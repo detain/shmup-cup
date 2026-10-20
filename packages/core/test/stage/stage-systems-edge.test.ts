@@ -364,9 +364,9 @@ describe('core/stage MovingBlockSystem — unit', () => {
     const system = new MovingBlockSystem(
       blockStage([
         { x: 100, type: 'block', screenX: 0, y: 0, w: 16, h: 8, tileId: 1 }, // right edge 115
-        { x: 300, type: 'block', y: 0, w: 8, h: 8, tileId: 1 },
-        { x: 400, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // inactive
-        { x: 500, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // at the camera: its event re-fires
+        { x: 350, type: 'block', y: 0, w: 8, h: 8, tileId: 1 },
+        { x: 450, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // inactive
+        { x: 550, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // at the camera: its event re-fires
       ]),
       blocks,
       TABLES,
@@ -378,10 +378,11 @@ describe('core/stage MovingBlockSystem — unit', () => {
       seen.push(i);
       return i !== 2;
     });
-    // At camera 243 the first block's right edge (115) is exactly the margin behind: kept.
+    // At a camera the margin ahead of the first block's right edge (115) it is exactly in
+    // reach: kept; the later blocks are still beyond the camera.
     expect(Array.from(system.slotEvent).filter((e) => e >= 0)).toEqual([0]);
     system.clear();
-    system.respawnBefore(500, (i) => i !== 2);
+    system.respawnBefore(550, (i) => i !== 2);
     expect(Array.from(system.slotEvent).filter((e) => e >= 0)).toEqual([1]);
     system.clear();
     system.respawnBefore(116 + BLOCK_DESPAWN_MARGIN, () => true);

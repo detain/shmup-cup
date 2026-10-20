@@ -98,6 +98,7 @@
  */
 import type { BendingLaserTable } from '../bullets/index.js';
 import { BOSS_PART_SLOTS } from '../bosses/index.js';
+import { WORLD_SCALE } from '../config/index.js';
 import {
   EnemyState,
   MAX_ENEMIES,
@@ -958,7 +959,7 @@ function statusCode(world: World): number {
 }
 
 /** How far before its boss event {@link skipToBoss} puts the camera, in pixels. */
-export const BOSS_SKIP_LEAD = 96;
+export const BOSS_SKIP_LEAD = 96 * WORLD_SCALE;
 
 /**
  * The debug stage skip: jumps the World's stage to {@link BOSS_SKIP_LEAD} px before its first

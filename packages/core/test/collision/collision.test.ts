@@ -160,8 +160,8 @@ describe('core/collision spatial grid', () => {
     expect([grid.cellSize, grid.capacity, grid.cols, grid.rows]).toEqual([
       DEFAULT_GRID_CELL_SIZE,
       DEFAULT_GRID_CAPACITY,
-      14,
-      11,
+      Math.ceil(448 / DEFAULT_GRID_CELL_SIZE),
+      Math.ceil(328 / DEFAULT_GRID_CELL_SIZE),
     ]);
   });
 

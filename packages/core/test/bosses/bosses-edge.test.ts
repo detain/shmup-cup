@@ -26,6 +26,7 @@ import {
   BOSS_CLEAR_TICKS,
   BOSS_ENTRY_MARGIN,
   BOSS_BLAST_HIT_STOP_TICKS,
+  CHAIN_SPREAD,
   BossHit,
   BossMotion,
   BossState,
@@ -716,7 +717,8 @@ describe('core/bosses — edge cases (M1-13)', () => {
       }
       expect(w.rng.gameplay.callCount).toBe(gameplay);
       expect(w.rng.cosmetic.callCount).toBeGreaterThan(cosmetic);
-      // Every chain explosion lies in a part's box (8 px around a part without a hurtbox).
+      // Every chain explosion lies in a part's box (`CHAIN_SPREAD` around a part without a
+      // hurtbox).
       const chain = events.filter(
         (e) => e.kind === SimEventKind.Particles && e.id === FX_CUES.BossChain,
       );
@@ -724,8 +726,8 @@ describe('core/bosses — edge cases (M1-13)', () => {
       const parts = boss.parts.slice(0, boss.partCount);
       for (const e of chain) {
         const inside = parts.some((part) => {
-          const hw = part.hurtbox ? part.hw : 8;
-          const hh = part.hurtbox ? part.hh : 8;
+          const hw = part.hurtbox ? part.hw : CHAIN_SPREAD;
+          const hh = part.hurtbox ? part.hh : CHAIN_SPREAD;
           return (
             Math.abs(e.x - Math.floor(part.x)) <= hw && Math.abs(e.y - Math.floor(part.y)) <= hh
           );

@@ -20,6 +20,7 @@ import {
   BOSS_CHAIN_INTERVAL,
   BOSS_CHAIN_TICKS,
   BOSS_CLEAR_TICKS,
+  BOSS_ENTRY_MARGIN,
   BOSS_MUSIC_FADE_TICKS,
   BOSS_PART_ID_BASE,
   BOSS_TALLY_TICKS,
@@ -419,10 +420,10 @@ describe('core/bosses', () => {
     const w = world();
     until(w, BossState.Intro);
     const boss = w.bosses.boss;
-    // The plate's left edge (x −24 − 3 px) starts 8 px past the right edge of the view.
-    expect(boss.screenX).toBe(PLAYFIELD_W + 8 + 27);
+    // The plate's left edge (x −24 − 3 px) starts `BOSS_ENTRY_MARGIN` past the right edge.
+    expect(boss.screenX).toBe(PLAYFIELD_W + BOSS_ENTRY_MARGIN + 27);
     const parts = boss.parts;
-    expect(parts[P.plate].x - parts[P.plate].hw).toBe(w.camera.x + PLAYFIELD_W + 8);
+    expect(parts[P.plate].x - parts[P.plate].hw).toBe(w.camera.x + PLAYFIELD_W + BOSS_ENTRY_MARGIN);
     let last = boss.screenX;
     for (let i = 0; i < 29; i++) {
       run(w, 1);

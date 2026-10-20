@@ -15,6 +15,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { resolveGameConfig } from '../../src/config/index.js';
+import { DEFAULT_GRID_CELL_SIZE } from '../../src/collision/index.js';
 import { EMPTY_CONTENT_DB, loadContent, type ContentDb } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import {
@@ -334,8 +335,8 @@ describe('core/world edge cases — pools, grid and view', () => {
   it('leaves the broad-phase grid built and empty after every tick, sized to the view', () => {
     const w = world();
     expect([w.grid.cols, w.grid.rows]).toEqual([
-      Math.ceil((PLAYFIELD_W + 2 * GRID_MARGIN) / 32),
-      Math.ceil((PLAYFIELD_H + 2 * GRID_MARGIN) / 32),
+      Math.ceil((PLAYFIELD_W + 2 * GRID_MARGIN) / DEFAULT_GRID_CELL_SIZE),
+      Math.ceil((PLAYFIELD_H + 2 * GRID_MARGIN) / DEFAULT_GRID_CELL_SIZE),
     ]);
     w.camera.vx = 3;
     run(w, createInputSnapshot(), 5);

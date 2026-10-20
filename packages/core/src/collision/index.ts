@@ -63,6 +63,7 @@
  *
  * @module
  */
+import { WORLD_SCALE } from '../config/index.js';
 import { defineModule } from '../module-info.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -372,8 +373,11 @@ export function segmentAabb(
 
 // ------------------------------------------------------------------------------ grid
 
-/** Default grid cell edge in pixels (shmup_feat.md §22: ~32 px cells). */
-export const DEFAULT_GRID_CELL_SIZE = 32;
+/**
+ * Default grid cell edge in pixels (shmup_feat.md §22: ~32 px cells at the world's scale —
+ * `v1 × WORLD_SCALE`, whole at every scale, so the grid divides by it).
+ */
+export const DEFAULT_GRID_CELL_SIZE = 32 * WORLD_SCALE;
 
 /** Default number of boxes a grid holds per tick (64 enemies + boss parts, with headroom). */
 export const DEFAULT_GRID_CAPACITY = 256;

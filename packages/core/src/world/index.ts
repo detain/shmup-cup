@@ -284,6 +284,7 @@ import {
   PLAYFIELD_W,
   SLOWDOWN_RUN_TICKS,
   SLOWDOWN_THRESHOLD,
+  WORLD_SCALE,
   type GameConfig,
 } from '../config/index.js';
 import {
@@ -756,7 +757,7 @@ export interface WorldPhaseEntry {
 }
 
 /** Extra border of the broad-phase grid around the camera view, in pixels. */
-export const GRID_MARGIN = 64;
+export const GRID_MARGIN = 64 * WORLD_SCALE;
 
 /**
  * Phase 1: copies each player's input into its intent (every slot, active or not, so a joining

@@ -52,7 +52,7 @@ import {
   type TerrainBlocks,
   type TerrainMap,
 } from '../collision/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, WORLD_SCALE } from '../config/index.js';
 import {
   DEFAULT_BLOCK_PERIOD,
   DEFAULT_BLOCK_SCREEN_X,
@@ -84,7 +84,7 @@ export const CHAIN_SPRITE = 'gimmicks/chain-link';
 export const GIMMICK_SPRITES: readonly string[] = Object.freeze([CHAIN_SPRITE]);
 
 /** A moving block this far (px) behind the view's left edge is gone. */
-export const BLOCK_DESPAWN_MARGIN = 128;
+export const BLOCK_DESPAWN_MARGIN = 128 * WORLD_SCALE;
 
 /** Tiles the moving blocks' sprite batch draws at most (all blocks together). */
 export const BLOCK_BATCH_CAPACITY = 256;

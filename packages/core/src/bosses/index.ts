@@ -150,7 +150,7 @@ import {
   type BulletSystem,
 } from '../bullets/index.js';
 import type { SpatialGrid } from '../collision/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, WORLD_SCALE } from '../config/index.js';
 import {
   BOSS_ROLES,
   BOSS_VULNERABILITIES,
@@ -265,7 +265,7 @@ export const BOSS_CLEAR_TICKS = 180;
 export const BOSS_MUSIC_FADE_TICKS = 60;
 
 /** A boss starts its intro this many pixels beyond the right edge of the view (its left edge). */
-export const BOSS_ENTRY_MARGIN = 8;
+export const BOSS_ENTRY_MARGIN = 8 * WORLD_SCALE;
 
 /** A captain's (mid-boss's) shorter death chain, in ticks (its blast comes on its last tick). */
 export const CAPTAIN_CHAIN_TICKS = 48;
@@ -286,13 +286,13 @@ export const BOSS_ESCAPE_TICKS = 90;
 export const BOSS_TURN_TICKS = 60;
 
 /** Playfield x the resting boss of a double boss withdraws to (its origin; mostly off screen). */
-export const BOSS_REST_X = PLAYFIELD_W + 40;
+export const BOSS_REST_X = PLAYFIELD_W + 40 * WORLD_SCALE;
 
 /** Ticks a raid's camera takes to ease back to where the raid began (death or escape). */
 export const RAID_RETURN_TICKS = BOSS_CHAIN_TICKS;
 
 /** A raid's part fires only when its centre is inside the view grown by this many pixels. */
-export const BOSS_FIRE_MARGIN = 8;
+export const BOSS_FIRE_MARGIN = 8 * WORLD_SCALE;
 
 /**
  * Bits of the World's `endingFlags` (M2-09; the ending selection of M2-10 reads them). Append,
@@ -1522,7 +1522,7 @@ const EXPLOSION_SFX = [
 const EXPLOSION_FX = [FX_CUES.ExplosionSmall, FX_CUES.ExplosionMedium, FX_CUES.ExplosionLarge];
 
 /** Ends of the chain explosions around a part without a hurtbox, in pixels. */
-const CHAIN_SPREAD = 8;
+export const CHAIN_SPREAD = 8 * WORLD_SCALE;
 
 /** Half a turn in binary units. */
 const HALF_TURN = ANGLE_UNITS / 2;

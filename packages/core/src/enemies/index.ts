@@ -185,7 +185,7 @@ import {
   type SpatialGridVisitor,
   type TerrainMap,
 } from '../collision/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, WORLD_SCALE } from '../config/index.js';
 import {
   BALLISTIC_LANDS,
   DEFAULT_REVENGE_SPEED,
@@ -261,20 +261,23 @@ export const MAX_ENEMIES = 64;
 /** Formation slots (formations alive or still spawning at the same time). */
 export const MAX_FORMATIONS = 32;
 
-/** Default spawn x in playfield pixels: 16 px beyond the right edge of the view. */
-export const DEFAULT_SPAWN_SCREEN_X = PLAYFIELD_W + 16;
+/**
+ * Default spawn x in playfield pixels: 16 px beyond the right edge of the view. The edge is
+ * the frame part, the 16 a world margin (`v1 × WORLD_SCALE`, plan §2.6; R2-02 makes it 24).
+ */
+export const DEFAULT_SPAWN_SCREEN_X = PLAYFIELD_W + 16 * WORLD_SCALE;
 
 /** An enemy that was on screen is removed (escaped) once it is this far outside the view. */
-export const DESPAWN_MARGIN = 32;
+export const DESPAWN_MARGIN = 32 * WORLD_SCALE;
 
 /** An enemy that never came on screen is removed once it is this far outside the view. */
-export const UNSEEN_MARGIN = 128;
+export const UNSEEN_MARGIN = 128 * WORLD_SCALE;
 
 /** An enemy that never came on screen is removed after this many ticks. */
 export const UNSEEN_TICKS = 600;
 
 /** A formation's ghost leader is removed once it is this far outside the view. */
-export const GHOST_MARGIN = 128;
+export const GHOST_MARGIN = 128 * WORLD_SCALE;
 
 /** Ticks an enemy shows its hit flash after taking damage (decision D30). */
 export const HIT_FLASH_TICKS = 4;
@@ -357,7 +360,7 @@ export class EnemyStats {
 export const MAX_CARRIED_OPTIONS = 8;
 
 /** Pixels between the Options an Option Hunter carries (drawn trailing behind it). */
-export const CARRIED_OPTION_SPACING = 10;
+export const CARRIED_OPTION_SPACING = 10 * WORLD_SCALE;
 
 /** Capacity of the carried-Options sprite batch ({@link EnemySystem.carriedBatch}). */
 export const CARRIED_BATCH_CAPACITY = 16;

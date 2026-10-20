@@ -34,7 +34,12 @@ import {
   defineBehavior,
   type BehaviorRegistry,
 } from '../../src/behaviors/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  WORLD_SCALE,
+  resolveGameConfig,
+} from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import {
@@ -326,7 +331,7 @@ describe('core/enemies edge — spawning', () => {
     const w = world(db({ events: [{ x: 0, type: 'spawn', enemy: 'idle' }] }));
     run(w, 1);
     const [e] = live(w);
-    expect(DEFAULT_SPAWN_SCREEN_X).toBe(PLAYFIELD_W + 16);
+    expect(DEFAULT_SPAWN_SCREEN_X).toBe(PLAYFIELD_W + 16 * WORLD_SCALE);
     expect([e.x, e.y]).toEqual([DEFAULT_SPAWN_SCREEN_X, PLAYFIELD_H / 2]);
     expect(e.formation).toBe(-1);
     expect(e.pathId).toBe(-1);
