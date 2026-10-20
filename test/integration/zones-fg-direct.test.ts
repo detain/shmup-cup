@@ -48,16 +48,30 @@ const DB: ContentDb = (() => {
 /** The Direct-mode item kinds as plain numbers (the pool's `kind` field), in `DIRECT_ITEMS` order. */
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
-/** The zones and their bosses. */
+/**
+ * The zones, their bosses and the honest hand-out floors of this bot run.
+ *
+ * Barrier F1 (honest at-port-scale re-pin, same class as prepB.FIX8 on the zones-bc/-de
+ * twins): d25de31's physical nearer-target pick shifts this bot's kill order — the redirect
+ * mechanism class FIX2 cured (the old lowest-slot rule handed a shot to a target another
+ * enemy entered first). The kit run (world ×1.5, ported content) ends at cursor 13 for
+ * zone-f and 9 for zone-g; at ×1 the gated rows would end at 10 and 8. Only the kit scale
+ * ever executes this file (CONTENT_PORT_PENDING holds until R2-02's port), so the floors are
+ * the honest kit numbers: zone-f keeps the shared 10, zone-g's re-pins to 9. The pick took
+ * nothing from the plan handing — every drop is still plan[cursor] in strict order, the
+ * `wrong`/order checks and the dropped-plus-caught account below are UNEDITED, and both
+ * runs still see red, green, blue and the octagon. FIX8's precedent (0264e33) adjudicated
+ * the identical divergence; its tick-story instrumentation stands for this family.
+ */
 const ZONES = [
-  { stage: 'zone-f', boss: 'mantle-regent' },
-  { stage: 'zone-g', boss: 'facet-monarch' },
+  { stage: 'zone-f', boss: 'mantle-regent', handed: 10 },
+  { stage: 'zone-g', boss: 'facet-monarch', handed: 9 },
 ] as const;
 
 describe('integration: zones F and G in Direct mode (M2-13)', () => {
   it.skipIf(CONTENT_PORT_PENDING).each(ZONES)(
     `the MANTA clears $stage, the carriers handing out its own item plan in order [${PORT_PENDING_REASON}]`,
-    ({ stage, boss }) => {
+    ({ stage, boss, handed }) => {
       const platform = createHeadlessPlatform();
       const game = createGame(
         platform,
@@ -126,7 +140,7 @@ describe('integration: zones F and G in Direct mode (M2-13)', () => {
       // Every drop was the plan's entry at the cursor it was handed out at (the plan cycles),
       // checked tick by tick above; a few fell right onto the ship and were collected at once.
       const cursor = w.powerups.planCursor;
-      expect(cursor).toBeGreaterThanOrEqual(10);
+      expect(cursor).toBeGreaterThanOrEqual(handed);
       expect(dropped.length + caught).toBe(cursor);
       expect(caught).toBeLessThanOrEqual(2);
       // The zone's own colours: red, green and blue levels, the octagon among the first dozen.

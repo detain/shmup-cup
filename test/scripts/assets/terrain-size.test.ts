@@ -8,7 +8,9 @@
  * throw. Since R2-01 it also pins the interim art stage's {@link INTERIM_ART_SCALE} to core's
  * `ART_SCALE` (the pipeline's own copy, flipped with core's), and asks that the generator's
  * tilesets are `native` (never upscaled: drawn at their tile size) and draw at whatever tile size
- * the pipeline asks for.
+ * the pipeline asks for. Barrier F2: the two cases that read the shipped tilesets as v1 8-px data
+ * are `it.runIf(CONTENT_STILL_V1)` — the T4b pattern on the rescale tests — and retire when
+ * R2-02 ports `content/`; their synthetic siblings keep running at both scales.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -53,6 +55,16 @@ const SHIPPED: readonly [string, TilesetJson][] = readdirSync(TILESETS)
 
 /** Every palette's sprite name. */
 const NAMES = Object.keys(TERRAIN_PALETTES);
+
+/**
+ * Whether the shipped `content/` still sits on v1's geometry — some tileset at 8-px tiles, read
+ * from the content itself (the `SHIPPED` table, the same directory the rescale tests' copy of
+ * this gate reads), never from `packages/core/test/helpers/port-pending.ts`: wave 5's U5 deletes
+ * that gate file without touching these tests, and the cases retired here must keep skipping
+ * after it (R2-02's two-scale kit ports `content/` in its throwaway tree, so it reads false
+ * there).
+ */
+const CONTENT_STILL_V1 = SHIPPED.some(([, tileset]) => tileset.tileSize === 8);
 
 /**
  * Whether a pixel of an image is opaque.
@@ -183,21 +195,24 @@ describe('scripts/assets/procedural/terrain — 12-px tiles (R1-04)', () => {
     expect(at('cube', 3, 3)).not.toEqual(at('cube', 5, 5));
   });
 
-  it('draws masks equal to every shipped mask resampled from 8 to 12 px', () => {
-    let checked = 0;
-    for (const [file, tileset] of SHIPPED) {
-      expect(tileset.tileSize, file).toBe(8);
-      const frames = renderTerrainTiles(12, tileset.sprite);
-      for (const tile of tileset.tiles) {
-        if (tile.type === 'empty') continue; // decoration: its frame need not match a mask
-        expect(opaqueHeights(frames[tile.frame], tile.anchor), `${file} ${tile.name}`).toEqual(
-          resampleMask(tile.mask, 8, 12),
-        );
-        checked++;
+  it.runIf(CONTENT_STILL_V1)(
+    'draws masks equal to every shipped mask resampled from 8 to 12 px',
+    () => {
+      let checked = 0;
+      for (const [file, tileset] of SHIPPED) {
+        expect(tileset.tileSize, file).toBe(8);
+        const frames = renderTerrainTiles(12, tileset.sprite);
+        for (const tile of tileset.tiles) {
+          if (tile.type === 'empty') continue; // decoration: its frame need not match a mask
+          expect(opaqueHeights(frames[tile.frame], tile.anchor), `${file} ${tile.name}`).toEqual(
+            resampleMask(tile.mask, 8, 12),
+          );
+          checked++;
+        }
       }
-    }
-    expect(checked).toBeGreaterThan(9 * TERRAIN_TILES.length);
-  });
+      expect(checked).toBeGreaterThan(9 * TERRAIN_TILES.length);
+    },
+  );
 
   it('rejects odd, tiny or fractional sizes and unknown palettes', () => {
     for (const size of [9, 2, 0, -8, 7.5, Number.NaN]) {
@@ -231,7 +246,10 @@ describe('scripts/assets/procedural/terrain — masks', () => {
     expect(lineMaskEnds(lineMask(0, 9, 9), 9)).toBeNull();
   });
 
-  it('resamples straight edges exactly, both ways', () => {
+  // Barrier F2: the shipped-mask loop reads v1 8-px data, so the whole case retires on the
+  // port (the T4b idiom gates the case, not its parts); the synthetic halves duplicate the
+  // sibling cases above and below, which keep running at both scales.
+  it.runIf(CONTENT_STILL_V1)('resamples straight edges exactly, both ways', () => {
     for (const [from, to] of [
       [8, 12],
       [12, 8],

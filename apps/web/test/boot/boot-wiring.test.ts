@@ -28,6 +28,7 @@ import {
 } from '@shmup/core';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { v1rel } from '../../../../packages/core/test/helpers/v1-port.js';
 import { runTextAtOtherFrame } from '../../../../packages/core/test/helpers/v1-replay.js';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
@@ -603,6 +604,8 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.config.stageSkip).toBe('boss');
     const warning = app.game.world.stage?.stage.events.find((e) => e.type === 'warning');
     expect(warning).toBeDefined();
+    // The 200 stays: it is looser than the ported skip margin (v1rel(96) = 144 at the kit's
+    // 3/2), so this flight twin passes at both scales without deriving anything (F3 note).
     expect(app.game.world.camera.x).toBeGreaterThan((warning?.x ?? 0) - 200);
   });
 
@@ -641,7 +644,11 @@ describe('web/boot bootWebApp wiring', () => {
     const world = app.game.world;
     expect(world.stage?.stage.id).toBe('zone-a');
     const warning = world.stage?.stage.events.find((e) => e.type === 'warning');
-    expect(world.camera.x).toBeGreaterThanOrEqual((warning?.x ?? 0) - 96);
+    // Barrier F3: the 96 is a WORLD margin, not a frame value — core's own skip lead is
+    // `BOSS_SKIP_LEAD = 96 * WORLD_SCALE` (debug), so the pin is v1's 96 through the mapping
+    // helper: 96 at K=1, 144 at the kit's 3/2. Handoff C2's "frame-independent" claim held
+    // for every other boot-wiring fake but this assertion.
+    expect(world.camera.x).toBeGreaterThanOrEqual((warning?.x ?? 0) - v1rel(96));
     expect(world.camera.x).toBeLessThan(warning?.x ?? 0);
   });
 
