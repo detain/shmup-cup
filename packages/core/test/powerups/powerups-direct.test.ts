@@ -7,7 +7,6 @@
  * the starting loadouts, the rank's direct power term and determinism.
  */
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../helpers/port-pending.js';
 import { BulletKind, spawnBullet } from '../../src/bullets/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyState } from '../../src/enemies/index.js';
@@ -399,7 +398,7 @@ describe('core/powerups Direct mode — determinism', () => {
   // The pincer waves and lead carriers of the range hand out its items on the shipped
   // direct-range's v1-scale waves (R2-01: at 640×360 the unported range hands out 2 by tick 2400,
   // under the 3 it asks for) — gated until R2-02. The lockstep above runs at both frames.
-  itPortPending('hands out at least three planned items on the same run', () => {
+  it('hands out at least three planned items on the same run', () => {
     const w = aliveWorld(DB, { stage: 'direct-range' });
     const input = createInputSnapshot();
     for (let t = 0; t < 2400; t++) {

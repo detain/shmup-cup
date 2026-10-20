@@ -6,7 +6,6 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../helpers/port-pending.js';
 import { v1speed } from '../helpers/v1-port.js';
 import {
   BEHAVIOR_IDS,
@@ -277,7 +276,7 @@ describe('core/behaviors — the roster in a World', () => {
     expect(DB.enemies[e.specIndex].drop).toBe('capsule');
   });
 
-  itPortPending('turret.floor stands on the floor and faces the nearest player', () => {
+  it('turret.floor stands on the floor and faces the nearest player', () => {
     const w = world();
     const e = spawn(w, 'turret', 300, Number.NaN);
     run(w, 1);
@@ -288,7 +287,7 @@ describe('core/behaviors — the roster in a World', () => {
     expect(e.flags & EnemyFlag.FaceRight).toBe(EnemyFlag.FaceRight);
   });
 
-  itPortPending('walker.floor walks towards the player, stops, walks again', () => {
+  it('walker.floor walks towards the player, stops, walks again', () => {
     const w = world();
     const e = spawn(w, 'walker', 250, Number.NaN);
     run(w, 1);

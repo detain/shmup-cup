@@ -43,7 +43,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
-import { itPortPending } from '../../../core/test/helpers/port-pending.js';
 import {
   connectFxEvents,
   createEventDispatcher,
@@ -218,7 +217,7 @@ describe('shell/dispatch game feel end to end (shipped content)', () => {
   // How many it kills comes from the shipped test range's v1-scale placements (R2-01: at 640×360
   // the unported range gives 4 kill bursts and 4 score events, under the 5 asked for) — only these
   // two counts are gated, until R2-02 ports the content.
-  itPortPending('kills more than five of the test range in 4000 ticks', () => {
+  it('kills more than five of the test range in 4000 ticks', () => {
     const { p, bursts } = rangeRun();
     expect(bursts).toBeGreaterThan(5);
     expect(p.scores.length).toBeGreaterThan(5);

@@ -28,7 +28,6 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../helpers/port-pending.js';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
@@ -778,7 +777,7 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
   // of the ellipse round (DEFAULT_BOSS_X, DEFAULT_BOSS_Y); at 640×360 it sits ~250 px from it, and
   // the orbit's first step (the last tick of `fighting`) jumps the boss onto it — gated until
   // R2-02 ports the home.
-  itPortPending('bobs on its ellipse from its home, without a jump', () => {
+  it('bobs on its ellipse from its home, without a jump', () => {
     const w = fighting('steed-bob');
     const b = w.bosses.boss;
     // At 384×216 the shipped home (304, 100) is the ellipse's right end: cx (DEFAULT_BOSS_X 296)
