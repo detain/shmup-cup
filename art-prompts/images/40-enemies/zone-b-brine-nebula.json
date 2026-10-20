@@ -113,7 +113,7 @@
     {
       "id": "brine-nebula-sprite-sheet-v1",
       "slug": "brine-nebula-sprite-sheet",
-      "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+      "title": "In-game sprite sheet: FROTH splitting bubble, four frames on key green",
       "variation": {
         "n": 1,
         "of": 3,
@@ -123,7 +123,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: FROTH splitting bubble enemies — four frames of a wobbling translucent pink-white foam sphere growing a seam, pinching in the middle, and separating into two smaller froth spheres. Row two: BROOD BUBBLES — four frames of a larger membranous jelly sphere containing a curled dark mechanical fish, shown intact, wobbling, cracking, and emptied with the film peeling away. Row three: URCHIN reef turrets — four frames of a squat charcoal barnacle dome plated in overlapping scales, crowned with a fan of purple spines and a single magenta lens, lens aimed left, up-left and down-left, plus one damaged frame with broken spines. Row four: MAW ROCKET missiles — four frames of a small fish-head torpedo with an open metal jaw nose and a stubby fin tail, flame nozzle flickering through four states. Chunky crisp pixels, dithered metal highlights, side view facing left.",
+      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, one pose per cell in the order listed, the same subject at the same scale, position and light in every cell, on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Subject: FROTH — a wobbling translucent pink-white foam-sphere splitting bubble enemy with a darker rim and a bright core. Four frames, side view facing left. The frames in order: intact wobbling sphere; a vertical seam growing down its middle; the sphere pinched deep at the seam; separating into two smaller froth spheres still touching at a thin thread. Identical silhouette and palette in every cell — only the split state changes. Chunky crisp pixels, light dithered shading.",
       "negative": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, realistic fish, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -139,12 +139,12 @@
           "seed": 15221
         }
       },
-      "notes": "Four-species atlas for the reef zone; rows are separated by scale class so extraction stays simple. Color reference: froth pink-white #ff5aa0 rim family, urchin spine #b84cff, lens #ff3a3a. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Froth swarm hazard; the two small spheres of the last frame are separate spawn art drawn from the same body at half size. Froth's pink bubble shots are bullets — procedural, not sprites on this sheet. The GALVANIC MAW's MAW ROCKET torpedo — an open metal fish-jaw nose with a dark throat #080410, stubby fins, a tail flame flickering through four #f89830 states — is its own single-subject strip in this form when the round sheets it. Color reference: froth pink-white #ff5aa0 rim family. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "brine-nebula-sprite-sheet-v2",
       "slug": "brine-nebula-sprite-sheet",
-      "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+      "title": "In-game sprite sheet: BROOD BUBBLE jelly pod, four frames on key green",
       "variation": {
         "n": 2,
         "of": 3,
@@ -154,7 +154,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "Retro 16-bit pixel art sprite atlas for a horizontal shoot-'em-up's underwater-reef level, flat solid pure bright green chroma-key sheet, generous margins, evenly spaced, absolutely no text and no annotations. Subject family: bubble-swarm hazards and reef gunners — wobbling foam spheres in four pinch-apart split frames with a pink-white sheen and a darker rim; a jelly brood pod drawn four ways with a curled mechanical fish-fry visible through the membrane in charcoal and violet; an armored barnacle turret dome of overlapping slate plates with a purple spine crown and a rotating magenta eye-lens, drawn at three aim angles and base-only without its spines for a destroyed state; and an open-jawed fish-head missile with a finned steel body and small orange nozzle flare in four flicker frames. Crisp 1-pixel near-black outlines, saturated limited palette of teal, violet, slate, pink and orange, chunky readable small-size forms, dithered highlights only, no anti-aliasing, no scenery behind any sprite.",
+      "positive": "Retro 16-bit pixel art sprite atlas for a horizontal shoot-'em-up's underwater-reef level, flat solid pure bright green chroma-key sheet, generous margins, evenly spaced, absolutely no text and no annotations. Subject: BROOD BUBBLE — a membranous jelly sphere, translucent violet film glimmering pink, a curled dark mechanical fish-fry visible inside with its charcoal spine showing through the shimmering membrane. Four frames in a regular grid of two rows of two, read left to right and top to bottom: the film intact and taut; wobbling, squashed and stretched; a long seam cracking across it; emptied, the film peeling back from the rim with the fish gone. Identical silhouette and palette in every cell — only the film state changes. Crisp 1-pixel near-black outlines, saturated limited palette of teal, violet, slate and pink, chunky readable small-size forms, dithered highlights only, no anti-aliasing, no scenery behind any sprite.",
       "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, coral background, water caustics, fish eyes, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -170,12 +170,12 @@
           "seed": 15222
         }
       },
-      "notes": "Square texture-page format including a destroyed urchin state. sd3.5 keeps the split-frame sequence legible; check the froth pinches read as one object dividing, not two unrelated balls. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Square texture-page format. sd3.5 keeps the brood sequence legible; check the curled mechanical fry stays readable through the film in every frame and the emptied shell reads as the same pod, not a new object. The hatched fry is a separate small sprite for the next sheet; the pink droplet burst is procedural. Color reference: jelly toward #8a48e8 translucency. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "brine-nebula-sprite-sheet-v3",
       "slug": "brine-nebula-sprite-sheet",
-      "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+      "title": "In-game sprite sheet: URCHIN reef turret, four frames on key green",
       "variation": {
         "n": 3,
         "of": 3,
@@ -185,7 +185,7 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid pure bright green chroma-key sheet background, one species per horizontal band, thick even margins, no text, no numbers, no frame borders. Species facing left in side view: FROTH — soft pink-white foam bubbles with a dark rim and a bright core, four growth-and-split frames ending as two smaller bubbles; BROOD — a translucent violet jelly sphere with a curled dark mechanical fish inside, intact / wobbling / cracked / hatched frames where the shell peels like a broken lantern; URCHIN — a reef-mounted charcoal barnacle turret, scale-plated dome, fan of purple crystal spines, single glowing magenta lens, three aim frames sweeping the lens from horizontal to vertical plus one shattered-shell frame; MAW ROCKET — a steel torpedo with a hinged open fish-jaw nose showing a dark throat, short fins, four flame frames at the tail. Crisp 1-pixel near-black navy outlines on every sprite, limited saturated palette, chunky pixel clusters, light dithering on metal only, classic cartridge-era readability at small scale.",
+      "positive": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid pure bright green chroma-key sheet background, thick even margins, no text, no numbers, no frame borders. A wide horizontal filmstrip of four equal cells in one row, read left to right, one pose per cell, the same subject at the same scale and light in every cell. Subject: URCHIN — a reef-mounted charcoal barnacle turret dome armored in overlapping scales, crowned with a fan of purple crystal spines and a single glowing magenta lens. Four frames, side view facing left. The frames in order: lens aimed straight left; lens tilted up-left; lens tilted down-left; damaged — the same dome aimed left with broken spines and a dimmed lens. Identical silhouette and palette in every cell — only the lens angle and the shell damage change. Crisp 1-pixel near-black navy outlines on every sprite, limited saturated palette, chunky pixel clusters, light dithering on metal only, classic cartridge-era readability at small scale.",
       "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, realistic water, watermark, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -201,7 +201,7 @@
           "seed": 15223
         }
       },
-      "notes": "Landscape band layout, best for website sprite-strip displays. flux.1-dev again the steadiest \"no-text\" producer. Color reference: jellies toward #8a48e8 translucency, rocket throat #080410-ish dark core, flame #f89830. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Landscape filmstrip layout, best for website sprite-strip displays. flux.1-dev again the steadiest \"no-text\" producer. The spineless base-only destroyed stump is a follow-up frame; the urchin's curling pink shots are bullets — procedural. Color reference: urchin spine #b84cff, lens #ff3a3a. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }

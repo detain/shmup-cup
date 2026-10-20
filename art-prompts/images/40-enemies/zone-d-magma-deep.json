@@ -137,7 +137,7 @@
     {
       "id": "magma-deep-sprite-sheet-v1",
       "slug": "magma-deep-sprite-sheet",
-      "title": "In-game pixel sprite sheet: magma cone eruptions, ember wisp flames, lava droplet effects on key green",
+      "title": "In-game pixel sprite sheet: MAGMA CONE turret, five states on key green",
       "variation": {
         "n": 1,
         "of": 3,
@@ -147,7 +147,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a squat volcanic MAGMA CONE turret in five states: sealed cone of stacked black basalt plates with cold gray seams, first crack glowing cherry, crater opening with tangerine light, full eruption with a short orange flame cap, and a spent cone puffing gray smoke. Middle band — an EMBER WISP in six frames: a small feral flame, molten-gold round core with ragged orange-red tongues and a thin sparking tail, the flame body licking and bending differently each frame, plus two tiny variants of half and quarter size. Bottom band — projectile and effect pixels: round bullets with bright cores and dark rims in pink and red, a fan of three molten shot, single falling lava droplets with gold spark trails, and four small orange-to-red explosion puffs in growth order from spark to bloom. Chunky readable silhouettes, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a regular grid of five equal cells in one row with even gutters, one state per cell in the order listed, the same subject at the same scale and light in every cell, on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Subject: MAGMA CONE — a squat volcanic turret of stacked black basalt plates with glowing lava seams, crater facing left. Five frames. The frames in order: sealed cone with cold gray seams; first crack glowing cherry; crater opening with tangerine light; full eruption with a short orange flame cap; spent cone puffing gray smoke. Identical silhouette and palette in every cell — only the eruption state changes. Chunky readable silhouettes, saturated limited palette, crisp pixel-grid edges.",
       "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -175,12 +175,12 @@
           "seed": 15421
         }
       },
-      "notes": "State-band layout (sealed→eruption→spent) is directly usable for a cone's charge cycle; the wisp band doubles as generic fire effects. Keep dithering to two tones per material so extraction stays clean. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "The cone's charge cycle, sealed to spent; the eruption animation strip is this file's wide variant. Molten shots, falling lava droplets, the lobbed slag glob with its dripping gold tail and the small explosion puffs are projectiles or effects — procedural (bible §5.4, §6), never on this sheet. The stalactite slag tips, basalt plate tile, lava-surface patch and scorch decal are environment art for the tileset and decor files. Keep dithering to two tones per material so extraction stays clean. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "magma-deep-sprite-sheet-v2",
       "slug": "magma-deep-sprite-sheet",
-      "title": "Square pixel sprite sheet: cone battery sizes, wisp swarm set, molten shot and slag effects on key green",
+      "title": "Square pixel sprite sheet: EMBER WISP flame family, six frames on key green",
       "variation": {
         "n": 2,
         "of": 3,
@@ -190,7 +190,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat solid pure bright green chroma-key background, no scenery, no text, no labels, no UI. Top row — three MAGMA CONE turrets in ascending size (small sentry cone, standard cone, heavy cone with an extra rock terrace), each a stack of black basalt plates with glowing lava seams, craters facing left, plus one heavy cone with its plates burst open and cherry-hot. Second row — a swarm set of EMBER WISPS: five flame bodies of irregular silhouette around molten-gold cores, two wisp pairs mid-fission stretching apart, and one wisp burning out to a gray ash puff with a last gold spark. Third row — molten projectiles in left-facing flight: single round shots with bright cores and dark rims in red and pink, pairs, a three-shot fan, and a slow lobbed glob of lava with a dripping gold tail. Fourth row — environmental pixels: stalactite slag tips with glow beads, a cracked basalt plate tile, a lava-surface patch of the dark-ember-to-tangerine ramp, two falling droplet sprites, and a small crater-scorch ground decal. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid of six equal cells in two rows of three with even gutters, one state per cell in the order listed, the same subject at the same scale and light in every cell, on a completely flat solid pure bright green chroma-key background, no scenery, no text, no labels, no UI. Subject: EMBER WISP — a small feral flame, a molten-gold round core with ragged orange-red tongues and a thin sparking tail. Six frames. The frames in order: core steady with the tongues low; licking forward-left; licking upward with the tail sparking; mid-fission, the body stretched thin between two forming cores; two settled half-wisps side by side; burning out to a gray ash puff with a last gold spark. Identical silhouette and palette in every cell — only the flame state changes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges.",
       "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -218,12 +218,12 @@
           "seed": 15422
         }
       },
-      "notes": "This sheet covers the full Zone D roster in one square — size gradation (sentry/standard/heavy) is the useful trick here, it maps straight to spawn tables. Lava ramp reference #8a2c0a→#e87a1c; shots #ff3a3a/#ff5aa0. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Square texture-page format. The half and quarter wisps born of fission are the same body redrawn smaller by hand cleanup, not scaled AI pixels; the wisp's glow trail is an additive effect on the black key (bible §3.6), never painted into these frames. The cone battery sizes (sentry/standard/heavy) are the same base silhouette redrawn wider — they ride the next cone sheet. Lava ramp reference #8a2c0a→#e87a1c; core gold. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "magma-deep-sprite-sheet-v3",
       "slug": "magma-deep-sprite-sheet",
-      "title": "Wide strip pixel sprite sheet: cone eruption sequence filmstrip with wisp and slag rows on key green",
+      "title": "Wide strip pixel sprite sheet: MAGMA CONE eruption cycle, six frames on key green",
       "variation": {
         "n": 3,
         "of": 3,
@@ -233,7 +233,7 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. The main band is a six-frame eruption cycle of one MAGMA CONE turret, evenly spaced left to right: dormant basalt stack, seam-glow widening, crater lid lifting with a first tangerine flare, full column of orange flame and pink-red molten shot, column thinning to smoke and sparks, cooling to dark crust with cherry cracks that loops back to the first frame — the same cone silhouette every frame, only the state changing. Below it a shorter band of six EMBER WISP flame bodies orbiting their molten-gold cores in different lick patterns, each with a one-to-three pixel sparking tail. Bottom band a sparse row of shared effects: pink and red bright-core round shots, a lobbed lava glob with dripping tail, two falling droplets with gold trails, a gray ash puff, and a single small orange-white explosion bloom in three growth frames. Large readable pixel clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip of six equal cells in one row with even gutters, read left to right, one state per cell, on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Subject: one MAGMA CONE turret — a squat stack of black basalt plates with glowing lava seams, crater facing left. Six frames, the eruption cycle. The frames in order: dormant basalt stack; seam-glow widening; crater lid lifting with a first tangerine flare; full column of orange flame; column thinning to smoke and sparks; cooling to dark crust with cherry cracks that loops back to the first frame. The same cone silhouette and palette in every cell — only the state changes. Large readable pixel clusters, saturated limited palette, crisp pixel-grid edges.",
       "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cone each frame, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -261,7 +261,7 @@
           "seed": 15423
         }
       },
-      "notes": "The continuity guard (\"same cone silhouette every frame\") matters more than usual here — an animation strip is only usable if the base shape locks. Flux.1-dev leads on clean sequential illustration; verify frame-to-frame consistency before extracting. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "The continuity guard (\"same cone silhouette every frame\") matters more than usual here — an animation strip is only usable if the base shape locks; the negative list already bans a different cone each frame. Flux.1-dev leads on clean sequential illustration; verify frame-to-frame consistency before extracting. The molten shot riding the flame column is a bullet — procedural; the EMBER WISP set lives on this file's square sheet. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }

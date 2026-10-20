@@ -54,15 +54,43 @@ those tables are drawn from.
 
 ## Model selection heuristics
 
-- **Any visible text ("SHMUP CUP", "WARNING!!", score screens)** → qwen-image first
-  (best rendered typography), flux.2-dev as the alternate. Quote the exact string in
-  the prompt.
+- **Any visible text ("SHMUP CUP", "WARNING!!", score screens)** → flux.2-dev first
+  (it won all seven text items in the R0-04 round-1 pick), qwen-image second. Quote the
+  exact string in the prompt. **FLUX is on hold** (see Licences below): until its licence
+  is cleared, nothing generated with a FLUX model ships or even serves as an edit
+  reference (decision RR-4) — so for anything headed into the game, qwen-image leads the
+  pick and flux.2-dev stays the yardstick it is measured against.
 - **Clean vector-ish illustration, silhouettes, icons, sprite sheets** → flux.1-dev /
-  flux.2-dev (literal, crisp shapes, no negative needed).
+  flux.2-dev (literal, crisp shapes, no negative needed) — same hold applies: these
+  renders guide the picking; the shipped pixels come from a licensable model or from hand.
 - **Rich painterly scenes with mood and lighting** → sd3.5-large or flux.2-dev.
+- **Terrain material swatches** → sd3.5-large won the six terrain families in round 1;
+  its swatches are **material references for hand-laid tilesets only — never shipped
+  tiles** (the bible's tile rule).
 - **Ultra-wide 1536x640 panoramas** → sd3.5-large handles the aspect natively; flux
   models also work — keep composition instructions ("left third / center / right third")
   explicit when going wide.
+
+## Licences (what may ship)
+
+Condensed from `docs/dev/art-provenance.md` §2 (the verdicts) and §6 (their conditions) —
+that file is the authority. **A model not in its table makes no shipped art.**
+
+- **flux.2-dev, flux.1-dev — ON HOLD.** Non-commercial licence. Nothing generated with
+  them ships — not a pixel, not as the base of an edit — until the owner has a written
+  commercial confirmation from BFL. They stay usable for picking and evaluation (the
+  round-1 winners, 84 of 91, are FLUX.2-dev, including all seven text items); the
+  licensable runner-up becomes the shipped pick.
+- **qwen-image — ships.** Apache 2.0; no conditions on outputs.
+- **Wan2.2-T2V-A14B (video) — ships.** Apache 2.0; the card's legal and harm usage notes
+  are respected.
+- **stable-diffusion-3.5-large — ships with two conditions:** after the owner completes
+  the free Stability registration, and only while annual revenue stays under USD 1 M
+  (Community License). Its round-1 terrain swatches are material references only.
+- **ltx-2.5 (video) — ships under a USD 10 M revenue cap.** Every clip is disclaimed as
+  machine-generated wherever it is shown, and its embedded watermark, metadata and
+  provenance record are kept.
+- **LTX-Video (the open fallback) — on hold** until the exact checkpoint's licence is known.
 
 ## Seeds
 

@@ -137,7 +137,7 @@
     {
       "id": "prism-labyrinth-sprite-sheet-v1",
       "slug": "prism-labyrinth-sprite-sheet",
-      "title": "in-game pixel sprites: halo crystal, option hunter, glint mote",
+      "title": "In-game pixel sprite sheet: OPTION HUNTER frigate, four poses on key green",
       "variation": {
         "n": 1,
         "of": 3,
@@ -147,7 +147,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in six frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above.",
+      "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A regular grid of four equal cells in two rows of two, read left to right and top to bottom, one pose per cell. Subject: the OPTION HUNTER — an armored deep-violet frigate with a wedge prow, four magnetic grapple-claws on its flanks and a violet glowing belly launch bay, gunmetal plating, facing left, identical hull in every cell. The frames in order: full profile with all four claws spread open; claws closed around one captured drone-orb at its flank; a close-up of the launch bay mouth alone with violet light spilling out; banking hard with the stolen orb tucked into the launch mouth. Only the claw and bay state changes between cells — identical silhouette and palette throughout. Every sprite crisp, readable at game scale, consistent lighting from above.",
       "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, organic coral shapes, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -175,12 +175,12 @@
           "seed": 15721
         }
       },
-      "notes": "Color reference: gem #8a48e8, edge-lights #c8a0ff, hunter armor deep violet with gunmetal plate. The six-frame ring rotation is the extraction prize of this sheet — insist the central gem never morphs; if it drifts, reroll with guidance up to 6.0 rather than editing. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Color reference: hunter armor deep violet (#6a3ab0 under crystal light) with gunmetal plate, bay glow #8a48e8, stolen-orb glow #c8a0ff. The captured drone-orb rides the claw cells only — the escort drone itself is existing orb art, not this sheet. The halo crystal's rotation and states get their own single-subject sheet (this file's v2 form); the glint motes ride the v3 strip. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "prism-labyrinth-sprite-sheet-v2",
       "slug": "prism-labyrinth-sprite-sheet",
-      "title": "square grid sheet, compact sprite set",
+      "title": "Square pixel sprite sheet: HALO CRYSTAL states, four frames on key green",
       "variation": {
         "n": 2,
         "of": 3,
@@ -190,7 +190,7 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art sprite sheet on a perfectly flat solid pure bright green chroma-key background, square layout, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 2x3 mini-grid of GLINT MOTES, six tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.",
+      "positive": "SNES-era 16-bit pixel art sprite sheet on a perfectly flat solid pure bright green chroma-key background, square layout, a regular grid of four equal cells in two rows of two, read left to right and top to bottom, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. Subject: the HALO CRYSTAL — a big faceted violet gem with lilac edge-glints ringed by six smaller satellite crystals, facing left. The frames in order: idle with the ring of six lilac satellites aligned; charging with all six satellites glowing bright while the central gem dims; firing where the central gem flashes white and the ring blurs slightly; shattered as a hollow outer ring with the central gem gone. The gem and satellite silhouettes are identical in the first three cells — only brightness and the flash state change. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.",
       "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -218,12 +218,12 @@
           "seed": 15722
         }
       },
-      "notes": "Color reference: charging satellites at #c8a0ff brightness, firing flash #fffff0, hunter bay #8a48e8. The six-frame mote strobe tests whether the model can hold a repeating micro-pattern grid; this sheet style historically comes out best on sd3.5. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Color reference: gem #8a48e8, charging satellites at #c8a0ff brightness, firing flash #fffff0. Insist the central gem never morphs between the first three cells; if it drifts, reroll with guidance up to 6.0 rather than editing — this sheet style historically comes out best on sd3.5. The option hunter rides the v1 grid; its six-frame satellite rotation can follow as a filmstrip of its own. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "prism-labyrinth-sprite-sheet-v3",
       "slug": "prism-labyrinth-sprite-sheet",
-      "title": "wide filmstrip: hunter attack sequence and halo volley",
+      "title": "Wide strip pixel sprite sheet: GLINT MOTE strobe, six frames on key green",
       "variation": {
         "n": 3,
         "of": 3,
@@ -233,7 +233,7 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "SNES-era 16-bit pixel art sprite filmstrip on a perfectly flat solid pure bright green chroma-key background, wide horizontal sheet, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.",
+      "positive": "SNES-era 16-bit pixel art sprite filmstrip on a perfectly flat solid pure bright green chroma-key background, wide horizontal sheet, a single row of six equal cells read left to right, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Subject: the GLINT MOTE — a fist-sized crystal spark with tiny satellite flecks orbiting, its edge-lights strobing bright lilac to dim and a one-pixel star-glint at its edge, facing left, identical silhouette in every cell. The frames in order: strobe at full brightness; three steps of the edge-lights dimming while the satellite flecks carry on orbiting; the dimmest frame; and the mote bursting into a harmless star-puff. Only the strobe brightness and the final burst change between cells — identical design and palette throughout. Hard silhouette readable at game scale, light from above.",
       "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
@@ -261,7 +261,7 @@
           "seed": 15723
         }
       },
-      "notes": "Color reference: stolen orb #c8a0ff glow, eject flash #8a48e8, needles #ff5aa0. Continuity clause (\"identical frigate design in every frame, only the claw and bay state changing\") is what makes filmstrips extractable; check the sixth frame's silhouette first, it's the usual drift point. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
+      "notes": "Color reference: mote glitter white-lilac, edge-lights #c8a0ff, burst-puff star-white. The strobe tests whether the model can hold a repeating micro-pattern across cells; check the burst frame's silhouette first, it's the usual drift point. The hunter attack run and the halo volley from this filmstrip's old bands are behavior mockups — the hunter rides the v1 grid, the halo the v2 square, and their needle-lasers are pattern bullets: procedural, bible §5.4. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }
