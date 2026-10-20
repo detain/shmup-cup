@@ -51,11 +51,12 @@ function mapOf(
   rows: number,
   cells: readonly (readonly [number, number, number])[],
   tables = TILESET.tables,
+  tileSize = T,
 ): TerrainMap {
   const tiles = new Uint8Array(cols * rows);
   for (const [c, r, id] of cells) tiles[r * cols + c] = id;
   return {
-    tileSize: T,
+    tileSize,
     cols,
     rows,
     tiles,
@@ -75,10 +76,16 @@ describe('core/collision terrain — every tile shape of terrain-a', () => {
   it('has the documented 45° and 22.5° slope masks', () => {
     const mask = (name: string): readonly number[] =>
       TILESET.tiles.find((tile) => tile.name === name)?.mask ?? [];
-    expect(mask('slope-up')).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    expect(mask('slope-up-low')).toEqual([0, 1, 1, 2, 2, 3, 3, 4]);
-    expect(mask('slope-up-high')).toEqual([4, 5, 5, 6, 6, 7, 7, 8]);
-    expect(mask('slope-down-low')).toEqual([4, 3, 3, 2, 2, 1, 1, 0]);
+    // The ported tileset keeps the slopes' geometry at its own tile edge: a 45° rise fills
+    // column i with height i + 1, and a half-slope spans half the tile, T / 2.
+    expect(mask('slope-up')).toEqual(Array.from({ length: T }, (_, lx) => lx + 1));
+    const rise = (offset: number): number[] =>
+      Array.from({ length: T }, (_, lx) => offset + Math.ceil(lx / 2));
+    expect(mask('slope-up-low')).toEqual(rise(0));
+    expect(mask('slope-up-high')).toEqual(rise(T / 2));
+    expect(mask('slope-down-low')).toEqual(
+      Array.from({ length: T }, (_, lx) => T / 2 - Math.ceil(lx / 2)),
+    );
     expect(TILESET.tables.anchor[TILESET.tables.byName.get('ceil-slope-up') ?? 0]).toBe(
       TerrainAnchor.Ceiling,
     );
@@ -120,27 +127,29 @@ describe('core/collision terrain — every tile shape of terrain-a', () => {
 
 describe('core/collision terrain — boxHitsTerrain', () => {
   const floorId = TILESET.tables.byName.get('floor') ?? 0;
-  // A floor row at map row 3 (world y 24 … 31), columns 0 … 9.
+  // A floor row at map row 3 (world y 3T … 4T−1), columns 0 … 9.
   const cells: [number, number, number][] = [];
   for (let c = 0; c < 10; c++) cells.push([c, 3, floorId]);
   const map = mapOf(10, 5, cells);
+  const top = 3 * T;
+  const mapBot = 5 * T;
 
   it('is pixel-exact: resting on the surface misses, one pixel of overlap hits', () => {
-    expect(boxHitsTerrain(map, 20, 21, 5, 3)).toBe(TerrainType.Empty); // bottom edge at y 24
-    expect(boxHitsTerrain(map, 20, 21.01, 5, 3)).toBe(TerrainType.Solid);
-    expect(boxHitsTerrain(map, 20, 22, 5, 3)).toBe(TerrainType.Solid);
-    expect(boxHitsTerrain(map, 20, 40, 5, 3)).toBe(TerrainType.Empty); // below the floor row
-    expect(boxHitsTerrain(map, 20, 35, 5, 3)).toBe(TerrainType.Empty); // top edge exactly at 32
-    expect(boxHitsTerrain(map, 20, 34.9, 5, 3)).toBe(TerrainType.Solid); // reaches row 31
+    expect(boxHitsTerrain(map, 20, top - 3, 5, 3)).toBe(TerrainType.Empty); // bottom edge at y 3T
+    expect(boxHitsTerrain(map, 20, top - 3 + 0.01, 5, 3)).toBe(TerrainType.Solid);
+    expect(boxHitsTerrain(map, 20, top - 2, 5, 3)).toBe(TerrainType.Solid);
+    expect(boxHitsTerrain(map, 20, mapBot, 5, 3)).toBe(TerrainType.Empty); // below the floor row
+    expect(boxHitsTerrain(map, 20, top + T + 3, 5, 3)).toBe(TerrainType.Empty); // top edge at 4T
+    expect(boxHitsTerrain(map, 20, top + T + 2.9, 5, 3)).toBe(TerrainType.Solid); // reaches 4T−1
   });
 
   it('misses outside the map and for NaN input, clips boxes overlapping the border', () => {
-    expect(boxHitsTerrain(map, -100, 28, 5, 3)).toBe(TerrainType.Empty);
+    expect(boxHitsTerrain(map, -100, top + 4, 5, 3)).toBe(TerrainType.Empty);
     expect(boxHitsTerrain(map, 20, -50, 5, 3)).toBe(TerrainType.Empty);
-    expect(boxHitsTerrain(map, 1000, 28, 5, 3)).toBe(TerrainType.Empty);
-    expect(boxHitsTerrain(map, Number.NaN, 28, 5, 3)).toBe(TerrainType.Empty);
-    expect(boxHitsTerrain(map, -3, 28, 5, 3)).toBe(TerrainType.Solid);
-    expect(boxHitsTerrain(map, 82, 28, 5, 3)).toBe(TerrainType.Solid);
+    expect(boxHitsTerrain(map, 1000, top + 4, 5, 3)).toBe(TerrainType.Empty);
+    expect(boxHitsTerrain(map, Number.NaN, top + 4, 5, 3)).toBe(TerrainType.Empty);
+    expect(boxHitsTerrain(map, -3, top + 4, 5, 3)).toBe(TerrainType.Solid);
+    expect(boxHitsTerrain(map, 10 * T + 2, top + 4, 5, 3)).toBe(TerrainType.Solid);
   });
 
   it('reports hazards over solid rock and ignores decorative tiles', () => {
@@ -190,6 +199,7 @@ describe('core/collision terrain — boxHitsTerrain', () => {
         [2, 1, 3],
       ],
       tables,
+      8, // this fixture's own tile edge — it keeps 8-px tiles at both scales
     );
     expect(boxHitsTerrain(mixed, 8, 12, 6, 3)).toBe(TerrainType.Hazard); // rock + spikes
     expect(boxHitsTerrain(mixed, 4, 12, 3, 3)).toBe(TerrainType.Solid);
@@ -208,23 +218,23 @@ describe('core/collision terrain — scans', () => {
   ]);
 
   it('limits findFloor / findCeiling to maxDist and returns the start pixel inside rock', () => {
-    expect(findFloor(map, 3, 40, 24)).toBe(64);
-    expect(findFloor(map, 3, 40, 23)).toBeNaN();
-    expect(findFloor(map, 3, 66.5, 10)).toBe(66);
-    expect(findCeiling(map, 3, 40, 24)).toBe(16);
-    expect(findCeiling(map, 3, 40, 23)).toBeNaN();
-    expect(findCeiling(map, 3, 12.5, 10)).toBe(13);
-    expect(findFloor(map, 3, 40, -1)).toBeNaN();
+    expect(findFloor(map, 3, 5 * T, 3 * T)).toBe(8 * T);
+    expect(findFloor(map, 3, 5 * T, 3 * T - 1)).toBeNaN();
+    expect(findFloor(map, 3, 8 * T + 2.5, 10)).toBe(8 * T + 2);
+    expect(findCeiling(map, 3, 5 * T, 3 * T)).toBe(2 * T);
+    expect(findCeiling(map, 3, 5 * T, 3 * T - 1)).toBeNaN();
+    expect(findCeiling(map, 3, 1.5 * T + 0.5, 10)).toBe(Math.ceil(1.5 * T + 0.5));
+    expect(findFloor(map, 3, 5 * T, -1)).toBeNaN();
   });
 
   it('treats the space above and below the map as open and outside columns as nothing', () => {
-    expect(findFloor(map, 3, -30, 50)).toBe(8); // starts at row 0, finds row 1
-    expect(findFloor(map, 3, 100, 50)).toBeNaN();
-    expect(findCeiling(map, 3, 200, 200)).toBe(72);
+    expect(findFloor(map, 3, -30, 50)).toBe(T); // starts at row 0, finds row 1
+    expect(findFloor(map, 3, 10 * T + 20, 50)).toBeNaN();
+    expect(findCeiling(map, 3, 200, 200)).toBe(9 * T);
     expect(findCeiling(map, 3, -5, 50)).toBeNaN();
-    expect(findFloor(map, 12, 0, 100)).toBeNaN(); // column 1 is empty
+    expect(findFloor(map, T + T / 2, 0, 100)).toBeNaN(); // column 1 is empty
     expect(findFloor(map, -1, 0, 100)).toBeNaN();
-    expect(findFloor(map, 16, 0, 100)).toBeNaN(); // right of the map
+    expect(findFloor(map, 2 * T, 0, 100)).toBeNaN(); // right of the map
   });
 
   it('never allocates on whole-pixel arguments', () => {

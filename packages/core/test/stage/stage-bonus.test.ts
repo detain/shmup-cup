@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../helpers/port-pending.js';
+import { K, PAD, v1x } from '../helpers/v1-port.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import {
   BONUS_ENTRANCES,
@@ -107,10 +108,12 @@ describe('core/stage bonus entrances (M2-10)', () => {
     expect(b.count).toBe(3);
     expect([...b.kind]).toEqual([BonusEntrance.Gap, BonusEntrance.Ground, BonusEntrance.Digit]);
     expect([...b.stageId]).toEqual([VAULT, VAULT, VAULT]);
-    expect([...b.armX]).toEqual([420, 1000, 2000]);
+    expect([...b.armX]).toEqual([v1x(420), v1x(1000), v1x(2000)]);
     // gap: the region's right edge; ground: its explicit until; digit: its x.
-    expect([...b.until]).toEqual([880, 1800, 2000]);
-    expect([b.x0[0], b.y0[0], b.x1[0], b.y1[0]]).toEqual([816, 0, 880, 24]);
+    expect([...b.until]).toEqual([v1x(880), v1x(1800), v1x(2000)]);
+    // The gap's region hugs the top edge: its top stays 0 (the port's §2.6 discontinuity), its
+    // bottom edge maps through `K · y + PAD`.
+    expect([b.x0[0], b.y0[0], b.x1[0], b.y1[0]]).toEqual([v1x(816), 0, v1x(880), K * 24 + PAD]);
     expect([b.digit[2], b.place[2]]).toEqual([0, 1000]);
     expect([b.entered, b.enteredTick, b.locked]).toEqual([-1, -1, false]);
     expect(b.enteredStage()).toBe(-1);
@@ -121,26 +124,26 @@ describe('core/stage bonus entrances (M2-10)', () => {
 
   it('gap: opens when a living ship`s centre is in the region — only while armed', () => {
     const w = world();
-    runTo(w, 300);
+    runTo(w, v1x(300));
     // Not armed yet: the region is ignored.
-    place(w, 840, 12);
+    place(w, v1x(840), 12);
     stepWorld(w, createInputSnapshot());
     expect(w.bonus.entered).toBe(-1);
     // Back down, out of the gap's row: armed from 420, the region (x 816–880) is in view from
     // camera x 496 on.
     place(w, w.camera.x + 100, 100);
-    runTo(w, 500);
+    runTo(w, v1x(500));
     expect(w.bonus.armed[0]).toBe(1);
     place(w, w.camera.x + 200, 100);
     stepWorld(w, createInputSnapshot());
     expect(w.bonus.entered).toBe(-1);
-    place(w, 840, 12);
+    place(w, v1x(840), 12);
     const tick = w.tick;
     stepWorld(w, createInputSnapshot());
     expect(w.bonus.entered).toBe(0);
     expect(w.bonus.enteredTick).toBe(tick);
     expect(w.bonus.enteredStage()).toBe(VAULT);
-    expect(w.bonus.enteredX()).toBe(420);
+    expect(w.bonus.enteredX()).toBe(v1x(420));
     expect([...w.bonus.armed]).toEqual([0, 0, 0]);
     // The World plays on (the scene flow does the rest).
     expect(w.status).toBe('playing');
@@ -148,36 +151,36 @@ describe('core/stage bonus entrances (M2-10)', () => {
 
   it('gap: the window closes when the camera passes its until', () => {
     const w = world();
-    runTo(w, 881);
+    runTo(w, v1x(881));
     expect(w.bonus.armed[0]).toBe(0);
-    place(w, 900, 12);
-    w.bonus.x0[0] = 890; // even a region still in view does not open once closed
-    w.bonus.x1[0] = 950;
+    place(w, v1x(900), 12);
+    w.bonus.x0[0] = v1x(890); // even a region still in view does not open once closed
+    w.bonus.x1[0] = v1x(950);
     stepWorld(w, createInputSnapshot());
     expect(w.bonus.entered).toBe(-1);
   });
 
   it('ground: opens when the window closes with every ground enemy of it destroyed', () => {
     const w = world();
-    w.stage?.jumpTo(990);
+    w.stage?.jumpTo(v1x(990));
     const killer = (world: World): void => {
       for (const e of world.enemies.enemies) {
         if (e.state === EnemyState.Live && e.anchor !== 0) world.enemies.kill(e, 0);
       }
     };
-    runTo(w, 1790, killer);
+    runTo(w, v1x(1790), killer);
     expect(w.bonus.armed[1]).toBe(1);
     expect(w.enemies.stats.groundKilled - w.bonus.groundKilled0[1]).toBe(3);
     expect(w.bonus.entered).toBe(-1);
-    runTo(w, 1801, killer);
+    runTo(w, v1x(1801), killer);
     expect(w.bonus.entered).toBe(1);
   });
 
   itPortPending('ground: stays shut when one ground enemy survives, or when none appeared', () => {
     const w = world();
-    w.stage?.jumpTo(990);
+    w.stage?.jumpTo(v1x(990));
     let spared = -1;
-    runTo(w, 1801, (world) => {
+    runTo(w, v1x(1801), (world) => {
       for (const e of world.enemies.enemies) {
         if (e.state !== EnemyState.Live || e.anchor === 0) continue;
         if (spared < 0) spared = e.slot;
@@ -199,8 +202,8 @@ describe('core/stage bonus entrances (M2-10)', () => {
 
   it('ground: kills credited to nobody do not count', () => {
     const w = world();
-    w.stage?.jumpTo(990);
-    runTo(w, 1801, (world) => {
+    w.stage?.jumpTo(v1x(990));
+    runTo(w, v1x(1801), (world) => {
       for (const e of world.enemies.enemies) {
         if (e.state === EnemyState.Live && e.anchor !== 0) world.enemies.kill(e, -1);
       }
@@ -210,29 +213,29 @@ describe('core/stage bonus entrances (M2-10)', () => {
 
   it('digit: opens when a playing ship`s score shows the digit at its place', () => {
     const miss = world();
-    miss.stage?.jumpTo(1900);
+    miss.stage?.jumpTo(v1x(1900));
     addScore(miss, 0, 21_000);
-    runTo(miss, 2001);
+    runTo(miss, v1x(2001));
     expect(miss.bonus.entered).toBe(-1);
     const hit = world();
-    hit.stage?.jumpTo(1900);
+    hit.stage?.jumpTo(v1x(1900));
     addScore(hit, 0, 20_300); // thousands digit 0
-    runTo(hit, 2001);
+    runTo(hit, v1x(2001));
     expect(hit.bonus.entered).toBe(2);
   });
 
   it('a locked World opens nothing, and the first entrance to open wins', () => {
     const w = world();
     w.bonus.lock();
-    runTo(w, 500);
+    runTo(w, v1x(500));
     expect(w.bonus.armed[0]).toBe(0);
-    place(w, 840, 12);
+    place(w, v1x(840), 12);
     stepWorld(w, createInputSnapshot());
     expect(w.bonus.entered).toBe(-1);
     expect(w.bonus.locked).toBe(true);
     const first = world();
-    runTo(first, 500);
-    place(first, 840, 12);
+    runTo(first, v1x(500));
+    place(first, v1x(840), 12);
     stepWorld(first, createInputSnapshot());
     expect(first.bonus.entered).toBe(0);
     // Arming another entrance after the entry does nothing.
@@ -242,10 +245,10 @@ describe('core/stage bonus entrances (M2-10)', () => {
 
   it('a checkpoint restart re-arms the windows it lands in, fresh counters, and not the others', () => {
     const w = world();
-    runTo(w, 1200);
+    runTo(w, v1x(1200));
     expect(w.bonus.armed[1]).toBe(1);
     // A jump to 1500 lands inside the ground window: re-armed with the totals of now.
-    w.stage?.jumpTo(1500);
+    w.stage?.jumpTo(v1x(1500));
     expect(w.bonus.armed[1]).toBe(1);
     expect(w.bonus.groundSpawned0[1]).toBe(w.enemies.stats.groundSpawned);
     expect(w.bonus.armed[0]).toBe(0);
@@ -262,8 +265,8 @@ describe('core/stage bonus entrances (M2-10)', () => {
       stepWorld(a, input);
       stepWorld(b, input);
     }
-    place(a, 840, 12);
-    place(b, 840, 12);
+    place(a, v1x(840), 12);
+    place(b, v1x(840), 12);
     stepWorld(a, input);
     stepWorld(b, input);
     expect(a.bonus.entered).toBe(0);

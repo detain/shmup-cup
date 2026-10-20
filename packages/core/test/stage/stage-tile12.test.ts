@@ -24,6 +24,7 @@ import { hashWorld } from '../../src/debug/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { PlayerHitCause } from '../../src/player/index.js';
 import { stageMapWidth } from '../../src/stage/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /** The fixture's tile edge. */
@@ -199,9 +200,11 @@ describe('core/stage: a stage of 12-px tiles (R1-04)', () => {
     }
     expect(ship.hits).toBe(1);
     expect(ship.hitCause).toBe(PlayerHitCause.Terrain);
-    // The KESTREL's terrain box (half height 3) touched the surface on its last step down.
-    expect(ship.y + 3).toBeGreaterThan(top);
-    expect(ship.y + 3).toBeLessThan(top + 8);
+    // The KESTREL's terrain box (half height 3) touched the surface on its last step down. A
+    // faster step (the ported world) snaps the box right onto the surface, so the bottom edge
+    // reaches `top` exactly rather than strictly past it.
+    expect(ship.y + 3).toBeGreaterThanOrEqual(top);
+    expect(ship.y + 3).toBeLessThan(top + v1rel(8));
   });
 
   it('runs deterministically', () => {
