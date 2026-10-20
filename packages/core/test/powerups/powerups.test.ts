@@ -88,11 +88,17 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** The heightfield's flat floor, quantized the way the generator quantizes (a multiple of TILE / 2). */
+const FLOOR_H = Math.round(32 / (TILE / 2)) * (TILE / 2);
+
+/** Rows of the test stage's map: one playfield tall (42 at 640×360 with 8-px tiles, 28 with 12-px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top, FLOOR_H px above the map's bottom edge. */
+const FLOOR_Y = PLAYFIELD_H - FLOOR_H;
 
 /**
  * Test content: the KESTREL, Type A weapons, the shipped tileset, test enemies, a static stage `t`
@@ -132,7 +138,7 @@ function db(): ContentDb {
         checkpoints: [{ x: 0 }],
         parallax: [],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
           rowsTall: ROWS,
           generator: {

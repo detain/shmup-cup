@@ -35,6 +35,12 @@ import {
 import { ENGINE_SPRITES, stepWorld } from '../../src/world/index.js';
 import { aliveWorld, shipped } from '../helpers/direct.js';
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** The 40-px flat floor quantized the way the generator quantizes (a multiple of TILE / 2). */
+const FLOOR_H = Math.round(40 / (TILE / 2)) * (TILE / 2);
+
 describe('core/shields the Arm (M2-05)', () => {
   it('describes the tiers as data: 3 / 4 / 5 hits after 1 / 4 / 9 blue items', () => {
     expect(ARM_TIER_HITS).toEqual([0, 3, 4, 5]);
@@ -143,9 +149,9 @@ describe('core/shields the Arm (M2-05)', () => {
             checkpoints: [{ x: 0 }],
             parallax: [],
             tilemap: {
-              tileSize: 8,
+              tileSize: TILE,
               tileset: 'terrain-a',
-              rowsTall: PLAYFIELD_H / 8, // one playfield tall
+              rowsTall: PLAYFIELD_H / TILE, // one playfield tall
               generator: {
                 type: 'heightfield',
                 segments: [
@@ -170,7 +176,7 @@ describe('core/shields the Arm (M2-05)', () => {
       const ship = w.players[0];
       if (armed) collectArm(ship.shield);
       // 60 px above the floor (its fly-in row at 384×216), then down into it and stay there.
-      ship.y = w.camera.y + PLAYFIELD_H - 40 - 60;
+      ship.y = w.camera.y + PLAYFIELD_H - FLOOR_H - 60;
       for (let t = 0; t < 30; t++) {
         commitPlayerInput(input.players[0], Action.Down);
         stepWorld(w, input);

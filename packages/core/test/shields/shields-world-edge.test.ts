@@ -294,8 +294,9 @@ describe('M2-04 shields in a World (edge): pods', () => {
 });
 
 describe('M2-04 shields in a World (edge): Reduce against every hurt test', () => {
-  /** The KESTREL's hurt radius (checked against the World's in {@link pair}). */
-  const HURT = 1.5;
+  /** The KESTREL's hurt radius from the shipped content (checked against the World's in {@link pair}). */
+  const HURT = (shipped('player/kestrel.player.json').data as { ships: { hurtRadius: number }[] })
+    .ships[0].hurtRadius;
 
   /**
    * A bare ship and a Reduce ship side by side.

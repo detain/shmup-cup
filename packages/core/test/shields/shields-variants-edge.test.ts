@@ -20,7 +20,7 @@
  *   frame 0; `reduceHurtScale` for odd inputs.
  */
 import { describe, expect, it } from 'vitest';
-import { SHIELD_CHOICES } from '../../src/config/index.js';
+import { SHIELD_CHOICES, WORLD_SCALE } from '../../src/config/index.js';
 import {
   FORCE_FIELD,
   FREE_POD_SPREAD,
@@ -114,7 +114,12 @@ describe('core/shields variants edge — tables', () => {
       REDUCE_SPRITE,
       'shields/arm',
     ]);
-    expect([POD_RADIUS, POD_ORBIT, ROTATE_POD_ORBIT, MAX_SHIELD_PODS]).toEqual([4, 13, 16, 4]);
+    expect([POD_RADIUS, POD_ORBIT, ROTATE_POD_ORBIT, MAX_SHIELD_PODS]).toEqual([
+      4 * WORLD_SCALE,
+      13 * WORLD_SCALE,
+      16 * WORLD_SCALE,
+      4, // a count
+    ]);
   });
 
   it('pod specs: maxHits is the pods` sum, no hurtbox steps; fields have no pods', () => {

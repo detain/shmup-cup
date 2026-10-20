@@ -33,6 +33,9 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
 /**
  * The KESTREL, Type A, the shipped tileset, a scriptless capsule carrier and a static stage with a
  * flat floor.
@@ -76,7 +79,7 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: 25,
             generator: {

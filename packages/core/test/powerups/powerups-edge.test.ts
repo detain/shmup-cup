@@ -103,8 +103,11 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Rows of the test stage's map: one playfield tall (42 at 640×360 with 8-px tiles, 28 with 12-px). */
+const ROWS = PLAYFIELD_H / TILE;
 
 /**
  * A static stage with a flat 32-px floor.
@@ -126,7 +129,7 @@ function stage(id: string, speed: number, events: unknown[]): Record<string, unk
     checkpoints: [{ x: 0 }],
     parallax: [],
     tilemap: {
-      tileSize: 8,
+      tileSize: TILE,
       tileset: 'terrain-a',
       rowsTall: ROWS,
       generator: {

@@ -37,7 +37,7 @@ import {
   createOptionGroup,
   type OptionGroup,
 } from '../../src/options/index.js';
-import { OPTION_CHOICES } from '../../src/config/index.js';
+import { OPTION_CHOICES, WORLD_SCALE } from '../../src/config/index.js';
 import {
   createPlayer,
   createPlayerIntent,
@@ -121,7 +121,7 @@ describe('core/options types edges: names, codes, reset', () => {
       0, 1, 2, 3,
     ]);
     expect(STOLEN_OPTION_SPRITE).toBe('options/stolen');
-    expect(OPTION_RADIUS).toBe(4);
+    expect(OPTION_RADIUS).toBe(4 * WORLD_SCALE); // the v1 radius (R2-02.W3)
   });
 
   it('setFormation keeps the per-type state; the next reset starts it afresh', () => {

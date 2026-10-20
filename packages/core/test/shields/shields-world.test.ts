@@ -243,7 +243,13 @@ describe('M2-04 shields in the World: Reduce', () => {
     w.bullets.collidePlayers();
     expect([ship.shield.kind, ship.shield.hurtScale]).toEqual([ShieldKind.None, 1]);
     expect(w.ship.terrainBox).toBe(box);
-    expect(box).toEqual({ hw: 5, hh: 3 });
+    expect(box).toEqual(
+      (
+        shipped('player/kestrel.player.json').data as {
+          ships: { terrainBox: { hw: number; hh: number } }[];
+        }
+      ).ships[0].terrainBox,
+    );
   });
 
   it('counts +2 towards the rank instead of a shield`s +4', () => {

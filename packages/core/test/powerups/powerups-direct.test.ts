@@ -37,7 +37,7 @@ import { ShieldKind, shieldActive } from '../../src/shields/index.js';
 import { DIRECT_MAX_LEVEL } from '../../src/weapons/index.js';
 import type { World } from '../../src/world/index.js';
 import { stepWorld, updateWorldRank } from '../../src/world/index.js';
-import { MANTA, aliveWorld, directDb, run } from '../helpers/direct.js';
+import { MANTA, aliveWorld, directDb, run, shipped } from '../helpers/direct.js';
 
 /** The shared content. */
 const DB = directDb();
@@ -273,7 +273,11 @@ describe('core/powerups Direct mode — the Speed toggle and the PowerUp press',
   it('cycles the MANTA`s three speeds on the Speed press edge (holding it does not repeat)', () => {
     const w = aliveWorld(DB);
     const ship = w.players[0];
-    expect(w.ship.speeds).toEqual([1.75, 2.25, 2.75]);
+    // The MANTA's three speed levels, read from the shipped content (R2-02: the kit ports them with it).
+    expect(w.ship.speeds).toEqual(
+      (shipped('player/manta.player.json').data as { ships: { speeds: number[] }[] }).ships[0]
+        .speeds,
+    );
     expect(ship.speedLevel).toBe(1); // the MANTA's startSpeedLevel: 2.25 px/tick (D3)
     const input = createInputSnapshot();
     const levels: number[] = [];
