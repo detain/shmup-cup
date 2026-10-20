@@ -11,6 +11,11 @@
  * `renderTerrainTiles(12)` — and a 12-px heightfield stage over those tilesets finds a tile for
  * every cell the generator shapes (`terrain.mjs` and `core/data` agree on the slope masks). The
  * fixtures live only in this test: nothing is added to `content/` or the atlas.
+ *
+ * R3-03.V4c (wave 5): the two checks are the shared ones — `expectMasksMatchArt` and
+ * `expectHeightfieldFindsTiles` are imported from `./terrain-checks.ts` (R3-03.V4b copied them
+ * there for the real-art lanes; the copies were byte-identical at the merge, so this spec lost its
+ * private ones and a change to either body is now a change in one place).
  */
 import {
   MAX_TILE_SIZE,
@@ -24,7 +29,6 @@ import {
   loadContent,
   type ContentDb,
   type ContentFile,
-  type TilesetSpec,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { v1rel, v1y } from '../../packages/core/test/helpers/v1-port.js';
@@ -32,6 +36,7 @@ import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
 import { readContentFiles } from '../../vite.shared.js';
+import { expectHeightfieldFindsTiles, expectMasksMatchArt } from './terrain-checks.js';
 
 /**
  * The shipped content DB.
@@ -58,35 +63,6 @@ function opaque(frameName: string, x: number, y: number): boolean {
   const frame = manifest.frames[frameName];
   const image = pages[frame.p].image;
   return image.data[((frame.y + y) * image.width + frame.x + x) * 4 + 3] > 0;
-}
-
-/**
- * Asserts that every solid tile of a tileset is drawn on a `tileSize²` frame whose opaque pixels
- * are exactly its column-height mask.
- *
- * @param tileset - The loaded tileset.
- * @param frameSize - Width and height of frame `i` of its sprite.
- * @param isOpaque - Whether pixel (x, y) of frame `i` is opaque.
- */
-function expectMasksMatchArt(
-  tileset: TilesetSpec,
-  frameSize: (frame: number) => readonly [number, number],
-  isOpaque: (frame: number, x: number, y: number) => boolean,
-): void {
-  const size = tileset.tileSize;
-  for (const tile of tileset.tiles) {
-    if (tile.type === 'empty') continue;
-    expect(frameSize(tile.frame), `${tileset.id}/${tile.name}`).toEqual([size, size]);
-    for (let x = 0; x < size; x++) {
-      const h = tile.mask[x];
-      for (let y = 0; y < size; y++) {
-        const solid = tile.anchor === 'ceiling' ? y < h : y >= size - h;
-        expect(isOpaque(tile.frame, x, y), `${tileset.id}/${tile.name} pixel ${x},${y}`).toBe(
-          solid,
-        );
-      }
-    }
-  }
 }
 
 /**
@@ -156,48 +132,7 @@ describe('integration: tilesets match their art', () => {
   });
 
   it('a 12-px fixture: the heightfield finds a tile for every cell it shapes', () => {
-    const tilesets = resampledTilesets(MAX_TILE_SIZE);
-    for (const file of tilesets) {
-      const id = (file.data as { id: string }).id;
-      const stage = {
-        formatVersion: 1,
-        kind: 'stage',
-        id: 'tile12',
-        name: 'TILE 12',
-        music: { stage: 'Stage', boss: 'Boss' },
-        length: 6000,
-        camera: [{ x: 0, speed: 1 }],
-        checkpoints: [],
-        parallax: [],
-        tilemap: {
-          tileSize: MAX_TILE_SIZE,
-          tileset: id,
-          rowsTall: 28, // v2's 336-px playfield in 12-px rows
-          generator: {
-            type: 'heightfield',
-            segments: [
-              {
-                from: 0,
-                to: 6000 + PLAYFIELD_W,
-                floor: { base: 84, amp: 60, period: 420, seed: 7 },
-                ceiling: { base: 48, amp: 36, period: 300, seed: 8 },
-              },
-            ],
-          },
-        },
-        events: [],
-      };
-      const { db, issues } = loadContent([file, { path: 'stages/tile12.stage.json', data: stage }]);
-      expect(issues, id).toEqual([]);
-      const terrain = db.stages[0].terrain;
-      expect(terrain?.tileSize).toBe(MAX_TILE_SIZE);
-      // Slopes of both kinds are in use, so the 45° and 22.5° shapes were looked up by mask.
-      const tables = db.tilesets[0].tables;
-      const used = new Set(terrain?.tiles);
-      for (const name of ['slope-up', 'slope-down', 'slope-up-low', 'ceil-slope-up-high']) {
-        expect(used.has(tables.byName.get(name) ?? -1), `${id} uses ${name}`).toBe(true);
-      }
-    }
+    for (const file of resampledTilesets(MAX_TILE_SIZE)) expectHeightfieldFindsTiles(file);
   });
 });
 
