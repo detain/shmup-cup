@@ -23,6 +23,7 @@ import {
   stepWorld,
   type World,
 } from '../../src/world/index.js';
+import { v1x } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -100,7 +101,7 @@ describe('core/world continues (M2-01)', () => {
   it('restarts at the last checkpoint with fresh lives, no power and the continue digit', () => {
     const w = overWorld();
     const stage = w.stage!;
-    stage.jumpTo(1600); // past the checkpoint at 1500
+    stage.jumpTo(v1x(1600)); // past the shipped checkpoint at v1 1500 (×K on the kit)
     expect(stage.checkpoint).toBe(1);
     w.status = 'gameOver';
     const ship = w.players[0];
@@ -126,7 +127,7 @@ describe('core/world continues (M2-01)', () => {
     expect(ship.shield.hits).toBe(0);
     expect(w.powerups.meters[0].cursor).toBe(-1);
     expect(w.scoring.board.scores[0].score).toBe(12_341);
-    expect(w.camera.x).toBe(1500);
+    expect(w.camera.x).toBe(v1x(1500)); // the checkpoint it restarted at
     expect(w.rank).toBe(2);
     const music: number[] = [];
     w.events.drain((e) => {

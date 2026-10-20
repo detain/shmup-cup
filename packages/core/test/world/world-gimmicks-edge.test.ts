@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
@@ -49,8 +49,21 @@ function shipped(path: string): ContentFile {
 const BRICK = 18;
 const TISSUE = 20;
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Map rows: one playfield tall at the live tile edge (the shipped tileset's own size). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** The heightfield floor of `db()`: its base 32 px under the map's bottom edge. */
+const FLOOR_TOP = ROWS * TILE - 32;
+
+/** The centre of the tracked cell (column 20, row 12) in world px. */
+const CELL_X = 20 * TILE + TILE / 2;
+const CELL_Y = 12 * TILE + TILE / 2;
+
 /**
- * RLE rows (25) with a column of one tile at a tile column over some rows.
+ * RLE rows ({@link ROWS}) with a column of one tile at a tile column over some rows.
  *
  * @param col - Tile column.
  * @param rows - Rows `[first, last]`.
@@ -59,12 +72,13 @@ const TISSUE = 20;
  */
 function column(col: number, rows: [number, number], tile: number): string[] {
   const out: string[] = [];
-  for (let r = 0; r < 25; r++) out.push(r >= rows[0] && r <= rows[1] ? `${col}*0, ${tile}` : '');
+  for (let r = 0; r < ROWS; r++) out.push(r >= rows[0] && r <= rows[1] ? `${col}*0, ${tile}` : '');
   return out;
 }
 
 /**
- * The KESTREL, Type A, `terrain-a` and a test stage with a floor (top at y 168).
+ * The KESTREL, Type A, `terrain-a` and a test stage with a floor (its {@link FLOOR_TOP}); the
+ * map is one playfield tall, so the RLE rows and the floor count from the playfield's top.
  *
  * @param stage - Stage fields over the defaults.
  * @returns The DB.
@@ -88,9 +102,9 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             rle: column(20, [10, 14], BRICK),
             generator: {
               type: 'heightfield',
@@ -145,7 +159,7 @@ function run(w: World, input: InputSnapshot, n: number): void {
 function breakBrick(w: World): void {
   const d = w.gimmicks.destructible;
   if (d === null) throw new Error('no destructible terrain');
-  expect(d.hit(164, 100, 99)).toBe(2);
+  expect(d.hit(CELL_X, CELL_Y, 99)).toBe(2);
   expect(cell(w)).toBe(0);
 }
 
@@ -169,7 +183,7 @@ function cell(w: World): number {
  * @param until - Stop condition.
  */
 function crash(w: World, input: InputSnapshot, until: () => boolean): void {
-  w.players[0].y = 190;
+  w.players[0].y = FLOOR_TOP + 10; // ten px below the floor's top: inside the rock
   for (let t = 0; t < 600 && !until(); t++) run(w, input, 1);
   expect(until()).toBe(true);
 }
@@ -217,9 +231,9 @@ describe('core/world gimmicks edge — regrowth around the ship', () => {
     const w = world(
       db({
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           rle: column(20, [12, 12], TISSUE),
         },
       }),
@@ -227,10 +241,10 @@ describe('core/world gimmicks edge — regrowth around the ship', () => {
     w.debugFlags.godMode = true;
     const d = w.gimmicks.destructible;
     if (d === null) throw new Error('no destructible terrain');
-    expect(d.hit(164, 100, 99)).toBe(2);
+    expect(d.hit(CELL_X, CELL_Y, 99)).toBe(2);
     const ship = w.players[0];
-    ship.x = 164;
-    ship.y = 100;
+    ship.x = CELL_X;
+    ship.y = CELL_Y;
     const input = createInputSnapshot();
     run(w, input, 400); // tissue regrows after 240 ticks — not onto the ship
     expect(cell(w)).toBe(0);
@@ -245,7 +259,9 @@ describe('core/world gimmicks edge — regrowth around the ship', () => {
 describe('core/world gimmicks edge — hashWorld', () => {
   const BLOCK = db({
     camera: [{ x: 0, speed: 0.5 }],
-    events: [{ x: 0, type: 'block', screenX: 200, y: 60, w: 16, h: 8, dy: 10, period: 60 }],
+    events: [
+      { x: 0, type: 'block', screenX: 200, y: 60, w: 2 * TILE, h: TILE, dy: 10, period: 60 },
+    ],
   });
 
   it('tells worlds apart by damage, placed tiles, blocks, fields and chains', () => {
@@ -253,9 +269,9 @@ describe('core/world gimmicks edge — hashWorld', () => {
     let [a, b] = pair();
     expect(hashWorld(a)).toBe(hashWorld(b));
     // Damage (a tracked entry), then a break (the change log).
-    a.gimmicks.destructible?.hit(164, 100, 1);
+    a.gimmicks.destructible?.hit(CELL_X, CELL_Y, 1);
     expect(hashWorld(a)).not.toBe(hashWorld(b));
-    b.gimmicks.destructible?.hit(164, 100, 1);
+    b.gimmicks.destructible?.hit(CELL_X, CELL_Y, 1);
     expect(hashWorld(a)).toBe(hashWorld(b));
     a.gimmicks.placeTile(8, 8, 1);
     expect(hashWorld(a)).not.toBe(hashWorld(b));
@@ -285,8 +301,8 @@ describe('core/world gimmicks edge — blocks, branches and views', () => {
     branches: [{ id: 'b', flag: 'open' }],
     events: [
       { x: 10, type: 'flag', flag: 'open' },
-      { x: 50, type: 'block', screenX: 100, y: 60, w: 8, h: 8, branch: 'b' },
-      { x: 60, type: 'block', screenX: 100, y: 90, w: 8, h: 8 },
+      { x: 50, type: 'block', screenX: 100, y: 60, w: TILE, h: TILE, branch: 'b' },
+      { x: 60, type: 'block', screenX: 100, y: 90, w: TILE, h: TILE },
     ],
   });
 
@@ -314,8 +330,8 @@ describe('core/world gimmicks edge — blocks, branches and views', () => {
       events: [
         { x: 10, type: 'flag', flag: 'open' },
         { x: 40, type: 'flag', flag: 'open', value: false },
-        { x: 50, type: 'block', screenX: 100, y: 60, w: 8, h: 8, branch: 'b' },
-        { x: 60, type: 'block', screenX: 100, y: 90, w: 8, h: 8 },
+        { x: 50, type: 'block', screenX: 100, y: 60, w: TILE, h: TILE, branch: 'b' },
+        { x: 60, type: 'block', screenX: 100, y: 90, w: TILE, h: TILE },
       ],
     });
     const c = world(closed);

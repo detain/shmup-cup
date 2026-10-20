@@ -7,7 +7,11 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_USER_OPTIONS, type InputProfileChoice } from '../../src/config/index.js';
+import {
+  DEFAULT_USER_OPTIONS,
+  PLAYFIELD_H,
+  type InputProfileChoice,
+} from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { SFX_CUES, SimEventKind, UserOptionKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
@@ -242,6 +246,9 @@ function shipped(path: string): unknown {
   ) as unknown;
 }
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json') as { tileSize: number }).tileSize;
+
 /**
  * Content with the KESTREL and a short open-space stage `range-t`.
  *
@@ -264,9 +271,9 @@ function stageDb(): ContentDb {
         checkpoints: [{ x: 0 }],
         parallax: [{ layer: 'far', sprite: 'bg/stars-far', factor: 0.5, y: 0, spacing: 128 }],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: PLAYFIELD_H / TILE, // one playfield tall
           generator: {
             type: 'heightfield',
             segments: [{ from: 0, to: 3384, floor: { base: 48, amp: 0, period: 64, seed: 1 } }],

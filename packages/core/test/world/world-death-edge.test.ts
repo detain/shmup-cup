@@ -19,7 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BulletFlag, BulletKind, spawnBullet } from '../../src/bullets/index.js';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
@@ -67,6 +67,9 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
 /**
  * An open stage (no terrain) scrolling at 1 px/tick.
  *
@@ -88,7 +91,12 @@ function stage(id: string, checkpoints: number[], events: unknown[] = []): Conte
       camera: [{ x: 0, speed: 1 }],
       checkpoints: checkpoints.map((x) => ({ x })),
       parallax: [],
-      tilemap: { tileSize: 8, tileset: 'terrain-a', rowsTall: 25, rle: Array(25).fill('') },
+      tilemap: {
+        tileSize: TILE,
+        tileset: 'terrain-a',
+        rowsTall: PLAYFIELD_H / TILE, // one playfield tall
+        rle: new Array<string>(PLAYFIELD_H / TILE).fill(''),
+      },
       events,
     },
   };

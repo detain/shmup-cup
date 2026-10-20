@@ -43,6 +43,17 @@ function shipped(path: string): ContentFile {
 const BRICK = 18;
 const TISSUE = 20;
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Map rows: one playfield tall at the live tile edge (the shipped tileset's own size). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** The brick wall's tile column and rows, and the ship row it is "in front of" (v1 y 100). */
+const BRICK_COL = 20;
+const BRICK_ROWS: [number, number] = [10, 14];
+const BRICK_ROW_Y = (BRICK_ROWS[0] + 2.5) * TILE; // the centre of row 12
+
 /**
  * The KESTREL, Type A, `terrain-a` and a still test stage with a floor (and optional RLE rows);
  * the default map is one playfield tall, so the ship's fly-in row stays above its floor.
@@ -69,9 +80,9 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
-            rowsTall: PLAYFIELD_H / 8,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
               segments: [
@@ -95,7 +106,7 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
 }
 
 /**
- * RLE rows (25) with a column of one tile at a tile column over some rows.
+ * RLE rows ({@link ROWS}) with a column of one tile at a tile column over some rows.
  *
  * @param col - Tile column.
  * @param rows - Rows `[first, last]`.
@@ -104,7 +115,7 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
  */
 function column(col: number, rows: [number, number], tile: number): string[] {
   const out: string[] = [];
-  for (let r = 0; r < 25; r++) out.push(r >= rows[0] && r <= rows[1] ? `${col}*0, ${tile}` : '');
+  for (let r = 0; r < ROWS; r++) out.push(r >= rows[0] && r <= rows[1] ? `${col}*0, ${tile}` : '');
   return out;
 }
 
@@ -149,9 +160,14 @@ function drain(w: World): [number, number][] {
 }
 
 describe('core/world — destructible terrain', () => {
-  // A brick wall at x 160…167 (col 20), rows 10…14 (y 80…119): in front of the ship's row.
+  // A brick wall at the tile column 20, rows 10…14: in front of the ship's row (v1 y 100).
   const BRICKS = db({
-    tilemap: { tileSize: 8, tileset: 'terrain-a', rowsTall: 25, rle: column(20, [10, 14], BRICK) },
+    tilemap: {
+      tileSize: TILE,
+      tileset: 'terrain-a',
+      rowsTall: ROWS,
+      rle: column(BRICK_COL, BRICK_ROWS, BRICK),
+    },
   });
 
   it('lets the shots break the bricks: hit SFX, explosions, points, logged changes', () => {
@@ -162,13 +178,13 @@ describe('core/world — destructible terrain', () => {
     expect(d?.any).toBe(true);
     expect(w.view.terrain?.changes).toBe(d);
     expect(map.tiles[12 * map.cols + 20]).toBe(BRICK);
-    w.players[0].y = 100;
+    w.players[0].y = BRICK_ROW_Y;
     drain(w);
     const input = createInputSnapshot();
     run(w, input, Action.Shot, 300);
     // The ship's row (y ≈ 100 → row 12) is shot open; the score counts 10 per brick.
     expect(map.tiles[12 * map.cols + 20]).toBe(0);
-    expect(terrainAt(map, 163, 100)).toBe(TerrainType.Empty);
+    expect(terrainAt(map, BRICK_COL * TILE + 3, BRICK_ROW_Y)).toBe(TerrainType.Empty);
     const broken = d?.destroyed ?? 0;
     expect(broken).toBeGreaterThanOrEqual(1);
     expect(w.scoring.board.scores[0].score).toBeGreaterThanOrEqual(10 * broken);
@@ -184,7 +200,7 @@ describe('core/world — destructible terrain', () => {
     const stage = w.stage;
     if (map === null || stage === null) throw new Error('no stage');
     const pristine = map.tiles.slice();
-    w.players[0].y = 100;
+    w.players[0].y = BRICK_ROW_Y;
     run(w, createInputSnapshot(), Action.Shot, 300);
     expect(map.tiles).not.toEqual(pristine);
     const resets = w.gimmicks.destructible?.resets ?? 0;
@@ -198,16 +214,16 @@ describe('core/world — destructible terrain', () => {
     const w = world(
       db({
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
-          rowsTall: 25,
-          rle: column(20, [10, 14], TISSUE),
+          rowsTall: ROWS,
+          rle: column(BRICK_COL, BRICK_ROWS, TISSUE),
         },
       }),
     );
     const map = w.terrain;
     if (map === null) throw new Error('no terrain');
-    w.players[0].y = 100;
+    w.players[0].y = BRICK_ROW_Y;
     const input = createInputSnapshot();
     let broken = -1;
     for (let t = 0; t < 300 && broken < 0; t++) {
@@ -249,10 +265,10 @@ describe('core/world — destructible terrain', () => {
             checkpoints: [{ x: 0 }],
             parallax: [],
             tilemap: {
-              tileSize: 8,
+              tileSize: TILE,
               tileset: 'terrain-hard',
-              rowsTall: 25,
-              rle: Array.from({ length: 25 }, () => ''),
+              rowsTall: ROWS,
+              rle: Array.from({ length: ROWS }, () => ''),
             },
             events: [],
           },
@@ -267,8 +283,8 @@ describe('core/world — destructible terrain', () => {
     expect(d.any).toBe(false);
     expect(d.keepOutCount).toBe(1);
     const ship = w.players[0];
-    const col = Math.floor(ship.x / 8);
-    const row = Math.floor(ship.y / 8);
+    const col = Math.floor(ship.x / TILE);
+    const row = Math.floor(ship.y / TILE);
     const cube = w.gimmicks.tileId('cube');
     expect(cube).toBeGreaterThan(0);
     // Under the ship: refused (it would be buried); a few cells ahead: placed.
@@ -282,7 +298,9 @@ describe('core/world — moving blocks', () => {
   const BLOCKS = db({
     camera: [{ x: 0, speed: 0.5 }],
     checkpoints: [{ x: 0 }, { x: 100 }],
-    events: [{ x: 50, type: 'block', screenX: 150, y: 90, w: 16, h: 8, dy: 20, period: 60 }],
+    events: [
+      { x: 50, type: 'block', screenX: 150, y: 90, w: 2 * TILE, h: TILE, dy: 20, period: 60 },
+    ],
   });
 
   it('are terrain wherever they swing, drawn tile by tile over the terrain grid', () => {

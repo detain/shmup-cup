@@ -32,14 +32,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Rows of the stage's map: one playfield tall at the live tile edge (42 at TILE 8, 28 at 12). */
+const ROWS = PLAYFIELD_H / TILE;
 
 /**
- * The map row of the ship's fly-in row `SPAWN_Y` (12 at 384×216): the systems below sit around it,
- * where the ship weaves and shoots.
+ * The map row of the ship's fly-in row `SPAWN_Y` (row 21 at TILE 8): the systems below sit
+ * around it, where the ship weaves and shoots.
  */
-const SHIP_ROW = Math.floor(SPAWN_Y / 8);
+const SHIP_ROW = Math.floor(SPAWN_Y / TILE);
 
 /**
  * RLE rows: a tissue column (`terrain-a` tile 20) at tile columns 22 and 30, four rows above and
@@ -74,7 +77,7 @@ function db(): ContentDb {
   for (let x = 0; x < STAGE_LENGTH - 200; x += 200) {
     // Placed round the ship's fly-in row (a block at y 40, a trigger band at y 60 at 384×216).
     const y = SPAWN_Y - 60;
-    events.push({ x, type: 'block', screenX: 250, y, w: 16, h: 8, dy: 24, period: 90 });
+    events.push({ x, type: 'block', screenX: 250, y, w: 2 * TILE, h: TILE, dy: 24, period: 90 });
     events.push({
       x: x + 1,
       type: 'trigger',
@@ -105,7 +108,7 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             rle: tissue(),

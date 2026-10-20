@@ -15,7 +15,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -57,6 +57,9 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
 /**
  * Content with the KESTREL, zone A and a flat scrolling stage `t` (checkpoints at 0, 600, 1800).
  *
@@ -86,9 +89,9 @@ function contentDb(): ContentDb {
           checkpoints: [{ x: 0 }, { x: 600 }, { x: 1800 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TILE, // one playfield tall
             generator: {
               type: 'heightfield',
               segments: [{ from: 0, to: 4384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],

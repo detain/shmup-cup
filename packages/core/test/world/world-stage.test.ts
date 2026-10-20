@@ -23,6 +23,7 @@ import { createSoaPool } from '../../src/pools/index.js';
 import { LayerId } from '../../src/presentation/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * Reads a shipped content file.
@@ -36,11 +37,15 @@ function shipped(path: string): unknown {
   ) as unknown;
 }
 
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json') as { tileSize: number }).tileSize;
+
 /**
- * Height of the test stage's floor: its top 52 px below the ship's fly-in row `SPAWN_Y` (the
- * playfield's middle) — 48 px at 384×216, a floor top at y 152 under a fly-in at y 100.
+ * Height of the test stage's floor: its top a v1 52-px world gap (×K on the kit) below the ship's
+ * fly-in row `SPAWN_Y` (the playfield's middle) — so the dive reaches it in the same tick count at
+ * either scale.
  */
-const FLOOR_BASE = PLAYFIELD_H / 2 - 52;
+const FLOOR_BASE = PLAYFIELD_H / 2 - v1rel(52);
 
 /**
  * Content with the KESTREL, the `terrain-a` tileset and a test stage one playfield tall.
@@ -66,9 +71,9 @@ function stageDb(stage: Record<string, unknown> = {}): ContentDb {
         checkpoints: [{ x: 0 }, { x: 600 }],
         parallax: [{ layer: 'far', sprite: 'bg/stars-far', factor: 0.5, y: 0, spacing: 128 }],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
-          rowsTall: PLAYFIELD_H / 8,
+          rowsTall: PLAYFIELD_H / TILE, // one playfield tall
           generator: {
             type: 'heightfield',
             segments: [

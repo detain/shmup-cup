@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BulletKind, spawnBullet } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { ItemKind } from '../../src/powerups/index.js';
@@ -32,6 +32,9 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
 /**
  * The KESTREL, Type A and an open stage scrolling at 0.75 px/tick (no terrain: only bullets kill).
@@ -56,10 +59,10 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
-            rowsTall: 25,
-            rle: new Array<string>(25).fill(''),
+            rowsTall: PLAYFIELD_H / TILE, // one playfield tall
+            rle: new Array<string>(PLAYFIELD_H / TILE).fill(''),
           },
           events: [],
         },

@@ -25,6 +25,7 @@ import { PlayerHitCause } from '../../src/player/index.js';
 import { BULLET_SPEED_RANK_CURVE, FIRE_RATE_RANK_CURVE, rankScale } from '../../src/rank/index.js';
 import { grantShield } from '../../src/shields/index.js';
 import { MainWeapon, applyLoadoutPreset } from '../../src/weapons/index.js';
+import { v1speed } from '../helpers/v1-port.js';
 import {
   ENGINE_SPRITES,
   createWorld,
@@ -322,7 +323,8 @@ describe('core/world revenge bullets (M2-01)', () => {
   it('fires the spread3 and ring8 patterns', () => {
     const w = world();
     w.enemies.kill(spawnSettled(w, 'fan'), 0);
-    expect(bulletSpeeds(w)).toEqual([1.25, 1.25, 1.25]);
+    // The revenge default speed: `DEFAULT_REVENGE_SPEED` (v1 1.25 px/tick, ×K on the kit).
+    expect(bulletSpeeds(w)).toEqual([v1speed(1.25), v1speed(1.25), v1speed(1.25)]);
     w.bullets.pool.clear();
     w.enemies.kill(spawnSettled(w, 'ring'), 0);
     expect(bulletSpeeds(w)).toEqual(new Array(8).fill(2));
