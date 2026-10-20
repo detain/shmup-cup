@@ -111,6 +111,8 @@ import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
+import { RECOVERY_WINDOW } from '../playtest/recovery.js';
+import { K, v1x, v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { PROCEDURAL_GENERATORS } from '../../scripts/assets/procedural/index.mjs';
 import { readContentFiles } from '../../vite.shared.js';
@@ -554,7 +556,7 @@ describe('integration: content/ validates', () => {
   it('gives zone A fans revenge bullets only at a high rank', () => {
     const { db } = loadContent(shippedFiles);
     const vane = db.enemies[db.enemyIndex.get('vane') ?? -1];
-    expect(vane?.revenge).toEqual({ minRank: 12, pattern: 'aimed', speed: 1.25 });
+    expect(vane?.revenge).toEqual({ minRank: 12, pattern: 'aimed', speed: v1speed(1.25) });
     const minRank = vane?.revenge?.minRank ?? 0;
     const rank = (base: number, power: number): number =>
       computeRank({ difficultyBase: base, growth: 1, loop: 1, stage: 1, power, special: 0 });
@@ -567,8 +569,8 @@ describe('integration: content/ validates', () => {
   it('gives the KESTREL the six speed levels of decision D3', () => {
     const { db } = loadContent(shippedFiles);
     const kestrel = db.ships[db.shipIndex.get('kestrel') ?? -1];
-    expect(kestrel?.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4]);
-    expect(kestrel?.hurtRadius).toBe(1.5);
+    expect(kestrel?.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4].map(v1speed));
+    expect(kestrel?.hurtRadius).toBe(v1x(1.5));
   });
 
   it('ships the zone map of decision D9: A → B|C → D|E → F|G → H|I, 16 routes, two finales (M2-10)', () => {
@@ -952,16 +954,16 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
 
   it('ships AZURE VERGE with HALCYON BULWARK (HB-01) and its five sections', () => {
     expect(stage.name).toBe('AZURE VERGE');
-    expect(stage.length).toBeGreaterThanOrEqual(8500);
-    expect(stage.length).toBeLessThanOrEqual(9500);
-    expect(stage.checkpoints.map((c) => c.x)).toEqual([0, 3500, 6000]);
+    expect(stage.length).toBeGreaterThanOrEqual(v1x(8500));
+    expect(stage.length).toBeLessThanOrEqual(v1x(9500));
+    expect(stage.checkpoints.map((c) => c.x)).toEqual([0, 3500, 6000].map(v1x));
     // The high-speed section of 6,000–8,000 at 1.5 px/tick, then the calm before the boss.
     const key = (x: number): number => stage.camera.find((k) => k.x === x)?.speed ?? -1;
-    expect(key(6000)).toBe(1.5);
-    expect(key(8000)).toBeLessThan(1.5);
+    expect(key(v1x(6000))).toBe(v1speed(1.5));
+    expect(key(v1x(8000))).toBeLessThan(v1speed(1.5));
     const warning = stage.events.find((e) => e.type === 'warning');
-    expect(warning?.x).toBeGreaterThanOrEqual(8500);
-    expect(warning?.x).toBeLessThanOrEqual(8700);
+    expect(warning?.x).toBeGreaterThanOrEqual(v1x(8500));
+    expect(warning?.x).toBeLessThanOrEqual(v1x(8700));
     const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
     expect(boss?.code).toBe('HB-01');
     expect(boss?.displayName).toBe('HALCYON BULWARK');
@@ -1043,10 +1045,10 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
     const sources = stage.events.filter(capsule).map((e) => e.x);
     expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
     for (const checkpoint of stage.checkpoints) {
-      const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+      const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW);
       expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
     }
-    expect(sources.filter((x) => x >= 8000 && x < warningX)).toHaveLength(2);
+    expect(sources.filter((x) => x >= v1x(8000) && x < warningX)).toHaveLength(2);
   });
   /**
    * The behaviours of every enemy a stage's spawn / formation events in `[from, to)` bring in
@@ -1076,18 +1078,18 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
   it('lays out the five sections with the archetypes the plan names (M1-18 test round)', () => {
     const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
     // (1) tutorial popcorn and the first carriers.
-    const one = sectionScripts(0, 1500);
+    const one = sectionScripts(0, v1x(1500));
     expect([...one].sort()).toEqual(['carrier.straight', 'drifter.sine']);
     // (2) fan formations on paths, rammers.
-    const two = sectionScripts(1500, 3500);
+    const two = sectionScripts(v1x(1500), v1x(3500));
     expect(two).toContain('fan.loop');
     expect(two).toContain('rammer.aimed');
     const fans = stage.events.filter(
-      (e) => e.type === 'formation' && e.x >= 1500 && e.x < 3500 && e.pathId >= 0,
+      (e) => e.type === 'formation' && e.x >= v1x(1500) && e.x < v1x(3500) && e.pathId >= 0,
     );
     expect(fans.length).toBeGreaterThanOrEqual(3);
     // (3) the corridor: floor and ceiling turrets, walkers, hatches.
-    const three = sectionScripts(3500, 6000);
+    const three = sectionScripts(v1x(3500), v1x(6000));
     for (const script of [
       'turret.floor:floor',
       'turret.floor:ceiling',
@@ -1097,10 +1099,10 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
       expect(three, script).toContain(script);
     }
     // (4) orbiters in the high-speed section.
-    expect(sectionScripts(6000, 8000)).toContain('orbiter.loop');
+    expect(sectionScripts(v1x(6000), v1x(8000))).toContain('orbiter.loop');
     // (5) the calm before the WARNING: two capsule carriers and nothing else.
     const calm = stage.events.filter(
-      (e) => e.x >= 8000 && e.x < warningX && (e.type === 'spawn' || e.type === 'formation'),
+      (e) => e.x >= v1x(8000) && e.x < warningX && (e.type === 'spawn' || e.type === 'formation'),
     );
     expect(calm.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].script : ''))).toEqual([
       'carrier.straight',
@@ -1109,8 +1111,8 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
     // Ground enemies only where the corridor gives them a floor or a ceiling.
     for (const event of stage.events) {
       if (event.type !== 'spawn' || db.enemies[event.enemyId].ground === null) continue;
-      expect(event.x, db.enemies[event.enemyId].id).toBeGreaterThanOrEqual(3500);
-      expect(event.x, db.enemies[event.enemyId].id).toBeLessThan(6000);
+      expect(event.x, db.enemies[event.enemyId].id).toBeGreaterThanOrEqual(v1x(3500));
+      expect(event.x, db.enemies[event.enemyId].id).toBeLessThan(v1x(6000));
     }
     // The stage theme and the boss theme; the planet band drawn last on the mid layer.
     expect(stage.music).toMatchObject({ stage: 'Stage', boss: 'Boss' });
@@ -1134,18 +1136,18 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
         if (ceiling(x)) {
           ceilingColumns++;
           // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
-          expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(3400);
-          expect(x, `ceiling at ${String(x)}`).toBeLessThan(6500);
+          expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(v1x(3400));
+          expect(x, `ceiling at ${String(x)}`).toBeLessThan(v1x(6500));
         }
       }
-      expect(ceilingColumns).toBeGreaterThan((6000 - 3500) / 4);
-      for (const x of [600, 1000, 4000, 5500, 7000])
+      expect(ceilingColumns).toBeGreaterThan((v1x(6000) - v1x(3500)) / 4);
+      for (const x of [600, 1000, 4000, 5500, 7000].map(v1x))
         expect(floor(x), `floor at ${String(x)}`).toBe(true);
       // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
-      for (let x = 8000; x < stage.length + PLAYFIELD_W; x += 4) {
+      for (let x = v1x(8000); x < stage.length + PLAYFIELD_W; x += 4) {
         expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
       }
-      expect(warningX).toBeGreaterThan(8000);
+      expect(warningX).toBeGreaterThan(v1x(8000));
     },
   );
 
@@ -1413,7 +1415,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const edges = stage.events
       .filter((e) => e.type === 'block')
       .map((e) => (e.type === 'block' ? e.x + (e.screenX ?? DEFAULT_BLOCK_SCREEN_X) : 0));
-    expect(edges).toContain(region.x - 16);
+    expect(edges).toContain(region.x - v1x(16));
     expect(edges).toContain(region.x + region.w);
     // The bonus stage: bonus capsules and a 1UP.
     const grotto = stageOf(entrance.stage);
@@ -1487,7 +1489,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
         expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
         let gap = 0;
         for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-        expect(gap * map.tileSize).toBeGreaterThanOrEqual(24); // a gap the ship fits through
+        expect(gap * map.tileSize).toBeGreaterThanOrEqual(24 * K); // a gap the ship fits through
       }
       // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
       const warning = stage.events.find((e) => e.type === 'warning');
@@ -1611,7 +1613,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     for (const rows of walls) {
       let gap = 0;
       for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-      expect(gap * (tileset?.tileSize ?? 0)).toBeGreaterThanOrEqual(48);
+      expect(gap * (tileset?.tileSize ?? 0)).toBeGreaterThanOrEqual(48 * K);
     }
     // Grabbing tentacles on the floor and on the ceiling.
     const claws = events.filter((e) => script(e) === 'tentacle.grab');
@@ -1782,7 +1784,9 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       const sources = stage.events.filter(capsule).map((e) => e.x);
       expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
       for (const checkpoint of stage.checkpoints) {
-        const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+        const after = sources.filter(
+          (x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW,
+        );
         expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
       }
     },
@@ -1808,9 +1812,11 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
         const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
         const top = Math.round(runner.camera.y);
         // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
-        const rows = (enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7]).map(
-          (y) => top + y,
-        );
+        const rows = (
+          enemy.ground === 'floor'
+            ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
+            : [0, map.tileSize - 1]
+        ).map((y) => top + y);
         expect(
           rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
           `${enemy.id} at ${String(event.x)}`,
@@ -2045,7 +2051,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
       // time limit, at the parade's scroll speed) later — never more than two up at once.
       const keys = stage.camera.filter((k) => k.x <= parade[0].x);
       const speed = keys[keys.length - 1].speed;
-      expect(speed).toBeLessThan(0.75); // a slow hangar
+      expect(speed).toBeLessThan(v1speed(0.75)); // a slow hangar
       for (let i = 1; i < parade.length; i++) {
         const before = parade[i - 1];
         const limit = before.type === 'boss' ? db.enemies[before.enemyId].boss : null;
@@ -2111,7 +2117,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     if (map === null) throw new Error('no terrain');
     const calmX = stage.camera[stage.camera.length - 1].x;
     for (let x = calmX; x < stage.length + PLAYFIELD_W; x += 8) {
-      for (let y = 0; y < PLAYFIELD_H; y += 8) {
+      for (let y = 0; y < PLAYFIELD_H; y += map.tileSize) {
         expect(terrainAt(map, x, y), `rock at ${String(x)}, ${String(y)}`).toBe(TerrainType.Empty);
       }
     }
@@ -2167,7 +2173,9 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
       const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
       expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
       for (const checkpoint of stage.checkpoints) {
-        const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+        const after = sources.filter(
+          (x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW,
+        );
         expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
       }
     },
@@ -2187,7 +2195,10 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
         if (enemy.ground === null) continue;
         ground++;
         const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
-        const rows = enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7];
+        const rows =
+          enemy.ground === 'floor'
+            ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
+            : [0, map.tileSize - 1];
         expect(
           rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
           `${enemy.id} at ${String(event.x)}`,
