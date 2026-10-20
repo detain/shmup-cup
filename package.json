@@ -25,7 +25,7 @@
     "lint:root": "eslint --max-warnings=0 --ignore-pattern \"packages/**\" --ignore-pattern \"apps/**\" .",
     "test": "vitest run",
     "test:integration": "vitest run --project integration",
-    "content:check": "vitest run --project integration test/integration/content.test.ts",
+    "content:check": "vitest run --project integration test/integration/content.test.ts test/integration/content-zone-",
     "content:tiled": "node scripts/content/tiled-import.mjs",
     "test:all": "vitest run",
     "test:e2e": "turbo run build:test --filter=@shmup/web --filter=@shmup/tizen --filter=@shmup/webos && playwright test --config test/e2e/playwright.config.ts",

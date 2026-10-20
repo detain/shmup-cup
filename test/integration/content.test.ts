@@ -17,12 +17,12 @@
  * and its enemies and weapons are checked against their behaviours' tunables
  * (`checkEnemyBehaviors`, `checkWeaponBehaviors`).
  *
- * Zone A (M1-18) is held to its plan: the 4-way design rules (shmup_feat.md §4 rule 2, D17) —
- * no aimed bullet tunable over 2 px/tick and, over a whole HALCYON BULWARK fight played by the
- * 4-way bot, no enemy bullet over 2 px/tick and no two simultaneous laser lanes closer than
- * 16 px — and its structure: the five sections' camera keys and checkpoints, 6–8 enemy types,
- * ≥ 12 capsule sources before the boss and ≥ 3 within 900 px after every checkpoint (the recovery
- * rule of shmup_feat.md §10), two in the calm before the WARNING.
+ * Since R5-P.P2a the zones' own tests are split into one `content-zone-<letter>.test.ts` per
+ * zone — the 4-way design rules (shmup_feat.md §4 rule 2, D17: no aimed bullet over 2 px/tick,
+ * no two simultaneous laser lanes closer than 16 px, the recovery rule of §10) and each zone's
+ * plan structure, over the shared fixtures of `zones/helpers.ts`. This file keeps the generic
+ * validation above and the checks that span zones: the sprite-draw tests of the B–G and H / I
+ * groups and, until R5-P.P2b splits them, the zones E–G cases and the H / I suite.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -34,7 +34,6 @@ import {
   BonusEntrance,
   BossState,
   DEFAULT_BEHAVIORS,
-  DEFAULT_BLOCK_SCREEN_X,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_DIFFICULTY_TABLE,
   DEFAULT_SCORING_RULES,
@@ -76,7 +75,6 @@ import {
   uiLanguageLabel,
   type BossPartSpec,
   type BossSpec,
-  type ContentDb,
   type ContentFile,
   type StageSpec,
   type ValidationIssue,
@@ -111,6 +109,14 @@ import { K, v1x, v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { PROCEDURAL_GENERATORS } from '../../scripts/assets/procedural/index.mjs';
 import { readContentFiles } from '../../vite.shared.js';
+import {
+  ZONES_B_G,
+  capsuleSources,
+  scrollTicksToWarning,
+  shippedDb,
+  stageEnemies,
+  zoneEnemies as zoneEnemiesOf,
+} from './zones/helpers.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const contentRoot = join(repo, 'content');
@@ -906,397 +912,20 @@ describe('integration: content/ sprites exist in the atlas', () => {
   });
 });
 
-/**
- * The shipped content with the engine's scripts and sprites (the shell's loader).
- *
- * @returns The DB (asserted issue-free).
- */
-function shippedDb(): ContentDb {
-  const { db, issues } = loadContent(readContentFiles(), {
-    knownScripts: KNOWN_SCRIPT_IDS,
-    extraSprites: ENGINE_SPRITES,
-  });
-  expect(issues).toEqual([]);
-  return db;
-}
-
-/**
- * The indices of every enemy a stage can bring into play: its spawn / formation / WARNING / boss
- * events' enemies and their children.
- *
- * @param db - Content.
- * @param stage - The stage.
- * @returns Enemy indices.
- */
-function stageEnemies(db: ContentDb, stage: StageSpec): Set<number> {
-  const used = new Set<number>();
-  for (const event of stage.events) {
-    if ('enemyId' in event && event.enemyId >= 0) used.add(event.enemyId);
-  }
-  for (const index of [...used]) {
-    const child = db.enemies[index].childId;
-    if (child >= 0) used.add(child);
-  }
-  return used;
-}
-
-describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
-  const db = shippedDb();
-  const stage = db.stages[db.stageIndex.get('zone-a') ?? -1];
-
-  it('ships AZURE VERGE with HALCYON BULWARK (HB-01) and its five sections', () => {
-    expect(stage.name).toBe('AZURE VERGE');
-    expect(stage.length).toBeGreaterThanOrEqual(v1x(8500));
-    expect(stage.length).toBeLessThanOrEqual(v1x(9500));
-    expect(stage.checkpoints.map((c) => c.x)).toEqual([0, 3500, 6000].map(v1x));
-    // The high-speed section of 6,000–8,000 at 1.5 px/tick, then the calm before the boss.
-    const key = (x: number): number => stage.camera.find((k) => k.x === x)?.speed ?? -1;
-    expect(key(v1x(6000))).toBe(v1speed(1.5));
-    expect(key(v1x(8000))).toBeLessThan(v1speed(1.5));
-    const warning = stage.events.find((e) => e.type === 'warning');
-    expect(warning?.x).toBeGreaterThanOrEqual(v1x(8500));
-    expect(warning?.x).toBeLessThanOrEqual(v1x(8700));
-    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-    expect(boss?.code).toBe('HB-01');
-    expect(boss?.displayName).toBe('HALCYON BULWARK');
-    // Four shield plates of 12 in front of a 40-hp core that needs them all gone; armoured hull.
-    const parts = boss?.parts ?? [];
-    const plates = parts.filter((p) => p.name.startsWith('plate-'));
-    expect(plates.map((p) => p.hp)).toEqual([12, 12, 12, 12]);
-    const core = parts.find((p) => p.core);
-    expect(core?.hp).toBe(40);
-    expect(core?.vulnerable).toBe('afterParts');
-    expect([...(core?.requires ?? [])].sort()).toEqual(plates.map((p) => p.name).sort());
-    expect(parts.find((p) => p.name === 'hull')?.vulnerable).toBe('never');
-    expect(parts.filter((p) => p.gun).map((p) => p.name)).toEqual([
-      'emitter-top',
-      'emitter-bottom',
-    ]);
-    // 6–8 enemy types (behaviours) besides the boss.
-    const types = new Set(
-      [...stageEnemies(db, stage)].map((i) => db.enemies[i]).filter((e) => e.boss === null),
-    );
-    const behaviours = new Set([...types].map((e) => e.script));
-    expect(behaviours.size).toBeGreaterThanOrEqual(6);
-    expect(behaviours.size).toBeLessThanOrEqual(8);
-  });
-
-  it('keeps every aimed bullet tunable at 2 px/tick or less (Normal)', () => {
-    const speeds: string[] = [];
-    for (const index of stageEnemies(db, stage)) {
-      const enemy = db.enemies[index];
-      if (enemy.boss !== null) {
-        enemy.boss.phases.forEach((phase, p) => {
-          const def = DEFAULT_BOSS_BEHAVIORS.get(phase.script);
-          const params = { ...def?.params, ...phase.params };
-          if ('bulletSpeed' in params)
-            speeds.push(`${enemy.id}[${String(p)}] ${params.bulletSpeed}`);
-          expect(params.bulletSpeed ?? 0, `${enemy.id} phase ${String(p)}`).toBeLessThanOrEqual(
-            MAX_AIMED_BULLET_SPEED,
-          );
-        });
-        continue;
-      }
-      const def = DEFAULT_BEHAVIORS.get(enemy.script);
-      const params = { ...def?.params, ...enemy.params };
-      if ('bulletSpeed' in params) speeds.push(`${enemy.id} ${params.bulletSpeed}`);
-      expect(params.bulletSpeed ?? 0, enemy.id).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
-    }
-    expect(speeds.length).toBeGreaterThanOrEqual(4); // turrets, walkers, orbiters, the boss
-  });
-
-  it('never fires a bullet over 2 px/tick nor squeezes two laser lanes under 16 px (HB-01 fight)', () => {
-    const rules = createRuleWatch();
-    const phases = new Set<number>();
-    const run = runStage('zone-a', fourWayBot(), {
-      godMode: true,
-      stageSkip: 'boss',
-      observe(world) {
-        rules.observe(world);
-        if (world.bosses.boss.state === BossState.Fight) phases.add(world.bosses.boss.phase);
-      },
-    });
-    expect(run.bossDefeated).toBe(true);
-    expect([...phases]).toEqual([0, 1, 2]);
-    expect(rules.violations).toEqual([]);
-    expect(rules.maxBulletSpeed).toBeGreaterThan(0);
-    expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
-    // Its last phase really overlaps two lanes — with room between them.
-    expect(rules.maxSeparate).toBe(2);
-    expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
-    expect(rules.narrowestOpen).toBeGreaterThanOrEqual(MIN_LANE_GAP);
-  });
-
-  it('places the capsules for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint', () => {
-    /** Whether an event is a capsule source: a dropping enemy, a formation that drops. */
-    const capsule = (event: StageSpec['events'][number]): boolean =>
-      event.type === 'spawn'
-        ? db.enemies[event.enemyId].drop === 'capsule'
-        : event.type === 'formation' && event.drop !== null;
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    const sources = stage.events.filter(capsule).map((e) => e.x);
-    expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
-    for (const checkpoint of stage.checkpoints) {
-      const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW);
-      expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
-    }
-    expect(sources.filter((x) => x >= v1x(8000) && x < warningX)).toHaveLength(2);
-  });
-  /**
-   * The behaviours of every enemy a stage's spawn / formation events in `[from, to)` bring in
-   * (children included), with the ground anchors of the ground enemies.
-   *
-   * @param from - First x.
-   * @param to - End x (exclusive).
-   * @returns Script ids, and `script:ground` for anchored enemies.
-   */
-  const sectionScripts = (from: number, to: number): Set<string> => {
-    const out = new Set<string>();
-    for (const event of stage.events) {
-      if (event.x < from || event.x >= to) continue;
-      if (event.type !== 'spawn' && event.type !== 'formation') continue;
-      for (const enemy of [
-        db.enemies[event.enemyId],
-        db.enemies[db.enemies[event.enemyId].childId],
-      ]) {
-        if (enemy === undefined) continue;
-        out.add(enemy.script);
-        if (enemy.ground !== null) out.add(`${enemy.script}:${enemy.ground}`);
-      }
-    }
-    return out;
-  };
-
-  it('lays out the five sections with the archetypes the plan names (M1-18 test round)', () => {
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    // (1) tutorial popcorn and the first carriers.
-    const one = sectionScripts(0, v1x(1500));
-    expect([...one].sort()).toEqual(['carrier.straight', 'drifter.sine']);
-    // (2) fan formations on paths, rammers.
-    const two = sectionScripts(v1x(1500), v1x(3500));
-    expect(two).toContain('fan.loop');
-    expect(two).toContain('rammer.aimed');
-    const fans = stage.events.filter(
-      (e) => e.type === 'formation' && e.x >= v1x(1500) && e.x < v1x(3500) && e.pathId >= 0,
-    );
-    expect(fans.length).toBeGreaterThanOrEqual(3);
-    // (3) the corridor: floor and ceiling turrets, walkers, hatches.
-    const three = sectionScripts(v1x(3500), v1x(6000));
-    for (const script of [
-      'turret.floor:floor',
-      'turret.floor:ceiling',
-      'walker.floor:floor',
-      'hatch.spawner:floor',
-    ]) {
-      expect(three, script).toContain(script);
-    }
-    // (4) orbiters in the high-speed section.
-    expect(sectionScripts(v1x(6000), v1x(8000))).toContain('orbiter.loop');
-    // (5) the calm before the WARNING: two capsule carriers and nothing else.
-    const calm = stage.events.filter(
-      (e) => e.x >= v1x(8000) && e.x < warningX && (e.type === 'spawn' || e.type === 'formation'),
-    );
-    expect(calm.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].script : ''))).toEqual([
-      'carrier.straight',
-      'carrier.straight',
-    ]);
-    // Ground enemies only where the corridor gives them a floor or a ceiling.
-    for (const event of stage.events) {
-      if (event.type !== 'spawn' || db.enemies[event.enemyId].ground === null) continue;
-      expect(event.x, db.enemies[event.enemyId].id).toBeGreaterThanOrEqual(v1x(3500));
-      expect(event.x, db.enemies[event.enemyId].id).toBeLessThan(v1x(6000));
-    }
-    // The stage theme and the boss theme; the planet band drawn last on the mid layer.
-    expect(stage.music).toMatchObject({ stage: 'Stage', boss: 'Boss' });
-    const mid = stage.parallax.filter((p) => p.layer === 'mid');
-    expect(mid[mid.length - 1]?.sprite).toBe('bg/azure-verge');
-  });
-
-  it('shapes its terrain: floors, the floor-and-ceiling corridor, an open arena for the boss', () => {
-    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-a' }, db);
-    const map = game.world.terrain;
-    expect(map).not.toBeNull();
-    if (map === null) return;
-    const ceiling = (x: number): boolean => terrainAt(map, x, 0) !== TerrainType.Empty;
-    const floor = (x: number): boolean => terrainAt(map, x, PLAYFIELD_H - 1) !== TerrainType.Empty;
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    let ceilingColumns = 0;
-    for (let x = 0; x < stage.length + PLAYFIELD_W; x += 4) {
-      if (ceiling(x)) {
-        ceilingColumns++;
-        // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
-        expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(v1x(3400));
-        expect(x, `ceiling at ${String(x)}`).toBeLessThan(v1x(6500));
-      }
-    }
-    expect(ceilingColumns).toBeGreaterThan((v1x(6000) - v1x(3500)) / 4);
-    for (const x of [600, 1000, 4000, 5500, 7000].map(v1x))
-      expect(floor(x), `floor at ${String(x)}`).toBe(true);
-    // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
-    for (let x = v1x(8000); x < stage.length + PLAYFIELD_W; x += 4) {
-      expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
-    }
-    expect(warningX).toBeGreaterThan(v1x(8000));
-  });
-
-  it("keeps HB-01's two lanes 16 px apart with the core's lane between them", () => {
-    const warning = stage.events.find((e) => e.type === 'warning');
-    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-    expect(boss).not.toBeNull();
-    if (boss === null) return;
-    /** A part's y relative to the boss origin (its parents' offsets added up). */
-    const offsetY = (index: number): number => {
-      let y = 0;
-      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
-      return y;
-    };
-    const guns = boss.parts.map((p, i) => (p.gun ? offsetY(i) : null)).filter((y) => y !== null);
-    expect(guns).toHaveLength(2);
-    const [top, bottom] = [Math.min(...guns), Math.max(...guns)];
-    const coreY = offsetY(boss.parts.findIndex((p) => p.core));
-    expect(top).toBeLessThan(coreY);
-    expect(bottom).toBeGreaterThan(coreY);
-    const hurt = createGame(createHeadlessPlatform(), { seed: 1 }, db).world.ship.hurtRadius;
-    const bulwark = DEFAULT_BOSS_BEHAVIORS.get('boss.bulwark');
-    for (const [p, phase] of boss.phases.entries()) {
-      expect(phase.script, `phase ${String(p)}`).toBe('boss.bulwark');
-      const params = { ...bulwark?.params, ...phase.params };
-      const half = params.laserWidth / 2 + hurt;
-      // Two simultaneous lanes (phase 2 overlaps them) leave a gap a 4-way ship fits in…
-      expect(bottom - top - 2 * half, `phase ${String(p)}`).toBeGreaterThanOrEqual(MIN_LANE_GAP);
-      // … the core's lane is inside it …
-      expect(coreY - top - half).toBeGreaterThan(0);
-      expect(bottom - coreY - half).toBeGreaterThan(0);
-      // … and the tracking keeps both lanes on the playfield.
-      expect(params.margin + top).toBeGreaterThanOrEqual(0);
-      expect(PLAYFIELD_H - params.margin + bottom).toBeLessThanOrEqual(PLAYFIELD_H);
-      expect(params.trackSpeed).toBeLessThan(1); // slow vertical tracking
-    }
-  });
-
-  it('takes the scroll about three minutes to reach the WARNING (the run lasts 3–6 min)', () => {
-    const runner = createStageRunner(stage, { event() {}, clear() {} });
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    let ticks = 0;
-    while (runner.camera.x < warningX && ticks < 60 * 60 * 10) {
-      runner.tick();
-      ticks++;
-    }
-    expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
-    expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
-  });
-  it('animates every shipped enemy and boss part with frames the atlas has; zone A flashes on hits', () => {
-    const { manifest } = buildAtlas();
-    const frames = (sprite: string): number => manifest.sprites[sprite]?.frames.length ?? 0;
-    for (const enemy of db.enemies) {
-      // A boss is drawn by its parts (its own sprite is unused).
-      if (enemy.boss === null) {
-        expect(frames(enemy.sprite), enemy.id).toBeGreaterThanOrEqual(enemy.anim.frames);
-      }
-      for (const part of enemy.boss?.parts ?? []) {
-        if (part.sprite === undefined) continue;
-        expect(frames(part.sprite), `${enemy.id}.${part.name}`).toBeGreaterThanOrEqual(
-          part.anim.frames,
-        );
-      }
-    }
-    // Zone A's roster and HB-01's parts have their white hit-flash frames.
-    const zone = [...stageEnemies(db, stage)].map((i) => db.enemies[i]);
-    const sprites = new Set<string>();
-    for (const enemy of zone) {
-      if (enemy.boss === null) sprites.add(enemy.sprite);
-      for (const part of enemy.boss?.parts ?? [])
-        if (part.sprite !== undefined) sprites.add(part.sprite);
-    }
-    expect(sprites.size).toBeGreaterThanOrEqual(10);
-    for (const sprite of sprites) {
-      const flash = manifest.sprites[sprite]?.flash ?? null;
-      expect(flash, sprite).not.toBeNull();
-      expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames(sprite));
-    }
-  });
-});
-
 describe('integration: zones B–G hold to the plan and the 4-way design rules (M2-11 … M2-13)', () => {
   const db = shippedDb();
   const stageOf = (id: string): StageSpec => db.stages[db.stageIndex.get(id) ?? -1];
   const zoneA = new Set(
     [...stageEnemies(db, stageOf('zone-a'))].map((index) => db.enemies[index].id),
   );
-  /** Everything a zone's timeline can bring in, its boss's and captains' minions included. */
-  const zoneEnemies = (stage: StageSpec): Set<number> => {
-    const used = stageEnemies(db, stage);
-    for (const index of [...used]) {
-      const minion = db.enemies[index].boss?.minionId ?? -1;
-      if (minion >= 0) {
-        used.add(minion);
-        const child = db.enemies[minion].childId;
-        if (child >= 0) used.add(child);
-      }
-    }
-    return used;
-  };
+  const zoneEnemies = (stage: StageSpec): Set<number> => zoneEnemiesOf(db, stage);
   /** The ids of the enemies the timelines of some stages place (their types). */
   const placedIn = (ids: readonly string[]): Set<string> =>
     new Set(ids.flatMap((id) => [...stageEnemies(db, stageOf(id))].map((i) => db.enemies[i].id)));
-  // `earlier`: the zones a run can have flown before (a zone's "new" types are new to them);
-  // `lanes`: the most separate laser lanes the boss may have up at once.
-  const zones = [
-    {
-      id: 'zone-b',
-      name: 'BRINE NEBULA',
-      code: 'GM-02',
-      boss: 'GALVANIC MAW',
-      tileset: 'terrain-reef',
-      earlier: ['zone-a'],
-      lanes: 1,
-    },
-    {
-      id: 'zone-c',
-      name: 'DUNE EXPANSE',
-      code: 'SW-03',
-      boss: 'SANDGRAVE WIDOW',
-      tileset: 'terrain-dune',
-      earlier: ['zone-a'],
-      lanes: 1,
-    },
-    {
-      id: 'zone-d',
-      name: 'MAGMA DEEP',
-      code: 'CB-04',
-      boss: 'CINDER BASTION',
-      tileset: 'terrain-magma',
-      earlier: ['zone-a', 'zone-b', 'zone-c'],
-      lanes: 2,
-    },
-    {
-      id: 'zone-e',
-      name: 'TEMPEST RIDGE',
-      code: 'SS-05',
-      boss: 'SQUALL STEED',
-      tileset: 'terrain-ridge',
-      earlier: ['zone-a', 'zone-b', 'zone-c'],
-      lanes: 0,
-    },
-    {
-      id: 'zone-f',
-      name: 'CELL VAULT',
-      code: 'MR-06',
-      boss: 'MANTLE REGENT',
-      tileset: 'terrain-vault',
-      earlier: ['zone-a', 'zone-b', 'zone-c', 'zone-d', 'zone-e'],
-      lanes: 0,
-    },
-    {
-      id: 'zone-g',
-      name: 'PRISM LABYRINTH',
-      code: 'FM-07',
-      boss: 'FACET MONARCH',
-      tileset: 'terrain-prism',
-      earlier: ['zone-a', 'zone-b', 'zone-c', 'zone-d', 'zone-e'],
-      lanes: 1,
-    },
-  ];
+  // R5-P.P2a moved zone B–D to their `content-zone-*.test.ts` files; P2b moves E–G.
+  const zones = ZONES_B_G.filter(
+    (zone) => zone.id === 'zone-e' || zone.id === 'zone-f' || zone.id === 'zone-g',
+  );
 
   it.each(zones)(
     'ships $name with $boss ($code): 3–6 minutes, checkpoints, its own tileset and songs',
@@ -1312,12 +941,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       expect(boss?.displayName).toBe(zone.boss);
       expect(boss?.phases).toHaveLength(3);
       // The scroll takes 2.5–4.5 minutes to the WARNING; the fight brings the run to 3–6 minutes.
-      const runner = createStageRunner(stage, { event() {}, clear() {} });
-      let ticks = 0;
-      while (runner.camera.x < (warning?.x ?? 0) && ticks < 60 * 60 * 10) {
-        runner.tick();
-        ticks++;
-      }
+      const ticks = scrollTicksToWarning(stage);
       expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
       expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
       // A high-speed section, then a calm before the WARNING with exactly two carriers.
@@ -1362,142 +986,6 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     expect(zoneA.size).toBeGreaterThan(0);
     expect(placed.size).toBeGreaterThanOrEqual(4);
     expect(placed.size).toBeLessThanOrEqual(6);
-  });
-
-  it('gives BRINE NEBULA its bubbles, a fish inside a bubble, wavy water, a mid-boss and a hidden bonus stage', () => {
-    const stage = stageOf('zone-b');
-    const used = [...zoneEnemies(stage)].map((index) => db.enemies[index]);
-    const bubbles = used.filter((e) => e.script === 'bubble.split');
-    // Splitting bubbles (a bubble whose child is a bubble) and an enemy inside one.
-    expect(
-      bubbles.some((e) => e.childId >= 0 && db.enemies[e.childId].script === 'bubble.split'),
-    ).toBe(true);
-    expect(
-      bubbles.some((e) => e.childId >= 0 && db.enemies[e.childId].script !== 'bubble.split'),
-    ).toBe(true);
-    // Wavy raster water on the sea band, its colours cycling.
-    expect(stage.raster.some((r) => r.kind === 'wave' && r.layer === 'mid')).toBe(true);
-    expect(stage.cycles).toHaveLength(1);
-    // The mid-boss: a captain flying in with a `boss` event before the second half.
-    const captains = stage.events.filter(
-      (e) => e.type === 'boss' && db.enemies[e.enemyId].boss?.role === 'captain',
-    );
-    expect(captains).toHaveLength(1);
-    expect(captains[0].x).toBeLessThan(stage.length / 2);
-    // The boss: a mechanical fish with a mouth that opens (the core) and homing rockets.
-    const warning = stage.events.find((e) => e.type === 'warning');
-    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-    expect(boss?.parts.find((p) => p.core)?.vulnerable).toBe('whenOpen');
-    expect(boss?.phases.every((p) => p.script === 'boss.maw')).toBe(true);
-    expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('rocket.homing');
-    // One hidden bonus stage: a gap entrance marked by two blocks, into a bonus stage.
-    const entrances = stage.events.filter((e) => e.type === 'bonus');
-    expect(entrances).toHaveLength(1);
-    const entrance = entrances[0];
-    if (entrance.type !== 'bonus') return;
-    expect(entrance.entrance).toBe('gap');
-    expect(stageOf(entrance.stage).type).toBe('bonus');
-    const region = entrance.region;
-    expect(region).not.toBeNull();
-    if (region === null || region === undefined) return;
-    const edges = stage.events
-      .filter((e) => e.type === 'block')
-      .map((e) => (e.type === 'block' ? e.x + (e.screenX ?? DEFAULT_BLOCK_SCREEN_X) : 0));
-    expect(edges).toContain(region.x - v1x(16));
-    expect(edges).toContain(region.x + region.w);
-    // The bonus stage: bonus capsules and a 1UP.
-    const grotto = stageOf(entrance.stage);
-    const drops = [...stageEnemies(db, grotto)].map((index) => db.enemies[index].drop);
-    expect(drops).toContain('bonusCapsule');
-    expect(drops).toContain('oneUp');
-  });
-
-  it('gives DUNE EXPANSE sand worms from the dunes, ceiling walkers and a spider-spawning boss', () => {
-    const stage = stageOf('zone-c');
-    const worms = stage.events.filter(
-      (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'worm.burst',
-    );
-    expect(worms.length).toBeGreaterThanOrEqual(6);
-    for (const worm of worms)
-      expect(db.enemies[worm.type === 'formation' ? worm.enemyId : 0].ground).toBe('floor');
-    const walkers = stage.events.filter(
-      (e) =>
-        e.type === 'spawn' &&
-        db.enemies[e.enemyId].script === 'walker.floor' &&
-        db.enemies[e.enemyId].ground === 'ceiling',
-    );
-    expect(walkers.length).toBeGreaterThanOrEqual(4);
-    const warning = stage.events.find((e) => e.type === 'warning');
-    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-    expect(boss?.phases.every((p) => p.script === 'boss.widow')).toBe(true);
-    expect(db.enemies[boss?.minionId ?? -1]?.id).toBe('widow-drone');
-    // The head needs its two fangs gone first.
-    const head = boss?.parts.find((p) => p.core);
-    expect(head?.vulnerable).toBe('afterParts');
-    expect([...(head?.requires ?? [])].sort()).toEqual(['fang-bottom', 'fang-top']);
-  });
-
-  it('gives MAGMA DEEP erupting volcanoes, falling rocks, a dive into a destructible maze and a shielded core battleship', () => {
-    const stage = stageOf('zone-d');
-    const placed = (script: string, ground: string): number =>
-      stage.events.filter(
-        (e) =>
-          (e.type === 'spawn' || e.type === 'formation') &&
-          db.enemies[e.enemyId].script === script &&
-          db.enemies[e.enemyId].ground === ground,
-      ).length;
-    // Erupting volcanoes on the surface floor, rocks that drop from the cave roofs.
-    expect(placed('volcano.lob', 'floor')).toBeGreaterThanOrEqual(5);
-    expect(placed('rock.fall', 'ceiling')).toBeGreaterThanOrEqual(6);
-    // The dive: a map taller than the playfield, a scroll stop that pans the camera down into it.
-    expect(stage.tilemap?.rowsTall ?? 0).toBeGreaterThanOrEqual(50);
-    const dive = stage.camera.find((k) => (k.yTo ?? 0) >= 150);
-    expect(dive?.hold ?? 0).toBeGreaterThan(0);
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    expect(dive?.x ?? warningX).toBeLessThan(warningX / 2);
-    // The destructible maze below: brick walls (breakable tiles), each with an open gap.
-    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
-    const map = game.world.terrain;
-    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
-    const brick = (tileset?.tiles.findIndex((t) => t.name === 'brick') ?? -1) + 1;
-    expect(tileset?.tiles[brick - 1]?.hp ?? 0).toBeGreaterThan(0);
-    if (map === null) throw new Error('no terrain');
-    const walls: number[][] = [];
-    for (let col = 0; col < map.cols; col++) {
-      const rows: number[] = [];
-      for (let row = 0; row < map.rows; row++)
-        if (map.tiles[row * map.cols + col] === brick) rows.push(row);
-      if (rows.length > 0) walls.push(rows);
-    }
-    expect(walls.length).toBeGreaterThanOrEqual(10);
-    for (const rows of walls) {
-      // below the surface (one playfield of tile rows): in the caves
-      expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
-      let gap = 0;
-      for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-      expect(gap * map.tileSize).toBeGreaterThanOrEqual(24 * K); // a gap the ship fits through
-    }
-    // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
-    const warning = stage.events.find((e) => e.type === 'warning');
-    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-    expect(boss?.phases.every((p) => p.script === 'boss.bastion')).toBe(true);
-    const parts = boss?.parts ?? [];
-    const core = parts.findIndex((p) => p.core);
-    const hubs = parts.filter(
-      (p) => p.parentIndex === core && p.hurtbox === null && p.radius === 0,
-    );
-    expect(hubs).toHaveLength(1);
-    const hub = parts.indexOf(hubs[0]);
-    const onHub = (index: number): boolean =>
-      index >= 0 && (parts[index].parentIndex === hub || onHub(parts[index].parentIndex));
-    const arms = parts.filter((_p, i) => onHub(i));
-    expect(arms.length).toBeGreaterThanOrEqual(4);
-    for (const arm of arms) {
-      expect(arm.vulnerable).toBe('never');
-      expect(arm.radius).toBeGreaterThan(0); // turned parts are hit as circles
-    }
-    expect(parts.filter((p) => p.gun)).toHaveLength(2);
-    for (const phase of boss?.phases ?? []) expect(phase.params.spin ?? 4).not.toBe(0);
   });
 
   it('gives TEMPEST RIDGE rear attackers, heavy weather, jagged ridges and a seahorse launching homing minis', () => {
@@ -1760,12 +1248,8 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     'places the capsules of $name for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint',
     (zone) => {
       const stage = stageOf(zone.id);
-      const capsule = (event: StageSpec['events'][number]): boolean =>
-        event.type === 'spawn'
-          ? db.enemies[event.enemyId].drop === 'capsule'
-          : event.type === 'formation' && event.drop !== null;
       const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-      const sources = stage.events.filter(capsule).map((e) => e.x);
+      const sources = capsuleSources(db, stage);
       expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
       for (const checkpoint of stage.checkpoints) {
         const after = sources.filter(
@@ -1876,22 +1360,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     return warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
   };
   /** Everything a zone can bring in: its timeline's enemies, the bosses inside and the minions. */
-  const zoneEnemies = (stage: StageSpec): Set<number> => {
-    const used = stageEnemies(db, stage);
-    for (let pass = 0; pass < 3; pass++) {
-      for (const index of [...used]) {
-        const boss = db.enemies[index].boss;
-        if (boss === null) continue;
-        for (const id of [boss.minionId, boss.innerId]) {
-          if (id < 0) continue;
-          used.add(id);
-          const child = db.enemies[id].childId;
-          if (child >= 0) used.add(child);
-        }
-      }
-    }
-    return used;
-  };
+  const zoneEnemies = (stage: StageSpec): Set<number> => zoneEnemiesOf(db, stage);
   const earlierZones = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((z) => 'zone-' + z);
   const zones = [
     {

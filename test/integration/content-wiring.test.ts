@@ -55,6 +55,8 @@ describe('integration: content wiring', () => {
     const target = /(\S+\.test\.ts)/.exec(check)?.[1] ?? '';
     expect(target).toBe('test/integration/content.test.ts');
     expect(existsSync(join(repo, target))).toBe(true);
+    // R5-P.P2a: the per-zone content tests (content-zone-a … -i) run alongside it.
+    expect(check).toContain('test/integration/content-zone-');
   });
 
   it('hands the shipped content to a headless game session', () => {
