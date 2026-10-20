@@ -26,8 +26,11 @@
  *   player's hold / toggle every tick); every Option fires every weapon of the loadout with its own
  *   caps, wherever its type puts it.
  * - **Hits** — enemy hurtboxes are in the World's grid (phase 6); each shot queries the cells
- *   under its box and tests the hurtboxes exactly. A non-piercing shot hits the overlapping enemy
- *   with the lowest slot and dies; a piercing shot hits every overlapping enemy whose entry in the
+ *   under its box and tests the hurtboxes exactly. A non-piercing shot hits the overlapping target
+ *   its leading edge entered first — the one whose box reaches farthest back along the shot's
+ *   travel, ties going to a live damageable target over an armoured one and then to the lowest
+ *   slot (prepB.FIX2: never an armoured steal of a hit a live damageable target would also open)
+ *   — and dies; a piercing shot hits every overlapping enemy whose entry in the
  *   shot's hit-cooldown table (`Uint8Array`, one entry per enemy slot) is 0, then waits its
  *   role's cooldown before hitting that enemy again (damage over time). Armoured enemies
  *   (`EnemyFlag.Invulnerable`) take no damage: the shot dies with a `Clink`. Hits are found in
@@ -1315,7 +1318,9 @@ export interface WeaponSystem {
    * @remarks
    * Each live shot queries the grid with its box (a laser's spans tail to head) and tests the
    * hurtboxes exactly (closed: touching hits; ghost and removed enemies never). A non-piercing
-   * shot records the overlapping enemy with the lowest slot; a piercing one every overlapping
+   * shot records the overlapping target its leading edge entered first — the box reaching farthest
+   * back along the shot's travel wins, a tie goes to the live damageable target over an armoured
+   * one and a further tie to the lowest slot (prepB.FIX2); a piercing one every overlapping
    * enemy whose cooldown entry is 0 (armoured ones always — the shot dies on them — except for a
    * Spread Bomb's blast, which burns on), in slot order. The result equals a brute-force test of
    * every shot against every enemy.
@@ -1869,8 +1874,20 @@ class WeaponSystemImpl implements WeaponSystem {
   private qTable = 0;
   /** The queried shot's boss-part cooldown-table offset (table × BOSS_PART_SLOTS). */
   private qPartTable = 0;
-  /** Lowest overlapping enemy slot of a non-piercing query (-1 = none). */
+  /** Leading target of a non-piercing query, the pick of {@link WeaponSystemImpl.offerHit} (-1 = none). */
   private qBest = -1;
+  /** Queried shot velocity x (the pick's travel direction). */
+  private qVx = 0;
+  /** Queried shot velocity y. */
+  private qVy = 0;
+  /** |{@link WeaponSystemImpl.qVx}| — a box's reach along x per half width. */
+  private qAx = 0;
+  /** |{@link WeaponSystemImpl.qVy}| — a box's reach along y per half height. */
+  private qAy = 0;
+  /** Entry gap along the travel of the picked target ({@link WeaponSystemImpl.qBest}). */
+  private qBestGap = 0;
+  /** Whether the picked target is armoured ({@link WeaponSystemImpl.qBest}). */
+  private qBestArm = false;
   /** Whether the queried shot is a Ripple (its ring, not its box, is the hitbox). */
   private qRing = false;
   /**
@@ -2784,6 +2801,12 @@ class WeaponSystemImpl implements WeaponSystem {
       this.qTable = pierce ? (f.table[i] - 1) * MAX_ENEMIES : 0;
       this.qPartTable = pierce ? (f.table[i] - 1) * BOSS_PART_SLOTS : 0;
       this.qBest = -1;
+      // The pick's travel vector: the shot's velocity, or for a beam its head advance in +x
+      // (a beam's `vy` is a row offset, not travel — the Twin's lanes).
+      this.qVx = f.vx[i];
+      this.qVy = kind === ShotKind.Laser || kind === ShotKind.Twin ? 0 : f.vy[i];
+      this.qAx = Math.abs(this.qVx);
+      this.qAy = Math.abs(this.qVy);
       this.qShot = i;
       this.qStart = this.hitCount;
       grid.query(
@@ -2824,7 +2847,7 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     if (this.qRing && !this.ringTouches(ex - e.hw, ey - e.hh, ex + e.hw, ey + e.hh)) return;
     if (!this.qPierce) {
-      if (this.qBest < 0 || slot < this.qBest) this.qBest = slot;
+      this.offerHit(slot, (e.flags & EnemyFlag.Invulnerable) !== 0, ex, ey, e.hw, e.hh);
       return;
     }
     // Armour is hit whatever the cooldown (the shot dies on it) — except by a blast, which burns
@@ -2868,11 +2891,56 @@ class WeaponSystemImpl implements WeaponSystem {
       return;
     }
     if (!this.qPierce) {
-      if (this.qBest < 0 || id < this.qBest) this.qBest = id;
+      this.offerHit(id, part.armoured, px, py, part.hw, part.hh);
       return;
     }
     if ((!part.armoured || this.qBlast) && this.partCooldowns[this.qPartTable + index] > 0) return;
     this.insertHit(id);
+  }
+
+  /**
+   * The non-piercing pick (prepB.FIX2): among the targets one shot overlaps in one tick, the one
+   * its leading edge entered FIRST wins — the target whose box reaches farthest back along the
+   * shot's travel: the entry gap `(cx · vx + cy · vy) − (hw · |vx| + hh · |vy|)`, projected on the
+   * shot's velocity (scale-stable where the old lowest-slot rule rested on a 1-px phase accident:
+   * the MANTA bolt overlapping HALCYON BULWARK's plate-1 and the armoured core at once used to
+   * clink on the core — lower id — forever, the plate never dying and the core never opening).
+   * The shot's own position and extent are the same for every candidate and cancel in the order.
+   * An exact tie of the gap goes to the live damageable target over an armoured one (armour never
+   * steals a hit that damages; armour entered first still blocks — front armour stops a shot), a
+   * further tie to the lower hit id (co-located same-kind targets keep the old rule). Scalars
+   * only, results kept in reused fields — never allocates.
+   *
+   * @param hit - The target's hit id (an enemy slot, or {@link BOSS_PART_ID_BASE} + part index).
+   * @param armoured - Whether the target is armoured against this shot.
+   * @param cx - Target box centre x.
+   * @param cy - Target box centre y.
+   * @param hw - Target box half width.
+   * @param hh - Target box half height.
+   */
+  private offerHit(
+    hit: number,
+    armoured: boolean,
+    cx: number,
+    cy: number,
+    hw: number,
+    hh: number,
+  ): void {
+    const gap = cx * this.qVx + cy * this.qVy - hw * this.qAx - hh * this.qAy;
+    if (this.qBest >= 0) {
+      if (!(gap < this.qBestGap)) {
+        if (gap === this.qBestGap) {
+          if (armoured !== this.qBestArm) {
+            if (armoured) return;
+          } else if (hit >= this.qBest) return;
+        } else {
+          return; // farther along the travel — or a non-finite gap never steals the pick
+        }
+      }
+    }
+    this.qBest = hit;
+    this.qBestGap = gap;
+    this.qBestArm = armoured;
   }
 
   /**

@@ -427,7 +427,7 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       for (let i = 0; i < items.count; i++) {
         if ((itf.flags[i] & ItemFlag.Dead) !== 0) continue;
         const ix = itf.x[i] - camera.x;
-        if (ix < sx - 6 || ix > sx + 220) continue;
+        if (ix < sx - 6 * WORLD_SCALE || ix > sx + 220 * WORLD_SCALE) continue;
         bonus[laneOf(itf.y[i] - camera.y)] += 40;
       }
       const boss = mainBoss(world);
