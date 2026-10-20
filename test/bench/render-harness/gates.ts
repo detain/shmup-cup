@@ -160,7 +160,9 @@ export function renderGroupViolations(result: RenderBenchResult, renderGroups: b
 }
 
 /**
- * The next power of two at or above `n` (Pixi pools a render target rounded up on each axis).
+ * The next power of two at or above `n` — since pixi.js **8.21** the *ceiling* of a pooled
+ * render-target axis, not the axis itself (pre-8.21 the pool rounded each axis up to this; from
+ * 8.21 a registered screen can cap it below, see {@link pooledAxisSize}).
  *
  * @param n - A positive size.
  * @returns The power of two.
@@ -169,6 +171,46 @@ export function nextPowerOfTwo(n: number): number {
   let p = 1;
   while (p < n) p *= 2;
   return p;
+}
+
+/**
+ * The backing size of one axis of a pooled render target, in physical pixels, per the pixi.js
+ * **8.21+** pool (`TexturePool.getOptimalSize` → `ScreenSizeRegistry.getFittingWidth/Height`):
+ * the next power of two, capped by the smallest registered screen the request fits inside. A
+ * renderer registers its own backbuffer as the screen (`ViewSystem._updateScreenSize`), and each
+ * bench page runs exactly one renderer in one scenario, so the registered screen of a record is
+ * its own `displayWidth` / `displayHeight` at resolution 1. A request larger than every
+ * registered screen on an axis keeps the bare power of two — the pool never rounds a request up
+ * to a screen it does not fit in — and whenever the screen is at least the power of two the axis
+ * equals {@link nextPowerOfTwo}, the pre-8.21 value (every v1-frame row of both benches).
+ *
+ * @param request - The requested size of the axis, in physical pixels.
+ * @param screen - The size of the page's registered screen on the axis.
+ * @returns The pooled size of the axis, in physical pixels.
+ */
+export function pooledAxisSize(request: number, screen: number): number {
+  const pow2 = nextPowerOfTwo(request);
+  return screen >= request ? Math.min(pow2, screen) : pow2;
+}
+
+/**
+ * Bytes of pooled render target one filter pass at `width × height` costs on a page whose
+ * renderer registered a `displayWidth × displayHeight` backbuffer — {@link pooledAxisSize} on
+ * each axis, RGBA8 (the benches all render at resolution 1).
+ *
+ * @param width - The internal frame width the filter pass renders.
+ * @param height - The internal frame height the filter pass renders.
+ * @param displayWidth - The page's registered screen width.
+ * @param displayHeight - The page's registered screen height.
+ * @returns The pooled bytes.
+ */
+export function pooledRenderTargetBytes(
+  width: number,
+  height: number,
+  displayWidth: number,
+  displayHeight: number,
+): number {
+  return pooledAxisSize(width, displayWidth) * pooledAxisSize(height, displayHeight) * 4;
 }
 
 /** What a TV-bench scenario is expected to show (plan R0-02). */
@@ -188,8 +230,9 @@ export interface TvBenchExpectation {
  * - draw calls within {@link DRAW_CALL_BUDGET} (the busiest variant stacks a filtered layer, the
  *   Mode-7 floor and the CRT);
  * - render targets: none pooled without a filtered layer (the CRT is the blit's shader and the
- *   Mode-7 floor a mesh since M3-02d), and with one exactly the frame rounded up to powers of two;
- *   the frame target `width · height · 4`;
+ *   Mode-7 floor a mesh since M3-02d), and with one exactly {@link pooledRenderTargetBytes} for
+ *   the frame on the page's registered screen (pixi.js 8.21+ — power-of-two axes capped by the
+ *   screen); the frame target `width · height · 4`;
  * - the density's atlas pages, and texture bytes of at least one RGBA page per page;
  * - the heap within {@link HEAP_BUDGET} whenever the browser reports one.
  *
@@ -218,12 +261,19 @@ export function tvBenchViolations(
     out.push(`${record.drawCalls} draw calls, over the budget of ${DRAW_CALL_BUDGET}`);
   }
   const pooled = record.filter
-    ? nextPowerOfTwo(record.width) * nextPowerOfTwo(record.height) * 4
+    ? pooledRenderTargetBytes(
+        record.width,
+        record.height,
+        record.displayWidth,
+        record.displayHeight,
+      )
     : 0;
   if (record.renderTargetBytes !== pooled) {
     out.push(
       `${record.renderTargetBytes} bytes of pooled render targets, expected ${pooled} ` +
-        (record.filter ? '(one filter pass at the frame size, power-of-two rounded)' : '(none)'),
+        (record.filter
+          ? '(one filter pass at the frame size, power-of-two axes capped by the screen)'
+          : '(none)'),
     );
   }
   if (record.frameTargetBytes !== record.width * record.height * 4) {

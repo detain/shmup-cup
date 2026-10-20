@@ -85,6 +85,7 @@ import type {
 import {
   HEAP_BUDGET,
   nextPowerOfTwo,
+  pooledRenderTargetBytes,
   renderBenchViolations,
   renderGroupViolations,
   tvBenchViolations,
@@ -229,11 +230,16 @@ const SCENARIOS: readonly Scenario[] = [
     options: load({ stage: 'raster-range', width: 2 * FRAME_W, height: 2 * FRAME_H }),
     check: (result) => {
       expect(result.layerEffectMask, 'a layer effect must be attached').toBeGreaterThan(0);
-      // The knob's whole point: a filter pass is pooled at the *internal* frame size, rounded up
-      // to the next power of two on each axis (review F3) — 512x256 at 384x216, 1024x512 at
-      // 768x432 (and 1024x512 / 2048x1024 at 640x360 / 1280x720). Four times the bytes, four
-      // times the fill.
+      // The knob's whole point: a filter pass is pooled at the *internal* frame size (review F3).
+      // Since pixi.js 8.21 each axis is the next power of two capped by the screen the page
+      // registers (here the 1280×720 display), so at the v2 frame 1024×512 survives and at ×2 of
+      // it the pass pools exactly 1280×720. The pure power-of-two size — what every axis pooled
+      // to in 8.20 and earlier — stays the ceiling: the scenario draws one filtered layer and the
+      // pass's own area is four times the shipped frame's.
       expect(result.renderTargetBytes).toBeGreaterThanOrEqual(
+        pooledRenderTargetBytes(2 * FRAME_W, 2 * FRAME_H, DISPLAY_WIDTH, DISPLAY_HEIGHT),
+      );
+      expect(result.renderTargetBytes).toBeLessThanOrEqual(
         nextPowerOfTwo(2 * FRAME_W) * nextPowerOfTwo(2 * FRAME_H) * 4,
       );
     },

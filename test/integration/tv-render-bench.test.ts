@@ -59,6 +59,7 @@ import {
   HEAP_BUDGET,
   MIN_LIVE_LOAD,
   nextPowerOfTwo,
+  pooledRenderTargetBytes,
   tvBenchViolations,
 } from '../bench/render-harness/gates.js';
 import { createLogServer } from '../../tools/input-probe/server/log-server.mjs';
@@ -201,7 +202,7 @@ function record(index: number, over: Partial<RenderBenchRecord> = {}): RenderBen
     drawCalls: 12,
     rebuilds: 1,
     renderTargetBytes: variant.filter
-      ? nextPowerOfTwo(size.width) * nextPowerOfTwo(size.height) * 4
+      ? pooledRenderTargetBytes(size.width, size.height, 1920, 1080)
       : 0,
     frameTargetBytes: size.width * size.height * 4,
     textureBytes: (size.density > 2 ? 2 : 1) * 2048 * 1024 * 4,
