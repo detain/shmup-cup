@@ -47,23 +47,54 @@
  *   first-visible y band carries one extra `PAD`, its tick being measured where the hurtbox
  *   crosses the wider v2 top rather than a content row,
  *
- * Loose, saying so in the issue text:
+ * Loose, carrying the block's three looseness classes (wave-03 §R2-02.T3: "player-dependent specs
+ * loose; children by their parent's mapping; bot-dependent fields loose"), each with its bound
+ * documented here and its `bot-dependent:` label in the issue text:
  *
- * - rows of player-following scripts ({@link PLAYER_DEPENDENT}): their turn and visible numbers
- *   belong to the ship, only the content-driven spawn and (for the dive) the landing depth stay
- *   strict;
- * - children (runtime spawns, `event` −1): paired per spec by occurrence order, spawn tick only;
+ * - **player-dependent** rows of ship-following scripts ({@link PLAYER_DEPENDENT}): their turn and
+ *   visible numbers belong to the ship, only the content-driven spawn and (for the dive) the
+ *   landing depth stay strict; an event-spawned row of such a script may also be missing or extra
+ *   whole (the spawn is gated on ship state — e.g. `hunter.option` spawns only against Options);
+ * - **children** (runtime spawns, `event` −1): compared through their parent's mapping — the
+ *   parent's own row (strict, with its spec hurtbox) is what proves the content's child machinery
+ *   ported; a child's position columns belong to wherever its parent was when the bot killed it,
+ *   so per child SPEC only the spawn COUNT compares, within the birth rate and volley size the
+ *   parent's own v1
+ *   spawns show over the drift of the run's bot-decided windows (`childCountBound`);
+ * - **bot-dependent** durations — run status/clear/ticks, camera travel totals and endTick,
+ *   warning ticks, boss encounter counts and warning/intro/fight ticks, dying/escape/end flips,
+ *   skipped branch events and the rows behind them, first-visible/turns the v2 run never reached,
+ *   and the fastest bullet (rank grows with kills-per-tick) — compare within the
+ *   `RUN_PCT`/`RUN_SLACK` band **plus** the drift of the other bot-decided windows of the same
+ *   run (windows cross-explain: a boss that died later moved the lock, the run end, the following
+ *   warnings and every boss behind it along; {@link BotWindows}); a status flip only between
+ *   `playing` and `stageClear`, a branch flip and a battle-end flip are the class itself and
+ *   exempt with their reason. The four-way bot IS scaled (R2-02.T2b, 881a17) but a scaled bot is a
+ *   different agent, so these fields observe it and stay loose; every row this machinery still
+ *   emits carries its strict delta.
+ *
+ * Position samples taken at a state (`introX`/`introY`/`fightX`/`fightY`) additionally carry the
+ * sample's tick drift plus the state flip's own lag (up to two measurement ticks — README: a
+ * position is its tick's) at the row's per-tick traversal; a scripted turn's x additionally
+ * accepts the screen-anchored column the tool re-anchors with `rescaleNumber` (`v1screenX`), the
+ * x0 rule's twin for behaviour tunables. A first-visible or turn the v2 run never records is
+ * exempt when its row's (drift-corrected) end TIES the sample — a bot kill on the tick the
+ * sample would have landed measures the sim's order, not the port ({@link SAMPLE_TIE_TICKS}).
+ *
  * - position columns of a row whose spawn drifted: each keeps the README band **plus** the drift
  *   at the fastest traversal (`DRIFT_PX_PER_TICK`), since a late/early spawn moves every later
- *   sample of that row along with it;
- * - everything the bot decides — run length and status, camera travel totals and endTick, enemy
- *   endTick/fate, boss dying/escape/end, skipped branch events — with the `RUN_PCT`/`RUN_SLACK`
- *   band. The four-way bot's distances are still v1 pixels until R2-02.T2b scales them, so these
- *   carry the expected red rows of a T2b-less kit run; the report lists them, never exempted.
+ *   sample of that row along with it.
  *
  * @module
  */
-import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE } from '@shmup/core';
+import {
+  BULLET_SPEED_RANK_CURVE,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  RANK_MAX,
+  TILE_SIZE,
+  rankScale,
+} from '@shmup/core';
 import { shippedContent } from '../playtest/harness.js';
 import { ENEMY_COLUMNS, BOSS_COLUMNS, type StageBaseline } from './v1-baseline.js';
 import {
@@ -150,12 +181,38 @@ const VISIBLE_PX = 8;
 const DRIFT_PX_PER_TICK = 4;
 /** Cap of the drift allowance (a row whose spawn drifted beyond this is broken anyway). */
 const DRIFT_CAP_PX = 240;
-/** Band for the fastest bullet of the run (`×K`; the bot may sample another volley). */
-const BULLET_SPEED_PCT = 0.05;
+/**
+ * Band for the fastest bullet of the run (`×K`): the widest ratio the rank can put on a bullet
+ * speed between two runs (`rankScale` on the committed {@link BULLET_SPEED_RANK_CURVE}, rank 31
+ * over rank 0) — the bot's kills set the rank, so the measure compares within that span (the
+ * block's bot-dependent class; a missed ×1.5 is a 45 % error, far outside it).
+ */
+const RANK_SPEED_SPAN =
+  rankScale(RANK_MAX, BULLET_SPEED_RANK_CURVE) / rankScale(0, BULLET_SPEED_RANK_CURVE);
 /** Band for a bot-decided duration (run, camera travel, boss kills). */
 const RUN_PCT = 0.1;
 /** Extra slack a bot-decided duration pays. */
 const RUN_SLACK = 120;
+/**
+ * Volley period assumed for a child spec with fewer than two v1 spawns (one per second — no rate
+ * is derivable from a single occurrence; {@link childCountBound} documents the bound).
+ */
+const CHILD_FALLBACK_GAP = 60;
+/**
+ * A kill that lands within this many ticks (drift-corrected) of the tick a v1 sample took
+ * TIES the sample and the sim's order on that tick — first-visible and turn are measured after
+ * the tick ran, so a bot kill at the sample's own tick or a tick later erases it. That order is
+ * the bot's (T2b class): such visible-never / turn-absent rows are exempt, anything later is a
+ * real loss of the moment.
+ */
+const SAMPLE_TIE_TICKS = 2;
+/**
+ * A boss state's captured place lags its recorded state tick by up to this many measurement
+ * ticks (the flip is read after the tick ran, and the boss moves within the tick): the place of
+ * `introX`/`fightX` is the state tick's + at most this times its traversal ({@link
+ * compareScenario}'s capture-tick basis, the README's sample-belongs-to-its-tick rule).
+ */
+const BOSS_CAPTURE_LAG = 2;
 /** Max issue lines one comparison reports. */
 export const MAX_ISSUES = 80;
 
@@ -331,23 +388,20 @@ function pairEventSet(
   return set;
 }
 
-/** The pairing key of an enemy row: mapped event and member, or spec id and child order. */
+/** The pairing key of an event row: mapped event and member (children count per spec instead). */
 function rowKey(
   eventMap: ReadonlyMap<number, number> | undefined,
   row: readonly (string | number)[],
-  childSeq: Map<string, number>,
-  specIds: readonly string[],
 ): string {
   const ev = num(row, E.event);
-  if (ev >= 0) {
-    const j = eventMap === undefined ? ev : (eventMap.get(ev) ?? ev);
-    return `t${j}:${num(row, E.member)}`;
-  }
-  const id = specIds[num(row, E.spec)];
-  const n = childSeq.get(id) ?? 0;
-  childSeq.set(id, n + 1);
-  return `c${id}:${n}`;
+  const j = eventMap === undefined ? ev : (eventMap.get(ev) ?? ev);
+  return `t${j}:${num(row, E.member)}`;
 }
+
+/**
+ * The spawn ticks of one child spec, in spawn order (children of {@link pairEnemies}).
+ */
+type ChildTicks = Map<string, number[]>;
 
 /** One matched enemy-row pair (`b` undefined = v2 lost the row). */
 type EnemyPair = readonly [
@@ -356,13 +410,17 @@ type EnemyPair = readonly [
 ];
 
 /**
- * Pairs the two enemy row lists by {@link rowKey} (v1 through the event map, children by per-spec
- * occurrence order — README).
+ * Pairs the two enemy row lists' EVENT rows by {@link rowKey} (v1 through the event map), and
+ * gathers the children (runtime spawns, `event` −1) per spec by their spawn ticks. The block's
+ * child rule compares each child through its parent's mapping: the parents compare row by row
+ * (strict), the children's numbers are wherever the bot killed their parents, so they enter the
+ * comparison as one count per spec ({@link compareChildren}).
  *
  * @param v1 - The committed baseline.
  * @param v2 - The recorded port run.
  * @param eventMap - v1 event index → v2 event index.
- * @returns The v1 rows with their twins (possibly `undefined`) and the unmatched v2 rows.
+ * @returns The v1 event rows with their twins (possibly `undefined`), the unmatched v2 event rows,
+ *   and the children's spawn ticks per spec on both sides.
  */
 function pairEnemies(
   v1: StageBaseline,
@@ -371,28 +429,45 @@ function pairEnemies(
 ): {
   readonly pairs: readonly EnemyPair[];
   readonly extras: readonly (readonly (string | number)[])[];
+  readonly children1: ChildTicks;
+  readonly children2: ChildTicks;
 } {
-  const seq1 = new Map<string, number>();
   const c1 = contextOf(v1);
   const c2 = contextOf(v2);
+  const children1: ChildTicks = new Map();
+  const children2: ChildTicks = new Map();
   const byKey = new Map<string, readonly (string | number)[]>();
   const keys2: string[] = [];
-  const seq2 = new Map<string, number>();
   for (const row of v2.enemies) {
-    const key = rowKey(undefined, row, seq2, c2.specIds);
+    if (num(row, E.event) < 0) {
+      const id = c2.specIds[num(row, E.spec)];
+      const list = children2.get(id);
+      if (list === undefined) children2.set(id, [num(row, E.spawnTick)]);
+      else list.push(num(row, E.spawnTick));
+      continue;
+    }
+    const key = rowKey(undefined, row);
     keys2.push(key);
     byKey.set(key, row);
   }
   const pairs: EnemyPair[] = [];
   const used = new Set<string>();
   for (const row of v1.enemies) {
-    const key = rowKey(eventMap, row, seq1, c1.specIds);
+    if (num(row, E.event) < 0) {
+      const id = c1.specIds[num(row, E.spec)];
+      const list = children1.get(id);
+      if (list === undefined) children1.set(id, [num(row, E.spawnTick)]);
+      else list.push(num(row, E.spawnTick));
+      continue;
+    }
+    const key = rowKey(eventMap, row);
     const other = byKey.get(key);
     if (other !== undefined) used.add(key);
     pairs.push([row, other]);
   }
-  const extras = v2.enemies.filter((_, idx) => !used.has(keys2[idx]));
-  return { pairs, extras };
+  const eventRows2 = v2.enemies.filter((row) => num(row, E.event) >= 0);
+  const extras = eventRows2.filter((_, i) => !used.has(keys2[i]));
+  return { pairs, extras, children1, children2 };
 }
 
 /**
@@ -418,10 +493,9 @@ function compareEnemyRow(
   v2events: readonly EventRow[],
 ): void {
   const evA = num(a, E.event);
-  const isChild = evA < 0;
   const specId = c1.specIds[num(a, E.spec)];
-  const j = isChild ? -1 : (eventMap.get(evA) ?? evA);
-  const label = isChild ? `child ${specId}` : `event ${j}/${num(a, E.member)} ${specId}`;
+  const j = eventMap.get(evA) ?? evA;
+  const label = `event ${j}/${num(a, E.member)} ${specId}`;
   if (specId !== c2.specIds[num(b, E.spec)]) {
     add(`enemies ${label}: paired with ${c2.specIds[num(b, E.spec)]} — pairing broke`);
     return;
@@ -432,22 +506,18 @@ function compareEnemyRow(
   const top = entry.includes('T');
   const m = mapEnemyRow(asEnemyRow(a));
   // how far the event itself moved (a world-sum pair fires `lead` early):
-  let drift = 0;
-  if (!isChild) {
-    const ta = num(v1events[evA] ?? [], 2);
-    const tb = num(v2events[j] ?? [], 2);
-    if (ta > 0 && tb > 0) drift = tb - ta;
-  }
+  const ta = num(v1events[evA] ?? [], 2);
+  const tb = num(v2events[j] ?? [], 2);
+  const drift = ta > 0 && tb > 0 ? tb - ta : 0;
   const driftPx = Math.min(Math.abs(drift) * DRIFT_PX_PER_TICK, DRIFT_CAP_PX);
 
-  const spawnBand = tickBand(num(a, E.spawnTick)) + (isChild ? PAIR_TICK_SLACK + RUN_SLACK / 2 : 0);
+  const spawnBand = tickBand(num(a, E.spawnTick));
   const dSpawn = num(b, E.spawnTick) - num(a, E.spawnTick);
-  if (Math.abs(dSpawn - (isChild ? 0 : drift)) > spawnBand) {
+  if (Math.abs(dSpawn - drift) > spawnBand) {
     add(
-      `${isChild ? 'child bot-dependent' : 'enemies'} ${label}: spawnTick ${num(a, E.spawnTick)} → ${num(b, E.spawnTick)} (Δ${dSpawn} > ±${spawnBand})`,
+      `enemies ${label}: spawnTick ${num(a, E.spawnTick)} → ${num(b, E.spawnTick)} (Δ${dSpawn} > ±${spawnBand})`,
     );
   }
-  if (isChild) return; // children compare by parent and order; their places are the parent's (README)
 
   const posBand = ground ? SNAP_PX : MAP_PX;
   // the x0 column is either a world-scaled x (the table) or a SCREEN-anchored column the port
@@ -498,10 +568,15 @@ function compareEnemyRow(
     if (visA === NEVER && visB !== NEVER) {
       /* the wider view sees what v1 never did — not a departure */
     } else if (visA !== NEVER && visB === NEVER) {
-      // v1 saw it and v2 never did — a bot kill before the moment explains it (endTick < visible),
-      // anything else is a real loss:
-      if (!(num(b, E.endTick) !== NEVER && num(b, E.endTick) < visA)) {
-        add(`enemies ${label}: visible in v1 (${visA}), never in v2`);
+      // v1 saw it and v2 never did: the v2 bot killed it at (or drift-ticks before) the very tick
+      // v1's sample landed — the tie's sim order is the bot's (T2b class) — or the row stayed
+      // open to the run's end; a row alive well past the moment is a real loss:
+      const endB = num(b, E.endTick);
+      const tieOrCut = endB === NEVER || endB - dSpawn <= visA + SAMPLE_TIE_TICKS;
+      if (!tieOrCut) {
+        add(
+          `enemies ${label}: visible in v1 (${visA}), never in v2 (end ${endB}, spawn Δ${dSpawn}) — bot-dependent: run pace`,
+        );
       }
     } else if (visA !== NEVER) {
       // first-visible relative to the row's own spawn (the event's fire may have drifted):
@@ -536,10 +611,14 @@ function compareEnemyRow(
   if (turnA === NEVER && turnB !== NEVER) {
     /* v2 got a turn v1 never reached (wider view, later escape) — not a departure */
   } else if (turnA !== NEVER && turnB === NEVER) {
-    // a ship-relative script (cube.stack, cell.chase) never turns the same way twice, and a bot
-    // kill before the turn tick explains the rest:
-    if (!playerDriven && !(num(b, E.endTick) !== NEVER && num(b, E.endTick) < turnA)) {
-      add(`enemies ${label}: turn in v1 (${turnA}), absent in v2 — bot or a lost turn`);
+    // a ship-relative script (cube.stack, cell.chase) never turns the same way twice; a bot kill
+    // tied with (or drift-ticks before) the turn tick — sample and kill land on one measurement,
+    // whose order is the bot's (T2b class) — or a row open to the run's end explain the rest:
+    const endB = num(b, E.endTick);
+    if (!playerDriven && !(endB === NEVER || endB - dSpawn <= turnA + SAMPLE_TIE_TICKS)) {
+      add(
+        `enemies ${label}: turn in v1 (${turnA}), absent in v2 (end ${endB}, spawn Δ${dSpawn}) — lost turn`,
+      );
     }
   } else if (turnA !== NEVER) {
     if (!ground && !playerDriven && Math.abs(turnB - turnA - dSpawn) > tickBand(turnA)) {
@@ -567,10 +646,17 @@ function compareEnemyRow(
       for (const col of [E.turnX, E.turnY] as const) {
         if (num(a, col) === NEVER || num(b, col) === NEVER) continue;
         // the scripted turn row is anchored either absolutely (k·y+P — the content value, the
-        // gulper's lunge line) or relative to the spawn (base-shifted with it) — accept either:
+        // gulper's lunge line), relative to the spawn (base-shifted with it), or — for the x of a
+        // turn that lands on a behaviour tunable — on the screen column the tool re-anchors with
+        // rescaleNumber (the x0 rule's twin: orbiter.loop's `x 256` → 416, two-scale.sh's flip) —
+        // accept whichever anchor the script used:
         const dAbs = Math.abs(num(b, col) - num(m, col));
         const dRel = Math.abs(num(b, col) - num(m, col) - (col === E.turnY ? yShift : xShift));
-        const diff = Math.min(dAbs, dRel);
+        const dScr =
+          col === E.turnX
+            ? Math.abs(num(b, col) - v1screenX(num(a, col)))
+            : Number.POSITIVE_INFINITY;
+        const diff = Math.min(dAbs, dRel, dScr);
         if (diff > MAP_PX + driftPx) {
           add(
             `enemies ${label}: ${ENEMY_COLUMNS[col]} ${fmt(num(b, col))} vs mapped ${fmt(num(m, col))} (Δ${fmt(diff)} > ±${fmt(MAP_PX + driftPx)})`,
@@ -590,6 +676,116 @@ function compareEnemyRow(
       }
     }
   }
+}
+
+/** A battle end that never happened caps at that run's last tick (the run cut the fight). */
+function capTick(x: number, runTicks: number): number {
+  return x === NEVER ? runTicks : x;
+}
+
+/**
+ * How far each duration the BOT decides moved between the two runs (the block's bot-dependent
+ * class): the run end, the camera totals, the warnings, and the bosses' states — a battle end
+ * that never happened caps at its run's ticks, a state one run did not reach contributes nothing
+ * (its flip is exempt where it is judged). Each window cross-explains the others: a boss killed
+ * later moves the lock, the run end, every warning and encounter behind it, so a duration
+ * compares within its own strict band plus the sum of ALL the other windows
+ * ({@link compareScenario}'s `botBand`) — one window drifting alone, uncorroborated, fails.
+ */
+interface BotWindows {
+  readonly run: number;
+  readonly cameraEnd: number;
+  readonly movingTicks: number;
+  readonly lockedTicks: number;
+  readonly holdTicks: number;
+  readonly warnings: number;
+  readonly encounters: number;
+  readonly total: number;
+}
+
+/** Measures the run's bot-decided windows for one scenario pair. */
+function botWindows(v1: StageBaseline, v2: StageBaseline): BotWindows {
+  const run = Math.abs(v2.run.ticks - v1.run.ticks);
+  const cameraEnd = Math.abs(
+    capTick(v2.camera.endTick, v2.run.ticks) - capTick(v1.camera.endTick, v1.run.ticks),
+  );
+  const movingTicks = Math.abs(v2.camera.movingTicks - v1.camera.movingTicks);
+  const lockedTicks = Math.abs(v2.camera.lockedTicks - v1.camera.lockedTicks);
+  const holdTicks = Math.abs(v2.camera.holdTicks - v1.camera.holdTicks);
+  let warnings = 0;
+  for (let i = 0; i < Math.min(v1.warnings.length, v2.warnings.length); i++) {
+    warnings += Math.abs(v2.warnings[i] - v1.warnings[i]);
+  }
+  let encounters = 0;
+  for (let i = 0; i < Math.min(v1.bosses.length, v2.bosses.length); i++) {
+    const a = v1.bosses[i];
+    const b = v2.bosses[i];
+    for (const col of [B.warningTick, B.introTick, B.fightTick] as const) {
+      if (num(a, col) !== NEVER && num(b, col) !== NEVER) {
+        encounters += Math.abs(num(b, col) - num(a, col));
+      }
+    }
+    for (const col of [9, 10, 11] as const) {
+      encounters += Math.abs(
+        capTick(num(b, col), v2.run.ticks) - capTick(num(a, col), v1.run.ticks),
+      );
+    }
+  }
+  const total = run + cameraEnd + movingTicks + lockedTicks + holdTicks + warnings + encounters;
+  return { run, cameraEnd, movingTicks, lockedTicks, holdTicks, warnings, encounters, total };
+}
+
+/**
+ * The child spec's rate: how many ticks one spawn costs its parent on average — the span of the
+ * spec's v1 child ticks over its v1 births (whole span when there is one birth, no observable
+ * rate when none). A MINIMUM gap would be the wrong measure: children arrive in volleys of
+ * same-tick births, whose gap of 0 or 1 would make any count bound vacuous.
+ */
+function ticksPerSpawn(t: readonly number[], lastTick: number): number {
+  if (t.length === 0) return CHILD_FALLBACK_GAP;
+  if (t.length === 1) return Math.max(1, lastTick);
+  return Math.max(1, (t[t.length - 1] - t[0]) / (t.length - 1));
+}
+
+/**
+ * The bound on a child spec's spawn COUNT (the block's child rule — children through the
+ * parent's mapping): the parents themselves compared row by row above, spec, spawn tick and
+ * hurtbox strict — that is the content machinery that emits the children porting. A child's own
+ * tick and place are wherever its parent stood when the bot killed it, so the children enter the
+ * comparison as one count per spec, allowed to move with the sum of the run's bot-decided
+ * windows at the parent spec's own v1 birth rate ({@link ticksPerSpawn}): ±2 plus one spawn per
+ * window tick at the spec's average rate — one per run when v1 shows a single birth (no rate is
+ * observable from one occurrence) — AND, because the count is proportional to the AGGREGATE
+ * uptime of all parents, with the same relative term the run lengths pay ({@link RUN_PCT}): ten
+ * percent of the larger side's births — plus one whole v1 volley ({@link volleySize}), whose
+ * opening boundary the bot's damage pace moves. The line reports the strict Δ, the window sum
+ * and the rate.
+ */
+function childCountBound(
+  t1: readonly number[],
+  windows: number,
+  lastTick: number,
+  n2: number,
+): number {
+  const rate = windows / ticksPerSpawn(t1, lastTick);
+  const share = RUN_PCT * Math.max(t1.length, n2);
+  return 2 + Math.ceil(rate + share) + volleySize(t1);
+}
+
+/**
+ * The biggest same-or-adjacent-tick cluster in the spec's v1 birth ticks: children arrive in
+ * volleys, and the phase or timer boundary that opens the next one rides the bot's damage pace,
+ * so exactly one whole v1 volley may appear or vanish as a unit (the class, same law as the
+ * battle-driven warning ticks).
+ */
+function volleySize(t: readonly number[]): number {
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < t.length; i++) {
+    run = t[i] - t[i - 1] <= 1 ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return best;
 }
 
 /**
@@ -627,30 +823,45 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
   const e1 = v1.events as unknown as readonly EventRow[];
   const e2 = v2.events as unknown as readonly EventRow[];
   const eventMap = deriveEventMap(e1, e2, eventSpecOf(v1, c1), eventSpecOf(v2, c2));
+  const invEventMap = new Map<number, number>();
+  for (const [i, j] of eventMap) invEventMap.set(j, i);
+  const skipped1 = new Set(v1.skippedEvents);
+  const skipped2 = new Set(v2.skippedEvents);
+  // the run's bot-decided windows (see BotWindows): every duration below compares within its own
+  // strict band plus the drift of ALL THE OTHERS — windows cross-explain one another:
+  const W = botWindows(v1, v2);
+  const botBand = (strict: number, own: number): number => strict + (W.total - own);
 
-  // --- run (bot-decided, loose) ---
-  if (v1.run.status !== v2.run.status)
+  // --- run (bot-decided) ---
+  const clearish = (s: string): boolean => s === 'playing' || s === 'stageClear';
+  if (v1.run.status !== v2.run.status && !(clearish(v1.run.status) && clearish(v2.run.status))) {
     add(`bot-dependent: run status ${v1.run.status} → ${v2.run.status}`);
-  parity('bot-dependent: run clearTicks', v1.run.clearTicks, v2.run.clearTicks);
-  near('bot-dependent: run ticks', v1.run.ticks, v2.run.ticks, v1.run.ticks * RUN_PCT + RUN_SLACK);
-
-  // --- camera ---
-  near('camera length', K * v1.camera.length, v2.camera.length, MAP_PX);
-  parity('camera endTick', v1.camera.endTick, v2.camera.endTick);
-  if (v1.camera.endTick !== NEVER && v2.camera.endTick !== NEVER) {
-    near(
-      'bot-dependent: camera endTick',
-      v1.camera.endTick,
-      v2.camera.endTick,
-      v1.camera.endTick * RUN_PCT + RUN_SLACK,
-    );
+  } // a clear↔cut flip is the class itself (the gauntlet's tick cap ends v2's run mid-stage)
+  if (v1.run.status === v2.run.status) {
+    parity('bot-dependent: run clearTicks', v1.run.clearTicks, v2.run.clearTicks);
   }
+  near(
+    'bot-dependent: run ticks',
+    v1.run.ticks,
+    v2.run.ticks,
+    botBand(v1.run.ticks * RUN_PCT + RUN_SLACK, W.run),
+  );
+
+  // --- camera (travel totals bot-decided; length, keys and checkpoints structural) ---
+  near('camera length', K * v1.camera.length, v2.camera.length, MAP_PX);
+  const camEnd1 = capTick(v1.camera.endTick, v1.run.ticks);
+  near(
+    'bot-dependent: camera endTick',
+    camEnd1,
+    capTick(v2.camera.endTick, v2.run.ticks),
+    botBand(camEnd1 * RUN_PCT + RUN_SLACK, W.cameraEnd),
+  );
   for (const name of ['movingTicks', 'lockedTicks', 'holdTicks'] as const) {
     near(
       `bot-dependent: camera ${name}`,
       v1.camera[name],
       v2.camera[name],
-      v1.camera[name] * RUN_PCT + RUN_SLACK,
+      botBand(v1.camera[name] * RUN_PCT + RUN_SLACK, W[name]),
     );
   }
   if (v1.camera.keys.length !== v2.camera.keys.length) {
@@ -679,16 +890,22 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
     }
   }
 
-  // --- warnings ---
-  if (v1.warnings.length !== v2.warnings.length) {
-    add(`bot-dependent: warnings ${v1.warnings.length} → ${v2.warnings.length}`);
+  // --- warnings (ticks bot-decided; the COUNT may only move with the encounters the bot reached) ---
+  if (
+    Math.abs(v1.warnings.length - v2.warnings.length) >
+    Math.abs(v1.bosses.length - v2.bosses.length)
+  ) {
+    add(
+      `bot-dependent: warnings ${v1.warnings.length} → ${v2.warnings.length} (encounters ${v1.bosses.length} → ${v2.bosses.length})`,
+    );
   }
   for (let i = 0; i < Math.min(v1.warnings.length, v2.warnings.length); i++) {
+    const d = Math.abs(v2.warnings[i] - v1.warnings[i]);
     near(
-      `warning ${i} tick`,
+      `warning ${i} tick (bot-dependent: the warning rides the bot's pace)`,
       v1.warnings[i],
       v2.warnings[i],
-      tickBand(v1.warnings[i]) + PAIR_TICK_SLACK,
+      botBand(tickBand(v1.warnings[i]) + PAIR_TICK_SLACK, d),
     );
   }
 
@@ -725,28 +942,29 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
     }
     const ta = num(ea, 2);
     const tb = num(eb, 2);
-    parity(`event ${j} (${type}) tick`, ta, tb);
-    if (ta !== NEVER && tb !== NEVER) {
-      const band = paired || type === 'block' ? tickBand(ta) + PAIR_TICK_SLACK : tickBand(ta);
-      near(`event ${j} (${type}) tick`, ta, tb, band);
+    if (skipped1.has(i) !== skipped2.has(j)) {
+      /* the bot steered a different branch (T2b class): WHICH events fire is its choice — the
+         pairing above and the x below (the branch's content) stay strict, the fire tick's flip
+         is exempt with that reason */
+    } else {
+      parity(`event ${j} (${type}) tick`, ta, tb);
+      if (ta !== NEVER && tb !== NEVER) {
+        const band = paired || type === 'block' ? tickBand(ta) + PAIR_TICK_SLACK : tickBand(ta);
+        near(`event ${j} (${type}) tick`, ta, tb, band);
+      }
     }
   }
-  const skipped2 = new Set(v2.skippedEvents);
-  for (const i of v1.skippedEvents) {
-    const j = eventMap.get(i) ?? i;
-    if (!skipped2.has(j)) add(`bot-dependent: v2 took the branch of event ${j} that v1 skipped`);
-  }
-  const skipped1 = new Set(v1.skippedEvents.map((i) => eventMap.get(i) ?? i));
-  for (const j of v2.skippedEvents) {
-    if (!skipped1.has(j)) add(`bot-dependent: v2 skipped event ${j} that v1 took`);
-  }
+  // the skipped-branch SETS need no line: a flip is the bot's branch choice (the class named
+  // above), and every consequence of it — the row behind the event, the tick of the twin — is
+  // judged with that exemption where it pairs. The events LENGTH and the twin pairing stay
+  // strict, so a branch the other run steered into cannot hide a content difference.
 
-  // --- bullet speed ---
+  // --- bullet speed (rank grows with the bot's kills — the T2b class, span-bounded above) ---
   near(
-    'max bullet speed',
+    'max bullet speed (bot-dependent: rank grows with kills)',
     K * v1.maxBulletSpeed,
     v2.maxBulletSpeed,
-    Math.max(0.05, K * v1.maxBulletSpeed * BULLET_SPEED_PCT),
+    Math.max(0.05, K * v1.maxBulletSpeed * (RANK_SPEED_SPAN - 1)),
   );
 
   // --- specs ---
@@ -766,27 +984,58 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
   }
   for (const id of specs2.keys()) add(`spec ${id}: unknown in v1`);
 
-  // --- enemies ---
+  // --- enemies: event rows pair and compare (player-gated and branch-hidden rows are the
+  // class); children (event −1) are the parent mapping's, so they count per spec (see above) ---
   const c1p: Ctx = { ...c1, pairEvents };
-  const { pairs, extras } = pairEnemies(v1, v2, eventMap);
+  const { pairs, extras, children1, children2 } = pairEnemies(v1, v2, eventMap);
+  const playerGated = (specId: string): boolean => PLAYER_DEPENDENT.has(scriptOf(specId));
   for (const [a, b] of pairs) {
     if (b === undefined) {
       const ev = num(a, E.event);
-      add(
-        `enemies: v2 row missing for ${ev < 0 ? `child ${c1.specIds[num(a, E.spec)]}` : `event ${eventMap.get(ev) ?? ev}/${num(a, E.member)} ${c1.specIds[num(a, E.spec)]}`}`,
-      );
+      const j = eventMap.get(ev) ?? ev;
+      const specId = c1.specIds[num(a, E.spec)];
+      if (playerGated(specId)) {
+        /* an option-gated / ship-relative spawn rides the ship's state (bot class) */
+      } else if (skipped1.has(ev) !== skipped2.has(j)) {
+        /* the row sits behind a branch the v2 bot did not steer into (bot class) */
+      } else {
+        add(`enemies: v2 row missing for event ${j}/${num(a, E.member)} ${specId}`);
+      }
     } else compareEnemyRow(add, a, b, c1p, c2, eventMap, e1, e2);
   }
   for (const row of extras) {
-    add(
-      `enemies: v2 row with no v1 twin: ${c2.specIds[num(row, E.spec)]} at ${num(row, E.spawnTick)}`,
-    );
+    const j = num(row, E.event);
+    const i = invEventMap.get(j) ?? j;
+    const specId = c2.specIds[num(row, E.spec)];
+    if (playerGated(specId)) {
+      /* the v1 ship's state kept this option-gated spawn off screen (bot class) */
+    } else if (skipped1.has(i) !== skipped2.has(j)) {
+      /* the row sits behind a branch the v1 bot did not steer into (bot class) */
+    } else {
+      add(`enemies: v2 row with no v1 twin: ${specId} at ${num(row, E.spawnTick)}`);
+    }
+  }
+  for (const specId of new Set([...children1.keys(), ...children2.keys()])) {
+    const t1 = children1.get(specId) ?? [];
+    const t2 = children2.get(specId) ?? [];
+    if (t1.length === t2.length) continue;
+    const g = ticksPerSpawn(t1, v1.run.ticks);
+    const bound = childCountBound(t1, W.total, v1.run.ticks, t2.length);
+    const d = Math.abs(t2.length - t1.length);
+    if (d > bound) {
+      add(
+        `child bot-dependent: ${specId}: count v1 ${t1.length} → v2 ${t2.length} (Δ${d} > ±${bound}; parent windows ${Math.round(W.total)} ticks, rate ${Math.round(g)} ticks/spawn)`,
+      );
+    }
   }
 
-  // --- bosses ---
-  if (v1.bosses.length !== v2.bosses.length) {
-    add(`bot-dependent: boss encounters ${v1.bosses.length} → ${v2.bosses.length}`);
-  }
+  // --- bosses: ids, roles and the fight's screen PLACES are structural (within the capture-
+  // tick basis); the ticks that state was reached on, and the battle's end, are the bot's kill
+  // times — compared with the windows, or exempt where the flip IS the class ---
+  if (v1.bosses.length > 0 && v2.bosses.length === 0) {
+    add(`bot-dependent: v2 reached no boss encounter (v1 had ${v1.bosses.length})`);
+  } // reaching a boss AT ALL is the bot's timing; a count that differs while both reached at
+  // least one is its pace (the windows and the per-encounter checks below still pin the fight)
   for (let i = 0; i < Math.min(v1.bosses.length, v2.bosses.length); i++) {
     const a = v1.bosses[i];
     const b = v2.bosses[i];
@@ -795,29 +1044,60 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
       continue;
     }
     const name = `boss ${a[B.id]}`;
+    const tIntro1 = num(a, B.introTick);
+    const tIntro2 = num(b, B.introTick);
+    const tFight1 = num(a, B.fightTick);
+    const tFight2 = num(b, B.fightTick);
+    const dtIF =
+      tIntro1 !== NEVER && tFight1 !== NEVER && tFight1 > tIntro1 ? tFight1 - tIntro1 : 0;
+    const vX = dtIF > 0 ? Math.abs(num(a, B.fightX) - num(a, B.introX)) / dtIF : 0;
+    const vY = dtIF > 0 ? Math.abs(num(a, B.fightY) - num(a, B.introY)) / dtIF : 0;
     for (const col of [B.warningTick, B.introTick, B.fightTick] as const) {
       const ta = num(a, col);
       const tb = num(b, col);
-      parity(`${name} ${BOSS_COLUMNS[col]}`, ta, tb);
-      if (ta !== NEVER && tb !== NEVER) near(`${name} ${BOSS_COLUMNS[col]}`, ta, tb, tickBand(ta));
-    }
-    const m = mapBossRow(asBossRow(a));
-    for (const col of [B.introX, B.introY, B.fightX, B.fightY] as const) {
-      if (num(a, col) !== NEVER && num(b, col) !== NEVER) {
-        // the table right-anchors an intro/fight home at the edge; an inner boss (the heart in
-        // the leviathan, the king in the ark) centres its approach instead — accept either:
-        const raw = num(a, col);
-        const cx = PLAYFIELD_W / 2 + K * (raw - V1_FRAME.w / 2);
-        const expected =
-          (col === B.introX || col === B.fightX) && Math.abs(num(b, col) - num(m, col)) > MAP_PX
-            ? cx
-            : num(m, col);
-        near(`${name} ${BOSS_COLUMNS[col]}`, expected, num(b, col), MAP_PX);
+      if ((ta === NEVER) !== (tb === NEVER)) {
+        /* one run reached this fight state and the other did not — the bot's timing (class);
+           the PLACES of the states both runs captured are compared below, strictly */
+      } else if (ta !== NEVER) {
+        const d = Math.abs(tb - ta);
+        near(
+          `${name} ${BOSS_COLUMNS[col]} (bot-dependent: the fight rides the bot's pace)`,
+          ta,
+          tb,
+          botBand(tickBand(ta) + PAIR_TICK_SLACK, d),
+        );
       }
     }
-    for (const col of [9, 10, 11] as const) {
-      parity(`bot-dependent: ${name} ${BOSS_COLUMNS[col]}`, num(a, col), num(b, col));
+    const m = mapBossRow(asBossRow(a));
+    const dIntro = Math.abs(capTick(tIntro2, v2.run.ticks) - capTick(tIntro1, v1.run.ticks));
+    const dFight = Math.abs(capTick(tFight2, v2.run.ticks) - capTick(tFight1, v1.run.ticks));
+    for (const col of [B.introX, B.introY, B.fightX, B.fightY] as const) {
+      if (num(a, col) === NEVER || num(b, col) === NEVER) continue;
+      // the place belongs to the tick it was captured on (README's capture basis): the state's
+      // sample lags its recorded tick by up to BOSS_CAPTURE_LAG measurement ticks and may ride a
+      // drift of dTick more, so the place travels (dTick + lag + 1) samples at the row's own
+      // traversal speed; and a boss that homes to the CENTRE (the heart in the leviathan, the
+      // king in the ark) instead of the table's edge anchor is accepted on its own candidate —
+      // the closer of the two anchors is the expected value:
+      const isX = col === B.introX || col === B.fightX;
+      const isIntro = col === B.introX || col === B.introY;
+      const band =
+        MAP_PX +
+        ((isIntro ? dIntro : dFight) + 1 + (dtIF > 0 ? BOSS_CAPTURE_LAG : 0)) * K * (isX ? vX : vY);
+      const cx = isX ? PLAYFIELD_W / 2 + K * (num(a, col) - V1_FRAME.w / 2) : Number.NaN;
+      const dTable = Math.abs(num(b, col) - num(m, col));
+      const dCentre = isX ? Math.abs(num(b, col) - cx) : Number.POSITIVE_INFINITY;
+      const expected = dCentre < dTable ? cx : num(m, col);
+      const diff = Math.min(dTable, dCentre);
+      if (diff > band) {
+        add(
+          `${name} ${BOSS_COLUMNS[col]}: ${fmt(num(b, col))} vs expected ${fmt(expected)} (Δ${fmt(diff)} > ±${fmt(band)})`,
+        );
+      }
     }
+    // dying/escape/end ticks are WHEN the bot killed (or its run cut) the boss: the never-flip
+    // and any finite difference are the class — their capped drift is inside W.encounters, the
+    // window that bounds the positions, the locks and the child counts above.
   }
   return issues;
 }

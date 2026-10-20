@@ -5,8 +5,10 @@
  * event pairing (derived from the two timelines by `deriveEventMap`, which also absorbs the
  * port's re-sort and the loop-2 remix order), spawn and entry, the first-visible ±1-tick rule,
  * the §2.6 landing proof (`T` entries lining up at `K·y + PAD ±2 px`), the spec table, bosses,
- * bullet speed — while everything the 4-way bot decides (until R2-02.T2b scales its distances) is
- * reported with a `bot-dependent:` prefix inside its generous band. The zones run in
+ * bullet speed — while the durations and observations the 4-way bot decides (its pace sets the
+ * run end, the locks, the warnings, the kills, the branches and through them the children) are
+ * compared within the cross-explaining windows of `v2-port.ts` or exempted there with the reason
+ * of their class, always reporting the strict delta where a line remains. The zones run in
  * `v2-port-zones.test.ts` and `v2-port-loop2.test.ts`.
  *
  * While the world is ×1 the comparisons skip (their meaning is the ported world's). The meta
@@ -71,8 +73,18 @@ describe('v2 port: the comparison machinery (R2-02.T3)', () => {
   });
 
   it('a plain port and a led pair both sit in the acceptance window', () => {
-    // the window constants themselves: lead + snap + map covers the tool's −(W′−K·W) shift
-    expect(LEAD_PX + SNAP_PX + MAP_PX).toBeGreaterThan(K * 0);
+    // the window's own edges (RTL7 F1): deriveEventMap pairs a v1 x whose port sits at most the
+    // tool's whole shift `LEAD + SNAP + MAP` below K·x and at most MAP above it — inside that
+    // span, the recorded early fire of a world-sum pair is exactly the lead identity
+    // compareScenario checks per paired row (`K·x1 − x2 ∈ [−MAP, LEAD+SNAP+MAP]`); one pixel
+    // beyond an edge the row is simply unportable and must fail to pair:
+    const lo = K * 400 - (LEAD_PX + SNAP_PX + MAP_PX);
+    expect(deriveEventMap([['spawn', 400, 10]], [['spawn', lo, 10]]).size).toBe(1);
+    expect(deriveEventMap([['spawn', 400, 10]], [['spawn', lo - 1, 10]]).size).toBe(0);
+    expect(deriveEventMap([['spawn', 400, 10]], [['spawn', K * 400 + MAP_PX, 10]]).size).toBe(1);
+    expect(deriveEventMap([['spawn', 400, 10]], [['spawn', K * 400 + MAP_PX + 1, 10]]).size).toBe(
+      0,
+    );
     expect(Math.abs(LEAD_PX)).toBeLessThanOrEqual(256);
   });
 
