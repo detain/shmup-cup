@@ -8,15 +8,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 1,
-      "speed": 6,
+      "speed": 9,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/direct-missile",
       "sfx": "PlayerShot",
       "params": {
         "frame": 0,
-        "hw": 4,
-        "hh": 2
+        "hw": 6,
+        "hh": 3
       }
     },
     {
@@ -25,15 +25,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 2,
-      "speed": 6,
+      "speed": 9,
       "cap": 4,
       "pierce": false,
       "sprite": "shots/direct-missile",
       "sfx": "PlayerShot",
       "params": {
         "frame": 1,
-        "hw": 5,
-        "hh": 3
+        "hw": 7.5,
+        "hh": 4.5
       }
     },
     {
@@ -42,15 +42,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 3,
-      "speed": 6.5,
+      "speed": 9.75,
       "cap": 6,
       "pierce": false,
       "sprite": "shots/disc",
       "sfx": "PlayerShot",
       "params": {
         "frame": 0,
-        "hw": 3,
-        "hh": 3
+        "hw": 4.5,
+        "hh": 4.5
       }
     },
     {
@@ -59,15 +59,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 7,
-      "speed": 6.5,
+      "speed": 9.75,
       "cap": 3,
       "pierce": false,
       "sprite": "shots/disc",
       "sfx": "PlayerShot",
       "params": {
         "frame": 1,
-        "hw": 5,
-        "hh": 5
+        "hw": 7.5,
+        "hh": 7.5
       }
     },
     {
@@ -76,15 +76,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 9,
-      "speed": 6.5,
+      "speed": 9.75,
       "cap": 3,
       "pierce": false,
       "sprite": "shots/disc",
       "sfx": "PlayerShot",
       "params": {
         "frame": 2,
-        "hw": 7,
-        "hh": 7
+        "hw": 10.5,
+        "hh": 10.5
       }
     },
     {
@@ -93,15 +93,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 12,
-      "speed": 6.5,
+      "speed": 9.75,
       "cap": 3,
       "pierce": false,
       "sprite": "shots/disc",
       "sfx": "PlayerShot",
       "params": {
         "frame": 3,
-        "hw": 9,
-        "hh": 9
+        "hw": 13.5,
+        "hh": 13.5
       }
     },
     {
@@ -110,15 +110,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 2,
-      "speed": 8,
+      "speed": 12,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/beam",
       "sfx": "PlayerShot",
       "params": {
         "frame": 0,
-        "hw": 8,
-        "hh": 1.5
+        "hw": 12,
+        "hh": 2.25
       }
     },
     {
@@ -127,15 +127,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 3,
-      "speed": 8,
+      "speed": 12,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/beam",
       "sfx": "PlayerShot",
       "params": {
         "frame": 1,
-        "hw": 8,
-        "hh": 2.5
+        "hw": 12,
+        "hh": 3.75
       }
     },
     {
@@ -144,15 +144,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 4,
-      "speed": 9,
+      "speed": 13.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/beam",
       "sfx": "PlayerShot",
       "params": {
         "frame": 2,
-        "hw": 12,
-        "hh": 2
+        "hw": 18,
+        "hh": 3
       }
     },
     {
@@ -161,15 +161,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 3,
-      "speed": 9,
+      "speed": 13.5,
       "cap": 3,
       "pierce": true,
       "sprite": "shots/beam",
       "sfx": "PlayerShot",
       "params": {
         "frame": 3,
-        "hw": 12,
-        "hh": 3,
+        "hw": 18,
+        "hh": 4.5,
         "hitCooldownTicks": 6
       }
     },
@@ -179,15 +179,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 3,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 3,
       "pierce": true,
       "sprite": "shots/wave",
       "sfx": "PlayerShot",
       "params": {
         "frame": 0,
-        "hw": 4,
-        "hh": 7,
+        "hw": 6,
+        "hh": 10.5,
         "hitCooldownTicks": 6,
         "passArmour": 1
       }
@@ -198,15 +198,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 4,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 3,
       "pierce": true,
       "sprite": "shots/wave",
       "sfx": "PlayerShot",
       "params": {
         "frame": 1,
-        "hw": 5,
-        "hh": 10,
+        "hw": 7.5,
+        "hh": 15,
         "hitCooldownTicks": 6,
         "passArmour": 1
       }
@@ -217,15 +217,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 5,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 3,
       "pierce": true,
       "sprite": "shots/wave",
       "sfx": "PlayerShot",
       "params": {
         "frame": 2,
-        "hw": 6,
-        "hh": 13,
+        "hw": 9,
+        "hh": 19.5,
         "hitCooldownTicks": 6,
         "passArmour": 1
       }
@@ -236,15 +236,15 @@
       "slot": "main",
       "behavior": "direct.bolt",
       "damage": 6,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 3,
       "pierce": true,
       "sprite": "shots/wave",
       "sfx": "PlayerShot",
       "params": {
         "frame": 3,
-        "hw": 7,
-        "hh": 16,
+        "hw": 10.5,
+        "hh": 24,
         "hitCooldownTicks": 6,
         "passArmour": 1
       }
@@ -255,14 +255,14 @@
       "slot": "sub",
       "behavior": "direct.bomb",
       "damage": 2,
-      "speed": 3,
+      "speed": 4.5,
       "cap": 4,
       "pierce": false,
       "sprite": "shots/sub-bomb",
       "sfx": "PlayerMissile",
       "params": {
-        "gravity": 0.06,
-        "oy": 2
+        "gravity": 0.09,
+        "oy": 3
       }
     },
     {
@@ -271,7 +271,7 @@
       "slot": "sub",
       "behavior": "direct.bomb",
       "damage": 2,
-      "speed": 3,
+      "speed": 4.5,
       "cap": 4,
       "pierce": false,
       "sprite": "shots/sub-bomb",
@@ -284,7 +284,7 @@
       "slot": "sub",
       "behavior": "direct.bolt",
       "damage": 2,
-      "speed": 5,
+      "speed": 7.5,
       "cap": 4,
       "pierce": false,
       "sprite": "shots/sub-laser",
@@ -292,8 +292,8 @@
       "params": {
         "turn": 1,
         "ox": 0,
-        "hw": 3,
-        "hh": 3
+        "hw": 4.5,
+        "hh": 4.5
       }
     },
     {
@@ -302,7 +302,7 @@
       "slot": "sub",
       "behavior": "direct.bolt",
       "damage": 2,
-      "speed": 5,
+      "speed": 7.5,
       "cap": 8,
       "pierce": true,
       "sprite": "shots/sub-laser-wide",
@@ -310,8 +310,8 @@
       "params": {
         "turn": 1,
         "ox": 0,
-        "hw": 4,
-        "hh": 4,
+        "hw": 6,
+        "hh": 6,
         "hitCooldownTicks": 6
       }
     },
@@ -321,7 +321,7 @@
       "slot": "sub",
       "behavior": "direct.bolt",
       "damage": 3,
-      "speed": 4.5,
+      "speed": 6.75,
       "cap": 4,
       "pierce": true,
       "sprite": "shots/sub-disc",
@@ -329,8 +329,8 @@
       "params": {
         "frame": 0,
         "ox": 0,
-        "hw": 4,
-        "hh": 4,
+        "hw": 6,
+        "hh": 6,
         "hitCooldownTicks": 6
       }
     },
@@ -340,7 +340,7 @@
       "slot": "sub",
       "behavior": "direct.bolt",
       "damage": 4,
-      "speed": 4.5,
+      "speed": 6.75,
       "cap": 4,
       "pierce": true,
       "sprite": "shots/sub-disc",
@@ -348,8 +348,8 @@
       "params": {
         "frame": 1,
         "ox": 0,
-        "hw": 6,
-        "hh": 6,
+        "hw": 9,
+        "hh": 9,
         "hitCooldownTicks": 6
       }
     }
@@ -381,11 +381,11 @@
           "shots": [
             {
               "weapon": "direct.missile.wide",
-              "oy": -4
+              "oy": -6
             },
             {
               "weapon": "direct.missile.wide",
-              "oy": 4
+              "oy": 6
             }
           ],
           "volleys": 2
@@ -402,11 +402,11 @@
           "shots": [
             {
               "weapon": "direct.disc.small",
-              "oy": -4
+              "oy": -6
             },
             {
               "weapon": "direct.disc.small",
-              "oy": 4
+              "oy": 6
             }
           ],
           "volleys": 3
@@ -650,50 +650,50 @@
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 128,
-              "ox": 2,
-              "oy": -2
+              "ox": 3,
+              "oy": -3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 128,
-              "ox": -2,
-              "oy": 2
+              "ox": -3,
+              "oy": 3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 384,
-              "ox": -2,
-              "oy": -2
+              "ox": -3,
+              "oy": -3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 384,
-              "ox": 2,
-              "oy": 2
+              "ox": 3,
+              "oy": 3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 640,
-              "ox": -2,
-              "oy": 2
+              "ox": -3,
+              "oy": 3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 640,
-              "ox": 2,
-              "oy": -2
+              "ox": 3,
+              "oy": -3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 896,
-              "ox": 2,
-              "oy": 2
+              "ox": 3,
+              "oy": 3
             },
             {
               "weapon": "direct.sub.laser.wide",
               "angle": 896,
-              "ox": -2,
-              "oy": -2
+              "ox": -3,
+              "oy": -3
             }
           ],
           "volleys": 1

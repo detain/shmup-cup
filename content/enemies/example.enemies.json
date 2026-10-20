@@ -6,18 +6,18 @@
       "id": "drifter",
       "hp": 1,
       "score": 100,
-      "hurtbox": { "hw": 6, "hh": 5 },
+      "hurtbox": { "hw": 9, "hh": 8 },
       "script": "drifter.sine",
       "sprite": "enemies/drifter",
       "anim": { "frames": 2, "ticks": 8 },
-      "params": { "amp": 20 },
+      "params": { "amp": 30 },
       "drop": null
     },
     {
       "id": "carrier-red",
       "hp": 2,
       "score": 200,
-      "hurtbox": { "hw": 7, "hh": 6 },
+      "hurtbox": { "hw": 11, "hh": 9 },
       "script": "carrier.straight",
       "sprite": "enemies/carrier-red",
       "drop": "capsule",
@@ -27,7 +27,7 @@
       "id": "turret-floor",
       "hp": 4,
       "score": 300,
-      "hurtbox": { "hw": 8, "hh": 6 },
+      "hurtbox": { "hw": 12, "hh": 9 },
       "script": "turret.floor",
       "sprite": "enemies/turret",
       "drop": null,
@@ -35,13 +35,13 @@
       "settleTicks": 45,
       "explosion": "medium",
       "rank": { "fireRate": 0.5, "bulletSpeed": 0.25 },
-      "revenge": { "minRank": 10, "pattern": "spread3", "speed": 1.5 }
+      "revenge": { "minRank": 10, "pattern": "spread3", "speed": 2.25 }
     },
     {
       "id": "hatch",
       "hp": 8,
       "score": 500,
-      "hurtbox": { "hw": 10, "hh": 5 },
+      "hurtbox": { "hw": 15, "hh": 8 },
       "script": "hatch.spawner",
       "sprite": "enemies/hatch",
       "drop": null,
@@ -53,10 +53,10 @@
       "id": "darter",
       "hp": 1,
       "score": 50,
-      "hurtbox": { "hw": 6, "hh": 3 },
+      "hurtbox": { "hw": 9, "hh": 5 },
       "script": "rammer.aimed",
       "sprite": "enemies/darter",
-      "mover": { "type": "straight", "vx": 0, "vy": 1.25 },
+      "mover": { "type": "straight", "vx": 0, "vy": 1.875 },
       "drop": null,
       "megaCrashImmune": false
     },
@@ -67,21 +67,21 @@
         "displayName": "EXAMPLE WARDEN",
         "introTicks": 120,
         "score": 5000,
-        "x": 300,
-        "y": 100,
+        "x": 514,
+        "y": 168,
         "parts": [
           {
             "name": "hull",
-            "hurtbox": { "hw": 8, "hh": 8 },
+            "hurtbox": { "hw": 12, "hh": 12 },
             "vulnerable": "never",
             "sprite": "bosses/hull-block"
           },
           {
             "name": "core",
             "parent": "hull",
-            "x": -12,
+            "x": -18,
             "hp": 40,
-            "hurtbox": { "hw": 7, "hh": 7 },
+            "hurtbox": { "hw": 11, "hh": 11 },
             "vulnerable": "afterParts",
             "requires": ["shield"],
             "core": true,
@@ -92,18 +92,18 @@
           {
             "name": "shield",
             "parent": "hull",
-            "x": -22,
+            "x": -33,
             "hp": 12,
-            "hurtbox": { "hw": 4, "hh": 8 },
+            "hurtbox": { "hw": 6, "hh": 12 },
             "sprite": "bosses/shield-plate",
             "score": 500
           },
           {
             "name": "gun",
             "parent": "hull",
-            "y": -18,
+            "y": -27,
             "hp": 8,
-            "hurtbox": { "hw": 6, "hh": 6 },
+            "hurtbox": { "hw": 9, "hh": 9 },
             "gun": true,
             "sprite": "bosses/emitter",
             "score": 1000
@@ -111,7 +111,7 @@
         ],
         "phases": [
           { "script": "boss.hover", "until": { "partsDestroyed": ["shield"] } },
-          { "script": "boss.lanes", "params": { "trackSpeed": 0.5 } }
+          { "script": "boss.lanes", "params": { "trackSpeed": 0.75 } }
         ]
       }
     }

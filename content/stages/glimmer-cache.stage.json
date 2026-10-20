@@ -8,11 +8,11 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 1800,
+  "length": 2700,
   "camera": [
     {
       "x": 0,
-      "speed": 1,
+      "speed": 1.5,
       "ramp": 30
     }
   ],
@@ -27,50 +27,50 @@
       "sprite": "bg/prism-facets",
       "factor": 0.2,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/prism-facets",
       "factor": 0.2,
-      "y": 64,
-      "spacing": 128
+      "y": 96,
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/prism-facets",
       "factor": 0.2,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/prism-spires",
       "factor": 0.4,
-      "y": 144,
-      "spacing": 128
+      "y": 252,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-prism",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 100,
-          "to": 2100,
+          "from": 150,
+          "to": 3150,
           "floor": {
-            "base": 20,
-            "amp": 10,
-            "period": 120,
+            "base": 30,
+            "amp": 15,
+            "period": 180,
             "seed": 121
           },
           "ceiling": {
-            "base": 18,
-            "amp": 8,
-            "period": 140,
+            "base": 63,
+            "amp": 12,
+            "period": 210,
             "seed": 122
           }
         }
@@ -79,49 +79,49 @@
   },
   "events": [
     {
-      "x": 80,
+      "x": 120,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 60,
+      "y": 126,
       "drop": null
-    },
-    {
-      "x": 200,
-      "type": "spawn",
-      "enemy": "glint-mote",
-      "y": 140
     },
     {
       "x": 300,
+      "type": "spawn",
+      "enemy": "glint-mote",
+      "y": 246
+    },
+    {
+      "x": 450,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 130,
+      "y": 231,
       "drop": null
     },
     {
-      "x": 360,
+      "x": 476,
       "type": "block",
-      "screenX": 400,
-      "y": 32,
-      "w": 16,
-      "h": 72,
+      "screenX": 664,
+      "y": 84,
+      "w": 24,
+      "h": 108,
       "tile": "cube"
     },
     {
-      "x": 520,
+      "x": 780,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 150,
+      "y": 261,
       "drop": null
     },
     {
-      "x": 640,
+      "x": 960,
       "type": "formation",
       "enemy": "prism-cube",
       "count": 6,
@@ -129,55 +129,55 @@
       "drop": null
     },
     {
-      "x": 760,
+      "x": 1140,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 90,
+      "y": 171,
       "drop": null
     },
     {
-      "x": 900,
+      "x": 1350,
       "type": "spawn",
       "enemy": "vault-carrier-1up",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 1000,
+      "x": 1436,
       "type": "block",
-      "screenX": 400,
-      "y": 96,
-      "w": 16,
-      "h": 72,
+      "screenX": 664,
+      "y": 180,
+      "w": 24,
+      "h": 108,
       "tile": "cube"
     },
     {
-      "x": 1080,
+      "x": 1620,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 60,
-      "drop": null
-    },
-    {
-      "x": 1200,
-      "type": "spawn",
-      "enemy": "geode",
-      "y": 120
-    },
-    {
-      "x": 1300,
-      "type": "formation",
-      "enemy": "vault-carrier",
-      "count": 3,
-      "interval": 24,
-      "y": 120,
+      "y": 126,
       "drop": null
     },
     {
       "x": 1800,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 216
+    },
+    {
+      "x": 1950,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 216,
+      "drop": null
+    },
+    {
+      "x": 2700,
       "type": "end"
     }
   ],

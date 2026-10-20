@@ -9,21 +9,21 @@
     "ending": "Ending",
     "credits": "Credits"
   },
-  "length": 4200,
+  "length": 6300,
   "camera": [
     {
       "x": 0,
-      "speed": 3,
+      "speed": 4.5,
       "ramp": 30
     },
     {
-      "x": 1200,
-      "speed": 4.5,
+      "x": 1800,
+      "speed": 6.75,
       "ramp": 120
     },
     {
-      "x": 3000,
-      "speed": 6,
+      "x": 4500,
+      "speed": 9,
       "ramp": 120
     }
   ],
@@ -38,82 +38,82 @@
       "sprite": "bg/stars-far",
       "factor": 0.25,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/stars-far",
       "factor": 0.25,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.6,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.6,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-a",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
           "from": 0,
-          "to": 1400,
+          "to": 2100,
           "floor": {
-            "base": 36,
-            "amp": 14,
-            "period": 260,
+            "base": 54,
+            "amp": 21,
+            "period": 390,
             "seed": 71
           },
           "ceiling": {
-            "base": 32,
-            "amp": 12,
-            "period": 300,
+            "base": 84,
+            "amp": 18,
+            "period": 450,
             "seed": 72
           }
         },
         {
-          "from": 1400,
-          "to": 2800,
+          "from": 2100,
+          "to": 4200,
           "floor": {
-            "base": 52,
-            "amp": 18,
-            "period": 220,
+            "base": 78,
+            "amp": 27,
+            "period": 330,
             "seed": 73
           },
           "ceiling": {
-            "base": 44,
-            "amp": 16,
-            "period": 240,
+            "base": 102,
+            "amp": 24,
+            "period": 360,
             "seed": 74
           }
         },
         {
-          "from": 2800,
-          "to": 4352,
+          "from": 4200,
+          "to": 6528,
           "floor": {
-            "base": 40,
-            "amp": 14,
-            "period": 200,
+            "base": 60,
+            "amp": 21,
+            "period": 300,
             "seed": 75
           },
           "ceiling": {
-            "base": 36,
-            "amp": 14,
-            "period": 220,
+            "base": 90,
+            "amp": 21,
+            "period": 330,
             "seed": 76
           }
         }
@@ -122,7 +122,7 @@
   },
   "events": [
     {
-      "x": 4100,
+      "x": 6150,
       "type": "end"
     }
   ]

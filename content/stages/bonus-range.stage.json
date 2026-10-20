@@ -7,16 +7,16 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2800,
+  "length": 4200,
   "camera": [
     {
       "x": 0,
-      "speed": 1,
+      "speed": 1.5,
       "ramp": 30
     },
     {
-      "x": 2200,
-      "speed": 0.75,
+      "x": 3300,
+      "speed": 1.125,
       "ramp": 60
     }
   ],
@@ -25,7 +25,7 @@
       "x": 0
     },
     {
-      "x": 1000
+      "x": 1500
     }
   ],
   "parallax": [
@@ -34,44 +34,44 @@
       "sprite": "bg/stars-far",
       "factor": 0.25,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/stars-far",
       "factor": 0.25,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.5,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.5,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-a",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 960,
-          "to": 2000,
+          "from": 1440,
+          "to": 3000,
           "floor": {
-            "base": 24,
-            "amp": 8,
-            "period": 320,
+            "base": 36,
+            "amp": 12,
+            "period": 480,
             "seed": 7
           }
         }
@@ -80,71 +80,71 @@
   },
   "events": [
     {
-      "x": 100,
+      "x": 150,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 400,
+      "x": 536,
       "type": "block",
-      "screenX": 400,
+      "screenX": 664,
       "y": 0,
-      "w": 16,
-      "h": 24,
+      "w": 24,
+      "h": 72,
       "tile": "brick"
     },
     {
-      "x": 400,
+      "x": 536,
       "type": "block",
-      "screenX": 480,
+      "screenX": 784,
       "y": 0,
-      "w": 16,
-      "h": 24,
+      "w": 24,
+      "h": 72,
       "tile": "brick"
     },
     {
-      "x": 420,
+      "x": 630,
       "type": "bonus",
       "stage": "bonus-vault",
       "entrance": "gap",
       "region": {
-        "x": 816,
+        "x": 1224,
         "y": 0,
-        "w": 64,
-        "h": 24
+        "w": 96,
+        "h": 72
       }
     },
     {
-      "x": 1000,
+      "x": 1500,
       "type": "bonus",
       "stage": "bonus-vault",
       "entrance": "ground",
-      "until": 1800
+      "until": 2700
     },
     {
-      "x": 1100,
+      "x": 1586,
       "type": "spawn",
       "enemy": "picket"
     },
     {
-      "x": 1250,
+      "x": 1811,
       "type": "spawn",
       "enemy": "picket"
     },
     {
-      "x": 1400,
+      "x": 2036,
       "type": "spawn",
       "enemy": "picket"
     },
     {
-      "x": 1600,
+      "x": 2400,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 2000,
+      "x": 3000,
       "type": "bonus",
       "stage": "bonus-vault",
       "entrance": "digit",
@@ -152,12 +152,12 @@
       "place": 1000
     },
     {
-      "x": 2400,
+      "x": 3600,
       "type": "warning",
       "enemy": "halcyon-bulwark"
     },
     {
-      "x": 2800,
+      "x": 4200,
       "type": "end"
     }
   ]

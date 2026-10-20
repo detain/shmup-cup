@@ -8,7 +8,7 @@
       "slot": "main",
       "behavior": "shot.straight",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/basic",
@@ -20,7 +20,7 @@
       "slot": "double",
       "behavior": "shot.double",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/double",
@@ -35,13 +35,13 @@
       "slot": "laser",
       "behavior": "laser.beam",
       "damage": 1,
-      "speed": 10,
+      "speed": 15,
       "cap": 1,
       "pierce": true,
       "sprite": "shots/laser",
       "sfx": "PlayerShot",
       "params": {
-        "maxLength": 64,
+        "maxLength": 96,
         "hitCooldownTicks": 6
       }
     },
@@ -51,13 +51,13 @@
       "slot": "missile",
       "behavior": "missile.groundSlide",
       "damage": 2,
-      "speed": 2.5,
+      "speed": 3.75,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/missile",
       "sfx": "PlayerMissile",
       "params": {
-        "slideSpeed": 3
+        "slideSpeed": 4.5
       }
     }
   ],

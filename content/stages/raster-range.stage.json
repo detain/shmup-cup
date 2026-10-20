@@ -4,75 +4,75 @@
   "id": "raster-range",
   "name": "RASTER RANGE",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 3600,
-  "camera": [{ "x": 0, "speed": 1, "ramp": 60 }],
-  "checkpoints": [{ "x": 0 }, { "x": 1800 }],
+  "length": 5400,
+  "camera": [{ "x": 0, "speed": 1.5, "ramp": 60 }],
+  "checkpoints": [{ "x": 0 }, { "x": 2700 }],
   "parallax": [
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
-    { "layer": "mid", "sprite": "bg/sea-swell", "factor": 0.5, "y": 112, "spacing": 128 },
-    { "layer": "mid", "sprite": "bg/checker-floor", "factor": 0, "y": 152, "spacing": 64 }
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 192, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/sea-swell", "factor": 0.5, "y": 204, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/checker-floor", "factor": 0, "y": 264, "spacing": 96 }
   ],
   "tilemap": null,
   "events": [
     {
-      "x": 300,
+      "x": 450,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 12,
-      "y": 50
+      "y": 111
     },
-    { "x": 700, "type": "spawn", "enemy": "carrier", "y": 70 },
+    { "x": 1050, "type": "spawn", "enemy": "carrier", "y": 141 },
     {
-      "x": 1400,
+      "x": 2100,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 12,
-      "y": 80
+      "y": 156
     },
-    { "x": 2000, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 3000, "type": "spawn", "enemy": "carrier", "y": 126 },
     {
-      "x": 2600,
+      "x": 3900,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 12,
-      "y": 40
+      "y": 96
     },
-    { "x": 3600, "type": "end" }
+    { "x": 5400, "type": "end" }
   ],
   "raster": [
     {
       "layer": "mid",
       "kind": "wave",
-      "top": 112,
-      "bottom": 152,
-      "amplitude": 3,
-      "wavelength": 20,
+      "top": 204,
+      "bottom": 264,
+      "amplitude": 4.5,
+      "wavelength": 30,
       "period": 96
     },
     {
       "layer": "mid",
       "kind": "lines",
-      "top": 152,
-      "bottom": 200,
+      "top": 264,
+      "bottom": 336,
       "factorTop": 0.25,
       "factorBottom": 1.5,
-      "bands": [2, 2, 3, 3, 4, 5, 6, 7, 8, 8],
-      "wrap": 64
+      "bands": [3, 3, 5, 4, 6, 8, 9, 10, 12, 12],
+      "wrap": 96
     },
     {
       "layer": "far",
       "kind": "haze",
-      "top": 40,
-      "bottom": 112,
-      "amplitude": 2,
-      "wavelength": 8,
+      "top": 60,
+      "bottom": 204,
+      "amplitude": 3,
+      "wavelength": 12,
       "period": 40,
-      "from": 1200,
-      "to": 2400
+      "from": 1800,
+      "to": 3600
     }
   ],
   "cycles": [{ "layer": "mid", "colors": ["#183c78", "#24569c", "#3474bc", "#5096d8"], "ticks": 8 }]

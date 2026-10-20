@@ -7,36 +7,36 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 9800,
+  "length": 14700,
   "camera": [
     {
       "x": 0,
-      "speed": 0.75,
+      "speed": 1.125,
       "ramp": 60
     },
     {
-      "x": 1800,
-      "speed": 0.7,
+      "x": 2700,
+      "speed": 1.05,
       "ramp": 60
     },
     {
-      "x": 3800,
-      "speed": 0.6,
+      "x": 5700,
+      "speed": 0.9,
       "ramp": 90
     },
     {
-      "x": 4600,
-      "speed": 0.8,
+      "x": 6900,
+      "speed": 1.2,
       "ramp": 90
     },
     {
-      "x": 6800,
-      "speed": 1.4,
+      "x": 10200,
+      "speed": 2.1,
       "ramp": 120
     },
     {
-      "x": 8600,
-      "speed": 0.75,
+      "x": 12900,
+      "speed": 1.125,
       "ramp": 120
     }
   ],
@@ -45,13 +45,13 @@
       "x": 0
     },
     {
-      "x": 2000
+      "x": 3000
     },
     {
-      "x": 4600
+      "x": 6900
     },
     {
-      "x": 6800
+      "x": 10200
     }
   ],
   "parallax": [
@@ -60,87 +60,87 @@
       "sprite": "bg/stars-far",
       "factor": 0.25,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/stars-far",
       "factor": 0.25,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/brine-nebula",
       "factor": 0.2,
-      "y": 24,
-      "spacing": 128
+      "y": 36,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.5,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/brine-sea",
       "factor": 0.4,
-      "y": 152,
-      "spacing": 128
+      "y": 264,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-reef",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 200,
-          "to": 1600,
+          "from": 300,
+          "to": 2400,
           "floor": {
-            "base": 14,
-            "amp": 10,
-            "period": 300,
+            "base": 21,
+            "amp": 15,
+            "period": 450,
             "seed": 61
           }
         },
         {
-          "from": 1900,
-          "to": 3900,
+          "from": 2850,
+          "to": 5850,
           "floor": {
-            "base": 32,
-            "amp": 12,
-            "period": 360,
+            "base": 48,
+            "amp": 18,
+            "period": 540,
             "seed": 62
           },
           "ceiling": {
-            "base": 28,
-            "amp": 10,
-            "period": 280,
+            "base": 78,
+            "amp": 15,
+            "period": 420,
             "seed": 63
           }
         },
         {
-          "from": 4700,
-          "to": 6700,
+          "from": 7050,
+          "to": 10050,
           "floor": {
-            "base": 20,
-            "amp": 12,
-            "period": 340,
+            "base": 30,
+            "amp": 18,
+            "period": 510,
             "seed": 64
           }
         },
         {
-          "from": 6900,
-          "to": 8400,
+          "from": 10350,
+          "to": 12600,
           "floor": {
-            "base": 12,
-            "amp": 6,
-            "period": 240,
+            "base": 18,
+            "amp": 9,
+            "period": 360,
             "seed": 65
           }
         }
@@ -149,418 +149,418 @@
   },
   "events": [
     {
-      "x": 150,
+      "x": 225,
       "type": "formation",
       "enemy": "froth-bead",
       "count": 5,
       "interval": 16,
-      "y": 70,
+      "y": 141,
       "bonus": 300
     },
     {
-      "x": 300,
+      "x": 450,
       "type": "spawn",
       "enemy": "tender",
-      "y": 110
+      "y": 201
     },
     {
-      "x": 440,
+      "x": 660,
       "type": "spawn",
       "enemy": "froth",
-      "y": 60
+      "y": 126
     },
     {
-      "x": 520,
+      "x": 780,
       "type": "formation",
       "enemy": "froth-bead",
       "count": 5,
       "interval": 16,
-      "y": 130,
+      "y": 231,
       "bonus": 300
     },
     {
-      "x": 700,
+      "x": 1050,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 820,
+      "x": 1230,
       "type": "spawn",
       "enemy": "froth",
-      "y": 140
+      "y": 246
     },
     {
-      "x": 840,
+      "x": 1260,
       "type": "spawn",
       "enemy": "froth",
-      "y": 60
+      "y": 126
     },
     {
-      "x": 1000,
+      "x": 1500,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 4,
       "interval": 20,
-      "y": 100,
+      "y": 186,
       "bonus": 400
     },
     {
-      "x": 1150,
+      "x": 1725,
       "type": "spawn",
       "enemy": "brood-bubble",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 1300,
+      "x": 1950,
       "type": "spawn",
       "enemy": "tender",
-      "y": 130
+      "y": 231
     },
     {
-      "x": 1440,
+      "x": 2160,
       "type": "formation",
       "enemy": "froth-bead",
       "count": 6,
       "interval": 14,
-      "y": 50,
+      "y": 111,
       "bonus": 400
     },
     {
-      "x": 1600,
+      "x": 2400,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 5,
       "interval": 16,
-      "y": 140,
+      "y": 246,
       "bonus": 500
     },
     {
-      "x": 2040,
+      "x": 3060,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 2160,
+      "x": 3176,
       "type": "spawn",
       "enemy": "urchin"
     },
     {
-      "x": 2300,
+      "x": 3450,
       "type": "formation",
       "enemy": "froth-bead",
       "count": 5,
       "interval": 16,
-      "y": 100,
+      "y": 186,
       "bonus": 300
     },
     {
-      "x": 2400,
+      "x": 3536,
       "type": "spawn",
       "enemy": "urchin-ceiling"
     },
     {
-      "x": 2520,
+      "x": 3780,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 4,
       "interval": 18,
-      "y": 100,
+      "y": 186,
       "bonus": 400
     },
     {
-      "x": 2640,
+      "x": 3960,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 2760,
+      "x": 4076,
       "type": "spawn",
       "enemy": "urchin"
     },
     {
-      "x": 2860,
+      "x": 4290,
       "type": "spawn",
       "enemy": "brood-bubble",
-      "y": 110
+      "y": 201
     },
     {
-      "x": 3000,
+      "x": 4436,
       "type": "spawn",
       "enemy": "urchin-ceiling"
     },
     {
-      "x": 3120,
+      "x": 4680,
       "type": "formation",
       "enemy": "froth-bead",
       "count": 5,
       "interval": 16,
-      "y": 90,
+      "y": 171,
       "drop": null
     },
     {
-      "x": 3220,
+      "x": 4830,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 3320,
+      "x": 4916,
       "type": "spawn",
       "enemy": "urchin"
     },
     {
-      "x": 3440,
+      "x": 5160,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 5,
       "interval": 16,
-      "y": 90,
+      "y": 171,
       "drop": null
     },
     {
-      "x": 3600,
+      "x": 5400,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 3800,
+      "x": 5700,
       "type": "boss",
       "enemy": "spume-herald"
     },
     {
-      "x": 4200,
+      "x": 6300,
       "type": "spawn",
       "enemy": "tender",
-      "y": 60
+      "y": 126
     },
     {
-      "x": 4640,
+      "x": 6960,
       "type": "spawn",
       "enemy": "tender",
-      "y": 90
+      "y": 171
     },
     {
-      "x": 4760,
+      "x": 7140,
       "type": "formation",
       "enemy": "froth",
       "count": 3,
       "interval": 40,
-      "y": 60,
+      "y": 126,
       "bonus": 500
     },
     {
-      "x": 4900,
+      "x": 7350,
       "type": "spawn",
       "enemy": "reef-jelly",
-      "y": 70
+      "y": 141
     },
     {
-      "x": 4960,
+      "x": 7440,
       "type": "spawn",
       "enemy": "reef-jelly",
-      "y": 130
+      "y": 231
     },
     {
-      "x": 5100,
+      "x": 7650,
       "type": "spawn",
       "enemy": "tender",
-      "y": 120
+      "y": 216
     },
     {
-      "x": 5200,
+      "x": 7736,
       "type": "block",
-      "screenX": 400,
+      "screenX": 664,
       "y": 0,
-      "w": 16,
-      "h": 24
+      "w": 24,
+      "h": 72
     },
     {
-      "x": 5200,
+      "x": 7736,
       "type": "block",
-      "screenX": 480,
+      "screenX": 784,
       "y": 0,
-      "w": 16,
-      "h": 24
+      "w": 24,
+      "h": 72
     },
     {
-      "x": 5220,
+      "x": 7830,
       "type": "bonus",
       "stage": "brine-grotto",
       "entrance": "gap",
       "region": {
-        "x": 5616,
+        "x": 8424,
         "y": 0,
-        "w": 64,
-        "h": 24
+        "w": 96,
+        "h": 72
       }
     },
     {
-      "x": 5300,
+      "x": 7886,
       "type": "spawn",
       "enemy": "urchin"
     },
     {
-      "x": 5420,
+      "x": 8130,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 5,
       "interval": 16,
-      "y": 60,
+      "y": 126,
       "bonus": 500
-    },
-    {
-      "x": 5560,
-      "type": "spawn",
-      "enemy": "brood-bubble",
-      "y": 140
-    },
-    {
-      "x": 5700,
-      "type": "spawn",
-      "enemy": "urchin"
-    },
-    {
-      "x": 5820,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 5960,
-      "type": "spawn",
-      "enemy": "reef-jelly",
-      "y": 90
-    },
-    {
-      "x": 6080,
-      "type": "formation",
-      "enemy": "froth",
-      "count": 3,
-      "interval": 40,
-      "y": 130,
-      "bonus": 500
-    },
-    {
-      "x": 6200,
-      "type": "spawn",
-      "enemy": "urchin"
-    },
-    {
-      "x": 6360,
-      "type": "spawn",
-      "enemy": "brood-bubble",
-      "y": 70
-    },
-    {
-      "x": 6500,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 110
-    },
-    {
-      "x": 6840,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 6960,
-      "type": "formation",
-      "enemy": "gill-dart",
-      "count": 6,
-      "interval": 12,
-      "y": 60,
-      "bonus": 600
-    },
-    {
-      "x": 7120,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 140
-    },
-    {
-      "x": 7260,
-      "type": "formation",
-      "enemy": "froth-bead",
-      "count": 8,
-      "interval": 10,
-      "y": 140,
-      "drop": null
-    },
-    {
-      "x": 7400,
-      "type": "spawn",
-      "enemy": "reef-jelly",
-      "y": 100
-    },
-    {
-      "x": 7560,
-      "type": "formation",
-      "enemy": "gill-dart",
-      "count": 6,
-      "interval": 12,
-      "y": 140,
-      "bonus": 600
-    },
-    {
-      "x": 7700,
-      "type": "formation",
-      "enemy": "froth-bead",
-      "count": 8,
-      "interval": 10,
-      "y": 60,
-      "drop": null
-    },
-    {
-      "x": 7860,
-      "type": "spawn",
-      "enemy": "brood-bubble",
-      "y": 100
-    },
-    {
-      "x": 8000,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 70
-    },
-    {
-      "x": 8160,
-      "type": "formation",
-      "enemy": "gill-dart",
-      "count": 5,
-      "interval": 12,
-      "y": 100,
-      "drop": null
     },
     {
       "x": 8340,
       "type": "spawn",
+      "enemy": "brood-bubble",
+      "y": 246
+    },
+    {
+      "x": 8486,
+      "type": "spawn",
+      "enemy": "urchin"
+    },
+    {
+      "x": 8730,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
+    },
+    {
+      "x": 8940,
+      "type": "spawn",
       "enemy": "reef-jelly",
-      "y": 60
+      "y": 171
     },
     {
-      "x": 8720,
+      "x": 9120,
+      "type": "formation",
+      "enemy": "froth",
+      "count": 3,
+      "interval": 40,
+      "y": 231,
+      "bonus": 500
+    },
+    {
+      "x": 9236,
+      "type": "spawn",
+      "enemy": "urchin"
+    },
+    {
+      "x": 9540,
+      "type": "spawn",
+      "enemy": "brood-bubble",
+      "y": 141
+    },
+    {
+      "x": 9750,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 201
     },
     {
-      "x": 8960,
+      "x": 10260,
       "type": "spawn",
       "enemy": "tender",
-      "y": 130
+      "y": 186
     },
     {
-      "x": 9300,
+      "x": 10440,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 6,
+      "interval": 12,
+      "y": 126,
+      "bonus": 600
+    },
+    {
+      "x": 10680,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 246
+    },
+    {
+      "x": 10890,
+      "type": "formation",
+      "enemy": "froth-bead",
+      "count": 8,
+      "interval": 10,
+      "y": 246,
+      "drop": null
+    },
+    {
+      "x": 11100,
+      "type": "spawn",
+      "enemy": "reef-jelly",
+      "y": 186
+    },
+    {
+      "x": 11340,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 6,
+      "interval": 12,
+      "y": 246,
+      "bonus": 600
+    },
+    {
+      "x": 11550,
+      "type": "formation",
+      "enemy": "froth-bead",
+      "count": 8,
+      "interval": 10,
+      "y": 126,
+      "drop": null
+    },
+    {
+      "x": 11790,
+      "type": "spawn",
+      "enemy": "brood-bubble",
+      "y": 186
+    },
+    {
+      "x": 12000,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 12240,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 5,
+      "interval": 12,
+      "y": 186,
+      "drop": null
+    },
+    {
+      "x": 12510,
+      "type": "spawn",
+      "enemy": "reef-jelly",
+      "y": 126
+    },
+    {
+      "x": 13080,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 13440,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 231
+    },
+    {
+      "x": 13950,
       "type": "warning",
       "enemy": "galvanic-maw"
     },
     {
-      "x": 9800,
+      "x": 14700,
       "type": "end"
     }
   ],
@@ -596,19 +596,19 @@
     {
       "layer": "mid",
       "kind": "wave",
-      "top": 152,
-      "bottom": 200,
-      "amplitude": 3,
-      "wavelength": 18,
+      "top": 264,
+      "bottom": 336,
+      "amplitude": 4.5,
+      "wavelength": 27,
       "period": 100
     },
     {
       "layer": "far",
       "kind": "wave",
-      "top": 24,
-      "bottom": 88,
-      "amplitude": 2,
-      "wavelength": 26,
+      "top": 36,
+      "bottom": 132,
+      "amplitude": 3,
+      "wavelength": 39,
       "period": 160
     }
   ],
@@ -621,57 +621,57 @@
   ],
   "remix": [
     {
-      "x": 1100,
+      "x": 1650,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 4,
       "interval": 20,
-      "y": 100,
+      "y": 186,
       "drop": null
     },
     {
-      "x": 2620,
+      "x": 3930,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 4,
       "interval": 18,
-      "y": 100,
+      "y": 186,
       "drop": null
     },
     {
-      "x": 4860,
+      "x": 7290,
       "type": "formation",
       "enemy": "froth",
       "count": 3,
       "interval": 40,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 5520,
+      "x": 8280,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 5,
       "interval": 16,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 7060,
+      "x": 10590,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 6,
       "interval": 12,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 8260,
+      "x": 12390,
       "type": "formation",
       "enemy": "gill-dart",
       "count": 5,
       "interval": 12,
-      "y": 100,
+      "y": 186,
       "drop": null
     }
   ]

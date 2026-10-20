@@ -8,11 +8,11 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 1800,
+  "length": 2700,
   "camera": [
     {
       "x": 0,
-      "speed": 1,
+      "speed": 1.5,
       "ramp": 30
     }
   ],
@@ -27,43 +27,43 @@
       "sprite": "bg/stars-far",
       "factor": 0.25,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/stars-far",
       "factor": 0.25,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/brine-sea",
       "factor": 0.4,
-      "y": 152,
-      "spacing": 128
+      "y": 264,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-reef",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 100,
-          "to": 2100,
+          "from": 150,
+          "to": 3150,
           "floor": {
-            "base": 20,
-            "amp": 8,
-            "period": 260,
+            "base": 30,
+            "amp": 12,
+            "period": 390,
             "seed": 66
           },
           "ceiling": {
-            "base": 20,
-            "amp": 8,
-            "period": 220,
+            "base": 66,
+            "amp": 12,
+            "period": 330,
             "seed": 67
           }
         }
@@ -72,103 +72,103 @@
   },
   "events": [
     {
-      "x": 80,
+      "x": 120,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 60,
+      "y": 126,
       "drop": null
-    },
-    {
-      "x": 200,
-      "type": "spawn",
-      "enemy": "froth",
-      "y": 140
     },
     {
       "x": 300,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 246
+    },
+    {
+      "x": 450,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 130,
+      "y": 231,
       "drop": null
     },
     {
-      "x": 360,
+      "x": 476,
       "type": "block",
-      "screenX": 400,
-      "y": 32,
-      "w": 16,
-      "h": 72,
+      "screenX": 664,
+      "y": 84,
+      "w": 24,
+      "h": 108,
       "tile": "brick"
     },
     {
-      "x": 520,
+      "x": 780,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 150,
+      "y": 261,
       "drop": null
     },
     {
-      "x": 640,
+      "x": 960,
       "type": "spawn",
       "enemy": "froth",
-      "y": 60
+      "y": 126
     },
     {
-      "x": 760,
+      "x": 1140,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 90,
+      "y": 171,
       "drop": null
     },
     {
-      "x": 900,
+      "x": 1350,
       "type": "spawn",
       "enemy": "vault-carrier-1up",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 1000,
+      "x": 1436,
       "type": "block",
-      "screenX": 400,
-      "y": 96,
-      "w": 16,
-      "h": 72,
+      "screenX": 664,
+      "y": 180,
+      "w": 24,
+      "h": 108,
       "tile": "brick"
     },
     {
-      "x": 1080,
+      "x": 1620,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
       "interval": 24,
-      "y": 60,
-      "drop": null
-    },
-    {
-      "x": 1200,
-      "type": "spawn",
-      "enemy": "froth",
-      "y": 120
-    },
-    {
-      "x": 1300,
-      "type": "formation",
-      "enemy": "vault-carrier",
-      "count": 3,
-      "interval": 24,
-      "y": 120,
+      "y": 126,
       "drop": null
     },
     {
       "x": 1800,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 216
+    },
+    {
+      "x": 1950,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 216,
+      "drop": null
+    },
+    {
+      "x": 2700,
       "type": "end"
     }
   ],
@@ -176,10 +176,10 @@
     {
       "layer": "mid",
       "kind": "wave",
-      "top": 152,
-      "bottom": 200,
-      "amplitude": 3,
-      "wavelength": 18,
+      "top": 264,
+      "bottom": 336,
+      "amplitude": 4.5,
+      "wavelength": 27,
       "period": 100
     }
   ],

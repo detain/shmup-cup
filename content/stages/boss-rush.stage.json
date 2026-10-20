@@ -7,11 +7,11 @@
     "stage": "Boss",
     "boss": "Boss"
   },
-  "length": 6000,
+  "length": 9000,
   "camera": [
     {
       "x": 0,
-      "speed": 1,
+      "speed": 1.5,
       "ramp": 30
     }
   ],
@@ -26,28 +26,28 @@
       "sprite": "bg/stars-far",
       "factor": 0.25,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/stars-far",
       "factor": 0.25,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.5,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.5,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     }
   ],
   "tilemap": null,

@@ -4,23 +4,26 @@
   "id": "example",
   "name": "Example Orbit",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 4096,
+  "length": 6144,
   "camera": [
-    { "x": 0, "speed": 1 },
-    { "x": 2048, "speed": 1.5, "ramp": 60 },
-    { "x": 3200, "speed": 1, "yTo": 0, "yTicks": 60 },
-    { "x": 3840, "speed": 1, "lock": true }
+    { "x": 0, "speed": 1.5 },
+    { "x": 3072, "speed": 2.25, "ramp": 60 },
+    { "x": 4800, "speed": 1.5, "yTo": 0, "yTicks": 60 },
+    { "x": 5760, "speed": 1.5, "lock": true }
   ],
-  "checkpoints": [{ "x": 0 }, { "x": 2048 }],
+  "checkpoints": [{ "x": 0 }, { "x": 3072 }],
   "parallax": [
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
-    { "layer": "mid", "sprite": "bg/stars-near", "factor": 0.5, "y": 0, "spacing": 128 }
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/stars-near", "factor": 0.5, "y": 0, "spacing": 192 }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "example",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "rle": [
+      "60*0, 12*3",
+      "60*0, 12*3",
+      "60*0, 12*3",
       "60*0, 12*3",
       "62*0, 8*3",
       "",
@@ -50,39 +53,39 @@
   },
   "events": [
     {
-      "x": 384,
+      "x": 576,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 12,
-      "y": 60,
+      "y": 126,
       "path": "sine-low"
     },
-    { "x": 768, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
-    { "x": 1536, "type": "formation", "enemy": "drifter", "count": 5, "interval": 8 },
-    { "x": 2048, "type": "speed", "speed": 2, "ramp": 120 },
-    { "x": 2048, "type": "flag", "flag": "fast-lane" },
-    { "x": 3840, "type": "warning", "enemy": "example-warden" },
-    { "x": 4096, "type": "end" }
+    { "x": 1152, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
+    { "x": 2304, "type": "formation", "enemy": "drifter", "count": 5, "interval": 8 },
+    { "x": 3072, "type": "speed", "speed": 3, "ramp": 120 },
+    { "x": 3072, "type": "flag", "flag": "fast-lane" },
+    { "x": 5760, "type": "warning", "enemy": "example-warden" },
+    { "x": 6144, "type": "end" }
   ],
   "raster": [
     {
       "layer": "mid",
       "kind": "wave",
-      "top": 150,
-      "bottom": 200,
-      "amplitude": 3,
-      "wavelength": 20
+      "top": 243,
+      "bottom": 336,
+      "amplitude": 4.5,
+      "wavelength": 30
     },
     {
       "layer": "terrain",
       "kind": "haze",
-      "top": 100,
-      "bottom": 150,
-      "amplitude": 1,
-      "wavelength": 8,
+      "top": 168,
+      "bottom": 243,
+      "amplitude": 1.5,
+      "wavelength": 12,
       "period": 40,
-      "from": 2048
+      "from": 3072
     }
   ],
   "cycles": [{ "layer": "terrain", "colors": ["#801808", "#c83010", "#f06018"], "ticks": 8 }]

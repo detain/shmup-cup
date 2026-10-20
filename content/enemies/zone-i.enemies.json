@@ -7,8 +7,8 @@
       "hp": 1,
       "score": 100,
       "hurtbox": {
-        "hw": 3,
-        "hh": 3
+        "hw": 5,
+        "hh": 5
       },
       "script": "drifter.sine",
       "sprite": "enemies/lumen-mote",
@@ -17,8 +17,8 @@
         "ticks": 10
       },
       "params": {
-        "speed": 1.1,
-        "amp": 20,
+        "speed": 1.65,
+        "amp": 30,
         "period": 110,
         "memberPhase": 34
       },
@@ -29,8 +29,8 @@
       "hp": 3,
       "score": 300,
       "hurtbox": {
-        "hw": 5,
-        "hh": 5
+        "hw": 8,
+        "hh": 8
       },
       "script": "mine.burst",
       "sprite": "enemies/depth-mine",
@@ -39,13 +39,13 @@
         "ticks": 20
       },
       "params": {
-        "speed": 0.45,
-        "amp": 10,
+        "speed": 0.675,
+        "amp": 15,
         "period": 150,
-        "trigger": 60,
+        "trigger": 90,
         "fuse": 40,
         "ring": 8,
-        "bulletSpeed": 0.95
+        "bulletSpeed": 1.425
       },
       "drop": null,
       "explosion": "medium"
@@ -55,8 +55,8 @@
       "hp": 2,
       "score": 150,
       "hurtbox": {
-        "hw": 4,
-        "hh": 3
+        "hw": 6,
+        "hh": 5
       },
       "script": "worm.burst",
       "sprite": "enemies/trench-eel",
@@ -65,11 +65,11 @@
         "ticks": 8
       },
       "params": {
-        "trigger": 190,
-        "vx": -0.75,
-        "up": 3.2,
-        "gravity": 0.075,
-        "maxFall": 4
+        "trigger": 285,
+        "vx": -1.125,
+        "up": 4.8,
+        "gravity": 0.1125,
+        "maxFall": 6
       },
       "drop": null,
       "ground": "floor"
@@ -79,8 +79,8 @@
       "hp": 6,
       "score": 600,
       "hurtbox": {
-        "hw": 8,
-        "hh": 5
+        "hw": 12,
+        "hh": 8
       },
       "script": "pattern.loop",
       "sprite": "enemies/gulper",
@@ -93,12 +93,12 @@
       },
       "mover": {
         "type": "waypoint",
-        "x": 300,
-        "y": 60,
-        "speed": 0.9,
+        "x": 514,
+        "y": 126,
+        "speed": 1.35,
         "hold": 340,
         "leaveVx": 0,
-        "leaveVy": -0.55
+        "leaveVy": -0.825
       },
       "pattern": "abyss.gulp",
       "drop": null,
@@ -109,8 +109,8 @@
       "hp": 6,
       "score": 600,
       "hurtbox": {
-        "hw": 8,
-        "hh": 5
+        "hw": 12,
+        "hh": 8
       },
       "script": "pattern.loop",
       "sprite": "enemies/gulper",
@@ -123,12 +123,12 @@
       },
       "mover": {
         "type": "waypoint",
-        "x": 300,
-        "y": 140,
-        "speed": 0.9,
+        "x": 514,
+        "y": 246,
+        "speed": 1.35,
         "hold": 340,
         "leaveVx": 0,
-        "leaveVy": 0.55
+        "leaveVy": 0.825
       },
       "pattern": "abyss.gulp",
       "drop": null,
@@ -139,14 +139,14 @@
       "hp": 4,
       "score": 300,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "turret.floor",
       "sprite": "enemies/abyss-turret",
       "params": {
         "fireTicks": 180,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "floor",
@@ -157,14 +157,14 @@
       "hp": 4,
       "score": 300,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "turret.floor",
       "sprite": "enemies/abyss-turret",
       "params": {
         "fireTicks": 180,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "ceiling",
@@ -175,8 +175,8 @@
       "hp": 2,
       "score": 200,
       "hurtbox": {
-        "hw": 5,
-        "hh": 3
+        "hw": 8,
+        "hh": 5
       },
       "script": "rocket.homing",
       "sprite": "enemies/ark-hook",
@@ -186,8 +186,8 @@
       },
       "params": {
         "launchTicks": 20,
-        "launchSpeed": 1,
-        "speed": 1.2,
+        "launchSpeed": 1.5,
+        "speed": 1.8,
         "turnRate": 4,
         "homeTicks": 70
       },
@@ -198,8 +198,8 @@
       "hp": 1,
       "score": 100,
       "hurtbox": {
-        "hw": 3,
-        "hh": 3
+        "hw": 5,
+        "hh": 5
       },
       "script": "cell.chase",
       "sprite": "enemies/lumen-mote",
@@ -208,7 +208,7 @@
         "ticks": 6
       },
       "params": {
-        "speed": 1,
+        "speed": 1.5,
         "enterTicks": 30,
         "turnRate": 5,
         "chaseTicks": 120,
@@ -223,40 +223,40 @@
         "displayName": "ABYSS ARK",
         "introTicks": 240,
         "score": 50000,
-        "x": 112,
-        "y": 100,
+        "x": 200,
+        "y": 168,
         "timeLimit": 5400,
         "inner": "hollow-king",
         "minion": "ark-hook",
         "raid": {
           "segments": [
             {
-              "x": -100,
-              "y": -100,
+              "x": -150,
+              "y": -150,
               "ticks": 150,
               "hold": 180
             },
             {
-              "x": -60,
-              "y": -112,
+              "x": -90,
+              "y": -168,
               "ticks": 210,
               "hold": 180
             },
             {
-              "x": -20,
-              "y": -100,
+              "x": -30,
+              "y": -150,
               "ticks": 210,
               "hold": 240
             },
             {
-              "x": -60,
-              "y": -88,
+              "x": -90,
+              "y": -132,
               "ticks": 210,
               "hold": 180
             },
             {
-              "x": -100,
-              "y": -100,
+              "x": -150,
+              "y": -150,
               "ticks": 210,
               "hold": 150
             }
@@ -270,28 +270,28 @@
           {
             "name": "hull-2",
             "parent": "bow",
-            "x": 96,
+            "x": 144,
             "sprite": "bosses/ark-hull"
           },
           {
             "name": "hull-3",
             "parent": "bow",
-            "x": 192,
+            "x": 288,
             "sprite": "bosses/ark-hull"
           },
           {
             "name": "stern",
             "parent": "bow",
-            "x": 288,
+            "x": 432,
             "sprite": "bosses/ark-stern"
           },
           {
             "name": "turret-t1",
             "parent": "bow",
-            "x": 36,
-            "y": -22,
+            "x": 54,
+            "y": -33,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 768,
             "turn": 16,
             "gun": true,
@@ -301,10 +301,10 @@
           {
             "name": "turret-t2",
             "parent": "bow",
-            "x": 132,
-            "y": -24,
+            "x": 198,
+            "y": -36,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 768,
             "turn": 16,
             "gun": true,
@@ -314,10 +314,10 @@
           {
             "name": "turret-t3",
             "parent": "bow",
-            "x": 228,
-            "y": -24,
+            "x": 342,
+            "y": -36,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 768,
             "turn": 16,
             "gun": true,
@@ -327,10 +327,10 @@
           {
             "name": "turret-b1",
             "parent": "bow",
-            "x": 84,
-            "y": 22,
+            "x": 126,
+            "y": 33,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 256,
             "turn": 16,
             "gun": true,
@@ -340,10 +340,10 @@
           {
             "name": "turret-b2",
             "parent": "bow",
-            "x": 180,
-            "y": 24,
+            "x": 270,
+            "y": 36,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 256,
             "turn": 16,
             "gun": true,
@@ -353,10 +353,10 @@
           {
             "name": "turret-b3",
             "parent": "bow",
-            "x": 276,
-            "y": 22,
+            "x": 414,
+            "y": 33,
             "hp": 12,
-            "radius": 7,
+            "radius": 10.5,
             "angle": 256,
             "turn": 16,
             "gun": true,
@@ -366,10 +366,10 @@
           {
             "name": "heart",
             "parent": "bow",
-            "x": 156,
-            "y": 2,
+            "x": 234,
+            "y": 3,
             "hp": 130,
-            "radius": 9,
+            "radius": 13.5,
             "core": true,
             "sprite": "bosses/ark-heart",
             "anim": {
@@ -385,7 +385,7 @@
             "script": "boss.ark",
             "params": {
               "fireTicks": 90,
-              "bulletSpeed": 1.1,
+              "bulletSpeed": 1.65,
               "launchTicks": 220,
               "count": 1
             },
@@ -399,12 +399,12 @@
               "fireTicks": 72,
               "ways": 3,
               "spread": 40,
-              "bulletSpeed": 1.25,
+              "bulletSpeed": 1.875,
               "launchTicks": 170,
               "count": 2,
               "ring": 8,
               "ringTicks": 220,
-              "ringSpeed": 0.95
+              "ringSpeed": 1.425
             }
           }
         ]
@@ -417,33 +417,33 @@
         "displayName": "THE HOLLOW KING",
         "introTicks": 150,
         "score": 60000,
-        "x": 296,
-        "y": 100,
+        "x": 508,
+        "y": 168,
         "minion": "king-spawn",
         "parts": [
           {
             "name": "body",
-            "x": 26,
+            "x": 39,
             "sprite": "bosses/king-body"
           },
           {
             "name": "bulk",
             "parent": "body",
-            "x": 14,
+            "x": 21,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 14,
-              "hh": 20
+              "hw": 21,
+              "hh": 30
             }
           },
           {
             "name": "maw",
-            "x": 6,
-            "y": 2,
+            "x": 9,
+            "y": 3,
             "hp": 96,
             "hurtbox": {
-              "hw": 6,
-              "hh": 6
+              "hw": 9,
+              "hh": 9
             },
             "vulnerable": "whenOpen",
             "core": true,
@@ -458,58 +458,58 @@
           {
             "name": "jaw-top",
             "parent": "maw",
-            "x": -14,
-            "y": -9,
+            "x": -21,
+            "y": -13.5,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 16,
-              "hh": 4
+              "hw": 24,
+              "hh": 6
             },
             "sprite": "bosses/king-jaw-top"
           },
           {
             "name": "jaw-bottom",
             "parent": "maw",
-            "x": -14,
-            "y": 10,
+            "x": -21,
+            "y": 15,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 16,
-              "hh": 4
+              "hw": 24,
+              "hh": 6
             },
             "sprite": "bosses/king-jaw-bottom"
           },
           {
             "name": "stalk-1",
             "parent": "body",
-            "x": -18,
-            "y": -22,
-            "radius": 4,
+            "x": -27,
+            "y": -33,
+            "radius": 6,
             "vulnerable": "never",
             "sprite": "bosses/king-stalk"
           },
           {
             "name": "stalk-2",
             "parent": "stalk-1",
-            "x": -8,
-            "radius": 4,
+            "x": -12,
+            "radius": 6,
             "vulnerable": "never",
             "sprite": "bosses/king-stalk"
           },
           {
             "name": "stalk-3",
             "parent": "stalk-2",
-            "x": -8,
-            "radius": 4,
+            "x": -12,
+            "radius": 6,
             "vulnerable": "never",
             "sprite": "bosses/king-stalk"
           },
           {
             "name": "lure",
             "parent": "stalk-3",
-            "x": -9,
+            "x": -13.5,
             "hp": 30,
-            "radius": 5,
+            "radius": 7.5,
             "gun": true,
             "sprite": "bosses/king-lure",
             "anim": {
@@ -524,13 +524,13 @@
           {
             "script": "boss.angler",
             "params": {
-              "trackSpeed": 0.3,
+              "trackSpeed": 0.45,
               "closedTicks": 150,
               "openTicks": 110,
               "fireTicks": 44,
               "ways": 3,
               "spread": 44,
-              "bulletSpeed": 1.25,
+              "bulletSpeed": 1.875,
               "sway": 1,
               "swayTicks": 40,
               "gunTicks": 100
@@ -542,15 +542,15 @@
           {
             "script": "boss.angler",
             "params": {
-              "trackSpeed": 0.4,
+              "trackSpeed": 0.6,
               "closedTicks": 130,
               "openTicks": 110,
               "fireTicks": 38,
               "ways": 3,
               "spread": 44,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "ring": 8,
-              "ringSpeed": 1,
+              "ringSpeed": 1.5,
               "sway": 1,
               "swayTicks": 32,
               "gunTicks": 90,
@@ -564,15 +564,15 @@
           {
             "script": "boss.angler",
             "params": {
-              "trackSpeed": 0.5,
+              "trackSpeed": 0.75,
               "closedTicks": 100,
               "openTicks": 120,
               "fireTicks": 36,
               "ways": 5,
               "spread": 38,
-              "bulletSpeed": 1.35,
+              "bulletSpeed": 2.025,
               "ring": 10,
-              "ringSpeed": 1.05,
+              "ringSpeed": 1.575,
               "sway": 2,
               "swayTicks": 30,
               "gunTicks": 90,

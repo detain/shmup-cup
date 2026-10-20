@@ -8,7 +8,7 @@
       "slot": "missile",
       "behavior": "missile.control",
       "damage": 2,
-      "speed": 3.5,
+      "speed": 5.25,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/missile",
@@ -22,13 +22,13 @@
       "slot": "missile",
       "behavior": "missile.upper",
       "damage": 2,
-      "speed": 2.5,
+      "speed": 3.75,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/missile",
       "sfx": "PlayerMissile",
       "extra": true,
-      "params": { "slideSpeed": 3 }
+      "params": { "slideSpeed": 4.5 }
     },
     {
       "id": "missile.smallSpread",
@@ -36,13 +36,13 @@
       "slot": "missile",
       "behavior": "missile.smallSpread",
       "damage": 2,
-      "speed": 2.5,
+      "speed": 3.75,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/bomb",
       "sfx": "PlayerMissile",
       "extra": true,
-      "params": { "blastRadius": 8, "blastTicks": 10 }
+      "params": { "blastRadius": 12, "blastTicks": 10 }
     },
     {
       "id": "missile.hawkWind",
@@ -50,13 +50,13 @@
       "slot": "missile",
       "behavior": "missile.hawkWind",
       "damage": 2,
-      "speed": 2.5,
+      "speed": 3.75,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/missile",
       "sfx": "PlayerMissile",
       "extra": true,
-      "params": { "slideSpeed": 3 }
+      "params": { "slideSpeed": 4.5 }
     },
     {
       "id": "missile.twoWayBack",
@@ -64,7 +64,7 @@
       "slot": "missile",
       "behavior": "missile.twoWayBack",
       "damage": 2,
-      "speed": 3,
+      "speed": 4.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/two-way",
@@ -77,7 +77,7 @@
       "slot": "double",
       "behavior": "shot.backDouble",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/double",
@@ -90,7 +90,7 @@
       "slot": "double",
       "behavior": "shot.spreadGun",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 3,
       "pierce": false,
       "sprite": "shots/double",

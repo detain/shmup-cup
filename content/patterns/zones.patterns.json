@@ -15,7 +15,7 @@
                 "type": "aim",
                 "value": "$i * 1024 / 6"
               },
-              "speed": 0.85,
+              "speed": 1.275,
               "bullet": {
                 "kind": "round-purple"
               }
@@ -42,7 +42,7 @@
                 "type": "sequence",
                 "value": 52
               },
-              "speed": 1.1,
+              "speed": 1.65,
               "bullet": {
                 "kind": "needle-pink"
               }
@@ -82,7 +82,7 @@
           "direction": {
             "type": "aim"
           },
-          "speed": 0.85,
+          "speed": 1.275,
           "bullet": {
             "kind": "needle-pink"
           }
@@ -99,7 +99,7 @@
               },
               "speed": {
                 "type": "sequence",
-                "value": 0.25
+                "value": 0.375
               },
               "bullet": {
                 "kind": "needle-pink"
@@ -127,7 +127,7 @@
                 "type": "aim",
                 "value": "($i - 1) * 56"
               },
-              "speed": 0.75,
+              "speed": 1.125,
               "bullet": {
                 "kind": "round-purple"
               }
@@ -158,7 +158,7 @@
                     "type": "aim",
                     "value": "($i * 2 - 3) * 20"
                   },
-                  "speed": 1.15,
+                  "speed": 1.725,
                   "bullet": {
                     "kind": "needle-purple"
                   }
@@ -195,7 +195,7 @@
                     "type": "aim",
                     "value": "($i - 1) * 28"
                   },
-                  "speed": 1,
+                  "speed": 1.5,
                   "bullet": {
                     "kind": "round-red"
                   }

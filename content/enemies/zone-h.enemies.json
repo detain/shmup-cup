@@ -7,8 +7,8 @@
       "hp": 1,
       "score": 100,
       "hurtbox": {
-        "hw": 4,
-        "hh": 4
+        "hw": 6,
+        "hh": 6
       },
       "script": "drifter.sine",
       "sprite": "enemies/bolt-drone",
@@ -17,8 +17,8 @@
         "ticks": 6
       },
       "params": {
-        "speed": 1.2,
-        "amp": 16,
+        "speed": 1.8,
+        "amp": 24,
         "period": 100,
         "memberPhase": 32
       },
@@ -29,8 +29,8 @@
       "hp": 6,
       "score": 500,
       "hurtbox": {
-        "hw": 8,
-        "hh": 4
+        "hw": 12,
+        "hh": 6
       },
       "script": "hatch.spawner",
       "sprite": "enemies/hatch-bay",
@@ -52,8 +52,8 @@
       "hp": 6,
       "score": 500,
       "hurtbox": {
-        "hw": 8,
-        "hh": 4
+        "hw": 12,
+        "hh": 6
       },
       "script": "hatch.spawner",
       "sprite": "enemies/hatch-bay",
@@ -75,8 +75,8 @@
       "hp": 1,
       "score": 60,
       "hurtbox": {
-        "hw": 4,
-        "hh": 3
+        "hw": 6,
+        "hh": 5
       },
       "script": "rammer.aimed",
       "sprite": "enemies/hatch-mite",
@@ -86,13 +86,13 @@
       },
       "mover": {
         "type": "straight",
-        "vx": -0.5,
-        "vy": -0.9
+        "vx": -0.75,
+        "vy": -1.35
       },
       "params": {
         "enterTicks": 34,
         "windup": 16,
-        "speed": 1.6
+        "speed": 2.4
       },
       "drop": null
     },
@@ -101,8 +101,8 @@
       "hp": 1,
       "score": 60,
       "hurtbox": {
-        "hw": 4,
-        "hh": 3
+        "hw": 6,
+        "hh": 5
       },
       "script": "rammer.aimed",
       "sprite": "enemies/hatch-mite",
@@ -112,13 +112,13 @@
       },
       "mover": {
         "type": "straight",
-        "vx": -0.5,
-        "vy": 0.9
+        "vx": -0.75,
+        "vy": 1.35
       },
       "params": {
         "enterTicks": 34,
         "windup": 16,
-        "speed": 1.6
+        "speed": 2.4
       },
       "drop": null
     },
@@ -127,8 +127,8 @@
       "hp": 6,
       "score": 600,
       "hurtbox": {
-        "hw": 5,
-        "hh": 5
+        "hw": 8,
+        "hh": 8
       },
       "script": "emitter.laser",
       "sprite": "enemies/laser-emitter",
@@ -141,7 +141,7 @@
         "laserTicks": 200,
         "telegraph": 60,
         "active": 36,
-        "laserWidth": 6
+        "laserWidth": 9
       },
       "drop": null,
       "ground": "floor",
@@ -152,8 +152,8 @@
       "hp": 6,
       "score": 600,
       "hurtbox": {
-        "hw": 5,
-        "hh": 5
+        "hw": 8,
+        "hh": 8
       },
       "script": "emitter.laser",
       "sprite": "enemies/laser-emitter",
@@ -166,7 +166,7 @@
         "laserTicks": 200,
         "telegraph": 60,
         "active": 36,
-        "laserWidth": 6
+        "laserWidth": 9
       },
       "drop": null,
       "ground": "ceiling",
@@ -177,8 +177,8 @@
       "hp": 4,
       "score": 400,
       "hurtbox": {
-        "hw": 5,
-        "hh": 6
+        "hw": 8,
+        "hh": 9
       },
       "script": "walker.floor",
       "sprite": "enemies/sentinel-walker",
@@ -187,10 +187,10 @@
         "ticks": 12
       },
       "params": {
-        "speed": 0.6,
+        "speed": 0.9,
         "walkTicks": 100,
         "stopTicks": 50,
-        "bulletSpeed": 1.2,
+        "bulletSpeed": 1.8,
         "spread": 48
       },
       "drop": null,
@@ -202,14 +202,14 @@
       "hp": 4,
       "score": 300,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "turret.floor",
       "sprite": "enemies/rail-turret",
       "params": {
         "fireTicks": 180,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "floor",
@@ -220,14 +220,14 @@
       "hp": 4,
       "score": 300,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "turret.floor",
       "sprite": "enemies/rail-turret",
       "params": {
         "fireTicks": 180,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "ceiling",
@@ -238,8 +238,8 @@
       "hp": 2,
       "score": 150,
       "hurtbox": {
-        "hw": 4,
-        "hh": 4
+        "hw": 6,
+        "hh": 6
       },
       "script": "cell.chase",
       "sprite": "enemies/bolt-drone",
@@ -248,7 +248,7 @@
         "ticks": 4
       },
       "params": {
-        "speed": 1.1,
+        "speed": 1.65,
         "enterTicks": 30,
         "turnRate": 5,
         "chaseTicks": 120,
@@ -264,16 +264,16 @@
         "role": "captain",
         "introTicks": 90,
         "score": 8000,
-        "x": 304,
-        "y": 100,
+        "x": 520,
+        "y": 168,
         "timeLimit": 960,
         "parts": [
           {
             "name": "hull",
-            "x": 28,
+            "x": 42,
             "hurtbox": {
-              "hw": 22,
-              "hh": 14
+              "hw": 33,
+              "hh": 21
             },
             "vulnerable": "never",
             "sprite": "bosses/bulwark-hull"
@@ -281,11 +281,11 @@
           {
             "name": "wing-top",
             "parent": "hull",
-            "x": -6,
-            "y": -23,
+            "x": -9,
+            "y": -34.5,
             "hurtbox": {
-              "hw": 26,
-              "hh": 6
+              "hw": 39,
+              "hh": 9
             },
             "vulnerable": "never",
             "sprite": "bosses/bulwark-wing-top"
@@ -293,11 +293,11 @@
           {
             "name": "wing-bottom",
             "parent": "hull",
-            "x": -6,
-            "y": 23,
+            "x": -9,
+            "y": 34.5,
             "hurtbox": {
-              "hw": 26,
-              "hh": 6
+              "hw": 39,
+              "hh": 9
             },
             "vulnerable": "never",
             "sprite": "bosses/bulwark-wing-bottom"
@@ -305,11 +305,11 @@
           {
             "name": "emitter-top",
             "parent": "wing-top",
-            "x": -34,
-            "y": -2,
+            "x": -51,
+            "y": -3,
             "hurtbox": {
-              "hw": 8,
-              "hh": 4
+              "hw": 12,
+              "hh": 6
             },
             "vulnerable": "never",
             "gun": true,
@@ -322,11 +322,11 @@
           {
             "name": "emitter-bottom",
             "parent": "wing-bottom",
-            "x": -34,
-            "y": 2,
+            "x": -51,
+            "y": 3,
             "hurtbox": {
-              "hw": 8,
-              "hh": 4
+              "hw": 12,
+              "hh": 6
             },
             "vulnerable": "never",
             "gun": true,
@@ -340,8 +340,8 @@
             "name": "core",
             "hp": 20,
             "hurtbox": {
-              "hw": 7,
-              "hh": 7
+              "hw": 11,
+              "hh": 11
             },
             "vulnerable": "afterParts",
             "requires": ["plate-1", "plate-2"],
@@ -356,11 +356,11 @@
           },
           {
             "name": "plate-1",
-            "x": -11,
+            "x": -16.5,
             "hp": 8,
             "hurtbox": {
-              "hw": 3,
-              "hh": 9
+              "hw": 5,
+              "hh": 14
             },
             "sprite": "bosses/bulwark-plate",
             "score": 300,
@@ -368,11 +368,11 @@
           },
           {
             "name": "plate-2",
-            "x": -17,
+            "x": -25.5,
             "hp": 8,
             "hurtbox": {
-              "hw": 3,
-              "hh": 9
+              "hw": 5,
+              "hh": 14
             },
             "sprite": "bosses/bulwark-plate",
             "score": 300,
@@ -383,12 +383,12 @@
           {
             "script": "boss.bulwark",
             "params": {
-              "trackSpeed": 0.35,
+              "trackSpeed": 0.525,
               "laserTicks": 130,
               "firstLaser": 50,
               "ways": 3,
               "fireTicks": 140,
-              "bulletSpeed": 1.3
+              "bulletSpeed": 1.95
             }
           }
         ]
@@ -402,33 +402,33 @@
         "role": "captain",
         "introTicks": 90,
         "score": 8000,
-        "x": 304,
-        "y": 100,
+        "x": 520,
+        "y": 168,
         "timeLimit": 960,
         "parts": [
           {
             "name": "hull",
-            "x": 26,
+            "x": 39,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 28,
-              "hh": 18
+              "hw": 42,
+              "hh": 27
             },
             "sprite": "bosses/maw-hull"
           },
           {
             "name": "fin",
             "parent": "hull",
-            "x": 38,
+            "x": 57,
             "sprite": "bosses/maw-fin"
           },
           {
             "name": "maw",
-            "x": -6,
+            "x": -9,
             "hp": 22,
             "hurtbox": {
-              "hw": 6,
-              "hh": 6
+              "hw": 9,
+              "hh": 9
             },
             "vulnerable": "whenOpen",
             "core": true,
@@ -443,24 +443,24 @@
           {
             "name": "jaw-top",
             "parent": "maw",
-            "x": -8,
-            "y": -9,
+            "x": -12,
+            "y": -13.5,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 12,
-              "hh": 4
+              "hw": 18,
+              "hh": 6
             },
             "sprite": "bosses/maw-jaw-top"
           },
           {
             "name": "jaw-bottom",
             "parent": "maw",
-            "x": -8,
-            "y": 9,
+            "x": -12,
+            "y": 13.5,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 12,
-              "hh": 4
+              "hw": 18,
+              "hh": 6
             },
             "sprite": "bosses/maw-jaw-bottom"
           }
@@ -469,13 +469,13 @@
           {
             "script": "boss.maw",
             "params": {
-              "trackSpeed": 0.4,
+              "trackSpeed": 0.6,
               "closedTicks": 110,
               "openTicks": 110,
               "fireTicks": 40,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "count": 0,
-              "gape": 4
+              "gape": 6
             }
           }
         ]
@@ -489,27 +489,27 @@
         "role": "captain",
         "introTicks": 90,
         "score": 8000,
-        "x": 304,
-        "y": 100,
+        "x": 520,
+        "y": 168,
         "timeLimit": 960,
         "parts": [
           {
             "name": "hull",
-            "x": 30,
+            "x": 45,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 24,
-              "hh": 16
+              "hw": 36,
+              "hh": 24
             },
             "sprite": "bosses/bastion-hull"
           },
           {
             "name": "core",
-            "x": -10,
+            "x": -15,
             "hp": 26,
             "hurtbox": {
-              "hw": 7,
-              "hh": 7
+              "hw": 11,
+              "hh": 11
             },
             "core": true,
             "sprite": "bosses/bastion-core",
@@ -527,16 +527,16 @@
           {
             "name": "arm-a",
             "parent": "hub",
-            "x": 19,
-            "radius": 5,
+            "x": 28.5,
+            "radius": 7.5,
             "vulnerable": "never",
             "sprite": "bosses/bastion-arm"
           },
           {
             "name": "arm-b",
             "parent": "hub",
-            "x": -19,
-            "radius": 5,
+            "x": -28.5,
+            "radius": 7.5,
             "vulnerable": "never",
             "sprite": "bosses/bastion-arm"
           }
@@ -545,14 +545,14 @@
           {
             "script": "boss.bastion",
             "params": {
-              "trackSpeed": 0.4,
+              "trackSpeed": 0.6,
               "spin": 5,
               "ways": 3,
               "fireTicks": 100,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "ring": 8,
               "ringTicks": 170,
-              "ringSpeed": 1
+              "ringSpeed": 1.5
             }
           }
         ]
@@ -566,27 +566,27 @@
         "role": "captain",
         "introTicks": 90,
         "score": 8000,
-        "x": 304,
-        "y": 100,
+        "x": 520,
+        "y": 168,
         "timeLimit": 960,
         "parts": [
           {
             "name": "mantle",
-            "x": 24,
+            "x": 36,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 26,
-              "hh": 13
+              "hw": 39,
+              "hh": 20
             },
             "sprite": "bosses/regent-mantle"
           },
           {
             "name": "eye",
-            "x": -10,
+            "x": -15,
             "hp": 24,
             "hurtbox": {
-              "hw": 6,
-              "hh": 6
+              "hw": 9,
+              "hh": 9
             },
             "core": true,
             "sprite": "bosses/regent-eye",
@@ -600,10 +600,10 @@
           {
             "name": "root-top",
             "parent": "mantle",
-            "x": -12,
-            "y": -17,
+            "x": -18,
+            "y": -25.5,
             "hp": 10,
-            "radius": 6,
+            "radius": 9,
             "sprite": "bosses/regent-root",
             "score": 600,
             "explosion": "medium"
@@ -611,16 +611,16 @@
           {
             "name": "seg-top",
             "parent": "root-top",
-            "x": -11,
-            "radius": 5,
+            "x": -16.5,
+            "radius": 7.5,
             "vulnerable": "never",
             "sprite": "bosses/regent-segment"
           },
           {
             "name": "tip-top",
             "parent": "seg-top",
-            "x": -10,
-            "radius": 4,
+            "x": -15,
+            "radius": 6,
             "vulnerable": "never",
             "gun": true,
             "sprite": "bosses/regent-tip"
@@ -628,10 +628,10 @@
           {
             "name": "root-bottom",
             "parent": "mantle",
-            "x": -12,
-            "y": 17,
+            "x": -18,
+            "y": 25.5,
             "hp": 10,
-            "radius": 6,
+            "radius": 9,
             "sprite": "bosses/regent-root",
             "score": 600,
             "explosion": "medium"
@@ -639,16 +639,16 @@
           {
             "name": "seg-bottom",
             "parent": "root-bottom",
-            "x": -11,
-            "radius": 5,
+            "x": -16.5,
+            "radius": 7.5,
             "vulnerable": "never",
             "sprite": "bosses/regent-segment"
           },
           {
             "name": "tip-bottom",
             "parent": "seg-bottom",
-            "x": -10,
-            "radius": 4,
+            "x": -15,
+            "radius": 6,
             "vulnerable": "never",
             "gun": true,
             "sprite": "bosses/regent-tip"
@@ -658,7 +658,7 @@
           {
             "script": "boss.squid",
             "params": {
-              "trackSpeed": 0.35,
+              "trackSpeed": 0.525,
               "curl": 1,
               "sweepTicks": 26,
               "guardTicks": 50,
@@ -666,7 +666,7 @@
               "fireTicks": 90,
               "ways": 3,
               "spread": 40,
-              "bulletSpeed": 1.25,
+              "bulletSpeed": 1.875,
               "gunTicks": 120
             }
           }
@@ -680,32 +680,32 @@
         "displayName": "IRON SOVEREIGN",
         "introTicks": 180,
         "score": 60000,
-        "x": 300,
-        "y": 100,
+        "x": 514,
+        "y": 168,
         "minion": "sovereign-drone",
         "parts": [
           {
             "name": "hull",
-            "x": 36,
+            "x": 54,
             "sprite": "bosses/sovereign-hull"
           },
           {
             "name": "bulk",
             "parent": "hull",
-            "x": 14,
+            "x": 21,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 16,
-              "hh": 40
+              "hw": 24,
+              "hh": 60
             }
           },
           {
             "name": "core",
-            "x": 15,
+            "x": 22.5,
             "hp": 150,
             "hurtbox": {
-              "hw": 8,
-              "hh": 8
+              "hw": 12,
+              "hh": 12
             },
             "vulnerable": "afterParts",
             "requires": ["plate-1", "plate-2"],
@@ -720,12 +720,12 @@
           },
           {
             "name": "emitter-top",
-            "x": 2,
-            "y": -38,
+            "x": 3,
+            "y": -57,
             "hp": 30,
             "hurtbox": {
-              "hw": 8,
-              "hh": 5
+              "hw": 12,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/sovereign-emitter",
@@ -734,12 +734,12 @@
           },
           {
             "name": "emitter-bottom",
-            "x": 2,
-            "y": 38,
+            "x": 3,
+            "y": 57,
             "hp": 30,
             "hurtbox": {
-              "hw": 8,
-              "hh": 5
+              "hw": 12,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/sovereign-emitter",
@@ -754,42 +754,42 @@
           {
             "name": "pod-a",
             "parent": "hub",
-            "x": -24,
-            "radius": 6,
+            "x": -36,
+            "radius": 9,
             "vulnerable": "never",
             "sprite": "bosses/sovereign-pod"
           },
           {
             "name": "pod-b",
             "parent": "hub",
-            "y": -24,
-            "radius": 6,
+            "y": -36,
+            "radius": 9,
             "vulnerable": "never",
             "sprite": "bosses/sovereign-pod"
           },
           {
             "name": "pod-c",
             "parent": "hub",
-            "x": 24,
-            "radius": 6,
+            "x": 36,
+            "radius": 9,
             "vulnerable": "never",
             "sprite": "bosses/sovereign-pod"
           },
           {
             "name": "pod-d",
             "parent": "hub",
-            "y": 24,
-            "radius": 6,
+            "y": 36,
+            "radius": 9,
             "vulnerable": "never",
             "sprite": "bosses/sovereign-pod"
           },
           {
             "name": "plate-1",
-            "x": -2,
+            "x": -3,
             "hp": 24,
             "hurtbox": {
-              "hw": 4,
-              "hh": 14
+              "hw": 6,
+              "hh": 21
             },
             "sprite": "bosses/sovereign-plate",
             "score": 1000,
@@ -797,11 +797,11 @@
           },
           {
             "name": "plate-2",
-            "x": -12,
+            "x": -18,
             "hp": 24,
             "hurtbox": {
-              "hw": 4,
-              "hh": 14
+              "hw": 6,
+              "hh": 21
             },
             "sprite": "bosses/sovereign-plate",
             "score": 1000,
@@ -812,12 +812,12 @@
           {
             "script": "boss.sovereign",
             "params": {
-              "trackSpeed": 0.3,
+              "trackSpeed": 0.45,
               "laserTicks": 140,
               "firstLaser": 60,
               "ways": 3,
               "fireTicks": 120,
-              "bulletSpeed": 1.25
+              "bulletSpeed": 1.875
             },
             "until": {
               "partsDestroyed": ["plate-1", "plate-2"]
@@ -826,16 +826,16 @@
           {
             "script": "boss.sovereign",
             "params": {
-              "trackSpeed": 0.35,
+              "trackSpeed": 0.525,
               "spin": 5,
               "laserTicks": 160,
               "firstLaser": 50,
               "ways": 3,
               "fireTicks": 110,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "ring": 10,
               "ringTicks": 170,
-              "ringSpeed": 1
+              "ringSpeed": 1.5
             },
             "until": {
               "hpBelow": 110
@@ -844,18 +844,18 @@
           {
             "script": "boss.sovereign",
             "params": {
-              "trackSpeed": 0.4,
+              "trackSpeed": 0.6,
               "spin": -6,
               "reverseTicks": 220,
               "ways": 5,
               "spread": 36,
               "fireTicks": 100,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "launchTicks": 170,
               "count": 2,
               "ring": 10,
               "ringTicks": 190,
-              "ringSpeed": 1
+              "ringSpeed": 1.5
             },
             "until": {
               "hpBelow": 60
@@ -864,18 +864,18 @@
           {
             "script": "boss.sovereign",
             "params": {
-              "trackSpeed": 0.45,
+              "trackSpeed": 0.675,
               "spin": 8,
               "reverseTicks": 180,
               "laserTicks": 200,
               "firstLaser": 80,
               "ways": 3,
               "fireTicks": 130,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "spiral": 3,
               "spiralTicks": 10,
               "spiralStep": 22,
-              "spiralSpeed": 1
+              "spiralSpeed": 1.5
             }
           }
         ]

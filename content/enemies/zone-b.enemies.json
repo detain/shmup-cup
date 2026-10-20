@@ -7,8 +7,8 @@
       "hp": 3,
       "score": 200,
       "hurtbox": {
-        "hw": 8,
-        "hh": 8
+        "hw": 12,
+        "hh": 12
       },
       "script": "bubble.split",
       "sprite": "enemies/froth",
@@ -17,11 +17,11 @@
         "ticks": 12
       },
       "params": {
-        "speed": 0.7,
-        "amp": 14,
+        "speed": 1.05,
+        "amp": 21,
         "period": 140,
         "count": 2,
-        "splitSpeed": 1.1
+        "splitSpeed": 1.65
       },
       "drop": null,
       "child": "froth-bead"
@@ -31,14 +31,14 @@
       "hp": 1,
       "score": 50,
       "hurtbox": {
-        "hw": 3,
-        "hh": 3
+        "hw": 5,
+        "hh": 5
       },
       "script": "bubble.split",
       "sprite": "enemies/froth-bead",
       "params": {
-        "speed": 0.9,
-        "amp": 8,
+        "speed": 1.35,
+        "amp": 12,
         "period": 90,
         "count": 0
       },
@@ -49,8 +49,8 @@
       "hp": 4,
       "score": 300,
       "hurtbox": {
-        "hw": 9,
-        "hh": 9
+        "hw": 14,
+        "hh": 14
       },
       "script": "bubble.split",
       "sprite": "enemies/brood-bubble",
@@ -59,11 +59,11 @@
         "ticks": 16
       },
       "params": {
-        "speed": 0.6,
-        "amp": 12,
+        "speed": 0.9,
+        "amp": 18,
         "period": 160,
         "count": 1,
-        "splitSpeed": 1,
+        "splitSpeed": 1.5,
         "scatterTicks": 20
       },
       "drop": null,
@@ -75,8 +75,8 @@
       "hp": 1,
       "score": 150,
       "hurtbox": {
-        "hw": 5,
-        "hh": 3
+        "hw": 8,
+        "hh": 5
       },
       "script": "rammer.aimed",
       "sprite": "enemies/gill-dart",
@@ -86,13 +86,13 @@
       },
       "mover": {
         "type": "straight",
-        "vx": -1.2,
+        "vx": -1.8,
         "vy": 0
       },
       "params": {
         "enterTicks": 50,
         "windup": 18,
-        "speed": 1.75
+        "speed": 2.625
       },
       "drop": null
     },
@@ -101,8 +101,8 @@
       "hp": 4,
       "score": 400,
       "hurtbox": {
-        "hw": 6,
-        "hh": 6
+        "hw": 9,
+        "hh": 9
       },
       "script": "pattern.loop",
       "sprite": "enemies/reef-jelly",
@@ -112,8 +112,8 @@
       },
       "mover": {
         "type": "sine",
-        "vx": -0.45,
-        "amp": 22,
+        "vx": -0.675,
+        "amp": 33,
         "period": 180
       },
       "params": {
@@ -128,14 +128,14 @@
       "hp": 3,
       "score": 300,
       "hurtbox": {
-        "hw": 5,
-        "hh": 5
+        "hw": 8,
+        "hh": 8
       },
       "script": "turret.floor",
       "sprite": "enemies/urchin",
       "params": {
         "fireTicks": 140,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "floor",
@@ -146,14 +146,14 @@
       "hp": 3,
       "score": 300,
       "hurtbox": {
-        "hw": 5,
-        "hh": 5
+        "hw": 8,
+        "hh": 8
       },
       "script": "turret.floor",
       "sprite": "enemies/urchin",
       "params": {
         "fireTicks": 140,
-        "bulletSpeed": 1.2
+        "bulletSpeed": 1.8
       },
       "drop": null,
       "ground": "ceiling",
@@ -164,8 +164,8 @@
       "hp": 1,
       "score": 100,
       "hurtbox": {
-        "hw": 4,
-        "hh": 2
+        "hw": 6,
+        "hh": 3
       },
       "script": "rocket.homing",
       "sprite": "enemies/maw-rocket",
@@ -175,8 +175,8 @@
       },
       "params": {
         "launchTicks": 20,
-        "launchSpeed": 1,
-        "speed": 1.25,
+        "launchSpeed": 1.5,
+        "speed": 1.875,
         "turnRate": 5,
         "homeTicks": 60
       },
@@ -190,8 +190,8 @@
         "role": "captain",
         "introTicks": 60,
         "score": 4000,
-        "x": 316,
-        "y": 100,
+        "x": 538,
+        "y": 168,
         "timeLimit": 1800,
         "minion": "brood-bubble",
         "parts": [
@@ -199,8 +199,8 @@
             "name": "shell",
             "hp": 40,
             "hurtbox": {
-              "hw": 13,
-              "hh": 9
+              "hw": 20,
+              "hh": 14
             },
             "core": true,
             "sprite": "bosses/herald-shell",
@@ -213,12 +213,12 @@
           {
             "name": "tube-top",
             "parent": "shell",
-            "x": -2,
-            "y": -14,
+            "x": -3,
+            "y": -21,
             "hp": 10,
             "hurtbox": {
-              "hw": 7,
-              "hh": 5
+              "hw": 11,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/maw-pod",
@@ -227,12 +227,12 @@
           {
             "name": "tube-bottom",
             "parent": "shell",
-            "x": -2,
-            "y": 14,
+            "x": -3,
+            "y": 21,
             "hp": 10,
             "hurtbox": {
-              "hw": 7,
-              "hh": 5
+              "hw": 11,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/maw-pod",
@@ -246,7 +246,7 @@
               "launchTicks": 120,
               "count": 2,
               "fireTicks": 85,
-              "bulletSpeed": 1.2
+              "bulletSpeed": 1.8
             }
           }
         ]
@@ -259,34 +259,34 @@
         "displayName": "GALVANIC MAW",
         "introTicks": 150,
         "score": 35000,
-        "x": 300,
-        "y": 100,
+        "x": 514,
+        "y": 168,
         "minion": "maw-rocket",
         "parts": [
           {
             "name": "hull",
-            "x": 26,
+            "x": 39,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 28,
-              "hh": 18
+              "hw": 42,
+              "hh": 27
             },
             "sprite": "bosses/maw-hull"
           },
           {
             "name": "fin",
             "parent": "hull",
-            "x": 38,
+            "x": 57,
             "sprite": "bosses/maw-fin"
           },
           {
             "name": "pod-top",
-            "x": 30,
-            "y": -26,
+            "x": 45,
+            "y": -39,
             "hp": 16,
             "hurtbox": {
-              "hw": 7,
-              "hh": 5
+              "hw": 11,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/maw-pod",
@@ -294,12 +294,12 @@
           },
           {
             "name": "pod-bottom",
-            "x": 30,
-            "y": 26,
+            "x": 45,
+            "y": 39,
             "hp": 16,
             "hurtbox": {
-              "hw": 7,
-              "hh": 5
+              "hw": 11,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/maw-pod",
@@ -307,11 +307,11 @@
           },
           {
             "name": "maw",
-            "x": -6,
+            "x": -9,
             "hp": 64,
             "hurtbox": {
-              "hw": 6,
-              "hh": 6
+              "hw": 9,
+              "hh": 9
             },
             "vulnerable": "whenOpen",
             "core": true,
@@ -326,24 +326,24 @@
           {
             "name": "jaw-top",
             "parent": "maw",
-            "x": -8,
-            "y": -9,
+            "x": -12,
+            "y": -13.5,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 12,
-              "hh": 4
+              "hw": 18,
+              "hh": 6
             },
             "sprite": "bosses/maw-jaw-top"
           },
           {
             "name": "jaw-bottom",
             "parent": "maw",
-            "x": -8,
-            "y": 9,
+            "x": -12,
+            "y": 13.5,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 12,
-              "hh": 4
+              "hw": 18,
+              "hh": 6
             },
             "sprite": "bosses/maw-jaw-bottom"
           }
@@ -352,14 +352,14 @@
           {
             "script": "boss.maw",
             "params": {
-              "trackSpeed": 0.35,
+              "trackSpeed": 0.525,
               "closedTicks": 150,
               "openTicks": 90,
               "fireTicks": 40,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "launchTicks": 170,
               "count": 1,
-              "gape": 8
+              "gape": 12
             },
             "until": {
               "hpBelow": 40
@@ -368,16 +368,16 @@
           {
             "script": "boss.maw",
             "params": {
-              "trackSpeed": 0.45,
+              "trackSpeed": 0.675,
               "closedTicks": 130,
               "openTicks": 100,
               "fireTicks": 34,
-              "bulletSpeed": 1.4,
+              "bulletSpeed": 2.1,
               "ring": 8,
-              "ringSpeed": 1,
+              "ringSpeed": 1.5,
               "launchTicks": 140,
               "count": 2,
-              "gape": 8
+              "gape": 12
             },
             "until": {
               "hpBelow": 16
@@ -386,18 +386,18 @@
           {
             "script": "boss.maw",
             "params": {
-              "trackSpeed": 0.55,
+              "trackSpeed": 0.825,
               "closedTicks": 100,
               "openTicks": 110,
               "fireTicks": 30,
               "ways": 5,
               "spread": 40,
-              "bulletSpeed": 1.5,
+              "bulletSpeed": 2.25,
               "ring": 10,
-              "ringSpeed": 1.1,
+              "ringSpeed": 1.65,
               "launchTicks": 110,
               "count": 2,
-              "gape": 9
+              "gape": 13.5
             }
           }
         ]

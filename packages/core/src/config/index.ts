@@ -829,14 +829,14 @@ export const ART_SCALE = 3 / 2;
  * World lengths, speeds, radii and accelerations in code are `v1 × WORLD_SCALE`. Declared
  * `: number` so both this value and the port's 3/2 compare without a literal-type clash (TS2367).
  */
-export const WORLD_SCALE: number = 1;
+export const WORLD_SCALE: number = 3 / 2;
 
 /**
  * The §2.6 top pad (0 until R2-02's port, then 36), added to an absolute world y:
  * `y′ = WORLD_SCALE · y + WORLD_TOP_PAD`. A y above the top edge (`y < 0`) takes
  * `WORLD_SCALE · y` only (§2.6's one discontinuity); frame-anchored values read neither constant.
  */
-export const WORLD_TOP_PAD: number = 0;
+export const WORLD_TOP_PAD: number = 36;
 
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,

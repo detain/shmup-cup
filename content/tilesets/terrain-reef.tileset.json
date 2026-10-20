@@ -3,133 +3,133 @@
   "kind": "tileset",
   "id": "terrain-reef",
   "sprite": "tiles/terrain-reef",
-  "tileSize": 8,
+  "tileSize": 12,
   "tiles": [
     {
       "name": "solid",
       "type": "solid",
       "frame": 0,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
     },
     {
       "name": "floor",
       "type": "solid",
       "frame": 1,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
     },
     {
       "name": "ceiling",
       "type": "solid",
       "frame": 2,
       "anchor": "ceiling",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
     },
     {
       "name": "wall-left",
       "type": "solid",
       "frame": 3,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
     },
     {
       "name": "wall-right",
       "type": "solid",
       "frame": 4,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
     },
     {
       "name": "slope-up",
       "type": "solid",
       "frame": 5,
       "anchor": "floor",
-      "mask": [1, 2, 3, 4, 5, 6, 7, 8]
+      "mask": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     },
     {
       "name": "slope-down",
       "type": "solid",
       "frame": 6,
       "anchor": "floor",
-      "mask": [8, 7, 6, 5, 4, 3, 2, 1]
+      "mask": [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
     },
     {
       "name": "slope-up-low",
       "type": "solid",
       "frame": 7,
       "anchor": "floor",
-      "mask": [0, 1, 1, 2, 2, 3, 3, 4]
+      "mask": [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
     },
     {
       "name": "slope-up-high",
       "type": "solid",
       "frame": 8,
       "anchor": "floor",
-      "mask": [4, 5, 5, 6, 6, 7, 7, 8]
+      "mask": [6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12]
     },
     {
       "name": "slope-down-high",
       "type": "solid",
       "frame": 9,
       "anchor": "floor",
-      "mask": [8, 7, 7, 6, 6, 5, 5, 4]
+      "mask": [12, 11, 11, 10, 10, 9, 9, 8, 8, 7, 7, 6]
     },
     {
       "name": "slope-down-low",
       "type": "solid",
       "frame": 10,
       "anchor": "floor",
-      "mask": [4, 3, 3, 2, 2, 1, 1, 0]
+      "mask": [6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0]
     },
     {
       "name": "ceil-slope-up",
       "type": "solid",
       "frame": 11,
       "anchor": "ceiling",
-      "mask": [1, 2, 3, 4, 5, 6, 7, 8]
+      "mask": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     },
     {
       "name": "ceil-slope-down",
       "type": "solid",
       "frame": 12,
       "anchor": "ceiling",
-      "mask": [8, 7, 6, 5, 4, 3, 2, 1]
+      "mask": [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
     },
     {
       "name": "ceil-slope-up-low",
       "type": "solid",
       "frame": 13,
       "anchor": "ceiling",
-      "mask": [0, 1, 1, 2, 2, 3, 3, 4]
+      "mask": [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
     },
     {
       "name": "ceil-slope-up-high",
       "type": "solid",
       "frame": 14,
       "anchor": "ceiling",
-      "mask": [4, 5, 5, 6, 6, 7, 7, 8]
+      "mask": [6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12]
     },
     {
       "name": "ceil-slope-down-high",
       "type": "solid",
       "frame": 15,
       "anchor": "ceiling",
-      "mask": [8, 7, 7, 6, 6, 5, 5, 4]
+      "mask": [12, 11, 11, 10, 10, 9, 9, 8, 8, 7, 7, 6]
     },
     {
       "name": "ceil-slope-down-low",
       "type": "solid",
       "frame": 16,
       "anchor": "ceiling",
-      "mask": [4, 3, 3, 2, 2, 1, 1, 0]
+      "mask": [6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0]
     },
     {
       "name": "brick",
       "type": "solid",
       "frame": 17,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
       "hp": 4,
       "score": 10
     },
@@ -138,7 +138,7 @@
       "type": "solid",
       "frame": 18,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
       "hp": 2,
       "score": 10
     },
@@ -147,7 +147,7 @@
       "type": "solid",
       "frame": 19,
       "anchor": "floor",
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
       "hp": 3,
       "regen": 240,
       "score": 10

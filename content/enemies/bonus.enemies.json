@@ -6,11 +6,11 @@
       "id": "vault-carrier",
       "hp": 2,
       "score": 200,
-      "hurtbox": { "hw": 6, "hh": 4 },
+      "hurtbox": { "hw": 9, "hh": 6 },
       "script": "carrier.straight",
       "sprite": "enemies/carrier-red",
       "anim": { "frames": 2, "ticks": 10 },
-      "params": { "speed": 0.6 },
+      "params": { "speed": 0.9 },
       "drop": "bonusCapsule",
       "explosion": "medium"
     },
@@ -18,11 +18,11 @@
       "id": "vault-carrier-1up",
       "hp": 4,
       "score": 500,
-      "hurtbox": { "hw": 6, "hh": 4 },
+      "hurtbox": { "hw": 9, "hh": 6 },
       "script": "carrier.straight",
       "sprite": "enemies/carrier-blue",
       "anim": { "frames": 2, "ticks": 10 },
-      "params": { "speed": 0.5 },
+      "params": { "speed": 0.75 },
       "drop": "oneUp",
       "explosion": "medium"
     }

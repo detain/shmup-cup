@@ -7,8 +7,8 @@
       "hp": 2,
       "score": 100,
       "hurtbox": {
-        "hw": 6,
-        "hh": 6
+        "hw": 9,
+        "hh": 9
       },
       "script": "worm.burst",
       "sprite": "enemies/dune-worm",
@@ -17,11 +17,11 @@
         "ticks": 8
       },
       "params": {
-        "trigger": 190,
-        "vx": -0.7,
-        "up": 3.3,
-        "gravity": 0.075,
-        "maxFall": 4
+        "trigger": 285,
+        "vx": -1.05,
+        "up": 4.95,
+        "gravity": 0.1125,
+        "maxFall": 6
       },
       "drop": null,
       "ground": "floor"
@@ -31,8 +31,8 @@
       "hp": 3,
       "score": 250,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "walker.floor",
       "sprite": "enemies/husk-crawler",
@@ -41,10 +41,10 @@
         "ticks": 8
       },
       "params": {
-        "speed": 0.6,
+        "speed": 0.9,
         "walkTicks": 80,
         "stopTicks": 50,
-        "bulletSpeed": 1.2,
+        "bulletSpeed": 1.8,
         "spread": 48
       },
       "drop": null,
@@ -56,8 +56,8 @@
       "hp": 3,
       "score": 250,
       "hurtbox": {
-        "hw": 6,
-        "hh": 4
+        "hw": 9,
+        "hh": 6
       },
       "script": "walker.floor",
       "sprite": "enemies/husk-crawler",
@@ -66,10 +66,10 @@
         "ticks": 8
       },
       "params": {
-        "speed": 0.6,
+        "speed": 0.9,
         "walkTicks": 80,
         "stopTicks": 50,
-        "bulletSpeed": 1.2,
+        "bulletSpeed": 1.8,
         "spread": 48
       },
       "drop": null,
@@ -81,8 +81,8 @@
       "hp": 1,
       "score": 100,
       "hurtbox": {
-        "hw": 5,
-        "hh": 3
+        "hw": 8,
+        "hh": 5
       },
       "script": "fan.loop",
       "sprite": "enemies/sand-skimmer",
@@ -91,7 +91,7 @@
         "ticks": 5
       },
       "params": {
-        "speed": 1.5
+        "speed": 2.25
       },
       "drop": null
     },
@@ -100,8 +100,8 @@
       "hp": 6,
       "score": 500,
       "hurtbox": {
-        "hw": 6,
-        "hh": 9
+        "hw": 9,
+        "hh": 14
       },
       "script": "pattern.loop",
       "sprite": "enemies/dust-devil",
@@ -111,8 +111,8 @@
       },
       "mover": {
         "type": "sine",
-        "vx": -0.5,
-        "amp": 10,
+        "vx": -0.75,
+        "amp": 15,
         "period": 120
       },
       "params": {
@@ -127,8 +127,8 @@
       "hp": 10,
       "score": 700,
       "hurtbox": {
-        "hw": 9,
-        "hh": 4
+        "hw": 14,
+        "hh": 6
       },
       "script": "volcano.lob",
       "sprite": "enemies/sand-geyser",
@@ -139,11 +139,11 @@
       "params": {
         "interval": 110,
         "count": 3,
-        "minUp": 2.2,
-        "maxUp": 3,
-        "spread": 1,
-        "gravity": 0.08,
-        "maxFall": 3
+        "minUp": 3.3,
+        "maxUp": 4.5,
+        "spread": 1.5,
+        "gravity": 0.12,
+        "maxFall": 4.5
       },
       "drop": null,
       "ground": "floor",
@@ -155,8 +155,8 @@
       "hp": 1,
       "score": 30,
       "hurtbox": {
-        "hw": 2,
-        "hh": 2
+        "hw": 3,
+        "hh": 3
       },
       "script": "rock.fall",
       "sprite": "enemies/sand-clod",
@@ -171,8 +171,8 @@
       "hp": 2,
       "score": 150,
       "hurtbox": {
-        "hw": 5,
-        "hh": 4
+        "hw": 8,
+        "hh": 6
       },
       "script": "rammer.aimed",
       "sprite": "enemies/widow-drone",
@@ -182,13 +182,13 @@
       },
       "mover": {
         "type": "straight",
-        "vx": -0.9,
+        "vx": -1.35,
         "vy": 0
       },
       "params": {
         "enterTicks": 40,
         "windup": 20,
-        "speed": 1.6
+        "speed": 2.4
       },
       "drop": null
     },
@@ -199,52 +199,52 @@
         "displayName": "SANDGRAVE WIDOW",
         "introTicks": 150,
         "score": 35000,
-        "x": 300,
-        "y": 100,
+        "x": 514,
+        "y": 168,
         "minion": "widow-drone",
         "parts": [
           {
             "name": "leg-top-front",
-            "x": 12,
-            "y": -21,
+            "x": 18,
+            "y": -31.5,
             "sprite": "bosses/widow-leg-top"
           },
           {
             "name": "leg-top-back",
-            "x": 40,
-            "y": -25,
+            "x": 60,
+            "y": -37.5,
             "sprite": "bosses/widow-leg-top"
           },
           {
             "name": "leg-bottom-front",
-            "x": 12,
-            "y": 21,
+            "x": 18,
+            "y": 31.5,
             "sprite": "bosses/widow-leg-bottom"
           },
           {
             "name": "leg-bottom-back",
-            "x": 40,
-            "y": 25,
+            "x": 60,
+            "y": 37.5,
             "sprite": "bosses/widow-leg-bottom"
           },
           {
             "name": "body",
-            "x": 30,
+            "x": 45,
             "vulnerable": "never",
             "hurtbox": {
-              "hw": 24,
-              "hh": 17
+              "hw": 36,
+              "hh": 26
             },
             "sprite": "bosses/widow-body"
           },
           {
             "name": "spinneret-top",
-            "x": 54,
-            "y": -14,
+            "x": 81,
+            "y": -21,
             "hp": 20,
             "hurtbox": {
-              "hw": 5,
-              "hh": 5
+              "hw": 8,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/widow-spinneret",
@@ -256,12 +256,12 @@
           },
           {
             "name": "spinneret-bottom",
-            "x": 54,
-            "y": 14,
+            "x": 81,
+            "y": 21,
             "hp": 20,
             "hurtbox": {
-              "hw": 5,
-              "hh": 5
+              "hw": 8,
+              "hh": 8
             },
             "gun": true,
             "sprite": "bosses/widow-spinneret",
@@ -275,8 +275,8 @@
             "name": "head",
             "hp": 56,
             "hurtbox": {
-              "hw": 8,
-              "hh": 7
+              "hw": 12,
+              "hh": 11
             },
             "vulnerable": "afterParts",
             "requires": ["fang-top", "fang-bottom"],
@@ -291,24 +291,24 @@
           },
           {
             "name": "fang-top",
-            "x": -11,
-            "y": -5,
+            "x": -16.5,
+            "y": -7.5,
             "hp": 14,
             "hurtbox": {
-              "hw": 4,
-              "hh": 6
+              "hw": 6,
+              "hh": 9
             },
             "sprite": "bosses/widow-fang",
             "score": 800
           },
           {
             "name": "fang-bottom",
-            "x": -11,
-            "y": 5,
+            "x": -16.5,
+            "y": 7.5,
             "hp": 14,
             "hurtbox": {
-              "hw": 4,
-              "hh": 6
+              "hw": 6,
+              "hh": 9
             },
             "sprite": "bosses/widow-fang",
             "score": 800
@@ -318,11 +318,11 @@
           {
             "script": "boss.widow",
             "params": {
-              "minX": 270,
-              "maxX": 316,
+              "minX": 437,
+              "maxX": 538,
               "stepTicks": 110,
               "fireTicks": 90,
-              "bulletSpeed": 1.25,
+              "bulletSpeed": 1.875,
               "launchTicks": 180,
               "count": 1
             },
@@ -333,11 +333,11 @@
           {
             "script": "boss.widow",
             "params": {
-              "minX": 270,
-              "maxX": 316,
+              "minX": 437,
+              "maxX": 538,
               "stepTicks": 95,
               "fireTicks": 80,
-              "bulletSpeed": 1.3,
+              "bulletSpeed": 1.95,
               "launchTicks": 150,
               "count": 2,
               "laserTicks": 160
@@ -349,13 +349,13 @@
           {
             "script": "boss.widow",
             "params": {
-              "minX": 270,
-              "maxX": 316,
+              "minX": 437,
+              "maxX": 538,
               "stepTicks": 80,
               "fireTicks": 64,
               "ways": 5,
               "spread": 36,
-              "bulletSpeed": 1.35,
+              "bulletSpeed": 2.025,
               "launchTicks": 130,
               "count": 2,
               "laserTicks": 130

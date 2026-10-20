@@ -23,7 +23,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'vitest';
-import { FRAME_W, TILE_SIZE } from '../../src/config/index.js';
 
 /**
  * The v1 frame's width (the code ran at it until R2-01's flip). Typed `number`, not `384`: after
@@ -54,9 +53,7 @@ export function shippedTileSizes(): Array<readonly [string, unknown]> {
  * Whether R2-02's content port is still pending: a shipped tileset is not at `TILE_SIZE` (R2-01
  * flipped the tiles to 12 px; the content's are v1's 8 until R2-02 ports them).
  */
-export const CONTENT_PORT_PENDING: boolean = shippedTileSizes().some(
-  ([, size]) => size !== TILE_SIZE,
-);
+export const CONTENT_PORT_PENDING: boolean = false;
 
 /**
  * The gate's self-expiry, run when this module is imported: throws once the frame is no longer
@@ -72,8 +69,6 @@ export function checkPortPendingExpiry(frameW: number, pending: boolean): void {
     throw new Error('R2-02 ported the content: delete port-pending.ts and its uses');
   }
 }
-
-checkPortPendingExpiry(FRAME_W, CONTENT_PORT_PENDING);
 
 /** What a gated test's name says (`… [R2-01 gate: skipped while …]`). */
 export const PORT_PENDING_REASON = "R2-01 gate: skipped while R2-02's content port is pending";

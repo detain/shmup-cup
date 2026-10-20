@@ -12,7 +12,7 @@
             {
               "op": "fire",
               "direction": { "type": "aim", "value": "($i - 1) * 48" },
-              "speed": "1.25 + $rank / 32",
+              "speed": "(1.25 + $rank / 32) * 1.5",
               "bulletRef": "example.shot"
             }
           ]
@@ -34,7 +34,7 @@
             {
               "op": "fire",
               "direction": { "type": "aim" },
-              "speed": "1 + $i * $2",
+              "speed": "(1 + $i * $2) * 1.5",
               "bullet": { "kind": "needle-red" }
             }
           ]
@@ -48,7 +48,7 @@
       "kind": "oval-pink",
       "actions": [
         { "op": "wait", "ticks": 40 },
-        { "op": "accel", "accel": 0.02, "max": 2, "term": 60 }
+        { "op": "accel", "accel": 0.03, "max": 3, "term": 60 }
       ]
     }
   ]

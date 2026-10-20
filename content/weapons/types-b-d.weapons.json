@@ -8,12 +8,12 @@
       "slot": "missile",
       "behavior": "missile.spreadBomb",
       "damage": 2,
-      "speed": 2.5,
+      "speed": 3.75,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/bomb",
       "sfx": "PlayerMissile",
-      "params": { "angle": 64, "gravity": 0.12, "blastRadius": 14, "blastTicks": 12 }
+      "params": { "angle": 64, "gravity": 0.18, "blastRadius": 21, "blastTicks": 12 }
     },
     {
       "id": "missile.twoWay",
@@ -21,7 +21,7 @@
       "slot": "missile",
       "behavior": "missile.twoWay",
       "damage": 2,
-      "speed": 3,
+      "speed": 4.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/two-way",
@@ -34,12 +34,12 @@
       "slot": "missile",
       "behavior": "missile.torpedo",
       "damage": 2,
-      "speed": 4,
+      "speed": 6,
       "cap": 1,
       "pierce": false,
       "sprite": "shots/torpedo",
       "sfx": "PlayerMissile",
-      "params": { "slideSpeed": 5 }
+      "params": { "slideSpeed": 7.5 }
     },
     {
       "id": "shot.tail",
@@ -47,7 +47,7 @@
       "slot": "double",
       "behavior": "shot.tailGun",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/tail",
@@ -59,7 +59,7 @@
       "slot": "double",
       "behavior": "shot.vertical",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/vertical",
@@ -71,7 +71,7 @@
       "slot": "double",
       "behavior": "shot.freeWay",
       "damage": 1,
-      "speed": 7,
+      "speed": 10.5,
       "cap": 2,
       "pierce": false,
       "sprite": "shots/free",
@@ -83,13 +83,13 @@
       "slot": "laser",
       "behavior": "laser.ripple",
       "damage": 1,
-      "speed": 6,
+      "speed": 9,
       "cap": 3,
       "pierce": false,
       "sprite": "shots/ripple",
       "sfx": "PlayerShot",
       "refireTicks": 8,
-      "params": { "startSize": 4, "maxSize": 20, "growth": 0.5 }
+      "params": { "startSize": 6, "maxSize": 30, "growth": 0.75 }
     },
     {
       "id": "laser.cyclone",
@@ -97,12 +97,12 @@
       "slot": "laser",
       "behavior": "laser.cyclone",
       "damage": 1,
-      "speed": 10,
+      "speed": 15,
       "cap": 1,
       "pierce": true,
       "sprite": "shots/cyclone",
       "sfx": "PlayerShot",
-      "params": { "maxLength": 80, "hitCooldownTicks": 6 }
+      "params": { "maxLength": 120, "hitCooldownTicks": 6 }
     },
     {
       "id": "laser.twin",
@@ -110,12 +110,12 @@
       "slot": "laser",
       "behavior": "laser.twin",
       "damage": 1,
-      "speed": 12,
+      "speed": 18,
       "cap": 4,
       "pierce": false,
       "sprite": "shots/twin",
       "sfx": "PlayerShot",
-      "params": { "maxLength": 16, "gap": 8 }
+      "params": { "maxLength": 24, "gap": 12 }
     }
   ],
   "presets": [

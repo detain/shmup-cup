@@ -4,119 +4,119 @@
   "id": "test-range",
   "name": "TEST RANGE",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 4800,
+  "length": 7200,
   "camera": [
-    { "x": 0, "speed": 1, "ramp": 60 },
-    { "x": 1500, "speed": 2, "ramp": 120 },
-    { "x": 2700, "speed": 0.5, "ramp": 90 },
-    { "x": 3000, "speed": 1, "ramp": 60 }
+    { "x": 0, "speed": 1.5, "ramp": 60 },
+    { "x": 2250, "speed": 3, "ramp": 120 },
+    { "x": 4050, "speed": 0.75, "ramp": 90 },
+    { "x": 4500, "speed": 1.5, "ramp": 60 }
   ],
-  "checkpoints": [{ "x": 0 }, { "x": 1500 }, { "x": 3000 }],
+  "checkpoints": [{ "x": 0 }, { "x": 2250 }, { "x": 4500 }],
   "parallax": [
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
-    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
-    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 192, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 192, "spacing": 192 }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-a",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
-        { "from": 96, "to": 1400, "floor": { "base": 28, "amp": 16, "period": 320, "seed": 1 } },
+        { "from": 144, "to": 2100, "floor": { "base": 42, "amp": 24, "period": 480, "seed": 1 } },
         {
-          "from": 1500,
-          "to": 2700,
-          "floor": { "base": 32, "amp": 20, "period": 400, "seed": 2 },
-          "ceiling": { "base": 24, "amp": 16, "period": 256, "seed": 3 }
+          "from": 2250,
+          "to": 4050,
+          "floor": { "base": 48, "amp": 30, "period": 600, "seed": 2 },
+          "ceiling": { "base": 72, "amp": 24, "period": 384, "seed": 3 }
         },
         {
-          "from": 3000,
-          "to": 4400,
-          "floor": { "base": 16, "amp": 8, "period": 200, "seed": 5 },
-          "ceiling": { "base": 40, "amp": 24, "period": 360, "seed": 4 }
+          "from": 4500,
+          "to": 6600,
+          "floor": { "base": 24, "amp": 12, "period": 300, "seed": 5 },
+          "ceiling": { "base": 96, "amp": 36, "period": 540, "seed": 4 }
         }
       ]
     }
   },
   "events": [
     {
-      "x": 60,
+      "x": 90,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 14,
-      "y": 60,
+      "y": 126,
       "bonus": 500
     },
-    { "x": 240, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 360, "type": "spawn", "enemy": "carrier", "y": 186 },
     {
-      "x": 360,
+      "x": 540,
       "type": "formation",
       "enemy": "fan",
       "count": 5,
       "interval": 10,
-      "y": 130,
+      "y": 231,
       "path": "fan-loop",
       "bonus": 1000
     },
-    { "x": 500, "type": "spawn", "enemy": "turret" },
-    { "x": 580, "type": "spawn", "enemy": "walker" },
-    { "x": 700, "type": "spawn", "enemy": "hatch" },
-    { "x": 840, "type": "spawn", "enemy": "rammer", "y": 50 },
+    { "x": 686, "type": "spawn", "enemy": "turret" },
+    { "x": 806, "type": "spawn", "enemy": "walker" },
+    { "x": 986, "type": "spawn", "enemy": "hatch" },
+    { "x": 1260, "type": "spawn", "enemy": "rammer", "y": 111 },
     {
-      "x": 1000,
+      "x": 1500,
       "type": "formation",
       "enemy": "drifter",
       "count": 6,
       "interval": 12,
-      "y": 130,
+      "y": 231,
       "drop": null,
       "bonus": 300
     },
-    { "x": 1200, "type": "spawn", "enemy": "turret" },
-    { "x": 1500, "type": "flag", "flag": "high-speed" },
-    { "x": 1600, "type": "spawn", "enemy": "turret-ceiling" },
-    { "x": 1800, "type": "spawn", "enemy": "orbiter", "y": 70, "path": "orbit-loop" },
+    { "x": 1736, "type": "spawn", "enemy": "turret" },
+    { "x": 2250, "type": "flag", "flag": "high-speed" },
+    { "x": 2336, "type": "spawn", "enemy": "turret-ceiling" },
+    { "x": 2700, "type": "spawn", "enemy": "orbiter", "y": 141, "path": "orbit-loop" },
     {
-      "x": 2000,
+      "x": 3000,
       "type": "formation",
       "enemy": "fan",
       "count": 4,
       "interval": 10,
-      "y": 80,
+      "y": 156,
       "path": "dive-down",
       "bonus": 800
     },
-    { "x": 2300, "type": "spawn", "enemy": "carrier", "y": 110 },
-    { "x": 2600, "type": "speed", "speed": 1.5, "ramp": 60 },
-    { "x": 2700, "type": "flag", "flag": "high-speed", "value": false },
-    { "x": 3100, "type": "spawn", "enemy": "walker" },
-    { "x": 3200, "type": "spawn", "enemy": "hatch" },
-    { "x": 3300, "type": "spawn", "enemy": "turret-ceiling" },
+    { "x": 3450, "type": "spawn", "enemy": "carrier", "y": 201 },
+    { "x": 3900, "type": "speed", "speed": 2.25, "ramp": 60 },
+    { "x": 4050, "type": "flag", "flag": "high-speed", "value": false },
+    { "x": 4586, "type": "spawn", "enemy": "walker" },
+    { "x": 4736, "type": "spawn", "enemy": "hatch" },
+    { "x": 4886, "type": "spawn", "enemy": "turret-ceiling" },
     {
-      "x": 3500,
+      "x": 5250,
       "type": "formation",
       "enemy": "drifter",
       "count": 5,
       "interval": 14,
-      "y": 90,
+      "y": 171,
       "bonus": 500
     },
-    { "x": 3800, "type": "spawn", "enemy": "orbiter", "y": 60 },
+    { "x": 5700, "type": "spawn", "enemy": "orbiter", "y": 126 },
     {
-      "x": 4000,
+      "x": 6000,
       "type": "formation",
       "enemy": "fan",
       "count": 5,
       "interval": 10,
-      "y": 140,
+      "y": 246,
       "path": "fan-loop",
       "bonus": 1000
     },
-    { "x": 4200, "type": "spawn", "enemy": "carrier", "y": 90 },
-    { "x": 4800, "type": "end" }
+    { "x": 6300, "type": "spawn", "enemy": "carrier", "y": 171 },
+    { "x": 7200, "type": "end" }
   ]
 }

@@ -4,49 +4,49 @@
   "id": "dimension",
   "name": "HIGH-SPEED DIMENSION",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 6400,
+  "length": 9600,
   "camera": [
-    { "x": 0, "speed": 2, "ramp": 60 },
-    { "x": 800, "speed": 4, "ramp": 120 },
-    { "x": 3600, "speed": 5, "ramp": 120 },
-    { "x": 5200, "speed": 2, "ramp": 120, "lock": true }
+    { "x": 0, "speed": 3, "ramp": 60 },
+    { "x": 1200, "speed": 6, "ramp": 120 },
+    { "x": 5400, "speed": 7.5, "ramp": 120 },
+    { "x": 7800, "speed": 3, "ramp": 120, "lock": true }
   ],
-  "checkpoints": [{ "x": 0 }, { "x": 1800 }, { "x": 3600 }],
+  "checkpoints": [{ "x": 0 }, { "x": 2700 }, { "x": 5400 }],
   "parallax": [
     {
       "layer": "far",
       "sprite": "bg/dimension-sky",
       "factor": 0.15,
-      "y": 52,
-      "spacing": 128
+      "y": 96,
+      "spacing": 192
     }
   ],
   "mode7": {
     "sprite": "bg/dimension-floor",
-    "horizon": 100,
-    "bottom": 200,
-    "height": 34,
+    "horizon": 168,
+    "bottom": 336,
+    "height": 51,
     "scroll": 0.09,
     "sway": 0.05,
     "fog": "#20124a",
-    "fogDepth": 220,
+    "fogDepth": 330,
     "alpha": 1
   },
   "tilemap": null,
   "events": [
-    { "x": 240, "type": "spawn", "enemy": "dim-pylon", "y": 40 },
-    { "x": 240, "type": "spawn", "enemy": "dim-pylon", "y": 168 },
-    { "x": 520, "type": "spawn", "enemy": "dim-pylon", "y": 28 },
-    { "x": 760, "type": "spawn", "enemy": "dim-pylon", "y": 180 },
-    { "x": 1000, "type": "spawn", "enemy": "dim-pylon", "y": 40 },
-    { "x": 1000, "type": "spawn", "enemy": "dim-pylon", "y": 168 },
-    { "x": 1300, "type": "spawn", "enemy": "dim-pylon", "y": 30 },
-    { "x": 1600, "type": "spawn", "enemy": "dim-pylon", "y": 176 },
-    { "x": 1900, "type": "boss", "enemy": "shadow-strider" },
-    { "x": 3800, "type": "spawn", "enemy": "dim-pylon", "y": 36 },
-    { "x": 4100, "type": "spawn", "enemy": "dim-pylon", "y": 172 },
-    { "x": 4400, "type": "boss", "enemy": "iron-talon" },
-    { "x": 5000, "type": "warning", "enemy": "grasping-bloom" },
-    { "x": 6200, "type": "end" }
+    { "x": 360, "type": "spawn", "enemy": "dim-pylon", "y": 96 },
+    { "x": 360, "type": "spawn", "enemy": "dim-pylon", "y": 288 },
+    { "x": 780, "type": "spawn", "enemy": "dim-pylon", "y": 78 },
+    { "x": 1140, "type": "spawn", "enemy": "dim-pylon", "y": 306 },
+    { "x": 1500, "type": "spawn", "enemy": "dim-pylon", "y": 96 },
+    { "x": 1500, "type": "spawn", "enemy": "dim-pylon", "y": 288 },
+    { "x": 1950, "type": "spawn", "enemy": "dim-pylon", "y": 81 },
+    { "x": 2400, "type": "spawn", "enemy": "dim-pylon", "y": 300 },
+    { "x": 2850, "type": "boss", "enemy": "shadow-strider" },
+    { "x": 5700, "type": "spawn", "enemy": "dim-pylon", "y": 90 },
+    { "x": 6150, "type": "spawn", "enemy": "dim-pylon", "y": 294 },
+    { "x": 6600, "type": "boss", "enemy": "iron-talon" },
+    { "x": 7500, "type": "warning", "enemy": "grasping-bloom" },
+    { "x": 9300, "type": "end" }
   ]
 }

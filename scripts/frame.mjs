@@ -84,7 +84,7 @@ export const LINE_H = 15;
  * 1 until R2-02's port, then 3/2 — the one mirror export that need not be a whole number.
  * World lengths in the scripts are written `v1 × WORLD_SCALE`.
  */
-export const WORLD_SCALE = 1;
+export const WORLD_SCALE = 3 / 2;
 
 /**
  * How far ahead of the camera an enemy appears by default: 16 px past the right edge of the

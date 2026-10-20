@@ -7,31 +7,31 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 9800,
+  "length": 14700,
   "camera": [
     {
       "x": 0,
-      "speed": 0.8,
+      "speed": 1.2,
       "ramp": 60
     },
     {
-      "x": 2200,
-      "speed": 0.7,
+      "x": 3300,
+      "speed": 1.05,
       "ramp": 60
     },
     {
-      "x": 4600,
-      "speed": 0.75,
+      "x": 6900,
+      "speed": 1.125,
       "ramp": 60
     },
     {
-      "x": 6800,
-      "speed": 1.3,
+      "x": 10200,
+      "speed": 1.95,
       "ramp": 120
     },
     {
-      "x": 8600,
-      "speed": 0.75,
+      "x": 12900,
+      "speed": 1.125,
       "ramp": 120
     }
   ],
@@ -40,13 +40,13 @@
       "x": 0
     },
     {
-      "x": 2200
+      "x": 3300
     },
     {
-      "x": 4600
+      "x": 6900
     },
     {
-      "x": 6800
+      "x": 10200
     }
   ],
   "parallax": [
@@ -55,96 +55,96 @@
       "sprite": "bg/prism-facets",
       "factor": 0.2,
       "y": 0,
-      "spacing": 128
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/prism-facets",
       "factor": 0.2,
-      "y": 64,
-      "spacing": 128
+      "y": 96,
+      "spacing": 192
     },
     {
       "layer": "far",
       "sprite": "bg/prism-facets",
       "factor": 0.2,
-      "y": 128,
-      "spacing": 128
+      "y": 192,
+      "spacing": 192
     },
     {
       "layer": "mid",
       "sprite": "bg/prism-spires",
       "factor": 0.4,
-      "y": 144,
-      "spacing": 128
+      "y": 252,
+      "spacing": 192
     }
   ],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-prism",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 120,
-          "to": 2140,
+          "from": 180,
+          "to": 3210,
           "floor": {
-            "base": 24,
-            "amp": 10,
-            "period": 120,
+            "base": 36,
+            "amp": 15,
+            "period": 180,
             "seed": 111
           }
         },
         {
-          "from": 800,
-          "to": 2140,
+          "from": 1200,
+          "to": 3210,
           "ceiling": {
-            "base": 16,
-            "amp": 8,
-            "period": 140,
+            "base": 60,
+            "amp": 12,
+            "period": 210,
             "seed": 112
           }
         },
         {
-          "from": 2200,
-          "to": 4560,
+          "from": 3300,
+          "to": 6840,
           "floor": {
-            "base": 28,
-            "amp": 8,
-            "period": 200,
+            "base": 42,
+            "amp": 12,
+            "period": 300,
             "seed": 113
           },
           "ceiling": {
-            "base": 28,
-            "amp": 8,
-            "period": 220,
+            "base": 78,
+            "amp": 12,
+            "period": 330,
             "seed": 114
           }
         },
         {
-          "from": 4640,
-          "to": 6760,
+          "from": 6960,
+          "to": 10140,
           "floor": {
-            "base": 30,
-            "amp": 8,
-            "period": 240,
+            "base": 45,
+            "amp": 12,
+            "period": 360,
             "seed": 115
           },
           "ceiling": {
-            "base": 30,
-            "amp": 8,
-            "period": 260,
+            "base": 81,
+            "amp": 12,
+            "period": 390,
             "seed": 116
           }
         },
         {
-          "from": 6820,
-          "to": 8560,
+          "from": 10230,
+          "to": 12840,
           "floor": {
-            "base": 18,
-            "amp": 12,
-            "period": 100,
+            "base": 27,
+            "amp": 18,
+            "period": 150,
             "seed": 117
           }
         }
@@ -156,14 +156,17 @@
       "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
       "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
       "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
       "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
-      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
-      "424*0, 2*3, 16*0, 2*2, 16*0, 2*3, 16*0, 2*2, 16*0, 2*3, 16*0, 2*2, 16*0, 2*3",
+      "424*0, 4, 5, 16*0, 2, 2, 16*0, 4, 5, 16*0, 2, 2, 16*0, 4, 5, 16*0, 2, 2, 16*0, 4, 5",
+      "424*0, 2*3, 16*0, 4, 5, 16*0, 2*3, 16*0, 4, 5, 16*0, 2*3, 16*0, 4, 5, 16*0, 2*3",
       "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
       "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
       "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
@@ -180,177 +183,177 @@
   },
   "events": [
     {
-      "x": 140,
+      "x": 210,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 5,
       "interval": 16,
-      "y": 70,
+      "y": 141,
       "bonus": 300
     },
     {
-      "x": 300,
+      "x": 450,
       "type": "spawn",
       "enemy": "tender",
-      "y": 110
+      "y": 201
     },
     {
-      "x": 440,
+      "x": 596,
       "type": "spawn",
       "enemy": "facet-turret"
     },
     {
-      "x": 680,
+      "x": 1020,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 820,
+      "x": 1230,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 116,
+      "y": 210,
       "bonus": 400
     },
     {
-      "x": 960,
+      "x": 1440,
       "type": "spawn",
       "enemy": "prism-lens",
-      "y": 40
+      "y": 96
     },
     {
-      "x": 1100,
+      "x": 1650,
       "type": "spawn",
       "enemy": "tender",
-      "y": 130
+      "y": 231
     },
     {
-      "x": 1240,
+      "x": 1796,
       "type": "spawn",
       "enemy": "facet-turret-ceiling"
     },
     {
-      "x": 1360,
+      "x": 2040,
       "type": "spawn",
       "enemy": "geode",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 1500,
+      "x": 2250,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 1760,
+      "x": 2640,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 60,
+      "y": 126,
       "drop": null
     },
     {
-      "x": 1830,
+      "x": 2681,
       "type": "spawn",
       "enemy": "facet-turret"
     },
     {
-      "x": 1880,
+      "x": 2820,
       "type": "spawn",
       "enemy": "halo-crystal",
-      "y": 150,
+      "y": 261,
       "path": "gyre-orbit-up"
     },
     {
-      "x": 2240,
+      "x": 3360,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 2300,
+      "x": 3450,
       "type": "bonus",
       "stage": "glimmer-cache",
       "entrance": "ground",
-      "until": 3100
+      "until": 4650
     },
     {
-      "x": 2340,
+      "x": 3450,
       "type": "spawn",
       "enemy": "facet-turret"
     },
     {
-      "x": 2440,
+      "x": 3596,
       "type": "spawn",
       "enemy": "facet-turret-ceiling"
     },
     {
-      "x": 2540,
+      "x": 3810,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 2620,
+      "x": 3866,
       "type": "spawn",
       "enemy": "facet-turret"
     },
     {
-      "x": 2720,
+      "x": 4016,
       "type": "spawn",
       "enemy": "facet-turret-ceiling"
     },
     {
-      "x": 2800,
+      "x": 4200,
       "type": "spawn",
       "enemy": "tender",
-      "y": 120
+      "y": 216
     },
     {
-      "x": 2860,
+      "x": 4290,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 5,
       "interval": 14,
-      "y": 100,
+      "y": 186,
       "bonus": 500
     },
     {
-      "x": 3000,
+      "x": 4500,
       "type": "spawn",
       "enemy": "prism-lens",
-      "y": 40
+      "y": 96
     },
     {
-      "x": 3600,
+      "x": 5400,
       "type": "spawn",
       "enemy": "prism-lens-low",
-      "y": 160
+      "y": 276
     },
     {
-      "x": 4300,
+      "x": 6450,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 4440,
+      "x": 6660,
       "type": "spawn",
       "enemy": "halo-crystal",
-      "y": 50,
+      "y": 111,
       "path": "gyre-orbit-down"
     },
     {
-      "x": 4640,
+      "x": 6960,
       "type": "spawn",
       "enemy": "tender",
-      "y": 90
+      "y": 171
     },
     {
-      "x": 4760,
+      "x": 7140,
       "type": "formation",
       "enemy": "prism-cube",
       "count": 8,
@@ -358,28 +361,28 @@
       "drop": null
     },
     {
-      "x": 4960,
+      "x": 7440,
       "type": "spawn",
       "enemy": "tender",
-      "y": 130
+      "y": 231
     },
     {
-      "x": 5200,
+      "x": 7800,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 100,
+      "y": 186,
       "bonus": 500
     },
     {
-      "x": 5340,
+      "x": 8010,
       "type": "spawn",
       "enemy": "tender",
-      "y": 70
+      "y": 141
     },
     {
-      "x": 5460,
+      "x": 8190,
       "type": "formation",
       "enemy": "prism-cube",
       "count": 10,
@@ -387,13 +390,13 @@
       "drop": null
     },
     {
-      "x": 5700,
+      "x": 8550,
       "type": "spawn",
       "enemy": "geode",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 5960,
+      "x": 8940,
       "type": "formation",
       "enemy": "prism-cube",
       "count": 10,
@@ -401,22 +404,22 @@
       "drop": null
     },
     {
-      "x": 6200,
+      "x": 9300,
       "type": "spawn",
       "enemy": "prism-lens-low",
-      "y": 160
+      "y": 276
     },
     {
-      "x": 6340,
+      "x": 9510,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 60,
+      "y": 126,
       "drop": null
     },
     {
-      "x": 6480,
+      "x": 9720,
       "type": "formation",
       "enemy": "prism-cube",
       "count": 8,
@@ -424,106 +427,106 @@
       "drop": null
     },
     {
-      "x": 6840,
+      "x": 10260,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 186
     },
     {
-      "x": 6960,
+      "x": 10440,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 8,
       "interval": 10,
-      "y": 60,
+      "y": 126,
       "bonus": 600
     },
     {
-      "x": 7100,
+      "x": 10650,
       "type": "spawn",
       "enemy": "tender",
-      "y": 140
+      "y": 246
     },
     {
-      "x": 7240,
+      "x": 10860,
       "type": "spawn",
       "enemy": "prism-lens",
-      "y": 40
+      "y": 96
     },
     {
-      "x": 7300,
+      "x": 10886,
       "type": "spawn",
       "enemy": "facet-turret"
     },
     {
-      "x": 7380,
+      "x": 11070,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 8,
       "interval": 10,
-      "y": 140,
+      "y": 246,
       "bonus": 600
     },
     {
-      "x": 7520,
+      "x": 11280,
       "type": "spawn",
       "enemy": "tender",
-      "y": 70
+      "y": 141
     },
     {
-      "x": 7660,
+      "x": 11490,
       "type": "spawn",
       "enemy": "halo-crystal",
-      "y": 60,
+      "y": 126,
       "path": "gyre-orbit-down"
     },
     {
-      "x": 7800,
+      "x": 11700,
       "type": "spawn",
       "enemy": "geode",
-      "y": 120
+      "y": 216
     },
     {
-      "x": 7960,
+      "x": 11940,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 8,
       "interval": 10,
-      "y": 90,
+      "y": 171,
       "drop": null
     },
     {
-      "x": 8120,
+      "x": 12180,
       "type": "spawn",
       "enemy": "prism-lens-low",
-      "y": 160
+      "y": 276
     },
     {
-      "x": 8300,
+      "x": 12450,
       "type": "spawn",
       "enemy": "halo-crystal",
-      "y": 150,
+      "y": 261,
       "path": "gyre-orbit-up"
     },
     {
-      "x": 8720,
+      "x": 13080,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 156
     },
     {
-      "x": 8960,
+      "x": 13440,
       "type": "spawn",
       "enemy": "tender",
-      "y": 130
+      "y": 231
     },
     {
-      "x": 9300,
+      "x": 13950,
       "type": "warning",
       "enemy": "facet-monarch"
     },
     {
-      "x": 9800,
+      "x": 14700,
       "type": "end"
     }
   ],
@@ -559,10 +562,10 @@
     {
       "layer": "mid",
       "kind": "haze",
-      "top": 144,
-      "bottom": 200,
-      "amplitude": 1,
-      "wavelength": 9,
+      "top": 252,
+      "bottom": 336,
+      "amplitude": 1.5,
+      "wavelength": 13.5,
       "period": 60
     }
   ],
@@ -575,57 +578,57 @@
   ],
   "remix": [
     {
-      "x": 240,
+      "x": 360,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 5,
       "interval": 16,
-      "y": 130,
+      "y": 231,
       "drop": null
     },
     {
-      "x": 1860,
+      "x": 2790,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 2960,
+      "x": 4440,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 5,
       "interval": 14,
-      "y": 100,
+      "y": 186,
       "drop": null
     },
     {
-      "x": 6440,
+      "x": 9660,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 6,
       "interval": 14,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 7060,
+      "x": 10590,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 8,
       "interval": 10,
-      "y": 140,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 8060,
+      "x": 12090,
       "type": "formation",
       "enemy": "glint-mote",
       "count": 8,
       "interval": 10,
-      "y": 110,
+      "y": 201,
       "drop": null
     }
   ]
