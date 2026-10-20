@@ -50,18 +50,23 @@
  * today's `common`. {@link buildAtlas} then packs it for real — groups, packer, PNG-8
  * encoder — and the temp tree is removed. Nothing is ever written into `assets/source/`.
  *
- * **The entropy is uncalibrated (decision RR-7).** `NOISE_CELL`, `HAZE_CELL`,
- * `FAR_STREAK_ROWS`, `DETAIL_DENSITY`, `RIBBON_DENSITY`, `BAND_STEP`,
- * `BAND_WINDOW_DENSITY` and `TILE_TEXTURE_LEVELS` aim at PNG-8 pages of 0.3–0.6 MB per
- * 2048×1024 px — they are the tuning knobs R3-04.M2a measures and adjusts. Nothing in the
- * gates depends on their values.
+ * **The entropy is tuned to RR-7's band, and the gates hold it there (decision RR-7,
+ * measured by R3-04.M1b).** `NOISE_CELL`, `HAZE_CELL`, `FAR_STREAK_ROWS`,
+ * `DETAIL_DENSITY`, `RIBBON_DENSITY`, `BAND_STEP`, `BAND_WINDOW_DENSITY` and
+ * `TILE_TEXTURE_LEVELS` (with part 2's `SPRITE_DETAIL_DENSITY`) land every stand-in
+ * group page at 339–446 KB scaled to a 2048×1024 PNG-8 page — inside RR-7's 0.3–0.6 MB
+ * band — and the band test of `test/scripts/assets/standin.test.ts` is the gate that
+ * holds them there. What remains uncalibrated is the comparison against **real AI
+ * art** — R3-04.M1c's pending job; the per-knob lines below point here.
  *
- * This module is **never loaded by the shipped pipeline** — nothing under
- * `scripts/assets/` besides `pipeline.mjs` imports it; it only joins the pipeline's code
- * hash, so adding the file makes `pnpm assets` rebuild once and changes no atlas byte
- * (wave-04 rule: the scale-1 digest pin never moves). Because the pipeline never loads it,
- * it may import `scripts/frame.mjs` for the frame constants — the one root-script
- * exception `terrain.mjs`'s docblock explains the shipped generators must not take.
+ * This module is **never loaded by the shipped pipeline**. Nothing under
+ * `scripts/assets/` imports it — the pipeline only folds the file into its directory
+ * code-hash; its only importer is its own test, and R3-04.M4a's bench will import
+ * `standinAtlas` as a consumer. Adding the file makes `pnpm assets` rebuild once and
+ * changes no atlas byte (wave-04 rule: the scale-1 digest pin never moves). Because the
+ * pipeline never loads it, it may import `scripts/frame.mjs` for the frame constants —
+ * the one root-script exception `terrain.mjs`'s docblock explains the shipped generators
+ * must not take.
  *
  * Determinism (M1's rule, the same as every generator here): exact integer maths and the
  * seeded `rng.mjs` only — no `Math.random`, no trig functions, no `**` — so the pixels are
@@ -197,36 +202,41 @@ export const BAND_PERIODS = Object.freeze([64, 80, 128, 160, 320]);
 
 /**
  * Width (px) of the fine texture noise cells (haze-modulated detail, silhouette wobble).
- * **Uncalibrated (RR-7)** — an entropy knob R3-04.M2a measures.
+ * **RR-7 entropy knob** — tuned to the band; see the module docblock.
  */
 export const NOISE_CELL = 8;
 
 /**
  * Width (px) of the large wash noise cells that soften the far gradient and the band
- * terraces. **Uncalibrated (RR-7)**.
+ * terraces. **RR-7 entropy knob** — see the module docblock.
  */
 export const HAZE_CELL = 16;
 
 /**
  * Rows the far layer's cloud streaks merge per noise cell — streaks are wide and flat, not
- * round blobs. **Uncalibrated (RR-7)**.
+ * round blobs. **RR-7 entropy knob** — see the module docblock.
  */
 export const FAR_STREAK_ROWS = 3;
 
 /**
  * Speckle probability (per thousand pixels): a speckled pixel steps one level brighter or
- * darker. **Uncalibrated (RR-7)** — the dominant PNG-8 cost of noise.
+ * darker. **RR-7 entropy knob** — the dominant PNG-8 cost of noise, tuned to the band; see
+ * the module docblock. At its measured 1000 the `% 1000 < DETAIL_DENSITY` test is always
+ * true (every pixel steps ±1), so the knob has no headroom above 1000 — it retunes down,
+ * and tuning up means changing the test.
  */
 export const DETAIL_DENSITY = 1000;
 
 /**
  * Cloud coverage of the far layer (per thousand): the streak noise must rise above this
- * quantile of its `0…15` range before a pixel steps two levels up. **Uncalibrated (RR-7)**.
+ * quantile of its `0…15` range before a pixel steps two levels up. **RR-7 entropy knob** —
+ * see the module docblock.
  */
 export const RIBBON_DENSITY = 230;
 
 /**
- * Depth (px) per colour terrace of a band below its skyline. **Uncalibrated (RR-7)**.
+ * Depth (px) per colour terrace of a band below its skyline. **RR-7 entropy knob** — see
+ * the module docblock.
  */
 export const BAND_STEP = 3;
 
@@ -235,11 +245,14 @@ export const BAND_RIM_DEPTH = 2;
 
 /**
  * Keyed-window probability (per thousand pixels deeper than 8 px): a hole the far layer
- * shows through. **Uncalibrated (RR-7)**.
+ * shows through. **RR-7 entropy knob** — see the module docblock.
  */
 export const BAND_WINDOW_DENSITY = 35;
 
-/** Texture levels a tile body mixes below its cap row. **Uncalibrated (RR-7)**. */
+/**
+ * Texture levels a tile body mixes below its cap row. **RR-7 entropy knob** — see the
+ * module docblock.
+ */
 export const TILE_TEXTURE_LEVELS = 5;
 
 /** Depth (px) inside a band before a keyed window may open. */
@@ -556,7 +569,7 @@ function buildFar(zoneId, rng) {
  * rim-lit skyline, haze shifts, speckle and a few keyed windows above the skyline depth.
  *
  * @param rng - The zone's generator.
- * @returns 3–5 {@link StandinSurface}s.
+ * @returns {@link BAND_MIN_COUNT}–{@link BAND_MAX_COUNT} (4–5) {@link StandinSurface}s.
  */
 function buildBands(rng) {
   const count = rng.rangeInt(BAND_MIN_COUNT, BAND_MAX_COUNT);
@@ -835,7 +848,11 @@ export const BOSS_HEIGHT = Math.round(0.6 * PLAYFIELD_H);
 /** The boss's states (frames): phase-1 armour, cracked plating, exposed core. */
 export const BOSS_STATES = 3;
 
-/** The stand-in zone's enemies (§5.6 roles; {@link ENEMY_FRAME_MIN}–{@link ENEMY_FRAME_MAX} frames each). */
+/**
+ * The stand-in zone's enemies (§5.6 roles; {@link ENEMY_FRAME_MIN}–{@link ENEMY_FRAME_MAX}
+ * frames each). The `turret` carries the role's name at §5.6's Large class (30–60 px),
+ * not the small 18–21 px turret row — the size is the byte model's.
+ */
 export const STANDIN_ENEMY_KINDS = Object.freeze([
   { name: 'grunt', width: 28, height: 22 },
   { name: 'dart', width: 26, height: 16 },
@@ -849,7 +866,12 @@ export const STANDIN_ENEMY_KINDS = Object.freeze([
   { name: 'hauler', width: 48, height: 32 },
 ]);
 
-/** The stand-in boss's parts (weak points a multi-part boss tree hangs on its hull). */
+/**
+ * The stand-in boss's parts (weak points a multi-part boss tree hangs on its hull). One
+ * deviation noted by review: the sizes shortcut bible §5.7's part table (e.g. the 44×44
+ * turret over its 24×24/16-heading row) — a deliberate byte-model shorthand of the
+ * placeholder generator; real art replaces these at R3/R5, and §5.7 governs that art.
+ */
 export const STANDIN_BOSS_PARTS = Object.freeze([
   { name: 'boss-turret', width: 44, height: 44, frames: 4 },
   { name: 'boss-pod', width: 26, height: 26, frames: 3 },
@@ -869,7 +891,10 @@ export const BOSS_WINDOW = Object.freeze(
 /**
  * Speckle probability (per thousand pixels) on the stand-in sprites — the same §5.10/§5.12
  * surface noise the part-1 layers carry, so the enemy and boss art costs PNG-8 bytes like
- * detailed art, not like flat fills. **Uncalibrated (RR-7)**: an entropy knob like the ones above.
+ * detailed art, not like flat fills. **RR-7 entropy knob** like the ones above — tuned to
+ * the band; see the module docblock. At its measured 1000 the `% 1000` test is always true
+ * (every pixel steps ±1), so the knob has no headroom above 1000 — it retunes down, and
+ * tuning up means changing the test.
  */
 export const SPRITE_DETAIL_DENSITY = 1000;
 
