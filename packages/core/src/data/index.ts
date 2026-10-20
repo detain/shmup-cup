@@ -238,6 +238,7 @@ import {
   PLAYFIELD_H,
   PLAYFIELD_W,
   TILE_SIZE,
+  WORLD_SCALE,
   type DifficultyRules,
   type DifficultyTable,
   type PowerUpMode,
@@ -718,7 +719,7 @@ export interface EnemyRevengeSpec {
 }
 
 /** Default {@link EnemyRevengeSpec.speed} (px/tick on Normal). */
-export const DEFAULT_REVENGE_SPEED = 1.25;
+export const DEFAULT_REVENGE_SPEED = 1.25 * WORLD_SCALE;
 
 /** Sprite animation of an enemy: `frames` frames of its sprite, `ticks` ticks each, looping. */
 export interface EnemyAnimSpec {
@@ -978,7 +979,7 @@ export const BOSS_VULNERABILITIES = Object.freeze([
  * right edge (552 since R2-01, 296 at v1's frame; the 88 is a world distance —
  * plan_resolution.md §2.6).
  */
-export const DEFAULT_BOSS_X = PLAYFIELD_W - 88;
+export const DEFAULT_BOSS_X = PLAYFIELD_W - 88 * WORLD_SCALE;
 
 /** Default home row of a boss (the playfield's middle, `PLAYFIELD_CY`). */
 export const DEFAULT_BOSS_Y = PLAYFIELD_CY;
@@ -1382,7 +1383,7 @@ export interface StageRasterEffect {
 export const DEFAULT_MODE7_SCROLL = 0.25;
 
 /** Default {@link StageMode7.fogDepth} in texels. */
-export const DEFAULT_MODE7_FOG_DEPTH = 96;
+export const DEFAULT_MODE7_FOG_DEPTH = 96 * WORLD_SCALE;
 
 /**
  * A stage's **Mode-7 floor** (M3-02, shmup_feat.md §18 "[P2] Mode 7-style effects: scaling /
@@ -1794,7 +1795,7 @@ export type BonusEntranceName = 'gap' | 'ground' | 'digit';
 export const BONUS_ENTRANCES = Object.freeze(['gap', 'ground', 'digit'] as const);
 
 /** Default length of a `ground` entrance's window, in camera pixels. */
-export const DEFAULT_BONUS_WINDOW = 600;
+export const DEFAULT_BONUS_WINDOW = 600 * WORLD_SCALE;
 
 /** Default place of a `digit` entrance's digit (100 = the hundreds). */
 export const DEFAULT_BONUS_PLACE = 100;
@@ -1882,9 +1883,9 @@ export const MAX_BLOCK_CELLS = 64;
 
 /**
  * Default {@link StageBlockEvent.screenX}: the block appears just past the view's right edge
- * (`PLAYFIELD_W + 16`, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`).
+ * (`PLAYFIELD_W + 16 * WORLD_SCALE`, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`).
  */
-export const DEFAULT_BLOCK_SCREEN_X = PLAYFIELD_W + 16;
+export const DEFAULT_BLOCK_SCREEN_X = PLAYFIELD_W + 16 * WORLD_SCALE;
 
 /** Default swing period of a moving block, in ticks. */
 export const DEFAULT_BLOCK_PERIOD = 120;
@@ -2462,8 +2463,8 @@ const BOSS_PART_SCHEMA = s.object(
   {
     name: PART_NAME,
     parent: PART_NAME,
-    x: s.num({ min: -512, max: 512, unit: 'rel-px' }),
-    y: s.num({ min: -512, max: 512, unit: 'rel-px' }),
+    x: s.num({ min: -512 * WORLD_SCALE, max: 512 * WORLD_SCALE, unit: 'rel-px' }),
+    y: s.num({ min: -512 * WORLD_SCALE, max: 512 * WORLD_SCALE, unit: 'rel-px' }),
     hp: s.int({ min: 1, max: 100000, unit: 'count' }),
     hurtbox: BOX_SCHEMA,
     radius: s.num({ min: 1, max: 128, unit: 'world-px' }),
@@ -2772,7 +2773,7 @@ const GROUND_SPAWN_WORLD_X: WorldSumPair = Object.freeze({
   rule: 'world-sum',
   camera: 'x',
   screen: 'screenX',
-  screenPastEnd: 16,
+  screenPastEnd: 16 * WORLD_SCALE,
   when: 'ground-enemy',
 });
 
