@@ -70,10 +70,15 @@ import { INTERIM_ART_SCALE, parseArtScale, scaleFont, scaleSprite } from './inte
 import { MANIFEST_FORMAT_VERSION, formatManifest, frameName } from './manifest.mjs';
 import { MAX_PAGE_SIZE, packRects } from './packer.mjs';
 import { encodePng } from './png.mjs';
+import { BULLET_COLORS } from './procedural/bullets.mjs';
+import { color, mix } from './procedural/common.mjs';
+import { BULLET_PALETTES, CORE_MARKS } from './procedural/palettes.mjs';
 import { TILE_SIZE as TERRAIN_TILE_SIZE } from './procedural/terrain.mjs';
 import { applyPngOverrides, listFiles, loadSpriteSources } from './sprite-source.mjs';
 
 /** @typedef {import('./image.mjs').Image} Image */
+/** @typedef {import('./image.mjs').Rgba} Rgba */
+/** @typedef {import('./procedural/bullets.mjs').CoreMark} CoreMark */
 /** @typedef {import('./sprite-source.mjs').SpriteDef} SpriteDef */
 /** @typedef {import('./sprite-source.mjs').AssetIssue} AssetIssue */
 /** @typedef {import('./font.mjs').FontMetrics} FontMetrics */
@@ -334,7 +339,9 @@ function terrainTileSize(artScale) {
  * Order of work: pixel maps and procedural sprites (a name defined twice is an issue; the
  * terrain tilesets drawn at the art scale's tile size) → the art scale (R2-01, `interim.mjs`:
  * every sprite but a `native` one scaled nearest-neighbour, its explicit anchor `⌈s·a⌉`) → PNG
- * overrides by name (never scaled: real art is v2-native) → font sprites (`font/<name>`, scaled
+ * overrides by name (never scaled: real art is v2-native) → the colour-blind `@<palette>`
+ * variants of an overridden bullet, beam or bend recoloured from that override (R3-03.V5,
+ * decision W5-13, {@link recolourBulletOverrides}) → font sprites (`font/<name>`, scaled
  * with their metrics) → `<name>@flash` siblings for `hitFlash` sprites → `<name>@p2` palette
  * maps of the ships and the stock icon (M2-06, `coop.mjs`, R3-03.V2a) — both from the scaled
  * sprites →
@@ -400,6 +407,11 @@ export function collectSprites(options = {}) {
   const merged = applyPngOverrides(sources, code.overrides);
   byName.clear();
   for (const sprite of merged) byName.set(sprite.name, sprite);
+
+  // Real-art bullets, beams and bends (R3-03.V5, decision W5-13): when a sprite of the
+  // colour-blind set has a PNG override, its `@<palette>` variants recolour the override
+  // instead of the procedural art, frame for frame and mark for mark.
+  recolourBulletOverrides(byName);
 
   const fontSources = loadFontSources(fontsDir, displayPath(fontsDir));
   issues.push(...fontSources.issues);
@@ -543,6 +555,132 @@ function p2MapIssues(sprite, map, path) {
     problems.push({ path, message: `changes no pixel of "${sprite.name}"` });
   }
   return problems;
+}
+
+/** A colour-blind palette variant name tail: `@<palette>` with a palette of `BULLET_PALETTES`. */
+const PALETTE_VARIANT = /@(deuteranopia|protanopia|tritanopia)$/;
+
+/**
+ * The engine bullet, beam and bending-laser families — the sprites `palettes.mjs` builds a
+ * colour-blind set for: `bullets.mjs`'s three shapes in the three colours, `lasers.mjs`'s beam
+ * and bend node (`pnpm content:check` demands every variant of every one of them).
+ */
+const PALETTE_BASE = /^(?:bullets|lasers)\/(?:round|oval|needle|beam|bend)-(pink|red|purple)$/;
+
+/** The radius of the recoloured `ring` / `dot` mark in pixels — the v2 plus (R3-03.V1). */
+const PALETTE_MARK_RADIUS = 1;
+
+/**
+ * The 8-bit luma of a colour: integer BT.601 weights (77 + 150 + 29 = 256), exact on every
+ * engine — no float, no `Math.pow`.
+ *
+ * @param {Rgba} rgba - The colour.
+ * @returns {number} The luma, 0…255.
+ */
+function luma(rgba) {
+  return (rgba[0] * 77 + rgba[1] * 150 + rgba[2] * 29) >> 8;
+}
+
+/**
+ * Recolours the colour-blind variants of the overridden bullet, beam and bend sprites
+ * (R3-03.V5, decision W5-13): a `@<palette>` sibling of a sprite whose frames come from a PNG
+ * override is dropped and rebuilt from the override — every opaque pixel classified into the v1
+ * art's rim / body / core bands by luma (the boundaries are the sums of neighbouring reference
+ * lumas compared against twice the pixel's, all integers, so no engine rounds differently),
+ * recoloured to the palette's body colour with the `mix` ratios `bullets.mjs` draws with, and
+ * re-marked with the family's shape code (`CORE_MARKS`; the beams and bend nodes carry none).
+ * The variant is `palette:<base>` — the provenance report classes it with its base, like the
+ * `flash:` / `p2:` siblings — and keeps the base's frame count, sizes and anchor, which the
+ * content check requires frame for frame.
+ *
+ * @param {Map<string, SpriteDef>} byName - The merged sprites (the procedural siblings are the
+ *   only entries of origin `procedural:palettes`); the recoloured variants replace them in place.
+ */
+function recolourBulletOverrides(byName) {
+  const black = color('#000000');
+  const white = color('#ffffff');
+  for (const sprite of [...byName.values()]) {
+    if (sprite.origin !== 'procedural:palettes') continue;
+    const variant = PALETTE_VARIANT.exec(sprite.name);
+    if (variant === null) continue;
+    const baseName = sprite.name.slice(0, sprite.name.length - variant[0].length);
+    const base = byName.get(baseName);
+    if (base === undefined || !base.origin.endsWith('.png')) continue;
+    const familyMatch = PALETTE_BASE.exec(baseName);
+    if (familyMatch === null) continue;
+    const family = /** @type {keyof typeof BULLET_COLORS} */ (familyMatch[1]);
+    const body = color(BULLET_PALETTES[variant[1]][family]);
+    const target = {
+      rim: mix(body, black, 0.68),
+      body,
+      core: mix(body, white, 0.75),
+    };
+    const v1 = color(BULLET_COLORS[family]);
+    const refs = {
+      rimPlusBody: luma(mix(v1, black, 0.68)) + luma(v1),
+      bodyPlusCore: luma(v1) + luma(mix(v1, white, 0.75)),
+    };
+    const mark = /** @type {CoreMark} */ (
+      baseName.startsWith('bullets/') ? CORE_MARKS[family] : 'solid'
+    );
+    byName.set(sprite.name, {
+      name: sprite.name,
+      anchor: base.anchor,
+      hitFlash: false,
+      frames: base.frames.map((frame) => recolourFrame(frame, refs, target, mark)),
+      animations: { ...base.animations },
+      origin: `palette:${baseName}`,
+      native: true,
+    });
+  }
+}
+
+/**
+ * One recoloured frame (the work of {@link recolourBulletOverrides} per frame).
+ *
+ * @param {Image} frame - The override's frame.
+ * @param {{ rimPlusBody: number, bodyPlusCore: number }} refs - The v1 band boundaries.
+ * @param {{ rim: Rgba, body: Rgba, core: Rgba }} target - The palette's band colours.
+ * @param {CoreMark} mark - The family's shape code: `ring` paints the centre plus with the rim,
+ *   `dot` drops the core band to the body and paints the plus with the core, `solid` paints
+ *   nothing (the beams and bend nodes).
+ * @returns {Image} The variant frame — same size, transparent pixels untouched.
+ */
+function recolourFrame(frame, refs, target, mark) {
+  const out = createImage(frame.width, frame.height);
+  const d = frame.data;
+  const o = out.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const alpha = d[i + 3];
+    if (alpha === 0) continue;
+    const twiceLuma = ((d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8) * 2;
+    const c =
+      twiceLuma <= refs.rimPlusBody
+        ? target.rim
+        : twiceLuma <= refs.bodyPlusCore
+          ? target.body
+          : mark === 'dot'
+            ? target.body
+            : target.core;
+    o[i] = c[0];
+    o[i + 1] = c[1];
+    o[i + 2] = c[2];
+    o[i + 3] = alpha;
+  }
+  if (mark === 'solid') return out;
+  const ink = mark === 'ring' ? target.rim : target.core;
+  const cx = (frame.width - 1) / 2;
+  const cy = (frame.height - 1) / 2;
+  for (let y = 0; y < frame.height; y++) {
+    for (let x = 0; x < frame.width; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      if (dx * dx + dy * dy <= PALETTE_MARK_RADIUS * PALETTE_MARK_RADIUS) {
+        setPixel(out, x, y, ink);
+      }
+    }
+  }
+  return out;
 }
 
 /**

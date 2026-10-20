@@ -13,7 +13,10 @@
  * The palette names match `@shmup/core` `BULLET_PALETTES` (the `standard` palette is the plain
  * sprites); `pnpm content:check` checks every variant of every engine bullet sprite exists.
  * From R3-03.V1 the variants follow the standard set through `artScale`: the same native v2
- * bullets, bend nodes and beams at the build's art scale, frame for frame.
+ * bullets, bend nodes and beams at the build's art scale, frame for frame. From R3-03.V5 the
+ * variant of a sprite that has a PNG override is recoloured from that override by the pipeline
+ * instead (`pipeline.mjs` `recolourBulletOverrides`, decision W5-13) — the tables below are the
+ * colours and marks it reproduces.
  *
  * @module
  */

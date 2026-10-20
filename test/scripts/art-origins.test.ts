@@ -8,7 +8,7 @@
  *   finding, and every sprite the atlas packs is classified exactly once, consistently with the
  *   pipeline's own origins. A **staged warning** (rules 3–5 in `art-prompts/v2/ingested/`) is
  *   allowed there and never fails CI — a test stages an unreviewed sprite to prove it;
- * - adds the ingest tool's **five fixture outputs** to a temporary copy of `assets/source/` as
+ * - adds the ingest tool's **six fixture outputs** to a temporary copy of `assets/source/` as
  *   override PNGs: the FLUX ones are on hold (rule 3), the unreviewed AI records fail (rule 4),
  *   `gyre` — `use: "reference"` with `cleanup: "none"` — fails rule 5, the hand-made `fringe-hull`
  *   passes;
@@ -272,9 +272,11 @@ describe('R3-05 — the origin report on the shipped tree', () => {
           'generator',
           o.slice('procedural:'.length),
         ]);
-      } else if (o.startsWith('flash:') || o.startsWith('p2:')) {
+      } else if (o.startsWith('flash:') || o.startsWith('p2:') || o.startsWith('palette:')) {
         const base = rows.get(o.slice(o.indexOf(':') + 1)) as SpriteOrigin;
-        expect(r.kind).toBe(o.startsWith('flash:') ? 'flash' : 'p2');
+        expect(r.kind).toBe(
+          o.startsWith('flash:') ? 'flash' : o.startsWith('p2:') ? 'p2' : 'palette',
+        );
         expect([r.base, r.origin, r.models]).toEqual([base.name, base.origin, base.models]);
       } else if (o.endsWith('.sprite.json'))
         expect([r.origin, r.kind]).toEqual(['procedural', 'pixel-map']);
@@ -285,6 +287,7 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     expect(kinds.font).toBe(Object.keys(fonts).length);
     expect(kinds.flash).toBe(sprites.filter((s) => s.name.endsWith('@flash')).length);
     expect(kinds.p2).toBe(sprites.filter((s) => s.name.endsWith('@p2')).length);
+    expect(kinds.palette ?? 0).toBe(sprites.filter((s) => s.origin.startsWith('palette:')).length);
   });
 
   it('every model that made shipped art is in the model table (none today)', () => {
@@ -364,7 +367,7 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       if (base.status === 'failure') expect(sibling.status).toBe('failure');
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(4);
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(5);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -544,6 +547,38 @@ describe('R3-05 — every rule, on synthetic records', () => {
   });
 });
 
+describe('R3-03.V5 — a recoloured palette variant traces to its overridden base', () => {
+  const source = join(tmp, 'palette-base');
+  writeOverride(join(source, 'sprites'), 'bullets/round-red');
+  const report = buildOriginReport({ sourceDir: source, stagingDir: null });
+
+  it('classes the variants as kind palette and inherits the base class', () => {
+    const base = row(report.sprites, 'bullets/round-red');
+    expect([base.origin, base.kind, base.base, base.status]).toEqual([
+      'ai-assisted',
+      'record',
+      null,
+      'ok',
+    ]);
+    for (const palette of ['deuteranopia', 'protanopia', 'tritanopia']) {
+      const r = row(report.sprites, `bullets/round-red@${palette}`);
+      expect([r.kind, r.origin, r.base, r.status]).toEqual([
+        'palette',
+        'ai-assisted',
+        'bullets/round-red',
+        'ok',
+      ]);
+      expect([r.models, r.record]).toEqual([base.models, base.record]);
+    }
+    // A bullet without an override keeps its procedural generator for every variant.
+    expect(row(report.sprites, 'bullets/oval-red@deuteranopia')).toMatchObject({
+      origin: 'procedural',
+      kind: 'generator',
+      base: null,
+    });
+  });
+});
+
 describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 and 6', () => {
   const empty = join(tmp, 'empty-source');
   mkdirSync(join(empty, 'sprites'), { recursive: true });
@@ -571,12 +606,13 @@ describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 an
       ['enemies/drone', 'staged', 'warning'],
       ['enemies/gyre', 'staged', 'warning'],
       ['fx/fixture-glow', 'staged', 'warning'],
+      ['ships/fixture-ship', 'staged', 'ok'],
     ]);
     // Staged art is not shipped: the shipped tree has no override, so no shipped sprite names a model.
     expect(report.counts.shipped.byModel).toEqual({});
     expect(report.counts.staged.byOriginKind).toEqual({
       hand: { record: 1 },
-      'ai-assisted': { record: 4 },
+      'ai-assisted': { record: 5 },
     });
     const text = formatOriginReport(report, { list: true });
     expect(text).toContain('Staged sprites by origin and kind:');

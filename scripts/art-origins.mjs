@@ -2,16 +2,16 @@
 /**
  * The origin report (plan step R3-05, part 2): every sprite the atlas ships, listed by where it
  * came from — **procedural** (a seeded generator, a `*.sprite.json` pixel map, the bitmap font and
- * the `@flash` / `@p2` siblings generated from them), **hand** or **ai-assisted** (a real-art
- * override PNG, with the served model of every source image and edit reference) — and the checks
- * that make "every shipped image can be traced" a test rather than a promise.
+ * the `@flash` / `@p2` / `@<palette>` siblings generated from them), **hand** or **ai-assisted** (a
+ * real-art override PNG, with the served model of every source image and edit reference) — and the
+ * checks that make "every shipped image can be traced" a test rather than a promise.
  *
  * **What it reads.**
  *
  * - The asset pipeline's own sprite list, {@link collectSprites} (read-only): the `origin` string
  *   of each sprite names its generator (`procedural:<module>`), its source file (`*.sprite.json`,
- *   `*.font.json`), its base (`flash:<name>`, `p2:<name>`) or the override PNG laid over it
- *   (`… + <path>.png`). So "procedural" is derived from the pipeline, never declared.
+ *   `*.font.json`), its base (`flash:<name>`, `p2:<name>`, `palette:<name>`) or the override PNG
+ *   laid over it (`… + <path>.png`). So "procedural" is derived from the pipeline, never declared.
  * - Each override's provenance record `<name>.art.json` (schema `shmup-art-provenance@1`), checked
  *   with the ingest tool's dependency-free `art-prompts/ingest/lib/provenance.mjs` —
  *   `checkProvenanceTree`, `validateRecord`, `loadModels`, `isUnversioned` — never restated here.
@@ -79,13 +79,14 @@ import { loadSpriteSources } from './assets/sprite-source.mjs';
 
 /**
  * How it was made: `generator` (`scripts/assets/procedural/*.mjs`), `pixel-map`
- * (`*.sprite.json`), `font` (`*.font.json`), `flash` / `p2` (a sibling generated from its base,
- * whose class it inherits), `record` (an override PNG with its `.art.json`), `licensed` (an
- * override PNG named in a `LICENSES.md`), `untraced` (an override PNG with neither),
- * `unclassified` (an origin string the report does not know).
+ * (`*.sprite.json`), `font` (`*.font.json`), `flash` / `p2` / `palette` (a sibling generated from
+ * its base — the `@<palette>` variant of a real-art bullet is recoloured from the override,
+ * R3-03.V5 — whose class it inherits), `record` (an override PNG with its `.art.json`),
+ * `licensed` (an override PNG named in a `LICENSES.md`), `untraced` (an override PNG with
+ * neither), `unclassified` (an origin string the report does not know).
  *
- * @typedef {'generator' | 'pixel-map' | 'font' | 'flash' | 'p2' | 'record' | 'licensed'
- *   | 'untraced' | 'unclassified'} OriginKind
+ * @typedef {'generator' | 'pixel-map' | 'font' | 'flash' | 'p2' | 'palette' | 'record'
+ *   | 'licensed' | 'untraced' | 'unclassified'} OriginKind
  */
 
 /**
@@ -111,7 +112,7 @@ import { loadSpriteSources } from './assets/sprite-source.mjs';
  * @property {OriginKind} kind - How it was made.
  * @property {string} source - The generator id, the source file, the base sprite's origin, or the
  *   override PNG (display paths).
- * @property {string | null} base - The base sprite of a `flash` / `p2` sibling.
+ * @property {string | null} base - The base sprite of a `flash` / `p2` / `palette` sibling.
  * @property {string | null} record - The `.art.json` it was classified from (display path).
  * @property {string[]} models - Served model ids of every source and nested edit reference,
  *   sorted, each once (a sibling inherits its base's).
@@ -190,6 +191,7 @@ const KIND_ORDER = Object.freeze([
   'font',
   'flash',
   'p2',
+  'palette',
   'record',
   'licensed',
   'untraced',
@@ -497,6 +499,9 @@ function codeOrigin(origin) {
   }
   if (origin.startsWith('p2:'))
     return { kind: 'p2', source: origin, base: origin.slice('p2:'.length) };
+  if (origin.startsWith('palette:')) {
+    return { kind: 'palette', source: origin, base: origin.slice('palette:'.length) };
+  }
   if (origin.endsWith('.sprite.json')) return { kind: 'pixel-map', source: origin, base: null };
   if (origin.endsWith('.font.json')) return { kind: 'font', source: origin, base: null };
   return { kind: 'unclassified', source: origin, base: null };
