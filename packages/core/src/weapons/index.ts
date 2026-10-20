@@ -1367,11 +1367,11 @@ export interface WeaponSystem {
    * row restores its columns by number, because {@link compileRole}, run only on these changes,
    * stays in a tier where every fractional tunable materialises a heap number (the port's `hh` 4.5,
    * `ox` 7.5 … — at the v1 scale each is a whole number, which is why only the port showed it).
-   * A cold path — a gameplay session keeps the arsenal of its config (`resolveArsenal`). The loadouts, Options and
-   * Free Way directions are kept; the hit list and cooldown tables are freed with the shots. The
-   * role tables are not hashed, but the emptied pool is: a recorded session must never call it
-   * (a replay header only knows the config's arsenal). The weapons are not checked against their
-   * slots here — {@link resolveArsenal} does that for a config.
+   * A cold path — a gameplay session keeps the arsenal of its config (`resolveArsenal`). The
+   * loadouts, Options and Free Way directions are kept; the hit list and cooldown tables are
+   * freed with the shots. The role tables are not hashed, but the emptied pool is: a recorded
+   * session must never call it (a replay header only knows the config's arsenal). The weapons
+   * are not checked against their slots here — {@link resolveArsenal} does that for a config.
    *
    * @param roles - The weapon of each {@link WeaponRole} (`null` = empty; missing entries too).
    *
@@ -3173,7 +3173,10 @@ class WeaponSystemImpl implements WeaponSystem {
 
   /** The weapons of {@link rowValues} (in order, `null` = the empty role's row). */
   private readonly rowKeys: (WeaponSpec | null)[] = [];
-  /** Each cached weapon's compiled columns, {@link ROLE_ROW_FIELDS} per row (`null` = no swap yet). */
+  /**
+   * Each cached weapon's compiled columns, {@link ROLE_ROW_FIELDS} per row
+   * (`null` = no swap yet).
+   */
   private rowValues: Float64Array | null = null;
 
   /**
@@ -3225,7 +3228,9 @@ class WeaponSystemImpl implements WeaponSystem {
       const row = this.findRow(spec);
       if (row >= 0) {
         applyRow(t, r, values, row * ROLE_ROW_FIELDS);
-        t.interval[r] = spec === null ? 0 : (spec.refireTicks ?? fallback);
+        // The interval travels with the role, not the row: mirror `compileRole` — an uncompiled
+        // kind keeps 0 exactly as the cold compile leaves it.
+        t.interval[r] = spec === null || t.kind[r] < 0 ? 0 : (spec.refireTicks ?? fallback);
       } else {
         compileRole(t, r, spec, fallback);
         this.rememberRow(spec, t, r);
