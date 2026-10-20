@@ -1356,8 +1356,13 @@ export interface WeaponSystem {
    * tables from `roles`, removes every shot at once and restarts the autofire timers.
    *
    * @remarks
-   * Never allocates (`roles` is copied into {@link WeaponSystem.roleWeapons}); a cold path — a
-   * gameplay session keeps the arsenal of its config (`resolveArsenal`). The loadouts, Options and
+   * Allocates nothing per swap once every weapon has been compiled here (`roles` is copied into
+   * {@link WeaponSystem.roleWeapons}; the first swap makes the row cache, and a weapon seen for the
+   * first time takes a row in it — {@link ROLE_ROW_CACHE}): a loadout change that lands on a cached
+   * row restores its columns by number, because {@link compileRole}, run only on these changes,
+   * stays in a tier where every fractional tunable materialises a heap number (the port's `hh` 4.5,
+   * `ox` 7.5 … — at the v1 scale each is a whole number, which is why only the port showed it).
+   * A cold path — a gameplay session keeps the arsenal of its config (`resolveArsenal`). The loadouts, Options and
    * Free Way directions are kept; the hit list and cooldown tables are freed with the shots. The
    * role tables are not hashed, but the emptied pool is: a recorded session must never call it
    * (a replay header only knows the config's arsenal). The weapons are not checked against their
@@ -1460,6 +1465,110 @@ function tunable(spec: WeaponSpec, name: string): number {
   return defaults !== undefined && Object.prototype.hasOwnProperty.call(defaults, name)
     ? defaults[name]
     : 0;
+}
+
+/**
+ * The columns a cached weapon row holds: every {@link compileRole} write but the interval, which
+ * follows the role's fallback (see {@link captureRow}).
+ */
+const ROLE_ROW_FIELDS = 31;
+
+/**
+ * Weapons whose compiled row {@link WeaponSystem.setArsenal} keeps (a fixed block, made on the
+ * first swap). The shipped arsenals stay below it; a weapon past it compiles per change as before.
+ */
+const ROLE_ROW_CACHE = 32;
+
+/**
+ * Writes one role's compiled columns into `out` at `at` (the row cache's capture).
+ *
+ * @param out - The cache's values.
+ * @param at - The row's first index in it.
+ * @param t - The role tables.
+ * @param r - The role whose columns are read.
+ * @remarks
+ * Every column but the interval, which follows the role's fallback rather than the weapon.
+ * The row's field order is {@link ROLE_ROW_FIELDS}'s list, and a missed column would show in
+ * the weapon suite's arsenal tests.
+ */
+function captureRow(out: Float64Array, at: number, t: RoleTables, r: number): void {
+  out[at + 0] = t.kind[r];
+  out[at + 1] = t.damage[r];
+  out[at + 2] = t.speed[r];
+  out[at + 3] = t.cap[r];
+  out[at + 4] = t.pierce[r];
+  out[at + 5] = t.sprite[r];
+  out[at + 6] = t.sfx[r];
+  out[at + 7] = t.angle[r];
+  out[at + 8] = t.maxLength[r];
+  out[at + 9] = t.cooldown[r];
+  out[at + 10] = t.slide[r];
+  out[at + 11] = t.step[r];
+  out[at + 12] = t.hw[r];
+  out[at + 13] = t.hh[r];
+  out[at + 14] = t.ox[r];
+  out[at + 15] = t.oy[r];
+  out[at + 16] = t.frames[r];
+  out[at + 17] = t.table[r];
+  out[at + 18] = t.gravity[r];
+  out[at + 19] = t.blastRadius[r];
+  out[at + 20] = t.blastTicks[r];
+  out[at + 21] = t.startSize[r];
+  out[at + 22] = t.maxSize[r];
+  out[at + 23] = t.growth[r];
+  out[at + 24] = t.aspect[r];
+  out[at + 25] = t.halfGap[r];
+  out[at + 26] = t.turn[r];
+  out[at + 27] = t.frame0[r];
+  out[at + 28] = t.passArmour[r];
+  out[at + 29] = t.track[r];
+  out[at + 30] = t.flip[r];
+}
+
+/**
+ * Restores one role's compiled columns from `row` at `at` (the row cache's hit).
+ *
+ * @param t - The role tables to write.
+ * @param r - The role.
+ * @param row - The cache's values.
+ * @param at - The row's first index in them.
+ * @remarks
+ * The reads and the stores are all a loop could want: the values never leave the machine's
+ * number representation, where {@link compileRole}'s fractions materialise a heap number each
+ * in the tier V8 keeps a once-per-loadout-change function in.
+ */
+function applyRow(t: RoleTables, r: number, row: Float64Array, at: number): void {
+  t.kind[r] = row[at + 0];
+  t.damage[r] = row[at + 1];
+  t.speed[r] = row[at + 2];
+  t.cap[r] = row[at + 3];
+  t.pierce[r] = row[at + 4];
+  t.sprite[r] = row[at + 5];
+  t.sfx[r] = row[at + 6];
+  t.angle[r] = row[at + 7];
+  t.maxLength[r] = row[at + 8];
+  t.cooldown[r] = row[at + 9];
+  t.slide[r] = row[at + 10];
+  t.step[r] = row[at + 11];
+  t.hw[r] = row[at + 12];
+  t.hh[r] = row[at + 13];
+  t.ox[r] = row[at + 14];
+  t.oy[r] = row[at + 15];
+  t.frames[r] = row[at + 16];
+  t.table[r] = row[at + 17];
+  t.gravity[r] = row[at + 18];
+  t.blastRadius[r] = row[at + 19];
+  t.blastTicks[r] = row[at + 20];
+  t.startSize[r] = row[at + 21];
+  t.maxSize[r] = row[at + 22];
+  t.growth[r] = row[at + 23];
+  t.aspect[r] = row[at + 24];
+  t.halfGap[r] = row[at + 25];
+  t.turn[r] = row[at + 26];
+  t.frame0[r] = row[at + 27];
+  t.passArmour[r] = row[at + 28];
+  t.track[r] = row[at + 29];
+  t.flip[r] = row[at + 30];
 }
 
 /**
@@ -2994,6 +3103,40 @@ class WeaponSystemImpl implements WeaponSystem {
     this.liveCounts.fill(0);
   }
 
+  /** The weapons of {@link rowValues} (in order, `null` = the empty role's row). */
+  private readonly rowKeys: (WeaponSpec | null)[] = [];
+  /** Each cached weapon's compiled columns, {@link ROLE_ROW_FIELDS} per row (`null` = no swap yet). */
+  private rowValues: Float64Array | null = null;
+
+  /**
+   * The cached row of a weapon.
+   *
+   * @param spec - The weapon, or `null` for the empty role.
+   * @returns Its row's index, or -1 when the cache does not hold it (yet).
+   */
+  private findRow(spec: WeaponSpec | null): number {
+    const keys = this.rowKeys;
+    for (let k = 0; k < keys.length; k++) {
+      if (keys[k] === spec) return k;
+    }
+    return -1;
+  }
+
+  /**
+   * Adds a weapon's freshly compiled row to the cache.
+   *
+   * @param spec - The weapon.
+   * @param t - The role tables it was just compiled into.
+   * @param r - The role it was compiled into.
+   */
+  private rememberRow(spec: WeaponSpec | null, t: RoleTables, r: number): void {
+    const values = this.rowValues;
+    const k = this.rowKeys.length;
+    if (values === null || k >= ROLE_ROW_CACHE) return;
+    this.rowKeys.push(spec);
+    captureRow(values, k * ROLE_ROW_FIELDS, t, r);
+  }
+
   /** See {@link WeaponSystem.setArsenal}. */
   setArsenal(roles: readonly (WeaponSpec | null)[]): void {
     const own = this.roleWeapons;
@@ -3001,7 +3144,25 @@ class WeaponSystemImpl implements WeaponSystem {
       const spec = r < roles.length ? roles[r] : null;
       own[r] = spec === undefined ? null : spec;
     }
-    compileRoles(this.roles, own, this.host.config);
+    const t = this.roles;
+    const config = this.host.config;
+    let values = this.rowValues;
+    if (values === null) {
+      values = new Float64Array(ROLE_ROW_CACHE * ROLE_ROW_FIELDS);
+      this.rowValues = values;
+    }
+    for (let r = 0; r < WEAPON_ROLE_COUNT; r++) {
+      const spec = own[r];
+      const fallback = r === WeaponRole.Missile ? config.missileInterval : config.autofireInterval;
+      const row = this.findRow(spec);
+      if (row >= 0) {
+        applyRow(t, r, values, row * ROLE_ROW_FIELDS);
+        t.interval[r] = spec === null ? 0 : (spec.refireTicks ?? fallback);
+      } else {
+        compileRole(t, r, spec, fallback);
+        this.rememberRow(spec, t, r);
+      }
+    }
     this.pool.clear();
     this.clear();
     this.timers.fill(0);
