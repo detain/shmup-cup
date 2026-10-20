@@ -281,7 +281,13 @@
 import { BulletKind, LASER_FADE_TICKS, LASER_GROW_TICKS } from '../bullets/index.js';
 import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
 import type { BossBehavior, BossBehaviorLookup, BossPart, BossScriptApi } from '../bosses/index.js';
-import { PLAYFIELD_CY, PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import {
+  PLAYFIELD_CY,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  WORLD_SCALE,
+  WORLD_TOP_PAD,
+} from '../config/index.js';
 import {
   DEFAULT_BOSS_X,
   DEFAULT_BOSS_Y,
@@ -454,7 +460,13 @@ function faceTarget(api: ScriptApi): void {
 /** `drifter.sine` — popcorn on a sine wave. */
 const drifterSine = defineBehavior(
   'drifter.sine',
-  { speed: 1.25, amp: 24, period: 96, phase: 0, memberPhase: 0 },
+  {
+    speed: 1.25 * WORLD_SCALE,
+    amp: 24 * WORLD_SCALE,
+    period: 96,
+    phase: 0,
+    memberPhase: 0,
+  },
   function* drifter(api, p): Script {
     const member = api.self.member < 0 ? 0 : api.self.member;
     api.setMover(MoverKind.Sine, -p.speed, p.amp, p.period, p.phase + member * p.memberPhase);
@@ -463,22 +475,26 @@ const drifterSine = defineBehavior(
 );
 
 /** `fan.loop` — formation flier: the leader flies the path, the others follow it. */
-const fanLoop = defineBehavior('fan.loop', { speed: 1.5 }, function* fan(api, p): Script {
-  const self = api.self;
-  if (self.member > 0) {
-    api.setMover(MoverKind.Follow);
-  } else if (self.pathId >= 0) {
-    api.setMover(MoverKind.Path, self.pathId, p.speed);
-  } else {
-    api.setMover(MoverKind.Straight, -p.speed, 0);
-  }
-  yield SLEEP_FOREVER;
-});
+const fanLoop = defineBehavior(
+  'fan.loop',
+  { speed: 1.5 * WORLD_SCALE },
+  function* fan(api, p): Script {
+    const self = api.self;
+    if (self.member > 0) {
+      api.setMover(MoverKind.Follow);
+    } else if (self.pathId >= 0) {
+      api.setMover(MoverKind.Path, self.pathId, p.speed);
+    } else {
+      api.setMover(MoverKind.Straight, -p.speed, 0);
+    }
+    yield SLEEP_FOREVER;
+  },
+);
 
 /** `carrier.straight` — the capsule carrier flies straight left. */
 const carrierStraight = defineBehavior(
   'carrier.straight',
-  { speed: 1 },
+  { speed: 1 * WORLD_SCALE },
   function* carrier(api, p): Script {
     api.setMover(MoverKind.Straight, -p.speed, 0);
     yield SLEEP_FOREVER;
@@ -488,7 +504,7 @@ const carrierStraight = defineBehavior(
 /** `turret.floor` — a ground turret that keeps facing the nearest player and shoots at it. */
 const turretFloor = defineBehavior(
   'turret.floor',
-  { aimTicks: 30, fireTicks: 90, bulletSpeed: 1.5 },
+  { aimTicks: 30, fireTicks: 90, bulletSpeed: 1.5 * WORLD_SCALE },
   function* turret(api, p): Script {
     api.setMover(MoverKind.None);
     const step = p.aimTicks >= 1 ? p.aimTicks : 1;
@@ -510,7 +526,13 @@ const turretFloor = defineBehavior(
 /** `walker.floor` — walk towards the player, stop, repeat. */
 const walkerFloor = defineBehavior(
   'walker.floor',
-  { speed: 0.75, walkTicks: 90, stopTicks: 45, bulletSpeed: 1.25, spread: 48 },
+  {
+    speed: 0.75 * WORLD_SCALE,
+    walkTicks: 90,
+    stopTicks: 45,
+    bulletSpeed: 1.25 * WORLD_SCALE,
+    spread: 48,
+  },
   function* walker(api, p): Script {
     for (;;) {
       const target = api.target();
@@ -552,7 +574,7 @@ const hatchSpawner = defineBehavior(
 /** `rammer.aimed` — enter, wind up, dash at the player. */
 const rammerAimed = defineBehavior(
   'rammer.aimed',
-  { enterTicks: 40, windup: 20, speed: 2.5 },
+  { enterTicks: 40, windup: 20, speed: 2.5 * WORLD_SCALE },
   function* rammer(api, p): Script {
     yield p.enterTicks;
     api.setMover(MoverKind.AimedDash, p.speed, p.windup);
@@ -564,14 +586,14 @@ const rammerAimed = defineBehavior(
 const orbiterLoop = defineBehavior(
   'orbiter.loop',
   {
-    speed: 1.25,
+    speed: 1.25 * WORLD_SCALE,
     x: 256,
     y: 100,
     hold: 90,
-    leaveSpeed: 2,
+    leaveSpeed: 2 * WORLD_SCALE,
     ringTicks: 120,
     ringCount: 8,
-    bulletSpeed: 1,
+    bulletSpeed: 1 * WORLD_SCALE,
   },
   function* orbiter(api, p): Script {
     const self = api.self;
@@ -630,7 +652,7 @@ const HUNTER_FRONT = 1;
 const HUNTER_RETARGET_TICKS = 6;
 
 /** Closest an Option Hunter lines up to the playfield's edges (px). */
-const HUNTER_EDGE = 12;
+const HUNTER_EDGE = 12 * WORLD_SCALE;
 
 /**
  * `hunter.option` — the Option Hunter (plan M2-04, shmup_feat.md §8 / §11): lines up with the
@@ -651,7 +673,15 @@ const HUNTER_EDGE = 12;
  */
 const hunterOption = defineBehavior(
   'hunter.option',
-  { variant: 0, lineUpTicks: 90, speed: 2, windup: 24, chargeSpeed: 4.5, lineX: 48, lineY: 24 },
+  {
+    variant: 0,
+    lineUpTicks: 90,
+    speed: 2 * WORLD_SCALE,
+    windup: 24,
+    chargeSpeed: 4.5 * WORLD_SCALE,
+    lineX: 48 * WORLD_SCALE,
+    lineY: 24 * WORLD_SCALE + WORLD_TOP_PAD,
+  },
   function* hunter(api, p): Script {
     const variant = p.variant >= 2 ? 2 : p.variant >= 1 ? HUNTER_FRONT : HUNTER_REAR;
     const self = api.self;
@@ -700,7 +730,12 @@ const hunterOption = defineBehavior(
  */
 const cubePincer = defineBehavior(
   'cube.pincer',
-  { speed: 1.5, meetX: 176, gap: 8, leaveSpeed: 1.75 },
+  {
+    speed: 1.5 * WORLD_SCALE,
+    meetX: 176,
+    gap: 8 * WORLD_SCALE,
+    leaveSpeed: 1.75 * WORLD_SCALE,
+  },
   function* cube(api, p): Script {
     const self = api.self;
     const camera = api.camera;
@@ -728,7 +763,7 @@ const cubePincer = defineBehavior(
  */
 const rockFall = defineBehavior(
   'rock.fall',
-  { trigger: 48, gravity: 0.15, maxFall: 4 },
+  { trigger: 48 * WORLD_SCALE, gravity: 0.15 * WORLD_SCALE, maxFall: 4 * WORLD_SCALE },
   function* rock(api, p): Script {
     if (api.self.mover !== MoverKind.Ballistic) {
       const trigger = p.trigger > 0 ? p.trigger : 0;
@@ -747,7 +782,15 @@ const rockFall = defineBehavior(
  */
 const bubbleSplit = defineBehavior(
   'bubble.split',
-  { speed: 0.75, amp: 16, period: 120, count: 2, splitSpeed: 1.25, spread: 256, scatterTicks: 30 },
+  {
+    speed: 0.75 * WORLD_SCALE,
+    amp: 16 * WORLD_SCALE,
+    period: 120,
+    count: 2,
+    splitSpeed: 1.25 * WORLD_SCALE,
+    spread: 256,
+    scatterTicks: 30,
+  },
   function* bubble(api, p): Script {
     // A child of a split flies out first (its parent set a straight mover on it).
     if (api.self.mover === MoverKind.Straight) yield p.scatterTicks >= 1 ? p.scatterTicks : 1;
@@ -785,7 +828,15 @@ const bubbleSplit = defineBehavior(
  */
 const volcanoLob = defineBehavior(
   'volcano.lob',
-  { interval: 90, count: 3, minUp: 2.5, maxUp: 3.5, spread: 1.25, gravity: 0.08, maxFall: 3 },
+  {
+    interval: 90,
+    count: 3,
+    minUp: 2.5 * WORLD_SCALE,
+    maxUp: 3.5 * WORLD_SCALE,
+    spread: 1.25 * WORLD_SCALE,
+    gravity: 0.08 * WORLD_SCALE,
+    maxFall: 3 * WORLD_SCALE,
+  },
   function* volcano(api, p): Script {
     api.setMover(MoverKind.None);
     const child = api.spec.childId;
@@ -796,7 +847,7 @@ const volcanoLob = defineBehavior(
       yield api.fireWait(p.interval);
       if (child < 0 || !api.canFire()) continue;
       for (let k = 0; k < count; k++) {
-        const stone = api.spawn(child, 0, -self.hh - 4);
+        const stone = api.spawn(child, 0, -self.hh - 4 * WORLD_SCALE);
         if (stone === null) break;
         const up = p.minUp + (p.maxUp - p.minUp) * rng.nextFloat();
         const side = (rng.nextFloat() * 2 - 1) * p.spread;
@@ -824,7 +875,7 @@ const volcanoLob = defineBehavior(
  */
 const fieldSuction = defineBehavior(
   'field.suction',
-  { radius: 160, strength: 0.6 },
+  { radius: 160 * WORLD_SCALE, strength: 0.6 * WORLD_SCALE },
   function* suction(api, p): Script {
     while (!api.onScreen()) yield 8;
     api.pull(p.radius, p.strength, 0);
@@ -845,13 +896,13 @@ const tentacleGrab = defineBehavior(
   'tentacle.grab',
   {
     links: 8,
-    reach: 96,
-    speed: 2,
+    reach: 96 * WORLD_SCALE,
+    speed: 2 * WORLD_SCALE,
     turnRate: 12,
     extendTicks: 48,
-    grabRadius: 40,
-    grabPull: 0.5,
-    retractSpeed: 1.5,
+    grabRadius: 40 * WORLD_SCALE,
+    grabPull: 0.5 * WORLD_SCALE,
+    retractSpeed: 1.5 * WORLD_SCALE,
     restTicks: 60,
   },
   function* tentacle(api, p): Script {
@@ -902,7 +953,7 @@ const CUBE_AIM_SCALE = 64;
  */
 const cubeStack = defineBehavior(
   'cube.stack',
-  { speed: 2, margin: 24 },
+  { speed: 2 * WORLD_SCALE, margin: 24 * WORLD_SCALE },
   function* cube(api, p): Script {
     const self = api.self;
     const camera = api.camera;
@@ -953,7 +1004,13 @@ const cubeStack = defineBehavior(
  */
 const rocketHoming = defineBehavior(
   'rocket.homing',
-  { launchTicks: 24, launchSpeed: 1, speed: 1.25, turnRate: 5, homeTicks: 60 },
+  {
+    launchTicks: 24,
+    launchSpeed: 1 * WORLD_SCALE,
+    speed: 1.25 * WORLD_SCALE,
+    turnRate: 5,
+    homeTicks: 60,
+  },
   function* rocket(api, p): Script {
     const self = api.self;
     const out = p.launchSpeed * Math.SQRT1_2;
@@ -984,7 +1041,13 @@ const rocketHoming = defineBehavior(
  */
 const wormBurst = defineBehavior(
   'worm.burst',
-  { trigger: 128, vx: -0.8, up: 3.4, gravity: 0.075, maxFall: 4 },
+  {
+    trigger: 128 * WORLD_SCALE,
+    vx: -0.8 * WORLD_SCALE,
+    up: 3.4 * WORLD_SCALE,
+    gravity: 0.075 * WORLD_SCALE,
+    maxFall: 4 * WORLD_SCALE,
+  },
   function* worm(api, p): Script {
     if (api.self.member > 0) {
       api.setMover(MoverKind.Follow);
@@ -1027,13 +1090,13 @@ const wormBurst = defineBehavior(
 const rearSwoop = defineBehavior(
   'rear.swoop',
   {
-    speed: 1.6,
+    speed: 1.6 * WORLD_SCALE,
     turnX: 280,
     hold: 18,
     ways: 1,
     spread: 40,
-    bulletSpeed: 1.3,
-    leaveSpeed: 1.4,
+    bulletSpeed: 1.3 * WORLD_SCALE,
+    leaveSpeed: 1.4 * WORLD_SCALE,
   },
   function* swoop(api, p): Script {
     const self = api.self;
@@ -1083,7 +1146,7 @@ const rearSwoop = defineBehavior(
  */
 const cellChase = defineBehavior(
   'cell.chase',
-  { speed: 1.1, enterTicks: 50, turnRate: 6, chaseTicks: 150, scatterTicks: 24 },
+  { speed: 1.1 * WORLD_SCALE, enterTicks: 50, turnRate: 6, chaseTicks: 150, scatterTicks: 24 },
   function* chase(api, p): Script {
     const speed = p.speed > 0 ? p.speed : 1;
     if (api.self.mover === MoverKind.Straight) {
@@ -1129,7 +1192,7 @@ const emitterLaser = defineBehavior(
     laserTicks: 150,
     heading: ANGLE_UNITS / 2,
     laserLength: PLAYFIELD_W,
-    laserWidth: 6,
+    laserWidth: 6 * WORLD_SCALE,
     telegraph: 50,
     active: 40,
   },
@@ -1172,7 +1235,15 @@ const emitterLaser = defineBehavior(
  */
 const mineBurst = defineBehavior(
   'mine.burst',
-  { speed: 0.5, amp: 10, period: 140, trigger: 64, fuse: 36, ring: 8, bulletSpeed: 1 },
+  {
+    speed: 0.5 * WORLD_SCALE,
+    amp: 10 * WORLD_SCALE,
+    period: 140,
+    trigger: 64 * WORLD_SCALE,
+    fuse: 36,
+    ring: 8,
+    bulletSpeed: 1 * WORLD_SCALE,
+  },
   function* mine(api, p): Script {
     const self = api.self;
     api.setMover(MoverKind.Sine, -p.speed, p.amp, p.period, 0);
