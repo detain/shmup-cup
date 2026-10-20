@@ -16,6 +16,7 @@ import { BulletFlag, BulletKind, fireLaser, spawnBullet } from '../../src/bullet
 import {
   PLAYFIELD_H,
   PLAYFIELD_W,
+  WORLD_SCALE,
   resolveGameConfig,
   type GameConfig,
   type MeterSlotName,
@@ -323,7 +324,16 @@ describe('core/powerups edge — meter helpers', () => {
       ITEM_CULL_MARGIN,
       ITEM_BLINK_TICKS,
       MEGA_CRASH_FLASH_TICKS,
-    ]).toEqual([32, 300, 5, 16, 2, 32, 8, 12]);
+    ]).toEqual([
+      32,
+      300,
+      5 * WORLD_SCALE,
+      16 * WORLD_SCALE,
+      2 * WORLD_SCALE,
+      32 * WORLD_SCALE,
+      8,
+      12,
+    ]); // the four item sizes are the v1 values (R2-02.W3); the rest are counts and ticks
     expect(METER_LABELS).toHaveLength(METER_SLOT_COUNT);
     expect(Object.isFrozen(METER_LABELS)).toBe(true);
     expect(Object.values(MeterSlot)).toEqual([0, 1, 2, 3, 4, 5, 6]);
