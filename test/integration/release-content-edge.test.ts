@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { v1rel } from '../packages/core/test/helpers/v1-port.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -97,8 +98,8 @@ describe('release content: the Direct-mode main shots (M2-18 fixes)', () => {
     const disc = DIRECT.families.find((f) => f.id === 'beam-disc');
     const fifth = disc?.levels[4].shots ?? [];
     expect(fifth.map((s) => [s.weapon, s.angle ?? 0, s.oy ?? 0])).toEqual([
-      ['direct.disc.small', 0, -4],
-      ['direct.disc.small', 0, 4],
+      ['direct.disc.small', 0, -v1rel(4)],
+      ['direct.disc.small', 0, v1rel(4)],
     ]);
   });
 
@@ -139,7 +140,7 @@ describe('release content: GALVANIC MAW fits the HUGE DISC (M2-18 fix)', () => {
     // The biggest disc any Direct-mode shot is.
     const discs = DIRECT.weapons.filter((w) => w.id.startsWith('direct.disc'));
     const tallest = Math.max(...discs.map((w) => 2 * (w.params?.hh ?? 0)));
-    expect(tallest).toBe(18);
+    expect(tallest).toBe(v1rel(18));
     const phases = maw.phases.filter((phase) => phase.script === 'boss.maw');
     expect(phases).toHaveLength(3);
     for (const [index, phase] of phases.entries()) {

@@ -28,6 +28,7 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel, v1y } from '../../packages/core/test/helpers/v1-port.js';
 import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
@@ -237,8 +238,8 @@ describe('integration: the test-range stage', () => {
         game.step();
         const terrain = game.world.terrain;
         if (terrain !== null && tick % 60 === 0) {
-          const x = Math.floor(game.world.camera.x) + 200;
-          if (!Number.isNaN(findFloor(terrain, x, 100, 100))) floors++;
+          const x = Math.floor(game.world.camera.x) + v1rel(200);
+          if (!Number.isNaN(findFloor(terrain, x, v1y(100), v1rel(100)))) floors++;
         }
       }
       return { game, floors };
@@ -246,7 +247,7 @@ describe('integration: the test-range stage', () => {
     const a = play();
     const b = play();
     expect(a.game.world.status).toBe('stageClear');
-    expect(a.game.world.camera.x).toBe(4800);
+    expect(a.game.world.camera.x).toBe(v1rel(4800));
     expect(a.floors).toBeGreaterThan(20);
     expect(hashWorld(a.game.world)).toBe(hashWorld(b.game.world));
     expect(a.game.world.stage?.checkpoint).toBe(2);

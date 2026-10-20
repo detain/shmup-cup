@@ -43,6 +43,7 @@ import {
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
+import { v1rel, v1speed, v1y } from '../packages/core/test/helpers/v1-port.js';
 
 /** Shipped pattern action ids (read from the files, so a new pattern is covered at once). */
 const SHIPPED_PATTERNS: readonly string[] = (() => {
@@ -103,7 +104,7 @@ function arena(seed = 17, db: ContentDb = DB): World {
   const w = createWorld(resolveGameConfig({ seed, autofire: false, remoteMode: false }), db);
   run(w, 50);
   w.players[0].x = 60;
-  w.players[0].y = 100;
+  w.players[0].y = v1y(100);
   w.players[0].invulnTicks = 1e9;
   return w;
 }
@@ -177,7 +178,9 @@ describe('integration: the shipped pattern library (M2-02)', () => {
 
   it('the sentry spirals: a 512-apart pair every 8 ticks turning 44 a volley, 24 volleys, a rest', () => {
     const w = arena();
-    spawn(w, 'sentry', 300, 100);
+    // Parked on its shipped waypoint (ported with it): the sentry never moves, so its
+    // aimed restart is the straight-left aim again.
+    spawn(w, 'sentry', v1rel(300), v1y(100));
     const f = w.bullets.pool.fields;
     const volleys: { tick: number; angles: number[] }[] = [];
     for (let t = 0; t < 240; t++) {
@@ -218,7 +221,11 @@ describe('integration: the shipped pattern library (M2-02)', () => {
     const origin = new BulletOrigin();
     origin.x = a.camera.x + 250;
     origin.y = 60;
-    expect(fireStack(a.bullets, origin, 4, 1, 0.25, BulletKind.NeedleRed)).toBe(4);
+    // The stack's per-bullet speed increment mirrors the file's `1 + $i * $2` (both px/tick
+    // values, ported together).
+    expect(fireStack(a.bullets, origin, 4, v1speed(1), v1speed(0.25), BulletKind.NeedleRed)).toBe(
+      4,
+    );
     const index = sample.db.patterns.actionIndex.get('example.burst') ?? -1;
     expect(b.patterns.startEmitter(0, index)).toBe(true);
     expect(b.patterns.stepEmitter(0, origin, true)).toBe(-1);

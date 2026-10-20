@@ -34,6 +34,7 @@ import {
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { INTERIM_ART_SCALE, scaleLength } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import * as rasterBands from '../../scripts/assets/procedural/raster-bands.mjs';
@@ -185,7 +186,7 @@ describe('integration: the raster range matches its art (M2-08)', () => {
     // The haze sits on the far layer above the sea, inside a camera range.
     expect(haze.layer).toBe('far');
     expect(haze.bottom).toBeLessThanOrEqual(wave.top);
-    expect([haze.from, haze.to]).toEqual([1200, 2400]);
+    expect([haze.from, haze.to]).toEqual([v1rel(1200), v1rel(2400)]);
     // The cycle recolours the sea's ramp on the sea's layer.
     expect(stage.cycles).toHaveLength(1);
     expect(stage.cycles[0].layer).toBe('mid');
@@ -263,7 +264,7 @@ describe('integration: the raster range drives the layer effects (M2-08)', () =>
     for (let tick = 0; game.world.status === 'playing' && tick < 5000; tick++) {
       game.step();
       effects.sync(game.world.tick, camera, 0, true);
-      const inHaze = camera.x >= 1200 && camera.x < 2400;
+      const inHaze = camera.x >= v1rel(1200) && camera.x < v1rel(2400);
       if (inHaze) hazeFrames++;
       const expectedMask = (1 << LayerId.BgMid) | (inHaze ? 1 << LayerId.BgFar : 0);
       if (effects.attachedMask !== expectedMask) {
