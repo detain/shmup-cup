@@ -10,6 +10,7 @@ import {
   DrawOp,
   EMPTY_CONTENT_DB,
   GRID_MARGIN,
+  ITEM_RADIUS,
   LaserPhase,
   LayerId,
   PLAYFIELD_H,
@@ -233,7 +234,11 @@ describe('render-pixi/debug outlines', () => {
     expect(bounds(rects(lists.shots)).slice(0, 2)).toEqual(at(1160, 99));
     expect(bounds(rects(lists.shots))[2]).toBe(Math.ceil(1200 - 1000.5) - 1);
     expect(bounds(rects(lists.enemies)).slice(0, 2)).toEqual(at(1294, 46));
-    expect(bounds(rects(lists.items)).slice(0, 2)).toEqual(at(1015, 175));
+    // The item box's half-size is the constant the outline builder draws with
+    // (`buildDebugOutlines` centres every item at `ITEM_RADIUS`), as on the bullet line above.
+    expect(bounds(rects(lists.items)).slice(0, 2)).toEqual(
+      at(1020 - ITEM_RADIUS, 180 - ITEM_RADIUS),
+    );
     const beam = rects(lists.lasers);
     expect(beam).toHaveLength(17 * 4); // 17 squares along the beam
     expect(bounds(beam)[0]).toBe(Math.floor(1110 - 3 - 1000.5));
