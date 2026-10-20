@@ -2320,13 +2320,13 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | done (owner parts pending) — 2026-10-19 |
-| R2-02 | Port all content ×1.5 | not started |
+| R2-02 | Port all content ×1.5 | in progress — prep A landed and reviewed at zero (waves 1–2: `WORLD_SCALE`/`WORLD_TOP_PAD` neutral, the two-scale kit, W1–W7, A1/T0/T4a–T4c; kit identity 0/0/0, core CI green `0f148fb`); the content port and the rest of the prep are waves 3–4 |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
 | R3-01 | Art bible v2 and the prompt library update | done (owner parts pending) — 2026-10-17 |
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
-| R3-03 | Variants, palettes and tiles from real art | not started |
-| R3-04 | Atlas pages and memory with detailed art | not started |
+| R3-03 | Variants, palettes and tiles from real art | in progress — V1 (bullets and bend nodes native at the bible's v2 sizes, `cf30c2c`) and V3 (the palette-cycle scan enforcing §4.4, `f7abd0d`) landed and reviewed (SRV1/SRV2, wave 2); the remaining variants and tiles ride the later art waves |
+| R3-04 | Atlas pages and memory with detailed art | in progress — the whole M3 chain landed and reviewed (M3a–M3e, `e1dcedf…338c3fe`, blockers closed at `ef40bfd`; lazy residency is the default — a *prospective* flip: measured crossings eager ×2.044 / lazy ×2.706, today's atlas fits either); open: the typed stale-atlas error (F7, wave-3 carry) and the on-device context-loss check (owner) |
 | R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
