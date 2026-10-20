@@ -35,6 +35,16 @@ import {
   type RescaleOptions,
   type WorldSumPair,
 } from '../../src/data/units.js';
+import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+
+/**
+ * Suites that port the shipped `content/` with the tool and check the result in v1 terms —
+ * the premise breaks when R2-02 ports `content/` (the two-scale kit), so they run while the
+ * port is pending; R2-02's final pass rewrites them to read the ported files.
+ */
+const describeV1Content = (name: string, fn: () => void): void => {
+  describe.runIf(CONTENT_PORT_PENDING)(name, fn);
+};
 
 /** The v1 → v2 port (plan §2.6 / §2.7): the content's own geometry, not today's constants. */
 const V2: RescaleOptions = {
@@ -277,49 +287,53 @@ describe('core/data units: the pairs of the stage schema', () => {
   });
 });
 
-describe('core/data units: the gap entrances keep their bricks around their region', () => {
-  for (const [stage, left, right, region] of [
-    ['bonus-range', 1, 2, 3],
-    ['zone-b', 33, 34, 35],
-  ] as const) {
-    it(`${stage}: events[${String(left)}]–[${String(right)}] around events[${String(region)}]`, () => {
-      const data = stageFile(stage);
-      const events = data['events'] as Record<string, unknown>[];
-      const brick = (index: number) => events[index] as Record<string, number>;
-      /** A block's column as written (the default stands 16 px past the right edge). */
-      const column = (index: number): number => brick(index)['screenX'] ?? V2.fromWidth + 16;
-      // As written: the region is exactly the gap between the bricks, from the top edge down.
-      const gap = (events[region] as { region: Record<string, number> }).region;
-      expect(brick(left).x + column(left) + brick(left).w).toBe(gap.x);
-      expect(brick(right).x + column(right)).toBe(gap.x + gap.w);
-      expect([brick(left).y, gap.y, brick(left).h]).toEqual([0, 0, gap.h]);
+describeV1Content(
+  'core/data units: the gap entrances keep their bricks around their region',
+  () => {
+    for (const [stage, left, right, region] of [
+      ['bonus-range', 1, 2, 3],
+      ['zone-b', 33, 34, 35],
+    ] as const) {
+      it(`${stage}: events[${String(left)}]–[${String(right)}] around events[${String(region)}]`, () => {
+        const data = stageFile(stage);
+        const events = data['events'] as Record<string, unknown>[];
+        const brick = (index: number) => events[index] as Record<string, number>;
+        /** A block's column as written (the default stands 16 px past the right edge). */
+        const column = (index: number): number => brick(index)['screenX'] ?? V2.fromWidth + 16;
+        // As written: the region is exactly the gap between the bricks, from the top edge down.
+        const gap = (events[region] as { region: Record<string, number> }).region;
+        expect(brick(left).x + column(left) + brick(left).w).toBe(gap.x);
+        expect(brick(right).x + column(right)).toBe(gap.x + gap.w);
+        expect([brick(left).y, gap.y, brick(left).h]).toEqual([0, 0, gap.h]);
 
-      const ported = portStage(data);
-      const get = (path: string): number => ported.get(path) as number;
-      const leftEdge = get(`events[${String(left)}].x`) + get(`events[${String(left)}].screenX`);
-      const rightEdge = get(`events[${String(right)}].x`) + get(`events[${String(right)}].screenX`);
-      const gapX = get(`events[${String(region)}].region.x`);
-      const gapW = get(`events[${String(region)}].region.w`);
-      // The bricks stand ×k and still close the region in.
-      expect(leftEdge).toBe((brick(left).x + column(left)) * 1.5);
-      expect(leftEdge + get(`events[${String(left)}].w`)).toBe(gapX);
-      expect(rightEdge).toBe(gapX + gapW);
-      // Both still appear past the new right edge.
-      expect(get(`events[${String(left)}].screenX`)).toBeGreaterThan(V2.toWidth);
-      // Bricks and region still hang from the top edge, grown by the pad together.
-      expect(get(`events[${String(left)}].y`)).toBe(0);
-      expect(get(`events[${String(region)}].region.y`)).toBe(0);
-      expect(get(`events[${String(left)}].h`)).toBe(72);
-      expect(get(`events[${String(region)}].region.h`)).toBe(72);
-      // Ported one value at a time (the old rules), the region would miss the gap.
-      const alone =
-        rescaleNumber('world-x', brick(left).x, V2) + rescaleNumber('screen-x', column(left), V2);
-      expect(alone + rescaleNumber('world-px', brick(left).w, V2)).not.toBe(gapX);
-    });
-  }
-});
+        const ported = portStage(data);
+        const get = (path: string): number => ported.get(path) as number;
+        const leftEdge = get(`events[${String(left)}].x`) + get(`events[${String(left)}].screenX`);
+        const rightEdge =
+          get(`events[${String(right)}].x`) + get(`events[${String(right)}].screenX`);
+        const gapX = get(`events[${String(region)}].region.x`);
+        const gapW = get(`events[${String(region)}].region.w`);
+        // The bricks stand ×k and still close the region in.
+        expect(leftEdge).toBe((brick(left).x + column(left)) * 1.5);
+        expect(leftEdge + get(`events[${String(left)}].w`)).toBe(gapX);
+        expect(rightEdge).toBe(gapX + gapW);
+        // Both still appear past the new right edge.
+        expect(get(`events[${String(left)}].screenX`)).toBeGreaterThan(V2.toWidth);
+        // Bricks and region still hang from the top edge, grown by the pad together.
+        expect(get(`events[${String(left)}].y`)).toBe(0);
+        expect(get(`events[${String(region)}].region.y`)).toBe(0);
+        expect(get(`events[${String(left)}].h`)).toBe(72);
+        expect(get(`events[${String(region)}].region.h`)).toBe(72);
+        // Ported one value at a time (the old rules), the region would miss the gap.
+        const alone =
+          rescaleNumber('world-x', brick(left).x, V2) + rescaleNumber('screen-x', column(left), V2);
+        expect(alone + rescaleNumber('world-px', brick(left).w, V2)).not.toBe(gapX);
+      });
+    }
+  },
+);
 
-describe('core/data units: the camera’s yTo', () => {
+describeV1Content('core/data units: the camera’s yTo', () => {
   it('is ×k, so a pan to the bottom of a map ports to the bottom of the padded map', () => {
     const fields = listNumberFields(CONTENT_FILE_SCHEMAS.stage).fields;
     expect(fields.find((field) => field.path === 'camera[].yTo')?.unit).toBe('rel-px');

@@ -13,7 +13,7 @@
  * derived. Each bound is checked at its limit and one past it.
  */
 import { describe, expect, it } from 'vitest';
-import { PLAYFIELD_CY, PLAYFIELD_H, PLAYFIELD_W } from '../../src/config/index.js';
+import { PLAYFIELD_CY, PLAYFIELD_H, PLAYFIELD_W, WORLD_SCALE } from '../../src/config/index.js';
 import {
   DEFAULT_BLOCK_SCREEN_X,
   DEFAULT_BOSS_X,
@@ -104,10 +104,10 @@ function stageIssues(events: unknown[]): readonly ValidationIssue[] {
 
 describe('core/data — frame-anchored defaults', () => {
   it('derives the boss home and the block entry from the playfield', () => {
-    expect(DEFAULT_BOSS_X).toBe(PLAYFIELD_W - 88);
+    expect(DEFAULT_BOSS_X).toBe(PLAYFIELD_W - 88 * WORLD_SCALE);
     expect(DEFAULT_BOSS_Y).toBe(PLAYFIELD_CY);
     expect(DEFAULT_BOSS_Y).toBe(PLAYFIELD_H / 2);
-    expect(DEFAULT_BLOCK_SCREEN_X).toBe(PLAYFIELD_W + 16);
+    expect(DEFAULT_BLOCK_SCREEN_X).toBe(PLAYFIELD_W + 16 * WORLD_SCALE);
     for (const value of [DEFAULT_BOSS_X, DEFAULT_BOSS_Y, DEFAULT_BLOCK_SCREEN_X]) {
       expect(Number.isInteger(value)).toBe(true);
     }

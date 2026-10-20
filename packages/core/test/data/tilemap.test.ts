@@ -7,7 +7,7 @@
  * half-tile steps, ramping in and out at the segment ends, floor over ceiling, missing tiles.
  */
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe as describeRaw, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType } from '../../src/collision/index.js';
 import { PLAYFIELD_W } from '../../src/config/index.js';
 import {
@@ -18,6 +18,17 @@ import {
   type LoadContentResult,
 } from '../../src/data/index.js';
 import { decodeRleRow } from '../../src/data/tilemap.js';
+import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+
+/**
+ * Every suite in this file builds tilemaps of the v1 8-px tile over the shipped `terrain-a`
+ * tileset and checks the expansion in v1 pixel terms — the premise breaks when R2-02 ports
+ * `content/` (the two-scale kit), so the suites run while the port is pending, and R2-02's
+ * final pass rewrites them for the 12-px content.
+ */
+const describe = (name: string, fn: () => void): void => {
+  describeRaw.runIf(CONTENT_PORT_PENDING)(name, fn);
+};
 
 /** The shipped `terrain-a` tileset JSON. */
 const TERRAIN_A = JSON.parse(

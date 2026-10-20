@@ -13,13 +13,24 @@
  * - `buildTilesetTables`: codes, frames, short masks, the first of duplicate names.
  */
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe as describeRaw, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType, findCeiling, findFloor } from '../../src/collision/index.js';
 import { PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentFile, type LoadContentResult } from '../../src/data/index.js';
 import { buildTilesetTables, decodeRleRow } from '../../src/data/tilemap.js';
 import { createRng, type Rng } from '../../src/rng/index.js';
 import { createStageTerrain } from '../../src/stage/index.js';
+import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+
+/**
+ * Every suite in this file lays tilemaps of the v1 8-px tile over the shipped `terrain-a`
+ * tileset and checks heights and surfaces in v1 pixel terms — the premise breaks when R2-02
+ * ports `content/` (the two-scale kit), so the suites run while the port is pending, and
+ * R2-02's final pass rewrites them for the 12-px content.
+ */
+const describe = (name: string, fn: () => void): void => {
+  describeRaw.runIf(CONTENT_PORT_PENDING)(name, fn);
+};
 
 /** The shipped `terrain-a` tileset JSON. */
 const TERRAIN_A = JSON.parse(

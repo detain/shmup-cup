@@ -202,7 +202,11 @@ describe('core/data Direct mode — the item plan and the powerup drop', () => {
     const db = directDb();
     const manta = db.ships[db.shipIndex.get('manta') ?? -1];
     expect(manta).toMatchObject({ name: 'MANTA', mode: 'direct', startSpeedLevel: 1 });
-    expect(manta.speeds).toEqual([1.75, 2.25, 2.75]);
+    // The v1 speeds, read from the shipped content (the kit ports them with it).
+    expect(manta.speeds).toEqual(
+      (shipped('player/manta.player.json').data as { ships: { speeds: number[] }[] }).ships[0]
+        .speeds,
+    );
     expect(db.ships[db.shipIndex.get('kestrel') ?? -1].mode).toBe('meter');
     expect(db.weaponFamilies.map((f) => [f.id, f.slot, f.label, f.levels.length])).toEqual([
       ['beam-disc', 'main', 'DISC', 9],

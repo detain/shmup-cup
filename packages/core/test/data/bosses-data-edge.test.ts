@@ -7,7 +7,7 @@
  * `partsDestroyed`, which made the phase's part condition impossible to meet.
  */
 import { describe, expect, it } from 'vitest';
-import { PLAYFIELD_H } from '../../src/config/index.js';
+import { PLAYFIELD_H, WORLD_SCALE } from '../../src/config/index.js';
 import {
   MAX_BOSS_PHASES,
   loadContent,
@@ -197,7 +197,7 @@ describe('core/data — boss section edge cases (M1-13)', () => {
         parts: [
           {
             name: 'Core',
-            x: 513,
+            x: 512 * WORLD_SCALE + 1,
             hp: 0,
             core: true,
             hurtbox: { hw: 1, hh: 1 },
@@ -228,8 +228,8 @@ describe('core/data — boss section edge cases (M1-13)', () => {
           parts: [
             {
               name: 'core',
-              x: -512,
-              y: 512,
+              x: -512 * WORLD_SCALE,
+              y: 512 * WORLD_SCALE,
               hp: 100000,
               hurtbox: { hw: 1, hh: 1 },
               core: true,
