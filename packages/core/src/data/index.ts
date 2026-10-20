@@ -953,7 +953,7 @@ export interface EnemySpec {
 }
 
 /** Most parts one boss may have (shmup_feat.md §13 multi-part bosses; plan M1-13). */
-export const MAX_BOSS_PARTS = 16;
+export const MAX_BOSS_PARTS = 24;
 
 /** Most phases one boss may have. */
 export const MAX_BOSS_PHASES = 8;

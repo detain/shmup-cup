@@ -4,8 +4,8 @@
  *
  * - **starting bosses**: bad indices, regular enemies, a captain with a WARNING, a second main
  *   boss (also while a WARNING plays), every slot busy, a WARNING boss in a later slot;
- * - **part slots**: hits and armour queries outside the 64 part slots or on parts a slot's boss
- *   lacks, another slot's parts through their global index;
+ * - **part slots**: hits and armour queries outside the part slots (BOSS_PART_SLOTS) or on a
+ *   slot's boss that lacks them, another slot's parts through their global index;
  * - **turned parts**: angles a behaviour sets (wrapped, NaN ignored, fractions kept), negative and
  *   fractional spins, `partAngle` / `aimPart` (bad index, no target, the step limit), children
  *   placed along a turned parent and destroyed with it, spins frozen while dying, a circle part in
@@ -63,7 +63,12 @@ import {
 import { BulletOrigin } from '../../src/bullets/index.js';
 import type { SpatialGrid } from '../../src/collision/index.js';
 import { PLAYFIELD_W, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import {
+  MAX_BOSS_PARTS,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { MAX_ENEMIES } from '../../src/enemies/index.js';
 import { FX_CUES, MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
@@ -477,12 +482,12 @@ describe('core/bosses — part slots (M2-09 edges)', () => {
     bosses.startBoss(index('cap'));
     // Its part 1 does not exist; slot 1 holds no boss.
     expect(bosses.damagePart(1, 1, 0)).toBe(BossHit.None);
-    expect(bosses.damagePart(16, 1, 0)).toBe(BossHit.None);
-    // Slot 1's core is part slot 16.
+    expect(bosses.damagePart(MAX_BOSS_PARTS, 1, 0)).toBe(BossHit.None);
+    // Slot 1's core is part slot MAX_BOSS_PARTS.
     bosses.startBoss(index('cap'));
     const second = bosses.slots[1].parts[0];
-    expect(second.global).toBe(16);
-    expect(bosses.damagePart(16, 3, 0)).toBe(BossHit.Damaged);
+    expect(second.global).toBe(MAX_BOSS_PARTS);
+    expect(bosses.damagePart(MAX_BOSS_PARTS, 3, 0)).toBe(BossHit.Damaged);
     expect([second.hp, bosses.slots[0].parts[0].hp]).toEqual([5, 8]);
   });
 });

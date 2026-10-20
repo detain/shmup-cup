@@ -11,6 +11,7 @@
  * - a stepped world's hash is a pure function of its state, however it was reached.
  */
 import { describe, expect, it } from 'vitest';
+import { BOSS_PART_SLOTS } from '../../src/bosses/index.js';
 import { fireBendingLaser, fireLaser } from '../../src/bullets/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
@@ -241,8 +242,9 @@ function referenceHash(w: World): number {
     const table = shots.fields.table[i];
     if (table <= 0) continue;
     for (let e = 0; e < 64; e++) word(weapons.cooldowns[(table - 1) * 64 + e]);
-    // Every boss slot's parts (M2-09: 4 × 16).
-    for (let e = 0; e < 64; e++) word(weapons.partCooldowns[(table - 1) * 64 + e]);
+    // Every boss slot's parts (M2-09; R5-P.P8: the width is BOSS_PART_SLOTS = 4 × MAX_BOSS_PARTS).
+    for (let e = 0; e < BOSS_PART_SLOTS; e++)
+      word(weapons.partCooldowns[(table - 1) * BOSS_PART_SLOTS + e]);
   }
   // Power-ups (M1-11): per player the meter cursor, pending Mega Crash and shield; taken drops.
   const powerups = w.powerups;

@@ -341,7 +341,7 @@ describe('core/bosses', () => {
     expect(moduleInfo.status).toBe('implemented');
     expect(moduleInfo.specRefs).toContain('shmup_feat.md §13');
     expect(BOSS_PART_ID_BASE).toBe(MAX_ENEMIES);
-    // Four boss slots of 16 parts each (M2-09).
+    // Four boss slots of 24 parts each (M2-09; R5-P.P8 raised 16 to 24).
     expect(MAX_HIT_TARGETS).toBe(MAX_ENEMIES + 4 * MAX_BOSS_PARTS);
   });
 

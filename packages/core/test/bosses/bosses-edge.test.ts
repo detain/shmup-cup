@@ -27,6 +27,7 @@ import {
   BOSS_ENTRY_MARGIN,
   BOSS_BLAST_HIT_STOP_TICKS,
   CHAIN_SPREAD,
+  BOSS_PART_SLOTS,
   BossHit,
   BossMotion,
   BossState,
@@ -836,7 +837,7 @@ describe('core/bosses — edge cases (M1-13)', () => {
       until(w, BossState.Warning);
       expect(w.bosses.damagePart(0, 1, 0)).toBe(BossHit.None);
       until(w, BossState.Fight);
-      for (const bad of [-1, 16, 0.5, Number.NaN]) {
+      for (const bad of [-1, BOSS_PART_SLOTS, 0.5, Number.NaN]) {
         expect(w.bosses.isArmoured(bad)).toBe(false);
         expect(w.bosses.damagePart(bad, 1, 0)).toBe(BossHit.None);
       }

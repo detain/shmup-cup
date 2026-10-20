@@ -36,7 +36,12 @@ import {
   type BossScriptApi,
 } from '../../src/bosses/index.js';
 import { PLAYFIELD_W, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import {
+  MAX_BOSS_PARTS,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -931,7 +936,7 @@ describe('core/bosses — captains (M2-09)', () => {
     expect(w.bosses.startBoss(index('cap'))).toBe(false);
     expect(w.bosses.slots.map((b) => b.state)).toEqual([2, 2, 2, 2]);
     // Every slot's parts have their own hit ids.
-    expect(w.bosses.slots[3].parts[0].slot).toBe(BOSS_PART_ID_BASE + 48);
+    expect(w.bosses.slots[3].parts[0].slot).toBe(BOSS_PART_ID_BASE + 3 * MAX_BOSS_PARTS);
   });
 });
 

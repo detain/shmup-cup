@@ -70,7 +70,7 @@ const issuesOf = (enemies: unknown[]): readonly ValidationIssue[] =>
 
 describe('core/data — boss section (M1-13)', () => {
   it('exports the limits and vulnerabilities', () => {
-    expect([MAX_BOSS_PARTS, MAX_BOSS_PHASES]).toEqual([16, 8]);
+    expect([MAX_BOSS_PARTS, MAX_BOSS_PHASES]).toEqual([24, 8]);
     expect([...BOSS_VULNERABILITIES]).toEqual(['always', 'afterParts', 'whenOpen', 'never']);
   });
 
@@ -296,9 +296,9 @@ describe('core/data — boss section (M1-13)', () => {
         message: "must be a string of length in 1..24 matching /^[A-Z0-9][A-Z0-9 .'-]*$/",
       },
     ]);
-    const many = Array.from({ length: 17 }, (_, i) => ({ name: 'p' + String(i) }));
+    const many = Array.from({ length: 25 }, (_, i) => ({ name: 'p' + String(i) }));
     expect(issuesOf([boss({ parts: many })])).toEqual([
-      { path: 'e.json:enemies[0].boss.parts', message: 'must have at most 16 items' },
+      { path: 'e.json:enemies[0].boss.parts', message: 'must have at most 24 items' },
     ]);
     expect(issuesOf([boss({ introTicks: 601, x: PLAYFIELD_W + 116 })]).map((i) => i.path)).toEqual([
       'e.json:enemies[0].boss.introTicks',
