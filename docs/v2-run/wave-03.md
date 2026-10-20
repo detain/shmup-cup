@@ -156,6 +156,12 @@ under the kit and master e2e unchanged.
   ```
 - **Acceptance:** green at both scales.
 - **Token:** none.
+- **Note (intake, 2026-10-20):** T2d's intake record never existed — the brief's
+  `$RUN_DIR/w02/rv-a2/T2d.txt` was not on disk, so the red list (9 tests over 7 files) is the lane's
+  self-report, and `enemies-runtime` was already green at intake. The §0.7 fixture-pairing rule
+  accounted for the majority of the T1b reds: 68 of 72 were the load error in its two fixture files
+  (one held an 8-px fixture tilemap against the kit-ported shipped `terrain-a`). The step landed at
+  `0fe5f95`, green at both scales.
 
 ### R2-02.T1c — Bullet, weapon, shield and pattern tests at both scales
 
@@ -360,6 +366,9 @@ under the kit and master e2e unchanged.
   and links in a WebGL1 context"), `:285` ("stretch fills a display the integer mode letterboxes") and `:306`
   ("draws the hitbox markers only while the option is on"), stage `:147` ("warns about an unknown ?stage= and flies
   in open space without terrain"), coop-gamepad.
+  - **Note (intake, 2026-10-20):** the list above is historically wrong in a useful way — E0's finding
+    was that **every** predicted candidate passes under the two-scale kit: zero gates were added (its
+    batch B ran 15 passed / 0 skipped / 0 failed), so none of these specs needed `GOLDEN_REASON`.
 - **Steps:**
   1. `bash test/port-v2/two-scale.sh --keep -- true` → a kept kit tree; `<kit>` below is the path that command prints
      as its last output line. In it, run the five standard batches A–E (README) — and batch G too, if it exists (it

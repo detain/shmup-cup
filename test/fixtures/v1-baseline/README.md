@@ -116,9 +116,19 @@ Caveats:
   view is W′ − k·W = 64 px wider than ×k): their ticks are not equal — compare their world position
   instead, and leave them out of the first-visible ±1-tick check.
 - **Event indices** — the port re-sorts a stage's `events` by the ported x where a ground spawn or a
-  block moved ahead of its neighbour (gimmick-range 9↔10, zone-c 8↔9, zone-d 42↔43, zone-g 14↔15,
+  block moved ahead of its neighbour (gimmick-range 9↔10, zone-c 8↔9, zone-d 42↔43,
   zone-h 15↔16, 19↔20, 28↔29, 32↔33, 62↔63): match `event` and the `events` rows through the tool's
-  reported index map.
+  reported index map (zone-g's 14↔15 pair died with the port's hand-fix — its facet-turret spawn
+  moved from x 3446 to 3450 back inside the previous band, so that stage orders by identity since).
+- **Event `y0`** — a ground event's `y0` is `K·y + PAD`, but where the event names no `y` the port
+  takes the playfield centre (v1's 100 → v2's 168, not `K·y + PAD`), and a ceiling-mounted spec
+  takes the pad-free `K·y` (`test/golden/v2-port.ts`).
+- **Screen-anchored columns** — an event `x` whose unit is a screen column goes through
+  `rescaleNumber`, which snaps to the new frame's edges rather than multiplying: a centre 200 → 332,
+  an end 400 → 664 (frame ≠ world, plan §2.6).
+- **The event maps are base-file only** — the index pairs above describe each shipped stage's base
+  file; loop-2 remixes re-sort the timeline by their own ported x, so a pair can differ there. Prefer
+  deriving the pairs as `test/golden/v2-port.ts`'s `deriveEventMap` does over hard-coding them.
 
 ## Re-recording
 

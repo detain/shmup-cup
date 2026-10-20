@@ -1707,10 +1707,10 @@ are fixed by k = 1.5. Detail comes from:
   - the **R4-02 readability sign-off** (512 bullets over each zone's backdrop in all four bullet palettes) and the
     **R4-03 font cell** (8×12 or 9×12), both left to those steps;
   - R3-05's licence decisions before any winner ships (FLUX is on hold — R3-05);
-  - **after round 2 of the art round, apply the remaining five prompt-library edits** (the art round is using the
-    library until then; edits 5 and 6 — the KESTREL in-game sheet's 4-frame thruster loop in a strict side view,
+  - **the remaining prompt-library edits were applied after round 2 of the art round** (the art round
+    used the library until then; edits 5 and 6 — the KESTREL in-game sheet's 4-frame thruster loop in a strict side view,
     and the darker playfield grade for the DUNE EXPANSE / TEMPEST RIDGE / BRINE NEBULA layer followups — were
-    applied to the round-2 followups early, `a092ee9`):
+    applied to the round-2 followups early, `a092ee9`; edits 1–4 landed at `ae0b81f`, 2026-10-20):
     - *edit 1* — `art-prompts/images/00-style-kernel.md` v2 targets table: a lead line saying the bible wins over
       it; bullets 11 / 13 / 17, point item 7, particles 7 / 9 / 13; the laser beam 12 frames, node 1; the force
       field "4 wear × 1–2 shimmer"; Options "hand, or AI concept → heavy cleanup"; the backdrop lighting budget in
@@ -1722,7 +1722,8 @@ are fixed by k = 1.5. Detail comes from:
     - *edit 4* — the `40-enemies` zone sheets v1–v3: one subject per sheet; drop "dithered highlights only" (zone A
       v2) and "light dithering on metal" (zone A v3); fix the stale "Grid layout on a single flat navy field"
       (zone A v1);
-    - *edit 7*, optional — "SNES-era" → "16-bit console era" (the same question as R3-05's "SNES" decision).
+    - *edit 7*, optional — "SNES-era" → "16-bit console era" (the same question as R3-05's "SNES"
+      decision) — **pending the owner**, still not applied as of `ae0b81f`.
 - **As built** (`c3b775a`, review fixes `7a51aaf`; review round 2 clean) — where `docs/dev/art-bible-v2.md` differs
   from this scope or from the kernel's v2 targets table, which it overrides:
   - **Odd sizes for point-symmetric sprites**, so the anchor is a real centre pixel (bible §5.1): bullets
