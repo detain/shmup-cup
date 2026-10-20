@@ -106,9 +106,12 @@
  * Since R3-04 {@link ShellOptions.atlasPages} `'lazy'` changes where the images come from: no page
  * is fetched at boot, the residency loads the shown stage's pages on demand — fetch, decode,
  * upload, **drop the image** (`createLazyAtlasResidency`, owner decision W5-15) — and while they
- * are in flight the frame loop holds the game: the last displayed frame is redrawded, no tick runs
+ * are in flight the frame loop holds the game: the last displayed frame is redrawn, no tick runs
  * and no input is consumed, so a slow page load cannot move a replay (decision W5-16; the boot's
- * own prepare is awaited, so the first frame draws the boot stage).
+ * own prepare is awaited, so the first frame draws the boot stage). Since R3-04.M3d the shell
+ * also listens for `webglcontextlost` / `webglcontextrestored` on the canvas: a restored context
+ * lost every GPU page upload with the old one, so the boot re-fetches and re-uploads every
+ * resident page on the restore event.
  *
  * **Replays and rumble (M3-01).** Right after the save the shell creates and loads the replay
  * library (`core/replay` `createReplayLibrary` over `platform.storage` — keys `replay.last`,
@@ -1491,6 +1494,50 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   } else {
     atlasResidency.prepare(bootStage);
   }
+  // WebGL context loss (plan R3-04.M3d). Pixi cancels the loss, rebuilds its GL objects on the
+  // restored context, and re-creates a texture lazily on the frame that first binds it — but the
+  // residency's resident pages were uploaded through THIS boot's eager `uploadTextureSource`, and
+  // a page that no sprite draws for a while would keep a dead GPU copy that long. So on the
+  // restore event the shell re-fetches and re-uploads every resident page: a fresh image (the
+  // driver reset can outlive the browser's hold on the decoded data), the page's GPU copy dropped
+  // (`unload`, which is also how the residency itself retires a page) and uploaded again in the
+  // same step. A cold path — a loss is rare, the loop runs the whole way, one page at a time;
+  // anything it cannot fetch or upload back-stops to Pixi's own lazy re-creation on the page's
+  // next drawn frame. The restore listener is added after the renderer's own, so Pixi has already
+  // cleared its texture bookkeeping when this runs.
+  const recoverAtlasPages = async (): Promise<void> => {
+    for (let p = 0; p < readyAtlas.pages.length; p++) {
+      if (!atlasResidency.resident[p]) continue;
+      const source = readyAtlas.pages[p];
+      try {
+        const loaded = await loadImageTimed(pageUrls[p], createImage, atlasClock);
+        readyAtlas.loadPage(p, loaded.image);
+      } catch (_error) {
+        // The old image stands in: it still decodes from its bytes, and the next prepare of a
+        // stage needing this page fetches it again anyway.
+      }
+      source.unload();
+      try {
+        readyRenderer.uploadTextureSource(source);
+      } catch (_error) {
+        // Pixi re-creates the texture on the page's next drawn frame (its own self-heal).
+      }
+    }
+  };
+  const onContextLost = (event: Event): void => {
+    // Cancel the loss so the browser restores the context at all — Pixi's own listener does the
+    // same; the two calls are one intention.
+    event.preventDefault();
+  };
+  const onContextRestored = (): void => {
+    void recoverAtlasPages();
+  };
+  const canvasEvents = canvas as Partial<HTMLCanvasElement>;
+  const canvasHasEvents = typeof canvasEvents.addEventListener === 'function';
+  if (canvasHasEvents) {
+    canvas.addEventListener('webglcontextlost', onContextLost);
+    canvas.addEventListener('webglcontextrestored', onContextRestored);
+  }
   // The first prepare always reports, so `lastUploadMs` holds the boot's uploads now.
   let bootUploadMs = 0;
   for (let p = 0; p < lastUploadMs.length; p++) bootUploadMs += lastUploadMs[p];
@@ -1780,6 +1827,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       win.removeEventListener('resize', onResize);
       win.removeEventListener('blur', onBlur);
       if (unlockOnGesture) removeGestureListeners();
+      if (canvasHasEvents) {
+        canvas.removeEventListener('webglcontextlost', onContextLost);
+        canvas.removeEventListener('webglcontextrestored', onContextRestored);
+      }
       input.destroy();
       readyRenderer.destroy();
       readyAtlas.destroy();

@@ -29,6 +29,10 @@
  * - what the GPU **really** holds, read from WebGL itself (an init script hooks `texImage2D` /
  *   `deleteTexture`): the weapon select's preview uploads zone A's page (its range's terrain) behind
  *   the residency's back, and the game it starts sends that page off the GPU again;
+ * - the same GPU view after a lost and restored WebGL context (plan R3-04.M3d): the restore event
+ *   clears the tracker's names (the lost context killed them without a `deleteTexture` call) and
+ *   the boot's recovery uploads the resident pages again, so the new context holds exactly the
+ *   pages the canvas still marks;
  * - the Tizen build from `file://` marks its resident pages (`common` + zone A, its start zone)
  *   and every page's fetch / decode / upload time.
  *
@@ -171,6 +175,17 @@ async function trackGpuPages(page: Page): Promise<void> {
     };
     wrap(window.WebGLRenderingContext?.prototype);
     wrap(window.WebGL2RenderingContext?.prototype);
+    // A lost context kills every texture it held **without** a `deleteTexture` call: on the
+    // restore event (R3-04.M3d), forget the names — the view must show what the new context
+    // holds. The event does not bubble; a capture listener on the document still sees it on its
+    // way to the canvas.
+    document.addEventListener(
+      'webglcontextrestored',
+      () => {
+        names.clear();
+      },
+      true,
+    );
     (window as unknown as { __atlasGpu: () => string[] }).__atlasGpu = () =>
       [...names.values()].filter((name) => /^main(-\d+)?\.png$/.test(name)).sort();
   });
@@ -234,6 +249,54 @@ async function runTicks(page: Page, ticks: number): Promise<void> {
     () =>
       new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
+  );
+}
+
+/**
+ * Loses and restores the canvas's WebGL context through `WEBGL_lose_context` (plan R3-04.M3d —
+ * the event pair a driver reset fires), resolving once the restore event has run its listeners:
+ * Pixi's rebuild first, then the shell's re-fetch and re-upload of the resident pages, then this.
+ * `restoreContext()` only takes effect once the context is actually lost, so it waits for the
+ * lost event to have run rather than following `loseContext()` in the same task.
+ *
+ * @param page - The page, with the game canvas present.
+ */
+async function loseAndRestore(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const canvas = document.querySelector('#game') as HTMLCanvasElement;
+        // The canvas already has its context: `getContext` answers with it for the type made
+        // with and `null` for the other (the renderer is WebGL1-first, but do not pin that).
+        const gl = canvas.getContext('webgl') ?? canvas.getContext('webgl2');
+        const lose = gl?.getExtension('WEBGL_lose_context');
+        if (lose === null || lose === undefined) {
+          reject(new Error('WEBGL_lose_context is not available'));
+          return;
+        }
+        const watchdog = setTimeout(
+          () => reject(new Error('webglcontextrestored never fired')),
+          40_000,
+        );
+        canvas.addEventListener(
+          'webglcontextrestored',
+          () => {
+            clearTimeout(watchdog);
+            resolve();
+          },
+          { once: true },
+        );
+        canvas.addEventListener(
+          'webglcontextlost',
+          () => {
+            // The loss has landed; a restore asked for now is honoured (in the next task, so
+            // every lost-event listener — Pixi's preventDefault included — has run first).
+            setTimeout(() => lose.restoreContext(), 0);
+          },
+          { once: true },
+        );
+        lose.loseContext();
       }),
   );
 }
@@ -477,6 +540,37 @@ test.describe('atlas residency (R1-05)', () => {
     await waitFrames(page, 10);
     expect(await gpuPages(page)).toEqual(zoneC.files);
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
+    expect(
+      log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
+    ).toEqual([]);
+  });
+
+  test('a restored WebGL context finds the resident pages on the GPU again (R3-04.M3d)', async ({
+    page,
+  }) => {
+    const log = watch(page);
+    await trackGpuPages(page);
+    await page.goto('./?stage=zone-c');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await waitFrames(page, 10);
+    const zoneC = zonePages(WEB_MANIFEST, 'zone-c');
+    expect(await gpuPages(page)).toEqual(zoneC.files);
+    await loseAndRestore(page);
+    // The restore cleared the tracker with the dead context; the boot's recovery re-fetches and
+    // re-uploads the resident pages (fetches are awaited, so this settles over a few frames).
+    await expect.poll(() => gpuPages(page), { timeout: 30_000 }).toEqual(zoneC.files);
+    await waitFrames(page, 10);
+    // The canvas's marks never moved, and exactly the resident pages came back: each resident
+    // page was fetched once more than at boot (eager boot fetched every page, lazy boot only the
+    // stage's — the bound holds under both policies, which M3e flips).
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
+    const pageFetches = log.requests.filter((url) => /\/assets\/atlas\/main(-\d+)?\.png/.test(url));
+    expect(pageFetches.length).toBeGreaterThanOrEqual(2 * zoneC.pages.length);
+    expect(pageFetches.length).toBeLessThanOrEqual(zoneC.total + zoneC.pages.length);
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
     ).toEqual([]);
