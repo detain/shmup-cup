@@ -103,6 +103,12 @@
  * per page ({@link ATLAS_PAGE_MS_ATTRIBUTE}: fetch / decode / upload — owner decision W3-6). The
  * debug tools get the save store (the save export / import of `window.__shmupDebug.save`), the
  * residency and the atlas timing (`__shmupDebug.atlas`, with `timing` and `pageMs`).
+ * Since R3-04 {@link ShellOptions.atlasPages} `'lazy'` changes where the images come from: no page
+ * is fetched at boot, the residency loads the shown stage's pages on demand — fetch, decode,
+ * upload, **drop the image** (`createLazyAtlasResidency`, owner decision W5-15) — and while they
+ * are in flight the frame loop holds the game: the last displayed frame is redrawded, no tick runs
+ * and no input is consumed, so a slow page load cannot move a replay (decision W5-16; the boot's
+ * own prepare is awaited, so the first frame draws the boot stage).
  *
  * **Replays and rumble (M3-01).** Right after the save the shell creates and loads the replay
  * library (`core/replay` `createReplayLibrary` over `platform.storage` — keys `replay.last`,
@@ -236,6 +242,7 @@ import {
   atlasPageUrls,
   loadAtlasManifest,
   loadGameContent,
+  loadImageTimed,
   loadImagesTimed,
   type ContentOwners,
   type ImageTiming,
@@ -249,10 +256,13 @@ import {
   atlasPageNeeds,
   connectAtlasResidency,
   createAtlasResidency,
+  createLazyAtlasResidency,
   prepareShownWorld,
   stageIndexOfWorld,
   stageSpriteSets,
   type AtlasResidency,
+  type AtlasResidencyOptions,
+  type LazyAtlasResidency,
 } from '../memory/index.js';
 
 /** Module descriptor. */
@@ -708,6 +718,16 @@ export interface ShellOptions {
    */
   readonly framePacing?: 'auto' | 'lock' | 'free';
   /**
+   * Atlas page loading (plan R3-04): `'eager'` (the default until M3e) — every page is fetched,
+   * decoded and attached at boot ({@link loadImagesTimed}) and the residency only moves GPU
+   * copies; `'lazy'` — no page loads at boot: the residency fetches, decodes, attaches and
+   * uploads each page when the shown stage needs it and **drops the decoded image** after its
+   * upload (`createLazyAtlasResidency`, owner decision W5-15; the memory estimate follows with
+   * the `resident` image policy), and the frame loop redraws the last frame while the shown
+   * World's pages are in flight — no tick, no input consumed (decision W5-16).
+   */
+  readonly atlasPages?: 'eager' | 'lazy';
+  /**
    * Image factory for the atlas pages (default `() => new Image()`).
    *
    * @returns A fresh, unloaded image.
@@ -789,7 +809,10 @@ export interface Shell {
   readonly refresh: RefreshMonitor;
   /**
    * The atlas pages' GPU residency (M2-17 — `memory` module): in the scene flow, pages the next
-   * zone does not need are unloaded on its `PrepareStage` event.
+   * zone does not need are unloaded on its `PrepareStage` event. With `atlasPages: 'lazy'`
+   * (plan R3-04.M3c) this is the eager-shaped view of the lazy residency: its `prepare` starts
+   * the page load in the background and returns 0, the counters forward live (the frame loop
+   * holds the game while the load is in flight).
    */
   readonly atlasResidency: AtlasResidency;
   /** The debug tools (dev / test builds — {@link ShellOptions.debugTools}), else `null`. */
@@ -983,6 +1006,42 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
 }
 
 /**
+ * The {@link AtlasResidency}-shaped view of a lazy residency (plan R3-04.M3c). The debug tools
+ * and the event wiring (`connectAtlasResidency`, `prepareShownWorld`) keep the eager contract: a
+ * synchronous `prepare` whose return counts the pages it believed resident that left the GPU. The
+ * lazy `prepare` detaches synchronously, loads its pages in the background and reports the whole
+ * movement through the same `onChange`, so firing it and counting 0 describes the residency
+ * truthfully for the overlay — the counters and {@link AtlasResidency.resident} forward live.
+ * `bootShell` builds one per boot, in lazy mode only; the frame loop reads the real residency.
+ *
+ * @param residency - The lazy residency (plan R3-04.M3b).
+ * @returns The eager-shaped view of it.
+ */
+function asAtlasResidency(residency: LazyAtlasResidency): AtlasResidency {
+  return {
+    get resident() {
+      return residency.resident;
+    },
+    get unloads() {
+      return residency.unloads;
+    },
+    get uploads() {
+      return residency.uploads;
+    },
+    get lastPrepareMs() {
+      return residency.lastPrepareMs;
+    },
+    imagePolicy: residency.imagePolicy,
+    prepare(stageIndex: number): number {
+      // A failed load leaves the pages it did fetch attached; the next prepare (the next stage
+      // change or new World) retries what is still missing — prepares are idempotent.
+      residency.prepare(stageIndex).catch(() => {});
+      return 0;
+    },
+  };
+}
+
+/**
  * Boots the game into a canvas (see the module docs for the sequence).
  *
  * @remarks
@@ -1065,6 +1124,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const flowMode = scene === 'game';
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
   const createImage = options.createImage ?? ((): HTMLImageElement => new Image());
+  /** Atlas pages load on demand and release their images (plan R3-04; M3e flips the default). */
+  const lazyPages = (options.atlasPages ?? 'eager') === 'lazy';
   markState(canvas, 'loading');
   overlay?.showProgress(0, 'LOADING');
 
@@ -1169,25 +1230,35 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     manifestMs = (atlasClock === undefined ? 0 : atlasClock()) - fetchStart;
     pageUrls = atlasPageUrls(assets.atlasDir, manifest);
   }
-  let images: Array<LoadableImage & AtlasPageImage>;
+  let images: Array<(LoadableImage & AtlasPageImage) | null>;
   let pageTimings: readonly ImageTiming[];
-  const pagesStart = atlasClock === undefined ? 0 : atlasClock();
-  try {
-    const loaded = await loadImagesTimed(
-      pageUrls,
-      createImage,
-      (count, total) => {
-        overlay?.showProgress(total === 0 ? 1 : count / total, 'LOADING');
-      },
-      atlasClock,
-    );
-    images = loaded.images;
-    pageTimings = loaded.timings;
-  } catch (error) {
-    const url = error instanceof AssetLoadError ? error.url : '?';
-    throw fail('ATLAS PAGE FAILED TO LOAD', [`${url}: ${describe(error)}`], [], error);
+  let pagesMs: number;
+  if (lazyPages) {
+    // R3-04.M3c: nothing is fetched here — every page starts detached and the lazy residency
+    // loads the shown stage's on demand. The boot's `atlasTiming` page rows carry uploads only
+    // (fetch / decode of a lazily loaded page show up in the canvas's per-page marks instead).
+    images = manifest.pages.map(() => null);
+    pageTimings = [];
+    pagesMs = 0;
+  } else {
+    const pagesStart = atlasClock === undefined ? 0 : atlasClock();
+    try {
+      const loaded = await loadImagesTimed(
+        pageUrls,
+        createImage,
+        (count, total) => {
+          overlay?.showProgress(total === 0 ? 1 : count / total, 'LOADING');
+        },
+        atlasClock,
+      );
+      images = loaded.images;
+      pageTimings = loaded.timings;
+    } catch (error) {
+      const url = error instanceof AssetLoadError ? error.url : '?';
+      throw fail('ATLAS PAGE FAILED TO LOAD', [`${url}: ${describe(error)}`], [], error);
+    }
+    pagesMs = (atlasClock === undefined ? 0 : atlasClock()) - pagesStart;
   }
-  const pagesMs = (atlasClock === undefined ? 0 : atlasClock()) - pagesStart;
   try {
     atlas = createAtlas(manifest, images);
   } catch (error) {
@@ -1356,41 +1427,70 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const lastUploadMs: number[] = manifest.pages.map(() => 0);
   /** The last stage change's per-page text ({@link ATLAS_PAGE_MS_ATTRIBUTE}). */
   let lastPageMs = '';
-  const atlasResidency = createAtlasResidency(
-    readyAtlas.pages,
-    atlasPageNeeds(manifest, content.db.sprites.names, stageSpriteSets(content.db)),
-    {
-      upload: (p) => {
-        const uploadStart = atlasClock === undefined ? 0 : atlasClock();
-        readyRenderer.uploadTextureSource(readyAtlas.pages[p]);
-        prepareUploadMs[p] = (atlasClock === undefined ? 0 : atlasClock()) - uploadStart;
-      },
-      // Cold: once per prepare that moved a page (every upload is reported by its own prepare).
-      onChange: (resident, _unloads, ms) => {
-        let pageMs = '';
-        for (let p = 0; p < prepareUploadMs.length; p++) {
-          const upload = prepareUploadMs[p];
-          lastUploadMs[p] = upload < 0 ? 0 : upload;
-          if (upload >= 0) {
-            const entry = pageMsEntry(manifest.pages[p].file, 0, 0, upload);
-            pageMs = pageMs === '' ? entry : `${pageMs};${entry}`;
-          }
-          prepareUploadMs[p] = -1;
-        }
-        lastPageMs = pageMs;
-        markCanvas(canvas, ATLAS_PAGES_ATTRIBUTE, resident.join(','));
-        markCanvas(canvas, ATLAS_LOAD_MS_ATTRIBUTE, String(Math.round(ms)));
-        markCanvas(canvas, ATLAS_PAGE_MS_ATTRIBUTE, pageMs);
-      },
-      now: atlasClock,
-    },
+  const residencyPageNeeds = atlasPageNeeds(
+    manifest,
+    content.db.sprites.names,
+    stageSpriteSets(content.db),
   );
+  const residencyOptions: AtlasResidencyOptions = {
+    upload: (p) => {
+      const uploadStart = atlasClock === undefined ? 0 : atlasClock();
+      readyRenderer.uploadTextureSource(readyAtlas.pages[p]);
+      prepareUploadMs[p] = (atlasClock === undefined ? 0 : atlasClock()) - uploadStart;
+    },
+    // Cold: once per prepare that moved a page (every upload is reported by its own prepare).
+    onChange: (resident, _unloads, ms) => {
+      let pageMs = '';
+      for (let p = 0; p < prepareUploadMs.length; p++) {
+        const upload = prepareUploadMs[p];
+        lastUploadMs[p] = upload < 0 ? 0 : upload;
+        if (upload >= 0) {
+          const entry = pageMsEntry(manifest.pages[p].file, 0, 0, upload);
+          pageMs = pageMs === '' ? entry : `${pageMs};${entry}`;
+        }
+        prepareUploadMs[p] = -1;
+      }
+      lastPageMs = pageMs;
+      markCanvas(canvas, ATLAS_PAGES_ATTRIBUTE, resident.join(','));
+      markCanvas(canvas, ATLAS_LOAD_MS_ATTRIBUTE, String(Math.round(ms)));
+      markCanvas(canvas, ATLAS_PAGE_MS_ATTRIBUTE, pageMs);
+    },
+    now: atlasClock,
+  };
+  // The residency the frame loop and the boot drive (plan R3-04.M3c): lazy pages load on demand
+  // and release their decoded images (`createLazyAtlasResidency`, W5-15); with the eager default
+  // nothing changes. `atlasResidency` is what the debug tools and the event wiring see — the
+  // eager contract, via {@link asAtlasResidency} in lazy mode; the frame loop's hold reads the
+  // lazy residency's `loading` directly.
+  const lazyResidency: LazyAtlasResidency | null = lazyPages
+    ? createLazyAtlasResidency(readyAtlas.pages, residencyPageNeeds, {
+        ...residencyOptions,
+        lazy: {
+          atlas: readyAtlas,
+          loadImage: (page) =>
+            loadImageTimed(pageUrls[page], createImage, atlasClock).then((loaded) => loaded.image),
+        },
+      })
+    : null;
+  const atlasResidency: AtlasResidency =
+    lazyResidency === null
+      ? createAtlasResidency(readyAtlas.pages, residencyPageNeeds, residencyOptions)
+      : asAtlasResidency(lazyResidency);
   // The boot stage's pages go up now, behind the loading screen and before the warm-up frame draws
   // them (the scene flow and free flight play `game.world`'s stage; the other dev scenes draw from
-  // any page, so they keep every page).
-  atlasResidency.prepare(
-    flowMode || flight !== null ? stageIndexOfWorld(content.db, game.world) : -1,
-  );
+  // any page, so they keep every page). The lazy boot **awaits** the load — fetch, decode, attach,
+  // upload — so the first displayed frame draws the boot stage (decision W5-16); the boot's own
+  // page failure then errors like the eager boot's page load does.
+  const bootStage = flowMode || flight !== null ? stageIndexOfWorld(content.db, game.world) : -1;
+  if (lazyResidency !== null) {
+    try {
+      await lazyResidency.prepare(bootStage);
+    } catch (error) {
+      throw fail('ATLAS PAGE FAILED TO LOAD', [describe(error)], [], error);
+    }
+  } else {
+    atlasResidency.prepare(bootStage);
+  }
   // The first prepare always reports, so `lastUploadMs` holds the boot's uploads now.
   let bootUploadMs = 0;
   for (let p = 0; p < lastUploadMs.length; p++) bootUploadMs += lastUploadMs[p];
@@ -1542,6 +1642,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   /** Whether the last frame showed the World (the scene flow's game, free flight). */
   let worldShown = false;
   /**
+   * The last frame handed to the renderer; the residency hold redraws it while the lazy pages
+   * load (plan R3-04.M3c). Seeded with the calibration frame — a held frame before the first
+   * displayed one cannot happen (the boot awaits its prepare), but the loop must never draw `null`.
+   */
+  let shownFrame: RenderFrame = calibration.update(game.renderFrame());
+  /**
    * One displayed frame: input context, fixed ticks, event dispatch, render (with the debug
    * tools' timing and overlay in dev / test builds).
    *
@@ -1560,6 +1666,20 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     if (pacingMode === 'auto' && refresh.ready) {
       const fixed = refresh.hz >= VSYNC_LOCK_MIN_HZ && refresh.hz <= VSYNC_LOCK_MAX_HZ;
       if (fixed !== game.vsyncLock) game.setVsyncLock(fixed);
+    }
+    // The residency hold (plan R3-04.M3c, decision W5-16): while the lazy atlas pages the shown
+    // World needs are in flight, redraw the last displayed frame — no tick runs, no input is
+    // consumed and no event drains, so a slow page load cannot move a replay by one tick (a held
+    // frame that ticks would change every hash after it). `game.frame` is not called at all, so a
+    // debug frame-advance asked for during the hold waits in its queue and runs exactly once on
+    // the first released frame (the e2e `stepTo` helper of `test/e2e/frame-advance.ts`).
+    if (lazyResidency !== null && lazyResidency.loading) {
+      if (tools !== null) tools.endTicks(0);
+      engine.endFrame();
+      if (tools !== null) tools.beforeRender();
+      readyRenderer.render(shownFrame);
+      if (tools !== null) tools.afterRender();
+      return;
     }
     const context = game.inputContext;
     if (context !== inputContext) {
@@ -1587,6 +1707,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         readyRenderer.popups?.clear();
         // Its stage's atlas pages, uploaded before its first frame (R1-05, W3-9 — the attract demo
         // never emits PrepareStage). Cold: once per World; a stage already prepared is a no-op.
+        // With the lazy policy (R3-04.M3c) this fires the load and the hold above redraws the
+        // last frame until the pages are in.
         prepareShownWorld(atlasResidency, content.db, game, frame.world);
       }
       markScene();
@@ -1595,6 +1717,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       shown = sceneView !== null ? sceneView.update(frame) : calibration.update(frame);
       worldShown = flight !== null;
     }
+    shownFrame = shown;
     if (tools !== null) tools.beforeRender();
     readyRenderer.render(shown);
     if (tools !== null) tools.afterRender();

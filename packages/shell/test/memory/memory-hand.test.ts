@@ -13,7 +13,7 @@
  */
 import { ENGINE_SPRITES, FRAME_H, FRAME_W, UI_SPRITES } from '@shmup/core';
 import { loadMusicContent, loadSfxContent } from '@shmup/audio-web';
-import type { AtlasManifest } from '@shmup/render-pixi';
+import type { AtlasManifest, AtlasPageImage } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
@@ -27,6 +27,7 @@ import {
   MIB,
   TEXTURE_BUDGET_BYTES,
   atlasPageNeeds,
+  createLazyAtlasResidency,
   estimateMemory,
   estimateStageMemory,
   fixedTargetBytes,
@@ -181,6 +182,53 @@ describe('shell/memory estimate = the hand calculation, every campaign zone (R1-
     expect(all.total - resident.total).toBe(all.images - resident.images);
     // One page today: every policy charges the same GPU copies.
     expect(new Set([all.textures, resident.textures, none.textures]).size).toBe(1);
+  });
+
+  it('the lazy residency runs under the resident policy these estimates describe (R3-04.M3c)', async () => {
+    const loaded: boolean[] = manifest.pages.map(() => false);
+    const residency = createLazyAtlasResidency(
+      manifest.pages.map(() => ({ unload: () => {} })),
+      needs,
+      {
+        lazy: {
+          atlas: {
+            loadPage: (p: number) => {
+              loaded[p] = true;
+            },
+            unloadPage: (p: number) => {
+              loaded[p] = false;
+            },
+            isPageLoaded: (p: number) => loaded[p] === true,
+          },
+          loadImage: (p: number): Promise<AtlasPageImage> =>
+            Promise.resolve({
+              width: manifest.pages[p].w,
+              height: manifest.pages[p].h,
+              naturalWidth: manifest.pages[p].w,
+              naturalHeight: manifest.pages[p].h,
+            } as unknown as AtlasPageImage),
+        },
+      },
+    );
+    expect(residency.imagePolicy).toBe('resident');
+    const stageIndex = zoneStages[1] ?? zoneStages[0];
+    await residency.prepare(stageIndex);
+    const want = stagePages(needs, stageIndex);
+    expect(residency.resident.map((r, p) => (r ? p : -1)).filter((p) => p >= 0)).toEqual(want);
+    expect(loaded.slice()).toEqual(manifest.pages.map((_, p) => want.indexOf(p) >= 0));
+    // The estimate under the residency's own policy charges the images of exactly its pages.
+    const est = estimateStageMemory({
+      content: db,
+      manifest,
+      sfx,
+      music,
+      stageIndex,
+      needs,
+      imagePolicy: residency.imagePolicy,
+    });
+    const handImages = want.reduce((n, p) => n + manifest.pages[p].w * manifest.pages[p].h * 4, 0);
+    expect(est.images).toBe(handImages);
+    expect(est.textures).toBe(handImages);
   });
 
   it('estimateMemory: imagePages overrides the images, keepPageImages: false drops them', () => {

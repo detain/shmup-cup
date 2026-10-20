@@ -461,4 +461,53 @@ describe('shell/boot atlas residency (R1-05)', () => {
     expect(gpuPages(pages)).toEqual(groupPages('zone-b'));
     shell.stop();
   });
+
+  it('lazy pages: the boot awaits and uploads only its stage’s, nothing else is attached', async () => {
+    const { promise, attributes } = boot({ atlasPages: 'lazy' });
+    const shell = await promise;
+    const expected = groupPages('zone-b');
+    const pages = shell.atlas.pages;
+    // The residency's eager-shaped view: same uploads, same marks, same `resident`.
+    expect(uploadedPages(pages)).toEqual(expected);
+    expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(expected.join(','));
+    expect(shell.atlasResidency.resident).toEqual(pages.map((_, p) => expected.indexOf(p) >= 0));
+    expect(gpuPages(pages)).toEqual(expected);
+    // The rest never got an image at all (W5-15): detached, not merely off the GPU — and the
+    // boot's `atlasTiming` page rows carry uploads only (no fetch, no decode here).
+    expect(pages.map((_, p) => shell.atlas.isPageLoaded(p))).toEqual(
+      pages.map((_, p) => expected.indexOf(p) >= 0),
+    );
+    expect(shell.atlasTiming.pagesMs).toBe(0);
+    expect(shell.atlasTiming.pages.every((page) => page.loadMs === 0)).toBe(true);
+    expect(shell.atlasResidency.imagePolicy).toBe('resident');
+    shell.stop();
+  });
+
+  it('lazy pages: a stage change fetches its own, detaches the others with their images', async () => {
+    const { promise, attributes } = boot({ atlasPages: 'lazy' });
+    const shell = await promise;
+    const pages = shell.atlas.pages;
+    const zoneC = shell.content.db.stageIndex.get('zone-c') ?? -1;
+    shell.atlasResidency.prepare(zoneC); // the adapter: fire and forget (R3-04.M3c)
+    const expected = groupPages('zone-c');
+    await vi.waitFor(() => {
+      expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(expected.join(','));
+    });
+    expect(pages.map((_, p) => shell.atlas.isPageLoaded(p))).toEqual(
+      pages.map((_, p) => expected.indexOf(p) >= 0),
+    );
+    // The fetched pages uploaded (the fake GPU gained them); zone B's own pages left it.
+    expect(gpuPages(pages)).toEqual(expected);
+    shell.stop();
+  });
+
+  it('lazy pages: the showcase, drawing from any page, keeps every page', async () => {
+    const { promise } = boot({ scene: 'showcase', atlasPages: 'lazy' });
+    const showcase = await promise;
+    const pages = showcase.atlas.pages;
+    expect(uploadedPages(pages)).toEqual(groupPages(null));
+    expect(pages.every((_, p) => showcase.atlas.isPageLoaded(p))).toBe(true);
+    expect(showcase.atlasResidency.unloads).toBe(0);
+    showcase.stop();
+  });
 });

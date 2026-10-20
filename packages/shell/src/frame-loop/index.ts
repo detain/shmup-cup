@@ -7,6 +7,11 @@
  * trivial: no timing logic, no allocation per frame. Shared by the web and TV hosts (it
  * used to live, twice, in `apps/web` and `apps/tizen`).
  *
+ * **Holding (R3-04.M3c).** While the atlas pages the shown World needs are still loading under the
+ * lazy policy, the shell's frame body skips its tick section and redraws the last displayed frame.
+ * The driver knows nothing of it: `onFrame` runs every refresh and the frame body owns the decision
+ * (`boot` module, the residency hold) — so no held frame can tick or consume input.
+ *
  * **Refresh probe (M2-08).** {@link createRefreshMonitor} estimates the display's refresh rate
  * from the recent rAF deltas — the mean of their middle half, so hitches and jitter do not sway it
  * (shmup_feat.md §3 "refresh rate probed at boot"); the
