@@ -1744,10 +1744,12 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       }
       expect(speeds.length).toBeGreaterThanOrEqual(4);
       for (const speed of speeds) expect(speed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
-      // The DSL patterns the zone's enemies run (every `speed` literal of their fire ops).
-      const patterns = JSON.stringify(
-        shippedFiles.find((file) => file.path === 'patterns/zones.patterns.json')?.data,
-      );
+      // The DSL patterns the zone's enemies run (every `speed` literal of their fire ops),
+      // read from **every** shipped patterns file — R5-P.P4 may split them further.
+      const patterns = shippedFiles
+        .filter((file) => file.path.startsWith('patterns/') && file.path.endsWith('.patterns.json'))
+        .map((file) => JSON.stringify(file.data))
+        .join('\n');
       for (const match of patterns.matchAll(/"speed":\s*([0-9.]+)/g)) {
         expect(Number(match[1])).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
       }
