@@ -1,8 +1,8 @@
 /**
  * The port allocation-churn gate's self-expiry (`port-alloc-churn.ts`, the prepB.FIX3 ruling's
  * option (c)): once the build is no longer at v1's frame and no committed recording is stale, the
- * gate throws so it cannot outlive R2-03's re-bless — the twin of `port-pending.test.ts` and of the
- * stale-gate check in `test/golden/golden-edge.test.ts`.
+ * gate throws so it cannot outlive R2-03's re-bless — what the content-port gate's own test was
+ * until R2-02 deleted it, the twin of the stale-gate check in `test/golden/golden-edge.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { ALLOC_CHURN_REASON, checkPortAllocChurnExpiry } from './port-alloc-churn.js';

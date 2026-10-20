@@ -13,7 +13,6 @@
  */
 import { Action, type World } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import {
   DEFAULT_MAX_TICKS,
@@ -124,38 +123,35 @@ describe('playtest harness: runStage', () => {
     expect(strict.remoteViolation).toMatch(/^direction-with-button@/);
   });
 
-  itPortPending(
-    'reports a crash into the floor with one life as a terrain death and game over',
-    () => {
-      const flags = { maxTicks: 3000, config: { startingLives: 1 } } as const;
-      const run = runStage('zone-a', scripted([Action.Down]), flags);
-      expect(run.status).toBe('gameOver');
-      expect(run.deaths).toHaveLength(1);
-      const [death] = run.deaths;
-      expect(death.cause).toBe('terrain');
-      expect(death.boss).toBe(false);
-      expect(death.livesLeft).toBe(0);
-      expect(death.y).toBeGreaterThan(100); // the floor, at the bottom of the playfield
-      expect(death.cameraX).toBeGreaterThan(0);
-      expect(run.ticks).toBeLessThan(3000);
-      expect(run.clearTick).toBe(-1);
-      expect(run.seconds).toBe(run.ticks / TICKS_PER_SECOND);
-      // The recording replays: same death, same end state — with the same options only.
-      const replay = replayStage('zone-a', run.inputs, flags);
-      expect(replay).toEqual({
-        status: 'gameOver',
-        ticks: run.ticks,
-        deathTicks: [death.tick],
-        hash: run.hash,
-      });
-      expect(replayStage('zone-a', run.inputs, { ...flags, seed: 2 }).hash).not.toBe(run.hash);
-      // God mode: the same input lives on (hits are ignored).
-      const god = runStage('zone-a', scripted([Action.Down]), { ...flags, godMode: true });
-      expect(god.deaths).toEqual([]);
-      expect(god.status).toBe('playing');
-      expect(god.ticks).toBe(3000);
-    },
-  );
+  it('reports a crash into the floor with one life as a terrain death and game over', () => {
+    const flags = { maxTicks: 3000, config: { startingLives: 1 } } as const;
+    const run = runStage('zone-a', scripted([Action.Down]), flags);
+    expect(run.status).toBe('gameOver');
+    expect(run.deaths).toHaveLength(1);
+    const [death] = run.deaths;
+    expect(death.cause).toBe('terrain');
+    expect(death.boss).toBe(false);
+    expect(death.livesLeft).toBe(0);
+    expect(death.y).toBeGreaterThan(100); // the floor, at the bottom of the playfield
+    expect(death.cameraX).toBeGreaterThan(0);
+    expect(run.ticks).toBeLessThan(3000);
+    expect(run.clearTick).toBe(-1);
+    expect(run.seconds).toBe(run.ticks / TICKS_PER_SECOND);
+    // The recording replays: same death, same end state — with the same options only.
+    const replay = replayStage('zone-a', run.inputs, flags);
+    expect(replay).toEqual({
+      status: 'gameOver',
+      ticks: run.ticks,
+      deathTicks: [death.tick],
+      hash: run.hash,
+    });
+    expect(replayStage('zone-a', run.inputs, { ...flags, seed: 2 }).hash).not.toBe(run.hash);
+    // God mode: the same input lives on (hits are ignored).
+    const god = runStage('zone-a', scripted([Action.Down]), { ...flags, godMode: true });
+    expect(god.deaths).toEqual([]);
+    expect(god.status).toBe('playing');
+    expect(god.ticks).toBe(3000);
+  });
 
   it('passes the stage skip and the session options through', () => {
     let cameraX = -1;

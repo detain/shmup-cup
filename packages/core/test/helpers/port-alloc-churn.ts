@@ -21,13 +21,13 @@
  *
  * The gate alone is HALF the rule: the churn appears at the port scale only, so the skip is
  * `(WORLD_SCALE !== 1) && PORT_ALLOC_CHURN` — at `WORLD_SCALE` 1 (CI on master) nothing skips and
- * the guard runs fully. Unlike {@link itPortAllocChurn}'s twins in `port-pending.ts` and
- * `stale.ts`, it therefore appends the reason to the test's name **only while it skips**: a
- * running test must not carry a "skipped while …" name.
+ * the guard runs fully. Unlike {@link itPortAllocChurn}'s twin in `stale.ts` (and the content-port
+ * gate R2-02 deleted with its port), it therefore appends the reason to the test's name **only
+ * while it skips**: a running test must not carry a "skipped while …" name.
  *
  * The recording read mirrors `test/golden/stale.ts` on purpose, re-done here rather than imported:
  * a core test must not load a second `@shmup/core` instance through the package name (the
- * `v1-port.ts` rule). The wave's other gates are `port-pending.ts` (until R2-02) and
+ * `v1-port.ts` rule). R2-02's content-port gate went with the port; the wave's other gates are
  * `test/golden/stale.ts` / `test/e2e/gates.ts` (until R2-03).
  */
 import { readFileSync, readdirSync } from 'node:fs';

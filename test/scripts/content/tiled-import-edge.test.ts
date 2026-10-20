@@ -30,7 +30,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_SPAWN_SCREEN_X, PLAYFIELD_W, TILE_SIZE } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
-import { itPortPending } from '../../../packages/core/test/helpers/port-pending.js';
 import {
   SPAWN_LEAD,
   TILED_TILE_SIZE,
@@ -552,9 +551,9 @@ describe('tiled-import edges — CLI', () => {
   const cli = (args: string[]) =>
     spawnSync(process.execPath, [script, ...args], { cwd: repo, encoding: 'utf8' });
 
-  // Reads the committed 12-px fixture map (redrawn by R2-02 with the tilesets): gated until wave
-  // 5's U5 deletes the port-pending gate — it expires on the tilesets, not on the fixture.
-  itPortPending('prints the committed 12-px fixture map instead of writing with --print', () => {
+  // Reads the committed 12-px fixture map (redrawn by R2-02 with the tilesets), now that the
+  // shipped content is ported.
+  it('prints the committed 12-px fixture map instead of writing with --print', () => {
     const out = join(tmp, 'print');
     const file = join(here, 'fixtures', 'tiled-sample.tmj');
     const result = cli([file, '--print', '--stages', out, '--paths', out]);

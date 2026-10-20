@@ -6,10 +6,10 @@
  * matching a tileset tile, slopes of at most one tile per column with half-tile heights left by
  * half-tile steps, ramping in and out at the segment ends, floor over ceiling, missing tiles.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe as describeRaw, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType } from '../../src/collision/index.js';
-import { PLAYFIELD_W } from '../../src/config/index.js';
+import { PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import {
   TILE_ANCHORS,
   TILE_TYPES,
@@ -18,13 +18,28 @@ import {
   type LoadContentResult,
 } from '../../src/data/index.js';
 import { decodeRleRow } from '../../src/data/tilemap.js';
-import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+
+/** The repository's `content/tilesets/` folder. */
+const TILESETS = new URL('../../../../content/tilesets/', import.meta.url);
+
+/**
+ * Whether R2-02's port is still pending: some shipped tileset is not at the build's `TILE_SIZE`
+ * — read straight from the content files, the port's own signal.
+ */
+const CONTENT_PORT_PENDING = readdirSync(TILESETS)
+  .filter((name) => name.endsWith('.tileset.json'))
+  .some((name) => {
+    const tileset = JSON.parse(readFileSync(new URL(name, TILESETS), 'utf8')) as {
+      tileSize?: unknown;
+    };
+    return tileset.tileSize !== TILE_SIZE;
+  });
 
 /**
  * Every suite in this file builds tilemaps of the v1 8-px tile over the shipped `terrain-a`
- * tileset and checks the expansion in v1 pixel terms — the premise breaks when R2-02 ports
- * `content/` (the two-scale kit), so the suites run while the port is pending, and R2-02's
- * final pass rewrites them for the 12-px content.
+ * tileset and checks the expansion in v1 pixel terms — the premise broke with R2-02's port of
+ * `content/`, so the suites run only while the pending signal above holds (some tileset still
+ * at another size), and R2-02's final pass rewrites them for the 12-px content.
  */
 const describe = (name: string, fn: () => void): void => {
   describeRaw.runIf(CONTENT_PORT_PENDING)(name, fn);

@@ -7,9 +7,8 @@
  * The inline maps place their objects from the importer's own {@link VIEW_WIDTH} and
  * {@link SPAWN_LEAD} (`SPAWN_LEAD + 200`, not `600`), so each case stays on the same side of the
  * lead and the view at 384×216 and at 640×360. The tests that read the committed fixture map
- * (`fixtures/tiled-sample.tmj`, redrawn by R2-02 at 12-px tiles for the 640 view) stay behind the
- * self-expiring port-pending gate: it expires on the shipped tilesets, not on the fixture, and
- * wave 5's U5 deletes it.
+ * (`fixtures/tiled-sample.tmj`, redrawn by R2-02 at 12-px tiles for the 640 view) ran behind
+ * R2-01's content-port gate, which expired on the shipped tilesets; R2-02's port removed it.
  */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -18,7 +17,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StageEventCode, createStageRunner, loadContent } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
-import { itPortPending } from '../../../packages/core/test/helpers/port-pending.js';
 import {
   SPAWN_LEAD,
   TILED_TILE_SIZE,
@@ -84,13 +82,13 @@ function objects(...objects: unknown[]): Record<string, unknown> {
 }
 
 describe('scripts/content/tiled-import.mjs — the committed 12-px fixture (redrawn by R2-02)', () => {
-  itPortPending('converts the fixture map into exactly the expected stage and paths JSON', () => {
+  it('converts the fixture map into exactly the expected stage and paths JSON', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     expect(stage).toEqual(fixture('tiled-sample.stage.json'));
     expect(paths).toEqual(fixture('tiled-sample.paths.json'));
   });
 
-  itPortPending('produces content that loads without issues next to the shipped files', () => {
+  it('produces content that loads without issues next to the shipped files', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     const { db, issues } = loadContent([
       ...readContentFiles(),
@@ -113,46 +111,43 @@ describe('scripts/content/tiled-import.mjs — the committed 12-px fixture (redr
     });
   });
 
-  itPortPending(
-    'puts every spawn where its object is in the world, under the panning camera too',
-    () => {
-      const tmj = fixture('tiled-sample.tmj') as {
-        layers: { objects?: { class?: string; x: number; y: number }[] }[];
-      };
-      const { stage, paths, warnings } = convertTiledMap(tmj);
-      expect(warnings).toEqual([]);
-      const { db, issues } = loadContent([
-        ...readContentFiles(),
-        { path: 'stages/tiled-sample.stage.json', data: stage },
-        { path: 'paths/tiled-sample.paths.json', data: paths },
-      ]);
-      expect(issues).toEqual([]);
-      const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
-      // The world y each spawn event lands on when the real runner fires it (the enemy system
-      // spawns at camera.y + y), keyed by the event's x.
-      const landed = new Map<number, number>();
-      const runner = createStageRunner(spec, {
-        event(code, event) {
-          if (code !== StageEventCode.Spawn && code !== StageEventCode.Formation) return;
-          landed.set(event.x, runner.camera.y + ((event as { y?: number }).y ?? NaN));
-        },
-        clear() {},
-      });
-      // The low branch too (its trigger is never probed here).
-      runner.setFlag(0, true);
-      for (let t = 0; t < 2000 && !runner.ended; t++) runner.tick();
-      expect(runner.ended).toBe(true);
-      const spawns = tmj.layers
-        .flatMap((l) => l.objects ?? [])
-        .filter((o) => o.class === 'spawn' || o.class === 'formation');
-      expect(landed.size).toBe(spawns.length);
-      for (const object of spawns) {
-        const at = Math.max(0, Math.round(object.x) - SPAWN_LEAD);
-        // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
-        expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
-      }
-    },
-  );
+  it('puts every spawn where its object is in the world, under the panning camera too', () => {
+    const tmj = fixture('tiled-sample.tmj') as {
+      layers: { objects?: { class?: string; x: number; y: number }[] }[];
+    };
+    const { stage, paths, warnings } = convertTiledMap(tmj);
+    expect(warnings).toEqual([]);
+    const { db, issues } = loadContent([
+      ...readContentFiles(),
+      { path: 'stages/tiled-sample.stage.json', data: stage },
+      { path: 'paths/tiled-sample.paths.json', data: paths },
+    ]);
+    expect(issues).toEqual([]);
+    const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
+    // The world y each spawn event lands on when the real runner fires it (the enemy system
+    // spawns at camera.y + y), keyed by the event's x.
+    const landed = new Map<number, number>();
+    const runner = createStageRunner(spec, {
+      event(code, event) {
+        if (code !== StageEventCode.Spawn && code !== StageEventCode.Formation) return;
+        landed.set(event.x, runner.camera.y + ((event as { y?: number }).y ?? NaN));
+      },
+      clear() {},
+    });
+    // The low branch too (its trigger is never probed here).
+    runner.setFlag(0, true);
+    for (let t = 0; t < 2000 && !runner.ended; t++) runner.tick();
+    expect(runner.ended).toBe(true);
+    const spawns = tmj.layers
+      .flatMap((l) => l.objects ?? [])
+      .filter((o) => o.class === 'spawn' || o.class === 'formation');
+    expect(landed.size).toBe(spawns.length);
+    for (const object of spawns) {
+      const at = Math.max(0, Math.round(object.x) - SPAWN_LEAD);
+      // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
+      expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
+    }
+  });
 });
 
 describe('scripts/content/tiled-import.mjs — helpers', () => {
@@ -375,9 +370,8 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
 });
 
 describe('scripts/content/tiled-import.mjs — CLI', () => {
-  // Converts the committed 12-px fixture map: gated with the suite above until wave 5's U5
-  // deletes the port-pending gate.
-  itPortPending('writes the fixture`s stage and paths files into the given folders', () => {
+  // Converts the committed 12-px fixture map, like the suite above: the content is ported.
+  it('writes the fixture`s stage and paths files into the given folders', () => {
     const stages = join(tmp, 'stages');
     const paths = join(tmp, 'paths');
     const result = spawnSync(

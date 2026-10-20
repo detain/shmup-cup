@@ -28,7 +28,6 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { v1rel, v1x } from '../../packages/core/test/helpers/v1-port.js';
 import {
   BOT_MAX_SPEED_LEVEL,
@@ -166,23 +165,20 @@ describe('playtest four-way bot: scanLanes', () => {
     expect(scan.centre[8] & (1 << (SLOTS - 1))).not.toBe(0);
   });
 
-  itPortPending(
-    "finds rock in zone A's corridor lanes (floor and ceiling), none in its open middle",
-    () => {
-      const w = parked('zone-a');
-      w.stage?.jumpTo(v1x(4500));
-      place(w, BOT_X, laneCentre(6));
-      const scan = createLaneScan();
-      scanLanes(w, scan);
-      expect(scan.terrain[0]).toBeGreaterThan(0);
-      expect(scan.terrain[LANES - 1]).toBeGreaterThan(0);
-      expect(scan.terrain[5]).toBe(0);
-      expect(scan.terrain[6]).toBe(0);
-      // A wall is rock right at the ship: never in an open lane.
-      for (let k = 0; k < LANES; k++)
-        if (scan.wall[k] !== 0) expect(scan.terrain[k]).toBeGreaterThan(0);
-    },
-  );
+  it("finds rock in zone A's corridor lanes (floor and ceiling), none in its open middle", () => {
+    const w = parked('zone-a');
+    w.stage?.jumpTo(v1x(4500));
+    place(w, BOT_X, laneCentre(6));
+    const scan = createLaneScan();
+    scanLanes(w, scan);
+    expect(scan.terrain[0]).toBeGreaterThan(0);
+    expect(scan.terrain[LANES - 1]).toBeGreaterThan(0);
+    expect(scan.terrain[5]).toBe(0);
+    expect(scan.terrain[6]).toBe(0);
+    // A wall is rock right at the ship: never in an open lane.
+    for (let k = 0; k < LANES; k++)
+      if (scan.wall[k] !== 0) expect(scan.terrain[k]).toBeGreaterThan(0);
+  });
 
   it('clears the previous result on every scan', () => {
     const w = parked();

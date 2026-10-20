@@ -10,12 +10,12 @@
  *   following the bands they bound — stacks stay closed, bottom bands stay on the bottom edge;
  * - the camera's `yTo` is ×k (`rel-px`): with the three pad rows the deepest pan ports exactly.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as core from '../../src/index.js';
-import { PLAYFIELD_W } from '../../src/config/index.js';
+import { PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import { CONTENT_FILE_SCHEMAS, DEFAULT_BLOCK_SCREEN_X } from '../../src/data/index.js';
 import { DEFAULT_SPAWN_SCREEN_X } from '../../src/enemies/index.js';
 import {
@@ -35,12 +35,27 @@ import {
   type RescaleOptions,
   type WorldSumPair,
 } from '../../src/data/units.js';
-import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+/** The repository's `content/tilesets/` folder. */
+const TILESETS = new URL('../../../../content/tilesets/', import.meta.url);
+
+/**
+ * Whether R2-02's port is still pending: some shipped tileset is not at the build's `TILE_SIZE`
+ * — read straight from the content files, the port's own signal.
+ */
+const CONTENT_PORT_PENDING = readdirSync(TILESETS)
+  .filter((name) => name.endsWith('.tileset.json'))
+  .some((name) => {
+    const tileset = JSON.parse(readFileSync(new URL(name, TILESETS), 'utf8')) as {
+      tileSize?: unknown;
+    };
+    return tileset.tileSize !== TILE_SIZE;
+  });
 
 /**
  * Suites that port the shipped `content/` with the tool and check the result in v1 terms —
- * the premise breaks when R2-02 ports `content/` (the two-scale kit), so they run while the
- * port is pending; R2-02's final pass rewrites them to read the ported files.
+ * the premise broke with R2-02's port of `content/`, so they run only while the pending signal
+ * above holds (some tileset still at another size); R2-02's final pass rewrites them to read
+ * the ported files.
  */
 const describeV1Content = (name: string, fn: () => void): void => {
   describe.runIf(CONTENT_PORT_PENDING)(name, fn);

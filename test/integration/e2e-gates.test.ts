@@ -1,18 +1,20 @@
 /**
  * `test/e2e/gates.ts` (plan_resolution.md R2-01, owner decisions W4-12 and W5-6): the browser
  * tests' skip gates follow the same rules as the Vitest ones — `R2_03_PENDING` the stale goldens'
- * (`test/golden/stale.ts`), and `PORT_UNMEASURED` adds the content port's
- * (`packages/core/test/helpers/port-pending.ts`, inverted) — their replay format mirror equals
- * core's, and they expire once nothing is stale. The specs cannot import core, so without this pin
- * a replay-format bump, or a gate that drifted from `goldenIsStale` or `CONTENT_PORT_PENDING`,
- * would show only in an e2e shard.
+ * (`test/golden/stale.ts`), and `PORT_UNMEASURED` adds the content port's — their replay format
+ * mirror equals core's, and they expire once nothing is stale. The specs cannot import core, so
+ * without this pin a replay-format bump, or a gate that drifted from `goldenIsStale` or from the
+ * shipped tilesets, would show only in an e2e shard.
  *
- * R2-02 deletes `port-pending.ts` with its port, and with it this file's pin of `contentPorted` to
- * `CONTENT_PORT_PENDING`; the state table (`resolveGates`) stays until R2-03 deletes the gates.
+ * Since R2-02's port this file reads the content signal itself, straight from
+ * `content/tilesets/`; the state table (`resolveGates`) stays until R2-03 deletes the gates.
  */
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { FRAME_H, FRAME_W, REPLAY_FORMAT_VERSION } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { CONTENT_PORT_PENDING } from '../../packages/core/test/helpers/port-pending.js';
+import { TILE_SIZE } from '../../scripts/frame.mjs';
 import {
   CONTENT_REASON,
   GOLDEN_REASON,
@@ -35,6 +37,25 @@ const V1_FRAME_W: number = 384;
 
 /** A flipped frame width: the build's when it is not v1's, else v2's 640. */
 const FLIPPED_W: number = FRAME_W === V1_FRAME_W ? 640 : FRAME_W;
+
+/** The repository's `content/tilesets/` folder (the content-port signal). */
+const TILESETS = fileURLToPath(new URL('../../content/tilesets/', import.meta.url));
+
+/**
+ * Whether the shipped content is ported, read straight from the files: every shipped tileset
+ * (`content/tilesets/*.tileset.json`, the format example included) is at `scripts/frame.mjs`'s
+ * `TILE_SIZE` — the same rule `gates.ts` `contentPorted()` states, re-read here as its pin.
+ *
+ * @returns `true` when no tileset is left at another tile size.
+ */
+function tilesetsPorted(): boolean {
+  return readdirSync(TILESETS)
+    .filter((name) => name.endsWith('.tileset.json'))
+    .every((name) => {
+      const data = JSON.parse(readFileSync(join(TILESETS, name), 'utf8')) as { tileSize?: unknown };
+      return data.tileSize === TILE_SIZE;
+    });
+}
 
 /**
  * A minimal replay document.
@@ -98,8 +119,10 @@ describe('the e2e gate (test/e2e/gates.ts)', () => {
     );
   });
 
-  it('reads the content port as port-pending.ts does, inverted', () => {
-    expect(contentPorted()).toBe(!CONTENT_PORT_PENDING);
+  it('reads the content port from the shipped tilesets, the same rule', () => {
+    expect(contentPorted()).toBe(tilesetsPorted());
+    // R2-02 ported the content, so the signal is on: the port gate reads ported, not pending.
+    expect(tilesetsPorted()).toBe(true);
   });
 
   it('holds the port gate only while the content is ported and a recording is stale', () => {
