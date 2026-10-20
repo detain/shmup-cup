@@ -5,10 +5,8 @@
  * shipped ones — a tileset ingested from real art, a temp fixture in a script test — without
  * importing a spec file.
  *
- * This is a COPY made for that step: `stage-terrain.test.ts` keeps its own private copies,
- * unchanged. V4c (wave 5, after U4) converts that spec to import these functions, so a change
- * to one body means changing the other in the same step — never silently, and never here
- * without reading the original.
+ * V4b copied the two checks; V4c deleted the spec's private copies, so this module now holds
+ * the only bodies — a change here changes `stage-terrain.test.ts`'s behaviour with it.
  *
  * Both checks take their tileset as data, not as a path: the caller loads or builds it.
  * `expectHeightfieldFindsTiles` takes one tileset `ContentFile` and shapes its own fixed
