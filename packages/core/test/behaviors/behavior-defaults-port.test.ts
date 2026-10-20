@@ -114,6 +114,11 @@ function checkRows(rows: Record<string, readonly [number, NumberUnit]>, weapon: 
   for (const [key, [v1, unit]] of Object.entries(rows)) {
     it(`${key} = ${v1} [${unit}] maps to the live scale`, () => {
       expect(unit).not.toBe('??');
+      // The fixture's unit must be today's `BEHAVIOR_PARAM_UNITS` row (RV4-N3): a unit rename in
+      // `units.ts` would hide at K = 1 (identity = keep numerically), so cross-check it here —
+      // both blocks' ids resolve in `units.ts`, weapons included. Fails loudly on drift.
+      const dot = key.lastIndexOf('.');
+      expect(liveUnit(key.slice(0, dot), key.slice(dot + 1)), key).toBe(unit);
       const expected = expectedOf(v1, unit);
       if (expected === undefined) return; // a screen anchor at K = 1: still the v1 literal
       expect(liveValue(key, weapon)).toBe(expected);

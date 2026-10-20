@@ -49,7 +49,14 @@ const GEOMETRY: RescaleOptions = Object.freeze({
   tileSize: 8,
 });
 
-/** The value meaning "never happened" in a baseline row; every mapper passes it through unmapped. */
+/**
+ * The value meaning "never happened" in a baseline row; every mapper passes it through unmapped.
+ * The README (§ "Comparing a v2 run") defines −1 only for the columns a run may leave empty: the
+ * enemy `visibleX`/`visibleY`, `turnX`/`turnY` and `endTick` (and the `event`/`member` indices, not
+ * positions). The spawn point `x0`/`y0` is **−1-free** — a spawn is always recorded, and every
+ * shipped baseline row holds a real coordinate there (RV4-N2) — so the `mapNum` guard on those two
+ * columns is a defensive passthrough (pinned by `v1-port.test.ts`), never a live masking of ×K.
+ */
 const NEVER = -1;
 
 /**
@@ -188,8 +195,11 @@ function enemyY(y: number, topEntry: boolean, isTurnY: boolean, k: number, pad: 
  * Maps a regular-enemy row's positions from v1 px to the live scale (README § "Comparing a v2
  * run"): every tick, the event/member/spec indices and the fate are equal, x columns scale (right-
  * anchored with an `R` in `entry`), y columns take the pad (above-the-top `T` entries do not —
- * their `turnY` landing excepted, the acceptance's "within 2 px" row). A −1 ("never") column stays
- * −1. Player-dependent rows and ground enemies are compared outside this helper (README caveats).
+ * their `turnY` landing excepted, the acceptance's "within 2 px" row). A −1 ("never") column among
+ * the README's sentinel columns (`visibleX`/`visibleY`, `turnX`/`turnY`, `endTick`) stays −1; the
+ * spawn `x0`/`y0` are −1-free (a spawn is always recorded), so their `mapNum` guard is a defensive
+ * passthrough (RV4-N2). Player-dependent rows and ground enemies are compared outside this helper
+ * (README caveats).
  *
  * @param row - The v1 row as recorded.
  * @param k - The scale (default {@link K}).

@@ -279,6 +279,16 @@ describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shi
     expect([...cycledStages.keys()].sort()).toEqual([...expected].sort());
     for (const [ramp, sprite] of Object.entries(CYCLE_ART)) {
       expect(atlas.manifest.sprites[sprite], `cycle art of ${ramp}`).toBeDefined();
+      // Bind the rule-2 own-ramp skip (SRV2-N1): the pin is only justified while the sprite sits on
+      // a cycled layer of one of the ramp's stages — else rule 2 silently skips it against its ramp
+      // while rule 1 no longer sees it. The stage data is already loaded above.
+      const bound = RAMPS[ramp].some((stage) => {
+        const file = cycledStages.get(stage);
+        if (file === undefined) return false;
+        const layers = new Set((file.cycles ?? []).map((c) => c.layer));
+        return (file.parallax ?? []).some((p) => layers.has(p.layer) && p.sprite === sprite);
+      });
+      expect(bound, `cycle art ${sprite} bound to a cycled layer of ${ramp}`).toBe(true);
     }
   });
 
@@ -353,7 +363,10 @@ describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shi
     };
     expect(cycledLayerViolations(build(), ramp, 'fixture', (k) => `fixture#${k}`)).toEqual([]);
     const off = build();
-    setPixel(off[1], 5, 5, [ramp[0][0] + 2, ramp[0][1], ramp[0][2], 255]); // 2/255 off: near
+    // SRV2-N2: keep the ±2 off-channel clear of `image.mjs`'s Uint8 store — a red channel ≥ 254
+    // would wrap `+2` to a far value and turn the single near miss into a confusing false red.
+    const nearRed = ramp[0][0] >= 2 ? ramp[0][0] - 2 : ramp[0][0] + 2;
+    setPixel(off[1], 5, 5, [nearRed, ramp[0][1], ramp[0][2], 255]); // 2/255 off: near
     const issues = cycledLayerViolations(off, ramp, 'fixture', (k) => `fixture#${k}`);
     expect(issues).toHaveLength(1);
     expect(issues[0]).toContain('fixture#1');
