@@ -9,7 +9,7 @@
  *   ramps, or repeats a reserved bullet / gold / explosion family colour exactly.
  * - The far layer is `FRAME_W × FRAME_H` or `2 * FRAME_W` wide (both variants ship across
  *   the zones), opaque, and stays inside its 32-colour window.
- * - Each zone carries 3–5 keyed bands of `FRAME_W × 120–240`, binary alpha, an all-key top
+ * - Each zone carries 4–5 keyed bands of `FRAME_W × 120–240`, binary alpha, an all-key top
  *   row, a solid bottom row, and ≤ 32 colours; far plus bands is a 4–6 layer stack.
  * - The tile set is 40 named 12-px frames, every one holding at least one solid pixel,
  *   binary alpha, and ≤ 32 colours across the whole set.
@@ -185,7 +185,7 @@ describe('standin far layer (bible §5.10)', () => {
 });
 
 describe('standin bands (bible §5.10)', () => {
-  it('gives every zone 3–5 keyed FRAME_W layers of 120–240 px', () => {
+  it('gives every zone 4–5 keyed FRAME_W layers of 120–240 px', () => {
     for (const zoneId of ZONE_IDS) {
       const bands = zones[zoneId].bands;
       expect(bands.length, zoneId).toBeGreaterThanOrEqual(BAND_MIN_COUNT);
