@@ -1,0 +1,103 @@
+{
+  "format": "shmup-ingest-masks@1",
+  "sprite": "tiles/stack",
+  "tileset": "tiles/fixture.tileset.json",
+  "tileSize": 12,
+  "frames": [
+    {
+      "frame": 0,
+      "tile": "block",
+      "anchor": "floor",
+      "mask": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "frame": 1,
+      "tile": "slope-up",
+      "anchor": "floor",
+      "mask": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        12
+      ]
+    },
+    {
+      "frame": 2,
+      "tile": "slope-down",
+      "anchor": "floor",
+      "mask": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9
+      ]
+    },
+    {
+      "frame": 3,
+      "tile": "overhang",
+      "anchor": "ceiling",
+      "mask": [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ]
+    },
+    {
+      "frame": 4,
+      "tile": "spike",
+      "anchor": "floor",
+      "mask": [
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4
+      ]
+    }
+  ]
+}

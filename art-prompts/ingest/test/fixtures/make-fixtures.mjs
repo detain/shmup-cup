@@ -15,6 +15,11 @@
  * Integer maths and a seeded LCG only, so every run draws the same bytes (a test compares a
  * fresh run with the committed files).
  *
+ * The R3-03.V4a tile fixtures (`makeTileFixtures`) join the sheet family: two 12-px tile
+ * sheets, one flat-topped block per frame for the clip-to-mask mode and one already-runnable
+ * set of column heights for the mask-from-art mode (the designed masks they are matched
+ * against are the committed `tiles/fixture.tileset.json`).
+ *
  *   node test/fixtures/make-fixtures.mjs [<output dir>]   (default: this folder)
  *
  * @module
@@ -226,6 +231,53 @@ function droneEdit() {
   return image;
 }
 
+/**
+ * Fills one column of a 12-px tile frame with a run anchored at the bottom or the top edge.
+ *
+ * @param {Image} image - Target sheet.
+ * @param {number} x - Column.
+ * @param {number} n - Run height (0 … 12).
+ * @param {number} c - `0xRRGGBB`.
+ * @param {boolean} fromTop - Measure the run from the top edge (a ceiling tile).
+ */
+function column(image, x, n, c, fromTop = false) {
+  for (let k = 0; k < n; k++) put(image, x, fromTop ? k : 11 - k, c);
+}
+
+/**
+ * The cliff sheet (V4a, clip-to-mask): seven 12×12 frames, every one a flat-topped opaque
+ * block — taller than most designed masks — so the clip does the shaping. Frame 5 is the
+ * `empty` deco and frame 6 no tile of the fixture tileset names; both must keep their art.
+ *
+ * @returns {Image} 84×12.
+ */
+function cliffSheet() {
+  const image = createImage(84, 12);
+  for (let f = 0; f < 7; f++) rect(image, f * 12, 0, 12, 12, f < 5 ? 0x5a7090 : f === 5 ? 0xa8c0d8 : 0xf08020);
+  return image;
+}
+
+/**
+ * The stack sheet (V4a, mask-from-art): six 12×12 frames whose columns are one run from the
+ * anchor edge the fixture tileset gives them — frame 3 hangs from the ceiling — and whose
+ * heights deliberately differ from the designed masks (that is the point of the mode), while
+ * frame 0 matches it exactly. Frame 5 is again the `empty` deco, unmeasured.
+ *
+ * @returns {Image} 72×12.
+ */
+function stackSheet() {
+  const image = createImage(72, 12);
+  for (let c = 0; c < 12; c++) column(image, c, 12, 0x5a7090); // 0 block: all 12, as designed
+  const ramp = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12];
+  for (let c = 0; c < 12; c++) column(image, 12 + c, ramp[c], 0x4a6a8a); // 1 slope-up-ish
+  for (let c = 0; c < 12; c++) column(image, 24 + c, 9, 0x3a4a68); // 2 flat shelf
+  for (let c = 0; c < 12; c++) column(image, 36 + c, 6, 0x141428, true); // 3 overhang, ceiling
+  const spike = [3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4];
+  for (let c = 0; c < 12; c++) column(image, 48 + c, spike[c], 0x6a5a8a); // 4 hazard
+  rect(image, 60, 0, 12, 12, 0xa8c0d8); // 5 deco, full block (empty: never measured)
+  return image;
+}
+
 /** The synthetic candidate sidecar of the drone sheet (gen-candidate.mjs's shape). */
 const DRONE_SIDECAR = {
   id: 'enemy/drone',
@@ -276,7 +328,28 @@ export function makeFixtures(out) {
   return files.map(([rel]) => rel);
 }
 
+/**
+ * Draws the two R3-03.V4a tile sheets (the `tiles/fixture.tileset.json`, the recipes and the
+ * committed outputs are hand-written JSON, like every other recipe, not drawn here).
+ *
+ * @param {string} out - The fixtures folder (it gets `tiles/`).
+ * @returns {string[]} The files written, relative to `out`.
+ */
+export function makeTileFixtures(out) {
+  /** @type {[string, Uint8Array][]} */
+  const files = [
+    ['tiles/cliff-sheet.png', encodePng(cliffSheet())],
+    ['tiles/stack-sheet.png', encodePng(stackSheet())],
+  ];
+  for (const [rel, bytes] of files) {
+    const file = join(out, ...rel.split('/'));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, bytes);
+  }
+  return files.map(([rel]) => rel);
+}
+
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const out = resolve(process.argv[2] ?? HERE);
-  for (const rel of makeFixtures(out)) console.log(`wrote ${rel}`);
+  for (const rel of [...makeFixtures(out), ...makeTileFixtures(out)]) console.log(`wrote ${rel}`);
 }

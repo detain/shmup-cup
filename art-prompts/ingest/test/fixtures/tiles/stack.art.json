@@ -1,0 +1,53 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "tiles/stack",
+  "origin": "hand",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": "make-fixtures.mjs",
+  "sources": [
+    {
+      "path": "tiles/stack-sheet.png",
+      "sha256": "561436eed26c654e73cd91accf2c897b64486e1f9cc555524c87938c7ea728c7",
+      "format": "png",
+      "width": 72,
+      "height": 12,
+      "model": null,
+      "modelKey": null,
+      "weights": null,
+      "licence": null,
+      "prompt": null,
+      "seed": null,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "tiles/stack.recipe.json",
+    "sha256": "833d049256bb3bcad111fefd1afd93ee55dd058be97c6f945d7bf5b89886dd11"
+  },
+  "edit": null,
+  "output": {
+    "png": "stack.png",
+    "sha256": "561436eed26c654e73cd91accf2c897b64486e1f9cc555524c87938c7ea728c7",
+    "sidecar": "stack.json",
+    "sidecarSha256": "9f9b2cc321163f707362a01579621e2928312e3552d7cf596f19064f888b7ecb",
+    "frames": 6,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 6,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture (R3-03.V4a): columns are one run from their anchor edge (frame 3 hangs from the ceiling as its tile declares) with heights that differ from the designed masks on purpose — mask-from-art derives them into stack.masks.json and touches no pixel."
+}

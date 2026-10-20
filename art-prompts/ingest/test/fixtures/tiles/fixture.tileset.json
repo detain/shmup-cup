@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "kind": "tileset",
+  "id": "fixture-tiles",
+  "sprite": "tiles/cliff",
+  "tileSize": 12,
+  "tiles": [
+    {
+      "name": "block",
+      "type": "solid",
+      "frame": 0,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "slope-up",
+      "type": "solid",
+      "frame": 1,
+      "anchor": "floor",
+      "mask": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    },
+    {
+      "name": "slope-down",
+      "type": "solid",
+      "frame": 2,
+      "anchor": "floor",
+      "mask": [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    },
+    {
+      "name": "overhang",
+      "type": "solid",
+      "frame": 3,
+      "anchor": "ceiling",
+      "mask": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    },
+    {
+      "name": "spike",
+      "type": "hazard",
+      "frame": 4,
+      "anchor": "floor",
+      "mask": [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
+    },
+    {
+      "name": "deco",
+      "type": "empty",
+      "frame": 5,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  ]
+}

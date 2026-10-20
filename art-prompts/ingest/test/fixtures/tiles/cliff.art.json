@@ -1,0 +1,53 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "tiles/cliff",
+  "origin": "hand",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": "make-fixtures.mjs",
+  "sources": [
+    {
+      "path": "tiles/cliff-sheet.png",
+      "sha256": "119c3e509df0d138cc8eedf4d3ef4e27ad2d586e8b61d08a639a246348be09b0",
+      "format": "png",
+      "width": 84,
+      "height": 12,
+      "model": null,
+      "modelKey": null,
+      "weights": null,
+      "licence": null,
+      "prompt": null,
+      "seed": null,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "tiles/cliff.recipe.json",
+    "sha256": "7545fd87943dd65396d5cfbf6964c3ef49cf1c44e7e54ad8d5d26377ecda5fe0"
+  },
+  "edit": null,
+  "output": {
+    "png": "cliff.png",
+    "sha256": "a8a0773deae12a8d56836587ca57f99c560ad904d1eb27381361ababce1abc39",
+    "sidecar": "cliff.json",
+    "sidecarSha256": "62dbf24db3089dff57eac7ec7f92919a55a08f651fe7707f9a3a3f33daf25064",
+    "frames": 7,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 3,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture (R3-03.V4a): every frame is a flat-topped block; clip-to-mask makes the alpha exactly the tileset's column heights, leaves the empty deco (frame 5) and the unreferenced frame 6 whole, and writes no masks file."
+}

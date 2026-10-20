@@ -100,6 +100,7 @@ const RECIPE_KEYS = [
   'alpha',
   'palette',
   'p2',
+  'collision',
   'dither',
   'outline',
   'cycles',
@@ -197,6 +198,11 @@ const CLEANUPS = ['none', 'light', 'heavy', 'redrawn'];
  * @property {Record<string, string> | null} p2 - Player-2 palette map, `"#rrggbb"` to
  *   `"#rrggbb"` (keys sorted); written to the sidecar's `meta.shmup.p2`, null when the recipe
  *   has none.
+ * @property {{ tileset: string, mode: 'clip-to-mask' | 'mask-from-art' } | null} collision -
+ *   The tile collision mode of a `tile` recipe (decision W5-11), null for every other recipe:
+ *   `"clip-to-mask"` makes the finished art's alpha exactly the tileset's designed column masks
+ *   per frame, `"mask-from-art"` derives the column heights from the art and writes them to
+ *   `<name>.masks.json` next to the PNG (never into `content/`).
  * @property {{ size: 0 | 2 | 4, strength: number }} dither - Ordered dither.
  * @property {{ enabled: boolean, color: number | null, edges: 'open' | 'closed' }} outline -
  *   Outline pass.
@@ -686,6 +692,36 @@ export function parseRecipe(json) {
     }
   }
 
+  // ---- collision ---------------------------------------------------------------------------
+  // A terrain tile ships with the collision mask its art must agree with (decision W5-11): the
+  // heightfield places slope and surface tiles by anchor + mask (`core/data/tilemap.ts`
+  // `maskKey`), so "clip-to-mask" — the default — forces the finished art's alpha to the
+  // designed mask per frame. "mask-from-art" lets the art decide the collision instead: the
+  // column heights are counted from its opaque pixels (each column must be one run from its
+  // anchor edge, or no tileset mask can express it) and written to `<name>.masks.json` next to
+  // the PNG — a review file for a human, never written into `content/`.
+  /** @type {Recipe['collision']} */
+  let collision = null;
+  if (json.collision !== undefined) {
+    if (category !== 'tile') warn('collision', 'only a tile has collision; it is ignored');
+    else {
+      const c = json.collision;
+      if (!isObject(c)) error('collision', 'must be { "tileset", "mode" }');
+      else {
+        for (const k of Object.keys(c))
+          if (k !== 'tileset' && k !== 'mode') error(`collision.${k}`, 'unknown field');
+        let mode = 'clip-to-mask';
+        if (c.mode !== undefined) {
+          if (c.mode !== 'clip-to-mask' && c.mode !== 'mask-from-art')
+            error('collision.mode', 'must be "clip-to-mask" or "mask-from-art"');
+          else mode = /** @type {'clip-to-mask' | 'mask-from-art'} */ (c.mode);
+        }
+        if (checkPath(c.tileset, 'collision.tileset', error))
+          collision = { tileset: /** @type {string} */ (c.tileset), mode };
+      }
+    }
+  }
+
   /** @type {Recipe['dither']} */
   const dither = { size: 0, strength: 24 };
   if (json.dither !== undefined && json.dither !== 'off' && json.dither !== false) {
@@ -889,6 +925,7 @@ export function parseRecipe(json) {
       alpha: /** @type {'binary' | 'translucent' | 'additive'} */ (alpha),
       palette,
       p2,
+      collision,
       dither,
       outline,
       cycles,

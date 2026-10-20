@@ -10,7 +10,11 @@
  *    ordered dither only where the bible allows;
  * 5. outline pass;
  * 6. lay the frames out as a strip and merge the hand-edit layer `<name>.edit.png`;
- * 7. write `<name>.png` (deterministic bytes), `<name>.json` (an Aseprite-format frame
+ * 7. tile collision (decision W5-11): with the recipe's `collision` block, `clip-to-mask`
+ *    forces the strip's alpha to the tileset's designed column masks per frame, and
+ *    `mask-from-art` derives the masks from the strip and writes `<name>.masks.json` next to
+ *    the PNG (the one file this module writes itself — a review file, never into `content/`);
+ * 8. write `<name>.png` (deterministic bytes), `<name>.json` (an Aseprite-format frame
  *    sidecar with the tags and the anchor pivot) and `<name>.art.json` (provenance).
  *
  * Nothing here reads the clock except the record's date, and only when nothing else in the
@@ -21,10 +25,10 @@
  *
  * @module
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative, sep } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, relative, sep } from 'node:path';
 import { decodeImage, encodePng } from './codec.mjs';
-import { mergeEdit, outlineFrame, stripOf } from './finish.mjs';
+import { clipToMasks, masksFromArt, mergeEdit, outlineFrame, stripOf } from './finish.mjs';
 import { cropImage, hexOf, lumaOf, parseHex } from './image.mjs';
 import { keyRegion } from './key.mjs';
 import {
@@ -61,6 +65,9 @@ export const TOOL_VERSION = '1.0.0';
 /** The named-palette file schema (`<palettes>/<name>.json`). */
 export const PALETTE_SCHEMA = 'shmup-palette@1';
 
+/** The derived tile-mask file schema (`<name>.masks.json`, written next to the PNG). */
+export const TILE_MASKS_SCHEMA = 'shmup-ingest-masks@1';
+
 /**
  * Options of one ingest run.
  *
@@ -82,7 +89,9 @@ export const PALETTE_SCHEMA = 'shmup-palette@1';
  * @property {string[]} errors - Problems that stopped it.
  * @property {string[]} warnings - Things to look at.
  * @property {{ png: { path: string, bytes: Buffer }, sidecar: { path: string, text: string },
- *   record: { path: string, text: string } } | null} files - The outputs (`null` on error).
+ *   record: { path: string, text: string }, masks: { path: string, text: string } | null } | null} files
+ *   - The outputs (`null` on error; `masks` only with a `mask-from-art` collision recipe — it
+ *     is written next to the PNG by `ingestRecipe` itself, the other three by the caller).
  * @property {Record<string, unknown>} report - Measurements for the report.
  */
 
@@ -157,6 +166,67 @@ export function loadPalette(dir, name) {
   if (json.outline !== undefined && outline === null)
     throw new Error(`${file}: "outline" is "#rrggbb"`);
   return { colors: [...new Set(/** @type {number[]} */ (colors))], outline };
+}
+
+/**
+ * The collision tiles of a designed tileset (`content/tilesets/*.tileset.json`, read-only —
+ * the ingest tool never writes into `content/`, decision W5-11). Only the fields the tile
+ * collision stage uses are checked; a file the content loader would reject still parses here,
+ * and `pnpm content:check` is the content's judge.
+ *
+ * @param {string} root - Run root (the path is relative to it).
+ * @param {string} path - Root-relative tileset path.
+ * @returns {{
+ *   tileSize: number,
+ *   tiles: { name: string, type: string, frame: number, anchor: 'floor' | 'ceiling',
+ *     mask: number[] }[]
+ * }} The tile edge and the tiles that carry collision (`empty` decorations left out).
+ * @throws {Error} When it cannot be read or does not look like a tileset.
+ */
+export function loadTilesetMasks(root, path) {
+  const file = join(root, ...path.split('/'));
+  if (!existsSync(file)) throw new Error(`tileset "${path}" not found (${file})`);
+  let json;
+  try {
+    json = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (error) {
+    throw new Error(`${path}: ${/** @type {Error} */ (error).message}`);
+  }
+  if (json?.kind !== 'tileset') throw new Error(`${path} is not a tileset (kind ${JSON.stringify(json?.kind)})`);
+  const tileSize = json.tileSize;
+  if (!Number.isInteger(tileSize) || tileSize < 1)
+    throw new Error(`${path}: "tileSize" must be a positive integer`);
+  if (!Array.isArray(json.tiles)) throw new Error(`${path}: "tiles" must be a list`);
+  /** @type {{ name: string, type: string, frame: number, anchor: 'floor' | 'ceiling', mask: number[] }[]} */
+  const tiles = [];
+  for (let i = 0; i < json.tiles.length; i++) {
+    const tile = json.tiles[i];
+    const at = `${path}: tiles[${i}]`;
+    if (tile === null || typeof tile !== 'object' || Array.isArray(tile))
+      throw new Error(`${at} is not an object`);
+    const name = typeof tile.name === 'string' ? tile.name : `tiles[${i}]`;
+    if (tile.type === 'empty') continue; // decoration: no collision to clip or derive
+    if (tile.type !== 'solid' && tile.type !== 'hazard')
+      throw new Error(`${at}: "type" must be "empty", "solid" or "hazard", not ${JSON.stringify(tile.type)}`);
+    if (!Number.isInteger(tile.frame) || tile.frame < 0)
+      throw new Error(`${at}: "frame" must be a non-negative integer`);
+    if (tile.anchor !== 'floor' && tile.anchor !== 'ceiling')
+      throw new Error(`${at}: "anchor" must be "floor" or "ceiling"`);
+    if (
+      !Array.isArray(tile.mask) ||
+      tile.mask.length !== tileSize ||
+      !tile.mask.every((/** @type {unknown} */ v) => Number.isInteger(v) && v >= 0 && v <= tileSize)
+    )
+      throw new Error(`${at}: "mask" must be ${tileSize} integer heights 0…${tileSize}`);
+    tiles.push({
+      name,
+      type: tile.type,
+      frame: tile.frame,
+      anchor: /** @type {'floor' | 'ceiling'} */ (tile.anchor),
+      mask: /** @type {number[]} */ (tile.mask),
+    });
+  }
+  return { tileSize, tiles };
 }
 
 /**
@@ -515,7 +585,8 @@ const numberOf = (candidate, key) =>
     : null;
 
 /**
- * Ingests one recipe (nothing is written: the caller writes `files`).
+ * Ingests one recipe (nothing is written but the derived `<name>.masks.json`, when a tile
+ * recipe uses `mask-from-art` — the caller writes the `files` themselves).
  *
  * @param {string} recipeFile - Path of `<name>.recipe.json`.
  * @param {IngestOptions} options - Run options.
@@ -897,6 +968,122 @@ export function ingestRecipe(recipeFile, options) {
     }
   }
 
+  // ---- tile collision (decision W5-11) ------------------------------------------------------
+  // Both modes run on the finished strip (after the hand-edit layer), so the mask is the last
+  // word on the alpha the game will draw. The tileset's own `sprite` field is not consulted:
+  // the masks are matched to the recipe's frames by index, the same way the engine draws them.
+  /** @type {{ path: string, text: string } | null} */
+  let masks = null;
+  /** @type {Record<string, unknown> | null} */
+  let collision = null;
+  if (recipe.collision !== null) {
+    const spec = recipe.collision;
+    let tileset;
+    try {
+      tileset = loadTilesetMasks(options.root, spec.tileset);
+    } catch (error) {
+      errors.push(`collision: ${/** @type {Error} */ (error).message}`);
+      return result;
+    }
+    const fw = recipe.frame.width;
+    const fh = recipe.frame.height;
+    if (fw !== tileset.tileSize || fh !== tileset.tileSize) {
+      errors.push(
+        `collision: the recipe's frames are ${fw}×${fh}, ${spec.tileset}'s tiles are ${tileset.tileSize}×${tileset.tileSize}`,
+      );
+      return result;
+    }
+    /** @type {Map<number, { name: string, anchor: 'floor' | 'ceiling', mask: number[] }>} */
+    const claims = new Map();
+    for (const tile of tileset.tiles) {
+      if (tile.frame >= frames.length) {
+        warnings.push(
+          `collision: tile "${tile.name}" names frame ${tile.frame}, the sprite draws ${frames.length}`,
+        );
+      } else if (claims.has(tile.frame)) {
+        warnings.push(
+          `collision: tile "${tile.name}" names frame ${tile.frame} again (the first tile's mask rules)`,
+        );
+      } else {
+        claims.set(tile.frame, { name: tile.name, anchor: tile.anchor, mask: tile.mask });
+      }
+    }
+    if (claims.size === 0) {
+      errors.push(
+        `collision: ${spec.tileset} has no solid or hazard tile for any frame this sprite draws`,
+      );
+      return result;
+    }
+    const covered = [...claims.keys()].sort((a, b) => a - b);
+    for (let f = 0; f < frames.length; f++)
+      if (!claims.has(f))
+        warnings.push(
+          `collision: frame ${f} is no solid or hazard tile of ${spec.tileset} — ${
+            spec.mode === 'clip-to-mask' ? 'its art is not clipped' : 'no mask is derived from it'
+          }`,
+        );
+    if (spec.mode === 'clip-to-mask') {
+      const cleared = clipToMasks(
+        strip,
+        fw,
+        covered.map((f) => ({ frame: f, ...claims.get(f) })),
+      );
+      collision = { mode: spec.mode, tileset: spec.tileset, frames: covered.length, cleared };
+    } else {
+      const measured = masksFromArt(
+        strip,
+        fw,
+        covered.map((f) => ({ frame: f, anchor: claims.get(f).anchor })),
+      );
+      if (measured.broken.length > 0) {
+        errors.push(
+          `collision: ${measured.broken.length} column(s) are not one run of opaque pixels from ` +
+            `their anchor edge: ${measured.broken
+              .map(
+                (b) =>
+                  `frame ${b.frame} column ${b.column} (tile "${claims.get(b.frame).name}", ` +
+                  `${claims.get(b.frame).anchor})`,
+              )
+              .join(', ')} — no tileset mask can express them`,
+        );
+        return result;
+      }
+      const masksFile = `${outBase}.masks.json`;
+      if (rel(options.root, masksFile).startsWith('content/')) {
+        errors.push(
+          `collision: ${rel(options.root, masksFile)} would be written into content/ — ` +
+            'the ingest tool never writes content (copy the masks with scripts/assets/tileset-masks.mjs)',
+        );
+        return result;
+      }
+      masks = {
+        path: masksFile,
+        text: `${JSON.stringify(
+          {
+            format: TILE_MASKS_SCHEMA,
+            sprite: recipe.name,
+            tileset: spec.tileset,
+            tileSize: fw,
+            frames: measured.masks.map((m) => ({
+              frame: m.frame,
+              tile: claims.get(m.frame).name,
+              anchor: m.anchor,
+              mask: m.mask,
+            })),
+          },
+          null,
+          2,
+        )}\n`,
+      };
+      collision = {
+        mode: spec.mode,
+        tileset: spec.tileset,
+        frames: measured.masks.length,
+        masks: rel(options.root, masksFile),
+      };
+    }
+  }
+
   // ---- checks and report ------------------------------------------------------------------
   const colours = colourCount([strip]);
   if (ingested > recipe.palette.max) {
@@ -940,6 +1127,7 @@ export function ingestRecipe(recipeFile, options) {
     nearMisses: misses.pixels,
     mixels,
     edit,
+    collision,
   };
 
   // ---- outputs ----------------------------------------------------------------------------
@@ -1060,10 +1248,19 @@ export function ingestRecipe(recipeFile, options) {
     }
   }
   record.ingestedAt = date;
+  if (masks !== null) {
+    // The derived masks are the one output this module writes itself: they are a review file
+    // of the in-memory pixels for scripts/assets/tileset-masks.mjs (V4b), not a game file, so
+    // the CLI's three-file loop never sees a path for them. A `--check` run re-writes them
+    // when they drifted — they are never hand-edited.
+    mkdirSync(dirname(masks.path), { recursive: true });
+    writeFileSync(masks.path, masks.text);
+  }
   result.files = {
     png: { path: `${outBase}.png`, bytes: pngBytes },
     sidecar: { path: `${outBase}.json`, text: sidecarText },
     record: { path: recordFile, text: `${JSON.stringify(record, null, 2)}\n` },
+    masks,
   };
   return result;
 }

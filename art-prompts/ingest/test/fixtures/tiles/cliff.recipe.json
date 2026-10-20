@@ -1,0 +1,17 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "tiles/cliff",
+  "category": "tile",
+  "frame": { "width": 12, "height": 12 },
+  "sources": [
+    {
+      "image": "tiles/cliff-sheet.png",
+      "grid": { "cellWidth": 12, "cellHeight": 12, "columns": 7, "rows": 1 }
+    }
+  ],
+  "key": { "mode": "none" },
+  "outline": false,
+  "collision": { "tileset": "tiles/fixture.tileset.json", "mode": "clip-to-mask" },
+  "provenance": { "model": "none", "author": "make-fixtures.mjs" },
+  "notes": "Synthetic fixture (R3-03.V4a): every frame is a flat-topped block; clip-to-mask makes the alpha exactly the tileset's column heights, leaves the empty deco (frame 5) and the unreferenced frame 6 whole, and writes no masks file."
+}

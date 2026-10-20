@@ -1,0 +1,17 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "tiles/stack",
+  "category": "tile",
+  "frame": { "width": 12, "height": 12 },
+  "sources": [
+    {
+      "image": "tiles/stack-sheet.png",
+      "grid": { "cellWidth": 12, "cellHeight": 12, "columns": 6, "rows": 1 }
+    }
+  ],
+  "key": { "mode": "alpha" },
+  "outline": false,
+  "collision": { "tileset": "tiles/fixture.tileset.json", "mode": "mask-from-art" },
+  "provenance": { "model": "none", "author": "make-fixtures.mjs" },
+  "notes": "Synthetic fixture (R3-03.V4a): columns are one run from their anchor edge (frame 3 hangs from the ceiling as its tile declares) with heights that differ from the designed masks on purpose — mask-from-art derives them into stack.masks.json and touches no pixel."
+}

@@ -9,6 +9,7 @@
 import assert from 'node:assert/strict';
 import {
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -20,10 +21,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { after, describe, it } from 'node:test';
 import { main } from '../ingest.mjs';
-import { decodeImage, pngChunks } from '../lib/codec.mjs';
-import { chebyshev, packRgb } from '../lib/image.mjs';
+import { decodeImage, encodePng, pngChunks } from '../lib/codec.mjs';
+import { chebyshev, createImage, packRgb, putRgba } from '../lib/image.mjs';
 import { ingestRecipe } from '../lib/pipeline.mjs';
 import { loadModels, sha256Hex, validateRecord } from '../lib/provenance.mjs';
+import { makeTileFixtures } from './fixtures/make-fixtures.mjs';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SPRITES = join(FIXTURES, 'sprites');
@@ -764,6 +766,330 @@ describe('a fixed palette over the cap', () => {
     rmSync(join(root, 'sprites', 'enemies', 'drone.edit.png'));
     const without = ingestAt(file, root);
     assert.ok(!without.warnings.some((w) => w.startsWith('colours:')), without.warnings.join('\n'));
+  });
+});
+
+describe('tile collision (R3-03.V4a)', () => {
+  const TILES = join(FIXTURES, 'tiles');
+  const cliff = decodeImage(readFileSync(join(TILES, 'cliff.png'))).image;
+  const stack = decodeImage(readFileSync(join(TILES, 'stack.png'))).image;
+
+  /** The designed masks of the fixture tileset, by frame (the deco `empty` tile is skipped). */
+  const DESIGNED = [
+    [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // ceiling anchor
+    [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7],
+  ];
+
+  /**
+   * One strip frame's column runs from the bottom edge (or the top one, for a ceiling).
+   *
+   * @param {import('../lib/image.mjs').Image} img - Strip.
+   * @param {number} f - Frame index.
+   * @param {boolean} [fromTop] - Measure from the top edge.
+   * @returns {number[]} Twelve heights.
+   */
+  const runs = (img, f, fromTop = false) =>
+    Array.from({ length: 12 }, (_, c) => {
+      let n = 0;
+      const at = (/** @type {number} */ k) =>
+        img.data[((fromTop ? k : img.height - 1 - k) * img.width + f * 12 + c) * 4 + 3];
+      while (n < img.height && at(n) !== 0) n++;
+      return n;
+    });
+
+  /**
+   * Opaque pixels of one strip frame.
+   *
+   * @param {import('../lib/image.mjs').Image} img - Strip.
+   * @param {number} f - Frame index.
+   * @returns {number} The count.
+   */
+  const opaque = (img, f) => {
+    let n = 0;
+    for (let y = 0; y < img.height; y++)
+      for (let c = 0; c < 12; c++)
+        if (img.data[(y * img.width + f * 12 + c) * 4 + 3] !== 0) n++;
+    return n;
+  };
+
+  /**
+   * Ingests a scratch tile recipe (the cliff sheet) inside a copy of the fixture root.
+   *
+   * @param {string} name - Scratch root name.
+   * @param {Record<string, unknown>} recipe - Recipe fields on top of the tile base.
+   * @param {string} [sprite] - Sprite name (scratch location).
+   * @returns {ReturnType<typeof ingestRecipe>} The result.
+   */
+  const tileRun = (name, recipe, sprite = 'tiles/scratch') => {
+    const root = copyRoot(name);
+    const file = join(root, ...`${sprite}.recipe.json`.split('/'));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(
+      file,
+      JSON.stringify({
+        format: 'shmup-ingest-recipe@1',
+        name: sprite,
+        category: 'tile',
+        frame: { width: 12, height: 12 },
+        sources: [
+          {
+            image: 'tiles/cliff-sheet.png',
+            grid: { cellWidth: 12, cellHeight: 12, columns: 1, rows: 1 },
+          },
+        ],
+        key: { mode: 'none' },
+        outline: false,
+        provenance: { model: 'none', author: 'pipeline.test.mjs' },
+        ...recipe,
+      }),
+    );
+    return ingestAt(file, root);
+  };
+
+  it('the tile sheets redraw byte-for-byte', () => {
+    const dir = join(tmp, 'tile-redraw');
+    mkdirSync(dir, { recursive: true });
+    assert.deepEqual(makeTileFixtures(dir), ['tiles/cliff-sheet.png', 'tiles/stack-sheet.png']);
+    for (const rel of ['tiles/cliff-sheet.png', 'tiles/stack-sheet.png']) {
+      const name = rel.split('/')[1];
+      assert.deepEqual(
+        readFileSync(join(dir, ...rel.split('/'))),
+        readFileSync(join(TILES, name)),
+        rel,
+      );
+    }
+  });
+
+  it('are exactly what the recipes produce (--check)', () => {
+    const run = cli(['--root', FIXTURES, '--palettes', PALETTES, '--check', TILES]);
+    assert.equal(run.code, 0, run.err);
+    assert.match(run.out, /2 recipe\(s\): 2 ok, 0 failed, 2 with warnings, 0 out of date/);
+  });
+
+  it('clip-to-mask: the committed alpha is the designed mask, column for column', () => {
+    for (let f = 0; f < 5; f++)
+      assert.deepEqual(runs(cliff, f, f === 3), DESIGNED[f], `frame ${f}`);
+    // The deco and the unreferenced frame keep all their art (clip only shapes solid/hazard).
+    assert.equal(opaque(cliff, 5), 144);
+    assert.equal(opaque(cliff, 6), 144);
+  });
+
+  it('clip-to-mask: a re-run touches no pixel, reports the clip, and writes no masks file', () => {
+    const result = ingestAt(join(TILES, 'cliff.recipe.json'), FIXTURES);
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(result.files?.png.bytes, readFileSync(join(TILES, 'cliff.png')));
+    assert.equal(result.files?.masks, null);
+    // 1 008 opaque before the clip; frames 0, 5 and 6 stay full: 144+144+78+78+78+54+144 = 720.
+    assert.deepEqual(result.report?.collision, {
+      mode: 'clip-to-mask',
+      tileset: 'tiles/fixture.tileset.json',
+      frames: 5,
+      cleared: 288,
+    });
+    assert.match(
+      result.warnings.join('\n'),
+      /collision: frame 5 is no solid or hazard tile of tiles\/fixture\.tileset\.json — its art is not clipped/,
+    );
+    assert.match(
+      result.warnings.join('\n'),
+      /collision: frame 6 is no solid or hazard tile of tiles\/fixture\.tileset\.json — its art is not clipped/,
+    );
+  });
+
+  it('mask-from-art: the masks file holds the art\'s heights, and no pixel moved', () => {
+    const derived = JSON.parse(readFileSync(join(TILES, 'stack.masks.json'), 'utf8'));
+    assert.equal(derived.format, 'shmup-ingest-masks@1');
+    assert.equal(derived.sprite, 'tiles/stack');
+    assert.equal(derived.tileset, 'tiles/fixture.tileset.json');
+    assert.equal(derived.tileSize, 12);
+    assert.deepEqual(
+      derived.frames.map((f) => [f.frame, f.tile, f.anchor, f.mask]),
+      [
+        [0, 'block', 'floor', DESIGNED[0]], // equal to the design on purpose
+        [1, 'slope-up', 'floor', [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12]],
+        [2, 'slope-down', 'floor', [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]],
+        [3, 'overhang', 'ceiling', [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]],
+        [4, 'spike', 'floor', [3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4]],
+      ],
+    );
+    for (const entry of derived.frames.slice(1))
+      assert.notDeepEqual(entry.mask, DESIGNED[entry.frame], `frame ${entry.frame} differs`);
+    for (const entry of derived.frames)
+      assert.deepEqual(runs(stack, entry.frame, entry.anchor === 'ceiling'), entry.mask);
+    assert.equal(opaque(stack, 5), 144); // the deco frame: unmeasured, whole
+  });
+
+  it('mask-from-art: a re-run writes the same masks text and warns only for the deco frame', () => {
+    const result = ingestAt(join(TILES, 'stack.recipe.json'), FIXTURES);
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(result.files?.png.bytes, readFileSync(join(TILES, 'stack.png')));
+    const masks = result.files?.masks;
+    assert.ok(masks, 'masks file');
+    assert.deepEqual(
+      JSON.parse(Buffer.from(masks.text).toString('utf8')),
+      JSON.parse(readFileSync(join(TILES, 'stack.masks.json'), 'utf8')),
+    );
+    assert.deepEqual(Buffer.from(masks.text), readFileSync(masks.path), 'same bytes on disk');
+    assert.match(
+      result.warnings.join('\n'),
+      /collision: frame 5 .* — no mask is derived from it/,
+    );
+    assert.deepEqual(result.report?.collision, {
+      mode: 'mask-from-art',
+      tileset: 'tiles/fixture.tileset.json',
+      frames: 5,
+      masks: 'tiles/stack.masks.json',
+    });
+  });
+
+  it('mask-from-art: a column that is not one run from its anchor edge fails the recipe', () => {
+    const root = copyRoot('broken-run');
+    // Frame 0 of a one-frame sheet: column 3 has its bottom run, a gap at row 6 and floating
+    // art above; column 4 is only 5 high, so the gap reaches the border and keying keeps the
+    // float (an enclosed hole would too — no mask can express either).
+    const image = createImage(12, 12);
+    for (let c = 0; c < 12; c++)
+      for (let y = 0; y < 12; y++) {
+        if (c === 4 && y < 7) continue;
+        if (c === 3 && y === 6) continue;
+        putRgba(image, y * 12 + c, 0x5a7090, 255);
+      }
+    put(root, 'tiles/broken-sheet.png', encodePng(image));
+    const recipe = JSON.parse(readFileSync(join(root, 'tiles', 'stack.recipe.json'), 'utf8'));
+    recipe.name = 'tiles/broken';
+    recipe.sources = [
+      { image: 'tiles/broken-sheet.png', grid: { cellWidth: 12, cellHeight: 12, columns: 1, rows: 1 } },
+    ];
+    put(root, 'tiles/broken.recipe.json', JSON.stringify(recipe));
+    const result = ingestAt(join(root, 'tiles', 'broken.recipe.json'), root);
+    assert.equal(result.files, null);
+    assert.match(
+      result.errors.join('\n'),
+      /collision: 1 column\(s\) are not one run of opaque pixels from their anchor edge: frame 0 column 3 \(tile "block", floor\) — no tileset mask can express them/,
+    );
+    assert.ok(!existsSync(join(root, 'tiles', 'broken.masks.json')), 'no masks file on disk');
+  });
+
+  it('warns on a non-tile recipe and changes nothing', () => {
+    const root = copyRoot('collision-sprite');
+    const file = join(root, 'sprites', 'enemies', 'drone.recipe.json');
+    const recipe = JSON.parse(readFileSync(file, 'utf8'));
+    recipe.collision = { tileset: 'tiles/fixture.tileset.json', mode: 'clip-to-mask' };
+    writeFileSync(file, JSON.stringify(recipe, null, 2));
+    const result = ingestAt(file, root);
+    assert.deepEqual(result.errors, []);
+    assert.match(
+      result.warnings.join('\n'),
+      /collision: only a tile has collision; it is ignored/,
+    );
+    assert.equal(result.report?.collision, null);
+    assert.deepEqual(result.files?.png.bytes, readFileSync(join(SPRITES, 'enemies', 'drone.png')));
+  });
+
+  for (const [label, collision, pattern] of /** @type {[string, unknown, RegExp][]} */ ([
+    [
+      'a collision that is not an object',
+      'tiles/fixture.tileset.json',
+      /collision: must be \{ "tileset", "mode" \}/,
+    ],
+    [
+      'an unknown mode',
+      { tileset: 'tiles/fixture.tileset.json', mode: 'clip' },
+      /collision\.mode: must be "clip-to-mask" or "mask-from-art"/,
+    ],
+    [
+      'a tileset path outside the root',
+      { tileset: '../escape.tileset.json' },
+      /collision\.tileset: /,
+    ],
+    [
+      'an unknown collision field',
+      { tileset: 'tiles/fixture.tileset.json', mode: 'clip-to-mask', trim: true },
+      /collision\.trim: unknown field/,
+    ],
+  ])) {
+    it(`reports ${label}`, () => {
+      const result = tileRun('shape', { collision });
+      assert.equal(result.files, null);
+      assert.match(result.errors.join('\n'), pattern);
+    });
+  }
+
+  it('reports frames that are not the tileset\'s tiles', () => {
+    const result = tileRun('tile-size', {
+      frame: { width: 10, height: 10 },
+      sources: [
+        {
+          image: 'tiles/cliff-sheet.png',
+          grid: { cellWidth: 10, cellHeight: 10, columns: 1, rows: 1 },
+        },
+      ],
+      collision: { tileset: 'tiles/fixture.tileset.json' },
+    });
+    assert.equal(result.files, null);
+    assert.match(
+      result.errors.join('\n'),
+      /collision: the recipe's frames are 10×10, tiles\/fixture\.tileset\.json's tiles are 12×12/,
+    );
+  });
+
+  it('reports a tileset with no collision tile for the sprite\'s frames', () => {
+    const root = copyRoot('no-claim');
+    put(
+      root,
+      'tiles/far.tileset.json',
+      JSON.stringify({
+        formatVersion: 1,
+        kind: 'tileset',
+        id: 'far',
+        sprite: 'tiles/cliff',
+        tileSize: 12,
+        tiles: [
+          { name: 'tall', type: 'solid', frame: 20, anchor: 'floor', mask: Array(12).fill(12) },
+        ],
+      }),
+    );
+    const file = join(root, 'tiles', 'scratch.recipe.json');
+    const recipe = JSON.parse(readFileSync(join(TILES, 'cliff.recipe.json'), 'utf8'));
+    recipe.name = 'tiles/scratch';
+    recipe.sources = [
+      {
+        image: 'tiles/cliff-sheet.png',
+        grid: { cellWidth: 12, cellHeight: 12, columns: 1, rows: 1 },
+      },
+    ];
+    recipe.collision = { tileset: 'tiles/far.tileset.json' };
+    put(root, 'tiles/scratch.recipe.json', JSON.stringify(recipe));
+    const result = ingestAt(file, root);
+    assert.equal(result.files, null);
+    assert.match(
+      result.warnings.join('\n'),
+      /collision: tile "tall" names frame 20, the sprite draws 1/,
+    );
+    assert.match(
+      result.errors.join('\n'),
+      /collision: tiles\/far\.tileset\.json has no solid or hazard tile for any frame this sprite draws/,
+    );
+  });
+
+  it('refuses to write derived masks into content/', () => {
+    const result = tileRun('content-guard', {
+      collision: { tileset: 'tiles/fixture.tileset.json', mode: 'mask-from-art' },
+    }, 'content/tiles/blocked');
+    assert.equal(result.files, null);
+    assert.match(
+      result.errors.join('\n'),
+      /collision: content\/tiles\/blocked\.masks\.json would be written into content\/ — the ingest tool never writes content/,
+    );
+  });
+
+  it('a tile strip has binary alpha, like every other output', () => {
+    for (const strip of [cliff, stack])
+      for (let p = 3; p < strip.data.length; p += 4)
+        assert.ok(strip.data[p] === 0 || strip.data[p] === 255);
   });
 });
 
