@@ -79,7 +79,8 @@
  * {@link DEFAULT_DISPLAY}, {@link ImagePolicy},
  * {@link stagePages}, {@link createAtlasResidency}, {@link createLazyAtlasResidency},
  * {@link AtlasResidency},
- * {@link AtlasResidencyOptions}, {@link AtlasResidencyLazyOptions}, {@link AtlasPageLike}, {@link connectAtlasResidency},
+ * {@link AtlasResidencyOptions}, {@link AtlasResidencyLazyOptions}, {@link AtlasPageLike},
+ * {@link connectAtlasResidency},
  * {@link LazyAtlasResidency}, {@link AtlasResidencyLazy}, {@link AtlasLazyPages},
  * {@link AtlasPageImageLoader},
  * {@link prepareShownWorld}, {@link worldOfView}, {@link stageIndexOfWorld},
@@ -880,7 +881,10 @@ export interface AtlasResidency {
 export interface LazyAtlasResidency {
   /** Per page: whether it is (or will be, on its next draw) on the GPU. */
   readonly resident: readonly boolean[];
-  /** Pages unloaded so far (only those it believed resident — {@link LazyAtlasResidency.prepare}). */
+  /**
+   * Pages unloaded so far (only those it believed resident —
+   * {@link LazyAtlasResidency.prepare}).
+   */
   readonly unloads: number;
   /** Pages uploaded by prepares so far (always 0 without {@link AtlasResidencyOptions.upload}). */
   readonly uploads: number;

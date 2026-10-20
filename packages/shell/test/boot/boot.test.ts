@@ -777,10 +777,27 @@ describe('shell/boot failures (boot error screen)', () => {
   });
 
   it('reports an atlas page that fails to load', async () => {
-    const { promise, shown } = boot({ assets: { manifest, pageUrls: ['assets/atlas/bad.png'] } });
+    // The lazy default fetches pages by index through the residency, so the injection carries
+    // all ten URLs (review M3RV F1); page 0 is the one that fails. Under the lazy default this
+    // now pins the residency's rejection path: the tag rides the `loadImage` wrapper and the
+    // boot must still reach the error screen (never hang on the page-load hold).
+    const badPages = pageUrls.map((url, page) => (page === 0 ? 'assets/atlas/bad.png' : url));
+    const { promise, shown, attributes } = boot({ assets: { manifest, pageUrls: badPages } });
     await expect(promise).rejects.toBeInstanceOf(ShellBootError);
     expect(shown[shown.length - 1]).toMatch(
       /^error:ATLAS PAGE FAILED TO LOAD\|assets\/atlas\/bad\.png/,
+    );
+    expect(attributes.get(BOOT_STATE_ATTRIBUTE)).toBe('error');
+  });
+
+  it('a missing page URL rejects the lazy boot at once (M3RV F1)', async () => {
+    // `pageUrls` shorter than the manifest: an image built from `undefined` may never settle,
+    // so the wrapper must reject before `createImage` — the boot surfaces the error screen
+    // instead of holding the frame loop forever (the test would time out on a hang).
+    const { promise, shown } = boot({ assets: { manifest, pageUrls: [] } });
+    await expect(promise).rejects.toBeInstanceOf(ShellBootError);
+    expect(shown[shown.length - 1]).toMatch(
+      /^error:ATLAS PAGE FAILED TO LOAD\|AtlasPageUrlError: atlas page 0 has no URL/,
     );
   });
 

@@ -908,6 +908,31 @@ function describe(error: unknown): string {
 }
 
 /**
+ * Rejection of the lazy page loader for a page the boot was given no URL for (review M3RV F1).
+ *
+ * @remarks
+ * `pageUrls` shorter than the manifest is a malformed injection, and under the lazy policy it
+ * must surface as the boot's error screen at once: handing `undefined` to `createImage` can
+ * produce an image whose `onload` / `onerror` never fire, which would leave {@link
+ * LazyAtlasResidency.prepare} unsettled and `loading` true forever — the frame loop's hold of
+ * plan R3-04.M3c would then redraw the last frame without end. Internal to the boot; a typed
+ * export is a wave-3 carry (review M3RV F7).
+ */
+class AtlasPageUrlError extends Error {
+  /** The page index that has no URL. */
+  readonly page: number;
+
+  /**
+   * @param page - The page index that has no URL.
+   */
+  constructor(page: number) {
+    super(`atlas page ${page} has no URL`);
+    this.name = 'AtlasPageUrlError';
+    this.page = page;
+  }
+}
+
+/**
  * The window's high-resolution clock, the one the atlas timings use ({@link AtlasTiming}).
  *
  * @param win - The window.
@@ -1509,17 +1534,25 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         ...residencyOptions,
         lazy: {
           atlas: readyAtlas,
-          loadImage: (page) =>
-            loadImageTimed(pageUrls[page], createImage, atlasClock)
+          loadImage: (page) => {
+            const url = pageUrls[page];
+            // A missing / non-string URL is a malformed injection (a `pageUrls` shorter than
+            // the manifest): reject at once — never hand `undefined` to `createImage`, whose
+            // image may never settle the fetch (review M3RV F1).
+            if (typeof url !== 'string') {
+              return Promise.reject(new AtlasPageUrlError(page));
+            }
+            return loadImageTimed(url, createImage, atlasClock)
               .then((loaded) => loaded.image)
               .catch((error: unknown) => {
                 // Tag the page URL onto the rejection (the loader error is fresh per load) so
                 // the boot error screen below can print the same `${url}: ${describe(error)}`
                 // line the eager page load prints (the R1-05 W3-6 format, R3-04.M3e).
                 const tagged = error instanceof Error ? error : new Error(String(error));
-                (tagged as Error & { pageUrl?: string }).pageUrl = pageUrls[page];
+                (tagged as Error & { pageUrl?: string }).pageUrl = url;
                 throw tagged;
-              }),
+              });
+          },
         },
       })
     : null;
@@ -1541,8 +1574,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     for (let p = 0; p < readyAtlas.pages.length; p++) {
       if (readyAtlas.isPageLoaded(p)) continue;
       const page = p;
+      const url = pageUrls[page];
+      if (typeof url !== 'string') continue; // Malformed injection: the page stays detached (F1).
       attaching.push(
-        loadImageTimed(pageUrls[page], createImage, atlasClock)
+        loadImageTimed(url, createImage, atlasClock)
           .then((loaded) => {
             readyAtlas.loadPage(page, loaded.image);
           })
@@ -1595,8 +1630,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     for (let p = 0; p < readyAtlas.pages.length; p++) {
       if (!atlasResidency.resident[p]) continue;
       const source = readyAtlas.pages[p];
+      const url = pageUrls[p];
       try {
-        const loaded = await loadImageTimed(pageUrls[p], createImage, atlasClock);
+        if (typeof url !== 'string') throw new AtlasPageUrlError(p); // Malformed injection (F1).
+        const loaded = await loadImageTimed(url, createImage, atlasClock);
         readyAtlas.loadPage(p, loaded.image);
       } catch (_error) {
         // The old image stands in: it still decodes from its bytes, and the next prepare of a
