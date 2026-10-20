@@ -129,7 +129,7 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     file: 'behaviors/index.ts',
     symbol: 'bossSuction.pullRadius',
     value: 200,
-    reason: "a world radius: boss.suction's pull field (plan §2.6 — not PLAYFIELD_H)",
+    reason: "a world radius, `200 * WORLD_SCALE`: boss.suction's pull field (plan §2.6)",
   },
   // Scene art, not the frame (R2-01 lays the panels and columns out from GLYPH_W / LINE_H and
   // `core/ui` uiPx, so none of their sizes is a literal any more; this table is scaled by

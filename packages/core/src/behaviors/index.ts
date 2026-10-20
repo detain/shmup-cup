@@ -1415,10 +1415,10 @@ function fireGuns(
 const bossHover = defineBossBehavior(
   'boss.hover',
   {
-    trackSpeed: 0.5,
-    margin: 32,
+    trackSpeed: 0.5 * WORLD_SCALE,
+    margin: 32 * WORLD_SCALE,
     fireTicks: 60,
-    bulletSpeed: 1.5,
+    bulletSpeed: 1.5 * WORLD_SCALE,
     ways: 1,
     spread: 40,
     openTicks: 0,
@@ -1458,14 +1458,14 @@ const bossLanes = defineBossBehavior(
   'boss.lanes',
   {
     trackSpeed: 0,
-    margin: 32,
+    margin: 32 * WORLD_SCALE,
     laserTicks: 150,
     laserLength: PLAYFIELD_W,
-    laserWidth: 6,
+    laserWidth: 6 * WORLD_SCALE,
     telegraph: 50,
     active: 45,
     fireTicks: 90,
-    bulletSpeed: 1.25,
+    bulletSpeed: 1.25 * WORLD_SCALE,
     ways: 3,
     spread: 40,
   },
@@ -1530,16 +1530,16 @@ const bossLanes = defineBossBehavior(
 const bossBulwark = defineBossBehavior(
   'boss.bulwark',
   {
-    trackSpeed: 0.35,
-    margin: 40,
+    trackSpeed: 0.35 * WORLD_SCALE,
+    margin: 40 * WORLD_SCALE,
     laserTicks: 110,
     firstLaser: 60,
     laserLength: PLAYFIELD_W,
-    laserWidth: 8,
+    laserWidth: 8 * WORLD_SCALE,
     telegraph: 45,
     active: 50,
     fireTicks: 120,
-    bulletSpeed: 1.5,
+    bulletSpeed: 1.5 * WORLD_SCALE,
     ways: 0,
     spread: 40,
   },
@@ -1679,7 +1679,7 @@ const captainRam = defineBossBehavior(
     waveTicks: 36,
     ways: 5,
     spread: 40,
-    bulletSpeed: 1.5,
+    bulletSpeed: 1.5 * WORLD_SCALE,
     ramTicks: 45,
     ramX: 40,
     returnTicks: 70,
@@ -1700,8 +1700,8 @@ const captainRam = defineBossBehavior(
       }
       const target = api.target();
       let row = Math.floor(target === null ? self.homeY : target.y - self.y + self.screenY);
-      if (row < 24) row = 24;
-      else if (row > PLAYFIELD_H - 24) row = PLAYFIELD_H - 24;
+      if (row < 24 * WORLD_SCALE) row = 24 * WORLD_SCALE;
+      else if (row > PLAYFIELD_H - 24 * WORLD_SCALE) row = PLAYFIELD_H - 24 * WORLD_SCALE;
       api.moveTo(p.ramX, row, ramTicks);
       yield ramTicks + 10;
       api.moveTo(self.homeX, self.homeY, returnTicks);
@@ -1722,12 +1722,12 @@ const captainRam = defineBossBehavior(
 const captainLauncher = defineBossBehavior(
   'captain.launcher',
   {
-    trackSpeed: 0.4,
-    margin: 40,
+    trackSpeed: 0.4 * WORLD_SCALE,
+    margin: 40 * WORLD_SCALE,
     launchTicks: 100,
     count: 2,
     fireTicks: 70,
-    bulletSpeed: 1.25,
+    bulletSpeed: 1.25 * WORLD_SCALE,
     ways: 3,
     spread: 48,
   },
@@ -1784,11 +1784,11 @@ const captainCircler = defineBossBehavior(
   {
     cx: PLAYFIELD_W / 2,
     cy: PLAYFIELD_CY,
-    rx: 140,
-    ry: 64,
+    rx: 140 * WORLD_SCALE,
+    ry: 64 * WORLD_SCALE,
     speed: 3,
     fireTicks: 60,
-    bulletSpeed: 1.25,
+    bulletSpeed: 1.25 * WORLD_SCALE,
     ring: 8,
   },
   function* circler(api, p): Script {
@@ -1823,7 +1823,7 @@ const captainCrab = defineBossBehavior(
     maxY: 160,
     ringTicks: 90,
     ring: 12,
-    bulletSpeed: 1.1,
+    bulletSpeed: 1.1 * WORLD_SCALE,
     turn: 16,
   },
   function* crab(api, p): Script {
@@ -1865,7 +1865,7 @@ const captainCrab = defineBossBehavior(
  */
 const bossRaid = defineBossBehavior(
   'boss.raid',
-  { fireTicks: 50, bulletSpeed: 1.5, ways: 1, spread: 32, aimStep: 0 },
+  { fireTicks: 50, bulletSpeed: 1.5 * WORLD_SCALE, ways: 1, spread: 32, aimStep: 0 },
   function* raid(api, p): Script {
     api.hold();
     const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
@@ -2005,16 +2005,16 @@ const MAW_FIRST_CUTTERS = 12;
 const bossMaw = defineBossBehavior(
   'boss.maw',
   {
-    trackSpeed: 0.4,
-    margin: 44,
+    trackSpeed: 0.4 * WORLD_SCALE,
+    margin: 44 * WORLD_SCALE,
     closedTicks: 140,
     openTicks: 90,
     fireTicks: 36,
-    bulletSpeed: 1.4,
+    bulletSpeed: 1.4 * WORLD_SCALE,
     ways: 3,
     spread: 48,
     ring: 0,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     launchTicks: 150,
     count: 1,
     gape: 0,
@@ -2094,14 +2094,14 @@ const bossWidow = defineBossBehavior(
     minY: 56,
     maxY: 144,
     fireTicks: 80,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ways: 3,
     spread: 40,
     launchTicks: 160,
     count: 1,
     laserTicks: 0,
     laserLength: PLAYFIELD_W,
-    laserWidth: 6,
+    laserWidth: 6 * WORLD_SCALE,
     telegraph: 50,
     active: 40,
   },
@@ -2218,23 +2218,23 @@ function spinHubs(api: BossScriptApi, speed: number): void {
 const bossBastion = defineBossBehavior(
   'boss.bastion',
   {
-    trackSpeed: 0.35,
-    margin: 44,
+    trackSpeed: 0.35 * WORLD_SCALE,
+    margin: 44 * WORLD_SCALE,
     spin: 4,
     reverseTicks: 0,
     laserTicks: 120,
     firstLaser: 60,
     laserLength: PLAYFIELD_W,
-    laserWidth: 8,
+    laserWidth: 8 * WORLD_SCALE,
     telegraph: 45,
     active: 50,
     fireTicks: 100,
     ways: 0,
     spread: 40,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ring: 0,
     ringTicks: 150,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
   },
   function* bastion(api, p): Script {
     api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
@@ -2329,8 +2329,8 @@ const bossSteed = defineBossBehavior(
   {
     cx: DEFAULT_BOSS_X,
     cy: DEFAULT_BOSS_Y,
-    rx: 8,
-    ry: 40,
+    rx: 8 * WORLD_SCALE,
+    ry: 40 * WORLD_SCALE,
     bobSpeed: 3,
     closedTicks: 150,
     openTicks: 110,
@@ -2339,9 +2339,9 @@ const bossSteed = defineBossBehavior(
     fireTicks: 80,
     ways: 3,
     spread: 44,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ring: 0,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     gape: 0,
   },
   function* steed(api, p): Script {
@@ -2540,8 +2540,8 @@ const SQUID_OPENING = 3;
 const bossSquid = defineBossBehavior(
   'boss.squid',
   {
-    trackSpeed: 0.35,
-    margin: 48,
+    trackSpeed: 0.35 * WORLD_SCALE,
+    margin: 48 * WORLD_SCALE,
     curl: 1,
     sweepTicks: 48,
     guardTicks: 60,
@@ -2549,10 +2549,10 @@ const bossSquid = defineBossBehavior(
     fireTicks: 70,
     ways: 3,
     spread: 40,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     gunTicks: 0,
     ring: 0,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     launchTicks: 0,
     count: 1,
   },
@@ -2669,20 +2669,20 @@ const bossSquid = defineBossBehavior(
 const bossFacet = defineBossBehavior(
   'boss.facet',
   {
-    trackSpeed: 0.3,
-    margin: 50,
+    trackSpeed: 0.3 * WORLD_SCALE,
+    margin: 50 * WORLD_SCALE,
     wave: 1,
     waveTicks: 40,
     fireTicks: 90,
     ways: 1,
     spread: 32,
-    bulletSpeed: 1.25,
+    bulletSpeed: 1.25 * WORLD_SCALE,
     ring: 0,
     ringTicks: 150,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     laserTicks: 0,
     laserLength: PLAYFIELD_W,
-    laserWidth: 6,
+    laserWidth: 6 * WORLD_SCALE,
     telegraph: 50,
     active: 40,
   },
@@ -2793,29 +2793,29 @@ const bossFacet = defineBossBehavior(
 const bossSovereign = defineBossBehavior(
   'boss.sovereign',
   {
-    trackSpeed: 0.3,
-    margin: 48,
+    trackSpeed: 0.3 * WORLD_SCALE,
+    margin: 48 * WORLD_SCALE,
     spin: 0,
     reverseTicks: 0,
     laserTicks: 0,
     firstLaser: 60,
     laserLength: PLAYFIELD_W,
-    laserWidth: 8,
+    laserWidth: 8 * WORLD_SCALE,
     telegraph: 45,
     active: 50,
     fireTicks: 110,
     ways: 0,
     spread: 40,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ring: 0,
     ringTicks: 160,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     launchTicks: 0,
     count: 1,
     spiral: 0,
     spiralTicks: 8,
     spiralStep: 24,
-    spiralSpeed: 1.1,
+    spiralSpeed: 1.1 * WORLD_SCALE,
   },
   function* sovereign(api, p): Script {
     api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
@@ -2916,7 +2916,7 @@ const bossArk = defineBossBehavior(
   'boss.ark',
   {
     fireTicks: 60,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ways: 1,
     spread: 32,
     aimStep: 0,
@@ -2924,7 +2924,7 @@ const bossArk = defineBossBehavior(
     count: 1,
     ring: 0,
     ringTicks: 180,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
   },
   function* ark(api, p): Script {
     api.hold();
@@ -3013,17 +3013,17 @@ const ANGLER_FIRST_SPREAD = 12;
 const bossAngler = defineBossBehavior(
   'boss.angler',
   {
-    trackSpeed: 0.35,
-    margin: 48,
+    trackSpeed: 0.35 * WORLD_SCALE,
+    margin: 48 * WORLD_SCALE,
     closedTicks: 150,
     openTicks: 100,
-    gape: 6,
+    gape: 6 * WORLD_SCALE,
     fireTicks: 40,
     ways: 3,
     spread: 44,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     ring: 0,
-    ringSpeed: 1,
+    ringSpeed: 1 * WORLD_SCALE,
     sway: 1,
     swayTicks: 40,
     gunTicks: 0,
@@ -3120,16 +3120,16 @@ const bossAngler = defineBossBehavior(
 const bossSuction = defineBossBehavior(
   'boss.suction',
   {
-    trackSpeed: 0.3,
-    margin: 48,
+    trackSpeed: 0.3 * WORLD_SCALE,
+    margin: 48 * WORLD_SCALE,
     pullTicks: 150,
     restTicks: 120,
-    pullRadius: 200,
-    pullStrength: 1.1,
+    pullRadius: 200 * WORLD_SCALE,
+    pullStrength: 1.1 * WORLD_SCALE,
     fireTicks: 50,
     ways: 3,
     spread: 40,
-    bulletSpeed: 1.2,
+    bulletSpeed: 1.2 * WORLD_SCALE,
     openTicks: 1,
   },
   function* suction(api, p): Script {
@@ -3174,17 +3174,17 @@ const bossSuction = defineBossBehavior(
 const bossGrabber = defineBossBehavior(
   'boss.grabber',
   {
-    trackSpeed: 0.6,
-    margin: 40,
+    trackSpeed: 0.6 * WORLD_SCALE,
+    margin: 40 * WORLD_SCALE,
     windUp: 40,
     grabTicks: 45,
-    grabRadius: 104,
-    grabStrength: 2.6,
+    grabRadius: 104 * WORLD_SCALE,
+    grabStrength: 2.6 * WORLD_SCALE,
     restTicks: 90,
     fireTicks: 0,
     ways: 2,
     spread: 56,
-    bulletSpeed: 1.4,
+    bulletSpeed: 1.4 * WORLD_SCALE,
   },
   function* grabber(api, p): Script {
     api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
@@ -3233,7 +3233,7 @@ const bossWalker = defineBossBehavior(
     fireTicks: 55,
     ways: 3,
     spread: 48,
-    bulletSpeed: 1.3,
+    bulletSpeed: 1.3 * WORLD_SCALE,
     stompShake: 0,
   },
   function* walker(api, p): Script {
