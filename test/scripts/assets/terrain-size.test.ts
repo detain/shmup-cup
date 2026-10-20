@@ -59,10 +59,9 @@ const NAMES = Object.keys(TERRAIN_PALETTES);
 /**
  * Whether the shipped `content/` still sits on v1's geometry — some tileset at 8-px tiles, read
  * from the content itself (the `SHIPPED` table, the same directory the rescale tests' copy of
- * this gate reads), never from `packages/core/test/helpers/port-pending.ts`: wave 5's U5 deletes
- * that gate file without touching these tests, and the cases retired here must keep skipping
- * after it (R2-02's two-scale kit ports `content/` in its throwaway tree, so it reads false
- * there).
+ * this gate reads), never from the deleted gate helper: wave 5's U5 deleted it without touching
+ * these tests, and the cases retired here must keep skipping after it (R2-02's two-scale kit
+ * ports `content/` in its throwaway tree, so it reads false there).
  */
 const CONTENT_STILL_V1 = SHIPPED.some(([, tileset]) => tileset.tileSize === 8);
 
