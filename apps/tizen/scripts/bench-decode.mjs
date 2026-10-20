@@ -1,44 +1,47 @@
 /**
- * The TV render bench's **decode pages** (plan R1-05, subtask B4 — decision W3-6): the PNG files
- * its `decode` scenario fetches, decodes and uploads on the TV, so R0-03's owner session records
- * what a 2048² atlas page costs from file to GPU on the M7 — the figure plan R3-04 estimates its
- * zone-load time from until the game measures it.
+ * The TV render bench's **decode pages** (plan R1-05, subtask B4 — decision W3-6; the page model
+ * replaced by plan R3-04.M4a, decisions RR-8 / W5-17): the PNG files its `decode` scenario
+ * fetches, decodes and uploads on the TV, so the M7 run records what a real stand-in zone page
+ * costs from file to GPU — the figure plan R3-04's zone-load estimate is measured on, not scaled
+ * from a synthetic page any more.
  *
- * Four pages, built at bench-build time into the bench's own output
+ * Three page groups, built at bench-build time into the bench's own output
  * (`dist-bench/assets/atlas/decode-<id>.png`, next to the density atlases of
  * `./bench-atlas.mjs`) — never committed, never added to the game's atlas:
  *
- * - **`rgba-2048`** — a 2048×2048 RGBA page ({@link decodeArtImage} in `'rgba'` mode): a packed
- *   page of synthetic "detailed" sprites — shaded blobs with outlines, brick and rock tiles,
- *   translucent glows — in 16 colour ramps of 32 levels plus soft alpha, so it has far more than
- *   256 colours and stays RGBA (colour type 6), like a `common` page of v2 art would.
- * - **`png8-2048`** — the same layout quantised to 64 colours (8 ramps × 8 levels) with 1-bit
- *   alpha, which the repo's encoder writes as lossless **PNG-8** (colour type 3, decision W3-3) —
- *   like a zone page of art quantised to a zone palette (art bible: 48–64 colours).
+ * - **`standin-zone-a`** (and `standin-zone-a-2` right after it when the group packs onto two
+ *   pages) — the stand-in zone A's own page(s): the interim art of `scripts/assets/standin.mjs`
+ *   packed through the real pipeline (`standinAtlas(['a'])`), PNG-8 pages of the byte band the v2
+ *   zone pages will ship in ({@link DECODE_BYTE_BANDS}). They replace the two synthetic 2048²
+ *   pages R1-05 B4 measured before the stand-in art existed.
  * - **`common`** and **`zone-a`** — the shipped atlas's `common` page and zone A's page, exactly
  *   as the asset pipeline builds them (`buildAtlas()`), for reference. They follow what the game
- *   ships: from R2-01's flip they are the interim ×1.5 pages (`common` 1024² instead of 1024×512,
- *   `zone-a` 256² instead of 256×128), unlike `./bench-atlas.mjs`'s density atlases, which keep
- *   the v1 art for good — so R0-03 decode rows recorded before and after the flip are not like
- *   for like.
+ *   ships: from R2-01's flip they are the interim ×1.5 pages, unlike `./bench-atlas.mjs`'s density
+ *   atlases, which keep the v1 art for good — so R0-03 decode rows recorded before and after the
+ *   flip are not like for like. The stand-in build's own `common` page is this same page byte for
+ *   byte (the stand-in art ships only zone art), so no second copy is built.
  *
- * The synthetic pages are **stand-ins with a stated size**, not art: what decides a PNG's decode
- * cost is its pixel count and its compressed bytes, so both pages are full 2048² and their bytes
- * sit in the range detailed pixel art compresses to (about 3–5 bits per pixel for RGBA, 1–2 for
- * PNG-8 — {@link DECODE_BYTE_BANDS}; the analyzer also prints ms per megapixel, so R3-04 can scale
- * the figure to the real pages' sizes). They are deterministic: integer hashing only (`Math.imul`,
- * no `Math.random`, no `Math.sin`), so every build writes the same bytes.
+ * {@link decodeArtImage} — R1-05 B4's synthetic-page drawer — stays exported for its tests and
+ * `test/integration/tv-render-bench.test.ts`'s sha pins, but the bench build ships no page drawn
+ * by it. {@link buildDecodeStandin} also returns the manifest of the run's last page load
+ * (`standin-zone`, plan R3-04.M4a): the stand-in build pruned to the pages shipped here, so the
+ * bench can draw a real frame from what it just decoded.
+ *
+ * Everything here is deterministic: the pipeline builds are seeded ({@link DECODE_SEED} is the
+ * kept drawer's own seed) and that drawer hashes by integer maths only (`Math.imul`, no
+ * `Math.random`, no `Math.sin`), so every build writes the same bytes.
  *
  * **Public API.** {@link DECODE_PAGE_SIZE}, {@link DECODE_SEED}, {@link DECODE_PAGE_PREFIX},
  * {@link DECODE_PAGE_IDS}, {@link DECODE_BYTE_BANDS}, {@link decodePageFile},
- * {@link decodeArtImage}, {@link pngColorType}, {@link buildDecodePages}.
+ * {@link decodeArtImage}, {@link pngColorType}, {@link buildDecodePages},
+ * {@link buildDecodeStandin}.
  *
  * @module
  */
 import { createImage } from '../../../scripts/assets/image.mjs';
 import { MAX_PAGE_SIZE } from '../../../scripts/assets/packer.mjs';
-import { encodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
+import { standinAtlas, standinGroupName } from '../../../scripts/assets/standin.mjs';
 
 /** Edge of the synthetic pages: the largest atlas page (2048, the packer's `MAX_PAGE_SIZE`). */
 export const DECODE_PAGE_SIZE = MAX_PAGE_SIZE;
@@ -46,20 +49,36 @@ export const DECODE_PAGE_SIZE = MAX_PAGE_SIZE;
 /** Seed of the synthetic pages' layout and noise. */
 export const DECODE_SEED = 0x5eed2048;
 
-/** File-name prefix of the decode pages (`decode-rgba-2048.png`, …). */
+/** File-name prefix of the decode pages (`decode-standin-zone-a.png`, …). */
 export const DECODE_PAGE_PREFIX = 'decode-';
 
-/** The decode pages in the order the scenario measures them. */
-export const DECODE_PAGE_IDS = Object.freeze(['rgba-2048', 'png8-2048', 'common', 'zone-a']);
+/** The stand-in zone the decode pages ship and the last page load draws (a zone letter). */
+const STANDIN_ZONE = 'a';
+
+/** The stand-in page ids' fixed part: `standin-zone-a`, `standin-zone-a-2`, … */
+const STANDIN_GROUP_BASE = `zone-${STANDIN_ZONE}`;
+
+/** Cache of {@link standinAtlasBuild} — the pipeline is deterministic, the build is wanted twice. */
+let standinCache = null;
 
 /**
- * The byte range each synthetic page must land in (checked by the tests): about 3–5 bits per pixel
- * for the RGBA page and 1–2 for the PNG-8 page — what detailed pixel art compresses to, so the
- * decode figure is neither a flat page's nor random noise's.
+ * The decode pages in the order the scenario measures them: the stand-in zone A's page group
+ * first — `standin-zone-a`, plus `standin-zone-a-2` right after it when the group packs onto two
+ * pages — then the shipped `common` and zone A pages. The stand-in group's pages are found by
+ * group, not by these ids, so the list is what the `decode` scenario ships at today's stand-in
+ * art; a {@link buildDecodePages} result must always hold every id.
+ */
+export const DECODE_PAGE_IDS = Object.freeze(['standin-zone-a', 'common', 'zone-a']);
+
+/**
+ * The byte range the stand-in zone pages must land in **per pixel** (checked by the tests over the
+ * group together: Σ bytes / Σ (width × height)) — decision RR-7's 0.3–0.6 MB for a 2048×1024
+ * PNG-8 page, what a page of detailed pixel art compresses to, so the decode figure is neither a
+ * flat page's nor random noise's. {@link buildDecodeStandin} throws when the packed group misses
+ * the band. The shipped pages are measured, never bounded.
  */
 export const DECODE_BYTE_BANDS = Object.freeze({
-  'rgba-2048': Object.freeze([1_500_000, 2_800_000]),
-  'png8-2048': Object.freeze([400_000, 1_050_000]),
+  standin: Object.freeze([300_000 / (2048 * 1024), 600_000 / (2048 * 1024)]),
 });
 
 /** Ramps of the RGBA page. */
@@ -90,7 +109,7 @@ const BAYER4 = Object.freeze([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13,
  * The file name of a decode page.
  *
  * @param {string} id - Page id ({@link DECODE_PAGE_IDS}).
- * @returns {string} e.g. `decode-rgba-2048.png`.
+ * @returns {string} e.g. `decode-standin-zone-a.png`.
  */
 export function decodePageFile(id) {
   return `${DECODE_PAGE_PREFIX}${id}.png`;
@@ -433,6 +452,18 @@ export function pngColorType(bytes) {
 /**
  * One decode page as the bench build ships it.
  *
+ * @typedef {object} StandinAtlasManifest
+ * @property {number} formatVersion Manifest format (2).
+ * @property {{ file: string, w: number, h: number, group?: string }[]} pages The stand-in group's
+ *   pages, shipped under their {@link decodePageFile} names.
+ * @property {Record<string, { x: number, y: number, w: number, h: number, p: number }>} frames
+ *   The stand-in sprites' frames, renumbered onto those pages.
+ * @property {Record<string, { frames: string[], flash?: string[] }>} sprites Sprite name to spec.
+ * @property {Record<string, Record<string, number[]>>} animations Surviving sprites' animations.
+ * @property {Record<string, never>} fonts Empty — the load draws no text.
+ */
+
+/**
  * @typedef {object} DecodePage
  * @property {string} id - {@link DECODE_PAGE_IDS}.
  * @property {string} file - {@link decodePageFile}.
@@ -442,21 +473,81 @@ export function pngColorType(bytes) {
  * @property {Buffer} png - The file's bytes.
  */
 
+/** The id of the `n`-th (0-based) page of a stand-in zone group: `standin-zone-a`, then
+ * `standin-zone-a-2`, … */
+function standinPageId(n) {
+  return n === 0 ? `standin-${STANDIN_GROUP_BASE}` : `standin-${STANDIN_GROUP_BASE}-${n + 1}`;
+}
+
 /**
- * Builds the decode pages (see the module docs): the two synthetic 2048² pages and the shipped
- * atlas's `common` and zone A pages (the asset pipeline's grouped build, in memory — it never reads
- * `assets/generated/`).
+ * The stand-in atlas build of the zone the bench decodes. Cached per process: the pipeline is
+ * deterministic, and {@link buildDecodeStandin} and the bench plugin want it more than once.
  *
- * @param {{ size?: number }} [options] - `size`: edge of the synthetic pages (default
- *   {@link DECODE_PAGE_SIZE}; the tests use a smaller one).
- * @returns {DecodePage[]} The pages in {@link DECODE_PAGE_IDS} order.
- * @throws {Error} When an asset source is invalid, or the shipped atlas has no `common` page.
+ * @returns {{ manifest: object, pages: { png: Buffer }[] }} The `standinAtlas(['a'])` result.
+ */
+function standinAtlasBuild() {
+  if (standinCache === null) standinCache = standinAtlas([STANDIN_ZONE]);
+  return standinCache;
+}
+
+/**
+ * The manifest of the run's last page load (`standin-zone`, plan R3-04.M4a): the stand-in build
+ * pruned to the group's own pages, shipped under their `decode-<id>.png` names, and to the
+ * stand-in sprites on them — frames renumbered onto the kept pages, animations filtered to the
+ * surviving sprites, no fonts (the load draws no text). Every sprite it names is on a page the
+ * bench decoded for the `decode` scenario one page load before.
+ *
+ * @param {object} manifest - The stand-in build's manifest.
+ * @param {number[]} groupIndices - Its `standin-zone-a` group's page indices, ascending.
+ * @returns {object} The pruned manifest, same shape.
+ */
+function standinAtlasManifest(manifest, groupIndices) {
+  /** Old page index → new one. */
+  const remap = new Map();
+  const pages = [];
+  for (let n = 0; n < groupIndices.length; n++) {
+    const index = groupIndices[n];
+    remap.set(index, pages.length);
+    const page = manifest.pages[index];
+    pages.push({ ...page, file: decodePageFile(standinPageId(n)) });
+  }
+  /** Names of the frames that survived, and the sprites that use only those. */
+  const frames = {};
+  for (const name of Object.keys(manifest.frames)) {
+    if (name.indexOf('standin/') !== 0) continue;
+    const frame = manifest.frames[name];
+    if (!remap.has(frame.p)) continue;
+    frames[name] = { ...frame, p: remap.get(frame.p) };
+  }
+  const sprites = {};
+  for (const name of Object.keys(manifest.sprites)) {
+    if (name.indexOf('standin/') !== 0) continue;
+    const sprite = manifest.sprites[name];
+    if (sprite.frames.every((frame) => frame in frames)) sprites[name] = sprite;
+  }
+  const animations = {};
+  for (const name of Object.keys(manifest.animations)) {
+    if (name in sprites) animations[name] = manifest.animations[name];
+  }
+  return { formatVersion: manifest.formatVersion, pages, frames, sprites, animations, fonts: {} };
+}
+
+/**
+ * Builds the decode pages and the last page load's manifest (see the module docs): the stand-in
+ * zone A's own pages from {@link standinAtlas}, then the shipped atlas's `common` and zone A pages
+ * (the asset pipeline's grouped build, in memory — it never reads `assets/generated/`).
+ *
+ * @returns {{ pages: DecodePage[], manifest: StandinAtlasManifest }} The pages in {@link DECODE_PAGE_IDS} order
+ *   (with `standin-zone-a-2`, … right after the first when the group packs more pages) and the
+ *   manifest of the `standin-zone` load.
+ * @throws {Error} When an asset source is invalid, the shipped atlas has no `common` page, the
+ *   stand-in build has no zone page, or the stand-in pages miss {@link DECODE_BYTE_BANDS}.
  *
  * @example
- * buildDecodePages().map((page) => page.file); // → ['decode-rgba-2048.png', …]
+ * const { pages } = buildDecodeStandin();
+ * pages.map((page) => page.id); // → ['standin-zone-a', 'common', 'zone-a']
  */
-export function buildDecodePages(options = {}) {
-  const size = options.size ?? DECODE_PAGE_SIZE;
+export function buildDecodeStandin() {
   const atlas = buildAtlas();
   /**
    * The shipped page of a group.
@@ -475,45 +566,75 @@ export function buildDecodePages(options = {}) {
   if (common === null) throw new Error('bench-decode: the shipped atlas has no common page');
   // Zone A's page; an atlas without zone groups falls back to its common page.
   const zone = shipped('zone-a') ?? common;
-  /**
-   * A synthetic page.
-   *
-   * @param {'rgba' | 'png8'} mode - Colour mode.
-   * @returns {Buffer} Its PNG bytes.
-   */
-  const synthetic = (mode) => encodePng(decodeArtImage(mode, size), { indexed: 'auto' });
-  return [
-    {
-      id: 'rgba-2048',
-      file: decodePageFile('rgba-2048'),
-      what: `synthetic ${size}x${size} RGBA page (detailed art stand-in)`,
-      width: size,
-      height: size,
-      png: synthetic('rgba'),
-    },
-    {
-      id: 'png8-2048',
-      file: decodePageFile('png8-2048'),
-      what: `synthetic ${size}x${size} PNG-8 page (64-colour stand-in)`,
-      width: size,
-      height: size,
-      png: synthetic('png8'),
-    },
-    {
-      id: 'common',
-      file: decodePageFile('common'),
-      what: `shipped common page (${common.file})`,
-      width: common.w,
-      height: common.h,
-      png: common.png,
-    },
-    {
-      id: 'zone-a',
-      file: decodePageFile('zone-a'),
-      what: `shipped zone-a page (${zone.file})`,
-      width: zone.w,
-      height: zone.h,
-      png: zone.png,
-    },
-  ];
+
+  const standin = standinAtlasBuild();
+  const group = standinGroupName(STANDIN_ZONE);
+  const groupIndices = [];
+  for (let index = 0; index < standin.manifest.pages.length; index++) {
+    if (standin.manifest.pages[index].group === group) groupIndices.push(index);
+  }
+  if (groupIndices.length === 0) {
+    throw new Error(`bench-decode: the stand-in atlas has no "${group}" page`);
+  }
+  // RR-7's band is a property of the packed art: a build that misses it is a build that must not
+  // ship (the tests check the same Σ bytes / Σ area figure the throw reads).
+  let area = 0;
+  let bytes = 0;
+  for (const index of groupIndices) {
+    const page = standin.manifest.pages[index];
+    area += page.w * page.h;
+    bytes += standin.pages[index].png.length;
+  }
+  const perPixel = bytes / area;
+  const band = DECODE_BYTE_BANDS.standin;
+  if (perPixel < band[0] || perPixel > band[1]) {
+    throw new Error(
+      `bench-decode: the stand-in pages are ${perPixel} bytes per pixel, outside the band [${band[0]}, ${band[1]}]`,
+    );
+  }
+  const pages = [];
+  for (let n = 0; n < groupIndices.length; n++) {
+    const index = groupIndices[n];
+    const page = standin.manifest.pages[index];
+    const id = standinPageId(n);
+    pages.push({
+      id,
+      file: decodePageFile(id),
+      what: `stand-in zone A page ${n + 1}/${groupIndices.length} (${page.w}x${page.h} PNG-8 interim art)`,
+      width: page.w,
+      height: page.h,
+      png: standin.pages[index].png,
+    });
+  }
+  pages.push({
+    id: 'common',
+    file: decodePageFile('common'),
+    what: `shipped common page (${common.file})`,
+    width: common.w,
+    height: common.h,
+    png: common.png,
+  });
+  pages.push({
+    id: 'zone-a',
+    file: decodePageFile('zone-a'),
+    what: `shipped zone-a page (${zone.file})`,
+    width: zone.w,
+    height: zone.h,
+    png: zone.png,
+  });
+  return { pages, manifest: standinAtlasManifest(standin.manifest, groupIndices) };
+}
+
+/**
+ * Builds the decode pages ({@link buildDecodeStandin}'s `pages` — the files the `decode` scenario
+ * measures, in {@link DECODE_PAGE_IDS} order).
+ *
+ * @returns {DecodePage[]} The pages.
+ * @throws {Error} Whatever {@link buildDecodeStandin} throws.
+ *
+ * @example
+ * buildDecodePages().map((page) => page.file); // → ['decode-standin-zone-a.png', …]
+ */
+export function buildDecodePages() {
+  return buildDecodeStandin().pages;
 }

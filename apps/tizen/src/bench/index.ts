@@ -47,12 +47,15 @@
  * (`test/bench/render.perf.ts`) gates the counted figures of every scenario that way.
  *
  * **The decode scenario (plan R1-05 B4, decision W3-6).** After the matrix a run loads the page
- * once more for `decode` (`./decode.ts`): four PNG pages the bench build ships
- * (`scripts/bench-decode.mjs` — a synthetic 2048² RGBA page, the same as a 2048² PNG-8 page, the
+ * once more for `decode` (`./decode.ts`): the PNG pages the bench build ships
+ * (`scripts/bench-decode.mjs` — the stand-in zone A's own PNG-8 page (or two, plan R3-04.M4a), the
  * shipped `common` and zone A pages) are fetched with XHR, decoded by an `HTMLImageElement` and
  * uploaded through the renderer's `uploadTextureSource` — and decoded by `createImageBitmap` too —
  * eight times each, every stage timed (median / p95) and every texture released between
- * repetitions: the 2048² decode figure plan R3-04 estimates its zone-load time from. R0-02's 18
+ * repetitions: the page-decode figure plan R3-04 estimates its zone-load time from. The run's
+ * last page load is `standin-zone`: one 640×360 frame drawn from the stand-in pages through the
+ * real bindings, measured like a render scenario (`./scene.ts` `createStandinScene`, `./run.ts`
+ * `measureStandinScenario`). R0-02's 18
  * scenarios keep their ids in the larger matrix, so R0-02's and R0-03's numbers stay comparable.
  *
  * **Implements.**
@@ -72,9 +75,9 @@
  * {@link BenchScenario}, {@link BenchTiming}, {@link TV_BENCH_TIMING},
  * {@link HEADLESS_BENCH_TIMING}, {@link timingFromSearch}, {@link searchParam}); the scene
  * ({@link BenchScene}, {@link BenchSceneOptions}, {@link BenchSceneManifest}, {@link BenchSprites},
- * {@link pickBenchSprites}, {@link BENCH_LOAD}, {@link BENCH_BASE_UNIT},
+ * {@link pickBenchSprites}, {@link createStandinScene}, {@link BENCH_LOAD}, {@link BENCH_BASE_UNIT},
  * {@link BENCH_TERRAIN_COLUMNS}, {@link BenchRandom}, {@link BenchCamera}, {@link BenchParticles},
- * {@link fillBenchParticles}); the sampler ({@link BenchSampler}, {@link BenchSeries},
+ * {@link fillBenchParticles}, {@link BenchStandinScene}); the sampler ({@link BenchSampler}, {@link BenchSeries},
  * {@link summarizeSeries}, {@link roundTo}, {@link BENCH_MAX_FRAMES}, {@link BENCH_TICK_BUCKETS});
  * the results ({@link formatResultsTable}, {@link formatResultsHeader}, {@link formatResultRow},
  * {@link baselineOf}, {@link lateShare}, {@link benchPageLines}, {@link benchResultPages},
@@ -96,7 +99,8 @@
  * {@link noteScenarioLaunch}, {@link campaignStep}, {@link startPass}, {@link campaignStatus},
  * {@link BenchCampaignConfig}, {@link BenchCampaignState}, {@link BenchCampaignAttempt},
  * {@link BenchCampaignStep}, {@link BenchPassGL}); the decode scenario ({@link DECODE_SCENARIO_ID},
- * {@link DECODE_SCENARIO_INDEX}, {@link BENCH_RUN_LENGTH}, {@link TV_DECODE_REPETITIONS},
+ * {@link DECODE_SCENARIO_INDEX}, {@link STANDIN_SCENARIO_ID}, {@link STANDIN_SCENARIO_INDEX},
+ * {@link BENCH_RUN_LENGTH}, {@link TV_DECODE_REPETITIONS},
  * {@link HEADLESS_DECODE_REPETITIONS}, {@link MAX_DECODE_REPETITIONS},
  * {@link DECODE_STAGE_TIMEOUT_MS}, {@link measureDecode}, {@link failedDecodeRecord},
  * {@link createDecodeHost}, {@link decodeRepetitionsFromSearch}, {@link pngEncodingOf},
@@ -124,6 +128,7 @@ export {
   startRenderBench,
   type BenchAssets,
   type BenchAtlasData,
+  type BenchStandinData,
   type RenderBenchAppOptions,
   type TvBenchEnv,
   type TvBenchOutcome,
@@ -169,12 +174,14 @@ export {
   BenchCamera,
   BenchRandom,
   BenchScene,
+  createStandinScene,
   fillBenchParticles,
   pickBenchSprites,
   type BenchParticles,
   type BenchSceneManifest,
   type BenchSceneOptions,
   type BenchSprites,
+  type BenchStandinScene,
 } from './scene.js';
 export {
   BENCH_MAX_FRAMES,
@@ -253,6 +260,8 @@ export {
   DECODE_STAGE_TIMEOUT_MS,
   HEADLESS_DECODE_REPETITIONS,
   MAX_DECODE_REPETITIONS,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
   decodeRepetitionsFromSearch,

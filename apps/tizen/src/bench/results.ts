@@ -230,11 +230,13 @@ export function formatResultsTable(records: readonly RenderBenchRecord[]): strin
 
 /** The decode table's columns: header and width (every width includes the leading space). */
 const DECODE_COLUMNS: readonly (readonly [string, number])[] = [
-  ['PAGE', 10],
-  ['SIZE', 10],
+  // Wide enough for `standin-zone-a-2` (plan R3-04.M4a) without truncation — the size, file and
+  // fetch columns give up the four columns it needs, which their widest shipped value does not.
+  ['PAGE', 16],
+  ['SIZE', 9],
   ['ENC', 5],
-  ['FILE_KB', 8],
-  ['FETCH50', 8],
+  ['FILE', 6],
+  ['FETCH', 7],
   ['DEC50', 7],
   ['DEC95', 7],
   ['UPL50', 7],
@@ -481,9 +483,9 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     },
     {
       text:
-        `ENTER run the matrix: ${input.scenarios} scenarios + decode, ~${minutes} min ` +
+        `ENTER run the matrix: ${input.scenarios} scenarios + decode + stand-in, ~${minutes} min ` +
         `(${seconds(t.warmupMs)} s warm-up, ${seconds(t.measureMs)} s measured, ` +
-        `${seconds(t.syncMs)} s synced each)`,
+        `${seconds(t.syncMs)} s synced)`,
       color: NOTE_COLOR,
     },
     {
@@ -532,7 +534,7 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   const page = Math.max(0, Math.min(pages - 1, Math.floor(input.page ?? 0)));
   lines.push({
     text:
-      `RUN ${state.session}  ${state.records.length}/${input.scenarios} measured  ` +
+      `RUN ${state.session}  ${state.records.length}/${input.scenarios + 1} measured  ` +
       `sent ${sent}/${state.records.length}` +
       (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +
       (state.running ? '  (still running)' : '') +

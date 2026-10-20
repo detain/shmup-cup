@@ -290,9 +290,12 @@ describe('bench-atlas plugin and particle presets', () => {
     expect(source).toContain(
       '"pageUrls":["assets/atlas/bench-x2.25-0.png","assets/atlas/bench-x2.25-1.png"]',
     );
-    // The decode scenario's pages (plan R1-05 B4), in the order it measures them.
-    expect(source).toContain('export const decode = [{"id":"rgba-2048",');
-    expect(source).toContain('"url":"assets/atlas/decode-png8-2048.png"');
-    expect(source).toContain('export default { atlases, fx, decode };');
+    // The decode scenario's pages (plan R1-05 B4; stand-in pages since R3-04.M4a), in the order it
+    // measures them, and the manifest of the run's last page load.
+    expect(source).toContain('export const decode = [{"id":"standin-zone-a",');
+    expect(source).toContain('"url":"assets/atlas/decode-zone-a.png"');
+    expect(source).toContain('export const standin = {"manifest":{"formatVersion":2,');
+    expect(source).toContain('"pageUrls":["assets/atlas/decode-standin-zone-a.png"]');
+    expect(source).toContain('export default { atlases, fx, decode, standin };');
   }, 60_000);
 });

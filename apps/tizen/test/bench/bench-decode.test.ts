@@ -13,6 +13,8 @@ import {
   DECODE_SCENARIO_INDEX,
   HEADLESS_DECODE_REPETITIONS,
   MAX_DECODE_REPETITIONS,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
   decodeRepetitionsFromSearch,
@@ -35,9 +37,9 @@ function pngHead(type: number): Uint8Array {
   return bytes;
 }
 
-/** Two pages: a 2048² RGBA one and a small PNG-8 one. */
+/** Two pages: a big stand-in zone A page and a small PNG-8 one. */
 const PAGES: BenchDecodePage[] = [
-  { id: 'rgba-2048', what: 'big', width: 2048, height: 2048, url: 'assets/atlas/a.png' },
+  { id: 'standin-zone-a', what: 'big', width: 2048, height: 2048, url: 'assets/atlas/a.png' },
   { id: 'zone-a', what: 'small', width: 256, height: 128, url: 'assets/atlas/b.png' },
 ];
 
@@ -140,12 +142,16 @@ function scriptedHost(
 }
 
 describe('decode scenario: its place in the run', () => {
-  it('follows the 172-scenario matrix as the run’s last page load', () => {
+  it('follows the 172-scenario matrix, and the stand-in load follows it (R3-04.M4a)', () => {
     expect(BENCH_SCENARIOS).toHaveLength(172);
     expect(DECODE_SCENARIO_ID).toBe('decode');
     expect(DECODE_SCENARIO_INDEX).toBe(172);
-    expect(BENCH_RUN_LENGTH).toBe(173);
+    expect(BENCH_RUN_LENGTH).toBe(174);
     expect(BENCH_SCENARIOS.some((s) => s.id === DECODE_SCENARIO_ID)).toBe(false);
+    expect(STANDIN_SCENARIO_ID).toBe('standin-zone');
+    expect(STANDIN_SCENARIO_INDEX).toBe(DECODE_SCENARIO_INDEX + 1);
+    expect(STANDIN_SCENARIO_INDEX + 1).toBe(BENCH_RUN_LENGTH);
+    expect(BENCH_SCENARIOS.some((s) => s.id === STANDIN_SCENARIO_ID)).toBe(false);
     expect([TV_DECODE_REPETITIONS, HEADLESS_DECODE_REPETITIONS]).toEqual([8, 2]);
   });
 
@@ -190,7 +196,7 @@ describe('decode scenario: measureDecode', () => {
     });
     const [big, small] = record.pages;
     expect(big).toEqual({
-      id: 'rgba-2048',
+      id: 'standin-zone-a',
       what: 'big',
       width: 2048,
       height: 2048,
@@ -212,11 +218,11 @@ describe('decode scenario: measureDecode', () => {
     expect(small.bytes).toBe(2_600);
     // Repetitions outer, pages inner; the progress is shown before each page's measurement.
     expect(script.log.filter((line) => line.startsWith('progress'))).toEqual([
-      'progress rgba-2048 1/3',
+      'progress standin-zone-a 1/3',
       'progress zone-a 1/3',
-      'progress rgba-2048 2/3',
+      'progress standin-zone-a 2/3',
       'progress zone-a 2/3',
-      'progress rgba-2048 3/3',
+      'progress standin-zone-a 3/3',
       'progress zone-a 3/3',
     ]);
     // Two textures per page and repetition (the image's and the bitmap's), all destroyed.

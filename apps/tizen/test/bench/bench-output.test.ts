@@ -135,9 +135,10 @@ describe('bench output: each scenario’s setup', () => {
       });
     }
     expect(benchSkippedScenarios(null)).toEqual([]);
-    // The matrix itself does not depend on the output: 172 rows + decode, indexes unchanged.
+    // The matrix itself does not depend on the output: 172 rows + decode + stand-in, indexes
+    // unchanged (the two extra page loads of plan R1-05 B4 and R3-04.M4a ride after the matrix).
     expect(BENCH_SCENARIOS).toHaveLength(172);
-    expect(BENCH_RUN_LENGTH).toBe(173);
+    expect(BENCH_RUN_LENGTH).toBe(174);
     expect(setupOf('640x360-busy', null).scaleMode).toBe(BENCH_DEFAULT_SCALE_MODE);
   });
 

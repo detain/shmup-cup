@@ -1,10 +1,17 @@
 /**
- * Fake TV render-bench records for the bench's tests (plan R0-02; the decode record — R1-05 B4).
+ * Fake TV render-bench records for the bench's tests (plan R0-02; the decode record — R1-05 B4;
+ * the stand-in record — R3-04.M4a).
  *
  * @module
  */
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
-import { BENCH_SCENARIOS, DECODE_SCENARIO_INDEX } from '../../src/bench/index.js';
+import {
+  BENCH_SCENARIOS,
+  BENCH_V2_SIZE,
+  DECODE_SCENARIO_INDEX,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
+} from '../../src/bench/index.js';
 
 /**
  * A complete fake record.
@@ -79,8 +86,9 @@ export function recordFor(index: number, over: Partial<RenderBenchRecord> = {}):
 }
 
 /**
- * A complete fake decode record (plan R1-05 B4): the four pages of the bench build, every stage
- * measured.
+ * A complete fake decode record (plan R1-05 B4; the page ids of plan R3-04.M4a): the pages of the
+ * bench build — the stand-in zone A's page, then the shipped `common` and `zone-a` pages — every
+ * stage measured.
  *
  * @param over - What differs.
  * @returns The record.
@@ -131,8 +139,7 @@ export function fakeDecode(over: Partial<DecodeBenchRecord> = {}): DecodeBenchRe
     imageDecode: true,
     imageBitmap: true,
     pages: [
-      page('rgba-2048', 2048, 2048, 'rgba', 2_500_793, 2),
-      page('png8-2048', 2048, 2048, 'png8', 541_135, 1),
+      page('standin-zone-a', 2048, 1024, 'png8', 541_135, 2),
       page('common', 1024, 512, 'rgba', 79_640, 0.125),
       page('zone-a', 256, 128, 'png8', 2_534, 0.01),
     ],
@@ -140,4 +147,34 @@ export function fakeDecode(over: Partial<DecodeBenchRecord> = {}): DecodeBenchRe
     endedAt: 1_700_000_100_000,
     ...over,
   };
+}
+
+/**
+ * The fake record of the run's last page load (plan R3-04.M4a): one 640×360 frame drawn from the
+ * stand-in pages, measured like a render scenario.
+ *
+ * @param over - What differs.
+ * @returns The record.
+ */
+export function fakeStandinRecord(over: Partial<RenderBenchRecord> = {}): RenderBenchRecord {
+  return fakeRecord({
+    scenario: STANDIN_SCENARIO_ID,
+    index: STANDIN_SCENARIO_INDEX,
+    size: '640x360',
+    width: 640,
+    height: 360,
+    density: BENCH_V2_SIZE.density,
+    variant: STANDIN_SCENARIO_ID,
+    frames: 1,
+    syncedFrames: 1,
+    twoTickShare: 0,
+    drawCalls: 96,
+    rebuilds: 1,
+    renderTargetBytes: 640 * 360 * 4,
+    frameTargetBytes: 640 * 360 * 4,
+    textureBytes: 2048 * 1024 * 4,
+    atlasPages: 1,
+    load: { bullets: 0, points: 0, enemies: 20, particles: 0, tiles: 110 },
+    ...over,
+  });
 }

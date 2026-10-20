@@ -22,9 +22,11 @@
  * @module
  */
 import {
+  HUD_BAR_HEIGHT,
   LayerId,
   PLAYFIELD_Y,
   RasterKind,
+  TILE_SIZE,
   createDrawList,
   createSpriteBatch,
   type CameraView,
@@ -851,4 +853,248 @@ export function fillBenchParticles(
       4,
     );
   }
+}
+
+/** The sprite-name prefix of one zone's stand-in art in the pruned manifest (`./index.ts` docs). */
+const STANDIN_PREFIX = 'standin/zone-a/';
+
+/** Enemy copies per kind in the stand-in frame's row. */
+const STANDIN_ENEMY_COPIES = 2;
+
+/** Copies per boss part in the stand-in frame. */
+const STANDIN_PART_COPIES = 3;
+
+/** Fractional playfield rows of the stand-in frame's enemy rows (staggered). */
+const STANDIN_ENEMY_ROWS = [0.32, 0.52, 0.68];
+
+/** Fractional playfield rows of the boss. */
+const STANDIN_BOSS_ROW = 0.42;
+
+/**
+ * The scene of the run's last page load (plan R3-04.M4a — see `./run.ts` `measureStandinScenario`):
+ * one static v2-native frame of the stand-in zone A drawn from the pages the `decode` scenario just
+ * fetched — the full-frame backdrop and the bands as a {@link ParallaxView} (the far on `BG_FAR`,
+ * the bands on `BG_MID`), the tiles as a batch on {@link LayerId.Terrain} (every tile is its own
+ * one-frame sprite, so not a `TerrainView`), a staggered row of every enemy kind and the boss with
+ * its parts on {@link LayerId.AirEnemies}, and the two HUD bars. No motion, no particles: the page
+ * renders it once, timed, and once more synced.
+ */
+export interface BenchStandinScene {
+  /** The world the renderer binds (batches only — the parallax is bound by the bench). */
+  readonly world: WorldView;
+  /** The camera (0, 0 — the frame is static). */
+  readonly camera: BenchCamera;
+  /** The backdrops, bound by the bench at the frame's width. */
+  readonly parallax: ParallaxView;
+  /** Bands of {@link BenchStandinScene.parallax} that are full-frame (the rest get the alpha). */
+  readonly fullBands: number;
+  /** The HUD bars. */
+  readonly hud: DrawList;
+  /** The UI layer's list (the progress line — `run.ts` draws into it). */
+  readonly ui: DrawList;
+  /** HUD bar height in pixels ({@link HUD_BAR_HEIGHT} — the art is v2-native). */
+  readonly hudBar: number;
+  /** Playfield height in pixels (the frame minus both bars). */
+  readonly playHeight: number;
+  /** Internal frame width in pixels. */
+  readonly frameWidth: number;
+  /** The sprite name table (`renderer.setSpriteNames`). */
+  readonly names: readonly string[];
+  /** Enemies of the row (not counting the boss and its parts). */
+  readonly liveEnemies: number;
+  /**
+   * Tile sprites the frame shows.
+   *
+   * @returns The count.
+   */
+  visibleTiles(): number;
+}
+
+/**
+ * Builds the stand-in frame's scene (load time — everything is allocated here).
+ *
+ * @param options - The frame size and the pruned stand-in manifest (its `frames` give the sizes).
+ * @returns The scene.
+ * @throws {Error} When the manifest holds no stand-in zone A art.
+ *
+ * @example
+ * ```ts
+ * const scene = createStandinScene({ width: FRAME_W, height: FRAME_H, manifest });
+ * renderer.setSpriteNames(scene.names);
+ * renderer.bindWorld(scene.world);
+ * ```
+ */
+export function createStandinScene(options: {
+  readonly width: number;
+  readonly height: number;
+  readonly manifest: BenchSceneManifest;
+}): BenchStandinScene {
+  const { width, height, manifest } = options;
+  const names = Object.keys(manifest.sprites);
+  /**
+   * The id of a sprite of the manifest.
+   *
+   * @param name - Sprite name.
+   * @returns Its id into {@link BenchStandinScene.names}.
+   * @throws {Error} When the stand-in manifest has no such sprite.
+   */
+  const id = (name: string): number => {
+    const at = names.indexOf(name);
+    if (at < 0) throw new Error(`render bench: the stand-in atlas has no "${name}" sprite`);
+    return at;
+  };
+  /**
+   * The base stand-in sprites of a name category (no `@flash` / palette variants).
+   *
+   * @param predicate - Whether a name belongs.
+   * @returns The names, in manifest order.
+   */
+  const pick = (predicate: (rest: string) => boolean): string[] => {
+    const out: string[] = [];
+    for (const name of names) {
+      if (name.indexOf(STANDIN_PREFIX) !== 0 || name.indexOf('@') >= 0) continue;
+      if (predicate(name.slice(STANDIN_PREFIX.length))) out.push(name);
+    }
+    return out;
+  };
+  /**
+   * A frame's size (at least 1 px).
+   *
+   * @param name - Sprite name.
+   * @returns `[w, h]` of its frame 0.
+   */
+  const sizeOf = (name: string): [number, number] => {
+    const frames = manifest.sprites[name]?.frames;
+    const frame = frames === undefined ? undefined : manifest.frames[frames[0]];
+    return frame === undefined ? [1, 1] : [Math.max(1, frame.w), Math.max(1, frame.h)];
+  };
+  const farNames = pick((rest) => rest === 'far');
+  const bandNames = pick((rest) => rest.indexOf('band-') === 0);
+  const tileNames = pick((rest) => rest.indexOf('tiles/') === 0);
+  const enemyNames = pick(
+    (rest) => rest.indexOf('/') < 0 && rest !== 'far' && rest.indexOf('boss') !== 0,
+  );
+  const bossNames = pick((rest) => rest === 'boss');
+  const partNames = pick((rest) => rest.indexOf('boss-') === 0);
+  if (farNames.length === 0 || tileNames.length === 0 || enemyNames.length === 0) {
+    throw new Error('render bench: the stand-in atlas holds no zone A art');
+  }
+  const hudBar = HUD_BAR_HEIGHT;
+  const playHeight = height - 2 * hudBar;
+
+  // --- parallax: the far's full-frame rows, then one row of each band.
+  const bands: { layer: number; sprite: number; y: number; spacing: number }[] = [];
+  for (const name of farNames) {
+    const sprite = id(name);
+    const [w, h] = sizeOf(name);
+    const rows = Math.ceil(playHeight / h);
+    for (let r = 0; r < rows; r++) {
+      bands.push({ layer: LayerId.BgFar, sprite, y: r * h, spacing: w });
+    }
+  }
+  const fullBands = bands.length;
+  for (let b = 0; b < bandNames.length; b++) {
+    const name = bandNames[b];
+    const [w, h] = sizeOf(name);
+    bands.push({
+      layer: LayerId.BgMid,
+      sprite: id(name),
+      y: Math.round((playHeight * (b + 0.5)) / bandNames.length - h / 2),
+      spacing: w,
+    });
+  }
+  const count = bands.length;
+  const layer = new Int32Array(count);
+  const spriteId = new Int32Array(count);
+  const offsetY = new Float64Array(count);
+  const offsetX = new Float64Array(count);
+  const spacing = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    layer[i] = bands[i].layer;
+    spriteId[i] = bands[i].sprite;
+    offsetY[i] = bands[i].y;
+    spacing[i] = bands[i].spacing;
+  }
+  const parallax: ParallaxView = { count, layer, spriteId, offsetX, y: offsetY, spacing };
+
+  // --- the batches: a ceiling and a floor row of tiles, the enemies, the boss and its parts.
+  const columns = Math.ceil(width / TILE_SIZE) + 1;
+  const tiles = createSpriteBatch(LayerId.Terrain, columns * 2);
+  for (let c = 0; c < columns; c++) {
+    tiles.spriteId[c] = id(tileNames[c % tileNames.length]);
+    tiles.x[c] = c * TILE_SIZE;
+    tiles.y[c] = 0;
+    const floor = columns + c;
+    tiles.spriteId[floor] = id(tileNames[(c * 7 + 3) % tileNames.length]);
+    tiles.x[floor] = c * TILE_SIZE;
+    tiles.y[floor] = playHeight - TILE_SIZE;
+  }
+  tiles.count = columns * 2;
+  const openTop = TILE_SIZE * 2;
+  const openBottom = playHeight - TILE_SIZE * 2;
+  const open = Math.max(1, openBottom - openTop);
+  const enemyTotal = enemyNames.length * STANDIN_ENEMY_COPIES;
+  const enemies = createSpriteBatch(LayerId.AirEnemies, enemyTotal);
+  for (let i = 0; i < enemyTotal; i++) {
+    const kind = enemyNames[i % enemyNames.length];
+    enemies.spriteId[i] = id(kind);
+    const [w] = sizeOf(kind);
+    enemies.x[i] = Math.round(width * 0.12 + ((i * (width * 0.5)) / enemyTotal + (i % 3) * 24));
+    enemies.y[i] = Math.round(
+      openTop + open * STANDIN_ENEMY_ROWS[i % STANDIN_ENEMY_ROWS.length] - w / 2,
+    );
+  }
+  enemies.count = enemyTotal;
+  const bossCount = bossNames.length + partNames.length * STANDIN_PART_COPIES;
+  const boss = createSpriteBatch(LayerId.AirEnemies, Math.max(1, bossCount));
+  let slot = 0;
+  for (const name of bossNames) {
+    const [w, h] = sizeOf(name);
+    boss.spriteId[slot] = id(name);
+    boss.x[slot] = Math.round(width - w - hudBar);
+    boss.y[slot] = Math.round(openTop + open * STANDIN_BOSS_ROW - h / 2);
+    slot++;
+  }
+  for (let p = 0; p < partNames.length; p++) {
+    const name = partNames[p];
+    const [w, h] = sizeOf(name);
+    for (let c = 0; c < STANDIN_PART_COPIES && slot < boss.capacity; c++) {
+      boss.spriteId[slot] = id(name);
+      boss.x[slot] = Math.round(width - w - hudBar - (c + 1) * hudBar * 3);
+      boss.y[slot] = Math.round(openTop + open * STANDIN_BOSS_ROW + (c - 1) * (h + hudBar));
+      slot++;
+    }
+  }
+  boss.count = slot;
+
+  const camera = new BenchCamera();
+  const world: WorldView = {
+    camera,
+    parallax: null,
+    terrain: null,
+    batches: [tiles, enemies, boss],
+    lasers: null,
+    bendingLasers: null,
+    warning: null,
+    effects: null,
+    hitboxes: null,
+  };
+  const hud = createDrawList(2, 1);
+  hud.rect(0, 0, width, hudBar, 0x10173a);
+  hud.rect(0, playHeight + hudBar, width, hudBar, 0x10173a);
+  const ui = createDrawList(4, 2);
+  return {
+    world,
+    camera,
+    parallax,
+    fullBands,
+    hud,
+    ui,
+    hudBar,
+    playHeight,
+    frameWidth: width,
+    names,
+    liveEnemies: enemyTotal,
+    visibleTiles: () => tiles.count,
+  };
 }

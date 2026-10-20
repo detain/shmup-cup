@@ -1653,7 +1653,11 @@ export interface RenderBenchRecord {
  * engine without `createImageBitmap`, or a stage that failed — then `error` says why).
  */
 export interface DecodeBenchPage {
-  /** Page id: `rgba-2048`, `png8-2048`, `common` or `zone-a`. */
+  /**
+   * Page id: `standin-zone-a` (with `standin-zone-a-2` right after it when the stand-in group
+   * packs two pages), `common` or `zone-a`. A session recorded before plan R3-04.M4a carries
+   * `rgba-2048` and `png8-2048` instead of the stand-in page.
+   */
   id: string;
   /** What the page stands for. */
   what: string;

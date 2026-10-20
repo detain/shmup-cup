@@ -9,9 +9,10 @@
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
  * A run is the render scenarios of the matrix (172 since the resolution sweep), then the `decode` scenario (plan R1-05 B4 —
- * `./decode.ts`): the cursor runs to {@link BENCH_RUN_LENGTH}, the render records go to `records`
- * and the decode record to `decode`. A state stored by a bench from before B4 (no `decode`) still
- * reads — its record is `null`.
+ * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`): the cursor
+ * runs to {@link BENCH_RUN_LENGTH}, the render records (the stand-in load's among them) go to
+ * `records` and the decode record to `decode`. A state stored by a bench from before B4 (no
+ * `decode`) still reads — its record is `null`.
  *
  * @module
  */
@@ -39,7 +40,7 @@ export interface BenchRunState {
   readonly single: boolean;
   /**
    * Index of the next scenario to run: a render scenario's index, `DECODE_SCENARIO_INDEX` for the
-   * decode scenario, `BENCH_RUN_LENGTH` = done.
+   * decode scenario, `STANDIN_SCENARIO_INDEX` for the stand-in load, `BENCH_RUN_LENGTH` = done.
    */
   readonly cursor: number;
   /** Sequence number of the last payload sent to the log server. */
@@ -288,12 +289,12 @@ export function recordResult(state: BenchRunState, record: RenderBenchRecord): B
 }
 
 /**
- * Stores the decode scenario's record (plan R1-05 B4) and moves the cursor past it.
+ * Stores the decode scenario's record (plan R1-05 B4) and moves the cursor past it — to the
+ * stand-in load (plan R3-04.M4a), which is the run's last page load.
  *
  * @param state - The state.
  * @param record - The record (replaces an earlier one).
- * @returns The new state — the run is over (the decode scenario is its last), its record not yet
- *   acknowledged.
+ * @returns The new state — the decode scenario done, its record not yet acknowledged.
  */
 export function recordDecode(state: BenchRunState, record: DecodeBenchRecord): BenchRunState {
   const cursor = Math.max(state.cursor, DECODE_SCENARIO_INDEX + 1);

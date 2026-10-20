@@ -3,10 +3,12 @@
  * `bench` module, see `./index.ts`): what an atlas page costs **from file to GPU** on the TV, so
  * R0-03's owner session records the 2048² figure plan R3-04 estimates its zone-load time from.
  *
- * It runs after the render scenarios, as the run's last page load ({@link DECODE_SCENARIO_ID},
- * {@link BENCH_RUN_LENGTH}), and measures four pages the bench build ships next to its density
- * atlases (`scripts/bench-decode.mjs`): a synthetic 2048² RGBA page, the same quantised to a
- * 2048² PNG-8 page, and the shipped atlas's `common` and zone A pages for reference. Per page and
+ * It runs after the render scenarios, as the run's penultimate page load
+ * ({@link DECODE_SCENARIO_ID}, {@link BENCH_RUN_LENGTH} — the {@link STANDIN_SCENARIO_ID} load of
+ * plan R3-04.M4a follows it), and measures the pages the bench build ships next to its density
+ * atlases (`scripts/bench-decode.mjs`, the page model of plan R3-04.M4a): the stand-in zone A's
+ * own PNG-8 page (or two, `standin-zone-a-2` right after the first), and the shipped atlas's
+ * `common` and zone A pages for reference. Per page and
  * repetition, each stage timed on its own:
  *
  * 1. **fetch** — the file's bytes with `XMLHttpRequest` (`@shmup/audio-web` `loadArrayBuffer`: the
@@ -44,10 +46,19 @@ export const DECODE_SCENARIO_ID = 'decode';
 /** Its position in a TV run: after every render scenario of the matrix. */
 export const DECODE_SCENARIO_INDEX = BENCH_SCENARIOS.length;
 
-/** Page loads of a whole TV run: the render matrix, then the decode scenario. */
-export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 1;
+/**
+ * The stand-in page load's id (plan R3-04.M4a, `?scenario=standin-zone` runs it headlessly): the
+ * run's last load, which draws one `FRAME_W × FRAME_H` frame from the decoded stand-in pages.
+ */
+export const STANDIN_SCENARIO_ID = 'standin-zone';
 
-/** Repetitions per page on the TV (about 20 s for the four pages on the M7, by estimate). */
+/** Its position in a TV run: after the decode scenario. */
+export const STANDIN_SCENARIO_INDEX = DECODE_SCENARIO_INDEX + 1;
+
+/** Page loads of a whole TV run: the render matrix, the decode scenario, the stand-in load. */
+export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 2;
+
+/** Repetitions per page on the TV (about 20 s for the pages on the M7, by estimate). */
 export const TV_DECODE_REPETITIONS = 8;
 
 /** Repetitions per page headlessly (SwiftShader — counts and shapes only). */
@@ -61,7 +72,11 @@ export const DECODE_STAGE_TIMEOUT_MS = 30_000;
 
 /** One page the decode scenario measures, as the bench build ships it (`virtual:shmup-render-bench`). */
 export interface BenchDecodePage {
-  /** `rgba-2048`, `png8-2048`, `common` or `zone-a`. */
+  /**
+   * `standin-zone-a` (with `standin-zone-a-2` right after it when the stand-in group packs onto
+   * two pages), `common` or `zone-a`; a stored run from before plan R3-04.M4a also holds
+   * `rgba-2048` and `png8-2048`.
+   */
   readonly id: string;
   /** What it stands for. */
   readonly what: string;

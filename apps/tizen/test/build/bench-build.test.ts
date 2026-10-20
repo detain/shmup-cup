@@ -3,9 +3,9 @@
  * produces a widget directory that passes the Tizen bundle checks"): runs the real bench build
  * (`vite.bench.config.ts`, mode `bench`) into a temporary folder and checks what would be packaged
  * — one classic ES2018 IIFE behind the `globalThis` banner, the bench's own `config.xml`, the
- * eight density atlases (one page each up to ×2, two from ×2.25), the decode scenario's four
- * pages (plan R1-05 B4: the synthetic 2048² RGBA and PNG-8 pages and the shipped `common` and
- * zone A pages) and nothing of the game's.
+ * eight density atlases (one page each up to ×2, two from ×2.25), the decode scenario's pages
+ * (plan R1-05 B4, plan R3-04.M4a: the interim stand-in zone A's own packed PNG-8 page(s) and the
+ * shipped `common` and zone A pages) and nothing of the game's.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -91,8 +91,7 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
       'assets/atlas/bench-x2.67-0.png',
       'assets/atlas/bench-x2.67-1.png',
       'assets/atlas/decode-common.png',
-      'assets/atlas/decode-png8-2048.png',
-      'assets/atlas/decode-rgba-2048.png',
+      'assets/atlas/decode-standin-zone-a.png',
       'assets/atlas/decode-zone-a.png',
       'config.xml',
       'icon.png',
@@ -109,19 +108,15 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
     expect(code).not.toMatch(/\bimport\s*\(/);
   });
 
-  it('ships the decode pages: 2048² RGBA and PNG-8 in their byte bands, and lists them', () => {
-    const rgba = readFileSync(join(outDir, 'assets/atlas', decodePageFile('rgba-2048')));
-    const png8 = readFileSync(join(outDir, 'assets/atlas', decodePageFile('png8-2048')));
-    expect(pngColorType(rgba)).toBe(6);
-    expect(pngColorType(png8)).toBe(3);
-    expect([rgba.readUInt32BE(16), rgba.readUInt32BE(20)]).toEqual([2048, 2048]);
-    expect([png8.readUInt32BE(16), png8.readUInt32BE(20)]).toEqual([2048, 2048]);
-    const [rgbaLow, rgbaHigh] = DECODE_BYTE_BANDS['rgba-2048'];
-    const [png8Low, png8High] = DECODE_BYTE_BANDS['png8-2048'];
-    expect(rgba.length).toBeGreaterThanOrEqual(rgbaLow);
-    expect(rgba.length).toBeLessThanOrEqual(rgbaHigh);
-    expect(png8.length).toBeGreaterThanOrEqual(png8Low);
-    expect(png8.length).toBeLessThanOrEqual(png8High);
+  it('ships the decode pages: the stand-in zone A page PNG-8 in its byte band, and lists them', () => {
+    const standin = readFileSync(join(outDir, 'assets/atlas', decodePageFile('standin-zone-a')));
+    expect(pngColorType(standin)).toBe(3);
+    expect([standin.readUInt32BE(16), standin.readUInt32BE(20)]).toEqual([2048, 1024]);
+    // RR-7's band, bytes per pixel over the stand-in pages together — one page today.
+    const [low, high] = DECODE_BYTE_BANDS.standin;
+    const perPixel = standin.length / (2048 * 1024);
+    expect(perPixel, `${standin.length} bytes over a 2048×1024 page`).toBeGreaterThanOrEqual(low);
+    expect(perPixel, `${standin.length} bytes over a 2048×1024 page`).toBeLessThanOrEqual(high);
     // The bundle names every page it measures, in order.
     let from = 0;
     for (const id of DECODE_PAGE_IDS) {

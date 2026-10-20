@@ -46,11 +46,15 @@ declare module 'virtual:shmup-render-bench' {
     readonly data: unknown;
   }
   /**
-   * One page of the `decode` scenario (plan R1-05 B4, `scripts/bench-decode.mjs`): fetched,
-   * decoded and uploaded on the TV, never drawn.
+   * One page of the `decode` scenario (plan R1-05 B4, the page model of plan R3-04.M4a,
+   * `scripts/bench-decode.mjs`): fetched, decoded and uploaded on the TV, never drawn.
    */
   export interface BenchDecodePageModule {
-    /** `rgba-2048`, `png8-2048`, `common` or `zone-a`. */
+    /**
+     * `standin-zone-a` (with `standin-zone-a-2` right after it when the stand-in group packs onto
+     * two pages), `common` or `zone-a`; a bench from before R3-04.M4a also recorded `rgba-2048`
+     * and `png8-2048`.
+     */
     readonly id: string;
     /** What it stands for. */
     readonly what: string;
@@ -58,8 +62,19 @@ declare module 'virtual:shmup-render-bench' {
     readonly width: number;
     /** Pixels. */
     readonly height: number;
-    /** URL relative to the page (`assets/atlas/decode-rgba-2048.png`, …). */
+    /** URL relative to the page (`assets/atlas/decode-standin-zone-a.png`, …). */
     readonly url: string;
+  }
+  /**
+   * The atlas of the run's last page load, `standin-zone` (plan R3-04.M4a): the stand-in build of
+   * `scripts/bench-decode.mjs` pruned to the shipped decode pages, so the bench draws one real
+   * frame from what it just decoded.
+   */
+  export interface BenchStandinModule {
+    /** The stand-in manifest (inlined — no `fetch()` on the TV, decision D25). */
+    readonly manifest: AtlasManifest;
+    /** Page URLs relative to the page (the `decode-standin-zone-a*.png` files). */
+    readonly pageUrls: readonly string[];
   }
   /** The atlases, in density order. */
   export const atlases: readonly BenchAtlasModule[];
@@ -67,11 +82,14 @@ declare module 'virtual:shmup-render-bench' {
   export const fx: readonly BenchFxFile[];
   /** The decode scenario's pages, in the order it measures them. */
   export const decode: readonly BenchDecodePageModule[];
-  /** All three. */
+  /** The `standin-zone` load's atlas. */
+  export const standin: BenchStandinModule;
+  /** All four. */
   const bench: {
     readonly atlases: readonly BenchAtlasModule[];
     readonly fx: readonly BenchFxFile[];
     readonly decode: readonly BenchDecodePageModule[];
+    readonly standin: BenchStandinModule;
   };
   export default bench;
 }

@@ -3,9 +3,10 @@
  * in Node, so these drive the paths around the measurement: the results page (its plain-text
  * fallback when no renderer can be made), the remote's Enter / Red / Back against the stored run
  * state, a scenario that fails and stops the run instead of reloading forever, and the headless
- * mode's published outcome — and the decode scenario at the end of a run (plan R1-05 B4), which
- * records its failure and finishes the run rather than stopping it. The measurement itself runs in
- * a browser: `pnpm bench` (`test/bench/render.perf.ts`) opens every scenario headlessly.
+ * mode's published outcome — the decode scenario after the matrix (plan R1-05 B4), which records
+ * its failure and hands the run on rather than stopping it, and the stand-in load that follows it
+ * (plan R3-04.M4a), which fails like a render scenario. The measurement itself runs in a browser:
+ * `pnpm bench` (`test/bench/render.perf.ts`) opens every scenario headlessly.
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -27,7 +28,7 @@ import {
   type BenchOutput,
   type TvBenchOutcome,
 } from '../../src/bench/index.js';
-import { fakeDecode, recordFor } from './fake-record.js';
+import { fakeDecode, fakeStandinRecord, recordFor } from './fake-record.js';
 import { shippedAtlas } from './shipped-atlas.js';
 import type { AtlasManifest } from '@shmup/render-pixi';
 
@@ -154,20 +155,32 @@ function matrixDone(): string {
 }
 
 /**
- * A complete run: the matrix, then the decode scenario.
+ * A run whose decode record is stored: the matrix, then the decode scenario — the stand-in load
+ * is next (plan R3-04.M4a).
  *
  * @returns Its stored text.
  */
-function completeRun(): string {
+function decodeDone(): string {
   const state = parseRunState(matrixDone());
   if (state === null) throw new Error('unreadable run');
   return serializeRunState(recordDecode(state, fakeDecode()));
 }
 
+/**
+ * A complete run: the matrix, the decode scenario, the stand-in load.
+ *
+ * @returns Its stored text.
+ */
+function completeRun(): string {
+  const state = parseRunState(decodeDone());
+  if (state === null) throw new Error('unreadable run');
+  return serializeRunState(recordResult(state, fakeStandinRecord()));
+}
+
 /** {@link ASSETS} with the decode scenario's pages (which never load in Node either). */
 const DECODE_ASSETS: BenchAssets = {
   ...ASSETS,
-  decode: [{ id: 'rgba-2048', what: 'x', width: 2048, height: 2048, url: 'decode.png' }],
+  decode: [{ id: 'standin-zone-a', what: 'x', width: 2048, height: 2048, url: 'decode.png' }],
 };
 
 describe('bench page (TV mode)', () => {
@@ -209,8 +222,8 @@ describe('bench page (TV mode)', () => {
     const done = fakePage('', completeRun());
     done.start();
     done.press(403);
-    // The last scenario of a whole run is the decode scenario.
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 172 });
+    // The last page load of a whole run is the stand-in load (plan R3-04.M4a).
+    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 173 });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -253,16 +266,28 @@ describe('bench page (TV mode)', () => {
 });
 
 describe('bench page: the decode scenario (plan R1-05 B4)', () => {
-  it('runs after the matrix, records why it could not measure, and ends the run', async () => {
+  it('runs after the matrix, records why it could not measure, and hands on to the stand-in load', async () => {
     const page = fakePage('', matrixDone());
     page.start();
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: false, cursor: 173, lastError: null });
+    expect(state).toMatchObject({ running: true, cursor: 173, lastError: null });
     expect(state?.records).toHaveLength(172);
     expect(state?.decode?.error).toBe('this bench build has no decode pages');
     expect(state?.decode?.pages).toEqual([]);
+    expect(page.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops on the stand-in load of a build without its pages, like a render scenario', async () => {
+    const page = fakePage('', decodeDone());
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    await settle();
+    const state = page.state();
+    expect(state).toMatchObject({ running: false, cursor: 173 });
+    expect(state?.lastError).toContain('this bench build has no stand-in pages');
+    expect(state?.records).toHaveLength(172);
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -296,9 +321,24 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(pages?.[1]).toBe(pages?.[2]);
     expect(Number(pages?.[2])).toBeGreaterThan(1);
     expect(decode).toContain('DECODE (R1-05) 8 reps GL1');
-    expect(decode).toContain('png8-2048  2048x2048 PNG8');
+    expect(decode).toContain('standin-zone-a');
+    expect(decode).toContain('PNG8');
     expect(decode).not.toContain('384x216 busy');
     expect(last.reload).not.toHaveBeenCalled();
+  });
+
+  it('publishes the stand-in outcome headlessly (?scenario=standin-zone)', async () => {
+    const page = fakePage('?scenario=standin-zone', null, ASSETS);
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('running');
+    await settle();
+    const outcome = (page.win as unknown as { __shmupTvBench: TvBenchOutcome }).__shmupTvBench;
+    expect(outcome.record).toBeNull();
+    expect(outcome.decode).toBeUndefined();
+    expect(outcome.error).toContain('this bench build has no stand-in pages');
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
+    expect(page.state()).toBeNull();
+    expect(page.reload).not.toHaveBeenCalled();
   });
 
   it('publishes the decode outcome headlessly (?scenario=decode)', async () => {
@@ -367,7 +407,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(text).toContain('output 1280x720');
     expect(text).toContain('22 scenario(s) skipped: frame larger than the output');
     expect(text).toContain('SKIPPED 1024x768n 1280x960n 1920x1080n 1920x1080n-interp');
-    expect(text).toContain('ENTER run the matrix: 150 scenarios + decode');
+    expect(text).toContain('ENTER run the matrix: 150 scenarios + decode + stand-in');
   });
 
   it('reports a null output without one', async () => {
@@ -381,7 +421,9 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     const payload = JSON.parse(page.posted[0]) as { env: { output: unknown } };
     expect(payload.env.output).toBeNull();
     expect(page.appended[0].textContent).not.toContain('OUTPUT');
-    expect(page.appended[0].textContent).toContain('ENTER run the matrix: 172 scenarios + decode');
+    expect(page.appended[0].textContent).toContain(
+      'ENTER run the matrix: 172 scenarios + decode + stand-in',
+    );
   });
 
   it('publishes a skipped scenario as an error headlessly', () => {

@@ -120,25 +120,25 @@ describe('bench results table', () => {
 describe('bench decode table (plan R1-05 B4)', () => {
   it('has a fixed-width header that fits the 640x360 results page', () => {
     expect(formatDecodeHeader()).toBe(
-      'PAGE            SIZE  ENC FILE_KB FETCH50  DEC50  DEC95  UPL50  UPL95  TOT50  TOT95  FIRST' +
-        '  BMP50  BMPUP',
+      'PAGE                 SIZE  ENC  FILE  FETCH  DEC50  DEC95  UPL50  UPL95  TOT50  TOT95' +
+        '  FIRST  BMP50  BMPUP',
     );
     expect(formatDecodeHeader().length).toBeLessThanOrEqual(106);
   });
 
   it('prints a page’s medians and p95s from file to GPU, column for column', () => {
-    const [rgba, png8] = fakeDecode().pages;
-    expect(formatDecodeRow(rgba)).toBe(
-      'rgba-2048  2048x2048 RGBA    2442    24.0  420.0  500.0  110.0  140.0  554.0  670.0  696.0' +
-        '  380.0   22.0',
+    const [standin, common, zone] = fakeDecode().pages;
+    expect(formatDecodeRow(standin)).toBe(
+      'standin-zone-a  2048x1024 PNG8   528   24.0  420.0  500.0  110.0  140.0  554.0  670.0' +
+        '  696.0  380.0   22.0',
     );
-    expect(formatDecodeRow(png8)).toContain(' PNG8 ');
-    expect(formatDecodeRow(png8).length).toBe(formatDecodeHeader().length);
+    expect(formatDecodeRow(common)).toContain(' RGBA ');
+    expect(formatDecodeRow(zone).length).toBe(formatDecodeHeader().length);
   });
 
   it('prints "-" for a stage that was not measured', () => {
     const page = {
-      ...fakeDecode().pages[3],
+      ...fakeDecode().pages[2],
       encoding: 'type 2',
       fetchMs: null,
       totalMs: null,
@@ -147,8 +147,8 @@ describe('bench decode table (plan R1-05 B4)', () => {
     };
     const row = formatDecodeRow(page);
     expect(row).toContain('   ? ');
-    const fetch = 10 + 10 + 5 + 8;
-    expect(row.slice(fetch, fetch + 8)).toBe('       -');
+    const fetch = 16 + 9 + 5 + 6;
+    expect(row.slice(fetch, fetch + 7)).toBe('      -');
     expect(row.endsWith('      -      -')).toBe(true);
   });
 
@@ -166,7 +166,7 @@ describe('bench decode table (plan R1-05 B4)', () => {
       'DECODE (R1-05) 8 reps GL1  file -> GPU ms: XHR fetch, Image decode, upload + gl.finish',
     );
     expect(lines[3].text).toBe('ERROR decode: Error: lost context');
-    expect(lines[4].text).toBe('NOTE png8-2048: bitmap: no createImageBitmap');
+    expect(lines[4].text).toBe('NOTE common: bitmap: no createImageBitmap');
     for (const line of lines) expect(line.text).toMatch(/^[ -~]*$/);
   });
 });
@@ -227,8 +227,8 @@ describe('bench results page', () => {
       color: HEADER_COLOR,
     });
     expect(lines[1].text).toBe(
-      'ENTER run the matrix: 172 scenarios + decode, ~92 min (10 s warm-up, 14 s measured, 6 s' +
-        ' synced each)',
+      'ENTER run the matrix: 172 scenarios + decode + stand-in, ~92 min (10 s warm-up, 14 s' +
+        ' measured, 6 s synced)',
     );
     expect(lines[2]).toEqual({
       text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
@@ -251,7 +251,7 @@ describe('bench results page', () => {
     );
     const texts = lines.map((line) => line.text);
     expect(texts[3]).toBe('LOG http://10.0.0.2:8787/report  all results acknowledged');
-    expect(texts).toContain('RUN rb-test-0001  2/172 measured  sent 0/2  PAGE 1/1');
+    expect(texts).toContain('RUN rb-test-0001  2/173 measured  sent 0/2  PAGE 1/1');
     expect(texts).toContain(formatResultsHeader());
     expect(texts.filter((text) => text.startsWith('640x360 busy'))).toHaveLength(1);
     expect(lines[lines.length - 1]).toEqual({ text: 'ERROR Error: no WebGL', color: ERROR_COLOR });
@@ -262,16 +262,18 @@ describe('bench results page', () => {
     state = recordDecode(recordResult(state, fakeRecord()), fakeDecode());
     let texts = benchPageLines(input({ state })).map((line) => line.text);
     expect(texts).toContain(
-      'RUN rb-test-0002  1/172 measured  sent 0/1  decode not sent  PAGE 1/1',
+      'RUN rb-test-0002  1/173 measured  sent 0/1  decode not sent  (still running)  PAGE 1/1',
     );
     const header = texts.indexOf(formatDecodeHeader());
     expect(header).toBeGreaterThan(texts.indexOf(formatResultsHeader()));
-    expect(texts[header + 1].startsWith('rgba-2048')).toBe(true);
-    expect(texts[header + 4].startsWith('zone-a')).toBe(true);
+    expect(texts[header + 1].startsWith('standin-zone-a')).toBe(true);
+    expect(texts[header + 3].startsWith('zone-a')).toBe(true);
     // Acknowledged: the render records count apart from the decode record.
     state = markSent(state, [0, DECODE_SCENARIO_INDEX]);
     texts = benchPageLines(input({ state })).map((line) => line.text);
-    expect(texts).toContain('RUN rb-test-0002  1/172 measured  sent 1/1  decode sent  PAGE 1/1');
+    expect(texts).toContain(
+      'RUN rb-test-0002  1/173 measured  sent 1/1  decode sent  (still running)  PAGE 1/1',
+    );
     // A decode record alone (a re-run of a run whose records were cleared) is still a result.
     const alone = recordDecode(createRunState('rb-test-0003', 1, 1, TV_BENCH_TIMING), fakeDecode());
     expect(benchPageLines(input({ state: alone })).map((line) => line.text)).not.toContain(
@@ -318,7 +320,7 @@ describe('bench results page', () => {
       expect(texts[5]).toContain(`  PAGE ${pages}/${pages}`);
       expect(texts).toContain(formatDecodeHeader());
       expect(texts).not.toContain(formatResultsHeader());
-      expect(texts.some((text) => text.startsWith('rgba-2048'))).toBe(true);
+      expect(texts.some((text) => text.startsWith('standin-zone-a'))).toBe(true);
       expect(benchPageLines(input({ state: whole, maxLines: 35, page: 99 }))).toEqual(last);
       expect(benchPageLines(input({ state: whole, maxLines: 35, page: -3 }))).toEqual(
         benchPageLines(input({ state: whole, maxLines: 35 })),

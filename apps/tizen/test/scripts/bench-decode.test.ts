@@ -1,8 +1,10 @@
 /**
- * `scripts/bench-decode.mjs` (plan R1-05 B4): the pages the TV render bench's `decode` scenario
- * fetches, decodes and uploads — two synthetic 2048² pages (RGBA, and PNG-8) generated at
- * bench-build time, deterministic byte for byte, sized like detailed pixel art, plus the shipped
- * atlas's `common` and zone A pages exactly as the asset pipeline builds them.
+ * `scripts/bench-decode.mjs` (plan R1-05 B4, pages re-picked by plan R3-04.M4a): the pages the TV
+ * render bench's `decode` scenario fetches, decodes and uploads — the interim stand-in zone A's own
+ * packed PNG-8 page(s) (`scripts/assets/standin.mjs`), then the shipped atlas's `common` and zone A
+ * pages exactly as the asset pipeline builds them — plus the manifest of the run's last page load,
+ * `standin-zone`. The synthetic 2048² drawer stays exported (its tests and its sha pins here) even
+ * though no build ships a page drawn by it.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,6 +14,7 @@ import {
   DECODE_PAGE_SIZE,
   DECODE_SEED,
   buildDecodePages,
+  buildDecodeStandin,
   decodeArtImage,
   decodePageFile,
   pngColorType,
@@ -31,12 +34,12 @@ function alphas(data: Uint8Array): Set<number> {
   return out;
 }
 
-describe('bench-decode: the synthetic pages', () => {
+describe('bench-decode: the synthetic drawer (kept for its tests, not shipped)', () => {
   it('names the pages and their files', () => {
-    expect(DECODE_PAGE_IDS).toEqual(['rgba-2048', 'png8-2048', 'common', 'zone-a']);
+    expect(DECODE_PAGE_IDS).toEqual(['standin-zone-a', 'common', 'zone-a']);
     expect(DECODE_PAGE_SIZE).toBe(2048);
     expect(DECODE_PAGE_PREFIX).toBe('decode-');
-    expect(decodePageFile('rgba-2048')).toBe('decode-rgba-2048.png');
+    expect(decodePageFile('standin-zone-a')).toBe('decode-standin-zone-a.png');
   });
 
   it('is deterministic: the same seed draws the same pixels, another seed others', () => {
@@ -81,23 +84,30 @@ describe('bench-decode: the synthetic pages', () => {
 });
 
 describe('bench-decode: the pages the bench ships', () => {
-  it('builds the two 2048² pages in their byte bands and the shipped common and zone A pages', () => {
+  it('builds the stand-in zone A page(s), the shipped common and zone A pages', () => {
     const pages = buildDecodePages();
+    // Today's stand-in pack is one page; a second would ride in right after the first.
     expect(pages.map((page) => page.id)).toEqual(DECODE_PAGE_IDS);
     expect(pages.map((page) => page.file)).toEqual(DECODE_PAGE_IDS.map(decodePageFile));
-    const [rgba, png8, common, zone] = pages;
-    for (const page of [rgba, png8]) {
-      expect([page.width, page.height]).toEqual([2048, 2048]);
-      const image = decodePng(page.png);
-      expect([image.width, image.height]).toEqual([2048, 2048]);
-      const [low, high] = DECODE_BYTE_BANDS[page.id as keyof typeof DECODE_BYTE_BANDS];
-      expect(page.png.length, `${page.id}: ${page.png.length} bytes`).toBeGreaterThanOrEqual(low);
-      expect(page.png.length, `${page.id}: ${page.png.length} bytes`).toBeLessThanOrEqual(high);
+    const [standin, common, zone] = pages;
+    expect(standin.what).toContain('stand-in zone A page 1/');
+    expect(standin.what).toContain('PNG-8');
+    expect(pngColorType(standin.png)).toBe(3);
+    const image = decodePng(standin.png);
+    expect([image.width, image.height]).toEqual([standin.width, standin.height]);
+    // RR-7's band: 0.3–0.6 MB per 2048×1024 PNG-8 page, checked over the stand-in pages together.
+    const standinPages = pages.filter((page) => page.id.indexOf('standin-zone-') === 0);
+    let bytes = 0;
+    let area = 0;
+    for (const page of standinPages) {
+      bytes += page.png.length;
+      area += page.width * page.height;
     }
-    expect(pngColorType(rgba.png)).toBe(6);
-    expect(pngColorType(png8.png)).toBe(3);
-    expect(rgba.what).toContain('RGBA');
-    expect(png8.what).toContain('PNG-8');
+    const [low, high] = DECODE_BYTE_BANDS.standin;
+    expect(DECODE_BYTE_BANDS.standin).toEqual([300_000 / (2048 * 1024), 600_000 / (2048 * 1024)]);
+    const perPixel = bytes / area;
+    expect(perPixel, `stand-in pages: ${bytes} bytes over ${area} px`).toBeGreaterThanOrEqual(low);
+    expect(perPixel, `stand-in pages: ${bytes} bytes over ${area} px`).toBeLessThanOrEqual(high);
     // The shipped pages, byte for byte as the asset pipeline packs them (R1-05: common = page 0).
     const atlas = buildAtlas();
     const groups = atlas.manifest.pages.map((page) => (page as { group?: string }).group);
@@ -116,10 +126,32 @@ describe('bench-decode: the pages the bench ships', () => {
     expect(common.what).toContain('main.png');
   }, 120_000);
 
-  it('can build small synthetic pages for a quick look', () => {
-    const pages = buildDecodePages({ size: 128 });
-    expect([pages[0].width, pages[1].height]).toEqual([128, 128]);
-    expect(decodePng(pages[0].png).width).toBe(128);
-    expect(pages[0].what).toContain('128x128');
-  }, 60_000);
+  it('is deterministic: the same pages and manifest every call', () => {
+    const a = buildDecodeStandin();
+    const b = buildDecodeStandin();
+    expect(b.pages.map((page) => page.id)).toEqual(a.pages.map((page) => page.id));
+    for (let i = 0; i < a.pages.length; i++) {
+      expect(b.pages[i].png.equals(a.pages[i].png)).toBe(true);
+    }
+    expect(JSON.stringify(b.manifest)).toBe(JSON.stringify(a.manifest));
+  }, 180_000);
+
+  it('prunes the stand-in manifest to the group pages and their stand-in sprites', () => {
+    const { pages, manifest } = buildDecodeStandin();
+    const standinPages = pages.filter((page) => page.id.indexOf('standin-zone-') === 0);
+    expect(manifest.pages).toHaveLength(standinPages.length);
+    expect(manifest.pages.map((page) => page.file)).toEqual(standinPages.map((page) => page.file));
+    expect(manifest.formatVersion).toBe(2);
+    const names = Object.keys(manifest.sprites);
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) expect(name.indexOf('standin/zone-a/')).toBe(0);
+    // Every frame sits on a page of this manifest, renumbered from 0.
+    for (const frame of Object.values(manifest.frames)) {
+      expect(frame.p).toBeLessThan(manifest.pages.length);
+    }
+    // No fonts (the load draws no text) and only animations of surviving sprites.
+    expect(Object.keys(manifest.fonts)).toEqual([]);
+    for (const name of Object.keys(manifest.animations))
+      expect(name in manifest.sprites).toBe(true);
+  }, 120_000);
 });

@@ -118,6 +118,13 @@ export const ZONE_LOAD_TARGET_MS = 2000;
 /** Plan R3-04's page target per zone: `common` ≤ 1 page, the zone's own ≤ 2 pages. */
 export const ZONE_PAGES = { common: 1, zone: 2 };
 
+/**
+ * Plan R3-04.M4a: the scenario id of the run's last page load — the stand-in zone drawn once on the 640×360
+ * frame. It is measured like a render scenario but is not a matrix row: it is excluded from the size tables and
+ * the campaign aggregation, and printed on its own line (see {@link standinLine}).
+ */
+export const STANDIN_SCENARIO = 'standin-zone';
+
 /** §13's tiers and the action each maps to (none of them blocks). */
 const SECTION13_ACTIONS = {
   planned: 'proceed as planned; record the headroom as the R3-04 / R6-02 budget',
@@ -131,8 +138,10 @@ const SECTION13_ACTIONS = {
  * Reads a session's payloads and keeps the latest record per scenario and WebGL version.
  *
  * @param {string} file - Path to the `<session>.jsonl` the log server wrote.
- * @returns {{payloads: any[], records: any[], decode: any | null}} the payloads in arrival order, the records in
- *   matrix order, and the latest decode record (plan R1-05 B4), or null when the session has none.
+ * @returns {{payloads: any[], records: any[], standin: any[], decode: any | null}} the payloads in arrival
+ *   order, the matrix records in matrix order (plan R3-04.M4a: without the {@link STANDIN_SCENARIO} load's
+ *   record), that record in `standin`, and the latest decode record (plan R1-05 B4), or null when the session
+ *   has none.
  */
 export function readBenchSession(file) {
   const payloads = readFileSync(file, 'utf8')
@@ -149,16 +158,18 @@ export function readBenchSession(file) {
       if (previous === undefined || (r.endedAt ?? 0) >= (previous.endedAt ?? 0)) latest.set(key, r);
     }
   }
-  const records = [...latest.values()].sort(
+  const all = [...latest.values()].sort(
     (a, b) => (a.index ?? 0) - (b.index ?? 0) || (a.webGLVersion ?? 0) - (b.webGLVersion ?? 0),
   );
+  const standin = all.filter((r) => r.scenario === STANDIN_SCENARIO);
+  const records = all.filter((r) => r.scenario !== STANDIN_SCENARIO);
   let decode = null;
   for (const p of payloads) {
     const d = p.decode;
     if (d === null || typeof d !== 'object' || !Array.isArray(d.pages)) continue;
     if (decode === null || (d.endedAt ?? 0) >= (decode.endedAt ?? 0)) decode = d;
   }
-  return { payloads, records, decode };
+  return { payloads, records, standin, decode };
 }
 
 /**
@@ -436,18 +447,55 @@ function median(d) {
 }
 
 /**
- * Plan R3-04's zone-load estimate from a decode record: `common` (the RGBA 2048² page) plus two zone pages (the
- * PNG-8 2048² page), each at its median — loaded cold (fetch + decode + upload: a lazy zone load, B3b) and
- * uploaded only (today's policy "all": the images are decoded at boot and the zone change uploads them).
+ * Plan R3-04's zone-load estimate from a decode record — two shapes, by the page ids the session measured.
+ * Since plan R3-04.M4a the stand-in zone's own pages are on the bench: `common` (the shipped page) plus the
+ * `standin-zone-a` page (or two, `standin-zone-a-2` right after it) each at its own median, with no page-count
+ * multiplier — those pages ARE the zone's pages. A session recorded before the change carries the synthetic
+ * 2048² pages instead: `common` (the RGBA 2048² page) plus two zone pages (the PNG-8 2048² page), each at its
+ * median — loaded cold (fetch + decode + upload: a lazy zone load, B3b) and uploaded only (today's policy
+ * "all": the images are decoded at boot and the zone change uploads them). The synthetic shape scales the
+ * PNG-8 page by {@link ZONE_PAGES}; the measured shape does not multiply anything.
  *
  * @param {any} decode - the decode record.
- * @returns {{lazyMs: number, eagerMs: number, perMpxMs: number | null} | null} the two estimates and the PNG-8
- *   page's decode ms per megapixel, or null when the record lacks either 2048² page's figures.
+ * @returns {{lazyMs: number, eagerMs: number, perMpxMs: number | null, basis: 'standin' | 'synthetic',
+ *   pages: number} | null} the two estimates, the PNG-8 (or stand-in) decode ms per megapixel, which shape
+ *   was used and how many pages it loaded, or null when the record has neither shape's pages measured.
  */
 export function decodeZoneEstimate(decode) {
   const pages = decode !== null && typeof decode === 'object' && Array.isArray(decode.pages) ? decode.pages : [];
-  const rgba = pages.find((p) => p !== null && typeof p === 'object' && p.id === 'rgba-2048');
-  const png8 = pages.find((p) => p !== null && typeof p === 'object' && p.id === 'png8-2048');
+  const valid = pages.filter((p) => p !== null && typeof p === 'object');
+  const common = valid.find((p) => p.id === 'common');
+  const standin = valid.filter(
+    (p) => typeof p.id === 'string' && p.id.indexOf('standin-zone-') === 0,
+  );
+  if (common !== undefined && standin.length > 0) {
+    const zone = [...standin, valid.find((p) => p.id === 'zone-a')].filter((p) => p !== undefined);
+    const totals = [median(common.totalMs), ...zone.map((p) => median(p.totalMs))];
+    const uploads = [median(common.uploadSyncedMs), ...zone.map((p) => median(p.uploadSyncedMs))];
+    if (totals.some((v) => v === null) || uploads.some((v) => v === null)) return null;
+    let lazyMs = 0;
+    let eagerMs = 0;
+    let decodeMs = 0;
+    let mpx = 0;
+    for (const p of [common, ...zone]) {
+      lazyMs += median(p.totalMs);
+      eagerMs += median(p.uploadSyncedMs);
+      const d = median(p.decodeMs);
+      if (d !== null) {
+        decodeMs += d;
+        mpx += (p.width * p.height) / 1e6;
+      }
+    }
+    return {
+      lazyMs,
+      eagerMs,
+      perMpxMs: mpx > 0 ? decodeMs / mpx : null,
+      basis: 'standin',
+      pages: 1 + zone.length,
+    };
+  }
+  const rgba = valid.find((p) => p.id === 'rgba-2048');
+  const png8 = valid.find((p) => p.id === 'png8-2048');
   if (rgba === undefined || png8 === undefined) return null;
   const totals = [median(rgba.totalMs), median(png8.totalMs)];
   const uploads = [median(rgba.uploadSyncedMs), median(png8.uploadSyncedMs)];
@@ -458,6 +506,8 @@ export function decodeZoneEstimate(decode) {
     lazyMs: ZONE_PAGES.common * totals[0] + ZONE_PAGES.zone * totals[1],
     eagerMs: ZONE_PAGES.common * uploads[0] + ZONE_PAGES.zone * uploads[1],
     perMpxMs: decodeMs === null || !(mpx > 0) ? null : decodeMs / mpx,
+    basis: 'synthetic',
+    pages: ZONE_PAGES.common + ZONE_PAGES.zone,
   };
 }
 
@@ -497,19 +547,27 @@ export function decodeSection(decode) {
   const estimate = decodeZoneEstimate(decode);
   out.push('');
   if (estimate === null) {
-    out.push('No zone-load estimate: the 2048² pages were not both measured.');
+    out.push('No zone-load estimate: neither the stand-in pages (plan R3-04.M4a) nor both synthetic 2048² pages were measured.');
   } else {
     const verdict = (ms) =>
       ms <= ZONE_LOAD_TARGET_MS ? `within R3-04’s ${ZONE_LOAD_TARGET_MS} ms` : `**over** R3-04’s ${ZONE_LOAD_TARGET_MS} ms`;
+    const basisLine =
+      estimate.basis === 'standin'
+        ? 'R3-04 zone-load estimate (the measured pages: `common` + the stand-in zone pages,' +
+          ` ${estimate.pages} page(s) in all, each at its median):`
+        : `R3-04 zone-load estimate (\`common\` = ${ZONE_PAGES.common} RGBA 2048² page + ${ZONE_PAGES.zone} PNG-8 2048² zone` +
+          ' pages, medians):';
     out.push(
-      `R3-04 zone-load estimate (\`common\` = ${ZONE_PAGES.common} RGBA 2048² page + ${ZONE_PAGES.zone} PNG-8 2048² zone` +
-        ' pages, medians):',
+      basisLine,
       '',
       `- **cold load** (fetch + decode + upload — a lazy zone load, B3b): **${num(estimate.lazyMs, 0)} ms**, ${verdict(estimate.lazyMs)};`,
       `- **zone change today** (policy "all": decoded at boot, uploaded at the change): **${num(estimate.eagerMs, 0)} ms**,` +
         ` ${verdict(estimate.eagerMs)};`,
-      `- PNG-8 decode ≈ ${estimate.perMpxMs === null ? '—' : num(estimate.perMpxMs, 1)} ms per megapixel — scale it to the` +
-        ' real pages’ size.',
+      estimate.basis === 'standin'
+        ? `- stand-in PNG-8 decode ≈ ${estimate.perMpxMs === null ? '—' : num(estimate.perMpxMs, 1)} ms per megapixel — the` +
+          ' measured pages, not a scaled stand-in.'
+        : `- PNG-8 decode ≈ ${estimate.perMpxMs === null ? '—' : num(estimate.perMpxMs, 1)} ms per megapixel — scale it to the` +
+          ' real pages’ size.',
     );
   }
   return out;
@@ -524,7 +582,7 @@ export function decodeSection(decode) {
  * @returns {string} the Markdown report.
  */
 export function analyzeBenchSession(file, options = {}) {
-  const { payloads, records, decode } = readBenchSession(file);
+  const { payloads, records, standin, decode } = readBenchSession(file);
   if (payloads.length === 0) return 'no payloads in ' + file;
   const last = payloads[payloads.length - 1];
   const env = last.env ?? {};
@@ -588,6 +646,19 @@ export function analyzeBenchSession(file, options = {}) {
       }
     }
   }
+  if (standin.length > 0) {
+    out.push('');
+    out.push(`## Stand-in draw (the run's last page load, plan R3-04.M4a) — ${standin.length} record(s)`);
+    out.push('');
+    out.push('| GL | Render p50 / p95 | Synced p50 / p95 | Draws | Atlas pages |');
+    out.push('|---|---|---|---|---|');
+    for (const r of standin) {
+      out.push(
+        `| ${r.webGLVersion ?? '?'} | ${pair(r.renderMs)} | ${pair(r.syncedMs)} | ${r.drawCalls ?? '?'} |` +
+          ` ${r.atlasPages ?? '?'} |`,
+      );
+    }
+  }
   if (decode !== null) {
     out.push('');
     for (const line of decodeSection(decode)) out.push(line);
@@ -596,7 +667,7 @@ export function analyzeBenchSession(file, options = {}) {
     out.push('');
     out.push('## Records');
     out.push('');
-    for (const r of records) out.push('    ' + JSON.stringify(r));
+    for (const r of [...records, ...standin]) out.push('    ' + JSON.stringify(r));
     if (decode !== null) out.push('    ' + JSON.stringify(decode));
   }
   return out.join('\n');

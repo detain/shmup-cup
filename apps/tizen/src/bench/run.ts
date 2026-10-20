@@ -39,6 +39,12 @@
  * table on the results page. Headless, `?scenario=decode` (`&reps=<n>`) publishes it as the
  * outcome's `decode`.
  *
+ * **The stand-in load (plan R3-04.M4a).** The run's last page load is `standin-zone`: it draws one
+ * 640×360 frame from the decode scenario's stand-in pages — parallax bands, tile rows, enemies and
+ * the boss — warm-up, measured and synced like a render scenario, and its {@link RenderBenchRecord}
+ * is stored and POSTed as one. Headless, `?scenario=standin-zone` publishes it as the outcome's
+ * `record`.
+ *
  * **The measured frame.** Per animation frame: the vsync-locked fixed-step loop (`core/loop`, as
  * the shell runs it on a 60 Hz TV) advances the scene by its ticks, the particle pool is topped up,
  * then the **timed** part — the backdrop and terrain bindings' sync and `renderer.render()` — runs,
@@ -83,6 +89,8 @@ import {
   BENCH_RUN_LENGTH,
   DECODE_SCENARIO_ID,
   DECODE_SCENARIO_INDEX,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
   HEADLESS_DECODE_REPETITIONS,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
@@ -130,6 +138,7 @@ import {
   BENCH_LOAD,
   BenchRandom,
   BenchScene,
+  createStandinScene,
   fillBenchParticles,
   pickBenchSprites,
 } from './scene.js';
@@ -284,6 +293,14 @@ export interface BenchAtlasData {
   readonly pageUrls: readonly string[];
 }
 
+/** The stand-in load's atlas as the bench build ships it (plan R3-04.M4a). */
+export interface BenchStandinData {
+  /** The stand-in zone's manifest, remapped onto the decode pages this build ships. */
+  readonly manifest: AtlasManifest;
+  /** Page URLs relative to the page (the `decode-standin-zone-a*.png` files). */
+  readonly pageUrls: readonly string[];
+}
+
 /** What the bench draws with: the density atlases and the particle presets. */
 export interface BenchAssets {
   /** One atlas per density. */
@@ -292,6 +309,8 @@ export interface BenchAssets {
   readonly fx: readonly { readonly path: string; readonly data: unknown }[];
   /** The decode scenario's pages (plan R1-05 B4); absent from older builds and test fakes. */
   readonly decode?: readonly BenchDecodePage[];
+  /** The stand-in load's atlas (plan R3-04.M4a); absent from older builds and test fakes. */
+  readonly standin?: BenchStandinData | null;
 }
 
 /**
@@ -770,6 +789,138 @@ function measureDecodeScenario(
 }
 
 /**
+ * Runs the stand-in load (plan R3-04.M4a — see `./scene.ts`): the decode scenario's stand-in pages
+ * as an atlas, one 640×360 frame drawn from it (bands, tile rows, enemies, the boss), warm-up, one
+ * timed render and one synced render that waits for `gl.finish()`. Its record carries the scenario
+ * id {@link STANDIN_SCENARIO_ID} and is stored and POSTed like a render scenario's.
+ *
+ * @param options - The app options (window, canvas, assets).
+ * @param webGLVersion - The WebGL version to ask for.
+ * @param label - The HUD label.
+ * @returns Resolves with the record; rejects when the build has no stand-in pages or the frame
+ *   cannot be drawn (the TV mode stops the run, as for a render scenario).
+ */
+async function measureStandinScenario(
+  options: RenderBenchAppOptions,
+  webGLVersion: 1 | 2,
+  label: string,
+): Promise<RenderBenchRecord> {
+  const { win, canvas, assets } = options;
+  const standin = assets.standin ?? null;
+  if (standin === null || standin.pageUrls.length === 0) {
+    throw new Error('this bench build has no stand-in pages');
+  }
+  const size = BENCH_V2_SIZE;
+  const images = await Promise.all(standin.pageUrls.map((url) => loadImage(win, url)));
+  const atlas = createAtlas(standin.manifest, images, { onWarning: () => {} });
+  const scene = createStandinScene({
+    width: size.width,
+    height: size.height,
+    manifest: standin.manifest,
+  });
+  const displayWidth = Math.max(1, Math.floor(win.innerWidth));
+  const displayHeight = Math.max(1, Math.floor(win.innerHeight));
+  canvas.width = displayWidth;
+  canvas.height = displayHeight;
+  const meter = createRenderTargetMeter();
+  const renderer = await createPixiRenderer({
+    canvas,
+    displayWidth,
+    displayHeight,
+    width: size.width,
+    height: size.height,
+    atlas,
+    preferWebGLVersion: webGLVersion,
+    countDrawCalls: true,
+    countStructureRebuilds: true,
+  });
+  try {
+    renderer.setSpriteNames(scene.names);
+    const tables = createSpriteTables(atlas, scene.names);
+    const parallax = createParallaxBinding({
+      atlas,
+      tables,
+      view: scene.parallax,
+      width: size.width,
+      offsetY: scene.hudBar,
+    });
+    for (let i = 0; i < parallax.containers.length; i++) {
+      renderer.layers.layers[parallax.layers[i]].addChild(parallax.containers[i]);
+      if (i >= scene.fullBands) parallax.containers[i].alpha = PARTIAL_ALPHA;
+    }
+    renderer.bindWorld(scene.world);
+    const lineHeight = standin.manifest.fonts.pixel?.lineHeight ?? 10;
+    drawBenchLines(scene.ui, [{ text: `${label} DRAW`, color: NOTE_COLOR }], 4, 4, lineHeight);
+    const frame = new BenchFrame(scene.world, scene.hud, scene.ui);
+    parallax.sync(scene.parallax);
+    renderer.warmUp();
+    const context = canvas.getContext(renderer.webGLVersion === 2 ? 'webgl2' : 'webgl') as {
+      finish(): void;
+    } | null;
+    const clock = win.performance;
+    collect(win);
+    const heapStart = heapUsed(win);
+    const t0 = clock.now();
+    renderer.render(frame);
+    const renderMs = clock.now() - t0;
+    const t1 = clock.now();
+    if (context !== null) context.finish();
+    const syncMs = clock.now() - t1;
+    collect(win);
+    const heapEnd = heapUsed(win);
+    const measured = heapStart >= 0 && heapEnd >= 0;
+    let textureBytes = 0;
+    for (const page of standin.manifest.pages) textureBytes += page.w * page.h * 4;
+    return {
+      scenario: STANDIN_SCENARIO_ID,
+      index: STANDIN_SCENARIO_INDEX,
+      size: size.id,
+      width: size.width,
+      height: size.height,
+      density: size.density,
+      variant: 'standin-zone',
+      crt: 'off',
+      filter: false,
+      mode7: false,
+      webGLVersion: renderer.webGLVersion,
+      displayWidth,
+      displayHeight,
+      scale: renderer.viewport.scale,
+      phaseMs: [0, 0, 0],
+      frames: 1,
+      syncedFrames: 1,
+      renderMs: [renderMs, renderMs, renderMs, renderMs],
+      syncedMs: [syncMs, syncMs, syncMs, syncMs],
+      frameMs: [renderMs + syncMs, renderMs + syncMs, renderMs + syncMs, renderMs + syncMs],
+      raf: [],
+      tickFrames: [],
+      twoTickShare: 0,
+      drawCalls: renderer.drawCalls,
+      rebuilds: renderer.structureRebuilds,
+      renderTargetBytes: meter.bytes,
+      frameTargetBytes: size.width * size.height * 4,
+      textureBytes,
+      atlasPages: standin.manifest.pages.length,
+      heapMeasured: measured,
+      heapStartBytes: measured ? heapStart : 0,
+      heapEndBytes: measured ? heapEnd : 0,
+      heapDeltaBytes: measured ? heapEnd - heapStart : 0,
+      load: {
+        bullets: 0,
+        points: 0,
+        enemies: scene.liveEnemies,
+        particles: 0,
+        tiles: scene.visibleTiles(),
+      },
+      endedAt: Date.now(),
+    };
+  } finally {
+    // Nothing else is torn down: the page is reloaded (TV) or closed (headless) after its one load.
+    meter.stop();
+  }
+}
+
+/**
  * Starts the bench on its page (the entry point — `./main.ts`).
  *
  * @param options - The window, canvas, log server and build id.
@@ -831,6 +982,17 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
     void measureDecodeScenario(options, gl, 'R1-05 DECODE', repetitions).then((decode) => {
       publish({ record: null, decode, error: decode.error });
     });
+    return;
+  }
+  if (scenarioId === STANDIN_SCENARIO_ID) {
+    measureStandinScenario(options, gl, 'R3-04 STAND-IN').then(
+      (record) => {
+        publish({ record, error: null });
+      },
+      (error: unknown) => {
+        publish({ record: null, error: String(error) });
+      },
+    );
     return;
   }
   const scenario = findBenchScenario(scenarioId);
@@ -1047,6 +1209,29 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       save(next);
       post([], next.cursor >= BENCH_RUN_LENGTH, reload, record);
     });
+    return;
+  }
+  if (mode === 'scenario' && state !== null && state.cursor === STANDIN_SCENARIO_INDEX) {
+    // The run's last page load (plan R3-04.M4a): the stand-in frame, stored and POSTed like a
+    // render scenario's record — and, like one, a failure stops the run instead of recording it.
+    const run: BenchRunState = state;
+    mark(win, 'scenario');
+    measureStandinScenario(
+      options,
+      run.webGLVersion === 2 ? 2 : 1,
+      `R3-04 STAND-IN ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}`,
+    ).then(
+      (record) => {
+        if (state === null) return;
+        const next = recordResult(state, record);
+        save(next);
+        post([record], next.cursor >= BENCH_RUN_LENGTH, reload);
+      },
+      (error: unknown) => {
+        if (state !== null) save(stopRun(state, String(error)));
+        reload();
+      },
+    );
     return;
   }
   if (mode === 'scenario' && state !== null) {

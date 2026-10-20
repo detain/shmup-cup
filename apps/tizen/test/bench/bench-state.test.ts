@@ -2,7 +2,8 @@
  * The TV render bench's persisted run state and its sampler (plan R0-02): one scenario per page
  * load, the cursor and the records in `localStorage` between reloads, the Red re-run, the
  * acknowledged records — and the per-frame statistics the records are folded from. Since R1-05 B4
- * a run ends with the decode scenario, whose record the state keeps beside the render records.
+ * a run appends the decode scenario, whose record the state keeps beside the render records;
+ * since R3-04.M4a its last page load is the stand-in draw, recorded like a render scenario.
  */
 import type { RenderBenchRecord } from '@shmup/shell';
 import { describe, expect, it } from 'vitest';
@@ -11,6 +12,7 @@ import {
   BENCH_SCENARIOS,
   BENCH_STATE_KEY,
   DECODE_SCENARIO_INDEX,
+  STANDIN_SCENARIO_INDEX,
   BENCH_STATE_VERSION,
   BenchSampler,
   BenchSeries,
@@ -31,7 +33,7 @@ import {
   summarizeSeries,
   unsentRecords,
 } from '../../src/bench/index.js';
-import { fakeDecode, recordFor } from './fake-record.js';
+import { fakeDecode, fakeStandinRecord, recordFor } from './fake-record.js';
 
 /**
  * A complete record for scenario `index`.
@@ -86,7 +88,7 @@ describe('bench run state', () => {
     expect(messy?.sent).toEqual([1]);
   });
 
-  it('works through the matrix one record at a time, then the decode scenario, and stops', () => {
+  it('works through the matrix, then decode and the stand-in load, and stops', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
       expect(state.running).toBe(true);
@@ -98,10 +100,15 @@ describe('bench run state', () => {
     expect(state.cursor).toBe(DECODE_SCENARIO_INDEX);
     expect(state.records.map((r) => r.index)).toEqual(BENCH_SCENARIOS.map((s) => s.index));
     state = recordDecode(state, fakeDecode());
-    expect(state.running).toBe(false);
-    expect(state.cursor).toBe(BENCH_RUN_LENGTH);
+    // The decode scenario hands on to the stand-in load (plan R3-04.M4a): the run goes on.
+    expect(state.running).toBe(true);
+    expect(state.cursor).toBe(STANDIN_SCENARIO_INDEX);
     expect(state.decode).toEqual(fakeDecode());
     expect(state.records).toHaveLength(BENCH_SCENARIOS.length);
+    state = recordResult(state, fakeStandinRecord());
+    expect(state.running).toBe(false);
+    expect(state.cursor).toBe(BENCH_RUN_LENGTH);
+    expect(state.records).toHaveLength(BENCH_SCENARIOS.length + 1);
   });
 
   it('re-runs the current scenario during a run (Red) and carries on afterwards', () => {
@@ -130,19 +137,25 @@ describe('bench run state', () => {
     expect(unsentRecords(state).map((r) => r.index)).toContain(171);
   });
 
-  it('re-runs the decode scenario from the results page after a whole run', () => {
+  it('re-runs the last page load from the results page after a whole run (R3-04.M4a)', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
     state = markSent(recordDecode(state, fakeDecode()), [DECODE_SCENARIO_INDEX]);
     expect(decodeUnsent(state)).toBe(false);
+    // The run is not over: the stand-in load is its last. Finish it, then re-run that one.
+    expect([state.running, state.cursor]).toEqual([true, 173]);
+    state = recordResult(state, fakeStandinRecord());
+    state = markSent(state, [STANDIN_SCENARIO_INDEX]);
+    expect([state.running, state.cursor]).toEqual([false, 174]);
     state = rerunScenario(state);
-    expect([state.running, state.single, state.cursor]).toEqual([true, true, 172]);
-    state = recordDecode(state, fakeDecode({ repetitions: 3 }));
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 173]);
-    expect(state.decode?.repetitions).toBe(3);
-    // The new decode record is not acknowledged yet; the render records are untouched.
-    expect(decodeUnsent(state)).toBe(true);
-    expect(state.records).toHaveLength(172);
+    expect([state.running, state.single, state.cursor]).toEqual([true, true, 173]);
+    state = recordResult(state, fakeStandinRecord({ drawCalls: 3 }));
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, 174]);
+    expect(state.records).toHaveLength(173);
+    expect(state.records[172].drawCalls).toBe(3);
+    // The new stand-in record is not acknowledged yet; the decode record is untouched.
+    expect(unsentRecords(state).map((r) => r.index)).toContain(STANDIN_SCENARIO_INDEX);
+    expect(decodeUnsent(state)).toBe(false);
   });
 
   it('stops where it is on Back or an error, keeping the results so far', () => {

@@ -242,7 +242,78 @@ describe('the decode scenario (plan R1-05 B4)', () => {
     expect(lines).toContain('**The decode scenario stopped:** Error: context lost');
     expect(lines.join('\n')).toContain('**3000 ms**, **over** R3-04’s 2000 ms');
     const none = decodeSection({ repetitions: 1, pages: [] });
-    expect(none).toContain('No zone-load estimate: the 2048² pages were not both measured.');
+    expect(none).toContain(
+      'No zone-load estimate: neither the stand-in pages (plan R3-04.M4a) nor both synthetic 2048² pages were measured.',
+    );
+  });
+
+  it('estimates the zone load from the measured stand-in pages, each page at its median', () => {
+    // Since plan R3-04.M4a the decode scenario measures the real thing: `common` plus the stand-in
+    // zone pages (and the shipped zone page, a reference row). No page is multiplied any more.
+    const page = (id: string, w: number, h: number, t: number, u: number, d: number) => ({
+      id,
+      width: w,
+      height: h,
+      encoding: 'png8',
+      fetchMs: [1, 1, 2, 2],
+      decodeMs: [d, d, d, d],
+      uploadSyncedMs: [u, u, u, u],
+      totalMs: [t, t, t, t],
+    });
+    const estimate = decodeZoneEstimate({
+      repetitions: 1,
+      pages: [
+        page('standin-zone-a', 2048, 1024, 420, 140, 90),
+        page('common', 1024, 1024, 300, 100, 40),
+        page('zone-a', 256, 128, 60, 20, 10),
+      ],
+    });
+    expect(estimate).toMatchObject({ lazyMs: 780, eagerMs: 260, basis: 'standin', pages: 3 });
+    expect(estimate?.perMpxMs).toBeCloseTo((90 + 40 + 10) / (2.097152 + 1.048576 + 0.032768), 6);
+    // The stand-in id list is the group rule: `standin-zone-a-2` joins when the pack needs two pages.
+    const two = decodeZoneEstimate({
+      repetitions: 1,
+      pages: [
+        page('standin-zone-a', 2048, 1024, 420, 140, 90),
+        page('standin-zone-a-2', 2048, 512, 210, 70, 45),
+        page('common', 1024, 1024, 300, 100, 40),
+      ],
+    });
+    expect(two).toMatchObject({ lazyMs: 930, eagerMs: 310, basis: 'standin', pages: 3 });
+    // An old session (synthetic 2048² pages) still takes the page-target formula.
+    const { decode } = readBenchSession(decodeSession('old-estimate.jsonl'));
+    expect(decodeZoneEstimate(decode)).toMatchObject({ basis: 'synthetic', pages: 3 });
+  });
+
+  it('prints the stand-in record on its own line, not as a matrix row', () => {
+    const lines = readFileSync(FIXTURE, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    const last = lines[lines.length - 1];
+    const results = last['results'] as Record<string, unknown>[];
+    const template = results[results.length - 1];
+    const standinRecord = {
+      ...template,
+      scenario: 'standin-zone',
+      index: 173,
+      size: '640x360',
+      variant: 'standin-zone',
+    };
+    const file = join(tmp, 'standin-record.jsonl');
+    writeFileSync(
+      file,
+      [...lines.slice(0, -1), { ...last, results: [...results, standinRecord] }]
+        .map((p) => JSON.stringify(p))
+        .join('\n') + '\n',
+    );
+    const session = readBenchSession(file);
+    expect(session.records.some((r: { scenario: string }) => r.scenario === 'standin-zone')).toBe(false);
+    expect(session.standin.map((r: { scenario: string }) => r.scenario)).toEqual(['standin-zone']);
+    const report = analyzeBenchSession(file);
+    expect(report).toContain("## Stand-in draw (the run's last page load, plan R3-04.M4a) — 1 record(s)");
+    expect(report).not.toContain('| standin-zone |');
+    expect(report).toContain('18 of 18 scenario(s) measured');
   });
 });
 

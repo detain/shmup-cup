@@ -34,6 +34,8 @@ import {
   BENCH_RUN_LENGTH,
   DECODE_SCENARIO_ID,
   DECODE_SCENARIO_INDEX,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
   measureDecode,
   type DecodeHost,
 } from '../../apps/tizen/src/bench/decode.js';
@@ -313,12 +315,14 @@ describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-
 });
 
 describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () => {
-  it('appends one page load to the run, after the matrix’s last scenario', () => {
-    expect([DECODE_SCENARIO_ID, DECODE_SCENARIO_INDEX, BENCH_RUN_LENGTH]).toEqual([
-      'decode',
-      172,
-      173,
-    ]);
+  it('appends one page load to the run, and the stand-in load follows it (R3-04.M4a)', () => {
+    expect([
+      DECODE_SCENARIO_ID,
+      DECODE_SCENARIO_INDEX,
+      STANDIN_SCENARIO_ID,
+      STANDIN_SCENARIO_INDEX,
+      BENCH_RUN_LENGTH,
+    ]).toEqual(['decode', 172, 'standin-zone', 173, 174]);
   });
 
   it('draws its synthetic pages the same on every machine (integer maths only)', () => {
