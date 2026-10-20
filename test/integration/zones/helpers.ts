@@ -12,8 +12,12 @@
 import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
+  createGame,
+  createHeadlessPlatform,
   createStageRunner,
   loadContent,
+  type BossPartSpec,
+  type BossSpec,
   type ContentDb,
   type StageSpec,
 } from '@shmup/core';
@@ -207,5 +211,86 @@ export const ZONES_B_G: readonly ZoneRow[] = [
     tileset: 'terrain-prism',
     earlier: ['zone-a', 'zone-b', 'zone-c', 'zone-d', 'zone-e'],
     lanes: 1,
+  },
+];
+
+/**
+ * The boss the stage's WARNING event announces.
+ *
+ * @param db - Content.
+ * @param stage - The stage.
+ * @returns The boss spec, or `null` when the stage has no WARNING.
+ */
+export function bossOf(db: ContentDb, stage: StageSpec): BossSpec | null {
+  const warning = stage.events.find((e) => e.type === 'warning');
+  return warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+}
+
+/**
+ * The **arms** of a boss (M2-13): chains of circle-hit parts, each hung from a part that is not
+ * one (its root's parent), as lists of part indices from the root to the tip.
+ */
+export function bossArms(parts: readonly BossPartSpec[]): number[][] {
+  const isArm = (i: number): boolean => parts[i].radius > 0 && parts[i].parentIndex >= 0;
+  const arms: number[][] = [];
+  parts.forEach((_part, root) => {
+    if (!isArm(root) || isArm(parts[root].parentIndex)) return;
+    const chain = [root];
+    for (;;) {
+      const last = chain[chain.length - 1];
+      const next = parts.findIndex((p, i) => isArm(i) && p.parentIndex === last);
+      if (next < 0) break;
+      chain.push(next);
+    }
+    arms.push(chain);
+  });
+  return arms;
+}
+
+/**
+ * The map columns of a zone that hold a tile, each as the list of map rows holding it.
+ *
+ * @param db - Content.
+ * @param id - Stage id.
+ * @param tile - Tile id (1-based; 0 = none).
+ * @returns Rows per column that has the tile.
+ */
+export function tileColumns(db: ContentDb, id: string, tile: number): number[][] {
+  const game = createGame(createHeadlessPlatform(), { seed: 1, stage: id }, db);
+  const map = game.world.terrain;
+  if (map === null) throw new Error('no terrain');
+  const columns: number[][] = [];
+  for (let col = 0; col < map.cols; col++) {
+    const rows: number[] = [];
+    for (let row = 0; row < map.rows; row++)
+      if (map.tiles[row * map.cols + col] === tile) rows.push(row);
+    if (rows.length > 0) columns.push(rows);
+  }
+  return columns;
+}
+
+/** One `it.each` row of the zones H / I table (the fields the shared case templates read). */
+export interface ZoneHiRow {
+  readonly id: string;
+  readonly name: string;
+  readonly code: string;
+  readonly boss: string;
+  readonly tileset: string;
+}
+
+export const ZONES_H_I: readonly ZoneHiRow[] = [
+  {
+    id: 'zone-h',
+    name: 'IRON CITADEL',
+    code: 'IS-08',
+    boss: 'IRON SOVEREIGN',
+    tileset: 'terrain-citadel',
+  },
+  {
+    id: 'zone-i',
+    name: 'ABYSSAL THRONE',
+    code: 'AA-09',
+    boss: 'ABYSS ARK',
+    tileset: 'terrain-abyss',
   },
 ];
