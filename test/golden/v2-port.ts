@@ -185,7 +185,9 @@ const DRIFT_CAP_PX = 240;
  * Band for the fastest bullet of the run (`×K`): the widest ratio the rank can put on a bullet
  * speed between two runs (`rankScale` on the committed {@link BULLET_SPEED_RANK_CURVE}, rank 31
  * over rank 0) — the bot's kills set the rank, so the measure compares within that span (the
- * block's bot-dependent class; a missed ×1.5 is a 45 % error, far outside it).
+ * block's bot-dependent class). The span is ≈ 81 % of the expected edge-to-edge, so this line
+ * alone cannot catch a missed ×1.5 (a Δ of ≈ 33 %, inside it) — the strict position, camera and
+ * first-visible lines are what pin the scale.
  */
 const RANK_SPEED_SPAN =
   rankScale(RANK_MAX, BULLET_SPEED_RANK_CURVE) / rankScale(0, BULLET_SPEED_RANK_CURVE);
