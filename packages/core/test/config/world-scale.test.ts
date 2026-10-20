@@ -300,7 +300,7 @@ const WORLD_SHAPE =
   /MARGIN|RADIUS|SPEED|ACCEL|_X$|_Y$|ORBIT|LINK|WIDTH|LENGTH|RANGE|PULL|DRIFT|SPREAD|STEP|LEAD|OFFSET|SPACING|CELL/;
 
 describe('the world-scale audit (R2-02.A1)', () => {
-  it('holds the v1 values at K = 1 (the world is still v1)', () => {
+  it('holds the v1 values at K = 1 (the two-scale kit; dormant since the port)', () => {
     if (K !== 1) return;
     const exports = numericExports();
     for (const { name, v1 } of V1_WORLD) expect(exports.get(name), name).toBe(v1);
@@ -328,7 +328,7 @@ describe('the world-scale audit (R2-02.A1)', () => {
   describe('the world-scale array audit (R2-02.A1, RV3-F1)', () => {
     const arrays = frozenNumberArrays();
 
-    it('holds the v1 elements at K = 1 (the world is still v1)', () => {
+    it('holds the v1 elements at K = 1 (the two-scale kit; dormant since the port)', () => {
       if (K !== 1) return;
       for (const { name, v1 } of V1_WORLD_ARRAYS) {
         expect([...(arrays.get(name) ?? [])], name).toEqual([...v1]);
