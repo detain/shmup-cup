@@ -17,7 +17,7 @@
  * column, and a sweep checks by core's own terrain expansion that no segment the map never showed
  * draws after a port.
  */
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1463,6 +1463,21 @@ describe('rescale: the map’s right end (review round 3)', () => {
     ]);
   });
 
+  /**
+   * Whether the shipped `content/` is still v1 (some tileset at 8-px tiles) — the two round-5
+   * cases below port the shipped `terrain-a` and are retired once R2-02 ports the content (the
+   * two-scale kit ports it, so they skip there). Read from the content itself, never from
+   * `packages/core/test/helpers/port-pending.ts` (U5 deletes that gate file in wave 5).
+   */
+  const CONTENT_STILL_V1 = readdirSync(join(here, '..', '..', '..', 'content', 'tilesets'))
+    .filter((name) => name.endsWith('.tileset.json'))
+    .some((name) => {
+      const tileset = JSON.parse(
+        readFileSync(join(here, '..', '..', '..', 'content', 'tilesets', name), 'utf8'),
+      ) as { tileSize?: number };
+      return tileset.tileSize === 8;
+    });
+
   /** terrain-a as shipped, for a port that reads (and ports) the tileset too. */
   const TILESET_FILE = file(
     'tilesets/terrain-a.tileset.json',
@@ -1554,141 +1569,147 @@ describe('rescale: the map’s right end (review round 3)', () => {
     };
   };
 
-  it('keeps a segment starting in the last column, short of the end, in the new one (round 5)', () => {
-    // A segment that starts in the map's last tile column is one column wide (the generator clamps
-    // it to the map), 0 high at both boundaries: the map never shows it. Off the tile grid
-    // (length 2004: the map ends at 2388, inside its last column 2384–2392; ported at 3646, inside
-    // the new last column 3636–3648) ×k would start {2386, 2600} at 3579, 5 columns before the new
-    // last one, and draw 6 columns of floor in the last view: it starts at the new last column.
-    // One column earlier a segment draws in both maps, and reaches the end of both.
-    const offGrid = portAndDraw(
-      2004,
-      [
-        [2386, 2600],
-        [2384, 2386],
-        [2376, 2386],
-      ],
-      V2,
-    );
-    expect(offGrid.plan.errors).toEqual([]);
-    expect(offGrid.ported).toEqual([
-      [3636, 3964],
-      [3636, 3643],
-      [3564, 3643],
-    ]);
-    expect([offGrid.cols, offGrid.newCols]).toEqual([299, 304]);
-    expect(offGrid.drawn.map((columns) => columns.length)).toEqual([0, 0, 2]);
-    expect(offGrid.newDrawn.map((columns) => columns.length)).toEqual([0, 0, 7]);
-    expect(offGrid.newDrawn[2]?.[6]).toBe(offGrid.newCols - 1);
-    // The two moved `from`s are listed with the map end.
-    const froms = offGrid.plan.moved
-      .filter((entry) => entry.path.endsWith('.from'))
-      .map((entry) => [entry.path, entry.from, entry.to, entry.note]);
-    expect(froms).toEqual([
-      [
-        'tilemap.generator.segments[0].from',
-        2386,
-        3636,
-        `map end: starts 2 px short of the map's right end (length + ${String(FRAME.playfieldW)} ` +
-          "= 2388 → length′ + 640 = 3646) but in the map's last column — kept in the new map's " +
-          'last column: a segment the map never shows stays one',
-      ],
-      [
-        'tilemap.generator.segments[1].from',
-        2384,
-        3636,
-        expect.stringMatching(/^map end: starts 4 px short of .* never shows stays one$/),
-      ],
-    ]);
-    // On the tile grid (length 800: the map ends at 1184, the edge of its 148th column; ported at
-    // 1840, 4 px into the new last column 1836–1848) ×k would start {1176, 1177} at 1764 and draw
-    // 7 columns.
-    const onGrid = portAndDraw(
-      800,
-      [
-        [1176, 1177],
-        [1176, 1300],
-        [1168, 1300],
-      ],
-      V2,
-    );
-    expect(onGrid.plan.errors).toEqual([]);
-    expect(onGrid.ported).toEqual([
-      [1836, 1837],
-      [1836, 2014],
-      [1752, 2014],
-    ]);
-    expect(onGrid.drawn.map((columns) => columns.length)).toEqual([0, 0, 2]);
-    expect(onGrid.newDrawn.map((columns) => columns.length)).toEqual([0, 0, 8]);
-    expect(onGrid.newDrawn[2]?.[7]).toBe(onGrid.newCols - 1);
-  });
-
-  it('never draws a segment the map never showed, in any geometry (round 5)', () => {
-    /**
-     * A geometry with no top pad.
-     *
-     * @param factor - The factor.
-     * @param toWidth - The new playfield's width (`null`: derived from the frame's aspect).
-     * @returns The geometry.
-     */
-    const geometry = (factor: number, toWidth: number | null): RescaleGeometry =>
-      rescaleGeometry(
-        { factor, topPad: 0, fromWidth: null, fromHeight: null, tileSize: null, toWidth },
-        FRAME,
+  it.runIf(CONTENT_STILL_V1)(
+    'keeps a segment starting in the last column, short of the end, in the new one (round 5)',
+    () => {
+      // A segment that starts in the map's last tile column is one column wide (the generator clamps
+      // it to the map), 0 high at both boundaries: the map never shows it. Off the tile grid
+      // (length 2004: the map ends at 2388, inside its last column 2384–2392; ported at 3646, inside
+      // the new last column 3636–3648) ×k would start {2386, 2600} at 3579, 5 columns before the new
+      // last one, and draw 6 columns of floor in the last view: it starts at the new last column.
+      // One column earlier a segment draws in both maps, and reaches the end of both.
+      const offGrid = portAndDraw(
+        2004,
+        [
+          [2386, 2600],
+          [2384, 2386],
+          [2376, 2386],
+        ],
+        V2,
       );
-    const geometries: Record<string, RescaleGeometry> = {
-      v2: V2,
-      'v2 without a pad': geometry(GEOMETRY.port.factor, GEOMETRY.port.toWidth),
-      '×1, 64 px wider': geometry(1, FRAME.playfieldW + 64),
-      '×2': geometry(2, FRAME.playfieldW * 2),
-      identity: geometry(1, null),
-    };
-    // Maps ending on the tile grid (800), off it (803, 2004), and one whose new end lies on the
-    // new grid (805 → 1208 + 640).
-    const lengths = [800, 803, 805, 2004];
-    const widths = [1, 3, 9, 40, 300];
-    for (const [name, port] of Object.entries(geometries)) {
-      const failures: string[] = [];
-      let hiddenShortOfTheEnd = 0;
-      let shownToLastColumn = 0;
-      for (const length of lengths) {
-        const end = length + FRAME.playfieldW;
-        const segments: [number, number][] = [];
-        for (let from = end - 20; from <= end + 6; from++) {
-          for (const width of widths) segments.push([from, from + width]);
-        }
-        const result = portAndDraw(length, segments, port);
-        expect(result.plan.errors, name).toEqual([]);
-        expect(result.plan.unclassified, name).toEqual([]);
-        segments.forEach((segment, i) => {
-          const [from, to] = result.ported[i] ?? [Number.NaN, Number.NaN];
-          const drawn = result.drawn[i] ?? [];
-          const newDrawn = result.newDrawn[i] ?? [];
-          const what =
-            `${name} @ ${String(length)}: ${JSON.stringify(segment)} → ` +
-            JSON.stringify([from, to]);
-          if (!(from < to)) failures.push(`${what} ends before it starts`);
-          if (drawn.length === 0) {
-            // A segment the map never shows stays one.
-            if (newDrawn.length > 0) failures.push(`${what} now draws ${newDrawn.join(', ')}`);
-            const lastColumn = Math.floor(segment[0] / FRAME.tileSize) === result.cols - 1;
-            if (lastColumn && segment[0] < end) hiddenShortOfTheEnd++;
-          } else if (drawn[drawn.length - 1] === result.cols - 1) {
-            // One drawn up to the map's last column is drawn up to the new map's last column.
-            shownToLastColumn++;
-            if (newDrawn[newDrawn.length - 1] !== result.newCols - 1) {
-              failures.push(`${what} no longer reaches the new map's last column`);
-            }
+      expect(offGrid.plan.errors).toEqual([]);
+      expect(offGrid.ported).toEqual([
+        [3636, 3964],
+        [3636, 3643],
+        [3564, 3643],
+      ]);
+      expect([offGrid.cols, offGrid.newCols]).toEqual([299, 304]);
+      expect(offGrid.drawn.map((columns) => columns.length)).toEqual([0, 0, 2]);
+      expect(offGrid.newDrawn.map((columns) => columns.length)).toEqual([0, 0, 7]);
+      expect(offGrid.newDrawn[2]?.[6]).toBe(offGrid.newCols - 1);
+      // The two moved `from`s are listed with the map end.
+      const froms = offGrid.plan.moved
+        .filter((entry) => entry.path.endsWith('.from'))
+        .map((entry) => [entry.path, entry.from, entry.to, entry.note]);
+      expect(froms).toEqual([
+        [
+          'tilemap.generator.segments[0].from',
+          2386,
+          3636,
+          `map end: starts 2 px short of the map's right end (length + ${String(FRAME.playfieldW)} ` +
+            "= 2388 → length′ + 640 = 3646) but in the map's last column — kept in the new map's " +
+            'last column: a segment the map never shows stays one',
+        ],
+        [
+          'tilemap.generator.segments[1].from',
+          2384,
+          3636,
+          expect.stringMatching(/^map end: starts 4 px short of .* never shows stays one$/),
+        ],
+      ]);
+      // On the tile grid (length 800: the map ends at 1184, the edge of its 148th column; ported at
+      // 1840, 4 px into the new last column 1836–1848) ×k would start {1176, 1177} at 1764 and draw
+      // 7 columns.
+      const onGrid = portAndDraw(
+        800,
+        [
+          [1176, 1177],
+          [1176, 1300],
+          [1168, 1300],
+        ],
+        V2,
+      );
+      expect(onGrid.plan.errors).toEqual([]);
+      expect(onGrid.ported).toEqual([
+        [1836, 1837],
+        [1836, 2014],
+        [1752, 2014],
+      ]);
+      expect(onGrid.drawn.map((columns) => columns.length)).toEqual([0, 0, 2]);
+      expect(onGrid.newDrawn.map((columns) => columns.length)).toEqual([0, 0, 8]);
+      expect(onGrid.newDrawn[2]?.[7]).toBe(onGrid.newCols - 1);
+    },
+  );
+
+  it.runIf(CONTENT_STILL_V1)(
+    'never draws a segment the map never showed, in any geometry (round 5)',
+    () => {
+      /**
+       * A geometry with no top pad.
+       *
+       * @param factor - The factor.
+       * @param toWidth - The new playfield's width (`null`: derived from the frame's aspect).
+       * @returns The geometry.
+       */
+      const geometry = (factor: number, toWidth: number | null): RescaleGeometry =>
+        rescaleGeometry(
+          { factor, topPad: 0, fromWidth: null, fromHeight: null, tileSize: null, toWidth },
+          FRAME,
+        );
+      const geometries: Record<string, RescaleGeometry> = {
+        v2: V2,
+        'v2 without a pad': geometry(GEOMETRY.port.factor, GEOMETRY.port.toWidth),
+        '×1, 64 px wider': geometry(1, FRAME.playfieldW + 64),
+        '×2': geometry(2, FRAME.playfieldW * 2),
+        identity: geometry(1, null),
+      };
+      // Maps ending on the tile grid (800), off it (803, 2004), and one whose new end lies on the
+      // new grid (805 → 1208 + 640).
+      const lengths = [800, 803, 805, 2004];
+      const widths = [1, 3, 9, 40, 300];
+      for (const [name, port] of Object.entries(geometries)) {
+        const failures: string[] = [];
+        let hiddenShortOfTheEnd = 0;
+        let shownToLastColumn = 0;
+        for (const length of lengths) {
+          const end = length + FRAME.playfieldW;
+          const segments: [number, number][] = [];
+          for (let from = end - 20; from <= end + 6; from++) {
+            for (const width of widths) segments.push([from, from + width]);
           }
-        });
+          const result = portAndDraw(length, segments, port);
+          expect(result.plan.errors, name).toEqual([]);
+          expect(result.plan.unclassified, name).toEqual([]);
+          segments.forEach((segment, i) => {
+            const [from, to] = result.ported[i] ?? [Number.NaN, Number.NaN];
+            const drawn = result.drawn[i] ?? [];
+            const newDrawn = result.newDrawn[i] ?? [];
+            const what =
+              `${name} @ ${String(length)}: ${JSON.stringify(segment)} → ` +
+              JSON.stringify([from, to]);
+            if (!(from < to)) failures.push(`${what} ends before it starts`);
+            if (drawn.length === 0) {
+              // A segment the map never shows stays one.
+              if (newDrawn.length > 0) failures.push(`${what} now draws ${newDrawn.join(', ')}`);
+              const lastColumn = Math.floor(segment[0] / FRAME.tileSize) === result.cols - 1;
+              if (lastColumn && segment[0] < end) hiddenShortOfTheEnd++;
+            } else if (drawn[drawn.length - 1] === result.cols - 1) {
+              // One drawn up to the map's last column is drawn up to the new map's last column.
+              shownToLastColumn++;
+              if (newDrawn[newDrawn.length - 1] !== result.newCols - 1) {
+                failures.push(`${what} no longer reaches the new map's last column`);
+              }
+            }
+          });
+        }
+        expect(failures, name).toEqual([]);
+        // The sweep holds segments of both kinds in every geometry (the never-shown ones that start
+        // in the last column short of the end included).
+        expect(hiddenShortOfTheEnd, name).toBeGreaterThan(0);
+        expect(shownToLastColumn, name).toBeGreaterThan(0);
       }
-      expect(failures, name).toEqual([]);
-      // The sweep holds segments of both kinds in every geometry (the never-shown ones that start
-      // in the last column short of the end included).
-      expect(hiddenShortOfTheEnd, name).toBeGreaterThan(0);
-      expect(shownToLastColumn, name).toBeGreaterThan(0);
-    }
-  });
+    },
+  );
 });
 
 describe('rescale: the map’s right end at its last column (review round 3)', () => {

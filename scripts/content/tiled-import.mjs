@@ -7,7 +7,8 @@
  * game rules.
  *
  * **The map.** Orthogonal, not infinite, square tiles of the game's tile size
- * ({@link TILED_TILE_SIZE}, 8 px today). Its custom properties (all optional) fill the stage
+ * ({@link TILED_TILE_SIZE}, 12 px since R2-01's flip). Its custom properties (all optional) fill
+ * the stage
  * header: `id` (default: the file name), `name` (default: the id in upper case), `tileset` (the
  * **content** tileset id, default `terrain-a`), `musicStage` / `musicBoss` (music cue names,
  * default `Stage` / `Boss`), `length` (default: the map width in pixels minus one screen,
@@ -26,7 +27,7 @@
  * types map to JSON: `int` / `float` → numbers, `bool` → booleans, `string` → strings):
  *
  * - `spawn`, `formation` — the object's position is the enemy's spawn point in the world: the
- *   event fires at `x = max(0, round(obj.x) − SPAWN_LEAD)` ({@link SPAWN_LEAD}, 400 today: the
+ *   event fires at `x = max(0, round(obj.x) − SPAWN_LEAD)` ({@link SPAWN_LEAD}, 656 today: the
  *   enemy appears 16 px past the right edge, the default `screenX`), `screenX` is written only
  *   when it is not `SPAWN_LEAD` (an object nearer the start than that); the enemy id is the
  *   `enemy` property or the object's name. A spawn takes `path` and `branch`; a formation also
@@ -83,7 +84,7 @@ export const VIEW_WIDTH = PLAYFIELD_W;
 
 /**
  * How far ahead of the camera a spawn appears by default (`@shmup/core` `DEFAULT_SPAWN_SCREEN_X`:
- * 16 px past the right edge, 400 today).
+ * 16 px past the right edge, 656 today).
  */
 export const SPAWN_LEAD = FRAME_SPAWN_LEAD;
 

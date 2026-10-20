@@ -20,7 +20,7 @@
  *
  * The inline maps place their objects from the importer's own {@link VIEW_WIDTH} and
  * {@link SPAWN_LEAD} (`SPAWN_LEAD + 100`, not `500`), so every case stays on the same side of the
- * lead and the view at 384×216 and at 640×360. Only `--print` reads the committed 8-px fixture map
+ * lead and the view at 384×216 and at 640×360. Only `--print` reads the committed 12-px fixture map
  * and is gated (v2's R2-01: R2-02 redraws the fixture at 12 px with the tilesets).
  */
 import { spawnSync } from 'node:child_process';
@@ -552,9 +552,9 @@ describe('tiled-import edges — CLI', () => {
   const cli = (args: string[]) =>
     spawnSync(process.execPath, [script, ...args], { cwd: repo, encoding: 'utf8' });
 
-  // Reads the committed 8-px fixture map: gated until R2-02 redraws it at 12 px (with the tilesets,
-  // in the same commit — the gate expires on the tilesets, not on the fixture).
-  itPortPending('prints the committed 8-px fixture map instead of writing with --print', () => {
+  // Reads the committed 12-px fixture map (redrawn by R2-02 with the tilesets): gated until wave
+  // 5's U5 deletes the port-pending gate — it expires on the tilesets, not on the fixture.
+  itPortPending('prints the committed 12-px fixture map instead of writing with --print', () => {
     const out = join(tmp, 'print');
     const file = join(here, 'fixtures', 'tiled-sample.tmj');
     const result = cli([file, '--print', '--stages', out, '--paths', out]);

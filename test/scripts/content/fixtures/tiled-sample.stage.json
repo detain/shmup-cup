@@ -4,20 +4,23 @@
   "id": "tiled-sample",
   "name": "TILED SAMPLE",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 416,
+  "length": 560,
   "camera": [
-    { "x": 0, "speed": 1, "ramp": 30 },
-    { "x": 200, "speed": 1.5 },
-    { "x": 320, "speed": 1.5, "yTo": 16, "yOver": 64 },
-    { "x": 380, "speed": 1, "yTo": 40, "yTicks": 30, "hold": 60 }
+    { "x": 0, "speed": 1.5, "ramp": 30 },
+    { "x": 300, "speed": 2.25 },
+    { "x": 480, "speed": 2.25, "yTo": 60, "yOver": 96 },
+    { "x": 524, "speed": 1.5, "yTo": 96, "yTicks": 30, "hold": 60 }
   ],
-  "checkpoints": [{ "x": 0 }, { "x": 300 }],
+  "checkpoints": [{ "x": 0 }, { "x": 451 }],
   "parallax": [],
   "tilemap": {
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-a",
-    "rowsTall": 25,
+    "rowsTall": 28,
     "rle": [
+      "100*3",
+      "100*3",
+      "100*3",
       "100*3",
       "",
       "",
@@ -46,38 +49,38 @@
     ]
   },
   "events": [
-    { "x": 0, "type": "spawn", "enemy": "drifter", "y": 60, "screenX": 300 },
+    { "x": 0, "type": "spawn", "enemy": "drifter", "y": 126, "screenX": 450 },
     {
-      "x": 116,
+      "x": 110,
       "type": "trigger",
       "flag": "took-low",
-      "region": { "x": 500, "y": 150, "w": 60, "h": 40 }
+      "region": { "x": 750, "y": 261, "w": 90, "h": 60 }
     },
     {
-      "x": 160,
+      "x": 176,
       "type": "formation",
       "enemy": "fan",
       "count": 3,
       "interval": 10,
-      "y": 100,
+      "y": 185,
       "path": "tiled-loop",
       "bonus": 500
     },
     {
-      "x": 250,
+      "x": 311,
       "type": "block",
-      "y": 96,
-      "w": 16,
-      "h": 8,
+      "y": 180,
+      "w": 24,
+      "h": 12,
       "tile": "solid",
-      "dy": 16,
+      "dy": 24,
       "period": 120
     },
-    { "x": 300, "type": "spawn", "enemy": "carrier", "y": 150, "branch": "low" },
-    { "x": 352, "type": "spawn", "enemy": "drifter", "y": 100 },
-    { "x": 380, "type": "music", "cue": "Boss" },
-    { "x": 390, "type": "spawn", "enemy": "drifter", "y": 80 },
-    { "x": 416, "type": "end" }
+    { "x": 386, "type": "spawn", "enemy": "carrier", "y": 261, "branch": "low" },
+    { "x": 464, "type": "spawn", "enemy": "drifter", "y": 198 },
+    { "x": 521, "type": "spawn", "enemy": "drifter", "y": 190 },
+    { "x": 524, "type": "music", "cue": "Boss" },
+    { "x": 560, "type": "end" }
   ],
   "branches": [{ "id": "low", "flag": "took-low" }]
 }

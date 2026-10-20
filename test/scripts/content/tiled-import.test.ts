@@ -7,9 +7,9 @@
  * The inline maps place their objects from the importer's own {@link VIEW_WIDTH} and
  * {@link SPAWN_LEAD} (`SPAWN_LEAD + 200`, not `600`), so each case stays on the same side of the
  * lead and the view at 384×216 and at 640×360. The tests that read the committed fixture map
- * (`fixtures/tiled-sample.tmj`, 8-px tiles) are gated by v2's R2-01: the importer takes 12-px tiles
- * from the flip, and R2-02 redraws the fixture at 12 px — in the commit that ports the tilesets,
- * since the gate expires on them, not on the fixture.
+ * (`fixtures/tiled-sample.tmj`, redrawn by R2-02 at 12-px tiles for the 640 view) stay behind the
+ * self-expiring port-pending gate: it expires on the shipped tilesets, not on the fixture, and
+ * wave 5's U5 deletes it.
  */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -83,7 +83,7 @@ function objects(...objects: unknown[]): Record<string, unknown> {
   return { type: 'objectgroup', name: 'events', objects };
 }
 
-describe('scripts/content/tiled-import.mjs — the committed 8-px fixture (redrawn by R2-02)', () => {
+describe('scripts/content/tiled-import.mjs — the committed 12-px fixture (redrawn by R2-02)', () => {
   itPortPending('converts the fixture map into exactly the expected stage and paths JSON', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     expect(stage).toEqual(fixture('tiled-sample.stage.json'));
@@ -100,9 +100,10 @@ describe('scripts/content/tiled-import.mjs — the committed 8-px fixture (redra
     expect(issues).toEqual([]);
     const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
     expect(spec.terrain?.cols).toBe(100);
-    // The brick pillar (content tile 18, destructible) is where the map put it.
+    // The brick pillar (content tile 18, destructible) is where the map put it — the ported
+    // fixture's three ceiling rows make its v1 row 20 the new row 23.
     const brick = db.tilesets[spec.terrain?.tilesetId ?? -1].tables.byName.get('brick');
-    expect(spec.terrain?.tiles[20 * 100 + 50]).toBe(brick);
+    expect(spec.terrain?.tiles[23 * 100 + 50]).toBe(brick);
     expect(spec.branches).toEqual([{ id: 'low', flag: 'took-low', flagId: 0, value: true }]);
     expect(spec.events.find((e) => e.type === 'formation')).toMatchObject({
       pathId: db.pathIndex.get('tiled-loop'),
@@ -374,7 +375,8 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
 });
 
 describe('scripts/content/tiled-import.mjs — CLI', () => {
-  // Converts the committed 8-px fixture map: gated with the suite above until R2-02 redraws it.
+  // Converts the committed 12-px fixture map: gated with the suite above until wave 5's U5
+  // deletes the port-pending gate.
   itPortPending('writes the fixture`s stage and paths files into the given folders', () => {
     const stages = join(tmp, 'stages');
     const paths = join(tmp, 'paths');
