@@ -171,9 +171,33 @@ across `SCENE_IDS`, `expectedScenes` names the scenes a report must show; the pr
 `KNOWN_LAYOUT_PROBLEMS` allow-list and `ui/ui-layout-frame-flip.test.ts` retired with the flip —
 every panel fits 640×360 now, the walks prove it); `campaign.ts` / `direct.ts` / `front-end.ts` /
 `front-end-session.ts` (the shipped-campaign, Direct-mode and front-end fixtures the scene suites
-drive); `port-pending.ts` (owner decision W4-1 — the `CONTENT_PORT_PENDING` gate: between the flip
-and R2-02's ×1.5 port the shipped content is still v1-scale, so the tests that fail *only* of that
-skip loudly, and the module self-expires once the port lands); and `v1-replay.ts` (R2-01, decision
+drive); `v1-port.ts` (R2-02.T0 — the single place where a test writes a v1 pixel pin: `v1x` / `v1y`
+/ `v1rel` / `v1speed` are the identity at `WORLD_SCALE` 1 and the port's ×3/2 (+ the top pad) after
+it, so a ported assertion needs no edit across the port; `v1screenX` / `v1screenY` re-map
+edge-anchored numbers through core's `rescaleNumber` with the v2 geometry when the world scales;
+`mapEnemyRow` / `mapBossRow` implement the mapping rules of `test/fixtures/v1-baseline/README.md` §
+"Comparing a v2 run" and take `k` / `pad` (defaulting to the live constants) so both scales test on
+either tree — and it imports core by relative path, never a second `@shmup/core` instance);
+`port-alloc-churn.ts` (R2-02.prepB.FIX3 — the allocation-churn twin of `test/golden/stale.ts`:
+`itPortAllocChurn` skips a World guard whose churn the port's fractional world causes — the gimmick
+guard reads 169,160 B over its 65,536 at `WORLD_SCALE` 3/2, where the `StageRunner.probe` trigger
+branch is live every tick and every fractional tunable boxes — only while a committed golden or demo
+is still stale, appends the reason to the test's name exactly while it skips, and self-expires for
+R2-03 to delete once the recordings re-bless and the guard must pass at both scales);
+`port-pending.ts` — owner decision W4-1's `CONTENT_PORT_PENDING` gate, which skipped the
+content-caused failures loudly between the flip and R2-02's port — was **deleted by U5 (`2ce6a12`)**
+when the port landed and its tests un-gated; and `v1-replay.ts` (R2-01, decision
 W4-7 — rewrites a current recording's header frame to the other frame, how a replay v1 recorded
 looks to this build, for the `ReplayVersionError` refusal suites `test/replay/replay-version*.test.ts`,
 which also refuse the committed v1 recording `test/replay/fixtures/run-replay-v1.json`).
+
+R2-02's port audits stand with these helpers: `test/config/world-scale.test.ts` freezes every
+world-unit numeric export of the barrel with its v1 value (read from the pre-flip tree) and its
+`NumberUnit`, requires each to equal `rescaleNumber(unit, v1, geometry)` at the live scale, and
+takes its completeness list from the barrel at runtime — a new world-shaped export fails until it
+is classified (the frozen `number[]` half covers the Formation offsets);
+`test/behaviors/behavior-defaults-port.test.ts` holds every behaviour and weapon default against
+the frozen v1 fixture `test/behaviors/fixtures/v1-behavior-defaults.json` — every world-unit
+default must equal v1 by its unit's rule at the current scale, screen-anchored ones are checked
+only when the world scales, and a new world-unit tunable without a fixture row fails too; and
+`test/helpers/v1-port.test.ts` pins the mapping helper itself, both scales on one tree.
