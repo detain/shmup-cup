@@ -259,7 +259,7 @@ describe('M3-02e draw-call budgets agree with each other', () => {
   it('pins the same e2e budget in both specs and keeps the bench’s above it', () => {
     const mode7 = budget('test/e2e/mode7.spec.ts');
     const raster = budget('test/e2e/raster.spec.ts');
-    const gates = budget('test/bench/render-harness/gates.ts');
+    const gates = budget('test/bench/render-harness/bench-gates.ts');
     // M3-02e raised the two e2e budgets from 12 to 16, deliberately: every render group is a batch
     // boundary (`shmup_feat.md` §22, which allows 20–50).
     expect([mode7, raster]).toEqual([16, 16]);
@@ -271,7 +271,7 @@ describe('M3-02e draw-call budgets agree with each other', () => {
   it('quotes the live e2e figure in the bench gates’ own docs', () => {
     // Review round 1 of M3-02e found this docblock still saying 12 after the specs had moved to
     // 16 — twice over the step's history. So the sentence is machine-checked from now on.
-    const gates = read('test/bench/render-harness/gates.ts').replace(/\s*\n\s*\*\s*/g, ' ');
+    const gates = read('test/bench/render-harness/bench-gates.ts').replace(/\s*\n\s*\*\s*/g, ' ');
     const e2e = budget('test/e2e/mode7.spec.ts');
     expect(gates).toContain(`the two e2e specs pin the plain frame at ${e2e}.`);
   });

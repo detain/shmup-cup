@@ -1,7 +1,8 @@
 /**
  * The TV render bench end to end, headless (plan R0-02): the counted gate `pnpm bench` reads every
- * scenario through (`test/bench/render-harness/gates.ts` `tvBenchViolations`), the wiring of the
- * browser half to it, and the results pipeline — records built the way the bench builds them, sent
+ * scenario through (`test/bench/render-harness/bench-gates.ts` `tvBenchViolations`), the wiring
+ * of the browser half to it, and the results pipeline — records built the way the bench builds
+ * them, sent
  * as `render-bench` payloads through `@shmup/shell`'s wire format to the input probe's real log
  * server, stored, and turned by `results/analyze-bench.mjs` into the tables relative to the
  * session's own 384×216 rows.
@@ -61,7 +62,7 @@ import {
   nextPowerOfTwo,
   pooledRenderTargetBytes,
   tvBenchViolations,
-} from '../bench/render-harness/gates.js';
+} from '../bench/render-harness/bench-gates.js';
 import { createLogServer } from '../../tools/input-probe/server/log-server.mjs';
 import {
   analyzeBenchSession,

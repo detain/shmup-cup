@@ -15,9 +15,10 @@
  * {@link RenderBenchApi.run} through `window.__shmupRenderBench`.
  *
  * **What is not here.** The scripted load (the tick order, the pool top-ups, the per-frame load
- * floor) lives in `load.ts`, the wire types in `protocol.ts` and the budgets in `gates.ts` — all
- * three free of the DOM and of the virtual modules, so `test/integration/render-bench.test.ts`
- * can pin them headlessly. This file is only the browser plumbing around them.
+ * floor) lives in `load.ts`, the wire types in `protocol.ts` and the budgets in
+ * `bench-gates.ts` — all three free of the DOM and of the virtual modules, so
+ * `test/integration/render-bench.test.ts` can pin them headlessly. This file is only the browser
+ * plumbing around them.
  *
  * @module
  */

@@ -89,7 +89,7 @@ import {
   renderBenchViolations,
   renderGroupViolations,
   tvBenchViolations,
-} from './render-harness/gates.js';
+} from './render-harness/bench-gates.js';
 import { WARMUP_TICKS, standinBenchViolations, standinEnemyCopies } from './render-harness/load.js';
 import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
 
@@ -99,7 +99,7 @@ export {
   MIN_LIVE_LOAD,
   RENDER_P95_BUDGET_MS,
   SCENE_REBUILD_BUDGET,
-} from './render-harness/gates.js';
+} from './render-harness/bench-gates.js';
 export { WARMUP_TICKS } from './render-harness/load.js';
 
 /** The harness sources. */

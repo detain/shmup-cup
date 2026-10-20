@@ -7,9 +7,9 @@
  * frame's reading.
  *
  * It is its own module — no DOM, no Pixi, no virtual modules: `@shmup/core` for the load and the
- * budgets of `./gates.js` for its gate — because the load is the one part of the bench that can be
- * wrong *silently*. A bench that measures an empty scene while printing confident numbers is worse
- * than no bench, so the order below is pinned by headless tests
+ * budgets of `./bench-gates.js` for its gate — because the load is the one part of the bench
+ * that can be wrong *silently*. A bench that measures an empty scene while printing confident
+ * numbers is worse than no bench, so the order below is pinned by headless tests
  * (`test/integration/render-bench.test.ts`) rather than by the browser run.
  *
  * Since plan **R3-04.M4b** it also holds the gate of the TV bench's **stand-in load**
@@ -41,7 +41,7 @@ import {
   PLAYFIELD_W,
   type Game,
 } from '@shmup/core';
-import { DRAW_CALL_BUDGET, HEAP_BUDGET } from './gates.js';
+import { DRAW_CALL_BUDGET, HEAP_BUDGET } from './bench-gates.js';
 
 /**
  * Ticks a scenario plays before it measures: the camera has to reach the stages' effect ranges

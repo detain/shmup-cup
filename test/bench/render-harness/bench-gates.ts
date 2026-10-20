@@ -1,5 +1,6 @@
 /**
- * # render-harness/gates — the render bench's budgets, and the check that a run means anything
+ * # render-harness/bench-gates — the render bench's budgets, and the check that a run
+ * means anything
  *
  * The gates of `pnpm bench`'s render suite (plan M3-02c): the budgets, and
  * {@link renderBenchViolations}, which turns one {@link RenderBenchResult} into the list of

@@ -12,7 +12,7 @@
  * - **the per-frame load floor** (`createLoadFloor` / `trackLoadFloor`) — the bench reports the
  *   *smallest* live count any timed frame carried, not the last frame's reading, which is what
  *   made the item pool's 512 → 256 sawtooth visible in the first place.
- * - **the gates** (`render-harness/gates.ts` `renderBenchViolations`) — a thin or empty scene
+ * - **the gates** (`render-harness/bench-gates.ts` `renderBenchViolations`) — a thin or empty scene
  *   fails before any budget is even looked at.
  * - **the stand-in gate** (`render-harness/load.ts` `standinBenchViolations` and
  *   `standinEnemyCopies`, plan R3-04.M4b) — the run's last page load: one v2-native frame of the
@@ -70,7 +70,7 @@ import {
   SCENE_REBUILD_BUDGET,
   renderBenchViolations,
   renderGroupViolations,
-} from '../bench/render-harness/gates.js';
+} from '../bench/render-harness/bench-gates.js';
 import type { RenderBenchResult } from '../bench/render-harness/protocol.js';
 import { shippedContent } from '../playtest/harness.js';
 
