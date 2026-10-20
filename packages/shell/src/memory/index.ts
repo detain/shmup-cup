@@ -28,7 +28,9 @@
  *   ({@link fixedTargetBytes} of the frame, {@link DEFAULT_DISPLAY} and {@link FILTER_TARGETS});
  *   the atlas gets the rest, floored to whole MiB — {@link TEXTURE_BUDGET_BYTES}, derived from
  *   core's `FRAME_W` × `FRAME_H` by {@link textureBudgetFor}: 26 MiB at 384×216, 23 MiB at
- *   640×360 (it drops by itself at R2-01's flip).
+ *   640×360 (it drops by itself at R2-01's flip). R3-04 set the sibling **download** budget from
+ *   the same stand-in projection: `DIST_BUDGET` (the Tizen bundle check) is 16 MiB since M2b, with
+ *   its measured derivation in that script's docblock (decision W5-16).
  * - **Residency** ({@link stageSpriteSets}, {@link atlasPageNeeds}, {@link createAtlasResidency}).
  *   Which sprites a campaign zone uses is found by walking its stage spec and everything it names
  *   (enemies — children, bosses, inner / double bosses, minions —, tilesets and linked stages such
@@ -267,6 +269,14 @@ export function textureBudgetFor(frame: Size): number {
  * {@link textureBudgetFor} the current frame — 26 MiB at 384×216, **23 MiB at 640×360** (it was a
  * flat 32 MiB until plan R1-05). Derived from core's `FRAME_W` / `FRAME_H`, so R2-01's flip lowers
  * it with no edit here.
+ *
+ * @remarks
+ * R3-04.M2a measured the art-bible stand-in against it (`test/integration/standin-budget.test.ts`,
+ * decision W5-14): a zone's `common` (1024²) plus one 2048×1024 stand-in page charges
+ * 12,582,912 B of textures + images under `imagePolicy: 'none'` — inside this share — while the
+ * same row under `'resident'` charges 25,165,824 B, **1 MiB over it**. That split is why the
+ * stand-in is gated at `'none'` and why the lazy residency (R3-04.M3b, decision W5-15) drops the
+ * decoded images: at the bible's density, keeping them does not fit.
  */
 export const TEXTURE_BUDGET_BYTES = textureBudgetFor({ width: FRAME_W, height: FRAME_H });
 

@@ -13,7 +13,8 @@
  *   the beam's thickness; `lasers.mjs` draws them at the art scale), a real-art PNG override keeps
  *   its size and its sidecar anchor, a `"native": true` map its size.
  * - The interim font (W4-4): 9 × 12 cells, a 15-px line, a 9-px advance.
- * - The budget: every page within 2048², the PNG bytes under the atlas cap.
+ * - The budget: every page within 2048², every group's PNG bytes under its R3-04 cap, and the
+ *   whole atlas under the total cap.
  * - The guard: at scale 1 the stage is a no-op — the v1 atlas, pinned by digest, at either frame.
  *
  * Nothing here depends on the frame: both scales are asked for explicitly, so the file passes
@@ -35,7 +36,7 @@ import {
 } from '../../../scripts/assets/image.mjs';
 import { INTERIM_ART_SCALE, scaleImage, scaleLength } from '../../../scripts/assets/interim.mjs';
 import { formatManifest } from '../../../scripts/assets/manifest.mjs';
-import { DEFAULT_SOURCE_DIR, buildAtlas } from '../../../scripts/assets/pipeline.mjs';
+import { COMMON_GROUP, DEFAULT_SOURCE_DIR, buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { encodePng } from '../../../scripts/assets/png.mjs';
 import { BULLET_COLORS } from '../../../scripts/assets/procedural/bullets.mjs';
 import { generateProceduralSprites } from '../../../scripts/assets/procedural/index.mjs';
@@ -43,7 +44,7 @@ import { BEAM_HEIGHT, BEAM_WIDTH } from '../../../scripts/assets/procedural/lase
 import { BULLET_PALETTES } from '../../../scripts/assets/procedural/palettes.mjs';
 import { TERRAIN_PALETTES, resampleMask } from '../../../scripts/assets/procedural/terrain.mjs';
 import { loadSpriteSources, type SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
-import { ATLAS_PNG_BYTES_CAP } from './atlas-budget.js';
+import { ATLAS_COMMON_PNG_CAP, ATLAS_PNG_BYTES_CAP, ATLAS_ZONE_PNG_CAP } from './atlas-budget.js';
 
 /** The atlas page limit (the packer's `MAX_PAGE_SIZE`). */
 const MAX_PAGE = 2048;
@@ -334,10 +335,20 @@ describe('scripts/assets/pipeline — the interim font (W4-4)', () => {
 });
 
 describe('scripts/assets/pipeline — the interim atlas stays inside the budget (R2-01)', () => {
-  it('keeps every page within 2048² and its PNG bytes under the atlas cap', () => {
+  it('keeps every page within 2048², each group under its cap and the atlas under the total', () => {
     for (const page of v2.manifest.pages) {
       expect(page.w, page.file).toBeLessThanOrEqual(MAX_PAGE);
       expect(page.h, page.file).toBeLessThanOrEqual(MAX_PAGE);
+    }
+    // R3-04.M2b caps per group: `common` its own, every zone page the stand-in band's top.
+    const byGroup = new Map<string, number>();
+    v2.manifest.pages.forEach((page, p) => {
+      const group = page.group ?? '';
+      byGroup.set(group, (byGroup.get(group) ?? 0) + v2.pages[p].png.length);
+    });
+    for (const [group, bytes] of byGroup) {
+      const cap = group === COMMON_GROUP ? ATLAS_COMMON_PNG_CAP : ATLAS_ZONE_PNG_CAP;
+      expect(bytes, group).toBeLessThanOrEqual(cap);
     }
     const bytes = v2.pages.reduce((sum, page) => sum + page.png.length, 0);
     expect(bytes).toBeLessThan(ATLAS_PNG_BYTES_CAP);

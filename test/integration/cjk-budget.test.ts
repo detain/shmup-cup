@@ -21,7 +21,8 @@
  * it is measured on the same art packed as **one page** — `buildAtlas({ ungrouped: true })`, the
  * layout M3-03 measured, byte for byte (also the TV bench's model). The occupied area is the
  * same in both. The shipped split is held to a **budget**, not a page count: every page within
- * the packer's limit, and every page's PNG bytes summed under {@link ATLAS_PNG_BYTES_CAP}.
+ * the packer's limit, every group's PNG bytes under its R3-04.M2b cap, and every page's bytes
+ * summed under {@link ATLAS_PNG_BYTES_CAP} — the stand-in projection of the packed detailed art.
  *
  * **Since R2-01 the shipped atlas is the interim ×1.5 upscale** of the same sources (decision
  * W4-6): the M3-03 figures describe the v1 art, so they are measured on `artScale: 1` — the v1
@@ -43,8 +44,12 @@ import {
   DIST_BUDGET,
 } from '../../apps/tizen/scripts/check-bundle.mjs';
 import { INTERIM_ART_SCALE } from '../../scripts/assets/interim.mjs';
-import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
-import { ATLAS_PNG_BYTES_CAP } from '../scripts/assets/atlas-budget.js';
+import { buildAtlas, COMMON_GROUP } from '../../scripts/assets/pipeline.mjs';
+import {
+  ATLAS_COMMON_PNG_CAP,
+  ATLAS_PNG_BYTES_CAP,
+  ATLAS_ZONE_PNG_CAP,
+} from '../scripts/assets/atlas-budget.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -116,12 +121,19 @@ const SOURCES = [
 ];
 
 describe('integration: the shipped atlas stays inside its budget (R1-05)', () => {
-  it('keeps every page inside the packer’s limit and its PNG bytes under the cap', () => {
+  it('keeps every page inside the packer’s limit, each group under its cap and the total under the budget', () => {
     expect(shipped.manifest.pages.length).toBeGreaterThanOrEqual(1);
     expect(ATLAS_PAGE_MAX_SIZE).toBe(2048);
-    for (const page of shipped.manifest.pages) {
+    const byGroup = new Map<string, number>();
+    for (const [p, page] of shipped.manifest.pages.entries()) {
       expect(page.w, page.file).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
       expect(page.h, page.file).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
+      const group = page.group ?? '';
+      byGroup.set(group, (byGroup.get(group) ?? 0) + shipped.pages[p].png.length);
+    }
+    for (const [group, bytes] of byGroup) {
+      const cap = group === COMMON_GROUP ? ATLAS_COMMON_PNG_CAP : ATLAS_ZONE_PNG_CAP;
+      expect(bytes, group).toBeLessThanOrEqual(cap);
     }
     const bytes = shipped.pages.reduce((sum, page) => sum + page.png.length, 0);
     expect(bytes).toBeLessThan(ATLAS_PNG_BYTES_CAP);
@@ -175,8 +187,9 @@ describe('integration: what a real kanji set would cost (M3-03)', () => {
   });
 
   it('is a download-and-boot cost, not a DIST_BUDGET overrun', () => {
-    // One more page of that size, encoded at this atlas's own bytes-per-pixel, against the 8 MB
-    // budget: nowhere near it. The reason the subset is katakana is the decode, not the budget.
+    // One more page of that size, encoded at this atlas's own bytes-per-pixel, against the v2
+    // 16 MiB budget: nowhere near it. The reason the subset is katakana is the decode, not the
+    // budget.
     const bytesPerPixel = PNG_BYTES / OCCUPIED_PIXELS;
     const extraPageBytes = JIS_PIXELS * bytesPerPixel;
     expect(extraPageBytes).toBeLessThan(DIST_BUDGET / 4);

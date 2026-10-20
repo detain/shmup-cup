@@ -78,7 +78,7 @@ never run. Since R1-05 the stub ships the decode scenario's four `decode-*.png` 
 `largeIcon.png` and, under `assets/atlas/`, the atlas manifest `main.json` and its pages (plan
 R1-05 — the shell fetches the manifest with XHR from `file://`; never tried on an LG set).
 `scripts/check-bundle.mjs` enforces the same budgets as the Tizen widget (imported from its check,
-so there is one source of truth): `app.js` ≤ 512 KB gzipped, atlas pages ≤ 2048², `dist/` ≤ 8 MB —
+so there is one source of truth): `app.js` ≤ 512 KB gzipped, atlas pages ≤ 2048², `dist/` ≤ 16 MB —
 and the Tizen check's rule 10 (`checkAtlasManifest`: the manifest outside `app.js`, every page
 listed).
 

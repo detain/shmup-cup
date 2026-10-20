@@ -1,8 +1,8 @@
 /**
  * Boundaries of the plan M1-19 budgets in scripts/check-bundle.mjs: an atlas page of exactly
- * 2048 px per edge passes and one pixel more on either edge fails; a `dist/` of exactly 8 MB
- * passes and one byte more fails; only pages directly in `assets/atlas/` count; `pngSize` reads a
- * PNG through a view into a larger buffer and rejects truncated or signature-less bytes.
+ * 2048 px per edge passes and one pixel more on either edge fails; a `dist/` of exactly the
+ * budget passes and one byte more fails; only pages directly in `assets/atlas/` count; `pngSize`
+ * reads a PNG through a view into a larger buffer and rejects truncated or signature-less bytes.
  */
 import {
   existsSync,
@@ -130,7 +130,8 @@ describe('tizen/scripts/check-bundle budgets — boundaries', () => {
     const over = checkTizenBundle(dir);
     expect(over.distBytes).toBe(DIST_BUDGET + 1);
     expect(over.problems).toEqual([
-      `dist/ holds ${((DIST_BUDGET + 1) / 1024).toFixed(1)} KB, over the 8192.0 KB budget`,
+      `dist/ holds ${((DIST_BUDGET + 1) / 1024).toFixed(1)} KB, over the ` +
+        `${(DIST_BUDGET / 1024).toFixed(1)} KB budget`,
     ]);
   });
 

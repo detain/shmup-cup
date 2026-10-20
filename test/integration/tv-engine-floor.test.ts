@@ -375,7 +375,7 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
     expect([APP_JS_GZIP_BUDGET, ATLAS_PAGE_MAX_SIZE, DIST_BUDGET]).toEqual([
       512 * 1024,
       2048,
-      8 * 1024 * 1024,
+      16 * 1024 * 1024,
     ]);
   });
 

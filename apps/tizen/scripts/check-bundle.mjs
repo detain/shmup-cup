@@ -79,22 +79,45 @@ export const APP_JS_GZIP_BUDGET = 512 * 1024;
 export const ATLAS_PAGE_MAX_SIZE = 2048;
 
 /**
- * Most bytes the whole `dist/` may take (8 MiB — the packaged widget).
+ * Most bytes the whole `dist/` may take (16 MiB — the packaged widget).
  *
  * @remarks
- * Kept at 8 MiB on purpose by plan R1-05 (owner decision W3-4), with its derivation written down so
- * R3-04 can re-derive it from measured art. `dist/` is `app.js` **raw** (≈ 1.4 MB today — ≈ 375 KB
- * gzipped; at the {@link APP_JS_GZIP_BUDGET} ceiling ≈ 1.9 MB), the atlas (its pages — ten
- * placeholder pages since R1-05's zone split, ≈ 118 KB in all — and `main.json`, ≈ 193 KB since
- * R1-05 moved it out of `app.js`), `index.html`, `config.xml` and the icon (< 20 KB): ≈ 1.7 MB
- * today, ≈ 2.4 MB with the code at its ceiling. 8 MiB therefore leaves ≈ 5.5 MiB for detailed art —
- * roughly 10–20 PNG-8 pages of 2048×1024, if one takes 0.3–0.6 MB (an assumption R3-04 measures).
+ * **The v2 value, set by plan R3-04.M2b from the stand-in projection (owner decision W5-16).**
+ * Plan R1-05 (decision W3-4) had kept it at 8 MiB with this docblock as the derivation note and
+ * asked R3-04 to re-derive it from measured art. Every part below is measured on myadmin1:
+ *
+ * - `common` + the nine stand-in zone atlas PNGs — **3,401,438** B, from
+ *   `test/integration/standin-budget.test.ts` (M2a: 91,921 + 3,309,517);
+ * - `app.js` raw — **1,450,743** B, from `pnpm --filter @shmup/tizen build` (385.8 KB gzip of
+ *   the 512 KB {@link APP_JS_GZIP_BUDGET});
+ * - the atlas manifest, `index.html`, `config.xml` and the icon — **211,360** B, the same
+ *   `dist/` (`main.json` 204,896, the three widget files 6,464);
+ * - recorded audio — 24 music tracks (821.7 s of play-through) + 26 SFX cues, OGG Vorbis —
+ *   **10,989,427** B: `pnpm audio:preview`'s WAVs encoded as `docs/dev/real-assets.md`
+ *   prescribes, `oggenc -q5` (music 10,824,641, SFX 164,786).
+ *
+ * Sum: **16,052,968 B = 15.31 MiB** — the budget leaves a **margin of 724,248 B (≈ 0.69 MiB)**.
+ * The margin is small on purpose: this is the guard that notices when the product outgrows the
+ * projection, exactly what W5-16 weighed against keeping 8 MiB ("R4 / R5 trip it zone by zone").
+ * Three ceilings sit around it, and R6-02 (the final art re-measure) adjudicates them with
+ * evidence — a budget moves to a new measurement, never to quiet a check:
+ *
+ * - art at the RR-7 band's top: `test/scripts/assets/atlas-budget.ts` caps the atlas at 5,700,000 B
+ *   (300,000 `common` + 9 × 600,000 zone bytes), 2,298,562 B above the measured stand-in;
+ * - code at its gzip ceiling: ≈ 1.9 MB raw against {@link APP_JS_GZIP_BUDGET} (≈ 450 KB more
+ *   than measured today; the shipped content is inlined, so R4/R5 add to it);
+ * - longer v2 tracks: the audio term is today's material at `oggenc -q5` ≈ 13.2 KB a second
+ *   (≈ 105 kbit/s mono — chiptune-derived); R5's real recordings ride the same rate.
+ *
  * The real caps are far above it — the Tizen dev install cap is 120 MB and the TV's memory budget
- * 100 MB (`@shmup/shell` `memory`) — so this is a regression guard, not a platform limit. R3-04
- * sets the v2 value from its stand-in art: pages × measured bytes per page + code + recorded audio.
- * A change also updates `check-bundle.test.ts` and the budget tables of `docs/dev`.
+ * 100 MB (`@shmup/shell` `memory`) — so this is a download regression guard, not a platform limit.
+ * `dist-bench/` shares it (rule 8 checks both; it is ≈ 4.7 MB since R1-05's B4 and the stand-in
+ * decode scenario). A change updates the pins in `check-bundle.test.ts`,
+ * `check-bundle-budgets.test.ts`, `test/integration/tv-engine-floor.test.ts`,
+ * `apps/webos/test/scripts/check-bundle.test.ts`, both apps' READMEs and the budget tables of
+ * `docs/dev`.
  */
-export const DIST_BUDGET = 8 * 1024 * 1024;
+export const DIST_BUDGET = 16 * 1024 * 1024;
 
 /** Where the atlas manifest ships, relative to `dist/` (rule 10 — plan R1-05). */
 export const ATLAS_MANIFEST_FILE = 'assets/atlas/main.json';
