@@ -43,7 +43,7 @@ import {
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { v1rel, v1speed, v1y } from '../packages/core/test/helpers/v1-port.js';
+import { v1rel, v1speed, v1y } from '../../packages/core/test/helpers/v1-port.js';
 
 /** Shipped pattern action ids (read from the files, so a new pattern is covered at once). */
 const SHIPPED_PATTERNS: readonly string[] = (() => {
