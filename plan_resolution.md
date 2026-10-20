@@ -65,7 +65,8 @@ without objection; **O11** came out of R1-03's review and is built as the defaul
 D1 …); **W3-1 … W3-12** are the orchestrator's wave-3 decisions for R1-05 and R3-05 part 2 — the wave-3 scout's
 recommended defaults, adopted and told to the owner, none blocking. **W4-1 … W4-14** are the orchestrator's
 wave-4 decisions for R2-01 and **W5-6** the wave-5 confirmation its C5 loop closed on; all fifteen are
-built, as R2-01's As built records.
+built, as R2-01's As built records. **W5-20** is the owner's graphics-options directive of 2026-10-20,
+worked into the plan as R6-04 by that directive's own order.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -110,6 +111,7 @@ built, as R2-01's As built records.
 | **W4-13** | v1's hi-score tables are archived under `legacyScores` on the 2 → 3 migration; v2's tables start empty | R2-01 |
 | **W4-14** | A `v1.x` build reading a format-3 save falls back to defaults — no back-migration, no rewrite | R2-01, `v1.x` |
 | **W5-6** | The e2e content gate is keyed on R2-03's re-measure, not on `CONTENT_PORT_PENDING`: `PORT_UNMEASURED` holds only from R2-02's port until R2-03, so the specs that pass at 640 on v1 content keep running through R2-02 (built as `test/e2e/gates.ts`, cited there and in `e2e-gates.test.ts`) | R2-01, R2-02, R2-03 |
+| **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick 1.5–2.7 points and synced p95 ±23–26 %. The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
 
 ---
 
@@ -341,7 +343,7 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
 | **R3** Art pipeline | R3-01 … R3-06 | art bible v2; the AI-to-sprite ingest tool with provenance; variants, palettes and tiles from real art; zone-grouped atlas pages within memory; stage art features (decor, painted backdrops, more parallax) | unchanged (R3-06 may add new stage fields) |
 | **R4** Shared art redo | R4-01 … R4-05 | ships, shots, Options, shields, bullets, items, FX, font, HUD, UI, title, endings, store and doc images — all new | re-blessed only if sprite ids change |
 | **R5** Zone remasters | R5-01 … R5-10 | each zone's tileset, backdrops, enemies and boss redrawn and its level expanded to ~4.5–5.5 min, plus bonus stages, boss rush, loops and the escape. Tag `v2.0.0-beta.1` after R5-10 | re-blessed per zone |
-| **R6** Balance, performance, release | R6-01 … R6-03 | difficulty and scoring retuned, on-device performance confirmed, docs and store assets refreshed, **v2.0.0** | final re-bless |
+| **R6** Balance, performance, release | R6-01 … R6-04 | difficulty and scoring retuned, on-device performance confirmed, the GRAPHICS options page with the sweep's recommended defaults (R6-04, added 2026-10-20 by decision W5-20), docs and store assets refreshed, **v2.0.0** | final re-bless |
 
 Dependencies: R0 ∥ R1 → R2 → R3 → R4 ∥ R5 (R5 zone steps need R3 and R4-01 … R4-03) → R6. **R0-02, R0-03 and R0-04
 block nothing.** Two R3 steps do not wait for R2: **R3-01**'s prompt-library half is done (`b938d5a`) and its art bible
@@ -2131,7 +2133,12 @@ B, D and F.
   - **Confirm the budgets:** render ≤ 8 ms (feat §22), TPF reading 1 with the vsync lock, zone-load ≤ 2 s,
     boot ≤ 10 s, memory < 100 MiB.
   - **Mitigations, only if needed (§13):** a TV profile with fewer parallax layers, far layers at half
-    resolution, CRT off by default, WebGL 2, PNG-8 everywhere.
+    resolution, CRT off by default, WebGL 2, PNG-8 everywhere. Of these, **the WebGL 2 entry is superseded** by
+    R6-04 (decision W5-20, 2026-10-20): the renderer choice is the user-facing RENDERER row there — Auto keeps
+    the directive's conservative floor, and the sweep measured the win as 1080p-fill-only — so no P4 mitigation
+    may flip the default; P4d, if P3 calls for it, retunes R6-04's Auto floor (the probe becomes primary on the
+    TVs) rather than flipping a hidden default. The CRT row likewise lives on R6-04's GRAPHICS page from that
+    step on, so P4c ships as a default there.
 - **Acceptance:** numbers recorded in `docs/dev/input-probe-results.md` §12; every budget met or a mitigation
   shipped and documented.
 
@@ -2146,6 +2153,75 @@ B, D and F.
   - **v1.x's future:** write down what happens to `v1.x` now — security and crash fixes only for one year after
     v2.0.0 (owner, Q-12), then end of life.
 - **Acceptance:** the full definition-of-done suite green; the release published.
+
+### R6-04 — Graphics options: output resolution, renderer, and the recommended defaults
+
+Added 2026-10-20 on the owner's directive (decision **W5-20**): a graphics settings section in the Options
+screen — "where we can tune things like native resolution and gl1/gl2 etc… with recommended/good defaults set".
+The evidence for the defaults is the R0-03 follow-up sweep: the 172-scenario bench matrix run on the real M7 at
+three canvas outputs × both WebGL versions, twelve sessions over ≈ 14 h of TV time
+([`tools/input-probe/results/2026-10-19-m7-bench-resolutions/`](tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md),
+recorded in §17's R0-03 row).
+
+- **Scope:**
+  - A new Options page **GRAPHICS**, placed after CONTROLS / DISPLAY / GAME (before the M3-02 EXTRAS row):
+    - **OUTPUT** — `Auto | 1920×1080 | 1280×720 | 960×540`: the cap on the canvas backbuffer that the TV's (or
+      the window's) compositor upscales — the bench's build-output mechanism
+      ([`apps/tizen/src/bench/output.ts`](apps/tizen/src/bench/output.ts)), *the lever the sweep measured*, made
+      user-facing ("what a real 720p / 540p output mode would do", says its docblock). **Auto is 1280×720 on the
+      TVs and the window's native size on desktop and web.** From the sweep: the M7's cost is the full-screen
+      fill, not the 640×360 scene, so at 720p output every 640×360 variant lands in §13's tv-profile band
+      (640×360-worst: 59.5 % two-tick at 1080p output → 11.3 % at 720p → 1.8 % at 540p; even CRT-full costs
+      0.2 % two-tick at 720p), and 540p only helps the heaviest rows — a few light rows are 1–4 points *worse*
+      there. Synced p95 stays flat ≈ 12–16 ms at every output (the scene's own render barely moves). Native art
+      from 1280×720n up is dead at any setting; ≤ 640×360n is fine.
+    - **RENDERER** — `Auto | WebGL 2 | WebGL 1`: Auto asks the engine for WebGL 2 only where the directive's
+      floor clears it — **Chromium ≥ 71** — and the context actually exists; **both TVs (68 / 69) therefore keep
+      WebGL 1, exactly today's shipped behaviour**, even though the M7s do expose WebGL 2
+      (measured 2026-09-15; the sweep's GL-2 campaigns ran on it). The conservatism is the sweep's own finding:
+      GL 2's win is 1080p-fill-only (21 better / 0 worse at 1080p output; mixed at 720p, within noise at 540p),
+      so at the recommended Auto output Auto never loses either way — and webOS 5 (Chromium 68, never run on
+      hardware) may expose no WebGL 2 at all, which is why the rule is a floor plus a runtime probe, never a
+      version guess alone. **This supersedes R6-02's "WebGL 2" mitigation bullet** (cross-referenced there):
+      the choice is a user option and §13's row now, not a last-minute default flip.
+    - The DISPLAY page's **CRT** and **ASPECT** rows **move to GRAPHICS**: they belong to the same
+      present-the-frame chain as OUTPUT (CRT filters the upscaled frame, ASPECT sets the window's shape and its
+      side panels), while DISPLAY keeps what changes how the game looks tick to tick — the bullet palette,
+      hitbox, shake, flashing and scale. This is a lane decision, stated with its reason; the rows' save fields
+      and live `UserOption` events do not move, only their page.
+  - **Both new knobs are boot-time values.** Changing one marks **`APPLIES AT RESTART`** on the row — the
+    pattern the GAME and EXTRAS pages carry with `APPLIES FROM THE NEXT GAME` — and the hosts honour the
+    restart: Tizen and webOS relaunch the app, the web host reloads the page, Electron rebuilds the window.
+    Nothing in the simulation moves — the two knobs are presentation-only (plan §1.5): a walk that flips them
+    changes no golden and no sim hash, and the fingerprint tables stay clean through the options-page change
+    except the sanctioned UI re-pin the new page itself causes.
+  - **Save:** the `UserOptions.display` section gains the two fields; a format bump (3 → 4) with the 3 → 4
+    migration and the defensive-parse law (M1-17 / M2-16 pattern: `resolveUserOptions` clamps and falls back —
+    an unknown enum name reads as `Auto`). The defaults are the recommended values — **`Auto` everywhere** — so
+    an untouched save needs nothing from anyone. What that means per host: RENDERER `Auto` is today's shipped
+    behaviour (WebGL 1 on the TVs), while OUTPUT `Auto` is the sweep's cure taken as the default — on a 1080p
+    panel the canvas stops filling the window (1920×1080 backbuffer) and caps at 1280×720 (the exact ×2 from
+    640×360), the set's own scaler taking the last step to the panel: R-D1's ×3-on-1080p becomes ×2 on the GPU
+    plus the compositor (the 59.5 % → 11.3 % two-tick move of 640×360-worst is bought with that last step — the
+    sweep ran exactly this mode, and the sharpness call is listed under Owner parts). `test/e2e/save-format.ts`
+    and its pin flip with the version; a `v1.x` app reading a format-4 save falls back to defaults (decision
+    W4-14 — no back-migration).
+- **Method:** the page is the `core/ui` list-menu machinery and the boot order the shell already walks
+  (`ShellOptions` → `createPixiRenderer`); no new renderer concept, no new draw calls beyond the page itself.
+- **Acceptance:**
+  - the sweep's numbers restated in `docs/dev/platform-polish.md`'s graphics-options row;
+  - the page tested at the UI-kit level (the `packages/core/test/scenes/` options suites: the rows, the hint,
+    the store-on-back, the moved CRT / ASPECT rows on their new page) with its allocation guards green;
+  - the presentation fingerprint re-pinned for the new page with the reason disclosed (never silently);
+  - e2e: the new page is walked, `display-options.spec.ts` follows the moved rows, and the save round trip
+    proves a boot-time value lands after the restart path;
+  - R6-02's budgets re-confirmed **per output** with the shipped defaults — the final audit (does the shipped
+    Auto still match what the final art needs?) rides R6-02's W13–W15 chain (P1's re-measure, P3's verdict —
+    which already pools the WebGL 1-vs-2 comparison — and P4c / P4d only if a budget misses), not a step of its
+    own.
+- **Owner parts:** the §17 row and the R6 milestone join GitHub issues only on the owner's say-so (§3.5's
+  rule); the on-device check of the shipped Auto settings — including the OUTPUT `Auto` sharpness call on the
+  1080p M7 (the compositor's last step, above) — is R6-02's guided capture, not new owner work.
 
 ---
 
@@ -2166,7 +2242,7 @@ outcome below maps to an action, not a stop.
 | Two-tick frames within +2 percentage points, synced render ≤ 8 ms | proceed as planned; record the headroom as the R3-04 / R6-02 budget |
 | Two-tick frames +2–10 points, or synced render 8–12 ms | proceed; R3-06 and R5 adopt the TV profile from the start: parallax layers capped at 4 on Tizen, the far backdrop at half resolution, CRT `off` default on TV |
 | Worse than that | proceed; open a performance step before R5 (render groups per layer revisited, `ParticleContainer` for the big pools — review F1(b), PNG-8, WebGL 2 if it measured better); re-measure after it |
-| WebGL 2 clearly better (≥ 10 % synced render) | a step to make WebGL 2 the TV default with a WebGL 1 fallback |
+| WebGL 2 clearly better (≥ 10 % synced render) | a step to make WebGL 2 the TV default with a WebGL 1 fallback — **R6-04 exposes the choice** (decision W5-20: the sweep's verdict is 1080p-fill-only, so it is a user option with a probing Auto, not a default flip) |
 
 | Outcome at 960×540 | Action |
 |---|---|
@@ -2347,6 +2423,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R6-01 | Balance and difficulty | not started |
 | R6-02 | Performance and memory on the TV with the final art | not started |
 | R6-03 | Docs, store refresh and the v2.0.0 release | not started |
+| R6-04 | Graphics options: output resolution, renderer, and the recommended defaults (added 2026-10-20, decision W5-20; the page rides wave 9, the final-default audit rides R6-02's W13–W15 chain) | not started |
 
 ---
 
@@ -2428,7 +2505,7 @@ work (≤ 2 per wave). Ids are `<step>.<subtask>` ([`docs/v2-run/README.md`](doc
 | **W06** | R2-03; R5's stable hash keys and capacity; R5's first test splits | 8: `E1 → E2`, `E3 → E4`, `I1`, `R5-P.P1 → P8`, `R5-P.P2a → P2b → P6`, `R5-P.P5c → P9`, then `G1`, `I3`, `G2` (optional — it re-pins the presentation fingerprint's attract walk), `R2-03.V`; + 2 reviews | GOLDEN + FP (G1, one commit), FP (P1: content-DB; P8: only the table of a fingerprint that really moved; G2: presentation), DATA-INDEX (P1, P8), CORE-CONFIG (P1, a barrel export only), DOCS-IMAGES (I1, I3), CONTENT-TEST (P2a → P2b → P6), the repo allow-list (P9, wave rule 6) | E1 / E2, E3 / E4, then G1 and V (batches A, B, C, F, and every other batch with a spec E1–E4 or G1 edited); P8's stress bench and I3's `docs:screens` run under the e2e lock and do not count toward the two | W05 code exit, incl. `R3-03.RV` and `R3-04.RV` at zero | goldens and demos re-blessed once, with reasons; every e2e gate removed; content-order-independent hashes; docs `W06.DOCS-A` … `D`; §17 R2-03 done |
 | **W07** | R2-04; R3-06; R4's prep | 8: `R2-04.F1 → P2 → G → REL`, `R2-04.P1 → P3 → P4`, `Z1 → Z3`, `Z2 → Z4`, `R3-06.L1 → L2 → L4 → L6`, `L5 → L3 → L7`, `R4-P.P1 → P2`, `R4-P.P3 → P4`; + 2 reviews | GOLDEN (`R2-04.G`), FP (`R2-04.P2`, `R2-04.G`, `R3-06.L1` — the content-DB `examples` only —, `R3-06.L2`, `L4`, `L6`, `R4-P.P1` — the credits line only —), DATA-INDEX (the `R3-06.L1` lane), the core barrel (CORE-CONFIG: `R3-06.L2`, then `L4`), RP-BARREL (`R3-06.L3`), `layer-effects.ts` (`R2-04.P4`, then `R3-06.L3`), `test/scripts/assets/pipeline-edge.test.ts` (`R4-P.P1`, then `R4-P.P3`; wave rule 10), the registry `scripts/assets/procedural/index.mjs` and `content/campaign/main.campaign.json` (`R4-P.P1`; the campaign file for the credits only) | `R2-04.P3` and `R3-06.L2` first, then `R3-06.L6`, `R2-04.G` last | W06 exit | the retune re-blessed with reasons; the `2.0.0-alpha.1` version line; the decor layers; the RR-1 pipeline; docs `W07.DOCS-A` … `E`; §17 R2-04, R3-06 done; **last**, the pre-release tag `v2.0.0-alpha.1` on `origin/master` once every review and the docs item are at zero (its SHA in `RUN_DIR/w07-tag.txt`, a commit Exit check 2 ran on — Exit check 3) |
 | **W08** | R4-01 … R4-05, all but the integrators | 8: ships `A1a → A1b → A2`; scenes `E3 → E4 → C7 → E2 → E1`; HUD and kit `C5 → C6`; `A3 → B2 → A4`; `A5 → A7 → A6`; the font `C1 → … → C4b`; `A8 → B1 → B3`; FX `D1 → … → D4`; fillers: the zone designs; + 2 reviews | GOLDEN (A1b, B3), FP, SCENES, UI-FILE, STRINGS, POWERUPS, E2E-MIRROR, DOCS-IMAGES (A1a, A6: their own folders), DATA-INDEX (A2; also `DEFAULT_PLAYER_SHIP` in `core/player`), CORE-CONFIG (C1, then A3) | the ships and HUD lanes, then scenes; at the end `W08.E2E` (batches A, C without `boss`, D, E without `flight` / `ship-select` / `weapon-select`, G and F, plus `enemies` and `coop-gamepad`) | W07 exit | all on master and reviewed; the scale-1 digest pin unchanged; the origin report at 0 failures; `W08.E2E` green |
-| **W09** | R4's integrators; R5 prep; the R5 designs | 8: `A9 → B4` (A9 edits `powerups.spec.ts`; B4 only re-runs it), `E5 → E6`, `R5-P.P4 → P5a1 → P5a2`, `R5-P.P3 → P10 → LAND`, `R5-P.P5e`, the designs `R5-P.D-A` … `D-I`; + 2 reviews (one is the design review) | DOCS-IMAGES (A9, B4: their own folders; E6: all), STORE (E5), FP (P10), GOLDEN (`R5-P.P3`, verify only) | A9 / B4, E6 | W08 exit | R4 complete; the split `vitest list` comparisons match, apart from each block's allowed differences; `land-zone.sh` tested; designs reviewed to zero; docs `W09.DOCS-A` … `E`; §17 R4-01 … R4-05 done (owner parts pending) |
+| **W09** | R4's integrators; R5 prep; the R5 designs; R6-04 (the GRAPHICS options page, decision W5-20) | 8: `A9 → B4` (A9 edits `powerups.spec.ts`; B4 only re-runs it), `E5 → E6`, `R5-P.P4 → P5a1 → P5a2`, `R5-P.P3 → P10 → LAND`, `R5-P.P5e`, `R6-04` (lane 6 of the glance), the designs `R5-P.D-A` … `D-I` fill the free slots in order; + 2 reviews (one is the design review) | DOCS-IMAGES (A9, B4: their own folders; E6: all), STORE (E5), FP (P10; R6-04's sanctioned re-pin, the two serialise on the land lock), GOLDEN (`R5-P.P3`, verify only), SCENES, STRINGS and CORE-CONFIG (R6-04, work-time) | A9 / B4, then R6-04's spec run and E6's screens on the freed passes | W08 exit | R4 complete; the split `vitest list` comparisons match, apart from each block's allowed differences; `land-zone.sh` tested; designs reviewed to zero; R6-04's page on master with its loop at zero (E6 shoots the final Options screen); docs `W09.DOCS-A` … `E`; §17 R4-01 … R4-05 done (owner parts pending), R6-04 the page landed (its audit line closes in wave 15's R6-02 chain) |
 | **W10** | R5 prep 2; the zones' stand-in art; the zone-A pilot | 8: `R5-P.P7`, `R5-P.P12 → P13 → P14`, `R5-P.P5d` (after P7's review is at zero), zone A `S2 → S4a → … → S6b → S7` (LAND), `R5-03.S2`, then the S2s of B, D, E, F, G, H, I; + the `R5-01.TO` timeout fix on demand (`R5-01.S6`'s Traps: a builder slot, while zone A's lane waits); + 2 reviews | BOT (`R5-P.P12`, for the whole wave), GLOBAL (`R5-P.P12`, only for its fallback re-bless), CONTENT-TEST (`R5-P.P13`), FINGERPRINTS and GOLDEN (`R5-P.P14`, inside the land lock), FP (`R5-P.P7`; `R5-01.S2` — the credits line only), the registry `scripts/assets/procedural/index.mjs` and `content/campaign/main.campaign.json` (`R5-01.S2`, work-time, the credits only), LAND (zone A, `R5-01.S7`) | pass 1: `R5-P.P7`'s pair-spec batch (only if a ramp changed), then P5d; pass 2: zone A | W09 exit | every S2 on master; zone A landed first, with only its own goldens and `bonus-range`'s moved; docs; §17 R5-01 done (owner parts pending) |
 | **W11** | R5-02 … R5-07, R5-09; zone H's first half | 8: zones B, C, D, E, F, G, I (local branches, one worktree each) and zone H `S4a → S4b → S5a → S5b` (no echo change); + `R5-0n.TO` timeout fixes on demand (rule 13: a builder slot, while its zone's lane waits); + 2 reviews | LAND (one at a time; B, D and F before H's echoes) | two passes for the wave: each zone's S6, each post-LAND check's e2e run and each RV's re-run of the spec (when the branch changed after S6), in lane order | W10 exit | seven zones landed with their post-LAND checks; zone H's S4a … S5b on its branch; docs `W11.DOCS-A` … `E`; their §17 rows done (owner parts pending), R5-08 in progress |
 | **W12** | R5-08; R5-10 part 1; the real-art drops | `R5-08.S4c → S6 → RV → S7` (+ `R5-08.TO` on demand, wave 12 rule 1), `R5-10.T1`, `T2 → T8`, `T3`, `T6`, up to two `S3` drops (owner-gated); + 2 reviews | LAND (H, T1, T2), GROUPS (T8; the shell memory module work-time), DOCS-IMAGES (T3: its four plates; the S3 drops; + LAND if a frame count moves), FP (T3 — always: the content-DB table re-pins with its content edits, the presentation and shell tables only when a new name shifts ids; `R5-10.T6`, only if a content file changed), the registry `scripts/assets/procedural/index.mjs` and `content/campaign/main.campaign.json` (T2, work-time) | two passes, handed out in this order: `R5-08.S6` (zone H), `R5-10.T3`, `R5-10.T8`, then the S3 drops; a post-LAND check's e2e run and an RV's re-run of a spec take a pass too | W11 exit | H landed; the bonus stages, the escape, the dimension, the ranges and the linked pages done; docs `W12.DOCS-A`, `B`; §17 R5-08 done (owner parts pending), R5-10 in progress |

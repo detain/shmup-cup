@@ -6,13 +6,15 @@
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R4-01 … R4-05 (their integrators and step reviews), R5 prep (`R5-P`: P3, P4, P5a1, P5a2, P5e, P10, the
-LAND helper, the nine zone designs). · **Gate to start:** wave 08's code exit: every R4 subtask of wave 08 on
+LAND helper, the nine zone designs), R6-04 (the GRAPHICS options page — the owner's 2026-10-20 directive,
+decision W5-20; its block is under Subtasks, lane 6). · **Gate to start:** wave 08's code exit: every R4 subtask of wave 08 on
 `origin/master` with its review at zero, in particular `R4-02.B3` (the last golden re-bless of R4) and
 `R4-05.E1 … E4`. · **Exit (summary):** R4 complete and reviewed to zero; the R5 test splits on master (each split's
 before/after `vitest list` comparison matches, apart from the differences its block allows);
 `node scripts/golden-update.mjs --only <ids>` and `SHMUP_FINGERPRINT_UPDATE=1` work; `land-zone.sh`
 committed and dry-run-tested; the nine designs written and reviewed to zero; §17 R4-01 … R4-05 `done (owner parts
-pending)`.
+pending)` and R6-04's page on `master` with its loop at zero (§17: the page landed, the audit rides wave 15's
+R6-02 chain).
 
 Line numbers are at `bc8e05d`. Waves 4 to 8 move many of them (the port, the golden re-bless, R4); re-find a line
 by the quoted code or test title before you edit it.
@@ -26,16 +28,21 @@ by the quoted code or test title before you edit it.
 | 3 | `R5-P.P4` → `R5-P.P5a1` → `R5-P.P5a2` | `content/patterns/*`, the 20 core behaviour tests, then the `behaviors-zones*` splits | none | no |
 | 4 | `R5-P.P3` → `R5-P.P10` → `R5-P.LAND` (LAND after `R4-05.E6` is on master) | `scripts/golden-update.mjs`, `test/golden/*.test.ts`, recovery tests; the 3 fingerprint tests; `docs/v2-run/helpers/land-zone.sh` | GOLDEN (verify only, P3); FINGERPRINTS (P10) | no |
 | 5 | `R5-P.P5e` | `test/integration/zones-*-{runtime,runtime-edge,direct}.test.ts` → per zone | none | no |
-| 6–8 | `R5-P.D-A` … `R5-P.D-I` (the designs not finished in wave 08), one agent per design | `docs/v2-run/designs/zone-<x>.md` (new) | none (docs commit of its own file) | no |
+| 6 | `R6-04` (the GRAPHICS options page) | `core/config`, `core/save`, `core/scenes`, `core/ui/strings.ts`, `content/strings/en.strings.json`, the shell boot and dispatch, the hosts' boots, the options specs | SCENES, STRINGS, CORE-CONFIG (work-time); FP (push-time, rule: the fingerprint bullet below); E2E-MIRROR not needed (no mirror file moves) | yes (the second pass, after `R4-02.B4` ends) |
+| 7–8 | `R5-P.D-A` … `R5-P.D-I` (the designs not finished in wave 08), one agent per design | `docs/v2-run/designs/zone-<x>.md` (new) | none (docs commit of its own file) | no |
 
 - **Fillers:** none; designs take every free slot.
 - **Reviews:** slot 1 — the R4 step reviews `R4-01.RV` … `R4-05.RV` (each as soon as the step's last subtask is on
   master; a review that runs before `R4-05.E6` skips the `pnpm docs:images --check` re-run and says so —
   `R4-05.RV` runs it green after E6), then the R5 prep reviews. Slot 2 — `R5-P.D-RV` for each
-  design as it lands, then the remaining prep reviews.
+  design as it lands, then the remaining prep reviews. `R6-04` takes the common per-subtask loop
+  (`R6-04.RV1` → `R6-04.FIX1` → `R6-04.RV2` … to zero, README rule as in wave 08's Reviews bullet); that step is
+  one subtask, so its loop closing **is** the step review.
 - **Docs item:** `W09.DOCS-A` … `W09.DOCS-E` (after the R4 step reviews and the R5 prep reviews are at zero;
   DOCS-E also covers R5 prep).
-- **e2e passes:** 2 — lane 1 (A9, then B4) and lane 2 (E6's `docs:screens`). No other subtask of this wave runs e2e.
+- **e2e passes:** 2 — lane 1 (A9, then B4), then lane 6 (`R6-04`'s spec run) takes the freed pass; E6's
+  `docs:screens` runs under the e2e lock whenever lane 1 and `R6-04`'s run leave it free (README rule 4 keeps the
+  batches serial). No other subtask of this wave runs e2e.
 
 ## Rules for this wave
 
@@ -44,8 +51,11 @@ by the quoted code or test title before you edit it.
   B4's report; the orchestrator starts `R4-01.A9.FIX<n>` (a new agent with A9's files, in lane 1), and B4 re-runs
   `powerups.spec.ts` and pushes only after that fix is on master — never two edits of the spec in parallel).
 - **E6 is the last R4 push.** It starts only when `R4-01.A9`, `R4-02.B4` and `R4-05.E5` are on master.
-- **Fingerprints in this wave:** `R5-P.P10` changes the code of the three fingerprint tests (the write mode). It is
-  the wave's only fingerprint change and takes the land lock for its push (README rule 6). `R5-P.P4` moves no
+- **Fingerprints in this wave:** `R5-P.P10` changes the code of the three fingerprint tests (the write mode);
+  `R6-04` re-pins the presentation and content-DB tables once, for its new page (the sanctioned UI re-pin —
+  decision W5-20's step). Beside P10's code change these are the wave's only fingerprint moves; both push under
+  the land lock (README rule 6), and whoever pushes later re-runs the earlier one's check on the rebased tree
+  before its own push. `R5-P.P4` moves no
   fingerprint: no `ContentDb` field holds a `patterns` file's path, so splitting the file leaves all three `PINNED`
   tables as they are.
 - **Goldens:** no subtask of this wave changes a `*.replay.json`. `R5-P.P3` runs
@@ -194,7 +204,10 @@ by the quoted code or test title before you edit it.
 
 - **Wave / lane / order:** wave 09, lane 2, after `R4-05.E5`; starts only when `R4-01.A9`, `R4-02.B4` and
   `R4-05.E5` are on master. It is the last R4 push.
-- **Depends on:** all of R4 on master.
+- **Depends on:** all of R4 on master; and `R6-04` pushed with its review loop at zero if it is already on
+  `master` or running — E6 shoots the Options pages, so the GRAPHICS page belongs in its screens; the
+  orchestrator starts E6 only after R6-04's loop closes (R6-04 is a single subtask on lane 6, E6 the tail of two
+  chained integrators — this orders itself in practice).
 - **Goal:** `docs/images/**` (plates, boss portraits, `logo.png`) and `docs/images/screens/` show the v2 art.
 - **Files (only these):** `docs/images/**` (all generated: `pnpm docs:images` and `pnpm docs:screens`);
   `scripts/doc-images.mjs` and `scripts/doc-screenshots.mjs` **only** if a layout needs re-measuring for a new
@@ -706,9 +719,130 @@ by the quoted code or test title before you edit it.
   `zones-d-and-e.md:382`, `zones-f-and-g.md:423`) — find them all with
   `git grep -n "zones-[a-z]*-runtime\|zones-[a-z]*-direct" -- docs/dev`.
 
+### R6-04 — The GRAPHICS options page, the two boot-time knobs, save format 4 (SCENES + STRINGS + CORE-CONFIG + FP)
+
+- **Wave / lane / order:** wave 09, lane 6, from the wave's start. Its files belong to no other wave-09 lane;
+  the designs queue behind it exactly as they queue behind lanes 1–5.
+- **Depends on:** wave 08's exit — the page draws with `R4-03`'s 9×12 font and redrawn UI kit, so it lands on
+  them, not beside them. Nothing else in the wave touches `scenes/index.ts`, `ui/strings.ts`, `config/index.ts`
+  or the save module after `R4-03.C1` handed CORE-CONFIG on (wave 08, lane 4); if a wave-08 carry-over still
+  holds one of the work-time tokens, wait for its push.
+- **Goal:** plan **R6-04** (§12 of `plan_resolution.md`, decision **W5-20**, the owner's 2026-10-20 directive):
+  a **GRAPHICS** Options page after CONTROLS / DISPLAY / GAME carrying **OUTPUT**
+  (`Auto | 1920×1080 | 1280×720 | 960×540` — the canvas-backbuffer cap the compositor upscales; Auto is 720p on
+  the TVs, the window's native size on desktop and web) and **RENDERER** (`Auto | WebGL 2 | WebGL 1` — Auto
+  takes WebGL 2 only where the directive's Chromium ≥ 71 floor clears and the context exists, so both TVs stay
+  on WebGL 1 = today's shipped default), with **CRT** and **ASPECT** moved from DISPLAY,
+  `APPLIES AT RESTART` on the two boot knobs, and `SAVE_VERSION` bumped 3 → 4 with the migration and the
+  defensive law. Defaults `Auto` everywhere — the sweep
+  (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`) is the evidence: at 720p output every
+  640×360 variant is in the §13 tv-profile band (640×360-worst 59.5 % → 11.3 % → 1.8 % two-tick across the three
+  outputs; CRT-full costs 0.2 % at 720p; 540p only helps the heaviest rows; synced p95 flat ≈ 12–16 ms), and
+  GL 2's 21-better / 0-worse is a 1080p-fill-only win, so Auto never loses at the recommended output.
+- **Files (only these):**
+  - `packages/core/src/config/index.ts` — the two unions and their tables next to `CRT_FILTERS` /
+    `ASPECT_MODES` (`OUTPUT_CAPS`: `auto | 1080 | 720 | 540`; `RENDERER_CHOICES`: `auto | webgl2 | webgl1` —
+    short string values, the long forms are display strings), `DisplayOptions` gains `output` and `renderer`,
+    `DEFAULT_USER_OPTIONS.display` sets both `auto`, `resolveUserOptions` reads them defensively (unknown →
+    `auto`, same `oneOf` law as `crtFilter`); the module docblock and `moduleInfo` stay true.
+  - `packages/core/src/save/index.ts` — `SAVE_VERSION` **4**, the 3 → 4 migration (copies every old field, the
+    two new ones take their `auto` defaults), `serializeSave` writes them in the display group's fixed order
+    (after `aspect`); a format-4 document read by `v1.x` falls back to defaults (decision W4-14 — no
+    back-migration, never a rewrite).
+  - `packages/core/src/scenes/index.ts` — `OptionsItem.Graphics` inserted after `Game` (EXTRAS and BACK shift —
+    the enum is code, nothing persists it); the new `GraphicsScene` page: OUTPUT / RENDERER / CRT / ASPECT rows
+    plus the `APPLIES AT RESTART` hint under the two boot rows — the pattern of the GAME and EXTRAS pages'
+    `APPLIES FROM THE NEXT GAME`; DISPLAY loses the CRT / ASPECT rows.
+  - `packages/core/src/ui/strings.ts` + `content/strings/en.strings.json` — the new ids (page, row labels, the
+    four value labels `1920×1080` …, the hint); `en.strings.json` must equal the built-in table
+    (`content:check`), and every glyph the labels add exists in the bitmap font.
+  - `packages/core/src/index.ts` — the barrel: the new names only (additions, next to the display tables).
+  - `packages/shell/src/boot/index.ts` and `packages/shell/src/dispatch/index.ts` — resolve OUTPUT to the canvas
+    backbuffer cap at boot (the mechanism's reference is `apps/tizen/src/bench/output.ts` — the cap sizes the
+    canvas, the CSS still fills the window, the compositor upscales), resolve RENDERER for
+    `preferWebGLVersion` (Auto: ask 2 only where the Chromium ≥ 71 floor clears **and** the probe finds a
+    WebGL 2 context — the TVs (68 / 69) get 1, today's shipped default; an explicit row pins its version; the
+    probe is the safety net, never an assumption — webOS 5 has never run on hardware; the dev switches
+    `?gl=` / `localStorage['shmup-cup:gl']` keep precedence over the user's choice); two new `UserOptionKind`
+    codes (appended) so the page marks the change pending a restart.
+  - the hosts' restart paths and their boot tests: `apps/tizen/src/` (Tizen relaunch), `apps/webos/src/` (the
+    webOS equivalent), `apps/web/src/` (reload); `apps/electron/src/main/` only if the window rebuild needs the
+    main process — if the renderer's reload alone restarts it cleanly, say so in the report and touch nothing.
+  - `apps/web/src/index.html` CSS **not** edited (the Chromium 68 floor review); the canvas sizing stays JS.
+  - tests: `packages/core/test/config/config-user-options.test.ts` and `-edge.test.ts`, `packages/core/test/save/`
+    (migration + round trip, a hostile format-4 document), `packages/core/test/scenes/scenes-options*.test.ts`
+    (the page's rows, hints, live events, store-on-back; the moved CRT / ASPECT cases),
+    `packages/core/test/index.test.ts` (the barrel), `packages/shell/test/boot/` + `packages/shell/test/dispatch/`,
+    the boot tests of the hosts you edited (`apps/tizen/test/boot/`, `apps/webos/test/boot/`, `apps/web/test/boot/`,
+    `apps/electron/test/main/` only on a main-process change).
+  - `test/e2e/save-format.ts` (the `SAVE_FORMAT` mirror 3 → 4 — pinned by
+    `test/integration/e2e-save-format.test.ts`), `test/e2e/graphics-options.spec.ts` (**new**: walk into GRAPHICS,
+    step OUTPUT and RENDERER and the moved CRT / ASPECT rows, the `APPLIES AT RESTART` marks, Back stores the
+    boot values, the next boot reads them), `test/e2e/display-options.spec.ts` (its CRT / ASPECT cases move into
+    the new spec; leave the DISPLAY-page half walking palette / hitbox / shake / flashing / scale).
+  - `test/integration/presentation-fingerprint.test.ts` and `test/integration/content-db-fingerprint.test.ts` —
+    the sanctioned re-pins (the OPTIONS walks now pass through the new page; `en.strings.json` moved), README
+    rule 6's two passes.
+- **Tests (targeted, run all of them):**
+  ```bash
+  pnpm content:check
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/save packages/core/test/scenes packages/core/test/ui packages/core/test/index.test.ts packages/core/test/frame-literals.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/boot packages/shell/test/dispatch
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-save-format.test.ts test/integration/tv-engine-floor.test.ts test/integration/eslint-rules.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  #   (they fail with the new page; re-pin per README rule 6 and run again clean)
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test/boot      # only if you edited it
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/boot      # only if you edited it
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project web apps/web/test/boot          # only if you edited it
+  pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/shell typecheck
+  pnpm lint
+  nohup bash docs/v2-run/helpers/e2e-batch.sh graphics-options display-options options front-end scenes game-options > /home/sites/shmup-cup-run/R6-04-e2e.log 2>&1 &
+  #   poll the log (README rule 4); batch B's specs are wave 9 lane 1's — do not run them
+  ```
+  The push holds the land lock for the two fingerprint re-pins (rule 6), with the wave's fingerprint bullet's
+  order rule beside `R5-P.P10`.
+- **Acceptance:** the step's Acceptance bullets (plan §12 R6-04): the page walks, the two events carry
+  `APPLIES AT RESTART`, a save written before the bump migrates to `auto`/`auto` + moved rows and behaves exactly
+  as today, the e2e save-format mirror is 4, both fingerprints re-pinned with the reason in the commit message,
+  the touched guards green; **no golden, no replay and no sim hash moves** — if one does, stop and report: the
+  knobs are presentation-only and that would be a bug, not a re-pin. Report the docs rows; do not edit docs
+  (README rule 7 — `W09.DOCS-D` collects the UI docs, `W09.DOCS-A` sets §17's R6-04 row to the page landed).
+- **Token:** SCENES, STRINGS, CORE-CONFIG (work-time — free in this wave from its start, see Depends);
+  FINGERPRINTS (push-time).
+- **Traps:**
+  - **the TV engine floor:** webOS 5's Chromium 68 may expose **no WebGL 2 at all**, and no webOS set has ever
+    run this code — Auto is the directive's ≥ 71 floor **and** the runtime probe together, never a capability
+    assumption (the M7s do expose GL 2; Auto still leaves them on WebGL 1 — the floor is deliberately below 69);
+    both TVs are inside the Chromium 68 / 69
+    floor (`test/integration/tv-engine-floor.test.ts`): no new browser or WebGL API appears in shipped source
+    without adding its name to that scan's list (the relaunch and reload calls live behind each host's own
+    injected-platform seam, exactly like the exit paths do today).
+  - **no frame literals:** the page lays out through `core/ui` `uiPx` from `GLYPH_W` / `LINE_H` like its sibling
+    pages; `1920×1080` is a string, never a size (the literal scan reads digits inside strings — the frame's own
+    numbers are the banned ones, but derive anyway).
+  - **zero-allocation UI law:** the page's `MenuLayout` is a frozen module constant, index loops not `for … of`,
+    labels built on transition not per frame (M1-16 / M2-16); the scenes' allocation guards stay green.
+  - **the restart paths are per-host** — Tizen's relaunch is not webOS's is not the browser's reload, and
+    Electron's window rebuild is the main process: prove each one you wire in that host's boot test, and keep
+    the pending values **saved before** any restart (Back already stores on close — the restart must not
+    re-store; a half-applied restart must leave the saved document valid).
+  - **`OptionsItem` renumbering:** every spec that walks OPTIONS by a fixed count of Downs breaks; navigate by
+    the constants (the table's own note in `saves-and-options.md`), and re-check `options.spec.ts`,
+    `front-end.spec.ts` and `scenes.spec.ts` runs in the batch above.
+  - the two boot knobs must not touch the sim: a moved golden or sim hash is a finding, never a re-pin.
+  - `apps/tizen/test/build/tizen-build.test.ts` (the release bundle holds no debug code) and the bundle size
+    budget must stay green — the page is ~one scene's worth of code; report honestly if the budget moves.
+  - do not rename `DISPLAY`'s remaining ids or the `UserOption` event codes — codes are appended, never reused.
+- **Docs needs (report them; `W09.DOCS-D` / `W09.DOCS-A` write them):**
+  `docs/dev/platform-polish.md` (the graphics-options row restating the sweep's numbers — the step's
+  Acceptance), `docs/dev/scenes-and-ui.md` (the new page, the moved rows with their reason, the
+  `APPLIES AT RESTART` pattern), `docs/dev/saves-and-options.md` (format 4, the two fields, the migration,
+  `resolveUserOptions`, the event codes), `docs/dev/api-reference.md` (the new names), and a `CHANGELOG.md`
+  `[Unreleased]` line (the docs agent's, not yours).
+
 ### R5-P.D-A — Zone design: A, AZURE VERGE
 
-- **Wave / lane / order:** wave 09, lanes 6–8 (any free design slot); filler from wave 08.
+- **Wave / lane / order:** wave 09, lanes 7–8 (any free design slot); filler from wave 08.
 - **Depends on:** R2-04 closed (wave 07: the content is ported ×1.5 and retuned).
 - **Goal:** a design spec for zone A's remaster that a zone lane can build without asking a question. It writes no
   code and no content.
@@ -1044,7 +1178,8 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
 3. The splits' `vitest list` comparisons are in their reports (same count and titles), except the differences
    each split block allows.
 4. `ls docs/v2-run/designs/` lists `zone-a.md` … `zone-i.md`, each reviewed to zero.
-5. `W09.DOCS-A` has set §17 R4-01 … R4-05 and pushed; the orchestrator ran the board sync.
+5. `W09.DOCS-A` has set §17 R4-01 … R4-05 done (owner parts pending) and R6-04 to the page landed (its audit
+   line rides wave 15's R6-02 chain), and pushed; the orchestrator ran the board sync.
 6. A look at GitHub CI for the wave's pushes (never wait for it).
 - **Deferred to wave 15:** the full `pnpm test`, `pnpm test:e2e` and `pnpm bench`.
 
@@ -1060,3 +1195,6 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
 - Say whether picking is finished and whether the winners go to Git LFS (R0-04); give the run a fresh copy of the
   picker's `choices.json` before any art subtask.
 - Read the nine zone designs if you want; they are adopted by default once reviewed.
+- R6-04 (decision W5-20): say whether its §17 row joins the GitHub board and the R6 milestone (plan §3.5); the
+  directive itself created no issue, and no agent opens one. The on-device re-check of the shipped Auto settings
+  is not yours here — R6-02's guided capture covers it (wave 15).
