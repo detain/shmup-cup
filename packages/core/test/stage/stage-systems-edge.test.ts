@@ -364,9 +364,9 @@ describe('core/stage MovingBlockSystem — unit', () => {
     const system = new MovingBlockSystem(
       blockStage([
         { x: 100, type: 'block', screenX: 0, y: 0, w: 16, h: 8, tileId: 1 }, // right edge 115
-        { x: 350, type: 'block', y: 0, w: 8, h: 8, tileId: 1 },
+        { x: 350, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // the one step b re-fires
         { x: 450, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // inactive
-        { x: 550, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // at the camera: its event re-fires
+        { x: 550, type: 'block', y: 0, w: 8, h: 8, tileId: 1 }, // exactly at b's camera
       ]),
       blocks,
       TABLES,
@@ -383,6 +383,8 @@ describe('core/stage MovingBlockSystem — unit', () => {
     expect(Array.from(system.slotEvent).filter((e) => e >= 0)).toEqual([0]);
     system.clear();
     system.respawnBefore(550, (i) => i !== 2);
+    // `respawnBefore` takes the events strictly before the camera and still in reach: the 350
+    // one re-fires; the 550 one sits exactly at the camera — not before it, so it does not.
     expect(Array.from(system.slotEvent).filter((e) => e >= 0)).toEqual([1]);
     system.clear();
     system.respawnBefore(116 + BLOCK_DESPAWN_MARGIN, () => true);
