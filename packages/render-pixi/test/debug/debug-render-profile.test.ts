@@ -58,39 +58,76 @@ function numbers(list: DrawList): Array<[number, number]> {
 /** The one method the meter hooks, as a plain property (not an unbound class method). */
 interface PoolHandle {
   /**
-   * Creates a pooled render target.
+   * Creates a pooled render target. Pixi 8.21+ hands the size as an options object; the four
+   * positional arguments survive as the method's own deprecation shim — the fake takes both,
+   * exactly as the pool does.
    *
-   * @param w - Pixel width.
-   * @param h - Pixel height.
-   * @param antialias - Whether the target is multisampled.
-   * @param mipmaps - Whether it generates mipmaps.
+   * @param w - The options object, or the legacy pixel width.
+   * @param h - Legacy pixel height.
+   * @param antialias - Legacy: whether the target is multisampled.
+   * @param mipmaps - Legacy: whether it generates mipmaps.
    * @returns The texture.
    */
-  createTexture: (w: number, h: number, antialias: boolean, mipmaps: boolean) => unknown;
+  createTexture: (
+    w: number | RequestOptions,
+    h?: number,
+    antialias?: boolean,
+    mipmaps?: boolean,
+  ) => unknown;
 }
+
+/** Pixi 8.21+'s `createTexture` options; the meter reads only the size, the rest travels through. */
+interface RequestOptions {
+  /** Width in pixels. */
+  width?: number;
+  /** Height in pixels. */
+  height?: number;
+  /** Whether the target is multisampled. */
+  antialias?: boolean;
+  /** Whether the target generates mipmaps. */
+  autoGenerateMipmaps?: boolean;
+  /** The pooled texture's format (e.g. `'bgra8n'`). */
+  format?: string;
+  /** The pooled texture's scale mode. */
+  scaleMode?: string;
+}
+
+/** Free textures of one pool shape: entries with a sized source, plus junk that must be skipped. */
+type FakeFreeTextures = Array<{ source?: Record<string, number> }>;
 
 /**
  * A `TexturePool`-shaped stand-in: `createTexture` only records what it was asked for.
  *
- * @param free - Free textures the pool already holds (Pixi's `_texturePool`), if any.
+ * @param free - Free textures the pool already holds in the pre-8.21 `_texturePool` object, if any.
+ * @param buckets - Free textures in the 8.21+ `_buckets` Map (keyed by packed bucket key), if any.
  * @returns The fake pool (as both shapes — the meter's argument type and the handle the test
- *   reads) and the calls it saw.
+ *   reads), the calls it saw normalized to `[width, height, antialias, mipmaps]`, and the raw
+ *   arguments of every call (to prove the meter forwards the request in the form it arrived).
  */
-function fakePool(free?: Record<string, Array<{ source?: Record<string, number> }>>): {
+function fakePool(
+  free?: Record<string, FakeFreeTextures>,
+  buckets?: Map<number, FakeFreeTextures>,
+): {
   pool: TexturePoolClass;
   handle: PoolHandle;
   calls: number[][];
+  seen: unknown[][];
 } {
   const calls: number[][] = [];
+  const seen: unknown[][] = [];
   const handle: PoolHandle = {
     createTexture: (w, h, antialias, mipmaps): unknown => {
-      calls.push([w, h, antialias ? 1 : 0, mipmaps ? 1 : 0]);
-      return { w, h };
+      seen.push([w, h, antialias, mipmaps]);
+      const width = typeof w === 'number' ? w : (w.width ?? 0);
+      const height = typeof w === 'number' ? (h ?? 0) : (w.height ?? 0);
+      calls.push([width, height, antialias ? 1 : 0, mipmaps ? 1 : 0]);
+      return { w: width, h: height };
     },
   };
   const pool = handle as unknown as Record<string, unknown>;
   if (free !== undefined) pool._texturePool = free;
-  return { pool: handle as unknown as TexturePoolClass, handle, calls };
+  if (buckets !== undefined) pool._buckets = buckets;
+  return { pool: handle as unknown as TexturePoolClass, handle, calls, seen };
 }
 
 describe('render-pixi/debug render-profile line (M3-02c)', () => {
@@ -169,6 +206,8 @@ describe('render-pixi/debug createRenderTargetMeter (M3-02c)', () => {
     // The renderer's boot warm-up frame (M3-02d) draws every filter once, so by the time the
     // shell's debug tools start their meter the pool may already hold that pass's target. The
     // overlay's `RT` figure would otherwise read 0 on a stage whose effect is plainly running.
+    // This is the pre-8.21 shape (the `_texturePool` object fallback); the 8.21+ `Map` buckets
+    // have their own test below.
     const { pool, handle } = fakePool({
       // Pixi's own shape: free textures by size key, each with a sized source.
       '67108872': [{ source: { pixelWidth: 512, pixelHeight: 256 } }],
@@ -186,6 +225,60 @@ describe('render-pixi/debug createRenderTargetMeter (M3-02c)', () => {
     handle.createTexture(2048, 2048, false, false);
     expect(meter.bytes).toBe(512 * 256 * 4 + 1024 * 512 * 4 + 2048 * 2048 * 4);
     expect(meter.count).toBe(3);
+    meter.stop();
+  });
+
+  it('counts the `_buckets` Map of the Pixi 8.21+ pool (the 8.22.0 dependency)', () => {
+    // 8.21 redesigned TexturePool: the free lists are a `Map` of buckets keyed by a packed
+    // number, and `getOptimalTexture` calls `createTexture` with an options object. This is the
+    // shape the shipped dependency really has — the e2e render-profile spec's warm-up target
+    // sits in one of these buckets.
+    const { pool, handle, seen } = fakePool(
+      undefined,
+      new Map([
+        [67108872, [{ source: { pixelWidth: 512, pixelHeight: 256 } }]],
+        [
+          268435464,
+          [
+            { source: { pixelWidth: 1024, pixelHeight: 512 } },
+            // Junk is skipped exactly as on the legacy lists.
+            { source: { pixelWidth: 0, pixelHeight: 0 } },
+            {},
+          ],
+        ],
+      ]),
+    );
+    const meter = createRenderTargetMeter(pool);
+    expect(meter.bytes).toBe(512 * 256 * 4 + 1024 * 512 * 4);
+    expect(meter.count).toBe(2);
+    // A post-start create arrives the 8.21+ way — the exact object `getOptimalTexture` builds.
+    const request: RequestOptions = {
+      width: 2048,
+      height: 2048,
+      antialias: false,
+      autoGenerateMipmaps: false,
+      format: 'bgra8n',
+      scaleMode: 'nearest',
+    };
+    expect(handle.createTexture(request)).toEqual({ w: 2048, h: 2048 });
+    // The request is forwarded untouched (rebuilding it positionally would trip the pool's
+    // deprecation shim), and the total grows by the right bytes — never a NaN.
+    expect(seen[0]).toEqual([request, undefined, undefined, undefined]);
+    expect(meter.bytes).toBe(512 * 256 * 4 + 1024 * 512 * 4 + 2048 * 2048 * 4);
+    expect(meter.count).toBe(3);
+    meter.stop();
+  });
+
+  it('prefers the `_buckets` Map over a legacy `_texturePool` beside it', () => {
+    // The fallback is for an older pool; when the Map is there it is the whole truth, and the
+    // object must not double-count beside it.
+    const { pool } = fakePool(
+      { '16392': [{ source: { pixelWidth: 64, pixelHeight: 64 } }] },
+      new Map([[67108872, [{ source: { pixelWidth: 512, pixelHeight: 256 } }]]]),
+    );
+    const meter = createRenderTargetMeter(pool);
+    expect(meter.bytes).toBe(512 * 256 * 4);
+    expect(meter.count).toBe(1);
     meter.stop();
   });
 

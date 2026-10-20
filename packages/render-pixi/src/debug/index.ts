@@ -533,18 +533,36 @@ export interface RenderTargetMeter {
 /** Bytes per pixel of a pooled render target (Pixi's `TexturePool` creates RGBA8 sources). */
 const RENDER_TARGET_BYTES_PER_PIXEL = 4;
 
-/** The pool's free lists, as {@link seedPooledBytes} reads them. */
-interface PooledTextureLists {
-  /** Pixi's `_texturePool`: free textures by size key. */
-  readonly _texturePool?: Record<string, ReadonlyArray<{ source?: PooledTextureSize }> | undefined>;
-}
-
 /** What a pooled texture's source says about its size. */
 interface PooledTextureSize {
   /** Width in pixels (power-of-two rounded by `getOptimalTexture`). */
   readonly pixelWidth?: number;
   /** Height in pixels. */
   readonly pixelHeight?: number;
+}
+
+/** One free list of pooled textures (one bucket, or one legacy size key). */
+type PooledTextures = ReadonlyArray<{ source?: PooledTextureSize }>;
+
+/**
+ * The pool's free textures, as {@link seedPooledBytes} reads them. Since Pixi **8.21** the redesign
+ * keeps them in a `Map` of buckets keyed by a packed number (`_buckets`, bundling size, flags,
+ * format and scale mode); before 8.21 it was a plain object keyed by the size (`_texturePool`).
+ * The dependency is the current `Map`; the object stays as the fallback.
+ */
+interface PooledTextureLists {
+  /** Pixi's `_buckets` (since 8.21): free textures by packed bucket key. */
+  readonly _buckets?: Map<number, PooledTextures>;
+  /** Pixi's `_texturePool` (before 8.21): free textures by size key. */
+  readonly _texturePool?: Record<string, PooledTextures | undefined>;
+}
+
+/** The size request of Pixi 8.21+'s options-object `createTexture` form. */
+interface PooledTextureRequest {
+  /** Width in pixels (already power-of-two rounded). */
+  readonly width?: number;
+  /** Height in pixels. */
+  readonly height?: number;
 }
 
 /**
@@ -561,20 +579,33 @@ interface PooledTextureSize {
  * @returns `[bytes, count]` of the free textures it already holds.
  */
 function seedPooledBytes(pool: unknown): [number, number] {
-  const lists = (pool as PooledTextureLists)._texturePool;
-  if (lists === undefined || lists === null || typeof lists !== 'object') return [0, 0];
+  const lists = pool as PooledTextureLists;
   let bytes = 0;
   let count = 0;
-  for (const key of Object.keys(lists)) {
-    const textures = lists[key];
-    if (textures === undefined) continue;
-    for (const texture of textures) {
-      const w = texture.source?.pixelWidth ?? 0;
-      const h = texture.source?.pixelHeight ?? 0;
+  /**
+   * Adds one free list's usable textures to the running seed.
+   *
+   * @param textures - The textures of one bucket (or one legacy size key).
+   */
+  const addTextures = (textures: PooledTextures): void => {
+    for (let i = 0; i < textures.length; i++) {
+      const w = textures[i].source?.pixelWidth ?? 0;
+      const h = textures[i].source?.pixelHeight ?? 0;
       if (!(w > 0) || !(h > 0)) continue;
       bytes += w * h * RENDER_TARGET_BYTES_PER_PIXEL;
       count++;
     }
+  };
+  const buckets = lists._buckets;
+  if (buckets instanceof Map) {
+    buckets.forEach(addTextures);
+    return [bytes, count];
+  }
+  const legacy = lists._texturePool;
+  if (legacy === undefined || legacy === null || typeof legacy !== 'object') return [0, 0];
+  for (const key of Object.keys(legacy)) {
+    const textures = legacy[key];
+    if (textures !== undefined) addTextures(textures);
   }
   return [bytes, count];
 }
@@ -582,19 +613,21 @@ function seedPooledBytes(pool: unknown): [number, number] {
 /** The one method {@link createRenderTargetMeter} hooks, as a plain property. */
 interface PooledTextureFactory {
   /**
-   * Creates a pooled render target (Pixi's `TexturePoolClass.createTexture`).
+   * Creates a pooled render target (Pixi's `TexturePoolClass.createTexture`). Since 8.21 the
+   * request is an options object; the four-positional form survives only as the method's own
+   * deprecation shim, so the meter reads and forwards both.
    *
-   * @param pixelWidth - Width in pixels (already power-of-two rounded).
-   * @param pixelHeight - Height in pixels.
-   * @param antialias - Whether the target is multisampled.
-   * @param autoGenerateMipmaps - Whether the target generates mipmaps.
+   * @param request - The size: 8.21+'s options object, or the legacy width in pixels.
+   * @param pixelHeight - Legacy height in pixels (ignored with the options object).
+   * @param antialias - Legacy: whether the target is multisampled.
+   * @param autoGenerateMipmaps - Legacy: whether the target generates mipmaps.
    * @returns The texture.
    */
   createTexture: (
-    pixelWidth: number,
-    pixelHeight: number,
-    antialias: boolean,
-    autoGenerateMipmaps: boolean,
+    request: number | PooledTextureRequest,
+    pixelHeight?: number,
+    antialias?: boolean,
+    autoGenerateMipmaps?: boolean,
   ) => unknown;
 }
 
@@ -611,6 +644,11 @@ interface PooledTextureFactory {
  * {@link RenderTargetMeter.bytes} is a plain number read — **allocation-free**, unlike walking the
  * pool's hashes would be.
  *
+ * Since Pixi **8.21** `getOptimalTexture` calls `createTexture` with an options object (the pool's
+ * redesign also moved the free textures into `Map` buckets); the meter reads that form and the
+ * legacy positional one alike, and forwards every argument through untouched — rewriting the
+ * request into the other form would trip the pool's own deprecation shim.
+ *
  * Targets the pool already holds when the meter starts are counted once, at the start (M3-02d:
  * the renderer's boot warm-up frame draws every filter, so the pool is no longer empty by the time
  * the shell's debug tools appear). A target *in use* at that moment cannot be seen — in practice
@@ -625,7 +663,7 @@ interface PooledTextureFactory {
  * ```ts
  * const meter = createRenderTargetMeter();
  * // … the camera enters a stage's wavy-water effect …
- * meter.bytes; // → 524_288 (one 512×256 RGBA target for the 384×216 filter pass)
+ * meter.bytes; // → 2_097_152 (one 1024×512 RGBA target for the 640×360 filter pass)
  * meter.stop();
  * ```
  */
@@ -643,21 +681,35 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
   /**
    * Creates a pooled texture and adds its bytes to the total.
    *
-   * @param pixelWidth - Width of the texture in pixels (already power-of-two rounded).
-   * @param pixelHeight - Height of the texture in pixels.
-   * @param antialias - Whether the target is multisampled.
-   * @param autoGenerateMipmaps - Whether the target generates mipmaps.
+   * @param request - The size: Pixi 8.21+'s options object, or the legacy positional width in
+   *   pixels (the pool's own deprecation shim keeps that form reachable).
+   * @param pixelHeight - Legacy height in pixels.
+   * @param antialias - Legacy: whether the target is multisampled.
+   * @param autoGenerateMipmaps - Legacy: whether the target generates mipmaps.
    * @returns The texture the pool created.
    */
   const metered = (
-    pixelWidth: number,
-    pixelHeight: number,
-    antialias: boolean,
-    autoGenerateMipmaps: boolean,
+    request: number | PooledTextureRequest,
+    pixelHeight?: number,
+    antialias?: boolean,
+    autoGenerateMipmaps?: boolean,
   ): unknown => {
-    const texture = original.call(pool, pixelWidth, pixelHeight, antialias, autoGenerateMipmaps);
+    // The arguments travel through untouched, in whichever form they came.
+    const texture = original.call(pool, request, pixelHeight, antialias, autoGenerateMipmaps);
     if (!stopped) {
-      bytes += pixelWidth * pixelHeight * RENDER_TARGET_BYTES_PER_PIXEL;
+      // One create is one create in either form. Only the byte figure needs the size, and an
+      // unreadable one — a missing or non-positive part — adds zero bytes rather than poisoning
+      // the running total with a NaN.
+      let width: number;
+      let height: number;
+      if (typeof request === 'number') {
+        width = request;
+        height = pixelHeight ?? 0;
+      } else {
+        width = request.width ?? 0;
+        height = request.height ?? 0;
+      }
+      bytes += width > 0 && height > 0 ? width * height * RENDER_TARGET_BYTES_PER_PIXEL : 0;
       count++;
     }
     return texture;

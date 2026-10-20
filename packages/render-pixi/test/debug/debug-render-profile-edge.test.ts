@@ -46,15 +46,22 @@ const COL = GLYPH_W;
 /** The one method the meter hooks, as a plain property (not an unbound class method). */
 interface PoolHandle {
   /**
-   * Creates a pooled render target.
+   * Creates a pooled render target. Pixi 8.21+ hands the size as an options object; the four
+   * positional arguments survive as the method's own deprecation shim — the fake takes both,
+   * exactly as the pool does.
    *
-   * @param w - Pixel width.
-   * @param h - Pixel height.
-   * @param antialias - Whether the target is multisampled.
-   * @param mipmaps - Whether it generates mipmaps.
+   * @param w - The options object (`{ width?, height? … }`), or the legacy pixel width.
+   * @param h - Legacy pixel height.
+   * @param antialias - Legacy: whether the target is multisampled.
+   * @param mipmaps - Legacy: whether it generates mipmaps.
    * @returns The texture.
    */
-  createTexture: (w: number, h: number, antialias: boolean, mipmaps: boolean) => unknown;
+  createTexture: (
+    w: number | { width?: number; height?: number },
+    h?: number,
+    antialias?: boolean,
+    mipmaps?: boolean,
+  ) => unknown;
 }
 
 /**
@@ -187,16 +194,41 @@ describe('render-pixi/debug createRenderTargetMeter, adversarially (M3-02c revie
     const handle: PoolHandle = {
       createTexture: (w, h, antialias, mipmaps): unknown => {
         seen.push([w, h, antialias, mipmaps]);
-        return `texture ${w}x${h}`;
+        return { texture: [w, h] };
       },
     };
     const pool = handle as unknown as TexturePoolClass;
     const meter = createRenderTargetMeter(pool);
-    expect(handle.createTexture(1024, 512, true, true)).toBe('texture 1024x512');
+    expect(handle.createTexture(1024, 512, true, true)).toEqual({ texture: [1024, 512] });
     expect(seen).toEqual([[1024, 512, true, true]]);
     // A zero-size target is counted as the zero bytes it is, not skipped.
     handle.createTexture(0, 0, false, false);
     expect([meter.bytes, meter.count]).toEqual([1024 * 512 * 4, 2]);
+    meter.stop();
+  });
+
+  it('reads the 8.21+ options form and never lets a broken size poison the total', () => {
+    const seen: unknown[][] = [];
+    const handle: PoolHandle = {
+      createTexture: (w, h, antialias, mipmaps): unknown => {
+        seen.push([w, h, antialias, mipmaps]);
+        return 'texture';
+      },
+    };
+    const pool = handle as unknown as TexturePoolClass;
+    const meter = createRenderTargetMeter(pool);
+    // The object the pool's `getOptimalTexture` really builds since 8.21 (the 8.22.0 dependency):
+    // extra keys travel with it, and the meter forwards the very object it received.
+    const request = { width: 1024, height: 512, antialias: false, autoGenerateMipmaps: false };
+    expect(handle.createTexture(request)).toBe('texture');
+    expect(seen[0]).toEqual([request, undefined, undefined, undefined]);
+    expect([meter.bytes, meter.count]).toEqual([1024 * 512 * 4, 1]);
+    // An options object without a usable size is the object-form twin of the zero-size pair
+    // above: counted as a create, adding zero bytes — and a NaN part must never poison the total.
+    handle.createTexture({});
+    handle.createTexture({ width: Number.NaN, height: 512 });
+    expect(meter.count).toBe(3);
+    expect(meter.bytes).toBe(1024 * 512 * 4);
     meter.stop();
   });
 
