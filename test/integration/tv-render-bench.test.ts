@@ -419,7 +419,9 @@ describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () =
     });
     // 900 ms of PNG-8 decode over the three pages' 10.49 megapixels — the analyzer sums the
     // per-page areas before dividing, so the exact product is only compared to its rounding.
-    expect(estimate.perMpxMs).toBeCloseTo(900 / ((2048 * 1024 + 2 * 2048 * 2048) / 1e6), 6);
+    // The `?.` keeps the `| null` return loud on failure while the program type-checks (the
+    // toMatchObject above is the null guard; `undefined` would fail `toBeCloseTo`, never skip).
+    expect(estimate?.perMpxMs).toBeCloseTo(900 / ((2048 * 1024 + 2 * 2048 * 2048) / 1e6), 6);
   });
 });
 
@@ -570,6 +572,26 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
   });
 
   it('keeps the stand-in draw out of the matrix tables and prints it on its own (R3-04.M4a)', async () => {
+    // The test owns its session (the M4bRV1 MAJOR fix): the matrix count was true only because the
+    // block's first test had posted the 172 payloads to the shared one, so standalone this test
+    // read `0 of 172`. Its own 172 matrix records ride here first, then the stand-in payload.
+    const own = makeRenderBenchSessionId(1_760_000_000_000 + 60_000, 0.75);
+    for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
+      const payload = buildRenderBenchPayload(
+        own,
+        i + 1,
+        env.startedAt + i,
+        env,
+        [record(i)],
+        i === BENCH_SCENARIOS.length - 1,
+      );
+      const response = await fetch(base, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(payload),
+      });
+      expect(response.status).toBe(200);
+    }
     const standin = record(0, {
       scenario: STANDIN_SCENARIO_ID,
       index: STANDIN_SCENARIO_INDEX,
@@ -595,7 +617,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
       endedAt: 1_760_000_000_000 + STANDIN_SCENARIO_INDEX * 32_000,
     });
     const payload = buildRenderBenchPayload(
-      session,
+      own,
       STANDIN_SCENARIO_INDEX + 1,
       env.startedAt + STANDIN_SCENARIO_INDEX + 1,
       env,
@@ -608,7 +630,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
       body: JSON.stringify(payload),
     });
     expect(response.status).toBe(200);
-    const file = join(dir, `${session}.jsonl`);
+    const file = join(dir, `${own}.jsonl`);
     // The analyzer reads it as the run's last page load, never as a size row (M4a's split): the
     // matrix keeps its 172 records and the header the fake env reports for them.
     const stored = readBenchSession(file);
