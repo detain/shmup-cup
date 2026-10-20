@@ -16,7 +16,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
 import { FNV_OFFSET_BASIS, FNV_PRIME, hashWorld } from '../../src/debug/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
-import { MAX_PATTERN_LOCALS, MAX_REPEAT_DEPTH } from '../../src/patterns/index.js';
+import { MAX_PATTERN_LOCALS, MAX_REPEAT_DEPTH, MoverKind } from '../../src/patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../../src/player/index.js';
 import { createSoaPool } from '../../src/pools/index.js';
 import { createRng } from '../../src/rng/index.js';
@@ -36,13 +36,15 @@ function world(seed = 1): World {
 /**
  * Reference hash, written from the module documentation with plain byte arrays: FNV-1a over the
  * little-endian bytes of every value; numbers as IEEE-754 doubles, codes / flags / counts / RNG
- * words as 32-bit words.
+ * words as 32-bit words; content-table indices as their stable keys (R5-P.P1), raw when the
+ * table does not hold the index.
  *
  * @param w - The world.
  * @returns The hash.
  */
 function referenceHash(w: World): number {
   const bytes: number[] = [];
+  const content = w.content;
   const word = (value: number): void => {
     for (let i = 0; i < 4; i++) bytes.push((value >>> (8 * i)) & 0xff);
   };
@@ -50,6 +52,10 @@ function referenceHash(w: World): number {
     const view = new DataView(new ArrayBuffer(8));
     view.setFloat64(0, value, true);
     for (let i = 0; i < 8; i++) bytes.push(view.getUint8(i));
+  };
+  const key = (keys: Uint32Array, index: number): void => {
+    if (index >= 0 && index < keys.length) word(keys[index]);
+    else num(index);
   };
   num(w.tick);
   for (const x of w.rng.gameplay.getState()) word(x);
@@ -83,7 +89,14 @@ function referenceHash(w: World): number {
   for (const entry of w.pools.entries) {
     const count = entry.pool.count;
     word(count);
-    for (const array of entry.arrays) for (let i = 0; i < count; i++) num(array[i]);
+    for (let f = 0; f < entry.arrays.length; f++) {
+      const array = entry.arrays[f];
+      if (entry.fieldNames[f] === 'sprite') {
+        for (let i = 0; i < count; i++) key(content.spriteKeys, array[i]);
+      } else {
+        for (let i = 0; i < count; i++) num(array[i]);
+      }
+    }
   }
   // M2-02: the bending lasers' active slots, then the pattern runners in use.
   const bend = w.bullets.bending;
@@ -118,8 +131,8 @@ function referenceHash(w: World): number {
     if (runners.state[i] === 0) continue;
     num(i);
     word(runners.state[i]);
-    num(runners.entry[i]);
-    num(runners.pc[i]);
+    key(content.patternKeys, runners.entry[i]);
+    num(runners.pc[i] - runners.entry[i]);
     num(runners.depth[i]);
     for (let d = 0; d < runners.depth[i]; d++) {
       num(runners.loopI[i * MAX_REPEAT_DEPTH + d]);
@@ -139,8 +152,8 @@ function referenceHash(w: World): number {
   for (const e of w.enemies.enemies) {
     word(e.state);
     if (e.state === 0) continue;
+    key(content.enemyKeys, e.specIndex);
     for (const value of [
-      e.specIndex,
       e.x,
       e.y,
       e.vx,
@@ -153,18 +166,13 @@ function referenceHash(w: World): number {
       e.member,
       e.anchor,
       e.mover,
-      e.m0,
-      e.m1,
-      e.m2,
-      e.m3,
-      e.m4,
-      e.m5,
-      e.s0,
-      e.s1,
-      e.s2,
-      e.s3,
-      e.moverTicks,
     ]) {
+      num(value);
+    }
+    // The Path mover carries its path's table index in m0 (R5-P.P1).
+    if (e.mover === MoverKind.Path) key(content.pathKeys, e.m0);
+    else num(e.m0);
+    for (const value of [e.m1, e.m2, e.m3, e.m4, e.m5, e.s0, e.s1, e.s2, e.s3, e.moverTicks]) {
       num(value);
     }
     word(e.script === null ? 0 : 1);
@@ -172,7 +180,7 @@ function referenceHash(w: World): number {
     word(e.flags);
     num(e.firstSeenTick);
     num(e.animFrame);
-    num(e.pathId);
+    key(content.pathKeys, e.pathId);
     num(e.camX);
     num(e.camY);
     // The Options an Option Hunter carries (M2-04).
@@ -182,8 +190,8 @@ function referenceHash(w: World): number {
   for (let slot = 0; slot < f.active.length; slot++) {
     word(f.active[slot]);
     if (f.active[slot] === 0) continue;
+    key(content.enemyKeys, f.enemy[slot]);
     for (const array of [
-      f.enemy,
       f.total,
       f.spawned,
       f.killed,
@@ -192,13 +200,11 @@ function referenceHash(w: World): number {
       f.nextTick,
       f.screenX,
       f.screenY,
-      f.path,
-      f.drop,
-      f.bonus,
-      f.lastX,
-      f.lastY,
-      f.leader,
     ]) {
+      num(array[slot]);
+    }
+    key(content.pathKeys, f.path[slot]);
+    for (const array of [f.drop, f.bonus, f.lastX, f.lastY, f.leader]) {
       num(array[slot]);
     }
     num(f.tracks[slot].recorded);
@@ -300,7 +306,7 @@ function referenceHash(w: World): number {
   for (const b of w.bosses.slots) {
     word(b.state);
     if (b.state === 0) continue;
-    num(b.specIndex);
+    key(content.enemyKeys, b.specIndex);
     word(b.role);
     for (const value of [b.x, b.y, b.screenX, b.screenY]) num(value);
     word(b.anchored ? 1 : 0);

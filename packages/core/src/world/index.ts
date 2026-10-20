@@ -485,6 +485,12 @@ export interface RegisteredPool {
   readonly pool: Pick<SoaPool<SoaSchema>, 'count' | 'capacity' | 'flush' | 'clear'>;
   /** The pool's field arrays in sorted field-name order (the state-hash order). */
   readonly arrays: readonly SoaArray[];
+  /**
+   * The field names behind {@link RegisteredPool.arrays}, in the same sorted order — the state
+   * hash reads it to recognise a pool's `sprite` field and mix its values through the content
+   * key table (R5-P.P1).
+   */
+  readonly fieldNames: readonly string[];
 }
 
 /**
@@ -1659,9 +1665,10 @@ function createPoolRegistry(): PoolRegistry {
         if (entry.name === name) throw new Error(`pool "${name}" is already registered`);
       }
       const fields = pool.fields as Readonly<Record<string, SoaArray>>;
+      const fieldNames = Object.keys(fields).sort();
       const arrays: SoaArray[] = [];
-      for (const key of Object.keys(fields).sort()) arrays.push(fields[key]);
-      entries.push({ name, pool, arrays });
+      for (const key of fieldNames) arrays.push(fields[key]);
+      entries.push({ name, pool, arrays, fieldNames });
       return pool;
     },
     flushAll() {

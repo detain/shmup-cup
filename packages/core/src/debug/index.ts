@@ -58,6 +58,16 @@
  * allocation left is the engine boxing the returned unsigned 32-bit value (a 16-byte heap number
  * when it does not fit a small integer); call it every few ticks, not per entity.
  *
+ * **Stable keys (R5-P.P1).** The values that are indices into a content table — a pool slot's
+ * `sprite`, an enemy's or a boss's `specIndex`, an enemy's and a formation's path id, a Path
+ * mover's `m0`, a pattern runner's code entry — are mixed through the key tables of the World's
+ * `ContentDb` (`spriteKeys`, `enemyKeys`, `pathKeys`, `patternKeys`: the FNV-1a of the name or
+ * id, and for the pattern bank the key of the action whose program holds the offset, its program
+ * counter mixed relative to that entry). Adding content in another file shifts those tables'
+ * indices and the bank's offsets, but no longer moves the hashes of the zones that did not
+ * change: a value travels under its own identity. An index outside its table (a World on
+ * `EMPTY_CONTENT_DB`, a `−1`) is mixed raw, byte for byte as before the keys.
+ *
  * M3-01 added two terms, each hashed **only when in use** so every World recorded before them
  * hashes as it did: a loadout's Spread Gun level (`Loadout.spread`, when non-zero) and the
  * caravan's clock (`World.timeLeft`, `timeUp`, `clockPaid` — only in a World with a time limit).
@@ -99,6 +109,7 @@
 import type { BendingLaserTable } from '../bullets/index.js';
 import { BOSS_PART_SLOTS } from '../bosses/index.js';
 import { WORLD_SCALE } from '../config/index.js';
+import type { ContentDb } from '../data/index.js';
 import {
   EnemyState,
   MAX_ENEMIES,
@@ -108,7 +119,12 @@ import {
 } from '../enemies/index.js';
 import type { Game } from '../game/index.js';
 import { defineModule } from '../module-info.js';
-import { MAX_PATTERN_LOCALS, MAX_REPEAT_DEPTH, type PatternRunners } from '../patterns/index.js';
+import {
+  MAX_PATTERN_LOCALS,
+  MAX_REPEAT_DEPTH,
+  MoverKind,
+  type PatternRunners,
+} from '../patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
 import { StageEventCode } from '../stage/index.js';
@@ -334,6 +350,70 @@ function mixArray(array: ArrayLike<number>, count: number): void {
 }
 
 /**
+ * Mixes an index into a content table through its stable key (R5-P.P1, see the module docs): a
+ * typed-array read of a key column of the World's `ContentDb`. The word is consumed by the four
+ * byte steps **inside** this function — a key is a full unsigned 32-bit value and handing one to
+ * a non-inlined call materialises a heap number, which the allocation guard measures. A `null`
+ * table (a field that indexes nothing on this run — a mover that is not on a path) and an index
+ * outside the table (a World on `EMPTY_CONTENT_DB`) are mixed raw — the byte stream of the state
+ * hash before the keys. The call stays one statement at every site so the mixer functions that
+ * used to inline `mixNumber` keep inlining it.
+ *
+ * @param keys - The content key table (FNV-1a per name / id), or `null` for a raw mix.
+ * @param index - The value the state hash mixed raw before R5-P.P1.
+ */
+function mixKey(keys: Uint32Array | null, index: number): void {
+  if (keys !== null && index >= 0 && index < keys.length) {
+    const word = keys[index];
+    let h = accumulator[0];
+    h = Math.imul(h ^ (word & 0xff), FNV_PRIME);
+    h = Math.imul(h ^ ((word >>> 8) & 0xff), FNV_PRIME);
+    h = Math.imul(h ^ ((word >>> 16) & 0xff), FNV_PRIME);
+    h = Math.imul(h ^ ((word >>> 24) & 0xff), FNV_PRIME);
+    accumulator[0] = h;
+  } else {
+    mixNumber(index);
+  }
+}
+
+/**
+ * Mixes a pool field's live slots as content keys (the `sprite` fields; {@link mixKey}).
+ *
+ * @param array - The field array.
+ * @param count - Live slots.
+ * @param keys - The sprite key table.
+ */
+function mixKeyArray(array: ArrayLike<number>, count: number, keys: Uint32Array): void {
+  for (let slot = 0; slot < count; slot++) mixKey(keys, array[slot]);
+}
+
+/**
+ * Mixes every registered pool: each one's live count, then its fields in sorted name order
+ * (slots `0 … count-1`). A field named `sprite` holds sprite-table ids (R5-P.P1): its values
+ * travel as the sprite names' keys. Lives in its own function so `hashWorld` stays small enough
+ * for its remaining calls to inline — the pools' fractional fields box per non-inlined
+ * `mixNumber` (the M1-08 lesson).
+ *
+ * @param world - The world.
+ * @param content - Its content (the sprite key table).
+ */
+function mixPools(world: World, content: ContentDb): void {
+  const pools = world.pools.entries;
+  const spriteKeys = content.spriteKeys;
+  for (let i = 0; i < pools.length; i++) {
+    const entry = pools[i];
+    const count = entry.pool.count;
+    mixWord(count);
+    const arrays = entry.arrays;
+    const names = entry.fieldNames;
+    for (let f = 0; f < arrays.length; f++) {
+      if (names[f] === 'sprite') mixKeyArray(arrays[f], count, spriteKeys);
+      else mixArray(arrays[f], count);
+    }
+  }
+}
+
+/**
  * Mixes the bending lasers (M2-02): every slot's active flag; for an active slot its fields and
  * the nodes of its body, newest first.
  *
@@ -371,8 +451,9 @@ function mixBendingLasers(b: BendingLaserTable): void {
  * values, heading, scale and state bits).
  *
  * @param r - The runner table.
+ * @param patternKeys - The World's pattern key column (offset → action key).
  */
-function mixPatternRunners(r: PatternRunners): void {
+function mixPatternRunners(r: PatternRunners, patternKeys: Uint32Array): void {
   mixNumber(r.meta[0]);
   mixNumber(r.meta[1]);
   const state = r.state;
@@ -380,8 +461,10 @@ function mixPatternRunners(r: PatternRunners): void {
     if (state[i] === 0) continue;
     mixNumber(i);
     mixWord(state[i]);
-    mixNumber(r.entry[i]);
-    mixNumber(r.pc[i]);
+    // The action the runner runs, under its id's key, and how far into its program the counter
+    // stands (R5-P.P1: a re-laid-out bank moves neither).
+    mixKey(patternKeys, r.entry[i]);
+    mixNumber(r.pc[i] - r.entry[i]);
     const depth = r.depth[i];
     mixNumber(depth);
     for (let d = 0; d < depth; d++) {
@@ -422,9 +505,10 @@ function mixPlayer(p: World['players'][number]): void {
  * Mixes one enemy slot's fields into {@link accumulator} (fixed order).
  *
  * @param e - The enemy (a slot in use).
+ * @param content - The World's content (the key tables, R5-P.P1).
  */
-function mixEnemy(e: Enemy): void {
-  mixNumber(e.specIndex);
+function mixEnemy(e: Enemy, content: ContentDb): void {
+  mixKey(content.enemyKeys, e.specIndex);
   mixNumber(e.x);
   mixNumber(e.y);
   mixNumber(e.vx);
@@ -437,7 +521,8 @@ function mixEnemy(e: Enemy): void {
   mixNumber(e.member);
   mixNumber(e.anchor);
   mixNumber(e.mover);
-  mixNumber(e.m0);
+  // A Path mover carries its path's table index in m0 (R5-P.P1): mix the path's key.
+  mixKey(e.mover === MoverKind.Path ? content.pathKeys : null, e.m0);
   mixNumber(e.m1);
   mixNumber(e.m2);
   mixNumber(e.m3);
@@ -453,7 +538,7 @@ function mixEnemy(e: Enemy): void {
   mixWord(e.flags);
   mixNumber(e.firstSeenTick);
   mixNumber(e.animFrame);
-  mixNumber(e.pathId);
+  mixKey(content.pathKeys, e.pathId);
   mixNumber(e.camX);
   mixNumber(e.camY);
   mixNumber(e.carried);
@@ -605,7 +690,7 @@ function mixBosses(world: World): void {
     const b = slots[s];
     mixWord(b.state);
     if (b.state === 0) continue;
-    mixNumber(b.specIndex);
+    mixKey(world.content.enemyKeys, b.specIndex);
     mixWord(b.role);
     mixNumber(b.x);
     mixNumber(b.y);
@@ -699,12 +784,13 @@ function mixBosses(world: World): void {
  * Mixes the active slots of the formation table into {@link accumulator}.
  *
  * @param f - The table.
+ * @param content - The World's content (the key tables, R5-P.P1).
  */
-function mixFormations(f: FormationTable): void {
+function mixFormations(f: FormationTable, content: ContentDb): void {
   for (let slot = 0; slot < MAX_FORMATIONS; slot++) {
     mixWord(f.active[slot]);
     if (f.active[slot] === 0) continue;
-    mixNumber(f.enemy[slot]);
+    mixKey(content.enemyKeys, f.enemy[slot]);
     mixNumber(f.total[slot]);
     mixNumber(f.spawned[slot]);
     mixNumber(f.killed[slot]);
@@ -713,7 +799,7 @@ function mixFormations(f: FormationTable): void {
     mixNumber(f.nextTick[slot]);
     mixNumber(f.screenX[slot]);
     mixNumber(f.screenY[slot]);
-    mixNumber(f.path[slot]);
+    mixKey(content.pathKeys, f.path[slot]);
     mixNumber(f.drop[slot]);
     mixNumber(f.bonus[slot]);
     mixNumber(f.lastX[slot]);
@@ -745,6 +831,7 @@ function mixFormations(f: FormationTable): void {
  */
 export function hashWorld(world: World): number {
   accumulator[0] = FNV_OFFSET_BASIS;
+  const content = world.content;
   mixNumber(world.tick);
 
   world.rng.gameplay.getStateInto(rngWords);
@@ -775,27 +862,21 @@ export function hashWorld(world: World): number {
   const players = world.players;
   for (let i = 0; i < players.length; i++) mixPlayer(players[i]);
 
-  const pools = world.pools.entries;
-  for (let i = 0; i < pools.length; i++) {
-    const entry = pools[i];
-    const count = entry.pool.count;
-    mixWord(count);
-    const arrays = entry.arrays;
-    for (let f = 0; f < arrays.length; f++) mixArray(arrays[f], count);
-  }
+  // Registered pools: counts and live slots, sorted field names, sprites by key (mixPools).
+  mixPools(world, content);
 
   // State kept outside the registered pools (M2-02): the bending lasers' stable slots and the
   // pattern interpreter's runners in use.
   mixBendingLasers(world.bullets.bending);
-  mixPatternRunners(world.patterns.runners);
+  mixPatternRunners(world.patterns.runners, content.patternKeys);
 
   const enemies = world.enemies.enemies;
   for (let i = 0; i < enemies.length; i++) {
     const e = enemies[i];
     mixWord(e.state);
-    if (e.state !== EnemyState.Free) mixEnemy(e);
+    if (e.state !== EnemyState.Free) mixEnemy(e, content);
   }
-  mixFormations(world.enemies.formations);
+  mixFormations(world.enemies.formations, content);
   mixWeapons(world.weapons, world.config.autofireMode === 'toggle');
   mixPowerUps(world);
   mixFxAndScores(world);

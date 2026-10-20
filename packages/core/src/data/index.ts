@@ -2175,6 +2175,24 @@ export interface ContentDb {
    * table (`core/ui` `resolveUiText`). Empty without any.
    */
   readonly uiStrings: readonly UiStringsSpec[];
+  /**
+   * Stable hash keys (R5-P.P1): the 32-bit FNV-1a of every {@link ContentDb.sprites} name, by
+   * the table's own index — `core/debug` {@link hashWorld} mixes these instead of the raw
+   * indices, so inserting a sprite (or below an enemy, path, or pattern action) moves the hash
+   * of the content it touches and not of every zone whose numbers shifted by one.
+   */
+  readonly spriteKeys: Uint32Array;
+  /** FNV-1a of each enemy id, by {@link ContentDb.enemies} index (see {@link ContentDb.spriteKeys}). */
+  readonly enemyKeys: Uint32Array;
+  /** FNV-1a of each path id, by {@link ContentDb.paths} index (see {@link ContentDb.spriteKeys}). */
+  readonly pathKeys: Uint32Array;
+  /**
+   * Pattern code offset → the FNV-1a of the action whose program holds the offset (a bullet
+   * program follows the action that embeds it; offsets before the first program read 0). The
+   * runners' hashed entry and program-relative pc see this table (see
+   * {@link ContentDb.spriteKeys}).
+   */
+  readonly patternKeys: Uint32Array;
 }
 
 /**
@@ -3472,6 +3490,10 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   demos: Object.freeze([]),
   demoIndex: new Map<string, number>(),
   uiStrings: Object.freeze([]),
+  spriteKeys: new Uint32Array(0),
+  enemyKeys: new Uint32Array(0),
+  pathKeys: new Uint32Array(0),
+  patternKeys: new Uint32Array(1),
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -3543,6 +3565,85 @@ function buildStringTable(names: Set<string>): StringTable {
   const index = new Map<string, number>();
   for (let i = 0; i < sorted.length; i++) index.set(sorted[i], i);
   return { names: sorted, index };
+}
+
+/**
+ * The FNV-1a 32-bit constants — a local copy of `core/debug`'s `FNV_OFFSET_BASIS` /
+ * `FNV_PRIME`. The loader must not import the debug module: `debug` imports the systems that
+ * import this file, and that ESM cycle throws at module evaluation. The test named below pins
+ * the two copies equal (recomputing every table key from the exported constants).
+ */
+const KEY_FNV_OFFSET_BASIS = 0x811c9dc5;
+const KEY_FNV_PRIME = 0x01000193;
+
+/**
+ * The stable hash key of a content name or id (R5-P.P1): FNV-1a over the two bytes of every
+ * UTF-16 code unit — the algorithm and the constants of `core/debug` {@link hashWorld}, kept in
+ * sync by `packages/core/test/debug/debug-hash-keys.test.ts` (which recomputes keys of its own
+ * with the exported constants and compares the tables). Computed once at load; the state hash
+ * reads the table, never a string, so it stays allocation-free.
+ *
+ * @param text - The id or name.
+ * @returns The unsigned 32-bit key.
+ */
+function contentKey(text: string): number {
+  let h = KEY_FNV_OFFSET_BASIS;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h = Math.imul(h ^ (c & 0xff), KEY_FNV_PRIME);
+    h = Math.imul(h ^ (c >>> 8), KEY_FNV_PRIME);
+  }
+  return h >>> 0;
+}
+
+/**
+ * The key column of a name list.
+ *
+ * @param texts - The names or ids, in table order.
+ * @returns {@link contentKey} of each.
+ */
+function keyColumn(texts: readonly string[]): Uint32Array {
+  const keys = new Uint32Array(texts.length);
+  for (let i = 0; i < texts.length; i++) keys[i] = contentKey(texts[i]);
+  return keys;
+}
+
+/**
+ * The key column of a spec list.
+ *
+ * @param specs - The specs, in table order.
+ * @param idOf - Its id.
+ * @returns {@link contentKey} of each id.
+ */
+function keyColumnOf<T>(specs: readonly T[], idOf: (spec: T) => string): Uint32Array {
+  const keys = new Uint32Array(specs.length);
+  for (let i = 0; i < specs.length; i++) keys[i] = contentKey(idOf(specs[i]));
+  return keys;
+}
+
+/**
+ * The key column of a compiled pattern bank (R5-P.P1): every program start (a nonzero
+ * `entries[k]`) carries the key of its action id, and each offset up to the next start belongs
+ * to the program it follows — a named bullet program, whose start only appears as a code
+ * immediate, is therefore keyed by the action that embeds it. A re-laid-out bank moves the
+ * offsets and the labels with them, so the runner terms of the state hash survive content
+ * added before this file. Offsets before the first program (the `End` at 0) read 0.
+ *
+ * @param bank - The compiled bank.
+ * @returns The key of every code offset.
+ */
+function buildPatternKeys(bank: PatternBank): Uint32Array {
+  const keys = new Uint32Array(bank.code.length);
+  const starts: number[] = [];
+  for (let k = 0; k < bank.entries.length; k++) if (bank.entries[k] > 0) starts.push(k);
+  starts.sort((a, b) => bank.entries[a] - bank.entries[b]);
+  for (let s = 0; s < starts.length; s++) {
+    const from = bank.entries[starts[s]];
+    const to = s + 1 < starts.length ? bank.entries[starts[s + 1]] : bank.code.length;
+    const key = contentKey(bank.actions[starts[s]]);
+    for (let o = from; o < to; o++) keys[o] = key;
+  }
+  return keys;
 }
 
 /**
@@ -3843,6 +3944,14 @@ export function loadContent(
   checkDemoStages(db, issues);
   expandStageTerrains(db, issues);
 
+  // Stable hash keys (R5-P.P1): the FNV-1a of every table name / id, and the pattern bank's
+  // per-offset action keys — computed here so `core/debug` `hashWorld` mixes keys by typed-array
+  // read and never touches a string or a raw, order-dependent index per tick.
+  const spriteKeys = keyColumn(sprites.names);
+  const enemyKeys = keyColumnOf(db.enemies, (spec) => spec.id);
+  const pathKeys = keyColumnOf(db.paths, (spec) => spec.id);
+  const patternKeys = buildPatternKeys(patterns);
+
   return {
     db: {
       sprites,
@@ -3870,6 +3979,10 @@ export function loadContent(
       demos: db.demos,
       demoIndex: db.demoIndex,
       uiStrings: db.uiStrings,
+      spriteKeys,
+      enemyKeys,
+      pathKeys,
+      patternKeys,
     },
     issues,
     foreign,
