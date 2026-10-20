@@ -28,7 +28,7 @@ field ([`content/enemies/`](../enemies/README.md)).
             {
               "op": "fire",
               "direction": { "type": "aim", "value": "($i - 1) * 40" }, // binary units, 1024 per turn
-              "speed": 1.25,                // px/tick on Normal (× the rank's bullet speed scale)
+              "speed": 1.875,               // px/tick on Normal (× the rank's bullet speed scale)
               "bulletRef": "sample.curver"
             }
           ]
@@ -41,7 +41,7 @@ field ([`content/enemies/`](../enemies/README.md)).
       "id": "sample.pair",
       "body": [
         { "op": "fire", "direction": { "type": "absolute", "value": "512 - $1" }, "bullet": { "kind": "needle-red" } },
-        { "op": "fire", "direction": { "type": "sequence", "value": "$1 * 2" }, "speed": { "type": "sequence", "value": 0.25 } }
+        { "op": "fire", "direction": { "type": "sequence", "value": "$1 * 2" }, "speed": { "type": "sequence", "value": 0.375 } }
       ]
     }
   ],
@@ -52,8 +52,8 @@ field ([`content/enemies/`](../enemies/README.md)).
       "actions": [                          // what the bullet does once fired
         { "op": "wait", "ticks": 30 },
         { "op": "changeDirection", "direction": { "type": "aim" }, "term": 12 },
-        { "op": "changeSpeed", "speed": 2, "term": 20 },
-        { "op": "accel", "accel": -0.01, "min": 1, "term": 60 }
+        { "op": "changeSpeed", "speed": 3, "term": 20 },
+        { "op": "accel", "accel": -0.015, "min": 1.5, "term": 60 }
       ]
     }
   ]
@@ -64,12 +64,12 @@ field ([`content/enemies/`](../enemies/README.md)).
 
 | Node | Fields | What it does |
 |---|---|---|
-| `fire` | `direction?`, `speed?`, `bullet?` / `bulletRef?`, `params?` | Fires one bullet. Missing direction / speed come from the bullet, else aimed at 1 px/tick. `params` (`$1` …) go with a `bulletRef`: evaluated when the fire runs and handed to the bullet. |
+| `fire` | `direction?`, `speed?`, `bullet?` / `bulletRef?`, `params?` | Fires one bullet. Missing direction / speed come from the bullet, else aimed at 1.5 px/tick. `params` (`$1` …) go with a `bulletRef`: evaluated when the fire runs and handed to the bullet. |
 | `wait` | `ticks`, `ranked?` | Sleeps (floored; below 1 = no wait). `ranked`: `round(ticks ÷ fire rate)`, at least 1 — like `ScriptApi.fireWait`. |
 | `repeat` | `times`, `body` | Runs `body` `times` times (floored; below 1 = never); `$i` counts from 0. At most 4 nested (after `actionRef` inlining). |
 | `changeSpeed` | `speed`, `term?` | Bullet only: reach the speed evenly over `term` ticks (0 = at once); a `sequence` value is a change per tick for `term` ticks. |
 | `changeDirection` | `direction`, `term?` | Bullet only: turn the short way to the heading over `term` ticks; `sequence` = turn per tick for `term` ticks. In an enemy's pattern it sets the heading `relative` fires measure from. |
-| `accel` | `accel`, `min?`, `max?`, `term?` | Bullet only: speed change per tick, clamped to `[min, max]` (defaults 0 and 16), for `term` ticks (0 = until changed). |
+| `accel` | `accel`, `min?`, `max?`, `term?` | Bullet only: speed change per tick, clamped to `[min, max]` (defaults 0 and 24), for `term` ticks (0 = until changed). |
 | `vanish` | — | Removes the bullet (no sparkle); ends an enemy's pattern. |
 | `actionRef` | `action`, `params?` | Runs another action (inlined at load), its `$1` … `$9` set to the values of `params`, evaluated when the `actionRef` runs. Recursion is an error. |
 
@@ -78,7 +78,7 @@ difficulty's aim directions, + value), `absolute` (0 = right, 256 = down, 512 = 
 (to the bullet's own heading; in an enemy's pattern to its heading, left unless set), `sequence`
 (to the previous `fire` of the same action / bullet; the first one is aimed). **Speeds**: an
 expression (absolute) or `{ "type": "absolute" | "relative" | "sequence", "value" }` — `relative`
-to the bullet's own speed (0 in an enemy's pattern), `sequence` to the previous fire's (1 before
+to the bullet's own speed (0 in an enemy's pattern), `sequence` to the previous fire's (1.5 before
 the first).
 
 **Expressions**: `+ - * / %`, unary `-`, parentheses, `floor`, `round`, `abs`, `min`, `max`,
@@ -94,19 +94,19 @@ reference's params, `repeat` deeper than 4, more than 16 non-constant param valu
 (nested references), both `bullet` and `bulletRef` in one fire, and a compiled bank over 262,144
 numbers — with the JSON path of the problem; an action that runs a problem (its own, an inlined
 action's or a bullet program's) runs nothing. Enemy speeds follow the
-same 4-way limits as hand-written behaviours (zone A: aimed bullets ≤ 2 px/tick on Normal). A
+same 4-way limits as hand-written behaviours (zone A: aimed bullets ≤ 3 px/tick on Normal). A
 bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 
 [`common.patterns.json`](common.patterns.json) holds the shared library (`common.fan-5`,
 `common.spiral`, `common.ring`, `common.homing-ring`, `common.splitter`);
 [`test-sentry.enemies.json`](../enemies/test-sentry.enemies.json)'s `sentry` runs
 `common.spiral`. [`zones.patterns.json`](zones.patterns.json) (M2-11) holds the zones' own patterns:
-`brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 0.85 px/tick) and
-`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.1 px/tick); M2-12 added
-`tempest.bolt` (zone E's `thunderhead`: a streak of four aimed needles, 0.85 → 1.6 px/tick — the
-first fire aimed, the others `sequence` 0 in direction and +0.25 in speed); M2-13 added
-`vault.spores` (zone F's `spore-sac`: a fan of three round spores, 56 units apart, aimed, at 0.75
+`brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 1.275 px/tick) and
+`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.65 px/tick); M2-12 added
+`tempest.bolt` (zone E's `thunderhead`: a streak of four aimed needles, 1.275 → 2.4 px/tick — the
+first fire aimed, the others `sequence` 0 in direction and +0.375 in speed); M2-13 added
+`vault.spores` (zone F's `spore-sac`: a fan of three round spores, 56 units apart, aimed, at 1.125
 px/tick) and `prism.fan` (zone G's `prism-lens`: two fans of four needles 18 ticks apart, 40 units
-apart round the aim — no bullet on the aimed line — at 1.15 px/tick); M2-14 added `abyss.gulp`
-(zone I's `gulper`: three aimed 3-ways of round red bullets 28 units apart, 14 ticks apart, at 1
+apart round the aim — no bullet on the aimed line — at 1.725 px/tick); M2-14 added `abyss.gulp`
+(zone I's `gulper`: three aimed 3-ways of round red bullets 28 units apart, 14 ticks apart, at 1.5
 px/tick).

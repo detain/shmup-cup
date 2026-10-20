@@ -11,7 +11,7 @@ low floor, (2) fan formations and rammers in open space, (3) a floor / ceiling c
 turrets, walkers and hatches (checkpoint at 3,500), (4) orbiters and a high-speed section at
 1.5 px/tick (checkpoint at 6,000), (5) a calm with two capsules, then the WARNING and HALCYON
 BULWARK. `pnpm content:check` checks its capsule budget (≥ 12 capsule sources before the boss,
-≥ 3 within 900 px after every checkpoint — the recovery rule of `shmup_feat.md` §10) and the 4-way
+≥ 3 within 1,350 px after every checkpoint — the recovery rule of `shmup_feat.md` §10) and the 4-way
 design rules; `test/playtest/` plays it with the 4-way bot. `?skip=boss` (web) starts a game a
 little before its boss.
 
@@ -201,7 +201,7 @@ clear, which counts as the clear of the zone it was entered from — the zone's 
 passes `until` it waits for its condition — `"entrance": "gap"` (a living ship's centre inside
 `region`, world pixels — mark the gap with terrain or blocks; `until` defaults to the region's right
 edge), `"ground"` (every ground enemy that appeared in the window destroyed by the players, at
-least one; `until` defaults to `x + 600` — the window counts every ground kill made while it is
+least one; `until` defaults to `x + 900` — the window counts every ground kill made while it is
 armed, so place no ground enemy that is still standing when it arms: one could be shot in place of
 one of the window's own; `pnpm content:check` plays every shipped stage to its `ground` windows and
 holds it to that) or `"digit"` (a playing ship's score shows `digit` at
@@ -221,20 +221,20 @@ barriers to shoot through).
   "id": "bonus-sample",
   "name": "BONUS SAMPLE",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 2000,
-  "camera": [{ "x": 0, "speed": 1 }],
+  "length": 3000,
+  "camera": [{ "x": 0, "speed": 1.5 }],
   "checkpoints": [{ "x": 0 }],
   "parallax": [],
   "tilemap": null,
   "events": [
-    // a gap: a ship flies into the marked region between x 816 and 880 at the top
-    { "x": 420, "type": "bonus", "stage": "bonus-vault", "entrance": "gap",
-      "region": { "x": 816, "y": 0, "w": 64, "h": 24 } },
-    // every ground enemy that appears from x 1000 to 1600 destroyed
-    { "x": 1000, "type": "bonus", "stage": "bonus-vault", "entrance": "ground", "until": 1600 },
-    // the hundreds digit of the score is 7 when the camera reaches x 1800
-    { "x": 1800, "type": "bonus", "stage": "bonus-vault", "entrance": "digit", "digit": 7 },
-    { "x": 2000, "type": "end" }
+    // a gap: a ship flies into the marked region between x 1224 and 1320 at the top
+    { "x": 630, "type": "bonus", "stage": "bonus-vault", "entrance": "gap",
+      "region": { "x": 1224, "y": 0, "w": 96, "h": 72 } },
+    // every ground enemy that appears from x 1500 to 2400 destroyed
+    { "x": 1500, "type": "bonus", "stage": "bonus-vault", "entrance": "ground", "until": 2400 },
+    // the hundreds digit of the score is 7 when the camera reaches x 2700
+    { "x": 2700, "type": "bonus", "stage": "bonus-vault", "entrance": "digit", "digit": 7 },
+    { "x": 3000, "type": "end" }
   ]
 }
 ```
@@ -253,8 +253,8 @@ brings the current boss again.
   "id": "rush-sample",
   "name": "RUSH SAMPLE",
   "music": { "stage": "Stage", "boss": "Boss" },
-  "length": 3600,
-  "camera": [{ "x": 0, "speed": 1 }],
+  "length": 5400,
+  "camera": [{ "x": 0, "speed": 1.5 }],
   "checkpoints": [{ "x": 0 }],
   "parallax": [],
   "tilemap": null,
@@ -284,56 +284,57 @@ orange 1UP).
   "id": "example",                 // unique id, referenced by the zone map
   "name": "Example Orbit",         // shown on the stage intro / zone map
   "music": { "stage": "Stage", "boss": "Boss" }, // MUSIC_CUES names (+ optional "ending", "credits" — M2-14)
-  "length": 4096,                  // camera-X length in pixels; the camera stops there
+  "length": 6144,                  // camera-X length in pixels; the camera stops there
   "camera": [                      // camera keys, strictly sorted by x, the first at 0
-    { "x": 0, "speed": 1, "ramp": 60 },            // speed in px/tick, reached over `ramp` ticks
-    { "x": 2048, "speed": 1, "yTo": 40, "yTicks": 90 }, // vertical pan of the camera's top edge
-    { "x": 3840, "speed": 1, "lock": true }        // scroll lock: stop exactly here until unlocked
+    { "x": 0, "speed": 1.5, "ramp": 60 },            // speed in px/tick, reached over `ramp` ticks
+    { "x": 3072, "speed": 1.5, "yTo": 60, "yTicks": 90 }, // vertical pan of the camera's top edge
+    { "x": 5760, "speed": 1.5, "lock": true }        // scroll lock: stop exactly here until unlocked
   ],
-  "checkpoints": [{ "x": 0 }, { "x": 2048 }],     // restart points, strictly sorted
+  "checkpoints": [{ "x": 0 }, { "x": 3072 }],     // restart points, strictly sorted
   "parallax": [                    // background bands, far → near
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 }
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 }
   ],
   "tilemap": {                     // or null for an open-space stage
-    "tileSize": 8,
+    "tileSize": 12,
     "tileset": "terrain-a",        // content/tilesets/
-    "rowsTall": 25,                // 25 rows = the 200-px playfield (PLAYFIELD_H / tileSize)
+    "rowsTall": 28,                // 28 rows = the 336-px playfield (PLAYFIELD_H / tileSize)
     "generator": {                 // procedural terrain, expanded at load
       "type": "heightfield",
       "segments": [
-        { "from": 96, "to": 1400, "floor": { "base": 28, "amp": 16, "period": 320, "seed": 1 } }
+        { "from": 144, "to": 2100, "floor": { "base": 42, "amp": 24, "period": 480, "seed": 1 } }
       ]
     }
   },
   "events": [                      // sorted by x (ties fire in file order)
-    { "x": 384, "type": "formation", "enemy": "drifter", "count": 5, "interval": 12, "y": 60 },
-    { "x": 768, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
-    { "x": 2000, "type": "speed", "speed": 2, "ramp": 120 },
-    { "x": 2000, "type": "flag", "flag": "fast-lane" },
-    { "x": 3840, "type": "warning", "enemy": "example-warden" }, // WARNING, then the boss
-    { "x": 4096, "type": "end" }
+    { "x": 576, "type": "formation", "enemy": "drifter", "count": 5, "interval": 12, "y": 126 },
+    { "x": 1152, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
+    { "x": 3000, "type": "speed", "speed": 3, "ramp": 120 },
+    { "x": 3000, "type": "flag", "flag": "fast-lane" },
+    { "x": 5760, "type": "warning", "enemy": "example-warden" }, // WARNING, then the boss
+    { "x": 6144, "type": "end" }
   ],
   "directItems": ["red", "blue", "green", "octagon"], // optional: the Direct-mode item plan (M2-05)
   "raster": [                      // optional (M2-08): per-scanline offsets of a layer
-    { "layer": "mid", "kind": "wave", "top": 150, "bottom": 200, "amplitude": 3, "wavelength": 20 },
-    { "layer": "mid", "kind": "lines", "top": 160, "bottom": 200, "factorTop": 0.25,
-      "factorBottom": 1.5, "wrap": 64, "from": 2048 }
+    { "layer": "mid", "kind": "wave", "top": 243, "bottom": 336, "amplitude": 4.5,
+      "wavelength": 30 },
+    { "layer": "mid", "kind": "lines", "top": 276, "bottom": 336, "factorTop": 0.25,
+      "factorBottom": 1.5, "wrap": 96, "from": 3072 }
   ],
   "cycles": [                      // optional (M2-08): palette cycling of a layer
     { "layer": "terrain", "colors": ["#801808", "#c83010", "#f06018"], "ticks": 8 }
   ],
   "mode7": {                       // optional (M3-02): the pseudo-3D floor under the horizon
     "sprite": "bg/dimension-floor", // the tile the shader repeats (frame 0, wraps on both axes)
-    "horizon": 100,                // playfield row of the horizon (rows above stay sky)
-    "bottom": 200,                 // last row the plane covers (> horizon, ≤ PLAYFIELD_H: 200)
-    "height": 34,                  // camera height above the plane in texels
+    "horizon": 168,                // playfield row of the horizon (rows above stay sky)
+    "bottom": 336,                 // last row the plane covers (> horizon, ≤ PLAYFIELD_H: 336)
+    "height": 51,                  // camera height above the plane in texels
     "scroll": 0.09,                // texels forward per pixel of camera x (default 0.08)
     "sway": 0.05,                  // texels sideways per pixel of camera y (default 0)
     "turn": 0,                     // how far the plane is turned, binary units [0, 1024)
     "fog": "#20124a",              // colour the plane fades into at the horizon
-    "fogDepth": 220,               // texels over which it fades (default 192)
+    "fogDepth": 330,               // texels over which it fades (default 144)
     "alpha": 1,                    // opacity of the whole floor
-    "from": 0, "to": 6400          // camera-x range it is drawn in (default the whole stage)
+    "from": 0, "to": 9600          // camera-x range it is drawn in (default the whole stage)
   }
 }
 ```
@@ -363,7 +364,7 @@ linearly over `ramp` ticks (at once without `ramp`); `yTo` pans the camera verti
 over `yTicks` ticks, at once without them — `yTicks` needs `yTo`); `lock: true` stops the camera
 exactly at `x` until the boss releases it, then it scrolls on at `speed`. A `warning` event
 brakes the camera to such a lock by itself (over one second), wherever it is. The camera never
-scrolls past `length`; the terrain map is `length + PLAYFIELD_W` (384 today) pixels wide. A key applies one tick
+scrolls past `length`; the terrain map is `length + PLAYFIELD_W` (640 today) pixels wide. A key applies one tick
 after the camera reaches it, events on that tick itself: a key and a `speed` event at the same
 `x` leave the key's speed — except at `x` 0, where the camera starts: the first tick applies the
 first key and then fires the events at 0, so a `speed` event at 0 overrides it.
@@ -385,16 +386,16 @@ tick, in file order.
 | `end` | — | the stage is cleared |
 | `trigger` | `flag`, `region` `{ x, y, w, h }` (world pixels), optional `value` (default `true`), `until` (camera x; default `region.x + region.w`) | M2-07: from its `x` until the camera passes `until`, the first living ship whose centre enters the region sets / clears the flag (once) |
 | `bonus` | `stage` (a `bonus` stage), `entrance` (`gap` / `ground` / `digit`), `region` (gap), `digit` + optional `place` (digit), optional `until` | M2-10: a hidden bonus-stage entrance (see above); at most 8 per stage |
-| `block` | `y` (world, top edge), `w`, `h` (whole tiles — multiples of 8 today, ≤ 64 tiles), optional `screenX` (default `PLAYFIELD_W + 16` — 400 today: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
+| `block` | `y` (world, top edge), `w`, `h` (whole tiles — multiples of 12 today, ≤ 64 tiles), optional `screenX` (default `PLAYFIELD_W + 24` — 664 today: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
 
 Every event may also name a **`branch`** (M2-07): it then fires only while that branch is taken.
 
 **Spawn points** are in playfield pixels relative to the camera: `screenX` defaults to
-`PLAYFIELD_W + 16` — 400 today — (16 px beyond the right edge; negative = behind the player), `y`
+`PLAYFIELD_W + 24` — 664 today — (24 px beyond the right edge; negative = behind the player), `y`
 to the middle of the playfield. Flying enemies ride the camera scroll; ground enemies (`"ground"` in their enemy
 definition) stand on the floor below — or hang from the ceiling above — their spawn point.
 `path` names a curve in `content/paths/` for path movers and path-following behaviours. An
-enemy that leaves the view by 32 px after having been on screen is gone (it *escaped*: its
+enemy that leaves the view by 48 px after having been on screen is gone (it *escaped*: its
 formation can no longer be completed).
 
 ## Holds, diagonal pans and branches (M2-07)
@@ -420,7 +421,7 @@ the renderer applies them through one GLSL ES 1.0 filter per affected layer, and
 the layer's effects is on screen. Both are optional lists (at most 8 entries each).
 
 - **`raster`** — a per-scanline horizontal offset of one layer (`far`, `mid` or `terrain`) on the
-  playfield rows `top … bottom − 1` (0 = the row under the top HUD bar, ≤ `PLAYFIELD_H` — 200 today), while the camera x
+  playfield rows `top … bottom − 1` (0 = the row under the top HUD bar, ≤ `PLAYFIELD_H` — 336 today), while the camera x
   is in `[from, to)` (defaults: the whole stage):
   - `wave` — wavy water: `amplitude` px (≤ 32) along a sine of `wavelength` rows, drifting once
     every `period` ticks (default 120; 0 = still);
@@ -486,7 +487,7 @@ colours on one layer.
 
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer
-entities become events at their scroll x (a spawn 400 px ahead of its object), camera keys,
+entities become events at their scroll x (a spawn 664 px ahead of its object), camera keys,
 checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file. Objects sit
 at world positions; since a spawn's `y` is camera-relative, the importer subtracts the camera y
 the imported keys give when the spawn fires (vertical and diagonal pans included; a spawn that may

@@ -30,16 +30,16 @@ H's pistons are moving blocks of their `solid` tile.
   "kind": "tileset",
   "id": "terrain-a",                 // unique; stages refer to it in tilemap.tileset
   "sprite": "tiles/terrain-a",       // atlas sprite whose frames draw the tiles
-  "tileSize": 8,                     // pixels: core's TILE_SIZE (8 until R2-01, 12 in v2)
+  "tileSize": 12,                    // pixels: core's TILE_SIZE (12 since v2's port, 8 in v1)
   "tiles": [                         // tile id = position + 1 (id 0 is the empty cell)
     {
       "name": "floor",               // unique in the tileset
       "type": "solid",               // "solid" | "hazard" | "empty" (drawn, never collides)
       "frame": 1,                    // frame of the sprite that draws it
       "anchor": "floor",             // heights grow from the "floor" (bottom) or "ceiling" (top)
-      "mask": [8, 8, 8, 8, 8, 8, 8, 8] // solid height of each pixel column, 0 … tileSize
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12] // solid height of each pixel column, 0 … tileSize
     },
-    { "name": "slope-up", "type": "solid", "frame": 5, "anchor": "floor", "mask": [1, 2, 3, 4, 5, 6, 7, 8] }
+    { "name": "slope-up", "type": "solid", "frame": 5, "anchor": "floor", "mask": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] }
   ]
 }
 ```
@@ -47,16 +47,16 @@ H's pistons are moving blocks of their `solid` tile.
 - **Tile size.** The loader accepts `8` or `12` (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`, R1-04 — any
   other value is an issue), and a stage's tilemap must use its tileset's size. Shipped tilesets
   use `TILE_SIZE` — `test/integration/tile-size.test.ts` holds them to it — so the 12-px sets
-  arrive with v2's port (R2-02: masks resampled by `terrain.mjs` `resampleMask`, the art drawn at
+  arrived with v2's port (R2-02: masks resampled by `terrain.mjs` `resampleMask`, the art drawn at
   12 px by `renderTerrainTiles`).
 - **Collision types.** `solid` rock blocks shots and crawlers and kills the ship; `hazard`
   tiles kill without being rock (spikes, lava) and win over `solid` when a box touches both;
   `empty` tiles are decoration (drawn, never collide).
 - **Masks.** A mask lists the solid height of each pixel column measured from the anchor edge:
-  a full block is all `8`; the 45° floor slope `1 … 8`; the 22.5° pair `0,1,1,2,2,3,3,4`
-  (`-low`) then `4,5,5,6,6,7,7,8` (`-high`). Ceiling tiles use the same numbers measured
-  down from the top edge. The integration test compares every mask with the pixels of its
-  atlas frame, so art and collision cannot drift apart.
+  a full block is all `12`; the 45° floor slope `1 … 12`; the 22.5° pair
+  `0,1,1,2,2,3,3,4,4,5,5,6` (`-low`) then `6,7,7,8,8,9,9,10,10,11,11,12` (`-high`). Ceiling
+  tiles use the same numbers measured down from the top edge. The integration test compares every
+  mask with the pixels of its atlas frame, so art and collision cannot drift apart.
 - **Names the heightfield generator needs.** A stage whose `tilemap.generator` is a
   `heightfield` fills buried cells with the tile named `solid`, flat exposed cells with
   `floor` / `ceiling`, and slopes with the solid tile whose anchor and mask match the

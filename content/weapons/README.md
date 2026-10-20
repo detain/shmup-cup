@@ -17,14 +17,14 @@ Player weapon definitions for both power-up models, loaded by the core's `weapon
       "slot": "main",                // meter slots: main | missile | double | laser; direct: main | sub
       "behavior": "shot.straight",   // coded behaviour id (core/weapons)
       "damage": 1,
-      "speed": 8,                    // px per tick
+      "speed": 12,                   // px per tick
       "cap": 4,                      // max projectiles on screen (Gradius-style)
       "pierce": false,
       "sprite": "shots/basic",
       "refireTicks": 4,             // optional: ticks between shots; omitted = GameConfig
                                     // autofireInterval (4) / missileInterval (10, missile slot)
       "sfx": "PlayerShot",          // optional: SFX_CUES name, or null for a silent weapon
-      "params": { "maxLength": 64 } // optional: behaviour-specific tunables (numbers only)
+      "params": { "ox": 12 }        // optional: behaviour-specific tunables (numbers only)
     }
   ],
   "presets": [                       // meter-mode loadouts (Type A–D style, original names)
@@ -41,8 +41,8 @@ Player weapon definitions for both power-up models, loaded by the core's `weapon
         { "shots": [{ "weapon": "shot.basic" }], "volleys": 2 },
         {
           "shots": [                 // 1–8 projectiles of one volley
-            { "weapon": "shot.basic", "angle": -16, "oy": -2 }, // angle: binary units, 0 forward
-            { "weapon": "shot.basic", "angle": 16, "ox": 0, "oy": 2 }
+            { "weapon": "shot.basic", "angle": -16, "oy": -3 }, // angle: binary units, 0 forward
+            { "weapon": "shot.basic", "angle": 16, "ox": 0, "oy": 3 }
           ],
           "refireTicks": 6,          // optional: ticks between volleys (default: autofireInterval /
                                      // missileInterval for a sub family)
@@ -93,19 +93,19 @@ behaviour in the wrong slot:
 
 | Behaviour | Slot | Params |
 |---|---|---|
-| `shot.straight` | main | `ox` 8, `oy` 0, `hw` 4, `hh` 2 |
-| `shot.double` | double | `angle` 128 (climb of the second shot), `ox` 4, `oy` -2, `hw` 3, `hh` 3 |
-| `laser.beam` | laser | `maxLength` 64, `hitCooldownTicks` 6, `ox` 8, `oy` 0, `hh` 2 |
-| `missile.groundSlide` | missile | `slideSpeed` 3, `angle` 128 (fall), `ox` 0, `oy` 4, `hw` 4, `hh` 1.5, `frames` 2 |
-| `missile.spreadBomb` | missile | `angle` 64 (launch below forward), `gravity` 0.12 px/tick², `ox` 2, `oy` 4, `hw` 3, `hh` 3, `blastRadius` 14, `blastTicks` 12, `hitCooldownTicks` 6, `frames` 4 (blast) — falls in an arc, bursts on terrain or the first target into a piercing, world-anchored blast that hits each target at most `blastTicks ÷ hitCooldownTicks` times (twice); armour clinks without putting it out; cap counts bomb and blast |
-| `missile.twoWay` | missile | `angle` 128 (climb / dive), `ox` 2, `oy` 0, `hw` 3, `hh` 3 — a volley of a climbing and a diving missile (sprite frames 0 / 1), refired once both are gone |
-| `missile.torpedo` | missile | `slideSpeed` 5, `angle` 96, `ox` 0, `oy` 4, `hw` 5, `hh` 1.5, `frames` 2 — a ground slider that flies on through every enemy its hit destroys |
-| `shot.tailGun` | double | `angle` 512 (straight back), `ox` -6, `oy` 0, `hw` 4, `hh` 2 — a Double pair |
-| `shot.vertical` | double | `angle` 256 (straight up), `ox` 0, `oy` -6, `hw` 2, `hh` 4 — a Double pair |
-| `shot.freeWay` | double | `angle` 128 (before any input), `ox` 0, `oy` 0, `hw` 3, `hh` 3 — a Double pair whose second shot flies in the last 8-way direction held |
-| `laser.ripple` | laser | `startSize` 4, `maxSize` 20 (half heights), `growth` 0.5 px/tick, `aspect` 0.5 (width ÷ height), `ox` 8, `oy` 0, `frames` 6 — a non-piercing ring whose ring (4 px thick) is the hitbox; the frame follows its size |
-| `laser.cyclone` | laser | `maxLength` 80, `hitCooldownTicks` 6, `ox` 8, `oy` 0, `hh` 4, `frames` 4 (swirl) — a thicker `laser.beam` |
-| `laser.twin` | laser | `maxLength` 16, `gap` 8, `ox` 8, `oy` 0, `hh` 1.5 — two beams `gap` px apart following the shooter; a pair fires while two more fit under `cap` |
+| `shot.straight` | main | `ox` 12, `oy` 0, `hw` 6, `hh` 3 |
+| `shot.double` | double | `angle` 128 (climb of the second shot), `ox` 6, `oy` -3, `hw` 4.5, `hh` 4.5 |
+| `laser.beam` | laser | `maxLength` 96, `hitCooldownTicks` 6, `ox` 12, `oy` 0, `hh` 3 |
+| `missile.groundSlide` | missile | `slideSpeed` 4.5, `angle` 128 (fall), `ox` 0, `oy` 6, `hw` 6, `hh` 2.25, `frames` 2 |
+| `missile.spreadBomb` | missile | `angle` 64 (launch below forward), `gravity` 0.18 px/tick², `ox` 3, `oy` 6, `hw` 4.5, `hh` 4.5, `blastRadius` 21, `blastTicks` 12, `hitCooldownTicks` 6, `frames` 4 (blast) — falls in an arc, bursts on terrain or the first target into a piercing, world-anchored blast that hits each target at most `blastTicks ÷ hitCooldownTicks` times (twice); armour clinks without putting it out; cap counts bomb and blast |
+| `missile.twoWay` | missile | `angle` 128 (climb / dive), `ox` 3, `oy` 0, `hw` 4.5, `hh` 4.5 — a volley of a climbing and a diving missile (sprite frames 0 / 1), refired once both are gone |
+| `missile.torpedo` | missile | `slideSpeed` 7.5, `angle` 96, `ox` 0, `oy` 6, `hw` 7.5, `hh` 2.25, `frames` 2 — a ground slider that flies on through every enemy its hit destroys |
+| `shot.tailGun` | double | `angle` 512 (straight back), `ox` -9, `oy` 0, `hw` 6, `hh` 3 — a Double pair |
+| `shot.vertical` | double | `angle` 256 (straight up), `ox` 0, `oy` -9, `hw` 3, `hh` 6 — a Double pair |
+| `shot.freeWay` | double | `angle` 128 (before any input), `ox` 0, `oy` 0, `hw` 4.5, `hh` 4.5 — a Double pair whose second shot flies in the last 8-way direction held |
+| `laser.ripple` | laser | `startSize` 6, `maxSize` 30 (half heights), `growth` 0.75 px/tick, `aspect` 0.5 (width ÷ height), `ox` 12, `oy` 0, `frames` 6 — a non-piercing ring whose ring (6 px thick) is the hitbox; the frame follows its size |
+| `laser.cyclone` | laser | `maxLength` 120, `hitCooldownTicks` 6, `ox` 12, `oy` 0, `hh` 6, `frames` 4 (swirl) — a thicker `laser.beam` |
+| `laser.twin` | laser | `maxLength` 24, `gap` 12, `ox` 12, `oy` 0, `hh` 2.25 — two beams `gap` px apart following the shooter; a pair fires while two more fit under `cap` |
 
 `cap` counts per **shooter**: the ship and each of its (up to four) Options may have that many
 of the weapon's projectiles on screen. The Double fires a pair (forward + climbing) and refires
@@ -131,7 +131,7 @@ content:check`). Two behaviours are made for them:
 
 | Behaviour | Slot | Params |
 |---|---|---|
-| `direct.bolt` | main, sub | `ox` 8, `oy` 0, `hw` 4, `hh` 2, `frame` 0 (the still sprite frame), `turn` 0 (1 = the frame of the heading's octant: 0 right, 1 down-right … 7 up-right), `hitCooldownTicks` 6 (with `pierce`), `passArmour` 0 (1 with `pierce` = armour does not stop it: it clinks at most once per cooldown and flies on — the waves, M2-18) — flies straight in its emitter's heading |
-| `direct.bomb` | sub | `gravity` 0, `ox` 2, `oy` 0, `hw` 3, `hh` 3, `blastRadius` 8, `blastTicks` 8, `hitCooldownTicks` 6, `frames` 4 (blast), `frame` 0 — a Spread Bomb fired in its emitter's heading |
+| `direct.bolt` | main, sub | `ox` 12, `oy` 0, `hw` 6, `hh` 3, `frame` 0 (the still sprite frame), `turn` 0 (1 = the frame of the heading's octant: 0 right, 1 down-right … 7 up-right), `hitCooldownTicks` 6 (with `pierce`), `passArmour` 0 (1 with `pierce` = armour does not stop it: it clinks at most once per cooldown and flies on — the waves, M2-18) — flies straight in its emitter's heading |
+| `direct.bomb` | sub | `gravity` 0, `ox` 3, `oy` 0, `hw` 4.5, `hh` 4.5, `blastRadius` 12, `blastTicks` 8, `hitCooldownTicks` 6, `frames` 4 (blast), `frame` 0 — a Spread Bomb fired in its emitter's heading |
 
 See [`example.weapons.json`](example.weapons.json).

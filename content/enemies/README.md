@@ -14,7 +14,7 @@ on Normal) — and the boss HALCYON BULWARK (`halcyon-bulwark`, code HB-01): an 
 and wings, four shield plates (12 hp) stacked in front of a 40-hp core that takes damage only once
 every plate is gone, and two laser emitters above and below it (`boss.bulwark`: slow tracking,
 alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A is held to the
-4-way design rules (no aimed bullet over 2 px/tick, no two laser lanes closer than 16 px) by
+4-way design rules (no aimed bullet over 3 px/tick, no two laser lanes closer than 24 px) by
 `pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages;
 `test-sentry.enemies.json` holds the `sentry`, which runs the `common.spiral` DSL pattern
 (`pattern.loop`, M2-02). `weapon-range.enemies.json` (M2-03) holds the harmless targets of the
@@ -46,12 +46,12 @@ or falling; `land` = `pass` / `stop` (default) / `shatter`).
       "id": "drifter",                 // referenced by stage events (and by other enemies' "child")
       "hp": 1,
       "score": 100,                    // points for the player whose shot (or Mega Crash) kills it
-      "hurtbox": { "hw": 6, "hh": 5 }, // half-extents in pixels; also the contact box
+      "hurtbox": { "hw": 9, "hh": 8 }, // half-extents in pixels; also the contact box
       "script": "drifter.sine",        // behaviour coroutine id (core/behaviors)
       "sprite": "enemies/drifter",     // atlas sprite name (assets/source/sprites/)
       "anim": { "frames": 2, "ticks": 8 }, // optional: loop frames 0…1, 8 ticks each (default: frame 0)
-      "params": { "amp": 20 },         // optional: behaviour tunables by name (defaults in core/behaviors)
-      "mover": { "type": "sine", "vx": -1, "amp": 16, "period": 90 }, // optional starting mover
+      "params": { "amp": 30 },         // optional: behaviour tunables by name (defaults in core/behaviors)
+      "mover": { "type": "sine", "vx": -1.5, "amp": 24, "period": 90 }, // optional starting mover
       "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | "oneUp" | "bonusCapsule" | null
       "ground": null,                  // optional: "floor" | "ceiling" | null (flying, default)
       "settleTicks": 30,               // optional: ticks on screen before it may fire (default 30)
@@ -61,7 +61,7 @@ or falling; `land` = `pass` / `stop` (default) / `shatter`).
       "child": null,                   // optional: enemy id a spawner releases (hatch.spawner)
       "pattern": null,                 // optional: content/patterns/ action the pattern.loop behaviour runs
       "rank": { "fireRate": 0.5 },     // optional rank modifiers (§11, §15; default 1 each)
-      "revenge": { "minRank": 12, "pattern": "aimed", "speed": 1.25 } // optional revenge bullets
+      "revenge": { "minRank": 12, "pattern": "aimed", "speed": 1.875 } // optional revenge bullets
     }
   ]
 }
@@ -103,7 +103,7 @@ faster, 2 = twice the effect (0–8). `"revenge": { "minRank", "pattern", "speed
 enemy revenge ("suicide") bullets: shot down on screen by a player at a rank of at least
 `minRank` (0–31), it fires `pattern` — `aimed` (one bullet at the player), `spread3` (an aimed
 3-way) or `ring8` (eight bullets round the circle, the first aimed) — from where it died, at
-`speed` px/tick on Normal (0.25–4, default 1.25; rank-scaled). A Mega Crash kill never fires
+`speed` px/tick on Normal (0.25–4, default 1.875; rank-scaled). A Mega Crash kill never fires
 revenge bullets. Bosses take neither field.
 
 **Drops and Mega Crash.** `"drop": "capsule"` makes the enemy leave a power capsule where it
@@ -245,17 +245,17 @@ section — every other enemy field is left out (the loader fills them). Stages 
         "displayName": "TRIAL WARDEN",   // shown by the WARNING (upper case; ≤ 24)
         "introTicks": 120,               // optional: invulnerable fly-in from the right (default 120)
         "score": 20000,                  // optional: points at the score tally (default 0)
-        "x": 300, "y": 100,              // optional: home of the boss's origin in playfield pixels
+        "x": 514, "y": 168,              // optional: home of the boss's origin in playfield pixels
         "parts": [                       // 1–16 parts, parents first; later parts drawn on top
-          { "name": "hull", "hurtbox": { "hw": 8, "hh": 8 }, "vulnerable": "never",
+          { "name": "hull", "hurtbox": { "hw": 12, "hh": 12 }, "vulnerable": "never",
             "sprite": "bosses/hull-block" },
-          { "name": "core", "parent": "hull", "x": -14, "hp": 24, "hurtbox": { "hw": 7, "hh": 7 },
+          { "name": "core", "parent": "hull", "x": -21, "hp": 24, "hurtbox": { "hw": 11, "hh": 11 },
             "vulnerable": "afterParts", "requires": ["plate"], "core": true,
             "sprite": "bosses/core", "anim": { "frames": 2, "ticks": 12 }, "score": 5000,
             "explosion": "large" },
-          { "name": "plate", "parent": "hull", "x": -26, "hp": 10, "hurtbox": { "hw": 4, "hh": 8 },
+          { "name": "plate", "parent": "hull", "x": -39, "hp": 10, "hurtbox": { "hw": 6, "hh": 12 },
             "sprite": "bosses/shield-plate", "score": 500 },
-          { "name": "gun", "parent": "hull", "y": -20, "hp": 12, "hurtbox": { "hw": 6, "hh": 6 },
+          { "name": "gun", "parent": "hull", "y": -30, "hp": 12, "hurtbox": { "hw": 9, "hh": 9 },
             "gun": true, "sprite": "bosses/emitter", "score": 1000 }
         ],
         "phases": [                      // 1–8, in order; every phase but the last has "until"
@@ -292,8 +292,8 @@ height, aimed spreads from the `gun` parts, opens / closes `whenOpen` parts — 
 `boss.lanes` (lane lasers from the guns in turn and aimed spreads — `trackSpeed`, `margin`,
 `laserTicks`, `laserLength` (default `PLAYFIELD_W`, one screen width), `laserWidth`, `telegraph`,
 `active`, `fireTicks`, `bulletSpeed`, `ways`, `spread`). Without `x` / `y` a boss's home is
-`DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` — 88 px left of the playfield's right edge on its middle row
-(`PLAYFIELD_W − 88`, `PLAYFIELD_CY`: 296, 100 today).
+`DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` — 132 px left of the playfield's right edge on its middle row
+(`PLAYFIELD_W − 132`, `PLAYFIELD_CY`: 508, 168 today).
 
 **The WARNING** shows the game's own text built from `displayName` and `code`
 (`WARNING!!` / `GIANT HOSTILE "TRIAL WARDEN"` / `CLOSING IN - CODE TW-00`) while the siren
@@ -322,11 +322,11 @@ dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntl
         "code": "CP-03",
         "displayName": "ORBIT WARDEN",
         "role": "captain",               // a mid-boss: a "boss" event, rides the scroll, no stage clear
-        "x": 332, "y": 100,              // = cx + rx of captain.circler's orbit: no jump at its start
+        "x": 530, "y": 168,              // = cx + rx of captain.circler's orbit: no jump at its start
         "parts": [
-          { "name": "hub", "hp": 30, "radius": 8, "spin": 6, "core": true, "gun": true,
+          { "name": "hub", "hp": 30, "radius": 12, "spin": 6, "core": true, "gun": true,
             "sprite": "bosses/core" },  // a circle hurtbox; spins 6 binary units (of 1024) a tick
-          { "name": "orb", "parent": "hub", "x": 20, "radius": 6, "vulnerable": "never",
+          { "name": "orb", "parent": "hub", "x": 30, "radius": 9, "vulnerable": "never",
             "sprite": "bosses/orb" }    // placed by the hub's turn: it circles the hub
         ],
         "phases": [{ "script": "captain.circler" }]
@@ -337,21 +337,21 @@ dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntl
       "boss": {
         "code": "RL-01",
         "displayName": "IRON LEVIATHAN",
-        "x": 96, "y": 150,
+        "x": 176, "y": 243,
         "timeLimit": 5400,               // fight ticks, then it escapes (the BossEscaped ending flag)
         "inner": "heart",                // revealed by its final blast
         "raid": {                        // anchored in the world; the camera follows these offsets
           "segments": [                  // (the camera's top-left minus the boss's origin)
-            { "x": -40, "y": -150, "ticks": 150, "hold": 150 },
-            { "x": 140, "y": -100, "ticks": 240 }
+            { "x": -60, "y": -225, "ticks": 150, "hold": 150 },
+            { "x": 210, "y": -150, "ticks": 240 }
           ],
           "loop": true
         },
         "parts": [
           { "name": "keel", "sprite": "bosses/raid-hull" },
-          { "name": "turret", "parent": "keel", "x": 24, "y": -26, "hp": 12, "radius": 7,
+          { "name": "turret", "parent": "keel", "x": 36, "y": -39, "hp": 12, "radius": 10.5,
             "angle": 768, "turn": 16, "gun": true, "sprite": "bosses/turret" },
-          { "name": "reactor", "parent": "keel", "x": 60, "hp": 60, "radius": 8, "core": true }
+          { "name": "reactor", "parent": "keel", "x": 90, "hp": 60, "radius": 12, "core": true }
         ],
         "phases": [{ "script": "boss.raid" }]
       }
@@ -365,7 +365,7 @@ dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntl
         "alternate": 300,                // they take turns: the other withdraws behind
         "enrage": { "fireRate": 0.5, "speed": 1.6, "phase": 1 }, // when its partner dies
         "minion": "bubble",              // what its behaviours launch (captain.launcher)
-        "parts": [{ "name": "core", "hp": 30, "radius": 7, "core": true }],
+        "parts": [{ "name": "core", "hp": 30, "radius": 10.5, "core": true }],
         "phases": [
           { "script": "boss.hover", "until": { "hpBelow": 15 } },
           { "script": "boss.lanes" }

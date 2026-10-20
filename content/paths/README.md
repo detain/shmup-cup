@@ -34,10 +34,10 @@ keeps its shape on screen while the stage scrolls.
       "id": "fan-loop",                 // unique across all path files
       "points": [                       // 2–64 control points, pixels, y down
         { "x": 0, "y": 0 },             // the start (where the enemy is when the mover starts)
-        { "x": -150, "y": 0 },
-        { "x": -240, "y": -60 },        // the curve passes through every point
-        { "x": -150, "y": -100 },
-        { "x": -470, "y": 0 }
+        { "x": -225, "y": 0 },
+        { "x": -360, "y": -90 },        // the curve passes through every point
+        { "x": -225, "y": -150 },
+        { "x": -705, "y": 0 }
       ]
     }
   ]
@@ -45,7 +45,7 @@ keeps its shape on screen while the stage scrolls.
 ```
 
 Stage `spawn` / `formation` events name a path in `"path"`; so does an enemy's
-`"mover": { "type": "path", "path": "…", "speed": 1.5 }` (without `path` the mover uses the
+`"mover": { "type": "path", "path": "…", "speed": 2.25 }` (without `path` the mover uses the
 spawn event's). Path-following behaviours (`fan.loop`, `orbiter.loop`) use the spawn event's
 path. All names resolve to numeric indices at load (`pathId`).
 

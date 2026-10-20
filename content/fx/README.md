@@ -27,7 +27,7 @@ the atlas.
 and binds them to the events with **triggers**: `fx` triggers listen to the sim's `Particles`
 events (their cue names are `FX_CUES` in `@shmup/core` `events`), `sfx` triggers to `Sfx`
 events whose sound also implies a visual (`EnemyHit` → sparks, `Clink` → clink,
-`MeterAdvance` / `CapsulePickup` → pickup ring, `PlayerShot` → muzzle flash 9 px ahead of the
+`MeterAdvance` / `CapsulePickup` → pickup ring, `PlayerShot` → muzzle flash 13.5 px ahead of the
 shooter). A cue may fire up to four presets (`ExplosionMedium` = the fireball plus debris).
 
 ## Format (formatVersion 1)
@@ -42,7 +42,7 @@ shooter). A cue may fire up to four presets (`ExplosionMedium` = the fireball pl
       "sprite": "fx/spark",                // atlas sprite (assets/source/sprites/… or a generator)
       "frames": [0, 1, 2],                 // optional: frames played evenly over the lifetime (default: all, in order)
       "count": 3,                          // particles per burst (1–64; × the event's intensity 1–4, 64 at most)
-      "speed": { "min": 0.8, "max": 1.8 }, // launch speed, px/tick (0–16)
+      "speed": { "min": 1.2, "max": 2.7 }, // launch speed, px/tick (0–16)
       "direction": 0,                      // optional: cone centre in degrees, 0 = right, 90 = down (default 0)
       "spread": 360,                       // optional: cone width in degrees (default 360 = every direction)
       "gravity": 0,                        // optional: px/tick² added to the vertical speed, + = down (default 0)
@@ -55,7 +55,7 @@ shooter). A cue may fire up to four presets (`ExplosionMedium` = the fireball pl
   ],
   "triggers": [                            // optional
     { "event": "fx", "cue": "ExplosionSmall", "preset": "spark" },
-    { "event": "sfx", "cue": "PlayerShot", "preset": "spark", "dx": 9, "dy": 0 } // dx / dy: offset in px (optional)
+    { "event": "sfx", "cue": "PlayerShot", "preset": "spark", "dx": 13.5, "dy": 0 } // dx / dy: offset in px (optional)
   ]
 }
 ```
