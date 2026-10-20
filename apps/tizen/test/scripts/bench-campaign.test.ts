@@ -26,6 +26,7 @@ import {
   parseBenchLine,
   parseCampaignBuild,
   parseBuildId,
+  parseBuildOutput,
   isForeignPayload,
   resolveTools,
   resultsDirName,
@@ -407,6 +408,28 @@ describe('the campaign build check', () => {
     expect(isForeignPayload(payload('9c7a594+'), '9c7a594+')).toBe(false);
     expect(isForeignPayload(payload('2a82316+'), '9c7a594+')).toBe(true);
     expect(isForeignPayload(payload('2a82316+'), null)).toBe(false);
+  });
+
+  it('reads a build output from the build id, and keeps outputs apart (VITE_BENCH_OUTPUT)', () => {
+    const bundle = 'reportUrl:`http://10.0.0.2:8787`,buildId:`9e60df2+@1280x720`,assets:d';
+    expect(parseBuildId(bundle)).toBe('9e60df2+@1280x720');
+    expect(parseBuildOutput(parseBuildId(bundle))).toBe('1280x720');
+    expect(parseBuildOutput('9e60df2@960x540')).toBe('960x540');
+    expect(parseBuildOutput('9e60df2+')).toBeNull();
+    expect(parseBuildOutput(null)).toBeNull();
+    const payload = (buildId: string) => ({
+      session: 'rb-a',
+      seq: 1,
+      done: false,
+      env: { buildId },
+      results: [],
+      decode: null,
+      receivedAt: null,
+    });
+    // The 720p campaign ignores the 1080p build's and the 540p build's re-sent sessions.
+    expect(isForeignPayload(payload('9e60df2+'), '9e60df2+@1280x720')).toBe(true);
+    expect(isForeignPayload(payload('9e60df2+@960x540'), '9e60df2+@1280x720')).toBe(true);
+    expect(isForeignPayload(payload('9e60df2+@1280x720'), '9e60df2+@1280x720')).toBe(false);
   });
 
   it('rejects a bundle without a campaign', () => {

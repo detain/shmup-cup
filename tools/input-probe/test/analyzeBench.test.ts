@@ -21,17 +21,20 @@ import {
   analyzeBenchSession,
   analyzeBenchSessions,
   baselineFor,
+  beatsReference,
   decodeSection,
   decodeZoneEstimate,
   expandSessionArgs,
   lateShare,
   loadCampaign,
   parseRow,
+  poolNoise,
   quantile,
   readBenchSession,
   relativeTo,
   runStats,
   section13Outcome,
+  sessionOutput,
   sizeOrder,
 } from '../results/analyze-bench.mjs';
 
@@ -363,5 +366,329 @@ describe('campaigns: aggregation, noise floor, GL 1 vs 2 (plan §13, review F8)'
       child.on('close', (code) => done(code));
     });
     expect(usage).toBe(2);
+  });
+});
+
+// ------------------------------------------------------------------ output resolutions
+
+interface SyntheticRow {
+  size: string;
+  variant: string;
+  index: number;
+}
+
+/** The synthetic matrix: three sizes (the last one native, 1280x720n) × two load variants. */
+const SYNTHETIC_ROWS: SyntheticRow[] = [
+  { size: '384x216', variant: 'busy', index: 0 },
+  { size: '384x216', variant: 'worst', index: 1 },
+  { size: '640x360', variant: 'busy', index: 2 },
+  { size: '640x360', variant: 'worst', index: 3 },
+  { size: '1280x720n', variant: 'busy', index: 4 },
+  { size: '1280x720n', variant: 'worst', index: 5 },
+];
+
+interface SyntheticOptions {
+  /** `env.output` (a reduced-output build), or none for the full window. */
+  output?: string;
+  /** The window, `[innerWidth, innerHeight]` (default 1920×1080). */
+  inner?: [number, number];
+  /** The session's WebGL version. */
+  gl: number;
+  /** Position in the campaign: 0 for the first run of its output, 1 for the repeat, … */
+  run: number;
+  /** Rows the build skipped (no record). */
+  skip?: (row: SyntheticRow) => boolean;
+  /** `[twoTick %, synced p95 ms]` of a row in this run. */
+  value: (row: SyntheticRow, run: number) => [number, number];
+}
+
+/**
+ * Writes a small synthetic bench session.
+ *
+ * @param name - File name.
+ * @param o - What the session holds.
+ * @returns The path.
+ */
+function syntheticSession(name: string, o: SyntheticOptions): string {
+  const [w, h] = o.inner ?? [1920, 1080];
+  const rows = SYNTHETIC_ROWS.filter((row) => !(o.skip?.(row) ?? false));
+  const env: Record<string, unknown> = {
+    buildId: o.output === undefined ? 'abc1234' : `abc1234@${o.output}`,
+    host: 'tizen',
+    innerWidth: w,
+    innerHeight: h,
+    devicePixelRatio: 1,
+    webGLVersion: o.gl,
+    scenarios: SYNTHETIC_ROWS.length,
+    startedAt: 1760000000000 + o.run * 1000 + (o.output === undefined ? 0 : 500) + o.gl,
+  };
+  if (o.output !== undefined) env['output'] = o.output;
+  const results = rows.map((row) => {
+    const [twoTick, sync] = o.value(row, o.run);
+    return {
+      scenario: `${row.size}-${row.variant}`,
+      index: row.index,
+      size: row.size,
+      density: 1,
+      variant: row.variant,
+      webGLVersion: o.gl,
+      twoTickShare: twoTick / 100,
+      syncedMs: [0, sync / 2, sync, sync * 1.5],
+      renderMs: [0, sync / 3, sync / 2, sync],
+      endedAt: 1760000000000 + o.run * 1000 + row.index,
+    };
+  });
+  const payload = { kind: 'render-bench', session: name.replace('.jsonl', ''), seq: 1, env, results, done: true };
+  const file = join(tmp, name);
+  writeFileSync(file, JSON.stringify(payload) + '\n');
+  return file;
+}
+
+/** Base figures of a row at 1920x1080: the two-tick share (%) and the synced p95 (ms). */
+function base1080(row: SyntheticRow): [number, number] {
+  return [10 + row.index, 8 + row.index];
+}
+
+/** A run's own jitter: the repeat (run 1) is +1.0 point and +10 % of the first. */
+function jitter(value: [number, number], run: number, points: number): [number, number] {
+  return run === 0 ? value : [value[0] + points, value[1] * 1.1];
+}
+
+/**
+ * The four passes (GL 1, 2, 1, 2) of one output.
+ *
+ * @param prefix - File-name prefix.
+ * @param output - `env.output`, or none for the window.
+ * @param value - The row's figures.
+ * @param skip - Skipped rows.
+ * @param passes - How many of the four passes to write.
+ * @returns The paths.
+ */
+function campaignOf(
+  prefix: string,
+  output: string | undefined,
+  value: (row: SyntheticRow, run: number) => [number, number],
+  skip?: (row: SyntheticRow) => boolean,
+  passes = 4,
+): string[] {
+  return [1, 2, 1, 2].slice(0, passes).map((gl, i) =>
+    syntheticSession(`${prefix}-${i}.jsonl`, {
+      gl,
+      run: Math.floor(i / 2),
+      ...(output === undefined ? {} : { output }),
+      ...(skip === undefined ? {} : { skip }),
+      value,
+    }),
+  );
+}
+
+/**
+ * The cells of one row of the cross-output table.
+ *
+ * @param report - The report.
+ * @param size - Size id.
+ * @param variant - Load variant.
+ * @returns The cells after Size and Variant: two-tick per output, then synced p95 per output.
+ */
+function crossRow(report: string, size: string, variant: string): string[] {
+  const at = report.indexOf('## Cross-output comparison');
+  expect(at).toBeGreaterThan(-1);
+  const line = report
+    .slice(at)
+    .split('\n')
+    .find((l) => {
+      const c = l.split('|').map((x) => x.trim());
+      return c[1] === size && c[2] === variant;
+    });
+  expect(line).toBeDefined();
+  return (line as string)
+    .split('|')
+    .map((x) => x.trim())
+    .slice(3, -1);
+}
+
+describe('output resolutions', () => {
+  // 1920x1080 (the window): jitter 1.0 pt / +10 %. 1280x720: much better on busy, the same on worst; jitter 0.4 pt.
+  // 960x540: one GL 1 session (no repeat), a hair better on busy, skips the native 1280x720n rows.
+  const full = campaignOf('o1080', undefined, (row, run) => jitter(base1080(row), run, 1));
+  const mid = campaignOf('o720', '1280x720', (row, run) => {
+    const [t, s] = base1080(row);
+    return row.variant === 'busy' ? jitter([t * 0.4, s * 0.5], run, 0.4) : jitter([t, s], run, 0.4);
+  });
+  const small = campaignOf(
+    'o540',
+    '960x540',
+    (row) => {
+      const [t, s] = base1080(row);
+      return [row.variant === 'busy' ? t - 0.5 : t, s];
+    },
+    (row) => row.size === '1280x720n',
+    1,
+  );
+  const all = [...full, ...mid, ...small];
+
+  it('takes the output from env.output, else from the window', () => {
+    expect(sessionOutput({ output: '1280x720', innerWidth: 1920, innerHeight: 1080 })).toEqual({
+      id: '1280x720',
+      label: '1280x720 (backbuffer)',
+      area: 921600,
+      window: false,
+    });
+    expect(sessionOutput({ innerWidth: 1920, innerHeight: 1080 })).toEqual({
+      id: '1920x1080',
+      label: '1920x1080 (window)',
+      area: 2073600,
+      window: true,
+    });
+    // A bogus output is ignored; nothing at all is an unknown output that sorts last.
+    expect(sessionOutput({ output: 'big', innerWidth: 1280, innerHeight: 720 }).id).toBe('1280x720');
+    expect(sessionOutput({}).id).toBe('?');
+    expect(sessionOutput(undefined).area).toBe(0);
+  });
+
+  it('groups the sessions by output, largest first, with their own runs per WebGL version', () => {
+    const campaign = loadCampaign(all);
+    expect(campaign.outputs.map((o: { output: { id: string } }) => o.output.id)).toEqual(['1920x1080', '1280x720', '960x540']);
+    expect(campaign.outputs.map((o: { sessions: unknown[] }) => o.sessions.length)).toEqual([4, 4, 1]);
+    const [o1080, o720, o540] = campaign.outputs;
+    expect([...o1080.runsByGl.keys()]).toEqual([1, 2]);
+    expect(o1080.runsByGl.get(1)).toHaveLength(2);
+    expect(o720.runsByGl.get(2)).toHaveLength(2);
+    expect([...o540.runsByGl.keys()]).toEqual([1]);
+    // The old fields mirror the first output.
+    expect(campaign.runsByGl).toBe(o1080.runsByGl);
+    expect(campaign.sessions).toHaveLength(9);
+    // Every output band comes from its own repeats.
+    expect(o1080.noise.twoTick.median).toBeCloseTo(1, 9);
+    expect(o720.noise.twoTick.median).toBeCloseTo(0.4, 9);
+    expect(o1080.noise.pooled).toBeUndefined();
+    expect(o720.noise.pooled).toBeUndefined();
+  });
+
+  it('prints a heading per output with its own sections, and a sessions table with the output', () => {
+    const report = analyzeBenchSessions(all);
+    const heads = ['## Output 1920x1080 (window)', '## Output 1280x720 (backbuffer)', '## Output 960x540 (backbuffer)'].map((h) =>
+      report.indexOf('\n' + h + '\n'),
+    );
+    expect(heads.every((i) => i > 0)).toBe(true);
+    expect([...heads].sort((a, b) => a - b)).toEqual(heads);
+    expect(report).toMatch(/\| # +\| Session +\| Output +\| GL /);
+    // Each output carries every per-GL section, demoted under its heading.
+    const section = (from: number, to: number) => report.slice(from, to);
+    const big = section(heads[0], heads[1]);
+    expect(big).toContain('\n### WebGL 1 — 2 run(s)\n');
+    expect(big).toContain('\n### WebGL 2 — 2 run(s)\n');
+    expect(big).toContain('\n#### Plan §13 at 640×360 — GL 1, median of 2 runs\n');
+    expect(big).toContain('\n### Noise floor — same-GL repeats\n');
+    expect(big).toContain('\n### WebGL 1 vs 2 (plan §13, review F8)\n');
+    expect(big).toContain('runs: GL 1 × 2, GL 2 × 2.');
+    // The noise band is computed per output: 1.0 point at 1080, 0.4 at 720.
+    expect(big).toMatch(/\| two-tick share, points +\| +\d+ +\| +1\.0 +\| +1\.0 \|/);
+    const mid = section(heads[1], heads[2]);
+    expect(mid).toMatch(/\| two-tick share, points +\| +\d+ +\| +0\.4 +\| +0\.4 \|/);
+    expect(mid).toContain('The canvas backbuffer is this size');
+    expect(big).not.toContain('falling back');
+    expect(mid).not.toContain('falling back');
+  });
+
+  it('falls back to the pooled band of all outputs when an output has no repeats, and says so', () => {
+    const campaign = loadCampaign(all);
+    const small540 = campaign.outputs[2];
+    expect(small540.ownNoise).toBeNull();
+    expect(small540.noise.pooled).toBe(true);
+    expect(small540.noise.pooledFrom).toEqual(['1920x1080', '1280x720']);
+    // 1080 contributes 12 pairs of 1.0, 720 12 of 0.4: the median of the pool is 0.7 (between the two groups).
+    expect(small540.noise.twoTick.n).toBe(24);
+    expect(small540.noise.twoTick.median).toBeCloseTo(0.7, 9);
+    expect(small540.noise.twoTick.p90).toBeCloseTo(1, 9);
+    const report = analyzeBenchSessions(all);
+    const at = report.indexOf('\n## Output 960x540 (backbuffer)\n');
+    const block = report.slice(at, report.indexOf('## Cross-output comparison'));
+    expect(block).toContain('**No same-GL repeats at this output** (GL 1 × 1)');
+    expect(block).toContain('pooled band of all outputs** (1920x1080, 1280x720)');
+    expect(block).toContain('Pooled over the outputs. 24 scenario');
+    // One run of one version: no verdict either way.
+    expect(block).toContain('No comparison: the sessions hold WebGL 1 runs only.');
+    // No output with a repeat: no band, no fallback.
+    const lone = loadCampaign(campaignOf('lone', undefined, (row) => base1080(row), undefined, 2).concat(small));
+    expect(lone.outputs.every((o: { noise: unknown }) => o.noise === null)).toBe(true);
+  });
+
+  it('prints the cross-output table with the outputs side by side, a star where a reduced output beats 1080p', () => {
+    const report = analyzeBenchSessions(all);
+    expect(report).toContain('Outputs, largest first: 1920x1080 (window) · 1280x720 (backbuffer) · 960x540 (backbuffer).');
+    expect(report).toMatch(/\| Size +\| Variant +\| 2t % 1920x1080 +\| 2t % 1280x720 +\| 2t % 960x540 +\| p95 ms 1920x1080 /);
+    // 640x360 busy (index 2): 1080 -> 12 / 10 (+1 pt, +10 % on the repeat: median over the four runs 12.5 / 10.5).
+    // 720 -> 4.8 / 5, repeat +0.4 / ×1.1 (median 5.0 / 5.25); 540 -> 11.5 / 10 (one run).
+    expect(crossRow(report, '640x360', 'busy')).toEqual(['12.5', '5.0*', '11.5', '10.5', '5.3*', '10.0']);
+    // The 720 worst row equals the 1080 one except its smaller jitter: no mark; 540 is the same.
+    expect(crossRow(report, '640x360', 'worst')).toEqual(['13.5', '13.2', '13.0', '11.6', '11.6', '11.0']);
+    // The native rows are skipped by the 960x540 build: a dash, never a zero.
+    expect(crossRow(report, '1280x720n', 'busy')).toEqual(['14.5', '5.8*', '—', '12.6', '6.3*', '—']);
+    expect(crossRow(report, '1280x720n', 'worst')).toEqual(['15.5', '15.2', '—', '13.7', '13.7', '—']);
+  });
+
+  it('says per variant where the reduced outputs beat the largest beyond the noise band', () => {
+    const report = analyzeBenchSessions(all);
+    expect(report).toContain('Where the reduced outputs beat 1920x1080 beyond the noise band, per load variant:');
+    expect(report).toContain(
+      '- **busy** — 1280x720 beats 1920x1080 on two-tick at 3/3 size(s) (most: 1280x720n -8.7 pts) and synced p95 at 3/3 size(s)' +
+        ' (most: ',
+    );
+    expect(report).toContain('0.50×) (3 size(s) compared); 960x540 beats it nowhere (2 size(s) compared).');
+    expect(report).toContain('- **worst** — 1280x720 beats it nowhere (3 size(s) compared); 960x540 beats it nowhere (2 size(s) compared).');
+  });
+
+  it('adds the per-version tables with --full only', () => {
+    expect(analyzeBenchSessions(all)).not.toContain('### Cross-output — WebGL 1 runs only');
+    const full1 = analyzeBenchSessions(all, { full: true });
+    expect(full1).toContain('### Cross-output — WebGL 1 runs only');
+    expect(full1).toContain('### Cross-output — WebGL 2 runs only');
+    // Per version the median is over that version's two runs: 640x360 busy at 1080 is (12 + 13) / 2.
+    const gl1 = full1.slice(full1.indexOf('### Cross-output — WebGL 1 runs only'));
+    const row = gl1.split('\n').find((l) => l.split('|').map((x) => x.trim())[1] === '640x360' && l.includes(' busy '));
+    expect((row as string).split('|').map((x) => x.trim()).slice(3, 4)).toEqual(['12.5']);
+  });
+
+  it('leaves a single-output campaign as it was: one output heading, no cross-output section', () => {
+    const report = analyzeBenchSessions(full);
+    expect(report).toContain('\n## Output 1920x1080 (window)\n');
+    expect(report).not.toContain('Cross-output');
+    expect(report).not.toMatch(/\| Session +\| Output/);
+    expect(loadCampaign(full).outputs).toHaveLength(1);
+    // The fixture session (no env.output) reads as the window.
+    expect(analyzeBenchSessions([FIXTURE])).toContain('## Output 1920x1080 (window)');
+    // A reduced-output session names its output in its own report.
+    expect(analyzeBenchSession(mid[0])).toContain('display 1920×1080 @1 · output 1280x720 · WebGL 1');
+    expect(analyzeBenchSession(full[0])).not.toContain(' · output ');
+  });
+
+  it('groups old sessions without env.output by their window size', () => {
+    const a = syntheticSession('win-a.jsonl', { gl: 1, run: 0, value: (row) => base1080(row) });
+    const b = syntheticSession('win-b.jsonl', { gl: 1, run: 1, inner: [1280, 720], value: (row) => base1080(row) });
+    const campaign = loadCampaign([a, b]);
+    expect(campaign.outputs.map((o: { output: { label: string } }) => o.output.label)).toEqual([
+      '1920x1080 (window)',
+      '1280x720 (window)',
+    ]);
+  });
+
+  it('judges a missing noise band as unjudged, not as a beat', () => {
+    expect(beatsReference({ twoTick: 10, sync: 10 }, { twoTick: 1, sync: 1 }, null, null)).toEqual({
+      twoTick: false,
+      sync: false,
+      points: -9,
+      ratio: 0.1,
+    });
+    expect(beatsReference(undefined, { twoTick: 1, sync: 1 }, null, null)).toEqual({
+      twoTick: false,
+      sync: false,
+      points: null,
+      ratio: null,
+    });
+    const band = { twoTick: { p90: 2 }, relSync: { p90: 0.2 } };
+    expect(beatsReference({ twoTick: 10, sync: 10 }, { twoTick: 8.5, sync: 8.5 }, band, band)).toMatchObject({ twoTick: false, sync: false });
+    expect(beatsReference({ twoTick: 10, sync: 10 }, { twoTick: 7.5, sync: 7.5 }, band, band)).toMatchObject({ twoTick: true, sync: true });
+    expect(poolNoise([])).toBeNull();
   });
 });

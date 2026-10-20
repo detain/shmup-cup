@@ -385,6 +385,36 @@ export function skipScenario(state: BenchRunState, reason: string): BenchRunStat
 }
 
 /**
+ * Moves a running run's cursor past the scenarios the build skips by design (a build output whose
+ * backbuffer is smaller than their frame — `./output.ts`), so none of them is launched.
+ *
+ * @param state - The state.
+ * @param isSkipped - Whether the render scenario at an index is skipped (never asked for the
+ *   decode scenario's index).
+ * @returns `state` itself when it is not running or the scenario at its cursor runs; else the
+ *   state with the cursor on the first scenario at or after it that runs (or the decode scenario).
+ *   No record is added and `lastError` is left alone — a planned skip is not an error, so a
+ *   campaign's resume never passes over the scenario after it. A **Red** re-run (`single`) of a
+ *   skipped scenario stops the run instead, its cursor one past it.
+ * @remarks Unlike {@link skipScenario} it never reloads the page: nothing was launched, so the
+ *   scenario page goes on to measure the scenario at the new cursor.
+ */
+export function skipPlannedScenarios(
+  state: BenchRunState,
+  isSkipped: (index: number) => boolean,
+): BenchRunState {
+  if (!state.running) return state;
+  let cursor = state.cursor;
+  while (cursor < DECODE_SCENARIO_INDEX && isSkipped(cursor)) {
+    cursor++;
+    if (state.single) break;
+  }
+  if (cursor === state.cursor) return state;
+  if (state.single) return { ...state, cursor, running: false, single: false };
+  return { ...state, cursor, running: cursor < BENCH_RUN_LENGTH };
+}
+
+/**
  * Resumes a stopped run (the campaign mode, `./campaign.ts`): after the owner's Back the scenario
  * at the cursor runs again; after an error (a scenario that threw) that scenario is skipped.
  *

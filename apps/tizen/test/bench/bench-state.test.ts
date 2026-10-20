@@ -26,6 +26,7 @@ import {
   rerunScenario,
   roundTo,
   serializeRunState,
+  skipPlannedScenarios,
   stopRun,
   summarizeSeries,
   unsentRecords,
@@ -241,5 +242,40 @@ describe('bench sampler', () => {
     expect(sampler.twoTickShare()).toBe(0.4);
     expect(sampler.sync.summary()).toEqual([4, 4, 4, 4]);
     expect(new BenchSampler().twoTickShare()).toBe(0);
+  });
+});
+
+describe('bench run state: planned skips (a build output — src/bench/output.ts)', () => {
+  /** Indexes 3 to 5 and the last render scenario are skipped. */
+  const skipped = (index: number): boolean =>
+    (index >= 3 && index <= 5) || index === DECODE_SCENARIO_INDEX - 1;
+  const run = createRunState('rb-s', 1, 1, TV_BENCH_TIMING);
+
+  it('leaves a run alone whose cursor scenario runs, or that is not running', () => {
+    const at2 = { ...run, cursor: 2 };
+    expect(skipPlannedScenarios(at2, skipped)).toBe(at2);
+    const stopped = { ...run, cursor: 3, running: false };
+    expect(skipPlannedScenarios(stopped, skipped)).toBe(stopped);
+    expect(skipPlannedScenarios({ ...run, cursor: 3 }, () => false).cursor).toBe(3);
+  });
+
+  it('moves the cursor past every skipped scenario in a row, with no record and no error', () => {
+    const next = skipPlannedScenarios({ ...run, cursor: 3, lastError: 'earlier' }, skipped);
+    expect(next).toMatchObject({ cursor: 6, running: true, single: false, lastError: 'earlier' });
+    expect(next.records).toEqual([]);
+  });
+
+  it('runs on into the decode scenario past a skipped last render scenario', () => {
+    const next = skipPlannedScenarios({ ...run, cursor: DECODE_SCENARIO_INDEX - 1 }, skipped);
+    expect(next).toMatchObject({ cursor: DECODE_SCENARIO_INDEX, running: true });
+    // The decode scenario itself is never asked about.
+    expect(skipPlannedScenarios({ ...run, cursor: DECODE_SCENARIO_INDEX }, () => true).cursor).toBe(
+      DECODE_SCENARIO_INDEX,
+    );
+  });
+
+  it('stops a Red re-run of a skipped scenario instead of running the rest of the matrix', () => {
+    const next = skipPlannedScenarios({ ...run, cursor: 4, single: true }, skipped);
+    expect(next).toMatchObject({ cursor: 5, running: false, single: false });
   });
 });

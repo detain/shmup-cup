@@ -21,8 +21,10 @@ import {
   recordResult,
   serializeRunState,
   startRenderBench,
+  parseBenchOutput,
   type BenchAssets,
   type BenchHost,
+  type BenchOutput,
   type TvBenchOutcome,
 } from '../../src/bench/index.js';
 import { fakeDecode, recordFor } from './fake-record.js';
@@ -38,14 +40,43 @@ const ASSETS: BenchAssets = {
   fx: [],
 };
 
+/** What a fake page's bench is started with beyond its storage and assets. */
+interface FakeOptions {
+  /** The build output (`VITE_BENCH_OUTPUT`), default none. */
+  readonly output?: BenchOutput | null;
+  /** The log server, default none. */
+  readonly reportUrl?: string;
+}
+
 /** A fake page: storage, keys, the body marker, reload and exit, and images that fail to load. */
-function fakePage(search = '', stored: string | null = null, assets: BenchAssets = ASSETS) {
+function fakePage(
+  search = '',
+  stored: string | null = null,
+  assets: BenchAssets = ASSETS,
+  extra: FakeOptions = {},
+) {
   const store = new Map<string, string>();
   if (stored !== null) store.set(BENCH_STATE_KEY, stored);
   let keydown: ((event: { keyCode: number; preventDefault(): void }) => void) | null = null;
   const attributes: Record<string, string> = {};
   const appended: { textContent: string }[] = [];
   const reload = vi.fn();
+  /** The bodies POSTed to the log server. */
+  const posted: string[] = [];
+  /** A request the log server accepts at once. */
+  class AcceptingRequest {
+    status = 200;
+    timeout = 0;
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    ontimeout: (() => void) | null = null;
+    open(): void {}
+    setRequestHeader(): void {}
+    send(body: string): void {
+      posted.push(body);
+      void Promise.resolve().then(() => this.onload?.());
+    }
+  }
   /** An image that fails to load, asynchronously like a real one. */
   class FailingImage {
     onload: (() => void) | null = null;
@@ -79,6 +110,8 @@ function fakePage(search = '', stored: string | null = null, assets: BenchAssets
     requestAnimationFrame: () => 0,
     performance: { now: () => 0 },
     Image: FailingImage,
+    XMLHttpRequest: AcceptingRequest,
+    setTimeout: () => 0,
     close: vi.fn(),
   };
   const exit = vi.fn();
@@ -91,13 +124,14 @@ function fakePage(search = '', stored: string | null = null, assets: BenchAssets
     startRenderBench({
       win: win as unknown as Window,
       canvas: {} as HTMLCanvasElement,
-      reportUrl: '',
+      reportUrl: extra.reportUrl ?? '',
       buildId: 'test',
       assets,
       host,
+      output: extra.output ?? null,
     });
   };
-  return { win, start, press, state, reload, exit, attributes, appended };
+  return { win, start, press, state, reload, exit, attributes, appended, posted };
 }
 
 /** Lets the page's promises settle. */
@@ -280,6 +314,84 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
     expect(page.state()).toBeNull();
     expect(page.reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
+  const OUT_540 = parseBenchOutput('960x540');
+
+  it('passes over the scenarios whose frame is larger than the output without launching them', async () => {
+    // Cursor on 1024x576-busy, the first row a 960x540 backbuffer cannot hold: the rest of the
+    // plain matrix (1024x576 … 1920x1080n, 72 rows) and the first knob rows (800x600-*-fit) are
+    // skipped, and the page goes on to 854x480-busy-fit.
+    const first = BENCH_SCENARIOS.findIndex((s) => s.id === '1024x576-busy');
+    const next = BENCH_SCENARIOS.findIndex((s) => s.id === '854x480-busy-fit');
+    const running = createRunState('rb-x', 1, 1, TV_BENCH_TIMING);
+    const page = fakePage('', serializeRunState({ ...running, cursor: first }), ASSETS, {
+      output: OUT_540,
+    });
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    // Stored before anything is measured: the cursor sits on the scenario this page measures.
+    expect(page.state()).toMatchObject({ running: true, cursor: next, lastError: null });
+    await settle();
+    // The measurement fails in Node (no images); it is the 854x480 row that failed, not a skipped one.
+    expect(page.state()).toMatchObject({ running: false, cursor: next });
+    expect(page.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs every scenario of the matrix without an output (no skip)', () => {
+    const at = BENCH_SCENARIOS.findIndex((s) => s.id === '1920x1080n-busy');
+    const running = createRunState('rb-x', 1, 1, TV_BENCH_TIMING);
+    const page = fakePage('', serializeRunState({ ...running, cursor: at }));
+    page.start();
+    expect(page.state()).toMatchObject({ running: true, cursor: at });
+  });
+
+  it('reports the output in the payload env and on the results page', async () => {
+    let state = createRunState('rb-out', 1, 1, TV_BENCH_TIMING);
+    state = recordResult(state, recordFor(0));
+    state = { ...state, running: false };
+    const page = fakePage('', serializeRunState(state), ASSETS, {
+      output: parseBenchOutput('1280x720'),
+      reportUrl: 'http://10.0.0.2:8787',
+    });
+    page.start();
+    await settle();
+    expect(page.posted).toHaveLength(1);
+    const payload = JSON.parse(page.posted[0]) as { env: { output: unknown; scenarios: number } };
+    expect(payload.env.output).toBe('1280x720');
+    // The indexes stay the matrix's, whatever the build skips.
+    expect(payload.env.scenarios).toBe(BENCH_SCENARIOS.length);
+    const text = page.appended[0].textContent;
+    expect(text).toContain('output 1280x720');
+    expect(text).toContain('22 scenario(s) skipped: frame larger than the output');
+    expect(text).toContain('SKIPPED 1024x768n 1280x960n 1920x1080n 1920x1080n-interp');
+    expect(text).toContain('ENTER run the matrix: 150 scenarios + decode');
+  });
+
+  it('reports a null output without one', async () => {
+    let state = createRunState('rb-out', 1, 1, TV_BENCH_TIMING);
+    state = { ...recordResult(state, recordFor(0)), running: false };
+    const page = fakePage('', serializeRunState(state), ASSETS, {
+      reportUrl: 'http://10.0.0.2:8787',
+    });
+    page.start();
+    await settle();
+    const payload = JSON.parse(page.posted[0]) as { env: { output: unknown } };
+    expect(payload.env.output).toBeNull();
+    expect(page.appended[0].textContent).not.toContain('OUTPUT');
+    expect(page.appended[0].textContent).toContain('ENTER run the matrix: 172 scenarios + decode');
+  });
+
+  it('publishes a skipped scenario as an error headlessly', () => {
+    const page = fakePage('?scenario=1280x720n-busy', null, ASSETS, { output: OUT_540 });
+    page.start();
+    const outcome = (page.win as unknown as { __shmupTvBench: TvBenchOutcome }).__shmupTvBench;
+    expect(outcome).toEqual({
+      record: null,
+      error: 'skipped: frame 1280x720 larger than the output 960x540',
+    });
   });
 });
 

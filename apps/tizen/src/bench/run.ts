@@ -23,6 +23,12 @@
  *   countdown on the status line, **Enter** acts at once, **Back** still exits (the next launch
  *   carries on).
  *
+ * - **Build output (`options.output`, a build with `VITE_BENCH_OUTPUT` — `./output.ts`):** every
+ *   scenario without its own output knob draws into that backbuffer, `'fit'`-upscaled unless its
+ *   knob sets a mode; a scenario page first moves the cursor past the scenarios whose frame is
+ *   larger than their backbuffer (no launch, no record), the results page lists them, and the
+ *   payloads' `env.output` names the output ({@link TvBenchEnv}).
+ *
  * Either way the body carries {@link TV_BENCH_MARKER} — `running`, `done`, `error`, `scenario` or
  * `results` — which is also how the Tizen bundle check tells the bench's `app.js` from the game's.
  *
@@ -127,6 +133,7 @@ import {
   fillBenchParticles,
   pickBenchSprites,
 } from './scene.js';
+import { benchScenarioSetup, benchSkippedScenarios, type BenchOutput } from './output.js';
 import { BenchSampler } from './stats.js';
 import {
   BENCH_STATE_KEY,
@@ -140,6 +147,7 @@ import {
   rerunScenario,
   resumeRun,
   serializeRunState,
+  skipPlannedScenarios,
   skipScenario,
   stopRun,
   unsentRecords,
@@ -219,6 +227,21 @@ export interface RenderBenchAppOptions {
    * for none: the TV mode then runs hands-off (see the module docs).
    */
   readonly campaign?: BenchCampaignConfig | null;
+  /**
+   * The build output resolution (`./output.ts` — `VITE_BENCH_OUTPUT`), or `null` / absent for the
+   * window's backbuffer: every scenario without its own output then draws into it, upscaled with
+   * `'fit'`, and a scenario whose frame does not fit it is skipped.
+   */
+  readonly output?: BenchOutput | null;
+}
+
+/**
+ * The session-level facts of a TV run's payloads: the shell's {@link RenderBenchEnv} plus the
+ * build output.
+ */
+export interface TvBenchEnv extends RenderBenchEnv {
+  /** The build output resolution (`'1280x720'`), or `null` for the window's backbuffer. */
+  output: string | null;
 }
 
 /** The empty screen effects of every bench frame. */
@@ -416,15 +439,17 @@ function measureScenario(
       filter: variant.filter,
       mode7: variant.mode7,
     });
-    // The canvas's backbuffer: the window's, or the output knob's (its CSS size stays the whole
-    // window, so the browser scales a smaller backbuffer up to the panel).
+    // The canvas's backbuffer: the window's, or the output knob's or the build's (`./output.ts` —
+    // its CSS size stays the whole window, so the browser scales a smaller backbuffer up to the
+    // panel).
+    const setup = benchScenarioSetup(scenario, options.output ?? null);
     const displayWidth = Math.max(
       1,
-      Math.floor(scenario.outputWidth > 0 ? scenario.outputWidth : win.innerWidth),
+      Math.floor(setup.outputWidth > 0 ? setup.outputWidth : win.innerWidth),
     );
     const displayHeight = Math.max(
       1,
-      Math.floor(scenario.outputHeight > 0 ? scenario.outputHeight : win.innerHeight),
+      Math.floor(setup.outputHeight > 0 ? setup.outputHeight : win.innerHeight),
     );
     canvas.width = displayWidth;
     canvas.height = displayHeight;
@@ -440,7 +465,7 @@ function measureScenario(
       height: size.height,
       atlas,
       preferWebGLVersion: webGLVersion,
-      scaleMode: scenario.scaleMode,
+      scaleMode: setup.scaleMode,
       interpolation: scenario.interpolation,
       countDrawCalls: true,
       countStructureRebuilds: true,
@@ -813,6 +838,11 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
     publish({ record: null, error: `unknown scenario "${scenarioId}"` });
     return;
   }
+  const skip = benchScenarioSetup(scenario, options.output ?? null).skip;
+  if (skip !== null) {
+    publish({ record: null, error: `skipped: ${skip}` });
+    return;
+  }
   const timing = timingFromSearch(search, HEADLESS_BENCH_TIMING);
   measureScenario(options, scenario, timing, gl, scenario.id).done.then(
     (record) => {
@@ -835,7 +865,18 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
   const host = options.host ?? detectBenchHost(win);
   const storage = storageOf(win);
   const endpoint = renderReportEndpoint(options.reportUrl);
-  let state = parseRunState(read(storage));
+  const output = options.output ?? null;
+  const stored = parseRunState(read(storage));
+  // The scenarios this build skips by design (`./output.ts`) are passed over before anything is
+  // launched — no record, no reload.
+  let state =
+    stored === null
+      ? null
+      : skipPlannedScenarios(
+          stored,
+          (index) => benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null,
+        );
+  if (state !== null && state !== stored) write(storage, BENCH_STATE_KEY, serializeRunState(state));
   const mode: 'scenario' | 'results' = state !== null && state.running ? 'scenario' : 'results';
 
   /**
@@ -845,11 +886,8 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
    */
   const save = (next: BenchRunState): void => {
     state = next;
-    try {
-      storage?.setItem(BENCH_STATE_KEY, serializeRunState(next));
-    } catch (_error) {
-      // Quota or a locked storage: the run goes on, the POSTs still carry its results.
-    }
+    // Quota or a locked storage: the run goes on, the POSTs still carry its results.
+    write(storage, BENCH_STATE_KEY, serializeRunState(next));
   };
   /** Reloads the page for the next scenario (or the results page). */
   const reload = (): void => {
@@ -884,8 +922,9 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
    * @param run - The run.
    * @returns The env.
    */
-  const envOf = (run: BenchRunState): RenderBenchEnv => ({
+  const envOf = (run: BenchRunState): TvBenchEnv => ({
     buildId: options.buildId,
+    output: output === null ? null : output.id,
     host: host.name,
     userAgent: (win as Partial<Window>).navigator?.userAgent ?? '',
     innerWidth: win.innerWidth,
@@ -1111,6 +1150,21 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
 }
 
 /**
+ * Stores a text, ignoring a storage that refuses it (quota, a locked or missing storage).
+ *
+ * @param storage - The storage, or `null`.
+ * @param key - The key.
+ * @param text - The text.
+ */
+function write(storage: Storage | null, key: string, text: string): void {
+  try {
+    storage?.setItem(key, text);
+  } catch (_error) {
+    // The caller goes on without it.
+  }
+}
+
+/**
  * Reads a stored state's text.
  *
  * @param storage - The storage, or `null`.
@@ -1156,6 +1210,8 @@ function showResults(
   onSettled?: (draw: (status: string) => void) => void,
 ): void {
   const { win, canvas } = options;
+  const output = options.output ?? null;
+  const skipped = benchSkippedScenarios(output);
   const size = BENCH_V2_SIZE;
   const source = atlasFor(options.assets, 1);
   const ui = createDrawList(256, RESULTS_MAX_LINES);
@@ -1180,6 +1236,8 @@ function showResults(
    */
   const inputOf = (status: string): BenchPageInput => ({
     state: getState(),
+    output: output === null ? null : output.id,
+    skipped,
     buildId: options.buildId,
     host: host.name,
     webGLVersion: benchWebGLVersion(
@@ -1189,7 +1247,7 @@ function showResults(
     display: `${win.innerWidth}x${win.innerHeight}`,
     endpoint,
     status,
-    scenarios: BENCH_SCENARIOS.length,
+    scenarios: BENCH_SCENARIOS.length - skipped.length,
     timing: TV_BENCH_TIMING,
     page,
     maxLines,

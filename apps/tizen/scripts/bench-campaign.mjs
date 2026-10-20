@@ -31,6 +31,8 @@
  *
  * Usage (from the repo root; PowerShell: `$env:NAME="value"; …`):
  *   VITE_BENCH_CAMPAIGN=1,2,1,2 VITE_REPORT_URL=http://<desktop ip>:8787 pnpm bench:tv
+ *   (add VITE_BENCH_OUTPUT=1280x720 or 960x540 for a smaller canvas backbuffer: the build id then
+ *   ends in `@<w>x<h>`, so its campaign never mixes with another output's — {@link parseBuildOutput})
  *   node tools/input-probe/server/log-server.mjs            (in a second terminal)
  *   pnpm bench:tv:campaign [-- --dry-run] [-- --target <ip:port> --passes N …]
  *
@@ -326,6 +328,18 @@ export function parseCampaignBuild(appJs) {
  */
 export function parseBuildId(appJs) {
   const match = /buildId:`([^`]*)`/.exec(appJs);
+  return match === null ? null : match[1];
+}
+
+/**
+ * The build output resolution a bench build id names (`src/bench/output.ts` `benchBuildId`: a
+ * build made with `VITE_BENCH_OUTPUT=1280x720` reports `<sha>@1280x720`).
+ *
+ * @param {string | null} buildId - The build id ({@link parseBuildId}), or `null`.
+ * @returns {string | null} `'<w>x<h>'`, or `null` when the id names none (the window's backbuffer).
+ */
+export function parseBuildOutput(buildId) {
+  const match = buildId === null ? null : /@(\d+x\d+)$/.exec(buildId);
   return match === null ? null : match[1];
 }
 
@@ -1142,6 +1156,10 @@ async function main(argv) {
     const bundle = readFileSync(appJs, 'utf8');
     buildId = parseBuildId(bundle);
     log(`  build id: ${buildId ?? '(none — every session counts)'}`);
+    const output = parseBuildOutput(buildId);
+    log(
+      `  output: ${output === null ? "the window's backbuffer" : `${output} backbuffer ('fit' upscale; frames larger are skipped)`}`,
+    );
     const port = new URL(options.logUrl).port || '80';
     if (!bundle.includes(`:${port}`)) {
       log(

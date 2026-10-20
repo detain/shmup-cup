@@ -37,6 +37,12 @@
  * skips a scenario that crashed or hung the TV on {@link MAX_SCENARIO_ATTEMPTS} launches; a desktop
  * orchestrator relaunches the app between passes and after a silence.
  *
+ * **Build output (`VITE_BENCH_OUTPUT`).** A bench built with `VITE_BENCH_OUTPUT=1280x720` (or any
+ * `<w>x<h>`, `./output.ts`) draws every scenario without its own output knob into a backbuffer of
+ * that size, upscaled with `'fit'` unless its knob says otherwise, skips — without launching — the
+ * scenarios whose frame is larger than their backbuffer, and reports the build id
+ * `<__SHMUP_BUILD__>@<w>x<h>`, so its campaign and payloads never mix with another build's.
+ *
  * The same page measures one scenario headlessly with `?scenario=<id>` — `pnpm bench`
  * (`test/bench/render.perf.ts`) gates the counted figures of every scenario that way.
  *
@@ -56,7 +62,7 @@
  * - shmup_tech.md §2.2 — the TV GPU: WebGL 1 / 2, 2048² atlas pages
  *
  * **Public API.** {@link startRenderBench}, {@link RenderBenchAppOptions},
- * {@link TvBenchOutcome}, {@link TV_BENCH_MARKER}, {@link BENCH_GL_KEY},
+ * {@link TvBenchOutcome}, {@link TvBenchEnv}, {@link TV_BENCH_MARKER}, {@link BENCH_GL_KEY},
  * {@link benchWebGLVersion}, {@link BenchAssets}, {@link BenchAtlasData}, {@link atlasFor}; the
  * matrix ({@link BENCH_RESOLUTIONS}, {@link BENCH_SIZES}, {@link BENCH_DENSITIES},
  * {@link BENCH_V2_SIZE}, {@link BENCH_MAX_ATLAS_PAGES}, {@link BENCH_VARIANTS}, {@link BENCH_KNOBS},
@@ -79,7 +85,11 @@
  * {@link createRunState}, {@link isRecord}, {@link isDecodeRecord}, {@link parseRunState},
  * {@link serializeRunState}, {@link recordResult}, {@link recordDecode}, {@link markSent},
  * {@link nextSeq}, {@link unsentRecords}, {@link decodeUnsent}, {@link stopRun},
- * {@link rerunScenario}, {@link skipScenario}, {@link resumeRun}); the campaign
+ * {@link rerunScenario}, {@link skipScenario}, {@link skipPlannedScenarios}, {@link resumeRun}); the
+ * build output ({@link parseBenchOutput}, {@link benchBuildId}, {@link benchScenarioSetup},
+ * {@link benchSkippedScenarios}, {@link BENCH_OUTPUT_SCALE_MODE}, {@link BENCH_MAX_OUTPUT_SIDE},
+ * {@link BenchOutput}, {@link BenchScenarioSetup}, and the results page's
+ * {@link formatOutputLines}); the campaign
  * ({@link BENCH_CAMPAIGN_KEY}, {@link BENCH_CAMPAIGN_VERSION}, {@link MAX_SCENARIO_ATTEMPTS},
  * {@link DEFAULT_CAMPAIGN_PAUSE_S}, {@link CAMPAIGN_RESUME_MS}, {@link parseCampaignConfig},
  * {@link createCampaign}, {@link parseCampaign}, {@link serializeCampaign}, {@link campaignFor},
@@ -115,8 +125,19 @@ export {
   type BenchAssets,
   type BenchAtlasData,
   type RenderBenchAppOptions,
+  type TvBenchEnv,
   type TvBenchOutcome,
 } from './run.js';
+export {
+  BENCH_MAX_OUTPUT_SIDE,
+  BENCH_OUTPUT_SCALE_MODE,
+  benchBuildId,
+  benchScenarioSetup,
+  benchSkippedScenarios,
+  parseBenchOutput,
+  type BenchOutput,
+  type BenchScenarioSetup,
+} from './output.js';
 export {
   BENCH_DEFAULT_SCALE_MODE,
   BENCH_DENSITIES,
@@ -177,6 +198,7 @@ export {
   formatDecodeTable,
   formatResultRow,
   formatResultsHeader,
+  formatOutputLines,
   formatResultsTable,
   lateShare,
   type BenchLine,
@@ -197,6 +219,7 @@ export {
   resumeRun,
   serializeRunState,
   isRecord,
+  skipPlannedScenarios,
   skipScenario,
   stopRun,
   unsentRecords,

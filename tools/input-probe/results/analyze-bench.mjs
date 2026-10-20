@@ -22,6 +22,15 @@
  *    variants): two-tick % and synced p95 ms per version, plus a **knob table** (a knob row against its own
  *    plain row at the same size, paired run by run) and plan §13's outcome at 640×360.
  *
+ * **Output resolutions.** The same matrix is also recorded with the canvas backbuffer at 1280×720 and 960×540
+ * (separate builds: `env.output` and a `buildId` ending in `@1280x720`); a session without `env.output` ran at
+ * the full window (`innerWidth × innerHeight`, 1920×1080 on the TV). Sessions are grouped by (output, WebGL
+ * version), largest output first: every section above is produced per output under an `## Output …` heading,
+ * the noise band from that output's own same-version repeats (an output without any borrows the pooled band of
+ * the others and says so). With ≥ 2 outputs a **cross-output comparison** puts each size × variant's two-tick
+ * share and synced p95 side by side (`—` where a build skipped the row) and says where the reduced outputs beat
+ * the largest beyond the noise band.
+ *
  * Why the figures are read relative: the M7's `requestAnimationFrame` already shows a p95 of ~30 ms with nothing
  * running at all (`input-probe-results.md` §8), so an absolute frame time says more about the panel than about
  * the frame. Plan §13 reads each 640×360 row against the same variant at 384×216 **of the same run** (the
@@ -530,7 +539,8 @@ export function analyzeBenchSession(file, options = {}) {
   );
   out.push(
     `Build \`${env.buildId ?? '?'}\` · host ${env.host ?? '?'} · display ${env.innerWidth}×${env.innerHeight}` +
-      ` @${env.devicePixelRatio} · WebGL ${glVersions.join(' + ') || '?'} · UA ${env.userAgent ?? '?'}`,
+      ` @${env.devicePixelRatio}${typeof env.output === 'string' ? ` · output ${env.output}` : ''} · WebGL` +
+      ` ${glVersions.join(' + ') || '?'} · UA ${env.userAgent ?? '?'}`,
   );
   out.push(
     'Each row is read against the same variant at 384×216 in this session (a knob row such as `busy-stretch`' +
@@ -712,6 +722,17 @@ export function noiseFloor(aggregates) {
       if (relSync !== null || twoTick !== null) samples.push({ gl, scenario: a.scenario, relSync, twoTick });
     }
   }
+  return noiseFromSamples(samples);
+}
+
+/**
+ * The bands of a list of spread samples (see {@link noiseFloor}).
+ *
+ * @param {{gl: number, scenario: string, relSync: number | null, twoTick: number | null, output?: string}[]} samples - per
+ *   scenario and version, the spreads of its repeated runs.
+ * @returns {any | null} the band (`{samples, relSync, twoTick}`), or null for no sample.
+ */
+function noiseFromSamples(samples) {
   if (samples.length === 0) return null;
   const band = (key) => {
     const with_ = samples.filter((s) => s[key] !== null);
@@ -724,35 +745,62 @@ export function noiseFloor(aggregates) {
 }
 
 /**
- * Loads a campaign: its sessions (oldest first), one run per session and WebGL version, the per-version
- * aggregates, the display order of the sizes and the noise floor.
+ * The pooled noise band of several outputs: every output's same-version spread samples together, and the
+ * largest run-to-run drift of any output. The fallback for an output that has no repeats of its own.
  *
- * @param {string[]} files - the session files.
- * @returns {any} the campaign.
+ * @param {any[]} bands - the outputs' own {@link noiseFloor} results (with `drift`), none null.
+ * @returns {any | null} the band, flagged `pooled` and with `pooledFrom` (the output ids), or null without bands.
  */
-export function loadCampaign(files) {
-  const sessions = files
-    .map((file, order) => {
-      const { payloads, records, decode } = readBenchSession(file);
-      const last = payloads[payloads.length - 1] ?? {};
-      const env = last.env ?? payloads[0]?.env ?? {};
-      return {
-        file,
-        order,
-        id: last.session ?? basename(file),
-        env,
-        from: last.from ?? null,
-        payloads,
-        records,
-        decode,
-        startedAt: typeof env.startedAt === 'number' ? env.startedAt : null,
-        complete: payloads.some((p) => p.done === true),
-      };
-    })
-    .filter((s) => s.payloads.length > 0)
-    .sort((a, b) =>
-      a.startedAt !== null && b.startedAt !== null ? a.startedAt - b.startedAt || a.order - b.order : a.order - b.order,
-    );
+export function poolNoise(bands) {
+  const samples = [];
+  const from = [];
+  for (const b of bands) {
+    for (const s of b.samples) samples.push({ ...s, output: b.outputId });
+    from.push(b.outputId);
+  }
+  const pooled = noiseFromSamples(samples);
+  if (pooled === null) return null;
+  const drifts = bands.map((b) => b.drift).filter((d) => d !== undefined);
+  const maxOf = (key) => drifts.reduce((m, d) => (typeof d[key] === 'number' ? Math.max(m ?? 0, d[key]) : m), null);
+  pooled.drift = { twoTick: maxOf('twoTick'), relSync: maxOf('relSync'), pairs: drifts.reduce((n, d) => n + d.pairs, 0) };
+  pooled.pooled = true;
+  pooled.pooledFrom = from;
+  return pooled;
+}
+
+/**
+ * The output resolution a session was recorded at: the canvas backbuffer of the reduced-output builds
+ * (`env.output`, e.g. `1280x720`), else the full window (`innerWidth × innerHeight`, 1920×1080 on the TV).
+ *
+ * @param {any} env - the session's `env`.
+ * @returns {{id: string, label: string, area: number, window: boolean}} the output: its id (`WxH`, or `?` when
+ *   the session knows neither), its heading label (`1920x1080 (window)`, `1280x720 (backbuffer)`), its pixel
+ *   count (for the order, largest first) and whether it was derived from the window.
+ */
+export function sessionOutput(env) {
+  const e = env !== null && typeof env === 'object' ? env : {};
+  const explicit = typeof e.output === 'string' && /^\d+x\d+$/.test(e.output.trim()) ? e.output.trim() : null;
+  const windowed =
+    typeof e.innerWidth === 'number' && typeof e.innerHeight === 'number' ? `${e.innerWidth}x${e.innerHeight}` : null;
+  const id = explicit ?? windowed ?? '?';
+  const [w, h] = id.split('x').map(Number);
+  return {
+    id,
+    label: id === '?' ? '? (unknown output)' : `${id} (${explicit !== null ? 'backbuffer' : 'window'})`,
+    area: Number.isFinite(w) && Number.isFinite(h) ? w * h : 0,
+    window: explicit === null,
+  };
+}
+
+/**
+ * One output's campaign: its sessions' runs per WebGL version, their aggregates, the size order and the
+ * output's own noise floor (null without same-version repeats).
+ *
+ * @param {{id: string, label: string, area: number, window: boolean}} output - the output.
+ * @param {any[]} sessions - the output's sessions (oldest first).
+ * @returns {any} the output campaign: `{output, sessions, gls, runsByGl, aggregates, sizes, noise, ownNoise}`.
+ */
+function outputCampaign(output, sessions) {
   const runsByGl = new Map();
   for (const session of sessions) {
     const gls = [...new Set(session.records.map((r) => r.webGLVersion))].sort();
@@ -765,9 +813,84 @@ export function loadCampaign(files) {
   }
   const gls = [...runsByGl.keys()].sort();
   const aggregates = new Map(gls.map((gl) => [gl, aggregateRuns(runsByGl.get(gl))]));
-  const noise = noiseFloor(aggregates);
-  if (noise !== null) noise.drift = runDrift(runsByGl);
-  return { sessions, gls, runsByGl, aggregates, sizes: sizeOrder(sessions.flatMap((s) => s.records)), noise };
+  const ownNoise = noiseFloor(aggregates);
+  if (ownNoise !== null) {
+    ownNoise.drift = runDrift(runsByGl);
+    ownNoise.outputId = output.id;
+  }
+  return {
+    output,
+    sessions,
+    gls,
+    runsByGl,
+    aggregates,
+    sizes: sizeOrder(sessions.flatMap((s) => s.records)),
+    noise: ownNoise,
+    ownNoise,
+  };
+}
+
+/**
+ * Loads a campaign: its sessions (oldest first), grouped by output resolution ({@link sessionOutput}, largest
+ * output first), and per output one run per session and WebGL version, the per-version aggregates, the display
+ * order of the sizes and the noise floor. An output without same-version repeats borrows the pooled band of
+ * the other outputs (`noise.pooled`).
+ *
+ * @param {string[]} files - the session files.
+ * @returns {any} the campaign: `{sessions, outputs, sizes}` plus — for callers that predate the outputs — the
+ *   fields of the first (largest) output: `gls`, `runsByGl`, `aggregates`, `noise`, `output`. With one output
+ *   (every older campaign) those are the whole campaign's.
+ */
+export function loadCampaign(files) {
+  const sessions = files
+    .map((file, order) => {
+      const { payloads, records, decode } = readBenchSession(file);
+      const last = payloads[payloads.length - 1] ?? {};
+      const env = last.env ?? payloads[0]?.env ?? {};
+      return {
+        file,
+        order,
+        id: last.session ?? basename(file),
+        env,
+        output: sessionOutput(env),
+        from: last.from ?? null,
+        payloads,
+        records,
+        decode,
+        startedAt: typeof env.startedAt === 'number' ? env.startedAt : null,
+        complete: payloads.some((p) => p.done === true),
+      };
+    })
+    .filter((s) => s.payloads.length > 0)
+    .sort((a, b) =>
+      a.startedAt !== null && b.startedAt !== null ? a.startedAt - b.startedAt || a.order - b.order : a.order - b.order,
+    );
+  const groups = new Map();
+  for (const session of sessions) {
+    const g = groups.get(session.output.id);
+    if (g === undefined) groups.set(session.output.id, { output: { ...session.output }, sessions: [session] });
+    else {
+      g.sessions.push(session);
+      // A label says "(window)" only when no session of the output named it explicitly.
+      if (!session.output.window) g.output = { ...session.output };
+    }
+  }
+  const outputs = [...groups.values()]
+    .sort((a, b) => b.output.area - a.output.area || (a.output.id < b.output.id ? -1 : 1))
+    .map((g) => outputCampaign(g.output, g.sessions));
+  const own = outputs.filter((o) => o.ownNoise !== null).map((o) => o.ownNoise);
+  const pooled = outputs.length > 1 ? poolNoise(own) : null;
+  for (const o of outputs) if (o.noise === null && pooled !== null) o.noise = pooled;
+  const first = outputs[0] ?? {
+    output: null,
+    gls: [],
+    runsByGl: new Map(),
+    aggregates: new Map(),
+    sizes: [],
+    noise: null,
+    ownNoise: null,
+  };
+  return { ...first, sessions, outputs, sizes: sizeOrder(sessions.flatMap((s) => s.records)) };
 }
 
 /**
@@ -1029,7 +1152,7 @@ function knobTable(campaign, gl) {
     noise === null
       ? 'No noise floor (one run per version): every knob difference is unjudged.'
       : `"beyond" = the difference exceeds the noise floor’s p90 (two-tick ${num(noise.twoTick?.p90, 1)} points, synced` +
-        ` p95 ${pct(noise.relSync?.p90)}); "within" = no call.`,
+        ` p95 ${pct(noise.relSync?.p90)}${noise.pooled === true ? ', pooled over all outputs' : ''}); "within" = no call.`,
   ];
 }
 
@@ -1043,6 +1166,13 @@ function noiseSection(campaign) {
   const out = ['## Noise floor — same-GL repeats', ''];
   const noise = campaign.noise;
   const counts = campaign.gls.map((gl) => `GL ${gl} × ${campaign.runsByGl.get(gl).length}`).join(', ');
+  if (noise !== null && noise.pooled === true) {
+    out.push(
+      `**No same-GL repeats at this output** (${counts || 'no runs'}): falling back to the **pooled band of all outputs**` +
+        ` (${noise.pooledFrom.join(', ')}). The band is a stand-in: a reduced output may jitter differently.`,
+      '',
+    );
+  }
   if (noise === null) {
     out.push(
       `No noise floor: no WebGL version has ${MIN_RUNS_FOR_VERDICT} runs (${counts || 'no runs'}). Without one,` +
@@ -1054,12 +1184,16 @@ function noiseSection(campaign) {
     .map((gl) => `GL ${gl}: ${noise.samples.filter((s) => s.gl === gl).length}`)
     .join(', ');
   out.push(
-    `Runs: ${counts}. ${noise.samples.length} scenario × version pair(s) measured at least twice (${perGl}). A pair’s` +
+    `${noise.pooled === true ? 'Pooled over the outputs' : `Runs: ${counts}`}. ${noise.samples.length} scenario × version` +
+      ` pair(s) measured at least twice (${perGl}). A pair’s` +
       ' spread is `(max − min) / median` of its synced p95 across runs, and `max − min` of its two-tick share in' +
       ' points.',
   );
   out.push('');
-  const worst = (b, fmt) => (b === null ? '—' : `${fmt(b.worst)} ${b.worst.scenario} GL ${b.worst.gl}`);
+  const worst = (b, fmt) =>
+    b === null
+      ? '—'
+      : `${fmt(b.worst)} ${b.worst.scenario} GL ${b.worst.gl}${noise.pooled === true ? ` @${b.worst.output}` : ''}`;
   out.push(
     ...mdTable(
       ['Spread', 'Pairs', 'Median', 'p90', 'Worst'],
@@ -1259,13 +1393,263 @@ export function glVerdict(campaign, options = {}) {
 }
 
 /**
- * The campaign report: the sessions, then per WebGL version the summary matrices, plan §13 and the knob table,
- * the noise floor, the GL 1-vs-2 verdict and the decode section; with `full` (or `withRecords`) each session's
- * own report after it.
+ * Turns a block's headings one level down (`## x` → `### x`), so the block sits under its output's heading.
+ *
+ * @param {string[]} lines - the block's lines.
+ * @returns {string[]} the lines, every Markdown heading one level deeper.
+ */
+function demote(lines) {
+  return lines.map((line) => (/^#{1,5} /.test(line) ? '#' + line : line));
+}
+
+/**
+ * The report of one output: its runs per WebGL version (summary matrices, plan §13, knobs), its noise floor and
+ * its GL 1-vs-2 verdict — everything a single-output campaign always printed.
+ *
+ * @param {any} oc - an output campaign of {@link loadCampaign}.
+ * @param {{full?: boolean}} options - `full`: every compared scenario of the verdict.
+ * @returns {string[]} the lines, headings at level 1 / 2 / 3 (the caller demotes them).
+ */
+function outputBlock(oc, options) {
+  const out = [];
+  const gls = oc.gls.map((gl) => `GL ${gl} × ${oc.runsByGl.get(gl).length}`).join(', ') || 'no runs';
+  out.push(`# Output ${oc.output.label}`, '');
+  out.push(
+    `${oc.sessions.length} session(s) (${oc.sessions.map((s) => s.id).join(', ')}); runs: ${gls}.` +
+      (oc.output.window
+        ? ' The canvas fills the window (no `env.output`).'
+        : ' The canvas backbuffer is this size; the page is scaled to the window.'),
+  );
+  for (const gl of oc.gls) {
+    const n = oc.runsByGl.get(gl).length;
+    const how = n === 1 ? 'one run' : `median ±half the min–max range of ${n} runs`;
+    out.push('');
+    out.push(`## WebGL ${gl} — ${n} run(s)`);
+    out.push('');
+    out.push(`### Two-tick share % (frames the vsync-locked loop needed two ticks for) — ${how}`);
+    out.push('');
+    out.push(...summaryMatrix(oc, gl, 'twoTick', 1));
+    out.push('');
+    out.push(`### Synced render p95 ms (\`gl.finish()\` after every render) — ${how}`);
+    out.push('');
+    out.push(...summaryMatrix(oc, gl, 'sync', 1));
+    const s13 = section13Block(oc, gl);
+    if (s13.length > 0) out.push('', ...s13);
+    const knobs = knobTable(oc, gl);
+    if (knobs.length > 0) out.push('', ...knobs);
+  }
+  out.push('');
+  out.push(...noiseSection(oc));
+  out.push('');
+  out.push(...glVerdict(oc, options));
+  return out;
+}
+
+/**
+ * Per scenario (plain rows only: size × load variant) the median across an output's runs of the two-tick share
+ * (percent) and of the synced p95 (ms).
+ *
+ * @param {any} oc - an output campaign.
+ * @param {number | null} gl - only this WebGL version's runs, or null for all of them pooled.
+ * @returns {Map<string, {size: string, variant: string, index: number, twoTick: number | null, sync: number | null}>}
+ *   the cells by `size|variant`; a scenario the output skipped has none.
+ */
+export function outputCells(oc, gl) {
+  const acc = new Map();
+  for (const [g, runs] of oc.runsByGl) {
+    if (gl !== null && g !== gl) continue;
+    for (const run of runs) {
+      for (const r of run.byScenario.values()) {
+        if (parseRow(r.variant).knob !== null) continue;
+        const key = `${r.size}|${r.variant}`;
+        let a = acc.get(key);
+        if (a === undefined) {
+          a = { size: r.size, variant: r.variant, index: typeof r.index === 'number' ? r.index : 0, twoTick: [], sync: [] };
+          acc.set(key, a);
+        }
+        a.twoTick.push(typeof r.twoTickShare === 'number' ? r.twoTickShare * 100 : null);
+        a.sync.push(p95Of(r.syncedMs));
+      }
+    }
+  }
+  const out = new Map();
+  for (const [key, a] of acc) out.set(key, { ...a, twoTick: quantile(a.twoTick, 0.5), sync: quantile(a.sync, 0.5) });
+  return out;
+}
+
+/**
+ * Whether a reduced output's cell beats the reference output's by more than the noise band: the two-tick
+ * share lower by more than the larger of the two outputs' p90 spreads (points), the synced p95 lower by more
+ * than the larger relative p90 spread.
+ *
+ * @param {any} ref - the reference cell (`{twoTick, sync}`) or undefined.
+ * @param {any} cur - the reduced output's cell or undefined.
+ * @param {any} refNoise - the reference output's noise band (or null).
+ * @param {any} curNoise - the reduced output's noise band (or null).
+ * @returns {{twoTick: boolean, sync: boolean, points: number | null, ratio: number | null}} the calls and the
+ *   differences (points; ratio of the synced p95s).
+ */
+export function beatsReference(ref, cur, refNoise, curNoise) {
+  const bandOf = (key) => {
+    const v = [refNoise?.[key]?.p90, curNoise?.[key]?.p90].filter((x) => typeof x === 'number');
+    return v.length === 0 ? null : Math.max(...v);
+  };
+  const both = ref !== undefined && cur !== undefined;
+  const points = both && ref.twoTick !== null && cur.twoTick !== null ? cur.twoTick - ref.twoTick : null;
+  const ratio = both && ref.sync !== null && cur.sync !== null && ref.sync > 0 ? cur.sync / ref.sync : null;
+  const twoBand = bandOf('twoTick');
+  const syncBand = bandOf('relSync');
+  return {
+    twoTick: points !== null && twoBand !== null && points < -twoBand,
+    sync: ratio !== null && syncBand !== null && ratio < 1 - syncBand,
+    points,
+    ratio,
+  };
+}
+
+/**
+ * The load variants of some cells in column order: the known ones, then any other.
+ *
+ * @param {Map<string, any>[]} cells - {@link outputCells} per output.
+ * @returns {string[]} the variants.
+ */
+function cellVariants(cells) {
+  return [
+    ...VARIANTS,
+    ...new Set(cells.flatMap((c) => [...c.values()].map((x) => x.variant)).filter((v) => !VARIANTS.includes(v))),
+  ];
+}
+
+/**
+ * The cross-output table of one WebGL selection: one row per size × load variant, the two-tick share and the
+ * synced p95 at every output side by side (`—` where the output skipped the row). A `*` marks a reduced output
+ * that beats the largest output beyond the noise band.
+ *
+ * @param {any[]} outputs - the output campaigns, largest first.
+ * @param {number | null} gl - only this version's runs, or null for all pooled.
+ * @param {any[]} sizes - the size order.
+ * @returns {string[]} the lines (empty without any row).
+ */
+function crossOutputTable(outputs, gl, sizes) {
+  const cells = outputs.map((o) => outputCells(o, gl));
+  const rows = [];
+  for (const size of sizes) {
+    for (const variant of cellVariants(cells)) {
+      const key = `${size.id}|${variant}`;
+      const here = cells.map((c) => c.get(key));
+      if (here.every((c) => c === undefined)) continue;
+      const mark = (i, field) =>
+        i > 0 && beatsReference(here[0], here[i], outputs[0].noise, outputs[i].noise)[field] ? '*' : '';
+      rows.push([
+        size.id,
+        variant,
+        ...here.map((c, i) => (c === undefined ? '—' : num(c.twoTick, 1) + mark(i, 'twoTick'))),
+        ...here.map((c, i) => (c === undefined ? '—' : num(c.sync, 1) + mark(i, 'sync'))),
+      ]);
+    }
+  }
+  if (rows.length === 0) return [];
+  const ids = outputs.map((o) => o.output.id);
+  return mdTable(['Size', 'Variant', ...ids.map((id) => `2t % ${id}`), ...ids.map((id) => `p95 ms ${id}`)], rows, [0, 1]);
+}
+
+/**
+ * Where the reduced outputs beat the largest one: per load variant, the sizes whose two-tick share or synced
+ * p95 is lower by more than the noise band (pooled over the WebGL versions).
+ *
+ * @param {any[]} outputs - the output campaigns, largest first.
+ * @param {any[]} sizes - the size order.
+ * @returns {string[]} one bullet per variant that has a row at the largest output and a reduced one.
+ */
+function crossOutputVerdicts(outputs, sizes) {
+  const ref = outputs[0];
+  const cells = outputs.map((o) => outputCells(o, null));
+  const out = [];
+  for (const variant of cellVariants(cells)) {
+    const clauses = [];
+    for (let i = 1; i < outputs.length; i++) {
+      let compared = 0;
+      const two = [];
+      const sync = [];
+      for (const size of sizes) {
+        const key = `${size.id}|${variant}`;
+        const b = beatsReference(cells[0].get(key), cells[i].get(key), ref.noise, outputs[i].noise);
+        if (b.points === null && b.ratio === null) continue;
+        compared += 1;
+        if (b.twoTick) two.push({ size: size.id, points: b.points });
+        if (b.sync) sync.push({ size: size.id, ratio: b.ratio });
+      }
+      if (compared === 0) continue;
+      const parts = [];
+      if (two.length > 0) {
+        const best = two.reduce((w, x) => (x.points < w.points ? x : w));
+        parts.push(`two-tick at ${two.length}/${compared} size(s) (most: ${best.size} ${signed(best.points)} pts)`);
+      }
+      if (sync.length > 0) {
+        const best = sync.reduce((w, x) => (x.ratio < w.ratio ? x : w));
+        parts.push(`synced p95 at ${sync.length}/${compared} size(s) (most: ${best.size} ${num(best.ratio)}×)`);
+      }
+      clauses.push(
+        `${outputs[i].output.id} ${parts.length > 0 ? 'beats ' + ref.output.id + ' on ' + parts.join(' and ') : 'beats it nowhere'}` +
+          ` (${compared} size(s) compared)`,
+      );
+    }
+    if (clauses.length > 0) out.push(`- **${variant}** — ${clauses.join('; ')}.`);
+  }
+  return out;
+}
+
+/**
+ * The cross-output comparison (only with ≥ 2 outputs): every size × variant at each output side by side, and a
+ * line per variant on where the reduced outputs beat the largest beyond the noise band.
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {{full?: boolean}} [options] - `full`: also the table per WebGL version.
+ * @returns {string[]} the lines.
+ */
+export function crossOutputSection(campaign, options = {}) {
+  const outputs = campaign.outputs;
+  const ref = outputs[0];
+  const out = ['## Cross-output comparison', ''];
+  out.push(
+    `Outputs, largest first: ${outputs.map((o) => o.output.label).join(' · ')}. Each cell is the **median over all runs of` +
+      ' that output** (both WebGL versions pooled; `--full` adds a table per version) for a plain row — knob rows are' +
+      ' not compared. `—` = the output skipped the row (its frame is larger than the output) or has no run of it.' +
+      ` \`*\` = a reduced output beats ${ref.output.id} by more than the noise band (the larger of the two outputs’ p90` +
+      ' spreads: two-tick in points, synced p95 relative). The M7’s run-to-run noise is as large as many of these' +
+      ' differences — a mark is a hint to look, not a verdict.',
+  );
+  const tableOf = (gl) => crossOutputTable(outputs, gl, campaign.sizes);
+  const pooled = tableOf(null);
+  out.push('');
+  if (pooled.length === 0) {
+    out.push('No plain rows to compare.');
+    return out;
+  }
+  out.push(...pooled);
+  const lines = crossOutputVerdicts(outputs, campaign.sizes);
+  out.push('', `Where the reduced outputs beat ${ref.output.id} beyond the noise band, per load variant:`, '');
+  out.push(...(lines.length > 0 ? lines : ['- none: no row has a reduced output and the largest in common.']));
+  if (options.full === true) {
+    const gls = [...new Set(outputs.flatMap((o) => o.gls))].sort();
+    for (const gl of gls) {
+      const t = tableOf(gl);
+      if (t.length > 0) out.push('', `### Cross-output — WebGL ${gl} runs only`, '', ...t);
+    }
+  }
+  return out;
+}
+
+/**
+ * The campaign report: the sessions, then per output resolution (largest first) per WebGL version the summary
+ * matrices, plan §13 and the knob table, the noise floor and the GL 1-vs-2 verdict; with ≥ 2 outputs the
+ * cross-output comparison; then the decode section; with `full` (or `withRecords`) each session’s own report
+ * after it.
  *
  * @param {string[]} paths - session files and folders of them.
- * @param {{withRecords?: boolean, full?: boolean}} [options] - `full`: the per-session detail reports and every
- *   compared scenario of the verdict; `withRecords`: the per-session reports with every record in full.
+ * @param {{withRecords?: boolean, full?: boolean}} [options] - `full`: the per-session detail reports, every
+ *   compared scenario of the verdict and the cross-output table per version; `withRecords`: the per-session
+ *   reports with every record in full.
  * @returns {string} the Markdown report.
  */
 export function analyzeBenchSessions(paths, options = {}) {
@@ -1274,6 +1658,7 @@ export function analyzeBenchSessions(paths, options = {}) {
   if (campaign.sessions.length === 0) return 'no payloads in ' + (files.join(', ') || paths.join(', '));
   const latest = campaign.sessions[campaign.sessions.length - 1];
   const env = latest.env;
+  const multi = campaign.outputs.length > 1;
   const out = [];
   out.push(`# TV render bench — ${campaign.sessions.length} session(s)`);
   out.push('');
@@ -1284,13 +1669,14 @@ export function analyzeBenchSessions(paths, options = {}) {
   out.push('');
   out.push(
     ...mdTable(
-      ['#', 'Session', 'GL', 'Scenarios', 'Run', 'Build', 'Zone load cold / change ms'],
+      ['#', 'Session', ...(multi ? ['Output'] : []), 'GL', 'Scenarios', 'Run', 'Build', 'Zone load cold / change ms'],
       campaign.sessions.map((s, i) => {
         const gls = [...new Set(s.records.map((r) => r.webGLVersion))].sort().join('+') || '?';
         const est = s.decode === null ? null : decodeZoneEstimate(s.decode);
         return [
           String(i + 1),
           s.id,
+          ...(multi ? [s.output.id] : []),
           gls,
           `${s.records.length}/${typeof s.env.scenarios === 'number' ? s.env.scenarios : '?'}`,
           s.complete ? 'complete' : '**incomplete**',
@@ -1298,31 +1684,17 @@ export function analyzeBenchSessions(paths, options = {}) {
           est === null ? '—' : `${num(est.lazyMs, 0)} / ${num(est.eagerMs, 0)}`,
         ];
       }),
-      [1, 4, 5],
+      multi ? [1, 2, 5, 6] : [1, 4, 5],
     ),
   );
-  for (const gl of campaign.gls) {
-    const n = campaign.runsByGl.get(gl).length;
-    const how = n === 1 ? 'one run' : `median ±half the min–max range of ${n} runs`;
+  for (const oc of campaign.outputs) {
     out.push('');
-    out.push(`## WebGL ${gl} — ${n} run(s)`);
-    out.push('');
-    out.push(`### Two-tick share % (frames the vsync-locked loop needed two ticks for) — ${how}`);
-    out.push('');
-    out.push(...summaryMatrix(campaign, gl, 'twoTick', 1));
-    out.push('');
-    out.push(`### Synced render p95 ms (\`gl.finish()\` after every render) — ${how}`);
-    out.push('');
-    out.push(...summaryMatrix(campaign, gl, 'sync', 1));
-    const s13 = section13Block(campaign, gl);
-    if (s13.length > 0) out.push('', ...s13);
-    const knobs = knobTable(campaign, gl);
-    if (knobs.length > 0) out.push('', ...knobs);
+    out.push(...demote(outputBlock(oc, options)));
   }
-  out.push('');
-  out.push(...noiseSection(campaign));
-  out.push('');
-  out.push(...glVerdict(campaign, options));
+  if (multi) {
+    out.push('');
+    out.push(...crossOutputSection(campaign, options));
+  }
   const withDecode = [...campaign.sessions].reverse().find((s) => s.decode !== null);
   if (withDecode !== undefined) {
     out.push('');

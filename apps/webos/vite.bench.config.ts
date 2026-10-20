@@ -16,8 +16,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { clientConditions, shmupBuildInfo } from '../../vite.shared.js';
+import { buildId, clientConditions, shmupBuildInfo } from '../../vite.shared.js';
 import { shmupRenderBench } from '../tizen/scripts/bench-atlas.mjs';
+import { benchBuildId, parseBenchOutput } from '../tizen/src/bench/output.js';
 import { classicScriptTag } from '../tizen/vite.config.js';
 import { benchAppInfo } from './scripts/appinfo.mjs';
 
@@ -54,13 +55,20 @@ export function benchAppInfoPlugin(): Plugin {
   };
 }
 
+/** `VITE_BENCH_OUTPUT`, parsed (`null`: the window's backbuffer); throws on a malformed value. */
+const benchOutput = parseBenchOutput(process.env.VITE_BENCH_OUTPUT ?? '');
+
 export default defineConfig({
   root: fileURLToPath(new URL('../tizen/bench', import.meta.url)),
   base: './',
   // The campaign mode (`src/bench/campaign.ts`): the passes and the pause, `''` = no campaign.
+  // The build output (`src/bench/output.ts`): `VITE_BENCH_OUTPUT` = `<w>x<h>` (a bad value fails
+  // the build), `''` = the window's backbuffer; the build id gains `@<w>x<h>` with one.
   define: {
     __SHMUP_BENCH_CAMPAIGN__: JSON.stringify(process.env.VITE_BENCH_CAMPAIGN ?? ''),
     __SHMUP_BENCH_PAUSE_S__: JSON.stringify(process.env.VITE_BENCH_PAUSE_S ?? '30'),
+    __SHMUP_BENCH_OUTPUT__: JSON.stringify(benchOutput === null ? '' : benchOutput.id),
+    __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput)),
   },
   publicDir: join(appDir, 'public'),
   resolve: {

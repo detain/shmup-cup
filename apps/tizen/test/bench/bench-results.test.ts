@@ -15,6 +15,7 @@ import {
   TV_BENCH_TIMING,
   NOTE_COLOR,
   baselineOf,
+  benchSkippedScenarios,
   benchPageLines,
   benchResultPages,
   createRunState,
@@ -22,11 +23,13 @@ import {
   formatDecodeHeader,
   formatDecodeRow,
   formatDecodeTable,
+  formatOutputLines,
   formatResultRow,
   formatResultsHeader,
   formatResultsTable,
   lateShare,
   markSent,
+  parseBenchOutput,
   recordDecode,
   recordResult,
   stopRun,
@@ -186,6 +189,35 @@ describe('bench results page', () => {
     scenarios: BENCH_SCENARIOS.length,
     timing: TV_BENCH_TIMING,
     ...over,
+  });
+
+  it('lists a build output and the sizes it skips under the head (VITE_BENCH_OUTPUT)', () => {
+    const skipped = benchSkippedScenarios(parseBenchOutput('960x540'));
+    const lines = benchPageLines(
+      input({ output: '960x540', skipped, scenarios: BENCH_SCENARIOS.length - skipped.length }),
+    );
+    expect(lines[0].text).toBe(
+      'SHMUP CUP TV RENDER BENCH (R0-02)  build abc1234  host tizen  GL 1  display 1920x1080' +
+        '  output 960x540',
+    );
+    expect(lines[1].text).toMatch(/^ENTER run the matrix: 90 scenarios \+ decode/);
+    const out = formatOutputLines('960x540', skipped);
+    expect(out.map((line) => line.text)).toEqual([
+      "OUTPUT backbuffer 960x540 ('fit' upscale), 82 scenario(s) skipped: frame larger than the output",
+      'SKIPPED 1024x576 1024x576n 800x600 800x600n 1024x600 1024x600n 960x640 960x640n 1280x720n' +
+        ' 1024x768n',
+      '        1280x960n 1920x1080n 800x600-fit 800x600-stretch 1280x720n-interp 1920x1080n-interp',
+      '        1920x1080n-out720',
+    ]);
+    expect(out.every((line) => line.color === NOTE_COLOR && line.text.length <= 100)).toBe(true);
+    expect(lines.slice(4, 4 + out.length)).toEqual(out);
+    expect(lines[4 + out.length].text).toBe('');
+    // Without an output the head is as it always was.
+    expect(
+      benchPageLines(input())
+        .map((line) => line.text)
+        .join('\n'),
+    ).not.toContain('OUTPUT');
   });
 
   it('says how to start and where the results go before the first run', () => {

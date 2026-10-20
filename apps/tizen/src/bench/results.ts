@@ -24,7 +24,8 @@ import type { DrawList } from '@shmup/core';
 import { RAF_BUCKET_EDGES_MS } from '@shmup/render-pixi';
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
 import { DECODE_SCENARIO_INDEX } from './decode.js';
-import { BENCH_SIZES, findBenchScenario, type BenchTiming } from './matrix.js';
+import { BENCH_SIZES, findBenchScenario, type BenchScenario, type BenchTiming } from './matrix.js';
+import { BENCH_OUTPUT_SCALE_MODE } from './output.js';
 import type { BenchRunState } from './state.js';
 
 /** One line of a bench page and its colour. */
@@ -373,8 +374,18 @@ export interface BenchPageInput {
   readonly endpoint: string | null;
   /** A status for the log line (`''` for none). */
   readonly status: string;
-  /** Scenarios in the matrix. */
+  /** Scenarios a run measures (the matrix less the {@link BenchPageInput.skipped} ones). */
   readonly scenarios: number;
+  /**
+   * The build output resolution (`'1280x720'` — `./output.ts`), or `null` / absent for the
+   * window's backbuffer.
+   */
+  readonly output?: string | null;
+  /**
+   * The scenarios the build skips because their frame is larger than the output (default none):
+   * listed under the head by size.
+   */
+  readonly skipped?: readonly BenchScenario[];
   /** The phase timing of a TV run. */
   readonly timing: BenchTiming;
   /** The page to show, from 0 (clamped to the pages there are; default 0). */
@@ -409,6 +420,45 @@ export function benchPageLines(input: BenchPageInput): BenchLine[] {
   return benchPage(input).lines;
 }
 
+/** Widest line of the skipped-sizes list (the results table's width). */
+const SKIPPED_LINE_CHARS = 100;
+
+/**
+ * The head's lines about a build output: the backbuffer and upscale mode, and the sizes whose
+ * scenarios are skipped (frame larger than the output), wrapped to the table's width.
+ *
+ * @param output - The build output id (`'1280x720'`).
+ * @param skipped - The skipped scenarios.
+ * @returns The lines.
+ */
+export function formatOutputLines(output: string, skipped: readonly BenchScenario[]): BenchLine[] {
+  const lines: BenchLine[] = [
+    {
+      text:
+        `OUTPUT backbuffer ${output} ('${BENCH_OUTPUT_SCALE_MODE}' upscale), ` +
+        `${skipped.length} scenario(s) skipped: frame larger than the output`,
+      color: NOTE_COLOR,
+    },
+  ];
+  const sizes: string[] = [];
+  for (let i = 0; i < skipped.length; i++) {
+    const scenario = skipped[i];
+    const id =
+      scenario.knob === null ? scenario.size.id : `${scenario.size.id}-${scenario.knob.id}`;
+    if (sizes.indexOf(id) < 0) sizes.push(id);
+  }
+  let line = 'SKIPPED';
+  for (let i = 0; i < sizes.length; i++) {
+    if (line.length + 1 + sizes[i].length > SKIPPED_LINE_CHARS) {
+      lines.push({ text: line, color: NOTE_COLOR });
+      line = '       ';
+    }
+    line += ` ${sizes[i]}`;
+  }
+  if (sizes.length > 0) lines.push({ text: line, color: NOTE_COLOR });
+  return lines;
+}
+
 /**
  * Lays out one page (see {@link benchPageLines}).
  *
@@ -425,7 +475,8 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     {
       text:
         `SHMUP CUP TV RENDER BENCH (R0-02)  build ${input.buildId}  host ${input.host}  ` +
-        `GL ${input.webGLVersion}  display ${input.display}`,
+        `GL ${input.webGLVersion}  display ${input.display}` +
+        (input.output === undefined || input.output === null ? '' : `  output ${input.output}`),
       color: HEADER_COLOR,
     },
     {
@@ -446,8 +497,12 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
         (input.status === '' ? '' : `  ${input.status}`),
       color: NOTE_COLOR,
     },
-    { text: '', color: NOTE_COLOR },
   ];
+  if (input.output !== undefined && input.output !== null) {
+    const extra = formatOutputLines(input.output, input.skipped ?? []);
+    for (let i = 0; i < extra.length; i++) lines.push(extra[i]);
+  }
+  lines.push({ text: '', color: NOTE_COLOR });
   const state = input.state;
   const error: BenchLine | null =
     state !== null && state.lastError !== null
