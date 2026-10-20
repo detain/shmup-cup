@@ -65,8 +65,12 @@ without objection; **O11** came out of R1-03's review and is built as the defaul
 D1 …); **W3-1 … W3-12** are the orchestrator's wave-3 decisions for R1-05 and R3-05 part 2 — the wave-3 scout's
 recommended defaults, adopted and told to the owner, none blocking. **W4-1 … W4-14** are the orchestrator's
 wave-4 decisions for R2-01 and **W5-6** the wave-5 confirmation its C5 loop closed on; all fifteen are
-built, as R2-01's As built records. **W5-20** is the owner's graphics-options directive of 2026-10-20,
-worked into the plan as R6-04 by that directive's own order.
+built, as R2-01's As built records. **W5-1 … W5-19** are the orchestrator's wave-5 decisions for R2-02,
+R3-03 and R3-04 — the wave-5 scout's recommended defaults, the rows saying so confirmed by the owner on
+2026-10-19 — **R2-N1 … R2-N3** are R2-02's execution-shape decisions from the R2 re-plan, and **RR-7**,
+**RR-8** are the R3 re-plan's stand-in decisions; all are built, as R2-02's, R3-03's and R3-04's As built
+records. **W5-20** is the owner's graphics-options directive of 2026-10-20, worked into the plan as R6-04
+by that directive's own order.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -110,7 +114,30 @@ worked into the plan as R6-04 by that directive's own order.
 | **W4-12** | The menu / HUD / boot / options e2e specs must pass at 1280×720 on the interim art; the content- and golden-backed specs are gated until R2-03 | R2-01, R2-03 |
 | **W4-13** | v1's hi-score tables are archived under `legacyScores` on the 2 → 3 migration; v2's tables start empty | R2-01 |
 | **W4-14** | A `v1.x` build reading a format-3 save falls back to defaults — no back-migration, no rewrite | R2-01, `v1.x` |
-| **W5-6** | The e2e content gate is keyed on R2-03's re-measure, not on `CONTENT_PORT_PENDING`: `PORT_UNMEASURED` holds only from R2-02's port until R2-03, so the specs that pass at 640 on v1 content keep running through R2-02 (built as `test/e2e/gates.ts`, cited there and in `e2e-gates.test.ts`) | R2-01, R2-02, R2-03 |
+| **W5-1** | World values reach ×1.5 through core `WORLD_SCALE` (1 → 3/2) and `WORLD_TOP_PAD` (0 → 36), written `v1 × WORLD_SCALE`, prepared neutrally at 1 and flipped in the one port commit with the tool output (`R2-02.P0` … `R2-02.S`) | R2-02 |
+| **W5-2** | The ship's spawn row `SPAWN_Y` stays the frame centre (168, `PLAYFIELD_H / 2`); tests that park a still ship put it on the enemies' line `v1y(100)` | R2-02 |
+| **W5-3** | Hurtbox-inside-art tests allow exactly O4's 1-px rounding, only for the entries the tool's rounded-integers list names (about 20 boxes: F 6, G 7, H 6, I 1) | R2-02, R2-04 |
+| **W5-4** | The rescale tests that read the shipped content at v1 geometry are retired (`runIf` content still v1), keeping a factor-1 identity case that also runs on the ported tree | R2-02 |
+| **W5-5** | Behaviour and weapon defaults are ported in code, pinned by a v1 snapshot and each unit's rule (`behavior-defaults-port.test.ts`) | R2-02 |
+| **W5-6** | The e2e content gate is keyed on R2-03's re-measure, not on `CONTENT_PORT_PENDING`: `PORT_UNMEASURED` holds only from R2-02's port until R2-03, so the specs that pass at 640 on v1 content keep running through R2-02 (built as `test/e2e/gates.ts`, cited there and in `e2e-gates.test.ts`; **implemented in R2-01** as `R2_03_PENDING`, with `PORT_UNMEASURED` added at `293e885` — the wave-5 confirmation closed C5's loop) | R2-01, R2-02, R2-03 |
+| **W5-7** | The tool's hand fixes travel in `test/port-v2/handfix.patch`: gimmick-range `events[8].until` 2275, zone-g `events[15]` back inside `events[14]`'s ground window (x ≥ 3450), captain-circler home 530, zone G's rising walls one row up. The hunter-range dive needs **no** content edit: `hunter.option` variant 2 flies to its `world-y` default, which `R2-02.W6` ports to 72, so it lands at ×1.5 + 36 by itself (T3's landing check confirmed it) | R2-02 |
+| **W5-8** | Boss `parts[].x/y` bound ±512 → **±768** (×1.5) (`R2-02.W5`) | R2-02 |
+| **W5-9** | v2 bullets drawn natively at the bible's sizes (`R3-03.V1`). Its beam half is **moot**: the beams are already native (6×12, 12 frames) since `16aff20` | R3-03 |
+| **W5-10** | `@p2` for procedural ships: palette maps that reproduce today's swap exactly; the swap code removed (`R3-03.V2a`) | R3-03 |
+| **W5-11** | Real-art tiles: "art clipped to mask" for every tile the heightfield matches by mask; "mask from art" only for name-placed or RLE-only tiles; derived masks reach `content/` only through `tileset-masks.mjs --write` | R3-03 |
+| **W5-12** | The palette-cycle scan fails on any near-miss on a cycled layer and on any new project-wide near-miss; the bible's exemption list is pinned in the test | R3-03 |
+| **W5-13** | The real-art bullet recolour step is built now and proven on a fixture (`R3-03.V5`) | R3-03 |
+| **W5-14** | R3-04's stand-in is a seeded synthetic generator; its calibration on candidates is optional and host-bound (RR-7) | R3-04 |
+| **W5-15** | Memory policy for detailed art: build the lazy residency (B3b — decoded images dropped, a context-loss re-fetch); the budget stays derived (23 MiB of GPU pages per zone at 640×360) | R3-04 |
+| **W5-16** | `DIST_BUDGET` set from the stand-in projection plus margin — **16 MiB** — derived in `check-bundle.mjs` | R3-04 |
+| **W5-17** | Stand-in pages replace the TV bench's synthetic decode pages (RR-8) | R3-04 |
+| **W5-18** | Linked and dev stages keep "every page" until R5-10.T8 aliases them | R3-04 |
+| **W5-19** | Zone load ≤ 2 s on the M7 estimated from headless Chromium × the R0-02 desktop-to-M7 ratio; flagged unmeasured if the logs are missing | R3-04 |
+| **R2-N1** | The two-scale kit (`test/port-v2/`: `two-scale.sh`, `handfix.patch`) is committed by `R2-02.P1` and deleted by the port commit | R2-02 |
+| **R2-N2** | At the port, `R2-02.S` stubs `packages/core/test/helpers/port-pending.ts` (`CONTENT_PORT_PENDING = false`, no import-time call); `R2-02.U1` … `U5` delete the wrappers after | R2-02 |
+| **R2-N3** | `R2-02.E0` pre-gates every e2e spec that fails under the kit on `PORT_UNMEASURED` (neutral before the port); R2-03 re-measures | R2-02, R2-03 |
+| **RR-7** | R3-04's stand-in uses R1-05's assumption — PNG-8 at 0.3–0.6 MB per 2048×1024 page — its constants marked **uncalibrated**; the optional `R3-04.M1c` calibration on candidates is host-bound and has not run | R3-04 |
+| **RR-8** | W5-17 kept: one stand-in zone plus `common` replace the TV bench's synthetic `rgba-2048` / `png8-2048` decode pages; `tools/input-probe/results/analyze-bench.mjs` reads the new ids | R3-04 |
 | **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick spread medians 1.5–2.7 points and synced-p95 spread medians 8–9 % (p90 23–26 %). The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
 
 ---
@@ -1463,6 +1490,76 @@ moved.
     they keep their terrain spot and come 64 px of camera travel earlier, O11);
   - every enemy that enters from above the screen reaches the same place as in v1 (×1.5 + 36 px, within 2 px):
     the §2.6 top-edge fix-ups are complete.
+- **As built** (2026-10-19/20; prep `R2-02.P0` `8143c26` and `R2-02.P1` `d70399f` in wave 2, T1–T4/E0/L7/W-runs
+  in wave 3, the port `R2-02.S` `8dbe858` and `R2-02.R` `4fb47e3`, `B → EF`, `U1`–`U5` and the review in wave 5;
+  `R2-02.RV` at zero after its one nit (`b8b771f`)):
+  - **The run** (`R2-02.S`, the one port commit): `node scripts/content/rescale.mjs --factor 1.5 --top-pad 36
+    --from-width 384 --from-height 200 --tile-size 8 --to-width 640 --art-scale 1.5` — **126 files (10 skipped),
+    10,623 values, 4,035 changes in 77 files, 0 unclassified, 0 errors**; the post-port identity check
+    (`--factor 1 --dry-run`, no flags) reads 0 changes. The port commit is the tool's own output plus the hand
+    fixes: `RV22` re-derived it **byte-exactly** from the tool and `handfix.patch` on its own tree.
+  - **Hand fixes** (W5-7, 4 hunks in 3 files): gimmick-range `events[8].until` → 2275 (below the rock's ported
+    2276), zone-g facet-turret `x` 3446 → 3450 (back inside the ground bonus window), captain-circler home
+    562 → 530 (`cx + rx`), zone G's rising walls one row up (`rle` rows 14/15 — A5 review 2 #1). T3's landing
+    check passed on the hunter dive with **no** added hunk: the 7 top-edge items needed no hand fix, the tool's
+    own pad maps them.
+  - **Code** (W5-1, P0 prepared, S flipped): `WORLD_SCALE` 1 → **3/2** and `WORLD_TOP_PAD` 0 → **36**
+    (`core/config` — `y′ = WORLD_SCALE·y + WORLD_TOP_PAD`, negative `y` takes the scale alone), the whole
+    Appendix B list rewritten as `v1 * WORLD_SCALE` in the W1–W7 lanes, the `scripts/frame.mjs` mirror with
+    `SPAWN_LEAD` derived (`PLAYFIELD_W + 16 × WORLD_SCALE` = 664); the 15 frame-unit behaviour defaults became
+    literal v2 numbers (R2-N6: orbiter.loop 416/186, cube.pincer 296, rear.swoop 452, captain.ram 60,
+    captain.crab 407/574/60/276, boss.widow 407/544/102/234, boss.walker 176/452) — none is a banned frame
+    literal, so `frame-literals.test.ts` needed no entry; the boss part bounds went ±512 → ±768 (W5-8), which
+    is what the three IRON LEVIATHAN parts needed. `FORMATION_RETRACTED` / `FORMATION_SPREAD` scale
+    element-wise by the owner's RV3-F1 ruling.
+  - **The kit** (R2-N1): `test/port-v2/two-scale.sh` builds a throwaway worktree at any K, runs the real tool,
+    applies `handfix.patch` and flips the code exactly as S did (13 unique-match replacements); modes
+    `--keep` / `--reuse` / `apply`. It died with the port, as decided — `git rm`'d inside `8dbe858`.
+  - **The prep reviews** (waves 1–3, both at zero): prep A's identity 0/0/0 and core CI green at `0f148fb`;
+    prep B's exit check green at `3d75d73`, with three real engine fixes found under the kit — the
+    simultaneous-part hit pick, the cold-compile row cache, and the port-scale trigger-probe churn (gated
+    `PORT_ALLOC_CHURN`, R2-03 re-measures); `FIX2`'s K = 1 drift was adjudicated in two Direct-mode
+    playthroughs — the physical nearer-target pick is more correct at both scales, its floors re-pinned
+    honestly (`0264e33`, prepB.FIX8).
+  - **The gates** (R2-N2): S stubbed `port-pending.ts` (`CONTENT_PORT_PENDING = false`, no import-time throw);
+    U1 `a8b086d` (7 files), U2 `15fe275` (`content.test.ts` — 7 gated cases became plain tests, the file's 99
+    green at K = 1 and K = 6 with the rules at their ported values), U3 `6e9dd06` (six zone suites, checkpoints
+    included) and U4
+    `eab6fa2` (11 files, 19 sites — 49 green at both scales) deleted the wrappers; U5 `2ce6a12` deleted the
+    stub and its
+    test, `tile-size.test.ts`'s pending branch (`CONTENT_TILE_SIZE` → `TILE_SIZE`), the `CONTENT_PORT_PENDING`
+    pin in `e2e-gates.test.ts` (re-keyed to a `tilesetsPorted()` check reading `content/tilesets` against
+    `scripts/frame.mjs`), and the last four files. **Zero `CONTENT_PORT_PENDING` on master**; the sanctioned
+    residue is docblock prose (`gates.ts`, `stale.ts`, two rescale comments) collected by the wave's docs
+    lanes. `PORT_ALLOC_CHURN` (2193888) is keyed on the stale goldens, not the port — it lives until R2-03.
+  - **E0** (R2-N3, wave 3): pre-gated **zero** specs — every predicted candidate passed at both scales under
+    the kit; the one kit-red spec (`render-profile`) failed identically on master, so it was reported as a bug
+    (fixed later at `3c58cb3`), never gated. The port switched `PORT_UNMEASURED` on: 23 specs and the
+    `debug-tools.spec.ts` camera assertions skip by design until R2-03 re-measures (W5-6).
+  - **The v2-port comparison** (`R2-02.L7` `c62bd6f`): `test/golden/v2-port*.ts` replay every v1-baseline
+    fixture's recording at the live scale — 37 scenarios, read-only, identity-skipped at K = 1. **Zero
+    landing failures** anywhere (the top-edge acceptance clause, every enemy reaches ×1.5 + 36 within 2 px),
+    10 scenarios fully green at the kit, the rest failing only in the bot-dependent timing classes, loudly,
+    none softened; the ground-spawn first-visible exemption is O11's (they come 64 px of camera travel earlier
+    by design). After the port: 40 passed / 37 identity-skipped / 0 failed. Two open rows ride to R2-03's
+    re-check: the test-range orbiter's `turnX` 416 against the mapping (Δ −32) and the raid `introX` 660
+    against 632 (Δ +28).
+  - **Fingerprints**: all three re-pinned in S — 16 red segments measured (presentation 11, content-DB 2,
+    shell 3), more than the 12 the plan expected, and all intentional; the shell scenes' tables moved with the
+    ported content as they never could through R2-01.
+  - **The ported tree** (B, `w05-B`, read-only at the wave base): the playtest bot clears zones A–I, the bonus
+    stage and the boss rush within budget — **zone F (CELL VAULT) went green with the port itself**, the
+    wave-3 scout's one real pre-port item, no Z lane needed; the sim benchmarks improved (stress 0.138 →
+    0.101 ms/tick, zones 0.479–0.524 → 0.399–0.517, all under the 1 ms gate, render worst p95 5.7 → 1.60 ms at
+    9 draw calls); the 29 render-bench reds were one stale Pixi-8.22 pooled-render-target assertion, proven
+    pre-existing at `6080ada` and fixed at `35a80f8`; the full e2e is **129 passed / 101 skipped / 0 failed /
+    0 flaky** on Chromium — exactly S's skip census — and the Firefox determinism spec 2 / 71 / 0.
+  - **Build delta:** Tizen `app.js` 391,996 → **392,763 B** gzip-9 (+767 B, +0.2 %), check-bundle 386.6 KB of
+    the 512 KB code budget (webOS 386.3 KB). `R2-02.R` `4fb47e3` ported the 12 format samples of the eight
+    `content/*/README.md` with the tool itself (`docs(content):`, reviewed clean).
+  - **Not touched, by design:** no `*.replay.json`, no `PINNED` outside the three fingerprint tables, no
+    e2e gate logic beyond U5's re-key, no format-version bump — the goldens and demos stay v1 recordings
+    until R2-03 (`GOLDENS_STALE`), and `pnpm golden:update` was never run.
 
 ### R2-03 — Golden replays, demos, e2e, docs images
 
@@ -1494,7 +1591,13 @@ moved.
       two `test.skip(!R2_03_PENDING, …)` cases), the 3 `assertionsGated` sites (the boss hull half-check in
       `boss.spec.ts`, `cameraGated` in `debug-tools.spec.ts`, `hudGated` in `render-groups.spec.ts`) and
       `test/integration/e2e-gates.test.ts`. Every gate throws at import once
-      its window closes, so none can be forgotten.
+      its window closes, so none can be forgotten. **Since R2-02:** `test/golden/golden-edge.test.ts`'s
+      golden-update refusal and its pin are dead code — delete them too (the tilesets are 12 px, the tool's
+      reason cannot fire). And `PORT_ALLOC_CHURN` (`packages/core/test/helpers/port-alloc-churn.ts`,
+      `2193888`) joins the list: the world-gimmicks allocation guard measures 169,160 B against its 65,536 B
+      budget when the cold trigger-probe path runs at the ported scale, so R2-03's re-measure re-derives the
+      budget honestly; delete the gate, its pin `port-alloc-churn.test.ts` and its single use in
+      `packages/core/test/world/world-gimmicks-alloc.test.ts` with the rest (R2-02.prepB.FIX3).
     - **Re-measure every `PORT_REASON` and `CONTENT_REASON` test** on the ported content — the 23
       `PORT_REASON` specs passed at 640 on v1 content, so a failure after the port is the port's. Give the
       fingerprint's attract walk the shipped demos again (optional).
@@ -1783,6 +1886,30 @@ are fixed by k = 1.5. Detail comes from:
     should not collide goes on the decor layer (R3-06), not into the tile.
 - **Acceptance:** a real-art ship gets correct `@flash` and `@p2`; a real-art backdrop cycles with no stray pixels;
   a real-art tileset passes the terrain tests; the colour-blind bullet sets are complete.
+- **As built** (2026-10-19/20; `V1` `cf30c2c` and `V3` `f7abd0d` in wave 2 (reviews SRV1/SRV2), `V2a` `8416da5`,
+  `V2b`, `V4a`, `V4b`, `V4c` `07194ac` and `V5` `55b5b1b` in wave 4; `R3-03.RV` at zero after its one
+  docblock nit (`1dbe091`)):
+  - **Bullets native** (W5-9, V1): the bullet and bending-laser-node sprites are drawn at the bible's v2
+    sizes natively — the oval drops 14 → 13×13 — not v1 art upscaled; the beams' half was moot, native since
+    `16aff20` (6×12, 12 frames).
+  - **`@p2`** (W5-10, V2a/V2b): `coop.mjs`'s red/blue channel swap is gone — a palette map in the ship recipe
+    reproduces the swap's output exactly (byte-for-byte on the procedural ships, proven before deletion), and
+    the ingest recipe learned the `p2` key, recorded into the frame sidecar as `meta.shmup.p2`.
+  - **Palette cycling** (W5-12, V3): the scan enforces the bible's §4.4 — any near-miss on a cycled layer, or
+    any new project-wide near-miss, fails; the exemption list is pinned in the test. One documented deviation:
+    the scan's work floor scaled 1000 → 850 to keep its runtime at the bigger atlas.
+  - **Tiles** (W5-11, V4a/V4b/V4c): the ingest tile gains the two collision modes — "art clipped to mask" for
+    every tile the heightfield matches by mask (the default), "mask from art" for name-placed or RLE-only
+    tiles — and derived masks reach `content/` only through `scripts/assets/tileset-masks.mjs --write`
+    (index-matched; refuses to remap a solid tile without `--allow-remap`). `stage-terrain.test.ts` now
+    imports the shared `test/integration/terrain-checks.ts` instead of keeping 72 private lines.
+  - **Recolour** (W5-13, V5): the real-art bullet recolour step maps every `BULLET_PALETTES` palette
+    frame-for-frame by integer BT.601 luma bands (77/150/29) and is proven on a fixture; `pnpm content:check`
+    keeps the frame-for-frame completeness rule over the overrides.
+  - **Acceptance met** on procedural art and fixtures — `@flash` untouched, `@p2` exact, the cycle scan green
+    project-wide, the terrain checks shared, the bullet palettes complete. Real shipped art exercises the same
+    gates through R4 by construction; no budget or digest moved (the V1 sizes re-pinned the presentation
+    fingerprint in its own commit).
 
 ### R3-04 — Atlas pages and memory with detailed art
 
@@ -1835,6 +1962,43 @@ are fixed by k = 1.5. Detail comes from:
       — watch it when the "v2 zone stand-in" scenario lands.
 - **Acceptance:** the stand-in set passes the new budgets in CI; the render bench gains a "v2 zone stand-in"
   scenario.
+- **As built** (2026-10-18/20; the residency chain `M3a`–`M3e` `e1dcedf … 338c3fe` landed in wave 2 with its
+  blockers closed at `ef40bfd`, the stand-in `M1a` `341836b`/`ef7634c` and `M1b` `1f49f41`/`fc4c6cd`
+  (`9979be3` docblock) in wave 4, the budgets `M2a` `2739efc` and `M2b` `e0a526d` (the derivation written up
+  in `3b800ae`), the bench `M4a` `175205d` and `M4b` `5e3d25d`; `R3-04.RV` **approved at zero findings**, owner
+  parts pending):
+  - **Lazy residency** (W5-15, the B3b policy — shipped on `master` as the prospective default): deferred page
+    loads in `createAtlas`, a hold while the shown World's pages load, decoded images released on unload, and
+    a re-fetch after a WebGL context loss. *Prospective* because today's atlas crosses the derived
+    `TEXTURE_BUDGET_BYTES` (23 MiB at 640×360) only at ×2.044 eager / ×2.706 lazy stand-in density — the flip
+    is measured, not assumed (decision W3-8's restatement in bytes holds).
+  - **The stand-in** (RR-7, W5-14, M1a/M1b): `scripts/assets/standin.mjs` is a seeded generator of bible
+    density — backdrops at ≥ `FRAME_W × FRAME_H` (2× for zones b/d/f/h), 3–5 bands of 120–240 px, a 40-tile
+    12-px tileset, a 56-colour palette kept ≥ `RAMP_MARGIN` off every reserved cycle ramp; `standinAtlas` adds
+    10 enemies (4–6 frames, `@flash` siblings) and a 420×202 three-part boss, packed as `common` +
+    `zone-a … zone-i` + `standin-zone-a … i` (19 pages, ≤ 2048²). The stand-in pages come out **PNG-8 at
+    0.3–0.6 MB per 2048×1024 — R1-05's assumption, still uncalibrated**: the optional `M1c` calibration never
+    ran (it is host-bound), which the generator's constants say out loud.
+  - **The budgets** (M2a/M2b, W5-16): `test/integration/standin-budget.test.ts` (6 tests) gates every stand-in
+    row's `textures + images` ≤ 23 MiB under `imagePolicy: 'none'` and within the 100 MiB total; the
+    `'resident'` figures are printed, not gated — they exceed the atlas share by 1 MiB, exactly the crossing
+    that made the lazy policy the default. `DIST_BUDGET` is 8 → **16 MiB**, derived in `check-bundle.mjs`'s
+    docblock (pages × measured stand-in bytes + code + recorded audio), and `cjk-budget.test.ts`' figure is
+    replaced by the real atlas PNG caps: 300 KB `common`, 600 KB per zone, 5.7 MB total
+    (`test/scripts/assets/atlas-budget.ts`), all derived, not hand-set.
+  - **The bench** (RR-8, W5-17/W5-19, M4a/M4b): the TV render bench's decode scenario loads the stand-in pages
+    instead of the synthetic ones — `DECODE_PAGE_IDS` = `standin-zone-a`, `common`, `zone-a`
+    (`bench-decode.mjs:71`), the run gains its last page load and `BENCH_RUN_LENGTH` became derived
+    (`BENCH_SCENARIOS.length + 2`); `analyze-bench.mjs` reads the new ids. The render bench gained the
+    **"v2 zone stand-in" scenario** (acceptance): a zone of stand-in pages loaded and drawn, with its own
+    violation set (`standinBenchViolations`). The M7 zone-load estimate per W5-19: 62.3 ms per page in headless
+    Chromium × R0-02's 7.5 desktop-to-M7 ratio ≈ 470 ms — a whole v2 zone A at ≈ 450–720 ms against the 2 s
+    target, cheaper than the 1.5 s R0-03 measured for the synthetic campaign load.
+  - **Kept as planned** (W5-18): linked and dev stages still take "every page" (`stagePages`) — the escape /
+    `terrain-a` aliasing trap stands until R5-10.T8.
+  - **Open after review:** the typed stale-atlas error (`F7`, a wave-3 carry) never landed; the on-device
+    checks (M7 context-loss round-trip, the stand-in bench run on hardware, webOS 5) are the owner's, as is the
+    bench warm-up ordering question RV44 left standing.
 
 ### R3-05 — AI art provenance and licences
 
@@ -2344,22 +2508,32 @@ webOS 80² / 130²).
 
 | Constant | Where | v1 | v2 |
 |---|---|---|---|
+| `WORLD_SCALE` | config | — (R2-02.P0 prepared it at 1) | **3/2** — every world value this table ports reads `v1 × WORLD_SCALE` |
+| `WORLD_TOP_PAD` | config | — (prepared at 0) | **36** — the top-edge map `y′ = 1.5·y + 36`; a negative `y` takes the scale alone |
 | `BULLET_CULL_MARGIN` / `SHOT_CULL_MARGIN` | bullets / weapons | 16 | 24 |
 | `MAX_BULLET_SPEED` | bullets | 16 | 24 |
-| `LASER_WIDTH`, bending laser width | bullets | 6 | 9 |
+| `LASER_WIDTH`, `BENDING_LASER_WIDTH` | bullets | 6 | 9 |
 | bending laser speed / length | bullets | 3 / 48 | 4.5 / 72 |
 | `GRAZE_MARGIN` | bullets | 7 | 10.5 |
-| `POINT_ITEM_MAX_SPEED` | bullets | 9 | 13.5 |
+| `POINT_ITEM_MAX_SPEED`, `POINT_ITEM_ACCEL` | bullets | 9, 0.35 | 13.5, 0.525 |
 | `LASER_SEGMENT_LENGTH`, `RIPPLE_RING_WIDTH` | weapons | 8, 4 | 12, 6 |
 | `ITEM_RADIUS`, `PICKUP_MAGNET_RANGE` / `SPEED`, `ITEM_CULL_MARGIN`, `COOP_EXTRA_OFFSET` | powerups | 5, 16 / 2, 32, 12 | 7.5, 24 / 3, 48, 18 |
 | `OPTION_RADIUS`, `ROTATE_RADIUS` | options | 4, 20 / 40 | 6, 30 / 60 |
+| `SNAKE_LINK` | options | 16 | 24 |
+| `FORMATION_RETRACTED` / `FORMATION_SPREAD` (per element) | options | `number[]` | scaled element-wise by `WORLD_SCALE` — owner ruling RV3-F1; the A1 audit in `world-scale.test.ts` walks every frozen array export so none can hide (`UNSCALED_ARRAYS` empty) |
 | `POD_RADIUS` | shields | 4 | 6 |
+| `POD_ORBIT`, `ROTATE_POD_ORBIT` | shields | 13, 16 | 19.5, 24 |
+| `CRAWL_STEP` | patterns | 8 | 12 |
 | `DESPAWN_MARGIN`, `UNSEEN_MARGIN` / `GHOST_MARGIN`, `CARRIED_OPTION_SPACING` | enemies | 32, 128, 10 | 48, 192, 15 |
 | `BLOCK_DESPAWN_MARGIN` | stage/systems | 128 | 192 |
 | `GRID_MARGIN`, `DEFAULT_GRID_CELL_SIZE` | world / collision | 64, 32 | 96, 48 |
 | black hole `RADIUS`, `CORE`, `PULL`, enemy pull, `DRIFT`, `THROW_X` | blackhole | 88, 10, 2, 1, 0.25, 48 | 132, 15, 3, 1.5, 0.375, 72 |
 | `ENTER_START_X`, `ENTER_END_X`, `LEAVE_MAX_SPEED` | player | −24, 64, 8 | −36, 96, 12 |
+| `LEAVE_ACCELERATION`, `LEAVE_END_X` | player | 0.125, `PLAYFIELD_W + 32` | 0.1875; edge stays, margin ×k → `PLAYFIELD_W + 48` |
 | `BOSS_ENTRY_MARGIN` / `BOSS_FIRE_MARGIN` | bosses | 8 | 12 |
+| `BOSS_REST_X`, `CHAIN_SPREAD` | bosses | `PLAYFIELD_W + 40`, 8 | edge stays, margin ×k → `PLAYFIELD_W + 60`; 12 |
+| `BOSS_SKIP_LEAD` | debug | 96 | 144 |
+| `HUNTER_EDGE` (module-private), the ram's inside clamp | behaviors | 12, `PLAYFIELD_H − 24` | 18, `PLAYFIELD_H − 36` |
 | `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` | data | 296 / 100 | frame-anchored: right edge − 132 / playfield centre (168) |
 | `DEFAULT_SPAWN_SCREEN_X`, `DEFAULT_BLOCK_SCREEN_X` | enemies / data | `W + 16`, 400 | frame-anchored: `PLAYFIELD_W + 24`. A block's `x` and `screenX` port **together** (R1-03: `x + screenX` is its world left edge, ×1.5; `x′ = 1.5·(x + screenX) − screenX′`), and so do a ground enemy's (O11). Change these defaults only **after** R2-02's rescale run: the block pair reads its old default column from `DEFAULT_BLOCK_SCREEN_X` |
 | the map's right end (`length + PLAYFIELD_W`, `stageMapWidth`) | stage | `length + 384` | frame-anchored: `length′ + 640` — not a constant, but a heightfield segment, region or RLE row reaching it ports to it (the rescale tool's map-end rule, R1-03) |
@@ -2371,7 +2545,15 @@ webOS 80² / 130²).
 
 **Unchanged:** `OPTION_SPACING` (ticks), every timer and telegraph, aim directions, `MAX_ENEMY_BULLETS` 512,
 `MAX_ENEMIES` 64, `MAX_PLAYER_SHOTS` 96, `MAX_ITEMS` 32, `PARTICLE_CAPACITY` 256 (pool sizes are reviewed in R5,
-not scaled), score values.
+not scaled), score values, and the drifts `FREE_OPTION_DRIFT` / `DIRECT_ITEM_DRIFT` 1.25 (wave-5 scout §0.5 —
+left by decision, not oversight).
+
+**O4's integer rounding (W5-3).** Odd integers turn fractional at ×1.5; the tool rounds each one and lists it —
+195 entries in the port run. The hurtbox half-extents among them grow their box by at most 1 px — the entries
+the W5-3 allowance names (F 6, G 7, H 6, I 1, ≈ 20 boxes, all ≤ 1 px over the interim art frame, from T4c's
+`w5pre/hurtbox.mjs` tally as kept in [`decisions.md`](docs/v2-run/decisions.md) §3): the ships' terrain and
+pickup boxes are that much larger, the schema was never relaxed, the
+hurtbox-inside-art tests allow exactly the listed entries, and R2-04's retune should know the 1 px.
 
 **Fractional results.** Values that become fractional (10.5, 7.5, 0.375) are fine in the simulation — it already
 uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tick call, the zero-allocation rules
@@ -2398,13 +2580,13 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | done (owner parts pending) — 2026-10-19 |
-| R2-02 | Port all content ×1.5 | in progress — prep A landed and reviewed at zero (waves 1–2: `WORLD_SCALE`/`WORLD_TOP_PAD` neutral, the two-scale kit, W1–W7, A1/T0/T4a–T4c; kit identity 0/0/0, core CI green `0f148fb`); prep B landed and reviewed at zero (wave 3: the test pins of T1a–T1e/T2a–T2e pass at both scales, the v2-port comparison suite, the e2e pre-gate ran zero-gate, and three real engine fixes — the simultaneous-part hit pick, the cold-compile row cache, the port-scale trigger-probe churn gated to R2-03; exit check green at `3d75d73`; the K=1 drift FIX2 introduced in two Direct-mode playthroughs — the physical nearer-target pick, adjudicated more correct at both scales, floors re-pinned honestly (`0264e33`, prepB.FIX8)); the content port is wave 4 |
+| R2-02 | Port all content ×1.5 | done — 2026-10-20 (the port `8dbe858`: tool run 4,035 changes in 77 files, 0 unclassified, 0 errors plus the four hand fixes; `WORLD_SCALE` 3/2 / `WORLD_TOP_PAD` 36; the content-port gate gone U1 … U5, zero `CONTENT_PORT_PENDING`; 16 fingerprint segments re-pinned; `v2-port` landing checks zero-fail, the bot clears every zone — CELL VAULT green with the port — benchmarks improved, build +767 B gzip; `R2-02.RV` at zero on `b8b771f`; the goldens and demos stay v1 recordings by design until R2-03) |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
 | R3-01 | Art bible v2 and the prompt library update | done (owner parts pending) — 2026-10-17 |
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
-| R3-03 | Variants, palettes and tiles from real art | in progress — V1 (bullets and bend nodes native at the bible's v2 sizes, `cf30c2c`) and V3 (the palette-cycle scan enforcing §4.4, `f7abd0d`) landed and reviewed (SRV1/SRV2, wave 2); the remaining variants and tiles ride the later art waves |
-| R3-04 | Atlas pages and memory with detailed art | in progress — the whole M3 chain landed and reviewed (M3a–M3e, `e1dcedf…338c3fe`, blockers closed at `ef40bfd`; lazy residency is the default — a *prospective* flip: measured crossings eager ×2.044 / lazy ×2.706, today's atlas fits either); open: the typed stale-atlas error (F7, wave-3 carry) and the on-device context-loss check (owner) |
+| R3-03 | Variants, palettes and tiles from real art | done — 2026-10-20 (V1 … V5 landed and reviewed: bullets and bend nodes native at the bible's sizes, `@p2` palette maps replacing the channel swap, the cycle scan enforcing the bible's §4.4, the tile mask rules with `tileset-masks.mjs --write`, the bullet recolour step proven frame-for-frame; the shipped real art exercises the same gates through R4; `R3-03.RV` at zero on `1dbe091`) |
+| R3-04 | Atlas pages and memory with detailed art | done (owner parts pending) — 2026-10-20 (lazy residency built and made the prospective default; the stand-in generator, budget gate, `DIST_BUDGET` 16 MiB and the derived PNG caps; the TV bench decodes the stand-in pages and the render bench gained the "v2 zone stand-in" scenario; zone loads estimate ≈ 450–720 ms on the M7 vs the 2 s target; `R3-04.RV` approved at zero. Owner parts: the M7 runs of the stand-in decode pages and the context-loss round-trip, webOS hardware; open carry: the typed stale-atlas error F7 — see the step's As built) |
 | R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |

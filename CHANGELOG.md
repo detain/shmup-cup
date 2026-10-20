@@ -27,9 +27,10 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
 
 ### The 640×360 flip (R2-01)
 
-These change what the game shows: since `72b18a1` `master` boots at the v2 frame. The content is still v1's
-world scale — plan step R2-02 ports it ×1.5 — so the golden replays and the attract demos are v1 recordings
-until R2-03 re-blesses them, and the interim art is v1's sprites ×1.5 until the R4 round replaces it.
+These change what the game shows: since `72b18a1` `master` boots at the v2 frame. At the flip the content was
+still v1's world scale — plan step R2-02 ported it ×1.5 (the next section) — and the golden replays and the
+attract demos remain v1 recordings until R2-03 re-blesses them, while the interim art is v1's sprites ×1.5
+until the R4 round replaces it.
 
 - **The frame is 640×360** (R2-01): `FRAME_W` / `FRAME_H` 640 / 360, 12-px HUD bars and 12-px tiles (the
   playfield 640×336), the font cell 9×12 — the interim font is v1's 6×8 pixel font upscaled ×1.5 at pipeline
@@ -50,6 +51,42 @@ until R2-03 re-blesses them, and the interim art is v1's sprites ×1.5 until the
   `R2_03_PENDING` / `PORT_UNMEASURED` — and each throws at import once its window closes. The frame-literal
   scans now ban 640 / 360 / 336 / 348 next to v1's numbers, with the tick timers, the angle 640, the bench
   sizes and the particle degrees on their allow-lists.
+
+### The ×1.5 world port (R2-02)
+
+These change what the game shows: since `8dbe858` the world itself is v2's — every length, position, speed and
+radius in the shipped content is ×1.5 of v1's, top edges mapped with the +36 px pad, tiles 12-px throughout.
+
+- **All content ported ×1.5** (R2-02): the R1-03 tool ran for real —
+  `rescale --factor 1.5 --top-pad 36` over `content/`: 126 files read, 4,035 changes in 77 files, zero
+  unclassified, zero errors — plus its listed hand fixes (the gimmick rock's trigger, zone G's bonus window and
+  rising walls, the circler's home), core's `WORLD_SCALE` 3/2 and `WORLD_TOP_PAD` 36 with the whole Appendix B
+  constant list rewritten as `v1 × WORLD_SCALE`, boss part bounds ±512 → ±768, the 4-way rule values and the
+  playtest bot at their ported numbers (aimed ≤ 3.0 px/tick, lanes ≥ 24 px, capsule windows 1,350 px), and the
+  three fingerprints re-pinned to the ported draw (16 segments). Every zone's camera travel, landing and
+  first-visible-tick behaviour is checked against the frozen v1 baseline by the new `v2-port*` suite (zero
+  landing failures; ground enemies come 64 px of camera travel earlier by decision O11); the bot clears every
+  zone, the bonus stage and the boss rush — CELL VAULT's pre-port red went green with the port itself. The
+  `CONTENT_PORT_PENDING` gate and its helper are gone (U1 … U5); the Tizen `app.js` grew 767 B gzipped. The
+  golden replays, the attract demos and the `PORT_UNMEASURED` e2e waits stay for R2-03 by design.
+
+### Real-art systems and memory (R3-03, R3-04)
+
+- **Variants, palettes and tiles from real art** (R3-03): v2 bullets and bending-laser nodes are drawn natively
+  at the art bible's sizes; `@p2` is a palette map that reproduces the old red/blue swap exactly (`coop.mjs`'s
+  swap code is gone) and the ingest recipe can name one; the palette-cycle scan enforces the bible's §4.4 — any
+  near-miss on a cycled layer fails, exemptions pinned; ingested tiles choose "art clipped to mask" or
+  "mask from art", derived masks reaching content only through `tileset-masks.mjs --write`; the real-art bullet
+  recolour step maps every colour-blind palette frame for frame, proven on a fixture.
+- **Atlas and memory with detailed art** (R3-04): a seeded stand-in generator makes zones of the bible's
+  density (backdrops, 12-px tileset, 10 enemies, a three-part boss; PNG-8 pages at R1-05's uncalibrated
+  0.3–0.6 MB / 2048×1024 assumption — RR-7); the residency gains the lazy `"resident"` policy — decoded images
+  dropped, a hold while the shown zone's pages load, a re-fetch after a context loss — as the *prospective*
+  default, the flip measured (the atlas crosses the derived 23 MiB only at ×2.044 eager / ×2.706 lazy stand-in
+  density); `DIST_BUDGET` is 16 MiB and the real atlas PNG caps (300 KB common / 600 KB zone / 5.7 MB total)
+  replace the CJK figures, all derived in `check-bundle.mjs`; the TV bench's decode scenario loads the stand-in
+  pages (RR-8) and the render bench gained a "v2 zone stand-in" scenario; a v2 zone load estimates ≈ 450–720 ms
+  on the M7 against the 2 s target.
 
 ### Engine and tooling
 
