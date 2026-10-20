@@ -52,8 +52,9 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 
 /**
  * The shipped content with the engine sprites, validated like the shell does.
@@ -186,7 +187,8 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
       continue;
     }
     v.check(x >= left && x <= right, () => at() + ' outside the view horizontally');
-    if (kind === ShotKind.Ripple) v.check(f.hh[i] <= 20, () => at() + ` ring ${f.hh[i]}`);
+    // The ring's cap is a world radius (the v1 cap 20 px, ported with the world).
+    if (kind === ShotKind.Ripple) v.check(f.hh[i] <= v1rel(20), () => at() + ` ring ${f.hh[i]}`);
     if ((flags & ShotFlag.Sliding) !== 0 && kind === ShotKind.Upper) {
       // The Upper Missile (M3-01) slides under the ceiling.
       const surface = y - f.hh[i] - 0.5;

@@ -48,8 +48,9 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 
 /**
  * The shipped content with the engine sprites, validated like the shell does.
@@ -158,7 +159,8 @@ function checkShots(w: World, v: Violations): void {
     if (kind === ShotKind.Laser) {
       const length = f.length[i];
       v.check(x >= left && x - length <= right, () => at() + ` (length ${length}) outside`);
-      v.check(length >= 0 && length <= 64, () => at() + ` has length ${length}`);
+      // Type A's laser maxLength (64 px, a world length ported with the world).
+      v.check(length >= 0 && length <= v1rel(64), () => at() + ` has length ${length}`);
       continue;
     }
     v.check(x >= left && x <= right, () => at() + ' outside the view horizontally');

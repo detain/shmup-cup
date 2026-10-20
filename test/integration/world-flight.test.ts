@@ -26,6 +26,7 @@ import {
 import { INPUT_PROFILES_KIND, createWebInput, loadInputProfiles } from '@shmup/input-web';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
+import { v1rel, v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 const STEP = 1000 / 60;
@@ -52,19 +53,27 @@ describe('integration: the shipped KESTREL', () => {
     const kestrel = db.ships[index ?? -1];
     expect(kestrel.name).toBe('KESTREL');
     expect(db.sprites.names[kestrel.spriteId]).toBe('ships/kestrel');
-    for (const key of [
-      'speeds',
-      'hurtRadius',
-      'terrainBox',
-      'pickupBox',
-      'margins',
-      'enterTicks',
-      'respawnInvulnTicks',
-      'bankFrames',
-    ] as const) {
-      expect(kestrel[key], key).toEqual(DEFAULT_PLAYER_SHIP[key]);
-    }
-    expect(kestrel.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4]); // decision D3
+    // R2-02 ports the shipped file's world-unit values while the built-in fallback ship stays
+    // the v1 spec: carry the fallback across the same mapping (px and px/tick scale, integer px
+    // fields round the way the port tool does; tick counts and frame counts never scale).
+    expect(kestrel.speeds).toEqual(DEFAULT_PLAYER_SHIP.speeds.map(v1speed));
+    expect(kestrel.hurtRadius).toBe(v1rel(DEFAULT_PLAYER_SHIP.hurtRadius));
+    const portedBox = (b: { hw: number; hh: number }) => ({
+      hw: Math.round(v1rel(b.hw)),
+      hh: Math.round(v1rel(b.hh)),
+    });
+    expect(kestrel.terrainBox).toEqual(portedBox(DEFAULT_PLAYER_SHIP.terrainBox));
+    expect(kestrel.pickupBox).toEqual(portedBox(DEFAULT_PLAYER_SHIP.pickupBox));
+    expect(kestrel.margins).toEqual({
+      left: Math.round(v1rel(DEFAULT_PLAYER_SHIP.margins.left)),
+      right: Math.round(v1rel(DEFAULT_PLAYER_SHIP.margins.right)),
+      top: Math.round(v1rel(DEFAULT_PLAYER_SHIP.margins.top)),
+      bottom: Math.round(v1rel(DEFAULT_PLAYER_SHIP.margins.bottom)),
+    });
+    expect(kestrel.enterTicks).toBe(DEFAULT_PLAYER_SHIP.enterTicks);
+    expect(kestrel.respawnInvulnTicks).toBe(DEFAULT_PLAYER_SHIP.respawnInvulnTicks);
+    expect(kestrel.bankFrames).toBe(DEFAULT_PLAYER_SHIP.bankFrames);
+    expect(kestrel.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4].map(v1speed)); // decision D3
   });
 
   it('has an atlas frame for every bank step the World can draw', () => {
@@ -145,7 +154,7 @@ describe('integration: a remote flies the KESTREL (tizen-remote-safe)', () => {
       if (i === 21 || (i > 21 && (i - 21) % 7 === 0)) tick(() => press('keydown', KEY.right));
       else tick();
     }
-    expect(ship.x).toBe(start + 30 * 1.5); // never stalled
+    expect(ship.x).toBe(start + 30 * v1speed(1.5)); // never stalled (the speed is ported)
 
     // Released: the ship stops on the next tick (no debounce, no inertia).
     const released = ship.x;

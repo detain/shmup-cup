@@ -31,6 +31,7 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { K } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -59,8 +60,14 @@ function fnv1a(bytes: Uint8Array): string {
   return h.toString(16).padStart(8, '0');
 }
 
-/** The pinned fingerprint of the generated `test-range` tile grid (see the module docs). */
-const TEST_RANGE_TERRAIN = { cols: 648, rows: 25, fnv: '4f750aee' };
+/**
+ * The pinned fingerprint of the generated `test-range` tile grid (see the module docs). A grid
+ * digest derives from no unit — it is the ported data's own identity — so it is pinned per scale:
+ * the v1 grid, and R2-02's tool output on that same content (the kit port: 12-px tiles over the
+ * ported generator, disclosed in the wave-03 report).
+ */
+const TEST_RANGE_TERRAIN =
+  K === 1 ? { cols: 648, rows: 25, fnv: '4f750aee' } : { cols: 654, rows: 28, fnv: '4bee93c1' };
 
 describe('integration: test-range terrain', () => {
   itPortPending('generates the pinned tile grid (deterministic heightfield)', () => {

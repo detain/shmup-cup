@@ -38,6 +38,7 @@ import {
   type Game,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -143,7 +144,7 @@ describe('integration: enemy bullets on the test range', () => {
     );
     const pink = shots.filter((s) => s.kind === BulletKind.RoundPink);
     expect(pink.length).toBeGreaterThan(4);
-    expect(pink.every((s) => s.speed === 1.5 && s.angle % 32 === 0)).toBe(true);
+    expect(pink.every((s) => s.speed === v1speed(1.5) && s.angle % 32 === 0)).toBe(true);
     // Walkers: 3-ways on one tick, 48 units apart, the middle one on a 32-step aim.
     const walkerTicks = [
       ...new Set(shots.filter((s) => s.kind === BulletKind.OvalRed).map((s) => s.tick)),
@@ -153,7 +154,7 @@ describe('integration: enemy bullets on the test range', () => {
     for (const tick of walkerTicks) {
       const volley = shots.filter((s) => s.kind === BulletKind.OvalRed && s.tick === tick);
       expect(volley.length % 3).toBe(0);
-      expect(volley.every((s) => s.speed === 1.25)).toBe(true);
+      expect(volley.every((s) => s.speed === v1speed(1.25))).toBe(true);
       if (volley.length !== 3) continue; // two walkers stopping on the same tick
       // The middle bullet is on the aim, its neighbours 48 units either side (mod one turn).
       const angles = volley.map((s) => s.angle);
@@ -208,7 +209,8 @@ describe('integration: enemy bullets on the test range', () => {
     const shots = playThrough(g);
     const pink = shots.filter((s) => s.kind === BulletKind.RoundPink);
     expect(pink.length).toBeGreaterThan(0);
-    const expected = 1.5 * rankScale(6, BULLET_SPEED_RANK_CURVE);
+    // The base speed 1.5 is a world px/tick (ported); the rank curve is a multiplier (never).
+    const expected = v1speed(1.5) * rankScale(6, BULLET_SPEED_RANK_CURVE);
     expect(expected).toBeGreaterThan(1.5);
     for (const shot of pink) expect(shot.speed).toBe(expected);
   });

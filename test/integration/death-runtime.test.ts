@@ -40,6 +40,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 import {
   CONTENT_PORT_PENDING,
   PORT_PENDING_REASON,
@@ -298,10 +299,10 @@ describe('integration: death penalties on the shipped content (decision D6)', ()
       const ship = w.players[0];
       const stage = w.stage!;
       const loadout = w.weapons.loadouts[0];
-      stepUntil(g, () => w.camera.x >= 1700);
+      stepUntil(g, () => w.camera.x >= v1x(1700)); // past the second checkpoint, short of the third
       expect(stage.checkpoint).toBe(1);
       const checkpointX = stage.stage.checkpoints[1].x;
-      expect(checkpointX).toBe(1500);
+      expect(checkpointX).toBe(v1x(1500));
       w.powerups.meters[0].cursor = 4;
       crash(g);
       expect([loadout.options, loadout.main, loadout.missile, ship.speedLevel]).toEqual([

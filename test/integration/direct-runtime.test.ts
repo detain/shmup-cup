@@ -52,6 +52,7 @@ import {
 } from '@shmup/core';
 import { INPUT_PROFILES_KIND, createWebInput, loadInputProfiles } from '@shmup/input-web';
 import { describe, expect, it } from 'vitest';
+import { v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -336,9 +337,9 @@ describe('integration: the Speed toggle under a Samsung remote (tizen-remote-saf
     s.key('keyup', KEY.chMinus);
     expect(ship.speedLevel).toBe(0);
     for (let i = 0; i < 4; i++) s.frame();
-    // The MANTA moves at the toggled speed.
+    // The MANTA moves at the toggled speed (the speed table is ported with the world).
     const w = s.game.world;
-    expect(w.ship.speeds[ship.speedLevel]).toBe(1.75);
+    expect(w.ship.speeds[ship.speedLevel]).toBe(v1speed(1.75));
   });
 
   it('OK changes nothing in Direct mode (no meter to equip)', () => {
