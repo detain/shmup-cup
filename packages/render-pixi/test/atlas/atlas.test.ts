@@ -64,6 +64,19 @@ describe('render-pixi/atlas', () => {
     ]);
   });
 
+  it('starts every page loaded when given every image; loadPage with the same image is a no-op', () => {
+    // R3-04: the deferred-page API in its loaded-at-creation form changes nothing.
+    const manifest = testManifest();
+    const images = pageImages(manifest);
+    const atlas = createAtlas(manifest, images);
+    expect(atlas.pages.map((_, p) => atlas.isPageLoaded(p))).toEqual([true, true]);
+    atlas.loadPage(0, images[0]);
+    expect(atlas.pages[0].resource).toBe(images[0]);
+    const ship = atlas.textures[atlas.frameId('ships/a#0')];
+    expect(ship.source).toBe(atlas.pages[0]);
+    expect([ship.frame.x, ship.frame.width]).toEqual([0, 16]);
+  });
+
   it('resolves sprite name tables; unknown names draw ui/missing and warn once each', () => {
     const manifest = testManifest();
     const warnings: string[] = [];

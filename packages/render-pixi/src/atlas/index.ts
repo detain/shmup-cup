@@ -9,6 +9,13 @@
  * becomes **one** `TextureSource` with nearest-neighbour sampling, and every frame a `Texture`
  * over it, so all sprites of a page batch into one draw call.
  *
+ * A page may start **unloaded** (`null` in the image list) and be brought in later by
+ * {@link Atlas.loadPage} / freed again by {@link Atlas.unloadPage} (plan R3-04, the lazy
+ * residency): until its page is loaded, every frame of it draws nothing — its texture points at
+ * Pixi's empty source with a 0×0 frame, so no sampling of a missing image ever happens. The page
+ * source and the frame textures keep their object identity across load/unload; only their
+ * contents move.
+ *
  * Frame ids are dense integers assigned **sprite by sprite** (sprites in name order, frames in
  * index order), so the frames of a sprite are consecutive: a sprite's frame `i` is
  * `table[spriteId] + i`. Names are resolved to ids once at load time
@@ -158,11 +165,16 @@ export interface Atlas {
   /** Number of frame ids: manifest frames plus fallbacks when `ui/missing` / `ui/pixel` lack. */
   readonly size: number;
   /**
-   * One texture source per page (nearest-neighbour), outside Pixi's texture GC
-   * (`autoGarbageCollect` off — the owner of the pages unloads them, R1-05).
+   * One **persistent** texture source per page (nearest-neighbour), outside Pixi's texture GC
+   * (`autoGarbageCollect` off — the owner of the pages unloads them, R1-05). The entry objects
+   * never change; an unloaded page holds no image (`resource` null) and no frame texture points
+   * at it until {@link Atlas.loadPage} brings the image back.
    */
   readonly pages: readonly TextureSource[];
-  /** Texture by frame id. */
+  /**
+   * Texture by frame id. A frame of an unloaded page draws nothing until its page loads again
+   * (see {@link Atlas.loadPage}).
+   */
   readonly textures: readonly Texture[];
   /** Anchor column by frame id. */
   readonly anchorX: Int16Array;
@@ -182,6 +194,35 @@ export interface Atlas {
   readonly missingFrame: FrameId;
   /** 1×1 white frame for rectangles (`ui/pixel#0`). */
   readonly pixelFrame: FrameId;
+  /**
+   * Whether a page's image is currently loaded (its frames draw).
+   *
+   * @param page - Page index.
+   * @returns `true` when the page is loaded.
+   * @throws {RangeError} When the index is not a page of this atlas.
+   */
+  isPageLoaded(page: number): boolean;
+  /**
+   * Loads (or reloads) one page's image and points its frames back at it. Idempotent for the
+   * image already set; replacing the image of a loaded page is legal (the context-loss recovery
+   * of plan R3-04 re-fetches). Everything it touches is the cold path — no per-frame cost.
+   *
+   * @param page - Page index.
+   * @param image - The decoded page image; its size must match the manifest entry.
+   * @throws {RangeError} When the index is not a page of this atlas, or the image's size differs
+   *   from its page entry (a stale atlas).
+   */
+  loadPage(page: number, image: AtlasPageImage): void;
+  /**
+   * Frees one page: unloads its GPU copy (Pixi's `unload()`), drops the decoded image and points
+   * its frames at the empty texture until the next {@link Atlas.loadPage}. Idempotent. While a
+   * page is unloaded its `pages` entry must not be passed to `uploadTextureSource` — load it
+   * first. A cold path.
+   *
+   * @param page - Page index.
+   * @throws {RangeError} When the index is not a page of this atlas.
+   */
+  unloadPage(page: number): void;
   /**
    * Resolves a frame name to its id (do this once at load, not per frame).
    *
@@ -241,6 +282,13 @@ function imageSize(image: AtlasPageImage): [number, number] {
 }
 
 /**
+ * The texture source every frame of an unloaded page points at (Pixi's empty texture's source:
+ * no image to sample, and with a 0×0 frame the quad has no area, so nothing draws and nothing
+ * throws).
+ */
+const UNLOADED_SOURCE = Texture.EMPTY.source;
+
+/**
  * Builds the textures of an atlas from its manifest and the loaded page images.
  *
  * @remarks
@@ -252,10 +300,13 @@ function imageSize(image: AtlasPageImage): [number, number] {
  * - Frame ids: sprites in name order, frames in index order (a sprite's frames are
  *   consecutive), then any frame no sprite lists. When the manifest lacks
  *   {@link MISSING_SPRITE} or {@link PIXEL_SPRITE}, Pixi's 1×1 white texture stands in.
+ * - An image may be `null` — that page starts unloaded (see {@link Atlas.loadPage} /
+ *   {@link Atlas.unloadPage}); its frames draw nothing until it loads.
  * - Everything is allocated here; the returned typed arrays are read per frame.
  *
  * @param manifest - The atlas manifest.
- * @param images - One decoded image per manifest page, same order.
+ * @param images - One decoded image per manifest page, same order; `null` starts the page
+ *   unloaded.
  * @param options - Warning sink.
  * @returns The atlas.
  * @throws {RangeError} When the image count differs from the page count, a page is larger
@@ -273,7 +324,7 @@ function imageSize(image: AtlasPageImage): [number, number] {
  */
 export function createAtlas(
   manifest: AtlasManifest,
-  images: readonly AtlasPageImage[],
+  images: readonly (AtlasPageImage | null)[],
   options: AtlasOptions = {},
 ): Atlas {
   const warn =
@@ -287,20 +338,23 @@ export function createAtlas(
     );
   }
   const pages: TextureSource[] = [];
+  const pageLoaded: boolean[] = [];
   for (let p = 0; p < manifest.pages.length; p++) {
     const page = manifest.pages[p];
     const image = images[p];
     if (page.w > MAX_ATLAS_SIZE || page.h > MAX_ATLAS_SIZE) {
       throw new RangeError(`atlas: page ${page.file} exceeds ${MAX_ATLAS_SIZE}²`);
     }
-    const [w, h] = imageSize(image);
-    if (w !== page.w || h !== page.h) {
-      throw new RangeError(
-        `atlas: page ${page.file} is ${w}×${h} but the manifest says ${page.w}×${page.h} (stale atlas?)`,
-      );
+    if (image !== null) {
+      const [w, h] = imageSize(image);
+      if (w !== page.w || h !== page.h) {
+        throw new RangeError(
+          `atlas: page ${page.file} is ${w}×${h} but the manifest says ${page.w}×${page.h} (stale atlas?)`,
+        );
+      }
     }
     const source = new ImageSource({
-      resource: image,
+      resource: image ?? undefined,
       scaleMode: 'nearest',
       autoGenerateMipmaps: false,
       label: `atlas/${page.file}`,
@@ -311,7 +365,11 @@ export function createAtlas(
     // The pages leave the GPU only through `unload()` (the residency) or `destroy()`.
     source.autoGarbageCollect = false;
     pages.push(source);
+    pageLoaded.push(image !== null);
   }
+
+  /** The frame ids drawn from each page, in creation order (filled by the frame loop). */
+  const pageFrames: FrameId[][] = pages.map(() => []);
 
   // Frame order: sprite by sprite, then orphans.
   const order: string[] = [];
@@ -354,6 +412,7 @@ export function createAtlas(
       throw new RangeError(`atlas: frame ${name} lies outside page ${page.file}`);
     }
     ids.set(name, id);
+    pageFrames[frame.p].push(id);
     textures.push(
       new Texture({
         source,
@@ -408,6 +467,66 @@ export function createAtlas(
     frameHeight[id] = frame.h;
   }
 
+  /**
+   * Moves one page's frame textures onto the page source (with the manifest rectangles restored)
+   * or onto the empty source with a 0×0 frame. A cold path — the work of {@link Atlas.loadPage}
+   * and {@link Atlas.unloadPage}; per-frame code never sees it.
+   *
+   * @param page - Page index (validated by the caller).
+   * @param image - The decoded page image, or `null` to free the page.
+   */
+  function applyPage(page: number, image: AtlasPageImage | null): void {
+    const source = pages[page];
+    const ids = pageFrames[page];
+    if (image !== null) {
+      source.resource = image;
+      source.update();
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        const texture = textures[id];
+        const frame = manifest.frames[order[id]];
+        texture.frame.x = frame.x;
+        texture.frame.y = frame.y;
+        texture.frame.width = frame.w;
+        texture.frame.height = frame.h;
+        texture.source = source;
+        texture.update();
+      }
+    } else {
+      for (let i = 0; i < ids.length; i++) {
+        const texture = textures[ids[i]];
+        texture.frame.x = 0;
+        texture.frame.y = 0;
+        texture.frame.width = 0;
+        texture.frame.height = 0;
+        texture.source = UNLOADED_SOURCE;
+        texture.update();
+      }
+      if (pageLoaded[page]) source.unload();
+      source.resource = null;
+    }
+    pageLoaded[page] = image !== null;
+  }
+
+  /**
+   * Validates a page index.
+   *
+   * @param page - Index to check.
+   * @returns The index, unchanged.
+   * @throws {RangeError} When the index is not a page of this atlas.
+   */
+  function checkedPage(page: number): number {
+    if (!(page >= 0 && page < pages.length)) {
+      throw new RangeError(`atlas: no page ${page} (the manifest has ${pages.length})`);
+    }
+    return page;
+  }
+
+  // Pages given as `null` start unloaded: move their frames onto the empty texture.
+  for (let p = 0; p < pages.length; p++) {
+    if (!pageLoaded[p]) applyPage(p, null);
+  }
+
   const warned = new Set<string>();
   /**
    * Resolves sprite names to first-frame ids (the sprite itself or its flash sibling).
@@ -451,6 +570,25 @@ export function createAtlas(
     framesLeft,
     missingFrame,
     pixelFrame,
+    isPageLoaded(page) {
+      return pageLoaded[checkedPage(page)];
+    },
+    loadPage(page, image) {
+      checkedPage(page);
+      if (pageLoaded[page] && pages[page].resource === image) return;
+      const info = manifest.pages[page];
+      const [w, h] = imageSize(image);
+      if (w !== info.w || h !== info.h) {
+        throw new RangeError(
+          `atlas: page ${info.file} is ${w}×${h} but the manifest says ${info.w}×${info.h} (stale atlas?)`,
+        );
+      }
+      applyPage(page, image);
+    },
+    unloadPage(page) {
+      checkedPage(page);
+      if (pageLoaded[page]) applyPage(page, null);
+    },
     frameId(name) {
       return ids.get(name) ?? -1;
     },
