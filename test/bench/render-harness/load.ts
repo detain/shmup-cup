@@ -6,10 +6,17 @@
  * generator that places them, and the per-frame **floor** the bench reports instead of the last
  * frame's reading.
  *
- * It is its own module — no DOM, no Pixi, no virtual modules, `@shmup/core` only — because the
- * load is the one part of the bench that can be wrong *silently*. A bench that measures an empty
- * scene while printing confident numbers is worse than no bench, so the order below is pinned by
- * headless tests (`test/integration/render-bench.test.ts`) rather than by the browser run.
+ * It is its own module — no DOM, no Pixi, no virtual modules: `@shmup/core` for the load and the
+ * budgets of `./gates.js` for its gate — because the load is the one part of the bench that can be
+ * wrong *silently*. A bench that measures an empty scene while printing confident numbers is worse
+ * than no bench, so the order below is pinned by headless tests
+ * (`test/integration/render-bench.test.ts`) rather than by the browser run.
+ *
+ * Since plan **R3-04.M4b** it also holds the gate of the TV bench's **stand-in load**
+ * ({@link standinBenchViolations}): that run's scene is built from the very manifest the bench
+ * build bakes (`apps/tizen/scripts/bench-decode.mjs` `buildDecodeStandin`), so the counts that make
+ * the drawn frame real — the pages, their texture bytes, the enemies and tiles the scene places —
+ * are testable in Node, exactly like the tick order above.
  *
  * **The order is the whole point** (review round 1 of M3-02c):
  *
@@ -34,6 +41,7 @@ import {
   PLAYFIELD_W,
   type Game,
 } from '@shmup/core';
+import { DRAW_CALL_BUDGET, HEAP_BUDGET } from './gates.js';
 
 /**
  * Ticks a scenario plays before it measures: the camera has to reach the stages' effect ranges
@@ -252,4 +260,189 @@ export function trackLoadFloor(
 export function quantile(sorted: Float64Array, q: number): number {
   if (sorted.length === 0) return 0;
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * sorted.length)))];
+}
+
+/** The sprite-name prefix of the stand-in zone A art — the mirror of `scene.ts`'s private one. */
+const STANDIN_PREFIX = 'standin/zone-a/';
+
+/** Enemy copies per kind in the stand-in frame's row — `scene.ts` `STANDIN_ENEMY_COPIES`. */
+const STANDIN_ENEMY_COPIES = 2;
+
+/**
+ * Enemy sprites the stand-in scene places: every base enemy kind of the stand-in manifest twice
+ * (the staggered row — the boss and its parts are the scene's other batch).
+ *
+ * @remarks
+ * Mirrors `apps/tizen/src/bench/scene.ts` `createStandinScene`'s enemy pick: the
+ * {@link STANDIN_PREFIX} names without an `@…` palette variant, whose rest holds no `/` (so not the
+ * tiles), is not `far` and does not start `boss`. The gate reads the same manifest the bench build
+ * bakes into the page, so the two counts must agree; `test/integration/render-bench.test.ts` pins
+ * this mirror against the scene's source, and the browser run pins the figures themselves.
+ *
+ * @param sprites - Every sprite name of the stand-in manifest.
+ * @returns Enemy sprites the scene places.
+ */
+export function standinEnemyCopies(sprites: readonly string[]): number {
+  let kinds = 0;
+  for (const name of sprites) {
+    if (name.indexOf(STANDIN_PREFIX) !== 0 || name.indexOf('@') >= 0) continue;
+    const rest = name.slice(STANDIN_PREFIX.length);
+    if (rest.indexOf('/') < 0 && rest !== 'far' && rest.indexOf('boss') !== 0) kinds++;
+  }
+  return kinds * STANDIN_ENEMY_COPIES;
+}
+
+/**
+ * The part of the stand-in load's `RenderBenchRecord` (the type in
+ * `packages/shell/src/telemetry/index.ts`) the gate reads — the whole record satisfies it, and this
+ * module stays browser-free and telemetry-free, like the load itself.
+ */
+export interface StandinGateRecord {
+  /** Scenario id — {@link StandinBenchExpectation.scenario}. */
+  readonly scenario: string;
+  /** Position in the run — {@link StandinBenchExpectation.index}. */
+  readonly index: number;
+  /** Internal frame width in pixels. */
+  readonly width: number;
+  /** Internal frame height in pixels. */
+  readonly height: number;
+  /** Frames measured free-running. */
+  readonly frames: number;
+  /** Frames measured in the synced pass. */
+  readonly syncedFrames: number;
+  /** Whether a filtered layer was on. */
+  readonly filter: boolean;
+  /** Whether the Mode-7 floor was drawn. */
+  readonly mode7: boolean;
+  /** WebGL draw calls of the measured frame. */
+  readonly drawCalls: number;
+  /** Bytes of render targets Pixi pooled. */
+  readonly renderTargetBytes: number;
+  /** Bytes of the internal frame's own render target. */
+  readonly frameTargetBytes: number;
+  /** Bytes of the atlas pages as uploaded (`Σ w · h · 4`). */
+  readonly textureBytes: number;
+  /** Atlas pages the scene drew from. */
+  readonly atlasPages: number;
+  /** Whether the browser reported a JS heap at all. */
+  readonly heapMeasured: boolean;
+  /** JS-heap growth over the measured phases, bytes. */
+  readonly heapDeltaBytes: number;
+  /** What the frame carried. */
+  readonly load: {
+    /** Enemy sprites placed (not counting the boss and its parts). */
+    readonly enemies: number;
+    /** Terrain tiles placed. */
+    readonly tiles: number;
+  };
+}
+
+/** What the TV bench's stand-in load must show (plan R3-04.M4b). */
+export interface StandinBenchExpectation {
+  /** The scenario id of the run's last page load. */
+  readonly scenario: string;
+  /** Its index: one after the decode scenario's, the run's last page load. */
+  readonly index: number;
+  /** The frame the scene is built for (`BENCH_V2_SIZE`). */
+  readonly width: number;
+  /** Its height. */
+  readonly height: number;
+  /** Pages of the pruned stand-in manifest (the build's group pages). */
+  readonly atlasPages: number;
+  /** Their texture bytes, `Σ w · h · 4`. */
+  readonly textureBytes: number;
+  /** Enemy sprites the scene places ({@link standinEnemyCopies}). */
+  readonly enemies: number;
+  /** Tiles the scene places: the frame's tile columns, a ceiling row and a floor row. */
+  readonly tiles: number;
+}
+
+/**
+ * Every reason the stand-in load's record (plan R3-04.M4b, the run's last page load —
+ * `apps/tizen/src/bench/run.ts` `measureStandinScenario`) must fail the headless gate. **No time
+ * gate**, as in gates.ts's `tvBenchViolations`: SwiftShader is not the M7; the milliseconds ride
+ * along for the zone-load estimate (decision W5-19), which scales the *decode* scenario's page
+ * timings.
+ *
+ * @remarks
+ * - the identity: the run's last page load, at the v2 frame (`BENCH_V2_SIZE` — 640×360 since the
+ *   flip);
+ * - exactly one frame per measured phase (the page renders the scene once, timed, and once more
+ *   synced — it is a page load, not a free-running scenario);
+ * - a plain frame: no filtered layer, no Mode-7 floor, so no pooled render target; the frame
+ *   target `width · height · 4`;
+ * - draw calls within {@link DRAW_CALL_BUDGET} — the budget the block's law forbids raising;
+ * - the atlas: the manifest's own page count and texture bytes (the scene draws from the pages the
+ *   `decode` scenario one load before fetched — equality, not a floor: a wrong page set would
+ *   fake the whole measure);
+ * - the scene: the enemy row and both tile rows carry the counts the manifest implies;
+ * - the heap within {@link HEAP_BUDGET} whenever the browser reports one.
+ *
+ * @param record - What the bench measured.
+ * @param expected - What the load must show.
+ * @returns The violations; empty when the record is a real, in-budget stand-in frame.
+ */
+export function standinBenchViolations(
+  record: StandinGateRecord,
+  expected: StandinBenchExpectation,
+): string[] {
+  const out: string[] = [];
+  if (record.scenario !== expected.scenario) {
+    out.push(`the record is scenario ${record.scenario}, not ${expected.scenario}`);
+  }
+  if (record.index !== expected.index) {
+    out.push(
+      `scenario index ${record.index}, expected ${expected.index} (the run's last page load)`,
+    );
+  }
+  if (record.width !== expected.width || record.height !== expected.height) {
+    out.push(
+      `the frame is ${record.width}×${record.height}, expected ${expected.width}×${expected.height}`,
+    );
+  }
+  if (record.frames !== 1) {
+    out.push(`measured ${record.frames} free-running frames; the stand-in load draws exactly one`);
+  }
+  if (record.syncedFrames !== 1) {
+    out.push(`measured ${record.syncedFrames} synced frames; the stand-in load draws exactly one`);
+  }
+  if (record.filter || record.mode7) {
+    out.push('the stand-in frame ran a filter or the Mode-7 floor — it draws neither');
+  }
+  if (record.renderTargetBytes !== 0) {
+    out.push(
+      `${record.renderTargetBytes} bytes of pooled render targets, expected none ` +
+        '(the frame runs no filter and no Mode-7 floor)',
+    );
+  }
+  if (record.drawCalls <= 0) {
+    out.push(`the frame took ${record.drawCalls} draw calls — nothing was drawn, or none counted`);
+  } else if (record.drawCalls > DRAW_CALL_BUDGET) {
+    out.push(`${record.drawCalls} draw calls, over the budget of ${DRAW_CALL_BUDGET}`);
+  }
+  if (record.frameTargetBytes !== record.width * record.height * 4) {
+    out.push(`the frame target holds ${record.frameTargetBytes} bytes, not width · height · 4`);
+  }
+  if (record.atlasPages !== expected.atlasPages) {
+    out.push(`${record.atlasPages} atlas pages, expected ${expected.atlasPages}`);
+  }
+  if (record.textureBytes !== expected.textureBytes) {
+    out.push(
+      `${record.textureBytes} texture bytes, expected ${expected.textureBytes} ` +
+        '(Σ page · w · h · 4 of the stand-in manifest)',
+    );
+  }
+  if (record.load.enemies !== expected.enemies) {
+    out.push(`the frame placed ${record.load.enemies} enemy sprites, expected ${expected.enemies}`);
+  }
+  if (record.load.tiles !== expected.tiles) {
+    out.push(`the frame placed ${record.load.tiles} tiles, expected ${expected.tiles}`);
+  }
+  if (record.heapMeasured && !(record.heapDeltaBytes < HEAP_BUDGET)) {
+    out.push(
+      `the heap grew ${record.heapDeltaBytes} bytes over the measured phases, ` +
+        `over the budget of ${HEAP_BUDGET}`,
+    );
+  }
+  return out;
 }

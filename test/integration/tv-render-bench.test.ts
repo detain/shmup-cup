@@ -9,7 +9,11 @@
  * Since plan R1-05 (B4) a run ends with the **decode scenario**, after the matrix's last scenario;
  * the decode record rides in a payload's optional `decode` field through the same log server to the
  * analyzer's decode table, its synthetic pages are drawn the same on every machine, and `pnpm bench`
- * opens it headlessly too.
+ * opens it headlessly too. Since plan R3-04.M4a the decode pages are the real stand-in zone's page
+ * and the two shipped ones, the run's last page load is the **stand-in zone drawn once**
+ * (`standin-zone`, plan R3-04.M4b on the headless side), and the analyzer estimates the zone load
+ * from those measured pages — while the synthetic-page sessions of the R0-03 campaign keep reading
+ * through the old formula (both shapes are pinned here).
  *
  * The matrix is the resolution sweep (the owner's R0-03 follow-up): 25 frame sizes × 6 variants
  * plus 22 knob rows, 172 scenarios — with R0-02's 18 ids (384×216, 640×360, 960×540) unchanged.
@@ -39,7 +43,7 @@ import {
   measureDecode,
   type DecodeHost,
 } from '../../apps/tizen/src/bench/decode.js';
-import { decodeArtImage } from '../../apps/tizen/scripts/bench-decode.mjs';
+import { DECODE_PAGE_IDS, decodeArtImage } from '../../apps/tizen/scripts/bench-decode.mjs';
 // Relative source imports, as `render-telemetry-pipeline.test.ts` does: the root suite does not
 // depend on `@shmup/shell`.
 import {
@@ -60,26 +64,28 @@ import {
 import { createLogServer } from '../../tools/input-probe/server/log-server.mjs';
 import {
   analyzeBenchSession,
+  decodeZoneEstimate,
   readBenchSession,
 } from '../../tools/input-probe/results/analyze-bench.mjs';
 
 /**
- * A decode record built the way the bench builds it: {@link measureDecode} over the bench's four
- * pages against a host whose clock advances by fixed steps (fetch 20 ms, decode 300 ms, upload
- * 100 ms CPU + 30 ms on `finish()`, bitmap 280 + 25 ms).
+ * A decode host whose clock advances by fixed steps (fetch 20 ms, decode 300 ms, upload 100 ms CPU
+ * + 30 ms on `finish()`, bitmap 280 + 25 ms) and whose pages come back as 1000-byte PNGs with the
+ * colour type the caller picks per page.
  *
- * @returns The record.
+ * @param png8 - Whether the page fetched at this url is PNG-8 (colour type 3) rather than RGBA (6).
+ * @returns The host.
  */
-async function decodeRecord(): Promise<DecodeBenchRecord> {
+function fakeDecodeHost(png8: (url: string) => boolean): DecodeHost {
   let clock = 0;
   let gpu = 0;
-  const host: DecodeHost = {
+  return {
     now: () => clock,
     fetch: (url) => {
       clock += 20;
       const bytes = new Uint8Array(1000);
       bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      bytes[25] = url.includes('png8') || url.includes('zone') ? 3 : 6;
+      bytes[25] = png8(url) ? 3 : 6;
       return Promise.resolve(bytes.buffer);
     },
     decodeImage: () => {
@@ -101,6 +107,18 @@ async function decodeRecord(): Promise<DecodeBenchRecord> {
       gpu = 0;
     },
   };
+}
+
+/**
+ * A decode record built the way the bench builds it: {@link measureDecode} over the **synthetic
+ * pages of before R3-04.M4a** against {@link fakeDecodeHost}. Kept on purpose: it pins
+ * `measureDecode`'s shape (encodings read off the fetched bytes, the `[min, p50, p95, max]` stages)
+ * and the analyzer's legacy formula for a session recorded with those pages (plan R3-04.M4a let
+ * `R3-04.M4b` re-own this file).
+ *
+ * @returns The record.
+ */
+async function legacyDecodeRecord(): Promise<DecodeBenchRecord> {
   const pages = [
     ['rgba-2048', 2048, 2048],
     ['png8-2048', 2048, 2048],
@@ -108,7 +126,32 @@ async function decodeRecord(): Promise<DecodeBenchRecord> {
     ['zone-a', 256, 128],
   ] as const;
   return measureDecode(
-    host,
+    fakeDecodeHost((url) => url.includes('png8') || url.includes('zone')),
+    pages.map(([id, width, height]) => ({
+      id,
+      what: id,
+      width,
+      height,
+      url: `assets/atlas/decode-${id}.png`,
+    })),
+    { repetitions: 4, webGLVersion: 1, imageDecode: true, wallClock: () => 1_760_000_700_000 },
+  );
+}
+
+/**
+ * The decode record of today's bench (plan R3-04.M4a): the stand-in zone A page first, then the two
+ * shipped pages — all PNG-8, since the atlas is indexed since R1-05.
+ *
+ * @returns The record.
+ */
+async function standinDecodeRecord(): Promise<DecodeBenchRecord> {
+  const pages: readonly [string, number, number][] = [
+    ['standin-zone-a', 2048, 1024],
+    ['common', 2048, 2048],
+    ['zone-a', 2048, 2048],
+  ];
+  return measureDecode(
+    fakeDecodeHost(() => true),
     pages.map(([id, width, height]) => ({
       id,
       what: id,
@@ -333,7 +376,7 @@ describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () =
   });
 
   it('builds a record of every page with each stage as [min, p50, p95, max]', async () => {
-    const record = await decodeRecord();
+    const record = await legacyDecodeRecord();
     expect(record).toMatchObject({ scenario: 'decode', index: 172, repetitions: 4, error: null });
     expect(record.pages.map((page) => [page.id, page.encoding])).toEqual([
       ['rgba-2048', 'rgba'],
@@ -348,6 +391,35 @@ describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () =
     expect(rgba.totalMs).toEqual([450, 450, 450, 450]);
     expect(rgba.bitmapUploadMs).toEqual([130, 130, 130, 130]);
     expect(rgba.textureBytes).toBe(2048 * 2048 * 4);
+    // The legacy estimate: `common` once plus the PNG-8 2048² page scaled to two zone pages.
+    expect(decodeZoneEstimate(record)).toMatchObject({
+      basis: 'synthetic',
+      pages: 3,
+      lazyMs: 450 + 2 * 450,
+      eagerMs: 130 + 2 * 130,
+    });
+  });
+
+  it('measures the stand-in page set today (R3-04.M4a) and estimates the zone from it', async () => {
+    expect([...DECODE_PAGE_IDS]).toEqual(['standin-zone-a', 'common', 'zone-a']);
+    const record = await standinDecodeRecord();
+    expect(record.pages.map((page) => [page.id, page.encoding])).toEqual([
+      ['standin-zone-a', 'png8'],
+      ['common', 'png8'],
+      ['zone-a', 'png8'],
+    ]);
+    // The measured-pages formula (decision W5-19): the zone's own pages, each at its median, no
+    // multiplier — here common + stand-in + zone-a, three pages at 450 ms cold / 130 ms uploaded.
+    const estimate = decodeZoneEstimate(record);
+    expect(estimate).toMatchObject({
+      basis: 'standin',
+      pages: 3,
+      lazyMs: 450 * 3,
+      eagerMs: 130 * 3,
+    });
+    // 900 ms of PNG-8 decode over the three pages' 10.49 megapixels — the analyzer sums the
+    // per-page areas before dividing, so the exact product is only compared to its rounding.
+    expect(estimate.perMpxMs).toBeCloseTo(900 / ((2048 * 1024 + 2 * 2048 * 2048) / 1e6), 6);
   });
 });
 
@@ -369,9 +441,22 @@ describe('render bench: the headless driver gates every TV scenario', () => {
     expect(perf).toContain("mode: 'bench'");
   });
 
-  it('opens the decode scenario too and checks its four pages (R1-05 B4)', () => {
+  it('opens the decode scenario too and checks its pages against the build (R1-05 B4, R3-04.M4a)', () => {
     expect(perf).toContain("runTvScenario(tvUrl, DECODE_SCENARIO_ID, '&reps=2')");
     expect(perf).toContain('DECODE_PAGE_IDS');
+    // The page shapes come from the deterministic build, never from a pinned literal: the
+    // synthetic 2048² pages are gone since R3-04.M4a.
+    expect(perf).toContain('buildDecodePages()');
+    expect(perf).not.toContain('rgba-2048');
+  });
+
+  it('opens the run’s last page load, the stand-in zone, and gates it (R3-04.M4b)', () => {
+    expect(perf).toContain('runTvScenario(tvUrl, STANDIN_SCENARIO_ID)');
+    // The gate is the tested helper in render-harness/load.js, driven by the expectations the
+    // Node side derives from the same stand-in manifest the build bakes.
+    expect(perf).toContain('standinBenchViolations(record, expected)');
+    expect(perf).toContain('buildDecodeStandin()');
+    expect(perf).toContain('standinEnemyCopies(');
   });
 
   it('renders on a 1280x720 display, a whole multiple of 640x360', () => {
@@ -448,7 +533,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
   });
 
   it('carries the decode record in the run’s last payload, through to the analyzer (R1-05 B4)', async () => {
-    const decode = await decodeRecord();
+    const decode = await standinDecodeRecord();
     const payload = buildRenderBenchPayload(
       session,
       BENCH_RUN_LENGTH,
@@ -469,11 +554,73 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     const report = analyzeBenchSession(file);
     expect(report).toContain('## Decode and upload — file to GPU (plan R1-05 B4, for R3-04)');
     expect(report).toContain(
-      '| rgba-2048 | 2048×2048 | rgba | 1 | 20.00 / 20.00 | 300.00 / 300.00 | 100.00 / 100.00 |' +
+      '| standin-zone-a | 2048×1024 | png8 | 1 | 20.00 / 20.00 | 300.00 / 300.00 | 100.00 / 100.00 |' +
         ' 130.00 / 130.00 | 450.00 / 450.00 | 450.00 | 280.00 / 280.00 | 130.00 / 130.00 |',
     );
-    // 450 + 2 × 450 cold; 130 + 2 × 130 as uploads only.
+    // 3 × 450 ms cold, 3 × 130 ms uploaded, the stand-in pages each at its median.
+    expect(report).toContain(
+      'R3-04 zone-load estimate (the measured pages: `common` + the stand-in zone pages,' +
+        ' 3 page(s) in all, each at its median):',
+    );
     expect(report).toContain('**1350 ms**, within R3-04’s 2000 ms');
     expect(report).toContain('**390 ms**, within R3-04’s 2000 ms');
+    expect(report).toContain(
+      '≈ 85.8 ms per megapixel — the measured pages, not a scaled stand-in.',
+    );
+  });
+
+  it('keeps the stand-in draw out of the matrix tables and prints it on its own (R3-04.M4a)', async () => {
+    const standin = record(0, {
+      scenario: STANDIN_SCENARIO_ID,
+      index: STANDIN_SCENARIO_INDEX,
+      size: BENCH_V2_SIZE.id,
+      width: BENCH_V2_SIZE.width,
+      height: BENCH_V2_SIZE.height,
+      density: BENCH_V2_SIZE.density,
+      variant: 'standin-zone',
+      crt: 'off',
+      filter: false,
+      mode7: false,
+      phaseMs: [0, 0, 0],
+      frames: 1,
+      syncedFrames: 1,
+      raf: [],
+      tickFrames: [],
+      twoTickShare: 0,
+      renderTargetBytes: 0,
+      frameTargetBytes: BENCH_V2_SIZE.width * BENCH_V2_SIZE.height * 4,
+      textureBytes: 2048 * 1024 * 4,
+      atlasPages: 1,
+      load: { bullets: 0, points: 0, enemies: 24, particles: 0, tiles: 110 },
+      endedAt: 1_760_000_000_000 + STANDIN_SCENARIO_INDEX * 32_000,
+    });
+    const payload = buildRenderBenchPayload(
+      session,
+      STANDIN_SCENARIO_INDEX + 1,
+      env.startedAt + STANDIN_SCENARIO_INDEX + 1,
+      env,
+      [standin],
+      true,
+    );
+    const response = await fetch(base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify(payload),
+    });
+    expect(response.status).toBe(200);
+    const file = join(dir, `${session}.jsonl`);
+    // The analyzer reads it as the run's last page load, never as a size row (M4a's split): the
+    // matrix keeps its 172 records and the header the fake env reports for them.
+    const stored = readBenchSession(file);
+    expect(stored.records.map((r: RenderBenchRecord) => r.scenario)).not.toContain(
+      STANDIN_SCENARIO_ID,
+    );
+    expect(stored.standin).toHaveLength(1);
+    const report = analyzeBenchSession(file);
+    expect(report).toContain(
+      "## Stand-in draw (the run's last page load, plan R3-04.M4a) — 1 record(s)",
+    );
+    expect(report).toContain('| 1 | 2.00 / 3.00 | 3.00 / 4.00 | 12 | 1 |');
+    expect(report).toContain('172 of 172 scenario(s) measured');
   });
 });

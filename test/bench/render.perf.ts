@@ -38,7 +38,13 @@
  * pages of the density — {@link TV_BENCH_PAGES} —, the heap) — the milliseconds are for the TV
  * (R0-03). Since plan
  * R1-05 (B4) it also opens the bench's **decode scenario** (`?scenario=decode&reps=2`) and checks
- * its shape: the four pages fetched, decoded and uploaded, with their sizes, encodings and bytes.
+ * its shape: the pages fetched, decoded and uploaded, with their sizes, encodings and bytes — since
+ * plan R3-04.M4a that is the stand-in zone A page first, then the shipped `common` and `zone-a`
+ * pages, every shape read off `buildDecodePages()` rather than pinned. And since plan **R3-04.M4b**
+ * the run ends head-to-head with the TV run: it opens the bench's last page load, the **stand-in
+ * load** (`?scenario=standin-zone`), and gates the one 640×360 frame it draws from those pages with
+ * `standinBenchViolations` — counts and the ordinary budgets, never milliseconds raised; plan
+ * R3-04's zone-load figure itself rides on the decode scenario's page timings (decision W5-19).
  *
  * Not part of `pnpm test`: it needs a browser and a quiet machine.
  *
@@ -49,7 +55,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
-import { FRAME_H, FRAME_W } from '@shmup/core';
+import { FRAME_H, FRAME_W, TILE_SIZE } from '@shmup/core';
 import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
@@ -58,9 +64,20 @@ import {
   BENCH_DENSITIES,
   BENCH_SCENARIOS,
   BENCH_SIZES,
+  BENCH_V2_SIZE,
 } from '../../apps/tizen/src/bench/matrix.js';
-import { DECODE_SCENARIO_ID } from '../../apps/tizen/src/bench/decode.js';
-import { DECODE_PAGE_IDS, decodePageFile } from '../../apps/tizen/scripts/bench-decode.mjs';
+import {
+  DECODE_SCENARIO_ID,
+  STANDIN_SCENARIO_ID,
+  STANDIN_SCENARIO_INDEX,
+} from '../../apps/tizen/src/bench/decode.js';
+import {
+  DECODE_PAGE_IDS,
+  buildDecodePages,
+  buildDecodeStandin,
+  decodePageFile,
+  pngColorType,
+} from '../../apps/tizen/scripts/bench-decode.mjs';
 import type {
   DecodeBenchRecord,
   RenderBenchRecord,
@@ -72,7 +89,7 @@ import {
   renderGroupViolations,
   tvBenchViolations,
 } from './render-harness/gates.js';
-import { WARMUP_TICKS } from './render-harness/load.js';
+import { WARMUP_TICKS, standinBenchViolations, standinEnemyCopies } from './render-harness/load.js';
 import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
 
 // Re-exported so the budgets are still readable from this file, where the docs name them.
@@ -588,7 +605,7 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
     }, 300_000);
   }
 
-  it('decode — fetches, decodes and uploads the four pages (R1-05 B4)', async () => {
+  it('decode — fetches, decodes and uploads the stand-in and shipped pages (R1-05 B4, R3-04.M4a)', async () => {
     const outcome = await runTvScenario(tvUrl, DECODE_SCENARIO_ID, '&reps=2');
     expect(outcome.error).toBeNull();
     const decode = outcome.decode as DecodeBenchRecord;
@@ -611,13 +628,45 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       // Chromium has createImageBitmap, so the alternative path is measured too.
       expect(page.bitmapMs).not.toBeNull();
     }
-    expect(
-      decode.pages.slice(0, 2).map((page) => [page.width, page.height, page.encoding]),
-    ).toEqual([
-      [2048, 2048, 'rgba'],
-      [2048, 2048, 'png8'],
-    ]);
+    // The pages and their shapes come from the same deterministic build the bench plugin baked —
+    // since R3-04.M4a the stand-in zone's own page first, then `common` and `zone-a` (no more
+    // synthetic 2048² pages, and the shipped pages are PNG-8 since R1-05).
+    const built = buildDecodePages();
+    expect(decode.pages.map((page) => [page.id, page.width, page.height])).toEqual(
+      built.map((page) => [page.id, page.width, page.height]),
+    );
+    expect(decode.pages.map((page) => page.encoding)).toEqual(
+      built.map((page) => (pngColorType(page.png) === 3 ? 'png8' : 'rgba')),
+    );
     expect(decode.imageBitmap).toBe(true);
+  }, 300_000);
+
+  it('standin-zone — draws one frame of the zone from those pages (R3-04.M4b)', async () => {
+    const outcome = await runTvScenario(tvUrl, STANDIN_SCENARIO_ID);
+    expect(outcome.error).toBeNull();
+    const record = outcome.record as RenderBenchRecord;
+    // The scene's expectation: the same pruned manifest the bench build baked into the page
+    // (`apps/tizen/scripts/bench-atlas.mjs`, plan R3-04.M4a), read here in Node. The tiles are the
+    // frame's tile columns twice over (a ceiling row and a floor row), as `scene.ts` places them.
+    const standin = buildDecodeStandin();
+    const expected = {
+      scenario: STANDIN_SCENARIO_ID,
+      index: STANDIN_SCENARIO_INDEX,
+      width: BENCH_V2_SIZE.width,
+      height: BENCH_V2_SIZE.height,
+      atlasPages: standin.manifest.pages.length,
+      textureBytes: standin.manifest.pages.reduce((bytes, page) => bytes + page.w * page.h * 4, 0),
+      enemies: standinEnemyCopies(Object.keys(standin.manifest.sprites)),
+      tiles: (Math.ceil(BENCH_V2_SIZE.width / TILE_SIZE) + 1) * 2,
+    };
+    console.info(
+      `[bench] tv ${STANDIN_SCENARIO_ID}: render ${record.renderMs[1].toFixed(2)} ms, synced ` +
+        `${record.syncedMs[1].toFixed(2)} ms (SwiftShader — not the M7), ${record.drawCalls} ` +
+        `draw calls, ${(record.textureBytes / 1024).toFixed(0)} KB atlas in ${record.atlasPages} ` +
+        `page(s), ${record.load.enemies} enemies + ${record.load.tiles} tiles, heap ` +
+        `${(record.heapDeltaBytes / 1024).toFixed(0)} KB [WebGL ${record.webGLVersion}]`,
+    );
+    expect(standinBenchViolations(record, expected)).toEqual([]);
   }, 300_000);
 
   it('reports every size with the atlas page count of its density', () => {

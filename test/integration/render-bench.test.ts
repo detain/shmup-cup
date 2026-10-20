@@ -14,7 +14,12 @@
  *   made the item pool's 512 → 256 sawtooth visible in the first place.
  * - **the gates** (`render-harness/gates.ts` `renderBenchViolations`) — a thin or empty scene
  *   fails before any budget is even looked at.
- * - the deterministic generator, the quantiles and the two source guards that keep the browser
+ * - **the stand-in gate** (`render-harness/load.ts` `standinBenchViolations` and
+ *   `standinEnemyCopies`, plan R3-04.M4b) — the run's last page load: one v2-native frame of the
+ *   stand-in zone, carrying the manifest's own page set and the scene's exact enemy and tile
+ *   counts, inside the unchanged draw-call and heap budgets. Its mirror against the TV scene's
+ *   real rules is pinned by a source guard, so a drift in either half fails in Node.
+ * - the deterministic generator, the quantiles and the source guards that keep the browser
  *   halves wired to all of the above.
  *
  * The particle pool is faked here (it needs an atlas and Pixi sprites;
@@ -23,10 +28,13 @@
  */
 import {
   CancelMode,
+  FRAME_H,
+  FRAME_W,
   MAX_ENEMY_BULLETS,
   MAX_POINT_ITEMS,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  TILE_SIZE,
   createGame,
   createHeadlessPlatform,
   hashWorld,
@@ -45,10 +53,15 @@ import {
   fillBullets,
   fillParticles,
   quantile,
+  standinBenchViolations,
+  standinEnemyCopies,
   trackLoadFloor,
   type BenchParticles,
   type LoadFloor,
+  type StandinBenchExpectation,
+  type StandinGateRecord,
 } from '../bench/render-harness/load.js';
+import { STANDIN_SCENARIO_ID, STANDIN_SCENARIO_INDEX } from '../../apps/tizen/src/bench/decode.js';
 import {
   DRAW_CALL_BUDGET,
   HEAP_BUDGET,
@@ -573,6 +586,166 @@ describe('render bench: the render-group gate (renderGroupViolations, M3-02e)', 
   });
 });
 
+/**
+ * What the stand-in gate expects for one healthy frame of the zone: the pruned manifest's single
+ * 2048×1024 group page, the enemy row and both tile rows of `scene.ts` `createStandinScene` at the
+ * v2 frame (plan R3-04.M4a/M4b — the browser run derives these from the real build).
+ *
+ * @returns The expectation.
+ */
+function standinExpectation(): StandinBenchExpectation {
+  return {
+    scenario: STANDIN_SCENARIO_ID,
+    index: STANDIN_SCENARIO_INDEX,
+    width: FRAME_W,
+    height: FRAME_H,
+    atlasPages: 1,
+    textureBytes: 2048 * 1024 * 4,
+    enemies: 6,
+    tiles: (Math.ceil(FRAME_W / TILE_SIZE) + 1) * 2,
+  };
+}
+
+/**
+ * A stand-in record the gate passes.
+ *
+ * @param over - Fields to replace — one mutation per violation test.
+ * @returns The record.
+ */
+function standinFixtureRecord(over: Partial<StandinGateRecord> = {}): StandinGateRecord {
+  const expected = standinExpectation();
+  return {
+    scenario: expected.scenario,
+    index: expected.index,
+    width: expected.width,
+    height: expected.height,
+    frames: 1,
+    syncedFrames: 1,
+    filter: false,
+    mode7: false,
+    drawCalls: 12,
+    renderTargetBytes: 0,
+    frameTargetBytes: expected.width * expected.height * 4,
+    textureBytes: expected.textureBytes,
+    atlasPages: expected.atlasPages,
+    heapMeasured: true,
+    heapDeltaBytes: 50_000,
+    load: { enemies: expected.enemies, tiles: expected.tiles },
+    ...over,
+  };
+}
+
+describe('render bench: the stand-in gate (R3-04.M4b)', () => {
+  it('counts the enemy row exactly as the TV scene picks it', () => {
+    // The mirror contract with `scene.ts`: base names of the stand-in prefix without an `@…`
+    // variant, whose rest holds no `/`, is not `far` and does not start `boss`. The scene's enemy
+    // pick keeps the `band-…` parallax names too — they pass that predicate, so they ride in the
+    // row as well; the gate must **equal** the scene, not re-judge it, so the mirror counts them
+    // the same way. `far`, the tiles, the boss and its parts, and a palette variant drop out.
+    const sprites = [
+      'standin/zone-a/far',
+      'standin/zone-a/band-1',
+      'standin/zone-a/band-2',
+      'standin/zone-a/tiles/dirt',
+      'standin/zone-a/pebble',
+      'standin/zone-a/pebble@flash',
+      'standin/zone-a/boss',
+      'standin/zone-a/boss-arm-1',
+      'shots/shot',
+    ];
+    expect(standinEnemyCopies(sprites)).toBe(3 * 2);
+    expect(standinEnemyCopies([])).toBe(0);
+  });
+
+  it('passes a healthy stand-in frame, at the inclusive edges', () => {
+    const expected = standinExpectation();
+    expect(standinBenchViolations(standinFixtureRecord(), expected)).toEqual([]);
+    // Draw calls right at the budget (inclusive) and the heap one byte under it; and a browser
+    // that reports no heap at all cannot be failed for a number it never measured.
+    expect(
+      standinBenchViolations(
+        standinFixtureRecord({ drawCalls: DRAW_CALL_BUDGET, heapDeltaBytes: HEAP_BUDGET - 1 }),
+        expected,
+      ),
+    ).toEqual([]);
+    expect(
+      standinBenchViolations(
+        standinFixtureRecord({ heapMeasured: false, heapDeltaBytes: 10 * HEAP_BUDGET }),
+        expected,
+      ),
+    ).toEqual([]);
+  });
+
+  it('refuses a record that is not the run’s last page load of the v2 frame', () => {
+    const expected = standinExpectation();
+    const violations = standinBenchViolations(
+      standinFixtureRecord({
+        scenario: 'decode',
+        index: 172,
+        width: 384,
+        height: 216,
+        frameTargetBytes: 384 * 216 * 4,
+      }),
+      expected,
+    );
+    expect(violations).toHaveLength(3);
+    expect(violations[0]).toContain(`not ${expected.scenario}`);
+    expect(violations[1]).toContain(`expected ${expected.index} (the run's last page load)`);
+    expect(violations[2]).toContain('384×216');
+  });
+
+  it('refuses anything but the one timed frame of a plain draw', () => {
+    const expected = standinExpectation();
+    const violations = standinBenchViolations(
+      standinFixtureRecord({ frames: 0, syncedFrames: 2, filter: true, renderTargetBytes: 1024 }),
+      expected,
+    );
+    expect(violations).toHaveLength(4);
+    expect(violations[0]).toContain('free-running frames');
+    expect(violations[1]).toContain('synced frames');
+    expect(violations[2]).toContain('ran a filter or the Mode-7 floor');
+    expect(violations[3]).toContain('pooled render targets');
+  });
+
+  it('refuses an empty frame and an over-budget one alike', () => {
+    const expected = standinExpectation();
+    expect(standinBenchViolations(standinFixtureRecord({ drawCalls: 0 }), expected)).toEqual([
+      expect.stringContaining('nothing was drawn'),
+    ]);
+    // The budget itself: the block's law is that M4b does not raise it — the gate shares the
+    // constant with the matrix gate above, so one number governs every scenario.
+    expect(
+      standinBenchViolations(standinFixtureRecord({ drawCalls: DRAW_CALL_BUDGET + 1 }), expected),
+    ).toEqual([expect.stringContaining(`over the budget of ${DRAW_CALL_BUDGET}`)]);
+  });
+
+  it('refuses a wrong atlas or a thin scene — counts are equality, not floors', () => {
+    const expected = standinExpectation();
+    const violations = standinBenchViolations(
+      standinFixtureRecord({
+        atlasPages: 2,
+        textureBytes: expected.textureBytes + 1,
+        load: { enemies: expected.enemies - 2, tiles: expected.tiles - 1 },
+      }),
+      expected,
+    );
+    expect(violations).toHaveLength(4);
+    expect(violations[0]).toContain('atlas pages');
+    expect(violations[1]).toContain('texture bytes');
+    expect(violations[2]).toContain('enemy sprites');
+    expect(violations[3]).toContain('tiles');
+  });
+
+  it('gates the heap at the shared budget, exclusive like the matrix gate', () => {
+    expect(
+      standinBenchViolations(
+        standinFixtureRecord({ heapMeasured: true, heapDeltaBytes: HEAP_BUDGET }),
+        standinExpectation(),
+      ),
+    ).toEqual([expect.stringContaining(`over the budget of ${HEAP_BUDGET}`)]);
+  });
+});
+
 describe('render bench: the halves stay wired to the tested code', () => {
   it('drives the page through benchTick instead of its own tick order', () => {
     const main = benchSource('render-harness/main.ts');
@@ -615,5 +788,39 @@ describe('render bench: the halves stay wired to the tested code', () => {
     const main = benchSource('render-harness/main.ts');
     expect(main).toContain('countDrawCalls: true');
     expect(main).toContain('countStructureRebuilds: true');
+  });
+
+  it('opens the stand-in load headlessly and gates it through the tested helper', () => {
+    // The TV record travels the same `runTvScenario` door as every matrix scenario, and its
+    // counts are checked by `standinBenchViolations` — the Node-tested helper — not by a copy of
+    // the rules inlined in the browser half. The expectation is derived from the same
+    // deterministic build the bench plugin baked into the page (plan R3-04.M4a).
+    const perf = benchSource('render.perf.ts');
+    expect(perf).toContain('runTvScenario(tvUrl, STANDIN_SCENARIO_ID)');
+    expect(perf).toContain('expect(standinBenchViolations(record, expected)).toEqual([])');
+    expect(perf).toContain('standinEnemyCopies(');
+    expect(perf).toContain('buildDecodeStandin()');
+    // And the stale synthetic-page pins of the R1-05 bench are gone for good: the decode half
+    // reads its page shapes off `buildDecodePages()` (the headless run re-checks every number).
+    expect(perf).toContain('buildDecodePages()');
+    expect(perf).not.toContain('rgba-2048');
+  });
+
+  it('keeps the stand-in mirror honest against the TV scene whose rules it copies', () => {
+    // `standinEnemyCopies` and the tiles formula in `load.ts` mirror the private pick inside
+    // `createStandinScene` (plan R3-04.M4b). The browser run pins the counts of the real
+    // manifest; this guard pins the rules — if the scene's predicates move, the mirror must move
+    // in the same commit, and the equality the page asserts stays meaningful.
+    const scene = readFileSync(
+      fileURLToPath(new URL('../../apps/tizen/src/bench/scene.ts', import.meta.url)),
+      'utf8',
+    );
+    expect(scene).toContain("const STANDIN_PREFIX = 'standin/zone-a/'");
+    expect(scene).toContain('const STANDIN_ENEMY_COPIES = 2');
+    expect(scene).toContain(
+      "rest.indexOf('/') < 0 && rest !== 'far' && rest.indexOf('boss') !== 0",
+    );
+    expect(scene).toContain('Math.ceil(width / TILE_SIZE) + 1');
+    expect(scene).toContain('columns * 2');
   });
 });
