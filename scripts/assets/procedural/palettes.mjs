@@ -12,6 +12,8 @@
  * keeps the solid bright core, red gets a dark centre pixel (a ring), purple a single bright dot.
  * The palette names match `@shmup/core` `BULLET_PALETTES` (the `standard` palette is the plain
  * sprites); `pnpm content:check` checks every variant of every engine bullet sprite exists.
+ * From R3-03.V1 the variants follow the standard set through `artScale`: the same native v2
+ * bullets, bend nodes and beams at the build's art scale, frame for frame.
  *
  * @module
  */
@@ -43,7 +45,8 @@ export const CORE_MARKS = Object.freeze({ pink: 'solid', red: 'ring', purple: 'd
  * Generates every colour-blind variant.
  *
  * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale the beams
- *   are drawn at (default 1; native like the standard beams, `lasers.mjs` — R2-01).
+ *   and the bullets are drawn at (default 1; native like the standard beams, `lasers.mjs` —
+ *   R2-01, with the v2 bullets and bend nodes of R3-03.V1).
  * @returns {SpriteDef[]} For each palette: the nine bullets (shape-coded), the three beams and
  *   the three bending laser segments, named `<sprite>@<palette>`.
  * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
@@ -53,7 +56,9 @@ export function generate(options = {}) {
   /** @type {SpriteDef[]} */
   const sprites = [];
   for (const [palette, colours] of Object.entries(BULLET_PALETTES)) {
-    sprites.push(...bulletSprites(colours, `@${palette}`, CORE_MARKS, 'palettes'));
+    sprites.push(
+      ...bulletSprites(colours, `@${palette}`, CORE_MARKS, 'palettes', options.artScale ?? 1),
+    );
     sprites.push(...laserSprites(colours, `@${palette}`, 'palettes', options.artScale ?? 1));
   }
   return sprites;

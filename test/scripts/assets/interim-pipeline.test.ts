@@ -170,7 +170,9 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
         scaled++;
       }
     }
-    expect(scaled).toBeGreaterThan(1000);
+    // R3-03.V1: the v2 bullets, bend nodes and their variants are native, so 216 frames left the
+    // upscaled pool — the floor measures what is still compared, not the natives.
+    expect(scaled).toBeGreaterThan(850);
     expect(wrongPixels).toEqual([]);
   });
 
@@ -194,10 +196,21 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
 });
 
 describe('scripts/assets/pipeline — what the interim stage never upscales (W4-5)', () => {
-  it('marks exactly the terrain tilesets, ui/pixel and the laser beams native', () => {
+  it('marks exactly the terrain tilesets, ui/pixel, the laser beams and the native v2 bullets and bend nodes', () => {
+    // The v2 bullets and bend nodes: `bullets.mjs` / `lasers.mjs` draw them at the art bible
+    // §5.4 sizes on the `artScale !== 1` path (R3-03.V1), the palette variants with them.
+    const V2_SHOTS = Object.keys(BULLET_COLORS).flatMap((colour) =>
+      ['', ...Object.keys(BULLET_PALETTES).map((palette) => `@${palette}`)].flatMap((suffix) => [
+        `bullets/round-${colour}${suffix}`,
+        `bullets/oval-${colour}${suffix}`,
+        `bullets/needle-${colour}${suffix}`,
+        `lasers/bend-${colour}${suffix}`,
+      ]),
+    );
     expect(BEAMS).toHaveLength(12); // 3 colours × (standard + 3 colour-blind palettes)
+    expect(V2_SHOTS).toHaveLength(48); // 3 colours × 4 sprites × (standard + 3 palettes)
     expect([...NATIVE].sort()).toEqual(
-      [...Object.keys(TERRAIN_PALETTES), 'ui/pixel', ...BEAMS].sort(),
+      [...Object.keys(TERRAIN_PALETTES), 'ui/pixel', ...BEAMS, ...V2_SHOTS].sort(),
     );
   });
 

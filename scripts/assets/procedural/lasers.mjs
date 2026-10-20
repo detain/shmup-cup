@@ -14,8 +14,10 @@
  * one per width R2-02's ×1.5 port asks for (the shipped 6 and 8 become 9 and 12); at 1, the v1
  * strip above, byte for byte.
  *
- * The bending lasers' segments `lasers/bend-<colour>` (plan M2-02): one 7×7 round blob (rim /
- * body / core, like a round bullet) the renderer draws at every node of a bending laser's body.
+ * The bending lasers' segments `lasers/bend-<colour>` (plan M2-02): one round blob (rim / body /
+ * core, like a round bullet) the renderer draws at every node of a bending laser's body. At art
+ * scale 1 it is the v1 7×7 blob; from R3-03.V1 the v2 path draws the art bible §5.4's **11×11**
+ * node native, its band radii ×1.5, marked `native` like the beams.
  * {@link laserSprites} draws both in any colours — `palettes.mjs` uses it for the colour-blind
  * variants.
  *
@@ -61,26 +63,33 @@ export function bandRows(height, palette) {
   return rows;
 }
 
-/** Side of a bending laser segment (odd: centred on its node). */
+/** Side of a bending laser segment (odd: centred on its node), v1. */
 export const BEND_SIZE = 7;
 
+/** Side of a bending laser segment on the native v2 path (art bible v2 §5.4, R3-03.V1). */
+export const BEND_SIZE_V2 = 11;
+
 /**
- * Draws one bending laser segment: a round blob, dark rim outside radius 2.6, bright core inside
- * radius 1.3.
+ * Draws one bending laser segment: a round blob with a dark rim outside `rimFrom`, a bright
+ * core inside `coreTo` and nothing outside `edge` (all in pixels from the centre).
  *
  * @param {{ rim: Rgba, body: Rgba, core: Rgba }} palette - Band colours.
- * @returns {import('../image.mjs').Image} The 7×7 frame.
+ * @param {number} size - Frame side (odd).
+ * @param {number} edge - Radius of the silhouette.
+ * @param {number} rimFrom - Radius where the rim starts.
+ * @param {number} coreTo - Radius where the core ends.
+ * @returns {import('../image.mjs').Image} The `size` × `size` frame.
  */
-function bendBlob(palette) {
-  const image = createImage(BEND_SIZE, BEND_SIZE);
-  const c = (BEND_SIZE - 1) / 2;
-  for (let y = 0; y < BEND_SIZE; y++) {
-    for (let x = 0; x < BEND_SIZE; x++) {
+function bendBlob(palette, size, edge, rimFrom, coreTo) {
+  const image = createImage(size, size);
+  const c = (size - 1) / 2;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
       const dx = x - c;
       const dy = y - c;
       const r = Math.sqrt(dx * dx + dy * dy);
-      if (r > 3.4) continue;
-      setPixel(image, x, y, r > 2.6 ? palette.rim : r > 1.3 ? palette.body : palette.core);
+      if (r > edge) continue;
+      setPixel(image, x, y, r > rimFrom ? palette.rim : r > coreTo ? palette.body : palette.core);
     }
   }
   return image;
@@ -89,19 +98,17 @@ function bendBlob(palette) {
 /**
  * Draws the beams and the bending laser segments in the given colours.
  *
- * @remarks
- * The beams are `native` (drawn at `artScale`, never upscaled by the pipeline: a frame's number
- * is its thickness); the bending laser segments are ordinary v1-scale art the pipeline upscales.
- *
  * @param {Readonly<Record<keyof typeof BULLET_COLORS, string>>} colours - Body colour per family.
  * @param {string} [suffix] - Appended to every sprite name (`@tritanopia`; default none).
  * @param {string} [generator] - Generator id of the sprites' `origin` (default `lasers`).
  * @param {number} [artScale] - The build's art scale (default 1): the beams are
- *   `⌈s·BEAM_WIDTH⌉ × ⌈s·BEAM_HEIGHT⌉` with one frame per band height.
+ *   `⌈s·BEAM_WIDTH⌉ × ⌈s·BEAM_HEIGHT⌉` with one frame per band height, and from R3-03.V1 every
+ *   non-unit scale also draws the bend node native at the bible's 11 px (§5.4).
  * @returns {SpriteDef[]} One beam (8 frames at art scale 1, 12 at 3/2) and one segment per colour.
  * @throws {RangeError} When `artScale` is not a valid art scale (`interim.mjs` `parseArtScale`).
  */
 export function laserSprites(colours, suffix = '', generator = 'lasers', artScale = 1) {
+  const v2 = artScale !== 1;
   /** @type {SpriteDef[]} */
   const sprites = [];
   const black = color('#000000');
@@ -122,7 +129,19 @@ export function laserSprites(colours, suffix = '', generator = 'lasers', artScal
       frames.push(image);
     }
     sprites.push(makeSprite(`lasers/beam-${name}${suffix}`, frames, generator, { native: true }));
-    sprites.push(makeSprite(`lasers/bend-${name}${suffix}`, [bendBlob(palette)], generator));
+    // The bend node: the v1 blob at scale 1, the bible's native 11×11 (radii ×1.5) at 3/2.
+    sprites.push(
+      makeSprite(
+        `lasers/bend-${name}${suffix}`,
+        [
+          v2
+            ? bendBlob(palette, BEND_SIZE_V2, 5.1, 3.9, 1.95)
+            : bendBlob(palette, BEND_SIZE, 3.4, 2.6, 1.3),
+        ],
+        generator,
+        { native: v2 },
+      ),
+    );
   }
   return sprites;
 }
@@ -131,7 +150,7 @@ export function laserSprites(colours, suffix = '', generator = 'lasers', artScal
  * Generates the beam strips and the bending laser segments.
  *
  * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
- *   the beams at (default 1).
+ *   the beams and bend nodes at (default 1).
  * @returns {SpriteDef[]} One beam and one segment per bullet colour.
  * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
  *   `parseArtScale`).
