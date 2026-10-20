@@ -1212,9 +1212,15 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
     at = press(Action.Confirm, at); // KESTREL in the ship select (M2-05; buffered too)
     at = press(0, at);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('weaponSelect');
+    // The weapon select's preview World now streams its page under the lazy default
+    // (R3-04.M3e) — let it settle, or the held frames would swallow the START press.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     at = press(Action.Confirm, at); // START in the weapon select (M2-03; buffered too)
     at = press(0, at);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('game');
+    // The lazy default (R3-04.M3e): the game World's prepare may still be one microtask from
+    // settling — the next frames would hold. Let it finish before counting contexts.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     win.frame(at);
     expect(input.contexts).toEqual(['menu', 'game']);
     const frame = fakes.frames[fakes.frames.length - 1];
@@ -1656,9 +1662,15 @@ describe('shell/boot saves and options (M1-17 edge)', () => {
     press(0);
     press(Action.Confirm); // KESTREL in the ship select (M2-05)
     press(0);
+    // The weapon select's preview streams its page under the lazy default (R3-04.M3e):
+    // settle it before START, or the held frames would swallow the press.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     press(Action.Confirm); // START in the weapon select (M2-03)
     press(0);
     expect(flow.stack.top?.id).toBe('game');
+    // The lazy default (R3-04.M3e): settle the game World's page prepare before the
+    // countdown's frames — held frames carry no ticks and the countdown needs 120.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     addScore(shell.game.world, 0, 4321);
     shell.game.world.status = 'gameOver';
     for (let i = 0; i < 120; i++) press(0);

@@ -296,7 +296,7 @@ describe('shell/boot atlas residency (R1-05)', () => {
   });
 
   it('uploads the boot stage’s pages before the warm-up frame and marks the canvas', async () => {
-    const { promise, attributes } = boot();
+    const { promise, attributes } = boot({ atlasPages: 'eager' });
     const shell = await promise;
     const expected = groupPages('zone-b');
     expect(uploadedPages(shell.atlas.pages)).toEqual(expected);
@@ -321,7 +321,7 @@ describe('shell/boot atlas residency (R1-05)', () => {
   it('times the boot uploads per page and reports the atlas total on the canvas', async () => {
     let ms = 0;
     win.performance = { now: () => (ms += 2) };
-    const { promise, attributes } = boot();
+    const { promise, attributes } = boot({ atlasPages: 'eager' });
     const shell = await promise;
     const expected = groupPages('zone-b');
     const timing = shell.atlasTiming;
@@ -395,7 +395,7 @@ describe('shell/boot atlas residency (R1-05)', () => {
         destroy: () => {},
       };
     };
-    const { promise, attributes } = boot({ debugTools: factory });
+    const { promise, attributes } = boot({ atlasPages: 'eager', debugTools: factory });
     const shell = await promise;
     expect(hosts[0].atlas).toBe(shell.atlasResidency);
     // And the timing (W3-6): the boot's, and the last load per page as the canvas shows it.
@@ -409,7 +409,7 @@ describe('shell/boot atlas residency (R1-05)', () => {
   });
 
   it('a new World on screen gets its stage’s pages before its first frame (W3-9)', async () => {
-    const { promise, attributes } = boot();
+    const { promise, attributes } = boot({ atlasPages: 'eager' });
     const shell = await promise;
     // Somewhere else first (as after the attract demo of another zone).
     const zoneC = shell.content.db.stageIndex.get('zone-c') ?? -1;
@@ -433,7 +433,7 @@ describe('shell/boot atlas residency (R1-05)', () => {
   });
 
   it('the page the weapon select’s preview draws leaves the GPU at the next stage change', async () => {
-    const { promise, attributes } = boot();
+    const { promise, attributes } = boot({ atlasPages: 'eager' });
     const shell = await promise;
     const pages = shell.atlas.pages;
     const stage = (id: string): number => shell.content.db.stageIndex.get(id) ?? -1;

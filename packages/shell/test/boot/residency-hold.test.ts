@@ -343,12 +343,16 @@ async function waitForPages(held: Held, expected: readonly number[]): Promise<vo
  * @returns The held shell and the next free frame timestamp.
  */
 async function toGameScene(lazy: boolean, holdFrames: number): Promise<{ held: Held; at: number }> {
-  const held = await bootOnce(lazy ? { atlasPages: 'lazy' } : {});
+  const held = await bootOnce({ atlasPages: lazy ? 'lazy' : 'eager' });
   // The zone C detour: lazy fetches C's pages now; eager already holds every image.
   held.shell.atlasResidency.prepare(stageOf(held.shell, 'zone-c'));
   await waitForPages(held, groupPages('zone-c'));
   expect(uploadedPages(held.shell.atlas.pages).length).toBeGreaterThan(0);
   let at = toWeaponSelect(1000);
+  // The preview World of the weapon select (R3-04.M3e): its page streams in lazily, and the
+  // held frames would swallow the START press. Let the preview settle first (nothing is pending
+  // in the eager run, so the drain is a no-op there).
+  await releasePending();
   at = press(Action.Confirm, at); // the weapon select's START
   at = press(0, at);
   if (lazy) {

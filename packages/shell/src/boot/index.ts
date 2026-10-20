@@ -103,12 +103,17 @@
  * per page ({@link ATLAS_PAGE_MS_ATTRIBUTE}: fetch / decode / upload — owner decision W3-6). The
  * debug tools get the save store (the save export / import of `window.__shmupDebug.save`), the
  * residency and the atlas timing (`__shmupDebug.atlas`, with `timing` and `pageMs`).
- * Since R3-04 {@link ShellOptions.atlasPages} `'lazy'` changes where the images come from: no page
- * is fetched at boot, the residency loads the shown stage's pages on demand — fetch, decode,
+ * Since R3-04.M3e {@link ShellOptions.atlasPages} defaults to `'lazy'`, which changes where the
+ * images come from: no page is fetched at boot, the residency loads the shown stage's pages on
+ * demand — fetch, decode,
  * upload, **drop the image** (`createLazyAtlasResidency`, owner decision W5-15) — and while they
  * are in flight the frame loop holds the game: the last displayed frame is redrawn, no tick runs
  * and no input is consumed, so a slow page load cannot move a replay (decision W5-16; the boot's
- * own prepare is awaited, so the first frame draws the boot stage). Since R3-04.M3d the shell
+ * own prepare is awaited, so the first frame draws the boot stage). The weapon select's preview
+ * World stays outside the residency (a menu must not stream every page of its dev range): the
+ * boot only attaches the unloaded pages' **images**, so a drawn preview page uploads itself on
+ * first draw exactly as under the eager policy, and the next real prepare unloads it again
+ * (R3-04.M3e). Since R3-04.M3d the shell
  * also listens for `webglcontextlost` / `webglcontextrestored` on the canvas: a restored context
  * lost every GPU page upload with the old one, so the boot re-fetches and re-uploads every
  * resident page on the restore event.
@@ -266,6 +271,8 @@ import {
   type AtlasResidency,
   type AtlasResidencyOptions,
   type LazyAtlasResidency,
+  type ResidencyGameLike,
+  type ResidencyWorldLike,
 } from '../memory/index.js';
 
 /** Module descriptor. */
@@ -721,13 +728,14 @@ export interface ShellOptions {
    */
   readonly framePacing?: 'auto' | 'lock' | 'free';
   /**
-   * Atlas page loading (plan R3-04): `'eager'` (the default until M3e) — every page is fetched,
-   * decoded and attached at boot ({@link loadImagesTimed}) and the residency only moves GPU
-   * copies; `'lazy'` — no page loads at boot: the residency fetches, decodes, attaches and
-   * uploads each page when the shown stage needs it and **drops the decoded image** after its
-   * upload (`createLazyAtlasResidency`, owner decision W5-15; the memory estimate follows with
-   * the `resident` image policy), and the frame loop redraws the last frame while the shown
-   * World's pages are in flight — no tick, no input consumed (decision W5-16).
+   * Atlas page loading (plan R3-04): `'lazy'` (the default since R3-04.M3e, owner decision
+   * W5-15) — no page loads at boot: the residency fetches, decodes, attaches and uploads each
+   * page when the shown stage needs it and **drops the decoded image** after its upload
+   * (`createLazyAtlasResidency`; the memory estimate follows with the `resident` image policy),
+   * and the frame loop redraws the last frame while the shown World's pages are in flight — no
+   * tick, no input consumed (decision W5-16); `'eager'` (the pre-R3-04 behaviour, the one-line
+   * switch back) — every page is fetched, decoded and attached at boot
+   * ({@link loadImagesTimed}) and the residency only moves GPU copies.
    */
   readonly atlasPages?: 'eager' | 'lazy';
   /**
@@ -1045,6 +1053,37 @@ function asAtlasResidency(residency: LazyAtlasResidency): AtlasResidency {
 }
 
 /**
+ * The {@link worldOfView} companion for a scene-owned preview World (plan R3-04.M3e). The
+ * residency's World placement reads the scenes' `.world` field only — the weapon select's live
+ * preview keeps its private World on `.preview`, deliberately outside that placement (a menu
+ * should not drive the GPU mask under the eager policy, where a drawn page uploads itself).
+ * Under the lazy policy a drawn page that was never attached draws nothing, so the boot answers a
+ * preview World by attaching the unloaded pages' images (uploading nothing itself — the first draw
+ * uploads, as under the eager policy; see {@link bootShell}'s preview paragraph).
+ *
+ * @param game - The game.
+ * @param view - The frame's World view (`RenderFrame.world`).
+ * @returns The World whose view is shown, or `null`.
+ */
+function previewWorldOfView(game: ResidencyGameLike, view: unknown): ResidencyWorldLike | null {
+  const stack = game.scenes?.stack;
+  if (stack === undefined) return null;
+  for (let i = stack.depth - 1; i >= 0; i--) {
+    const scene = stack.sceneAt(i);
+    if (scene === null || typeof scene !== 'object') continue;
+    const candidate = (scene as { readonly preview?: unknown }).preview;
+    if (
+      candidate !== null &&
+      typeof candidate === 'object' &&
+      (candidate as Partial<ResidencyWorldLike>).view === view
+    ) {
+      return candidate as ResidencyWorldLike;
+    }
+  }
+  return null;
+}
+
+/**
  * Boots the game into a canvas (see the module docs for the sequence).
  *
  * @remarks
@@ -1128,7 +1167,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
   const createImage = options.createImage ?? ((): HTMLImageElement => new Image());
   /** Atlas pages load on demand and release their images (plan R3-04; M3e flips the default). */
-  const lazyPages = (options.atlasPages ?? 'eager') === 'lazy';
+  const lazyPages = (options.atlasPages ?? 'lazy') === 'lazy';
   markState(canvas, 'loading');
   overlay?.showProgress(0, 'LOADING');
 
@@ -1461,17 +1500,26 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     now: atlasClock,
   };
   // The residency the frame loop and the boot drive (plan R3-04.M3c): lazy pages load on demand
-  // and release their decoded images (`createLazyAtlasResidency`, W5-15); with the eager default
-  // nothing changes. `atlasResidency` is what the debug tools and the event wiring see — the
-  // eager contract, via {@link asAtlasResidency} in lazy mode; the frame loop's hold reads the
-  // lazy residency's `loading` directly.
+  // and release their decoded images (`createLazyAtlasResidency`, W5-15) — the default since
+  // R3-04.M3e; with `atlasPages: 'eager'` nothing changes. `atlasResidency` is what the debug
+  // tools and the event wiring see — the eager contract, via {@link asAtlasResidency} in lazy
+  // mode; the frame loop's hold reads the lazy residency's `loading` directly.
   const lazyResidency: LazyAtlasResidency | null = lazyPages
     ? createLazyAtlasResidency(readyAtlas.pages, residencyPageNeeds, {
         ...residencyOptions,
         lazy: {
           atlas: readyAtlas,
           loadImage: (page) =>
-            loadImageTimed(pageUrls[page], createImage, atlasClock).then((loaded) => loaded.image),
+            loadImageTimed(pageUrls[page], createImage, atlasClock)
+              .then((loaded) => loaded.image)
+              .catch((error: unknown) => {
+                // Tag the page URL onto the rejection (the loader error is fresh per load) so
+                // the boot error screen below can print the same `${url}: ${describe(error)}`
+                // line the eager page load prints (the R1-05 W3-6 format, R3-04.M3e).
+                const tagged = error instanceof Error ? error : new Error(String(error));
+                (tagged as Error & { pageUrl?: string }).pageUrl = pageUrls[page];
+                throw tagged;
+              }),
         },
       })
     : null;
@@ -1479,6 +1527,32 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     lazyResidency === null
       ? createAtlasResidency(readyAtlas.pages, residencyPageNeeds, residencyOptions)
       : asAtlasResidency(lazyResidency);
+  /**
+   * Attaches every atlas page the lazy boot has no image for (plan R3-04.M3e, the preview-Words
+   * case): fetch and {@link Atlas.loadPage} only — **no upload**, the residency's mask, marks and
+   * counters untouched. A page the shown preview actually draws then uploads itself on its first
+   * draw (Pixi's own path, the eager policy's behaviour); a page it never draws stays a decoded
+   * image costing CPU only, and the next real `prepare` detaches every unneeded page, these
+   * included. A page whose fetch fails simply stays detached and draws nothing — a menu must not
+   * hard-fail the shell. Cold: once per preview World.
+   */
+  const attachUnloadedPageImages = async (): Promise<void> => {
+    const attaching: Promise<void>[] = [];
+    for (let p = 0; p < readyAtlas.pages.length; p++) {
+      if (readyAtlas.isPageLoaded(p)) continue;
+      const page = p;
+      attaching.push(
+        loadImageTimed(pageUrls[page], createImage, atlasClock)
+          .then((loaded) => {
+            readyAtlas.loadPage(page, loaded.image);
+          })
+          .catch(() => {
+            // The page stays detached; its sprites draw nothing until a real prepare retries it.
+          }),
+      );
+    }
+    await Promise.all(attaching);
+  };
   // The boot stage's pages go up now, behind the loading screen and before the warm-up frame draws
   // them (the scene flow and free flight play `game.world`'s stage; the other dev scenes draw from
   // any page, so they keep every page). The lazy boot **awaits** the load — fetch, decode, attach,
@@ -1489,7 +1563,19 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     try {
       await lazyResidency.prepare(bootStage);
     } catch (error) {
-      throw fail('ATLAS PAGE FAILED TO LOAD', [describe(error)], [], error);
+      // Same error screens as the eager page load (R1-05): a page whose image disagrees with
+      // the manifest is the build mismatch `createAtlas` names eagerly, and a page that will
+      // not load names its URL (tagged onto the rejection by the `loadImage` above — the
+      // late attach of a `prepare(-1)` sees only one rejection, and it is not always the
+      // page the URL belongs to).
+      const stale = error instanceof RangeError && /stale atlas/.test(error.message);
+      const pageUrl = stale ? undefined : (error as { pageUrl?: string }).pageUrl;
+      throw fail(
+        stale ? 'ATLAS DOES NOT MATCH ITS MANIFEST' : 'ATLAS PAGE FAILED TO LOAD',
+        [pageUrl === undefined ? describe(error) : `${pageUrl}: ${describe(error)}`],
+        [],
+        error,
+      );
     }
   } else {
     atlasResidency.prepare(bootStage);
@@ -1757,6 +1843,15 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         // With the lazy policy (R3-04.M3c) this fires the load and the hold above redraws the
         // last frame until the pages are in.
         prepareShownWorld(atlasResidency, content.db, game, frame.world);
+        if (lazyResidency !== null && previewWorldOfView(game, frame.world) !== null) {
+          // A scene-owned preview World (the weapon select's live preview, R3-04.M3e): outside
+          // {@link worldOfView}'s placement by design — under the lazy policy a page it draws
+          // that was never attached would draw nothing, so attach every unloaded page's image
+          // and let the first draw upload it, exactly the eager policy's behaviour. The next
+          // real prepare (the game start's) unloads the preview's pages again, residency-unknown
+          // or not — its detach drops every page the new stage does not need.
+          void attachUnloadedPageImages();
+        }
       }
       markScene();
       worldShown = frame.world !== null;

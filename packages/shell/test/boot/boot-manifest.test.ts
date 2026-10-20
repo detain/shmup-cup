@@ -283,7 +283,7 @@ describe('shell/boot — the fetched atlas manifest (R1-05)', () => {
     let ms = 1000;
     win.performance = { now: () => (ms += 7) };
     let bootClock = 0;
-    const shell = await boot({ now: () => (bootClock += 50) }).promise;
+    const shell = await boot({ atlasPages: 'eager', now: () => (bootClock += 50) }).promise;
     // The boot clock saw exactly its two readings (start, ready) — the atlas used its own.
     expect(shell.bootTiming).toEqual({ startMs: 50, readyMs: 100, bootMs: 50 });
     expect(shell.atlasTiming.manifestMs).toBe(7);
@@ -394,7 +394,10 @@ describe('shell/boot — the fetched atlas manifest (R1-05)', () => {
   });
 
   it('a page the fetched manifest names that fails to load is ATLAS PAGE FAILED TO LOAD', async () => {
-    const { error } = await bootFails({ assets: { ...URL_ASSETS, atlasDir: 'bad/atlas' } });
+    const { error } = await bootFails({
+      atlasPages: 'eager',
+      assets: { ...URL_ASSETS, atlasDir: 'bad/atlas' },
+    });
     expect(error.message).toBe(
       'ATLAS PAGE FAILED TO LOAD\nbad/atlas/main.png: AssetLoadError: could not load bad/atlas/main.png',
     );
@@ -403,6 +406,7 @@ describe('shell/boot — the fetched atlas manifest (R1-05)', () => {
 
   it('pages of another size than the fetched manifest says are ATLAS DOES NOT MATCH ITS MANIFEST', async () => {
     const { error } = await bootFails({
+      atlasPages: 'eager',
       createImage: () => new FakeImage([16, 16]) as unknown as LoadableImage & HTMLImageElement,
     });
     expect(error.message).toMatch(/^ATLAS DOES NOT MATCH ITS MANIFEST\n/);

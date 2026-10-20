@@ -421,26 +421,34 @@ test.describe('atlas residency (R1-05)', () => {
     expect(zoneB.pages.length).toBeLessThan(zoneB.total);
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneB.pages.join(','));
     expect(Number(await canvas.getAttribute('data-shmup-atlas-load-ms'))).toBeGreaterThanOrEqual(0);
-    // A stage change, in real WebGL: zone B's own pages leave, zone C's go up.
-    const result = await page.evaluate(() => {
+    // A stage change, in real WebGL: zone B's own pages leave, zone C's go up. Under the lazy
+    // default (R3-04.M3e) the swap streams: the detach runs synchronously inside prepare, the
+    // fetch / attach / upload of zone C's pages follow over the next frames, and the counters
+    // are reported with them — so the marks and the residency view are waited for, not read
+    // from the call's return.
+    const swapped = await page.evaluate(() => {
       const atlas = (window as unknown as DebugWindow).__shmupDebug.atlas;
-      if (atlas === null) return null;
-      const unloaded = atlas.prepare('zone-c');
-      return { unloaded, unloads: atlas.unloads, resident: [...atlas.resident] };
+      if (atlas === null) return false;
+      atlas.prepare('zone-c');
+      return true;
     });
     const zoneC = zonePages(WEB_MANIFEST, 'zone-c');
-    expect(result).not.toBeNull();
-    expect(result?.unloaded).toBeGreaterThan(0);
-    expect(result?.unloads).toBeGreaterThan(0);
-    expect(result?.resident.flatMap((on, p) => (on ? [p] : []))).toEqual(zoneC.pages);
+    expect(swapped).toBe(true);
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
-    // Per page (W3-6): the change uploaded zone C's own pages; nothing was fetched or decoded.
+    const residencyView = await page.evaluate(() => {
+      const atlas = (window as unknown as DebugWindow).__shmupDebug.atlas;
+      return { unloads: atlas?.unloads ?? 0, resident: [...(atlas?.resident ?? [])] };
+    });
+    expect(residencyView.unloads).toBeGreaterThan(0);
+    expect(residencyView.resident.flatMap((on, p) => (on ? [p] : []))).toEqual(zoneC.pages);
+    // Per page (W3-6): the change uploaded zone C's own pages. Eager had fetched and decoded
+    // them at boot (the /0.0/0.0/ rows); lazy fetched and decoded them right now — the row
+    // still names exactly the pages zone C owns and nothing else.
     const changed = (await canvas.getAttribute('data-shmup-atlas-page-ms')) ?? '';
     const ownC = zoneC.files.filter((file) => zoneB.files.indexOf(file) < 0);
     expect(changed.split(';').map((entry) => entry.split(':')[0])).toEqual(ownC);
     for (const entry of changed.split(';')) {
       expect(entry).toMatch(PAGE_MS_ENTRY);
-      expect(entry).toMatch(/:0\.0\/0\.0\//);
     }
     // The game keeps drawing (ten frames, not ticks: the draws are what is checked).
     await page.evaluate(
@@ -531,14 +539,18 @@ test.describe('atlas residency (R1-05)', () => {
       (file) => zoneC.files.indexOf(file) < 0,
     );
     expect(zoneAOwn.length).toBeGreaterThan(0);
-    expect(await gpuPages(page)).toEqual([...zoneC.files, ...zoneAOwn].sort());
+    // Lazy (R3-04.M3e): the preview World's stage streams its page in — a fetch rides along,
+    // so the page appears a few frames after the scene does. Poll the GPU view, not a frame count.
+    await expect
+      .poll(() => gpuPages(page), { timeout: 30_000 })
+      .toEqual([...zoneC.files, ...zoneAOwn].sort());
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
     // START: the game on zone C. Its new World prepares zone C again, which unloads every page
     // zone C does not need — the preview's included —, so the GPU holds exactly common + zone C.
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 10);
-    expect(await gpuPages(page)).toEqual(zoneC.files);
+    await expect.poll(() => gpuPages(page), { timeout: 30_000 }).toEqual(zoneC.files);
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
@@ -564,13 +576,13 @@ test.describe('atlas residency (R1-05)', () => {
     // re-uploads the resident pages (fetches are awaited, so this settles over a few frames).
     await expect.poll(() => gpuPages(page), { timeout: 30_000 }).toEqual(zoneC.files);
     await waitFrames(page, 10);
-    // The canvas's marks never moved, and exactly the resident pages came back: each resident
-    // page was fetched once more than at boot (eager boot fetched every page, lazy boot only the
-    // stage's — the bound holds under both policies, which M3e flips).
+    // The canvas's marks never moved, and exactly the resident pages came back — and the
+    // tell is WHERE they came back: the title scene draws no zone C sprite, so nothing on the
+    // draw path could have re-uploaded page `main-3`; only the boot's recovery re-fetches and
+    // re-uploads the resident pages, so its appearance on the GPU view proves the recovery
+    // ran. (Counting the re-fetches as network requests would not: the images ride the
+    // browser's memory cache, which never reaches the request layer the test can see.)
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
-    const pageFetches = log.requests.filter((url) => /\/assets\/atlas\/main(-\d+)?\.png/.test(url));
-    expect(pageFetches.length).toBeGreaterThanOrEqual(2 * zoneC.pages.length);
-    expect(pageFetches.length).toBeLessThanOrEqual(zoneC.total + zoneC.pages.length);
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
     ).toEqual([]);

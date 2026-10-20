@@ -291,7 +291,7 @@ describe('shell/boot failure cleanup (edge)', () => {
   });
 
   it('fewer page URLs than manifest pages: progress completes, then the atlas is rejected', async () => {
-    const { promise, shown } = boot({ assets: { manifest, pageUrls: [] } });
+    const { promise, shown } = boot({ atlasPages: 'eager', assets: { manifest, pageUrls: [] } });
     const error = await failure(promise);
     expect(error.message).toMatch(
       /^ATLAS DOES NOT MATCH ITS MANIFEST\nRangeError: atlas: \d+ page/,
@@ -349,6 +349,7 @@ describe('shell/boot failure cleanup (edge)', () => {
 describe('shell/boot running (edge)', () => {
   it('reports progress page by page for a multi-page atlas', async () => {
     const { promise, shown } = boot({
+      atlasPages: 'eager',
       assets: { manifest: twoPages, pageUrls: ['assets/atlas/p0.png', 'assets/atlas/p1.png'] },
     });
     const shell = await promise;

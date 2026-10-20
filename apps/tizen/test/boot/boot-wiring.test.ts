@@ -644,8 +644,14 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.game.scenes?.stack.top?.id).toBe('shipSelect');
     tap(13); // KESTREL in the ship select (M2-05)
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
+    // The preview World of the weapon select streams its page under the lazy default
+    // (R3-04.M3e) — settle it, or the held frames would swallow the START press.
+    await flush();
     tap(13); // START in the weapon select (M2-03)
     expect(app.game.scenes?.stack.top?.id).toBe('game');
+    // The lazy default (R3-04.M3e): settle the game World's page prepare before driving the
+    // game — held frames carry no input, and Back would not reach the pause scene.
+    await flush();
     tap(10009);
     expect(app.game.scenes?.stack.top?.id).toBe('pause');
     tap(10009);

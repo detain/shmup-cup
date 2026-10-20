@@ -445,9 +445,15 @@ describe('web/boot bootWebApp wiring', () => {
     tap('Enter', 13); // KESTREL in the ship select (M2-05; buffered by its lock)
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
+    // The preview World of the weapon select streams its page under the lazy default
+    // (R3-04.M3e) — settle it, or the held frames would swallow the START press.
+    await flush();
     tap('Enter', 13); // START in the weapon select (M2-03; buffered by its lock too)
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('game');
+    // The lazy default (R3-04.M3e): let the game World's page prepare settle — the next
+    // frame would otherwise hold (no tick, no input context switch).
+    await flush();
     frame();
     expect(app.input.context).toBe('game');
     tap('Escape', 27);
@@ -628,6 +634,7 @@ describe('web/boot bootWebApp wiring', () => {
     enter(); // KESTREL in the ship select (M2-05)
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
+    await flush(); // the preview page of R3-04.M3e, as above
     enter(); // START in the weapon select (M2-03)
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('game');
