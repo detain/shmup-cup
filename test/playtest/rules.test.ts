@@ -192,17 +192,12 @@ describe('playtest rules: createRuleWatch', () => {
 
   it('reports a bullet over 2 px/tick, lanes too close and a closed playfield', () => {
     const fast = world();
-    spawnBullet(
-      fast,
-      200,
-      100,
-      ANGLE_UNITS / 2,
-      MAX_AIMED_BULLET_SPEED + 0.5,
-      BulletKind.RoundPink,
-    );
+    const fastSpeed = MAX_AIMED_BULLET_SPEED + 0.5;
+    spawnBullet(fast, 200, 100, ANGLE_UNITS / 2, fastSpeed, BulletKind.RoundPink);
     const close = world();
     lane(close, 100);
-    lane(close, 115); // 15 rows apart: 15 − 9 = 6 open rows
+    lane(close, 115); // 15 rows apart: the open rows are 15 − 2·(3 + hurt)
+    const gapRows = 15 - 2 * (3 + close.ship.hurtRadius);
     const closed = world();
     for (let y = 10; y < PLAYFIELD_H; y += 30) lane(closed, y, 32);
     const watch = createRuleWatch();
@@ -210,11 +205,15 @@ describe('playtest rules: createRuleWatch', () => {
     watch.observe(close);
     watch.observe(closed);
     expect(watch.violations).toHaveLength(3);
-    expect(watch.violations[0]).toMatch(/^tick 0: bullet at 2\.500$/);
-    expect(watch.violations[1]).toMatch(/^tick 0: lane gap 6\.0$/);
+    expect(watch.violations[0]).toMatch(
+      new RegExp(`^tick 0: bullet at ${fastSpeed.toFixed(3).replace('.', '\\.')}$`),
+    );
+    expect(watch.violations[1]).toMatch(
+      new RegExp(`^tick 0: lane gap ${gapRows.toFixed(1).replace('.', '\\.')}$`),
+    );
     expect(watch.violations[2]).toMatch(/widest open band/);
-    expect(watch.maxBulletSpeed).toBe(2.5);
-    expect(watch.narrowestGap).toBeCloseTo(6, 9);
+    expect(watch.maxBulletSpeed).toBe(fastSpeed);
+    expect(watch.narrowestGap).toBeCloseTo(gapRows, 9);
   });
 
   it('allows a bullet at exactly 2 px/tick and lanes exactly 16 px apart', () => {

@@ -13,7 +13,7 @@
  *
  * — then moves up or down towards the lowest-danger lane, preferring near lanes, the lane of a
  * capsule ahead, the lane of the boss's core during a boss fight and the lane of the next enemy
- * ahead (so its shots hit). Once in its lane it steps left / right back to x ≈ 64.
+ * ahead (so its shots hit). Once in its lane it steps left / right back to x ≈ {@link BOT_X}.
  *
  * **The remote's limits (M3-02b).** Since the 2026-09-15 input probe the bot's wishes pass through
  * the `remote-strict` model by default: the remote delivers **one key at a time**, so a PowerUp
@@ -35,6 +35,7 @@ import {
   Action,
   BossState,
   BulletFlag,
+  ENTER_END_X,
   EnemyFlag,
   EnemyState,
   ItemFlag,
@@ -42,6 +43,7 @@ import {
   MeterSlot,
   PLAYFIELD_H,
   TerrainType,
+  WORLD_SCALE,
   terrainAt,
   type World,
 } from '@shmup/core';
@@ -53,10 +55,10 @@ import {
 } from './remote-strict.js';
 
 /** Playfield x the bot keeps its ship at (where the fly-in ends). */
-export const BOT_X = 64;
+export const BOT_X = ENTER_END_X;
 
 /** Height of one lane of the danger scan, in pixels. */
-export const LANE_HEIGHT = 16;
+export const LANE_HEIGHT = 16 * WORLD_SCALE;
 
 /** Lanes of the scan: centres at `LANE_HEIGHT / 2 + k · LANE_HEIGHT`, `k = 0 … LANES − 1`. */
 export const LANES = Math.floor(PLAYFIELD_H / LANE_HEIGHT);
@@ -65,7 +67,7 @@ export const LANES = Math.floor(PLAYFIELD_H / LANE_HEIGHT);
 export const BULLET_HORIZON = 40;
 
 /** Pixels ahead of the ship the terrain scan looks. */
-export const TERRAIN_AHEAD = 56;
+export const TERRAIN_AHEAD = 56 * WORLD_SCALE;
 
 /** Highest speed level the bot equips (a faster 4-way ship overshoots its lanes). */
 export const BOT_MAX_SPEED_LEVEL = 2;
@@ -230,7 +232,7 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
     const ey = e.y - camera.y;
     for (let s = 0; s < SLOTS; s++) {
       const t = s * SLOT_TICKS;
-      if (Math.abs(ex + vx * t - sx) > e.hw + 8) continue;
+      if (Math.abs(ex + vx * t - sx) > e.hw + 8 * WORLD_SCALE) continue;
       mark(scan, ey + vy * t, e.hh + hurt + 5, s);
     }
   }
@@ -240,7 +242,7 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
     for (let i = 0; i < boss.partCount; i++) {
       const part = boss.parts[i];
       if (!part.active || part.destroyed || !part.hurtbox) continue;
-      if (Math.abs(part.x - camera.x - sx) > part.hw + 24) continue;
+      if (Math.abs(part.x - camera.x - sx) > part.hw + 24 * WORLD_SCALE) continue;
       for (let s = 0; s < SLOTS; s++) mark(scan, part.y - camera.y, part.hh + hurt + 6, s);
     }
   }
@@ -253,7 +255,7 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
     if (phase === LaserPhase.Fade) continue;
     const x0 = Math.min(lf.x[i], lf.ex[i]) - camera.x;
     const x1 = Math.max(lf.x[i], lf.ex[i]) - camera.x;
-    if (sx < x0 - 8 || sx > x1 + 8) continue;
+    if (sx < x0 - 8 * WORLD_SCALE || sx > x1 + 8 * WORLD_SCALE) continue;
     const dx = lf.ex[i] - lf.x[i];
     const at = Math.abs(dx) < 1e-6 ? 0 : (ship.x - lf.x[i]) / dx;
     const y = lf.y[i] + (lf.ey[i] - lf.y[i]) * (at < 0 ? 0 : at > 1 ? 1 : at) - camera.y;
@@ -283,8 +285,8 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
         for (let dy = -box.hh - 4; dy <= box.hh + 4; dy += 3.5) {
           if (terrainAt(map, ship.x + dx, y + dy) !== TerrainType.Empty) {
             blocked = true;
-            scan.terrain[k] = dx <= 16 ? TERRAIN_DANGER : TERRAIN_DANGER / 2;
-            if (dx <= 8) scan.wall[k] = 1;
+            scan.terrain[k] = dx <= 16 * WORLD_SCALE ? TERRAIN_DANGER : TERRAIN_DANGER / 2;
+            if (dx <= 8 * WORLD_SCALE) scan.wall[k] = 1;
             break;
           }
         }
@@ -398,7 +400,7 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       const sy = ship.y - camera.y;
       scanLanes(world, scan, player);
       const current = laneOf(sy);
-      const speed = world.ship.speeds[ship.speedLevel] ?? 1.5;
+      const speed = world.ship.speeds[ship.speedLevel] ?? 1.5 * WORLD_SCALE;
       // PowerUp: one-tick presses (an edge), never two ticks in a row. Under the remote model the
       // press costs a whole tap without a direction (M3-02b), so the bot only starts one while its
       // lane stays clear for as long as the tap lasts — what a careful remote player does.
@@ -447,7 +449,7 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
           if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
           if (e.anchor !== 0) continue;
           const dx = e.x - camera.x - sx;
-          if (dx < 24 || dx > 280 || dx >= nearest) continue;
+          if (dx < 24 * WORLD_SCALE || dx > 280 * WORLD_SCALE || dx >= nearest) continue;
           nearest = dx;
           lane = laneOf(e.y - camera.y);
         }

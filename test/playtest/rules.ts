@@ -19,16 +19,16 @@
  *
  * @module
  */
-import { BulletFlag, LaserPhase, PLAYFIELD_H, type World } from '@shmup/core';
+import { BulletFlag, LaserPhase, PLAYFIELD_H, WORLD_SCALE, type World } from '@shmup/core';
 
 /** Fastest enemy bullet a 4-way player can be asked to side-step (px/tick, Normal). */
-export const MAX_AIMED_BULLET_SPEED = 2.0;
+export const MAX_AIMED_BULLET_SPEED = 2.0 * WORLD_SCALE;
 
 /** Narrowest open gap between two simultaneous laser lanes (px). */
-export const MIN_LANE_GAP = 16;
+export const MIN_LANE_GAP = 16 * WORLD_SCALE;
 
 /** Half width of the ship's column that {@link columnGap} checks (px either side of the ship). */
-export const COLUMN_HALF_WIDTH = 8;
+export const COLUMN_HALF_WIDTH = 8 * WORLD_SCALE;
 
 /**
  * The fastest live enemy bullet.

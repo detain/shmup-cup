@@ -12,6 +12,7 @@
  */
 import { BossState } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { BOT_X, fourWayBot } from './four-way-bot.js';
 import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
@@ -38,7 +39,7 @@ describe('playtest: zone D with the 4-way bot (M2-12)', () => {
     expect(run.seconds).toBeLessThanOrEqual(6 * 60);
     // The boss went through its three phases; the camera dived into the caves on the way.
     expect([...phases].sort()).toEqual([0, 1, 2]);
-    expect(deepest).toBe(200);
+    expect(deepest).toBe(v1rel(200));
     // A remote player: never two directions at once, parked at x ≈ 64.
     expect(run.diagonalTicks).toBe(0);
     expect(run.remoteViolations, run.remoteViolation).toBe(0);

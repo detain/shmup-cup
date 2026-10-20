@@ -16,6 +16,7 @@ import {
   Action,
   ANGLE_UNITS,
   BulletKind,
+  ENTER_END_X,
   MeterSlot,
   PLAYFIELD_H,
   createInputSnapshot,
@@ -28,6 +29,7 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel, v1x } from '../../packages/core/test/helpers/v1-port.js';
 import {
   BOT_MAX_SPEED_LEVEL,
   BOT_X,
@@ -98,17 +100,19 @@ function directions(mask: number): number {
 }
 
 describe('playtest four-way bot: lanes', () => {
-  it('splits the playfield into 16-px lanes, clamped at both ends', () => {
-    expect(LANE_HEIGHT).toBe(16);
-    // As many whole lanes as the playfield holds (12 of 200 rows; 21 of 336 at 640×360).
+  it('pins the bot to the fly-in end and splits the playfield into lanes, clamped at both ends', () => {
+    // The bot parks where the fly-in ends: the same world value core's player module uses.
+    expect(BOT_X).toBe(ENTER_END_X);
+    expect(LANE_HEIGHT).toBe(v1rel(16));
+    // As many whole lanes as the playfield holds (21 of 336 rows at K = 1, 14 under the kit).
     expect(LANES).toBe(Math.floor(PLAYFIELD_H / LANE_HEIGHT));
     expect(SLOTS * SLOT_TICKS).toBe(BULLET_HORIZON);
-    expect(laneCentre(0)).toBe(8);
-    expect(laneCentre(LANES - 1)).toBe((LANES - 1) * LANE_HEIGHT + 8);
+    expect(laneCentre(0)).toBe(LANE_HEIGHT / 2);
+    expect(laneCentre(LANES - 1)).toBe((LANES - 1) * LANE_HEIGHT + LANE_HEIGHT / 2);
     expect(laneOf(-20)).toBe(0);
     expect(laneOf(0)).toBe(0);
-    expect(laneOf(15.9)).toBe(0);
-    expect(laneOf(16)).toBe(1);
+    expect(laneOf(LANE_HEIGHT - 0.1)).toBe(0);
+    expect(laneOf(LANE_HEIGHT)).toBe(1);
     expect(laneOf(PLAYFIELD_H - 1)).toBe(LANES - 1);
     expect(laneOf(1e9)).toBe(LANES - 1);
     for (let k = 0; k < LANES; k++) expect(laneOf(laneCentre(k))).toBe(k);
@@ -166,7 +170,7 @@ describe('playtest four-way bot: scanLanes', () => {
     "finds rock in zone A's corridor lanes (floor and ceiling), none in its open middle",
     () => {
       const w = parked('zone-a');
-      w.stage?.jumpTo(4500);
+      w.stage?.jumpTo(v1x(4500));
       place(w, BOT_X, laneCentre(6));
       const scan = createLaneScan();
       scanLanes(w, scan);

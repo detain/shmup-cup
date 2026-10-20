@@ -10,6 +10,7 @@
 import {
   EnemyFlag,
   EnemyState,
+  WORLD_SCALE,
   createGame,
   createHeadlessPlatform,
   spawnPlayer,
@@ -18,7 +19,7 @@ import {
 import { shippedContent } from './harness.js';
 
 /** The recovery window after a checkpoint (px). */
-export const RECOVERY_WINDOW = 900;
+export const RECOVERY_WINDOW = 900 * WORLD_SCALE;
 
 /** Capsule sources a restarted player must meet within it. */
 export const MIN_RECOVERY_CAPSULES = 3;

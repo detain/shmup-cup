@@ -12,6 +12,7 @@
  */
 import { BossState, EnemyState } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { v1y } from '../../packages/core/test/helpers/v1-port.js';
 import { BOT_X, fourWayBot } from './four-way-bot.js';
 import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
@@ -39,7 +40,7 @@ describe('playtest: zone I with the 4-way bot (M2-14)', () => {
             const id = enemies[e.specIndex].id;
             // A mine that armed: it stopped and flashes for its fuse.
             if (id === 'depth-mine' && e.flashTicks > 8) armed++;
-            if (id === 'trench-eel' && e.y < world.camera.y + 170) eels++;
+            if (id === 'trench-eel' && e.y < world.camera.y + v1y(170)) eels++;
           }
         }
       },
