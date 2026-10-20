@@ -59,6 +59,7 @@ import { atan2B, quantizeAngle } from '../../src/math/index.js';
 import { PlayerHitCause } from '../../src/player/index.js';
 import { SpriteFlag } from '../../src/presentation/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -75,14 +76,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8-px tiles, 28 at 12-px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top, four tile rows above the map's bottom edge (304 now, 288 ported). */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
 
 /**
- * The KESTREL, the shipped tileset and a static stage `t` with a flat 32-px floor (one checkpoint,
+ * The KESTREL, the shipped tileset and a static stage `t` with a flat four-row floor (one checkpoint,
  * at 0).
  *
  * @param extraSprites - Engine sprites to intern.
@@ -106,7 +110,7 @@ function db(extraSprites: readonly string[] = ENGINE_SPRITES): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             generator: {
@@ -965,7 +969,11 @@ describe('core/bullets edge: lasers', () => {
       LASER_WIDTH,
     ]);
     expect([f.telegraph[0], f.grow[0], f.active[0], f.fade[0], f.width[0]]).toEqual([
-      40, 8, 60, 8, 6,
+      40,
+      8,
+      60,
+      8,
+      v1rel(6),
     ]);
   });
 

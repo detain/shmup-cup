@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyFlag, type Enemy } from '../../src/enemies/index.js';
@@ -42,6 +42,7 @@ import {
   weaponsOfSlot,
 } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -70,7 +71,7 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
     id,
     hp: 1000,
     score: 100,
-    hurtbox: { hw: 4, hh: 4 },
+    hurtbox: { hw: v1rel(4), hh: v1rel(4) },
     script: 'test.idle',
     sprite: 'enemies/drifter',
     drop: null,
@@ -78,8 +79,17 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** The fixture stage is one playfield of these tiles tall. */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** The flat floor's surface: four tile rows high, at each scale. */
+const SURF = PLAYFIELD_H - 4 * TILE;
+
 /**
- * A stage with a flat floor 32 px high (its surface at y 168).
+ * A stage one playfield tall with a flat four-row floor (its surface at `SURF`).
  *
  * @param id - Stage id.
  * @param speed - Camera speed (px/tick).
@@ -99,12 +109,12 @@ function stage(id: string, speed: number): ContentFile {
       checkpoints: [{ x: 0 }],
       parallax: [],
       tilemap: {
-        tileSize: 8,
+        tileSize: TILE,
         tileset: 'terrain-a',
-        rowsTall: 25,
+        rowsTall: ROWS,
         generator: {
           type: 'heightfield',
-          segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+          segments: [{ from: 0, to: 3384, floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 } }],
         },
       },
       events: [],
@@ -576,14 +586,14 @@ describe('core/weapons arsenal edges (M2-03): spawn geometry', () => {
     const b = world({ ...MANUAL, weaponPreset: 'type-b' });
     const [sx, sy] = [b.players[0].x, b.players[0].y];
     const tail = shotAt(b, b.weapons.spawnShot(WeaponRole.Double, 0, sx, sy));
-    expect([tail.x, tail.y, tail.hw, tail.hh]).toEqual([sx - 6, sy, 4, 2]);
-    expect(tail.vx).toBe(-7);
+    expect([tail.x, tail.y, tail.hw, tail.hh]).toEqual([sx - v1rel(6), sy, v1rel(4), v1rel(2)]);
+    expect(tail.vx).toBe(-v1speed(7));
     expect(Math.abs(tail.vy)).toBeLessThan(1e-9);
     expect(tail.sprite).toBe(spriteId('shots/tail'));
     const c = world({ ...MANUAL, weaponPreset: 'type-c' });
     const up = shotAt(c, c.weapons.spawnShot(WeaponRole.Double, 0, sx, sy));
-    expect([up.x, up.y, up.hw, up.hh]).toEqual([sx, sy - 6, 2, 4]);
-    expect(up.vy).toBe(-7);
+    expect([up.x, up.y, up.hw, up.hh]).toEqual([sx, sy - v1rel(6), v1rel(2), v1rel(4)]);
+    expect(up.vy).toBe(-v1speed(7));
     expect(Math.abs(up.vx)).toBeLessThan(1e-9);
     expect(up.sprite).toBe(spriteId('shots/vertical'));
   });
@@ -596,9 +606,17 @@ describe('core/weapons arsenal edges (M2-03): spawn geometry', () => {
     expect(pair).toHaveLength(2);
     const forward = pair.find((s) => s.vx > 0)!;
     const turned = pair.find((s) => s.vy < 0)!;
-    expect([forward.hw, forward.hh, forward.sprite]).toEqual([4, 2, spriteId('shots/basic')]);
-    expect([turned.hw, turned.hh, turned.sprite]).toEqual([2, 4, spriteId('shots/vertical')]);
-    expect(forward.vx).toBe(7);
+    expect([forward.hw, forward.hh, forward.sprite]).toEqual([
+      v1rel(4),
+      v1rel(2),
+      spriteId('shots/basic'),
+    ]);
+    expect([turned.hw, turned.hh, turned.sprite]).toEqual([
+      v1rel(2),
+      v1rel(4),
+      spriteId('shots/vertical'),
+    ]);
+    expect(forward.vx).toBe(v1speed(7));
   });
 
   it('2-Way, Torpedo, Spread Bomb, Ripple, Twin and Cyclone launch as tuned', () => {
@@ -607,13 +625,24 @@ describe('core/weapons arsenal edges (M2-03): spawn geometry', () => {
     const c = world({ ...MANUAL, weaponPreset: 'type-c' });
     const climb = shotAt(c, c.weapons.spawnShot(WeaponRole.Missile, 0, sx, sy));
     expect(climb.frame).toBe(0);
-    expect(climb.vx).toBeCloseTo(3 * SQRT_HALF, 3);
-    expect(climb.vy).toBeCloseTo(-3 * SQRT_HALF, 3);
-    expect([climb.x, climb.y, climb.hw, climb.hh, climb.table]).toEqual([sx + 2, sy, 3, 3, 0]);
+    expect(climb.vx).toBeCloseTo(v1speed(3) * SQRT_HALF, 3);
+    expect(climb.vy).toBeCloseTo(-v1speed(3) * SQRT_HALF, 3);
+    expect([climb.x, climb.y, climb.hw, climb.hh, climb.table]).toEqual([
+      sx + v1rel(2),
+      sy,
+      v1rel(3),
+      v1rel(3),
+      0,
+    ]);
     // The Cyclone: a thicker piercing beam with a hit-cooldown table.
     const cyclone = shotAt(c, c.weapons.spawnShot(WeaponRole.Laser, 0, sx, sy));
-    expect([cyclone.x, cyclone.y, cyclone.hh, cyclone.length]).toEqual([sx + 8, sy, 4, 0]);
-    expect([cyclone.vx, cyclone.vy]).toEqual([10, 0]);
+    expect([cyclone.x, cyclone.y, cyclone.hh, cyclone.length]).toEqual([
+      sx + v1rel(8),
+      sy,
+      v1rel(4),
+      0,
+    ]);
+    expect([cyclone.vx, cyclone.vy]).toEqual([v1speed(10), 0]);
     expect(cyclone.flags).toBe(ShotFlag.Pierce);
     expect(cyclone.table).toBeGreaterThan(0);
     // Torpedo: falls 96 units (≈34°) below forward at 4 px/tick.
@@ -621,41 +650,47 @@ describe('core/weapons arsenal edges (M2-03): spawn geometry', () => {
     const torpedo = shotAt(d, d.weapons.spawnShot(WeaponRole.Missile, 0, sx, sy));
     expect([torpedo.x, torpedo.y, torpedo.hw, torpedo.hh, torpedo.flags]).toEqual([
       sx,
-      sy + 4,
-      5,
-      1.5,
+      sy + v1rel(4),
+      v1rel(5),
+      v1rel(1.5),
       0,
     ]);
-    expect(Math.hypot(torpedo.vx, torpedo.vy)).toBeCloseTo(4, 3);
+    expect(Math.hypot(torpedo.vx, torpedo.vy)).toBeCloseTo(v1speed(4), 3);
     expect(torpedo.vy).toBeGreaterThan(0);
     expect(torpedo.vx).toBeGreaterThan(torpedo.vy);
     // Twin: spawnShot fires the upper beam of a pair, its lane kept in `vy`.
     const twin = shotAt(d, d.weapons.spawnShot(WeaponRole.Laser, 0, sx, sy));
     expect([twin.x, twin.y, twin.vx, twin.vy, twin.length, twin.hh]).toEqual([
-      sx + 8,
-      sy - 4,
-      12,
-      -4,
+      sx + v1rel(8),
+      sy - v1rel(4),
+      v1speed(12),
+      -v1rel(4),
       0,
-      1.5,
+      v1rel(1.5),
     ]);
     expect(twin.table).toBe(0);
     // Spread Bomb: 64 units below forward, not piercing until it bursts, its table reserved.
     const b = world({ ...MANUAL, weaponPreset: 'type-b' });
     const bomb = shotAt(b, b.weapons.spawnShot(WeaponRole.Missile, 0, sx, sy));
-    expect([bomb.x, bomb.y, bomb.hw, bomb.hh, bomb.flags]).toEqual([sx + 2, sy + 4, 3, 3, 0]);
-    expect(Math.hypot(bomb.vx, bomb.vy)).toBeCloseTo(2.5, 3);
+    expect([bomb.x, bomb.y, bomb.hw, bomb.hh, bomb.flags]).toEqual([
+      sx + v1rel(2),
+      sy + v1rel(4),
+      v1rel(3),
+      v1rel(3),
+      0,
+    ]);
+    expect(Math.hypot(bomb.vx, bomb.vy)).toBeCloseTo(v1speed(2.5), 3);
     expect(bomb.vy).toBeGreaterThan(0);
     expect(bomb.table).toBeGreaterThan(0);
     // Ripple: a 4-px ring (half width 2) flying straight at 6 px/tick.
     const ring = shotAt(b, b.weapons.spawnShot(WeaponRole.Laser, 0, sx, sy));
     expect([ring.x, ring.y, ring.vx, ring.vy, ring.hw, ring.hh, ring.table]).toEqual([
-      sx + 8,
+      sx + v1rel(8),
       sy,
-      6,
+      v1speed(6),
       0,
-      2,
-      4,
+      v1rel(2),
+      v1rel(4),
       0,
     ]);
   });
@@ -684,7 +719,7 @@ describe('core/weapons arsenal edges (M2-03): the Free Way heading', () => {
       const s = shotAt(w, w.weapons.spawnShot(WeaponRole.Double, 0, ship.x, ship.y));
       const sign = (v: number): number => Math.sign(Math.round(v * 1e6));
       expect([sign(s.vx), sign(s.vy)], String(held)).toEqual([sx, sy]);
-      expect(Math.hypot(s.vx, s.vy)).toBeCloseTo(7, 3);
+      expect(Math.hypot(s.vx, s.vy)).toBeCloseTo(v1speed(7), 3);
     }
     // Opposite directions cancel: no direction, the heading stays.
     commitPlayerInput(input.players[0], Action.Up | Action.Down);
@@ -913,7 +948,7 @@ describe('core/weapons arsenal edges (M2-03): the Ripple ring`s edges', () => {
     const w = world({ ...MANUAL, weaponPreset: 'type-b' }, 40, 100);
     const i = w.weapons.spawnShot(WeaponRole.Laser, 0, w.players[0].x, w.players[0].y);
     w.weapons.pool.fields.age[i] = 100;
-    return { w, cx: w.weapons.pool.fields.x[i] + 6, cy: w.weapons.pool.fields.y[i] };
+    return { w, cx: w.weapons.pool.fields.x[i] + v1rel(6), cy: w.weapons.pool.fields.y[i] };
   };
 
   /**
@@ -931,32 +966,32 @@ describe('core/weapons arsenal edges (M2-03): the Ripple ring`s edges', () => {
     const hit = e.hp < 1000;
     // A non-piercing ring dies on its hit.
     expect(ring.length, `${dx},${dy}`).toBe(hit ? 0 : 1);
-    if (!hit) expect([ring[0].hh, ring[0].hw]).toEqual([20, 10]);
+    if (!hit) expect([ring[0].hh, ring[0].hw]).toEqual([v1rel(20), v1rel(10)]);
     return hit;
   };
 
   it('misses a target wholly inside the inner edge, hits one reaching into the ring band', () => {
     expect(hits(0, 0)).toBe(false);
-    expect(hits(0, 9.8)).toBe(false); // farthest corner √(8² + 13.8²) < 16 = 20 − ring width
-    expect(hits(0, 10)).toBe(true); // √(8² + 14²) ≥ 16
-    expect(hits(0, -10)).toBe(true);
-    expect(hits(0, 14)).toBe(true);
+    expect(hits(0, v1rel(9.8))).toBe(false); // farthest corner √(8² + 13.8²) < 16 = 20 − ring width
+    expect(hits(0, v1rel(10))).toBe(true); // √(8² + 14²) ≥ 16
+    expect(hits(0, -v1rel(10))).toBe(true);
+    expect(hits(0, v1rel(14))).toBe(true);
   });
 
   it('is closed at the outer edge (vertically and horizontally, the width half the height)', () => {
-    expect(hits(0, 24)).toBe(true); // the box's top edge on the ring's bottom
-    expect(hits(0, 24.5)).toBe(false);
-    expect(hits(14, 0)).toBe(true); // half width 10 + the box's 4
-    expect(hits(-14, 0)).toBe(true);
-    expect(hits(14.5, 0)).toBe(false);
+    expect(hits(0, v1rel(24))).toBe(true); // the box's top edge on the ring's bottom
+    expect(hits(0, v1rel(24.5))).toBe(false);
+    expect(hits(v1rel(14), 0)).toBe(true); // half width 10 + the box's 4
+    expect(hits(-v1rel(14), 0)).toBe(true);
+    expect(hits(v1rel(14.5), 0)).toBe(false);
     // A corner beyond the ellipse while inside its bounding box: missed.
-    expect(hits(12, 20)).toBe(false);
+    expect(hits(v1rel(12), v1rel(20))).toBe(false);
   });
 
   it('hits only the lowest slot of two targets on the ring', () => {
     const { w, cx, cy } = grown();
-    const a = spawnAt(w, 'target', cx, cy - 18);
-    const b = spawnAt(w, 'target', cx, cy + 18);
+    const a = spawnAt(w, 'target', cx, cy - v1rel(18));
+    const b = spawnAt(w, 'target', cx, cy + v1rel(18));
     run(w, 1);
     const [low, high] = a.slot < b.slot ? [a, b] : [b, a];
     expect([low.hp, high.hp]).toEqual([999, 1000]);
@@ -1032,7 +1067,7 @@ describe('core/weapons arsenal edges (M2-03): caps below a pair', () => {
       run(w3, 1);
       const beams = shots(w3, ShotKind.Twin);
       most = Math.max(most, beams.length);
-      for (const beam of beams) expect(Math.abs(beam.y - w3.players[0].y)).toBe(4);
+      for (const beam of beams) expect(Math.abs(beam.y - w3.players[0].y)).toBe(v1rel(4));
     }
     expect(most).toBe(2);
     const w1 = world(
@@ -1061,11 +1096,11 @@ describe('core/weapons arsenal edges (M2-03): caps below a pair', () => {
 
 describe('core/weapons arsenal edges (M2-03): beams', () => {
   it('Twin Laser: a beam whose row is in the floor is blocked at once and vanishes', () => {
-    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-d' }, 40, 164);
+    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-d' }, 40, SURF - v1rel(4));
     const ship = w.players[0];
     w.weapons.loadouts[0].main = MainWeapon.Laser;
-    // One held tick of Shot fires one pair: the upper beam (row 160) flies, its lower twin (row
-    // 168) is in the floor (its surface).
+    // One held tick of Shot fires one pair: the upper beam (a twin offset above the ship) flies,
+    // its lower twin (the same offset below) lands on the floor's surface row.
     const input = createInputSnapshot();
     commitPlayerInput(input.players[0], Action.Shot);
     run(w, 1, input);
@@ -1073,32 +1108,34 @@ describe('core/weapons arsenal edges (M2-03): beams', () => {
     expect(pair).toHaveLength(2);
     const lower = pair.find((s) => s.vy > 0)!;
     const upper = pair.find((s) => s.vy < 0)!;
-    expect([lower.y, upper.y]).toEqual([ship.y + 4, ship.y - 4]);
+    expect([lower.y, upper.y]).toEqual([ship.y + v1rel(4), ship.y - v1rel(4)]);
     expect(lower.flags & ShotFlag.Blocked).toBe(ShotFlag.Blocked);
+    // One stub pixel: the block scan stops at the next whole pixel after the muzzle
+    // (scale-invariant, an artefact of the pixel scan, not a length).
     expect(lower.length).toBe(1);
     expect(upper.flags & ShotFlag.Blocked).toBe(0);
-    expect(upper.length).toBe(12);
+    expect(upper.length).toBe(v1speed(12));
     commitPlayerInput(input.players[0], 0);
     run(w, 1, input);
     const beams = shots(w, ShotKind.Twin);
     expect(beams).toHaveLength(1);
-    expect(beams[0].y).toBe(ship.y - 4);
-    expect(beams[0].length).toBe(16);
+    expect(beams[0].y).toBe(ship.y - v1rel(4));
+    expect(beams[0].length).toBe(v1rel(16));
   });
 
   it('Twin Laser: each beam draws ceil(length / 8) segments; Cyclone segments step the swirl frames', () => {
     const d = world({ ...MANUAL, weaponPreset: 'type-d' }, 40, 100);
     d.weapons.spawnShot(WeaponRole.Laser, 0, d.players[0].x, d.players[0].y);
-    run(d, 1); // length 12 → 2 segments
-    expect(shots(d, ShotKind.Twin)[0].length).toBe(12);
+    run(d, 1); // length 12 (at K=1) → 2 segments
+    expect(shots(d, ShotKind.Twin)[0].length).toBe(v1speed(12));
     expect(d.weapons.batch.count).toBe(2);
     const c = world({ ...MANUAL, weaponPreset: 'type-c' }, 40, 100);
     const i = c.weapons.spawnShot(WeaponRole.Laser, 0, c.players[0].x, c.players[0].y);
     run(c, 12);
     const beam = shotAt(c, i);
-    expect([beam.length, beam.age]).toEqual([80, 12]);
+    expect([beam.length, beam.age]).toEqual([v1rel(80), 12]);
     const batch = c.weapons.batch;
-    const segments = Math.ceil(80 / LASER_SEGMENT_LENGTH);
+    const segments = Math.ceil(v1rel(80) / LASER_SEGMENT_LENGTH);
     const frames: number[] = [];
     const xs: number[] = [];
     for (let s = 0; s < batch.count; s++) {
@@ -1110,7 +1147,7 @@ describe('core/weapons arsenal edges (M2-03): beams', () => {
     expect(frames).toEqual([0, 1, 2, 3, 0, 1, 2, 3, 0, 1]);
     expect(xs).toHaveLength(segments);
     expect(xs[0]).toBe(beam.x - LASER_SEGMENT_LENGTH);
-    expect(xs[segments - 1]).toBe(beam.x - 80);
+    expect(xs[segments - 1]).toBe(beam.x - v1rel(80));
     // The Type A beam has one frame: every segment frame 0.
     const a = world({ ...MANUAL, weaponPreset: 'type-a' }, 40, 100);
     a.weapons.spawnShot(WeaponRole.Laser, 0, a.players[0].x, a.players[0].y);

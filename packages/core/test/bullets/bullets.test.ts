@@ -22,6 +22,7 @@ import {
   CancelMode,
   LASER_SPRITE,
   LaserPhase,
+  MAX_BULLET_SPEED,
   MAX_ENEMY_BULLETS,
   MAX_ENEMY_LASERS,
   NO_TARGET_ANGLE,
@@ -63,14 +64,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8-px tiles, 28 at 12-px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top, four tile rows above the map's bottom edge (304 now, 288 ported). */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
 
 /**
- * Test content: the KESTREL, the shipped tileset and a static stage with a flat 32-px floor.
+ * Test content: the KESTREL, the shipped tileset and a static stage with a flat four-row floor.
  *
  * @param extraSprites - Engine sprites to intern (default {@link ENGINE_SPRITES}).
  * @returns The DB.
@@ -93,7 +97,7 @@ function db(extraSprites: readonly string[] = ENGINE_SPRITES): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             generator: {
@@ -102,7 +106,7 @@ function db(extraSprites: readonly string[] = ENGINE_SPRITES): ContentDb {
                 {
                   from: 0,
                   to: 3000 + PLAYFIELD_W,
-                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                  floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 },
                 },
               ],
             },
@@ -269,7 +273,12 @@ describe('core/bullets spawning', () => {
     expect(f.sprite[i]).toBe(DB.sprites.index.get('bullets/oval-red'));
     expect(f.draw[i]).toBe(0);
     expect(f.frame[i]).toBe(4); // 90° = frame 4 (22.5° steps)
-    expect([f.minSpeed[i], f.maxSpeed[i], f.accel[i], f.angVel[i]]).toEqual([0, 16, 0, 0]);
+    expect([f.minSpeed[i], f.maxSpeed[i], f.accel[i], f.angVel[i]]).toEqual([
+      0,
+      MAX_BULLET_SPEED,
+      0,
+      0,
+    ]);
     expect(w.bullets.count).toBe(1);
     expect(w.bullets.batch.count).toBe(1);
     expect(w.bullets.batch.layer).toBe(LayerId.EnemyBullets);

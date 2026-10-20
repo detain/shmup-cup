@@ -47,6 +47,7 @@ import {
   moduleInfo,
 } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -91,12 +92,15 @@ const ENEMIES = [
   enemy('armor', { hp: 5 }),
 ];
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Rows of the test stage's map: one playfield tall (42 at K=1, 28 ported). */
+const ROWS = PLAYFIELD_H / TILE;
 
 /**
  * Test content: the KESTREL, Type A weapons (or `weapons`), the shipped tileset, the test enemies
- * and a static stage `t` with a flat 32-px floor.
+ * and a static stage `t` with a flat four-row floor.
  *
  * @param weapons - The weapons file (default: the shipped Type A), or `null` for none.
  * @param enterTicks - The KESTREL's fly-in length (default: the shipped one).
@@ -130,13 +134,17 @@ function db(
         checkpoints: [{ x: 0 }],
         parallax: [],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
           rowsTall: ROWS,
           generator: {
             type: 'heightfield',
             segments: [
-              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+              {
+                from: 0,
+                to: 3000 + PLAYFIELD_W,
+                floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 },
+              },
             ],
           },
         },
@@ -365,8 +373,11 @@ describe('core/weapons', () => {
       lengths.push(laser.length);
       expect(laser.y).toBe(w.players[0].y);
     }
-    expect(lengths.slice(0, 7)).toEqual([10, 20, 30, 40, 50, 60, 64]);
-    expect(lengths[11]).toBe(64);
+    // Growth: the content's laser speed px/tick up to its maxLength cap.
+    expect(lengths.slice(0, 7)).toEqual(
+      [1, 2, 3, 4, 5, 6, 7].map((k) => Math.min(v1speed(10) * k, v1rel(64))),
+    );
+    expect(lengths[11]).toBe(v1rel(64));
   });
 
   it('slides the missile along the floor, over slopes, and loses it at a wall', () => {
@@ -398,19 +409,24 @@ describe('core/weapons', () => {
     }
     expect(landed).toBeGreaterThan(0);
     const slid = path.filter((p) => p.sliding);
-    // On the floor its centre rests 2 px above the surface; on the plateau 8 px higher.
-    expect(slid.some((p) => p.x < 160 && p.y === 158)).toBe(true);
-    expect(slid.some((p) => p.x >= 168 && p.x < 200 && p.y === 150)).toBe(true);
-    expect(slid.some((p) => p.x >= 208 && p.x < 240 && p.y === 158)).toBe(true);
-    // Up the slope it climbs smoothly (at most a 3-px step per tick).
+    // On the floor its centre rests 2 px (at K=1) above the surface row 20; on the plateau
+    // row 19 it rides a tile higher. The riding offset lands on quarter-pixels ported.
+    const FLOOR_TOP = 20 * TILE;
+    const rides = (surface: number, x0: number, x1: number): boolean =>
+      slid.some((p) => p.x >= x0 && p.x < x1 && Math.abs(p.y - (surface - v1rel(2))) < 1);
+    expect(rides(FLOOR_TOP, -1, FLOOR_TOP)).toBe(true);
+    expect(rides(FLOOR_TOP - TILE, 21 * TILE, 25 * TILE)).toBe(true);
+    expect(rides(FLOOR_TOP, 26 * TILE, 30 * TILE)).toBe(true);
+    // Up the slope it climbs smoothly: never more than a tile row per tick (at most a 3-px
+    // step per tick at K=1).
     for (let k = 1; k < slid.length; k++) {
-      expect(Math.abs(slid[k].y - slid[k - 1].y)).toBeLessThanOrEqual(3);
-      expect(slid[k].x - slid[k - 1].x).toBeCloseTo(3, 9);
+      expect(Math.abs(slid[k].y - slid[k - 1].y)).toBeLessThan(TILE);
+      expect(slid[k].x - slid[k - 1].x).toBeCloseTo(v1speed(3), 9);
     }
-    // The wall destroyed it: it never got past the wall's face.
+    // The wall destroyed it: it never got past the wall's face (column 30).
     const last = path[path.length - 1];
-    expect(last.x).toBeLessThan(240);
-    expect(last.x).toBeGreaterThan(230);
+    expect(last.x).toBeLessThan(30 * TILE);
+    expect(last.x).toBeGreaterThan(30 * TILE - v1rel(10));
     expect(path.length).toBeLessThan(120);
   });
 
@@ -655,11 +671,11 @@ describe('core/weapons', () => {
   it('kills shots on terrain', () => {
     const w = world({ stage: 't' }, DB, 40, 100);
     const map = w.terrain!;
-    for (let row = 0; row < map.rows; row++) map.tiles[row * map.cols + 20] = 1; // wall at x 160
+    for (let row = 0; row < map.rows; row++) map.tiles[row * map.cols + 20] = 1; // wall column
     run(w, 120);
     const straight = shots(w, ShotKind.Straight);
     expect(w.weapons.pool.count).toBeGreaterThan(0);
-    for (const s of straight) expect(s.x).toBeLessThan(160);
+    for (const s of straight) expect(s.x).toBeLessThan(20 * TILE);
   });
 
   it('starts fully powered with loadout "full" and fires lasers and missiles from every shooter', () => {

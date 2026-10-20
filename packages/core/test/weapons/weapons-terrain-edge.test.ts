@@ -1,8 +1,8 @@
 /**
  * Player shots meeting the terrain hit the destructible tile there (plan M2-07, `core/weapons` →
  * the World's stage gimmicks `hitTerrain`), per shot kind, in a World on a still stage one
- * playfield tall with a flat floor (top at `PLAYFIELD_H − 32`, y 168 at 384×216) and a wall at
- * x 240 … 247 standing on it:
+ * playfield tall with a flat four-row floor (top at `FLOOR_Y`) and a wall in tile column
+ * {@link WALL_COL} standing on it:
  *
  * - a straight shot hits once, at the pixel where it met the wall, with its damage, credited to
  *   its player;
@@ -34,6 +34,7 @@ import {
   stepWorld,
   type World,
 } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -50,11 +51,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (`PLAYFIELD_H / TILE`). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top, four tile rows above the map's bottom edge. */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
+
+/** The wall's tile column; it spans x `WALL_COL * TILE` … `(WALL_COL + 1) * TILE − 1`. */
+const WALL_COL = 30;
 
 /** `terrain-a` tile ids: solid rock 1, brick 18 (hp 4, 10 points). */
 const ROCK = 1;
@@ -62,7 +69,7 @@ const BRICK = 18;
 
 /**
  * The content: both ships' weapons, `terrain-a` and a still stage with a floor and a wall column
- * (tile column 30, rows 5 … `ROWS − 5`: from y 40 down to the floor) of one tile.
+ * (`WALL_COL`, rows 5 … `ROWS − 5`: from row 5 down to the floor) of one tile.
  *
  * @param tile - The wall's tile id (0 = no wall).
  * @returns The DB.
@@ -70,7 +77,7 @@ const BRICK = 18;
 function db(tile: number): ContentDb {
   const rle: string[] = [];
   for (let r = 0; r < ROWS; r++)
-    rle.push(tile > 0 && r >= 5 && r <= ROWS - 5 ? `30*0, ${tile}` : '');
+    rle.push(tile > 0 && r >= 5 && r <= ROWS - 5 ? `${WALL_COL}*0, ${tile}` : '');
   const { db: content, issues } = loadContent(
     [
       shipped('player/kestrel.player.json'),
@@ -90,7 +97,7 @@ function db(tile: number): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             rle,
@@ -100,7 +107,7 @@ function db(tile: number): ContentDb {
                 {
                   from: 0,
                   to: 2000 + PLAYFIELD_W,
-                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                  floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 },
                 },
               ],
             },
@@ -183,9 +190,9 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     run(w, 0, 60);
     expect(hits).toHaveLength(1);
     const [hit] = hits;
-    expect(hit.px).toBeGreaterThanOrEqual(240);
-    expect(hit.px).toBeLessThanOrEqual(247);
-    expect(Math.abs(hit.py - SPAWN_Y)).toBeLessThanOrEqual(8);
+    expect(hit.px).toBeGreaterThanOrEqual(WALL_COL * TILE);
+    expect(hit.px).toBeLessThanOrEqual((WALL_COL + 1) * TILE - 1);
+    expect(Math.abs(hit.py - SPAWN_Y)).toBeLessThanOrEqual(TILE);
     expect(hit.amount).toBeGreaterThan(0);
     expect([hit.by, hit.result]).toEqual([0, TerrainHit.None]); // rock does not break
     expect(w.weapons.pool.count).toBe(0);
@@ -220,7 +227,7 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     run(w, Action.Shot, 1);
     run(w, 0, 40);
     expect(hits).toHaveLength(beams);
-    for (const hit of hits) expect([hit.px, hit.py, hit.by]).toEqual([240, SPAWN_Y, 0]);
+    for (const hit of hits) expect([hit.px, hit.py, hit.by]).toEqual([WALL_COL * TILE, SPAWN_Y, 0]);
     // The beams stay blocked at the wall until they are gone: no further hits.
     run(w, 0, 120);
     expect(hits).toHaveLength(beams);
@@ -233,9 +240,9 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     // Each missile dropped to the floor (top FLOOR_Y), slid right and died in the wall's foot.
     expect(hits.length).toBeGreaterThanOrEqual(1);
     for (const hit of hits) {
-      expect(hit.px).toBeGreaterThanOrEqual(240);
-      expect(hit.px).toBeLessThanOrEqual(247);
-      expect(hit.py).toBeGreaterThan(FLOOR_Y - 18);
+      expect(hit.px).toBeGreaterThanOrEqual(WALL_COL * TILE);
+      expect(hit.px).toBeLessThanOrEqual((WALL_COL + 1) * TILE - 1);
+      expect(hit.py).toBeGreaterThan(FLOOR_Y - v1rel(18));
       expect(hit.py).toBeLessThan(FLOOR_Y);
       expect(hit.by).toBe(0);
     }
@@ -251,7 +258,7 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     expect(hits.length).toBeGreaterThanOrEqual(1);
     for (const hit of hits) {
       expect(hit.py).toBeGreaterThanOrEqual(FLOOR_Y);
-      expect(hit.py).toBeLessThan(FLOOR_Y + 8);
+      expect(hit.py).toBeLessThan(FLOOR_Y + TILE);
       expect(hit.result).toBe(TerrainHit.None);
       expect(hit.by).toBe(0);
     }

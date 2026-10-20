@@ -38,14 +38,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8-px tiles, 28 at 12-px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top, four tile rows above the map's bottom edge (304 now, 288 ported). */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
 
 /**
- * The KESTREL, the shipped tileset and a static stage with a flat 32-px floor.
+ * The KESTREL, the shipped tileset and a static stage with a flat four-row floor.
  *
  * @returns The DB.
  */
@@ -67,7 +70,7 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             generator: {
@@ -76,7 +79,7 @@ function db(): ContentDb {
                 {
                   from: 0,
                   to: 3000 + PLAYFIELD_W,
-                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                  floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 },
                 },
               ],
             },

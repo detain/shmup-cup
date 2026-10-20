@@ -33,6 +33,7 @@ import {
   type Script,
 } from '../../src/patterns/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1speed } from '../helpers/v1-port.js';
 
 /** Absolute direction. */
 const abs = (value: number | string): Record<string, unknown> => ({ type: 'absolute', value });
@@ -229,7 +230,7 @@ const ACTIONS = [
 const BULLETS = [
   { id: 'to-two', actions: [{ op: 'changeSpeed', speed: 2 }] },
   { id: 'faster', actions: [{ op: 'changeSpeed', speed: { type: 'relative', value: 0.5 } }] },
-  { id: 'rocket', actions: [{ op: 'changeSpeed', speed: 20, term: 2 }] },
+  { id: 'rocket', actions: [{ op: 'changeSpeed', speed: v1speed(20), term: 2 }] },
   { id: 'seeker', actions: [{ op: 'changeDirection', direction: { type: 'aim' } }] },
   {
     id: 'seeker-offset',
@@ -528,7 +529,10 @@ describe('core/patterns DSL interpreter — emitters', () => {
     const scale = w.bullets.speedScale;
     run(w, 'seq');
     expect(values(w, 'angle')).toEqual([aim + 30, aim + 60]);
-    expect(values(w, 'speed').map((s) => s / scale)).toEqual([1.5, 2]);
+    expect(values(w, 'speed').map((s) => s / scale)).toEqual([
+      v1speed(1) + 0.5, // the sequence starts from the compiler's default speed…
+      v1speed(1) + 1, // …and each fire adds its own relative amount
+    ]);
     run(w, 'seq');
     expect(values(w, 'angle').slice(2)).toEqual([aim + 30, aim + 60]);
   });
@@ -574,9 +578,9 @@ describe('core/patterns DSL interpreter — bullets’ own programs', () => {
     const r = arena();
     const rs = r.bullets.speedScale;
     run(r, 'fire-rocket', 2);
-    expect(20 * rs).toBeGreaterThan(MAX_BULLET_SPEED);
-    expect(values(r, 'maxSpeed')[0]).toBe(20 * rs);
-    expect(values(r, 'speed')[0]).toBe(20 * rs);
+    expect(v1speed(20) * rs).toBeGreaterThan(MAX_BULLET_SPEED);
+    expect(values(r, 'maxSpeed')[0]).toBe(v1speed(20) * rs);
+    expect(values(r, 'speed')[0]).toBe(v1speed(20) * rs);
   });
 
   it('turns a timed change the short way round across heading 0 and lands on the target', () => {

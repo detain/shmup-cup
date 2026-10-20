@@ -31,8 +31,11 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Rows of the test stage's map: one playfield tall (42 at K=1, 28 ported). */
+const ROWS = PLAYFIELD_H / TILE;
 
 /**
  * The KESTREL, Type A, the shipped tileset, two scriptless targets and a static stage whose floor
@@ -76,7 +79,7 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             generator: {
@@ -85,7 +88,7 @@ function db(): ContentDb {
                 {
                   from: 0,
                   to: 3000 + PLAYFIELD_W,
-                  floor: { base: 32, amp: 12, period: 96, seed: 4 },
+                  floor: { base: 4 * TILE, amp: 12, period: 96, seed: 4 },
                 },
               ],
             },

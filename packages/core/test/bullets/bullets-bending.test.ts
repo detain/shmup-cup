@@ -7,9 +7,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BENDING_LASER_NODES,
+  BULLET_CULL_MARGIN,
   BulletOrigin,
   CancelMode,
   MAX_BENDING_LASERS,
+  MAX_BULLET_SPEED,
   MAX_POINT_ITEMS,
   POINT_ITEM_HOVER_TICKS,
   POINT_ITEM_LIFETIME,
@@ -97,7 +99,10 @@ describe('core/bullets bending lasers (M2-02)', () => {
     const w = world(60, 180);
     fireBendingLaser(w, at(20, 40), 512, 4, 0, 0, 16, 6, 1000);
     const b = w.bullets.bending;
-    run(w, 10); // the head reaches x = −16 (the view's edge − 16) on tick 9, leaves on tick 10
+    // The head flies left at 4 px/tick from x = 20; it reaches the view's left edge (the camera
+    // minus BULLET_CULL_MARGIN — 16 px at K = 1, 24 px ported) on that tick and leaves the next.
+    const leaveTick = Math.floor((20 + BULLET_CULL_MARGIN) / 4) + 1;
+    run(w, leaveTick);
     const filled = b.filled[0];
     expect(b.emit[0]).toBe(0);
     run(w, 1);
@@ -178,7 +183,8 @@ describe('core/bullets bending lasers (M2-02)', () => {
     const w = world(60, 180);
     const src = at(300, 60);
     expect(fireBendingLaser(w, src, 512, 0)).toBe(-1);
-    expect(fireBendingLaser(w, src, 512, 17)).toBe(-1);
+    // One px/tick over the cap (16 at K = 1, 24 ported) — rejected.
+    expect(fireBendingLaser(w, src, 512, MAX_BULLET_SPEED + 1)).toBe(-1);
     expect(fireBendingLaser(w, src, 512, 2, 0, 0, 1)).toBe(-1);
     expect(fireBendingLaser(w, src, 512, 2, 0, 0, BENDING_LASER_NODES + 1)).toBe(-1);
     expect(fireBendingLaser(w, src, 512, 2, 0, 0, 8, 0)).toBe(-1);
@@ -206,7 +212,10 @@ describe('core/bullets bending lasers (M2-02)', () => {
     const b = world(60, 180);
     fireBendingLaser(a, at(300, 60));
     fireBendingLaser(b, at(300, 60));
-    for (let t = 0; t < 80; t++) {
+    // The homing head reaches the ship on tick ~55 at the ported scale (~89 at K = 1) and the
+    // death cancels the laser; stay inside the in-flight window so the perturbation below lands
+    // on a live, hashed node at both scales.
+    for (let t = 0; t < 40; t++) {
       run(a, 1);
       run(b, 1);
       expect(hashWorld(a)).toBe(hashWorld(b));

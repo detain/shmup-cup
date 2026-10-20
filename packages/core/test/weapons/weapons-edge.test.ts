@@ -28,6 +28,7 @@ import {
   PLAYFIELD_H,
   PLAYFIELD_W,
   resolveGameConfig,
+  WORLD_SCALE,
   type GameConfig,
 } from '../../src/config/index.js';
 import {
@@ -83,6 +84,7 @@ import {
   resolveWeaponPreset,
 } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 // ------------------------------------------------------------------------------------ content
 
@@ -190,7 +192,7 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
     id,
     hp: 1000,
     score: 100,
-    hurtbox: { hw: 4, hh: 4 },
+    hurtbox: { hw: v1rel(4), hh: v1rel(4) },
     script: 'test.idle',
     sprite: 'enemies/drifter',
     drop: null,
@@ -198,8 +200,11 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** Rows of the test stage's map: one playfield tall (42 at K=1, 28 ported). */
+const ROWS = PLAYFIELD_H / TILE;
 
 /**
  * A stage file with a flat 32-px floor.
@@ -222,13 +227,17 @@ function stageFile(id: string, speed: number): ContentFile {
       checkpoints: [{ x: 0 }],
       parallax: [],
       tilemap: {
-        tileSize: 8,
+        tileSize: TILE,
         tileset: 'terrain-a',
         rowsTall: ROWS,
         generator: {
           type: 'heightfield',
           segments: [
-            { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+            {
+              from: 0,
+              to: 3000 + PLAYFIELD_W,
+              floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 },
+            },
           ],
         },
       },
@@ -471,8 +480,8 @@ function hitList(w: World): [number, number][] {
 }
 
 /**
- * Clears the terrain of a world and lays a flat floor (surface y 160) out to 96 px past the view's
- * right edge (columns `0 … 59` at 384×216).
+ * Clears the terrain of a world and lays a flat floor (surface row 20) out to 96 px (at K=1) past
+ * the view's right edge.
  *
  * @param w - The world (with a stage).
  * @returns A tile setter `(col, row, tile)`.
@@ -483,8 +492,8 @@ function flatFloor(w: World): (col: number, row: number, tile: number) => void {
   const set = (col: number, row: number, tile: number): void => {
     map.tiles[row * map.cols + col] = tile;
   };
-  // Out to 96 px past the view's right edge (60 columns at 384×216).
-  for (let col = 0; col < (PLAYFIELD_W + 96) / 8; col++) {
+  // Out to one tile past the view's right edge.
+  for (let col = 0; col < (PLAYFIELD_W + v1rel(96)) / TILE; col++) {
     for (let row = 21; row < map.rows; row++) set(col, row, 1);
     set(col, 20, 2);
   }
@@ -498,12 +507,12 @@ describe('core/weapons edge cases — tables, content and roles', () => {
     expect(MAX_PLAYER_SHOTS).toBe(96);
     expect(SHOOTERS_PER_PLAYER).toBe(1 + MAX_OPTIONS);
     expect(MAX_SHOOTERS).toBe(2 * SHOOTERS_PER_PLAYER);
-    expect(SHOT_CULL_MARGIN).toBe(16);
+    expect(SHOT_CULL_MARGIN).toBe(16 * WORLD_SCALE);
     expect(SFX_RATE_TICKS).toBe(4);
     expect(PIERCE_TABLES).toBe(32);
     expect(MAX_SHOT_HITS).toBe(1024);
     expect(SHOT_BATCH_CAPACITY).toBe(192);
-    expect(LASER_SEGMENT_LENGTH).toBe(8);
+    expect(LASER_SEGMENT_LENGTH).toBe(8 * WORLD_SCALE);
     expect(DEFAULT_WEAPON_PRESET).toBe('type-a');
     expect(WEAPON_ROLE_COUNT).toBe(Object.keys(WeaponRole).length);
     const ids = Object.keys(WEAPON_BEHAVIOR_KINDS).sort();
@@ -697,12 +706,12 @@ describe('core/weapons edge cases — firing', () => {
     // Basic: (8, 0) ahead, 7 px/tick, 4 × 2 box, damage 1 — it moved once this tick.
     const [basic] = shotTick(MainWeapon.Basic, Action.Shot);
     expect(basic).toMatchObject({
-      x: sx + 8 + 7,
+      x: sx + v1rel(8) + v1speed(7),
       y: sy,
-      vx: 7,
+      vx: v1speed(7),
       vy: 0,
-      hw: 4,
-      hh: 2,
+      hw: v1rel(4),
+      hh: v1rel(2),
       damage: 1,
       role: WeaponRole.Main,
       kind: ShotKind.Straight,
@@ -719,39 +728,39 @@ describe('core/weapons edge cases — firing', () => {
     expect(pair.length).toBe(2);
     const up = 1024 - 128;
     expect(pair[0]).toMatchObject({
-      x: sx + 8 + 7,
+      x: sx + v1rel(8) + v1speed(7),
       y: sy,
-      vx: 7,
+      vx: v1speed(7),
       vy: 0,
-      hw: 4,
-      hh: 2,
+      hw: v1rel(4),
+      hh: v1rel(2),
       role: WeaponRole.Double,
       kind: ShotKind.Double,
       sprite: 'shots/basic',
     });
     expect(pair[1]).toMatchObject({
-      x: sx + 4 + cosB(up) * 7,
-      y: sy - 2 + sinB(up) * 7,
-      vx: cosB(up) * 7,
-      vy: sinB(up) * 7,
-      hw: 3,
-      hh: 3,
+      x: sx + v1rel(4) + cosB(up) * v1speed(7),
+      y: sy - v1rel(2) + sinB(up) * v1speed(7),
+      vx: cosB(up) * v1speed(7),
+      vy: sinB(up) * v1speed(7),
+      hw: v1rel(3),
+      hh: v1rel(3),
       role: WeaponRole.Double,
       kind: ShotKind.Double,
       sprite: 'shots/double',
     });
-    expect(pair[1].vx).toBeCloseTo(4.95, 2);
-    expect(pair[1].vy).toBeCloseTo(-4.95, 2);
+    expect(pair[1].vx).toBeCloseTo(v1speed(4.95), 2);
+    expect(pair[1].vy).toBeCloseTo(-v1speed(4.95), 2);
     run(w, 60);
     // Laser: head (8, 0) ahead, 10 px in its first tick, piercing with a table, 2 px half-height.
     const [laser] = shotTick(MainWeapon.Laser, Action.Shot);
     expect(laser).toMatchObject({
-      x: sx + 8 + 10,
+      x: sx + v1rel(8) + v1speed(10),
       y: sy,
-      vx: 10,
+      vx: v1speed(10),
       vy: 0,
-      length: 10,
-      hh: 2,
+      length: v1speed(10),
+      hh: v1rel(2),
       damage: 1,
       role: WeaponRole.Laser,
       kind: ShotKind.Laser,
@@ -765,12 +774,12 @@ describe('core/weapons edge cases — firing', () => {
     loadout.missile = true;
     const [missile] = shotTick(MainWeapon.Basic, Action.Sub);
     expect(missile).toMatchObject({
-      x: sx + cosB(128) * 2.5,
-      y: sy + 4 + sinB(128) * 2.5,
-      vx: cosB(128) * 2.5,
-      vy: sinB(128) * 2.5,
-      hw: 4,
-      hh: 1.5,
+      x: sx + cosB(128) * v1speed(2.5),
+      y: sy + v1rel(4) + sinB(128) * v1speed(2.5),
+      vx: cosB(128) * v1speed(2.5),
+      vy: sinB(128) * v1speed(2.5),
+      hw: v1rel(4),
+      hh: v1rel(1.5),
       damage: 2,
       role: WeaponRole.Missile,
       kind: ShotKind.Missile,
@@ -854,12 +863,12 @@ describe('core/weapons edge cases — firing', () => {
       }
       return fired.slice(1).map((t, k) => t - fired[k]);
     };
-    // Its shot spawns 8 px ahead, moves 7 px/tick and is culled once past the right edge + 16,
-    // after 51 moves.
-    const spawnX = shipX + 8;
+    // Its shot spawns v1rel(8) px ahead, moves v1speed(7) px/tick and is culled once past the
+    // right edge + SHOT_CULL_MARGIN.
+    const spawnX = shipX + v1rel(8);
     let moves = 1;
-    while (spawnX + 7 * moves <= PLAYFIELD_W + SHOT_CULL_MARGIN) moves++;
-    expect(moves).toBe(51);
+    while (spawnX + v1speed(7) * moves <= PLAYFIELD_W + SHOT_CULL_MARGIN) moves++;
+    expect(moves).toBeGreaterThan(10);
     expect(new Set(gapsFor({}))).toEqual(new Set([moves]));
     // A longer interval wins over the cap.
     expect(new Set(gapsFor({ autofireInterval: 60 }))).toEqual(new Set([60]));
@@ -938,10 +947,10 @@ describe('core/weapons edge cases — firing', () => {
     const [forward, angled] = shots(w);
     const ship = w.players[0];
     expect(forward).toMatchObject({
-      x: ship.x + 4 + 7,
-      y: ship.y - 2,
-      hw: 3,
-      hh: 3,
+      x: ship.x + v1rel(4) + 7,
+      y: ship.y - v1rel(2),
+      hw: v1rel(3),
+      hh: v1rel(3),
       vx: 7,
       vy: 0,
       sprite: 'shots/double',
@@ -1040,26 +1049,28 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       run(w, 1);
       const [nsx, nsy] = screen(0);
       const [nmx, nmy] = screen(1);
-      expect(nsx - sx).toBeCloseTo(7, 9);
+      expect(nsx - sx).toBeCloseTo(v1speed(7), 9);
       expect(nsy - sy).toBeCloseTo(0, 9);
-      expect(nmx - mx).toBeCloseTo(cosB(128) * 2.5, 9);
-      expect(nmy - my).toBeCloseTo(sinB(128) * 2.5, 9);
+      expect(nmx - mx).toBeCloseTo(cosB(128) * v1speed(2.5), 9);
+      expect(nmy - my).toBeCloseTo(sinB(128) * v1speed(2.5), 9);
       [sx, sy, mx, my] = [nsx, nsy, nmx, nmy];
     }
   });
 
-  it('culls straight shots exactly at the view ± 16 px on every side', () => {
-    // Free flight: the camera sits at (0, 0), so the kept area is x −16…right, y −16…bottom
-    // (400 and 216 at 384×216).
+  it('culls straight shots exactly at the view ± SHOT_CULL_MARGIN on every side', () => {
+    // Free flight: the camera sits at (0, 0), so the kept area is x −16·K…right,
+    // y −16·K…bottom (400 and 216 at 384×216 — at K=1).
     const right = PLAYFIELD_W + SHOT_CULL_MARGIN;
     const bottom = PLAYFIELD_H + SHOT_CULL_MARGIN;
+    // A straight shot's first tick carries it the muzzle offset plus one advance.
+    const adv = v1rel(8) + v1speed(7);
     const cases: [string, number, number, boolean][] = [
-      ['right edge', right - 15, 100, true],
-      ['past the right edge', right - 15 + 0.5, 100, false],
-      ['left edge', -16 - 15, 100, true],
-      ['past the left edge', -16 - 15 - 0.5, 100, false],
-      ['top edge', 100, -16, true],
-      ['past the top edge', 100, -16.25, false],
+      ['right edge', right - adv, 100, true],
+      ['past the right edge', right - adv + 0.5, 100, false],
+      ['left edge', -SHOT_CULL_MARGIN - adv, 100, true],
+      ['past the left edge', -SHOT_CULL_MARGIN - adv - 0.5, 100, false],
+      ['top edge', 100, -SHOT_CULL_MARGIN, true],
+      ['past the top edge', 100, -SHOT_CULL_MARGIN - 0.25, false],
       ['bottom edge', 100, bottom, true],
       ['past the bottom edge', 100, bottom + 0.25, false],
     ];
@@ -1072,15 +1083,17 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
   });
 
   it('culls a laser by its head on the left and by its tail on the right', () => {
-    const right = PLAYFIELD_W + SHOT_CULL_MARGIN; // 400 at 384×216
+    const right = PLAYFIELD_W + SHOT_CULL_MARGIN; // 400 at 384×216 (at K=1)
+    // The laser advances — and grows, up to its cap — by its speed once per tick.
+    const advL = v1speed(10);
     const cases: [string, number, number, boolean][] = [
       // [label, head before the tick, length before the tick, kept]
-      ['head at the left edge', -16 - 10, 0, true],
-      ['head past the left edge', -16 - 10.5, 0, false],
-      ['tail at the right edge', right + 64 - 10, 54, true],
-      ['tail past the right edge', right + 64 - 10 + 0.5, 54, false],
-      ['head past the right edge, tail inside', right + 100, 64, false],
-      ['head far right, tail inside', right + 50, 60, true],
+      ['head at the left edge', -SHOT_CULL_MARGIN - advL, 0, true],
+      ['head past the left edge', -SHOT_CULL_MARGIN - advL - 0.5, 0, false],
+      ['tail at the right edge', right + v1rel(64) - advL, v1rel(54), true],
+      ['tail past the right edge', right + v1rel(64) - advL + 0.5, v1rel(54), false],
+      ['head past the right edge, tail inside', right + v1rel(100), v1rel(64), false],
+      ['head far right, tail inside', right + v1rel(50), v1rel(60), true],
     ];
     for (const [label, head, length, kept] of cases) {
       const w = world(MANUAL);
@@ -1139,21 +1152,26 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       lengths.push(f.length[i]);
       if (blockedAt < 0 && (f.flags[i] & ShotFlag.Blocked) !== 0) blockedAt = t;
     }
-    // 58, 68, … 198, then the wall at 200 stops it; the tail catches up 10 px per tick.
-    expect(heads.slice(0, 15)).toEqual([
-      58, 68, 78, 88, 98, 108, 118, 128, 138, 148, 158, 168, 178, 188, 198,
-    ]);
-    expect(blockedAt).toBe(15);
-    expect(heads.slice(15).every((h) => h === 200)).toBe(true);
-    expect(lengths.slice(15)).toEqual([64, 54, 44, 34, 24, 14, 4]);
+    // The head rides the beam speed from the muzzle until the wall stops it; the tail then
+    // catches up one advance per tick. (58, 68, … 198 and the wall at 200 — at K=1.)
+    const wall = 25 * TILE;
+    const muzzle = 40 + v1rel(8);
+    const adv = v1speed(10);
+    expect(heads).toEqual(
+      Array.from({ length: heads.length }, (_, k) => Math.min(muzzle + adv * (k + 1), wall)),
+    );
+    expect(blockedAt).toBe(Math.ceil((wall - muzzle) / adv) - 1);
+    expect(lengths.slice(blockedAt)).toEqual(
+      Array.from({ length: 7 }, (_, k) => v1rel(64) - adv * k),
+    );
     expect(shots(w)).toEqual([]);
   });
 
   it('keeps a blocked laser head on its wall while the stage scrolls', () => {
     const w = world({ ...MANUAL, stage: 's' }, DB, 40, 100);
     const map = w.terrain!;
-    const col = Math.floor((w.camera.x + 200) / 8) + 1;
-    const wall = col * 8;
+    const col = Math.floor((w.camera.x + v1rel(200)) / TILE) + 1;
+    const wall = col * TILE;
     for (let row = 0; row < map.rows - 5; row++) map.tiles[row * map.cols + col] = 1;
     const i = w.weapons.spawnShot(WeaponRole.Laser, 0, w.players[0].x, w.players[0].y);
     const f = w.weapons.pool.fields;
@@ -1165,8 +1183,8 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       if ((f.flags[i] & ShotFlag.Blocked) === 0) continue;
       blocked++;
       expect(f.x[i]).toBe(wall);
-      // The tail rides the scroll (1 px) and advances at the beam's speed (10 px).
-      if (previous >= 0) expect(previous - f.length[i]).toBe(11);
+      // The tail rides the scroll (1 px) and advances at the beam's speed (10 px — at K=1).
+      if (previous >= 0) expect(previous - f.length[i]).toBe(v1speed(10) + 1);
       previous = f.length[i];
     }
     expect(blocked).toBeGreaterThan(3);
@@ -1199,10 +1217,14 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
   it('climbs and descends an 8-px step when the slide may climb 8 px (slideSpeed 7)', () => {
     const w = world(
       { ...MANUAL, stage: 't' },
-      db(typeA({ 'missile.ground': { params: { slideSpeed: 7 } } })),
+      db(typeA({ 'missile.ground': { params: { slideSpeed: v1speed(7) } } })),
     );
     const set = flatFloor(w);
-    for (let col = 20; col < 25; col++) set(col, 19, 2); // plateau x 160…199, surface 152
+    // Plateau over tile columns 20…24: surface one tile above the floor (x 160…199, surface
+    // 152 — at K=1).
+    for (let col = 20; col < 25; col++) set(col, 19, 2);
+    const FLOOR_RIDE = 20 * TILE - v1rel(2);
+    const PLAT_RIDE = 19 * TILE - v1rel(2);
     w.weapons.spawnShot(WeaponRole.Missile, 0, w.players[0].x, w.players[0].y);
     const path: { x: number; y: number; sliding: boolean }[] = [];
     for (let t = 0; t < 200; t++) {
@@ -1214,12 +1236,16 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     const first = path.findIndex((p) => p.sliding);
     expect(first).toBeGreaterThan(0);
     const slid = path.slice(first);
-    // It never left the ground: up onto the plateau and down again, 7 px a tick.
+    // It never left the ground: up onto the plateau and down again, one slide step a tick.
     expect(slid.every((p) => p.sliding)).toBe(true);
-    for (let k = 1; k < slid.length; k++) expect(slid[k].x - slid[k - 1].x).toBeCloseTo(7, 9);
-    expect(slid.some((p) => p.x >= 160 && p.x < 200 && p.y === 150)).toBe(true);
-    expect(slid.some((p) => p.x >= 200 && p.y === 158)).toBe(true);
-    for (const p of slid) expect([150, 158]).toContain(p.y);
+    for (let k = 1; k < slid.length; k++)
+      expect(slid[k].x - slid[k - 1].x).toBeCloseTo(v1speed(7), 9);
+    expect(
+      slid.some((p) => p.x >= 20 * TILE && p.x < 25 * TILE && Math.abs(p.y - PLAT_RIDE) < 1),
+    ).toBe(true);
+    expect(slid.some((p) => p.x >= 25 * TILE && Math.abs(p.y - FLOOR_RIDE) < 1)).toBe(true);
+    for (const p of slid)
+      expect(Math.min(Math.abs(p.y - PLAT_RIDE), Math.abs(p.y - FLOOR_RIDE))).toBeLessThan(1);
     // It left the view on the right (no wall ahead).
     expect(path[path.length - 1].x).toBeGreaterThan(PLAYFIELD_W + 6);
   });
@@ -1229,7 +1255,9 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     // Into the step's face.
     const w = world({ ...MANUAL, stage: 't' }, content);
     const set = flatFloor(w);
-    for (let col = 20; col < 25; col++) set(col, 19, 2);
+    for (let col = 20; col < 25; col++) set(col, 19, 2); // plateau, one tile above the floor
+    const FLOOR_RIDE = 20 * TILE - v1rel(2);
+    const PLAT_RIDE = 19 * TILE - v1rel(2);
     w.weapons.spawnShot(WeaponRole.Missile, 0, w.players[0].x, w.players[0].y);
     let last = { x: 0, y: 0, flags: 0 };
     let ticks = 0;
@@ -1241,15 +1269,15 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     }
     expect(ticks).toBeLessThan(200);
     expect(last.flags & ShotFlag.Sliding).toBe(ShotFlag.Sliding);
-    expect(last.y).toBe(158);
-    expect(last.x).toBeLessThan(160);
-    expect(last.x).toBeGreaterThan(160 - 7);
+    expect(Math.abs(last.y - FLOOR_RIDE)).toBeLessThanOrEqual(1);
+    expect(last.x).toBeLessThan(20 * TILE);
+    expect(last.x).toBeGreaterThan(20 * TILE - v1rel(7));
 
     // Landed on the plateau, it drops off its far end (8 px > 7) and lands on the floor below.
     const v = world({ ...MANUAL, stage: 't' }, content);
     const setV = flatFloor(v);
     for (let col = 20; col < 25; col++) setV(col, 19, 2);
-    v.weapons.spawnShot(WeaponRole.Missile, 0, 120, 100);
+    v.weapons.spawnShot(WeaponRole.Missile, 0, v1rel(120), v1rel(100));
     const states: { x: number; y: number; sliding: boolean }[] = [];
     for (let t = 0; t < 120; t++) {
       run(v, 1);
@@ -1257,26 +1285,26 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       if (m === undefined) break;
       states.push({ x: m.x, y: m.y, sliding: (m.flags & ShotFlag.Sliding) !== 0 });
     }
-    const onPlateau = states.findIndex((s) => s.sliding && s.y === 150);
+    const onPlateau = states.findIndex((s) => s.sliding && Math.abs(s.y - PLAT_RIDE) < 1);
     expect(onPlateau).toBeGreaterThan(0);
     const fall = states.findIndex((s, k) => k > onPlateau && !s.sliding);
     expect(fall).toBeGreaterThan(onPlateau);
-    expect(states[fall].x).toBeGreaterThanOrEqual(200);
+    expect(states[fall].x).toBeGreaterThanOrEqual(25 * TILE);
     const relanded = states.findIndex((s, k) => k > fall && s.sliding);
     expect(relanded).toBeGreaterThan(fall);
-    expect(states[relanded].y).toBe(158);
+    expect(Math.abs(states[relanded].y - FLOOR_RIDE)).toBeLessThan(1);
     // Falling again it follows its launch heading (45° down).
     if (relanded - fall >= 3) {
-      expect(states[fall + 2].x - states[fall + 1].x).toBeCloseTo(cosB(128) * 2.5, 9);
-      expect(states[fall + 2].y - states[fall + 1].y).toBeCloseTo(sinB(128) * 2.5, 9);
+      expect(states[fall + 2].x - states[fall + 1].x).toBeCloseTo(cosB(128) * v1speed(2.5), 9);
+      expect(states[fall + 2].y - states[fall + 1].y).toBeCloseTo(sinB(128) * v1speed(2.5), 9);
     }
   });
 
   it("dies falling into a wall's side, and just falls out of the view without terrain", () => {
     const w = world({ ...MANUAL, stage: 't' });
     const set = flatFloor(w);
-    for (let row = 0; row < 20; row++) set(12, row, 1); // a wall x 96…103, top to floor
-    w.weapons.spawnShot(WeaponRole.Missile, 0, 60, 40);
+    for (let row = 0; row < 20; row++) set(12, row, 1); // a wall at tile column 12, top to floor
+    w.weapons.spawnShot(WeaponRole.Missile, 0, v1rel(60), v1rel(40));
     let last = { x: 0, y: 0, flags: 0 };
     let alive = 0;
     for (; alive < 100; alive++) {
@@ -1286,9 +1314,9 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       last = m;
     }
     expect(last.flags & ShotFlag.Sliding).toBe(0);
-    expect(last.x).toBeLessThan(96);
-    expect(last.x).toBeGreaterThan(90);
-    expect(last.y).toBeLessThan(100); // mid-air, far above the floor
+    expect(last.x).toBeLessThan(12 * TILE);
+    expect(last.x).toBeGreaterThan(12 * TILE - v1rel(6));
+    expect(last.y).toBeLessThan(20 * TILE - v1rel(30)); // mid-air, far above the floor
 
     const free = world(MANUAL); // free flight: no terrain
     free.weapons.spawnShot(WeaponRole.Missile, 0, 40, 100);
@@ -1299,9 +1327,11 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       ticks++;
       for (const m of shots(free)) if ((m.flags & ShotFlag.Sliding) !== 0) sliding = true;
     }
-    // From y 104 at 2.5·sin 45° per tick until past the view's bottom edge + 16 (216 at 384×216).
+    // From y 104 at 2.5·sin 45° per tick until past the view's bottom edge + 16 (216 and 16
+    // at 384×216 — at K=1).
     let moves = 1;
-    while (104 + sinB(128) * 2.5 * moves <= PLAYFIELD_H + SHOT_CULL_MARGIN) moves++;
+    const y0 = 100 + v1rel(4);
+    while (y0 + sinB(128) * v1speed(2.5) * moves <= PLAYFIELD_H + SHOT_CULL_MARGIN) moves++;
     expect(ticks).toBe(moves);
     expect(sliding).toBe(false);
   });
@@ -1329,18 +1359,21 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
   it('kills shots fired from inside rock at once (Options pass through rock, shots do not)', () => {
     const w = world({ ...MANUAL, stage: 't' });
     const map = w.terrain!;
-    // Rock at x 96…135, y 40…79.
+    // Rock at tile columns 12…16, rows 5…9 (x 96…135, y 40…79 — at K=1).
     for (let col = 12; col < 17; col++)
       for (let row = 5; row < 10; row++) map.tiles[row * map.cols + col] = 1;
-    expect(w.weapons.spawnShot(WeaponRole.Main, 1, 100, 60)).toBeGreaterThanOrEqual(0);
-    expect(w.weapons.spawnShot(WeaponRole.Double, 2, 100, 60)).toBeGreaterThanOrEqual(0);
-    const laser = w.weapons.spawnShot(WeaponRole.Laser, 3, 100, 60);
+    // Spawn so the muzzle (offset 8·K px on) lands inside the rock at both scales.
+    const rockX = 13 * TILE - v1rel(8);
+    const rockY = 6 * TILE;
+    expect(w.weapons.spawnShot(WeaponRole.Main, 1, rockX, rockY)).toBeGreaterThanOrEqual(0);
+    expect(w.weapons.spawnShot(WeaponRole.Double, 2, rockX, rockY)).toBeGreaterThanOrEqual(0);
+    const laser = w.weapons.spawnShot(WeaponRole.Laser, 3, rockX, rockY);
     run(w, 1);
     // The straight and Double shots died in the rock; the laser is stopped one pixel on.
     const left = shots(w);
     expect(left.map((s) => s.kind)).toEqual([ShotKind.Laser]);
     expect(left[0].flags & ShotFlag.Blocked).toBe(ShotFlag.Blocked);
-    expect(w.weapons.pool.fields.x[laser]).toBe(109);
+    expect(w.weapons.pool.fields.x[laser]).toBe(rockX + v1rel(8) + 1);
     run(w, 1);
     expect(shots(w)).toEqual([]);
   });
@@ -1348,18 +1381,18 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
 
 describe('core/weapons edge cases — hits', () => {
   it('hits on touching boxes (closed test) and misses by a fraction', () => {
-    // A straight shot is 4 × 2, the target 4 × 4: they touch at 8 px apart horizontally and 6 px
-    // apart vertically.
+    // A straight shot is 4 × 2, the target 4 × 4 (× K): they touch at 8 px apart horizontally
+    // and 6 px apart vertically (at K=1).
     const cases: [number, number, boolean][] = [
-      [-8, 0, true],
-      [-8.001, 0, false],
-      [8, 0, true],
-      [8.001, 0, false],
-      [0, 6, true],
-      [0, 6.001, false],
-      [0, -6, true],
-      [-8, -6, true],
-      [-8, -6.001, false],
+      [-v1rel(8), 0, true],
+      [-v1rel(8.001), 0, false],
+      [v1rel(8), 0, true],
+      [v1rel(8.001), 0, false],
+      [0, v1rel(6), true],
+      [0, v1rel(6.001), false],
+      [0, -v1rel(6), true],
+      [-v1rel(8), -v1rel(6), true],
+      [-v1rel(8), -v1rel(6.001), false],
     ];
     for (const [dx, dy, hit] of cases) {
       const w = world(MANUAL);
@@ -1394,7 +1427,7 @@ describe('core/weapons edge cases — hits', () => {
     const left = shots(v);
     expect(left.map((s) => s.shooter)).toEqual([1]);
     run(v, 1);
-    expect(shots(v)[0].x).toBe(200 + 7); // still flying
+    expect(shots(v)[0].x).toBe(200 - 15 + v1rel(8) + 2 * v1speed(7)); // still flying
   });
 
   it('never hits ghosts or removed enemies', () => {
@@ -1556,10 +1589,10 @@ describe('core/weapons edge cases — hits', () => {
     // The Double's angle 1280 ≡ 256: its angled shot climbs straight up.
     const up = w.weapons.spawnShot(WeaponRole.Double, 0, 100, 100);
     expect(f.vx[up]).toBeCloseTo(0, 12);
-    expect(f.vy[up]).toBe(-7);
+    expect(f.vy[up]).toBe(-v1speed(7));
     // A missile with angle 0 flies level.
     const level = w.weapons.spawnShot(WeaponRole.Missile, 0, 100, 100);
-    expect([f.vx[level], f.vy[level]]).toEqual([2.5, 0]);
+    expect([f.vx[level], f.vy[level]]).toEqual([v1speed(2.5), 0]);
   });
 
   it('finds the brute-force hits through the grid with fractional positions and scrolling', () => {
@@ -1627,11 +1660,12 @@ describe('core/weapons edge cases — presentation and restart', () => {
       }
       return xs;
     };
+    const SEG = LASER_SEGMENT_LENGTH;
     expect(segments(0)).toEqual([]);
-    expect(segments(8)).toEqual([92]);
-    expect(segments(8.5)).toEqual([92, 91.5]);
-    expect(segments(10)).toEqual([92, 90]);
-    expect(segments(64)).toEqual([92, 84, 76, 68, 60, 52, 44, 36]);
+    expect(segments(v1rel(8))).toEqual([100 - SEG]);
+    expect(segments(v1rel(8) + 0.5)).toEqual([100 - SEG, 100 - v1rel(8) - 0.5]);
+    expect(segments(v1rel(10))).toEqual([100 - SEG, 100 - v1rel(10)]);
+    expect(segments(v1rel(64))).toEqual(Array.from({ length: 8 }, (_, k) => 100 - SEG * (k + 1)));
   });
 
   it('never overfills the shot batch (lasers first take the room, later shots are dropped)', () => {
@@ -1641,13 +1675,15 @@ describe('core/weapons edge cases — presentation and restart', () => {
       const i = w.weapons.spawnShot(WeaponRole.Laser, 0, 0, 0);
       w.weapons.pool.fields.x[i] = 300;
       w.weapons.pool.fields.y[i] = 10 + k;
-      w.weapons.pool.fields.length[i] = 64;
+      w.weapons.pool.fields.length[i] = v1rel(64);
     }
     for (let k = 0; k < 20; k++) w.weapons.spawnShot(WeaponRole.Main, 1, 100, 100);
     w.weapons.sync();
     expect(w.weapons.batch.count).toBe(SHOT_BATCH_CAPACITY);
-    // 24 full beams fit (8 segments each); nothing after them.
-    expect(w.weapons.batch.y[SHOT_BATCH_CAPACITY - 1]).toBe(10 + 23);
+    // 24 full beams fit (8 segments each at K=1); nothing after them.
+    expect(w.weapons.batch.y[SHOT_BATCH_CAPACITY - 1]).toBe(
+      10 + SHOT_BATCH_CAPACITY / Math.ceil(v1rel(64) / LASER_SEGMENT_LENGTH) - 1,
+    );
   });
 
   it('draws the Options as pulsing orbs (8 ticks a frame), and nothing without the sprite', () => {

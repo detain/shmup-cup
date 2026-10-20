@@ -22,6 +22,7 @@ import {
 } from '../../src/weapons/index.js';
 import { stepWorld, type World } from '../../src/world/index.js';
 import { aliveWorld, directDb } from '../helpers/direct.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /** The shared content. */
 const DB = directDb();
@@ -168,7 +169,7 @@ describe('core/weapons Direct mode — the families', () => {
       if (roleWeapon(twin, tf.role[i]) === 'direct.missile.wide')
         rows.push(tf.y[i] - twin.players[0].y);
     }
-    expect(rows.sort((a, b) => a - b)).toEqual([-4, 4]);
+    expect(rows.sort((a, b) => a - b)).toEqual([-v1rel(4), v1rel(4)]);
   });
 
   it('fires the sub-weapon`s bombs as Spread Bomb shots in their emitters` headings', () => {
@@ -226,7 +227,7 @@ describe('core/weapons Direct mode — the families', () => {
       waves++;
       expect(f.flags[i] & ShotFlag.Pierce).toBe(ShotFlag.Pierce);
       expect(f.table[i]).toBeGreaterThan(0);
-      expect(f.hh[i]).toBe(16);
+      expect(f.hh[i]).toBe(v1rel(16));
     }
     expect(waves).toBe(1);
   });

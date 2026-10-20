@@ -77,6 +77,7 @@ describe('@shmup/core public API', () => {
   });
 
   it('re-exports the Ripple ring width', () => {
-    expect(core.RIPPLE_RING_WIDTH).toBe(4);
+    // 4 v1 world px, read at the live world scale (the kit ports it to 6).
+    expect(core.RIPPLE_RING_WIDTH).toBe(4 * core.WORLD_SCALE);
   });
 });

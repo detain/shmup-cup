@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadContent, type ContentFile } from '../../src/data/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../../src/math/trig-table.js';
+import { v1speed } from '../helpers/v1-port.js';
 import {
   DirType,
   ExprOp,
@@ -255,7 +256,7 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
       0,
       2,
       0,
-      1,
+      v1speed(1), // the compiler bakes the DEFAULT_PATTERN_SPEED (a px/tick length)
     ]);
     expect(fire(entries[1])).toEqual([4, DirType.Absolute, 0, 4, 0, 0, 2, 0, 256, 2, 0, 0.5]);
     expect(fire(entries[2])).toEqual([4, DirType.Absolute, 0, 4, 0, 0, 2, 0, 256, 2, 0, 3]);

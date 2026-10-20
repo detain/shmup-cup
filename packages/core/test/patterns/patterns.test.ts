@@ -37,6 +37,7 @@ import {
   type ScriptHolder,
 } from '../../src/patterns/index.js';
 import { createStageTerrain } from '../../src/stage/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A fresh body at a position.
@@ -447,6 +448,9 @@ describe('core/patterns groundCrawl', () => {
     ),
   ) as unknown;
 
+  /** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+  const TILE = (tileset as { tileSize: number }).tileSize;
+
   /**
    * Content with the shipped tileset and a stage whose floor rolls (45° and 22.5° slopes).
    *
@@ -465,12 +469,12 @@ describe('core/patterns groundCrawl', () => {
           id: 's',
           name: 'S',
           music: { stage: 'Stage', boss: 'Boss' },
-          length: 2000,
+          length: v1rel(2000),
           camera: [{ x: 0, speed: 0 }],
           checkpoints: [],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: 25,
             generator: {
@@ -478,9 +482,18 @@ describe('core/patterns groundCrawl', () => {
               segments: [
                 {
                   from: 0,
-                  to: 2384,
-                  floor: { base: 40, amp: 24, period: 240, seed: 7 },
-                  ...(ceiling ? { ceiling: { base: 40, amp: 24, period: 200, seed: 9 } } : {}),
+                  to: v1rel(2384),
+                  floor: { base: v1rel(40), amp: v1rel(24), period: v1rel(240), seed: 7 },
+                  ...(ceiling
+                    ? {
+                        ceiling: {
+                          base: v1rel(40),
+                          amp: v1rel(24),
+                          period: v1rel(200),
+                          seed: 9,
+                        },
+                      }
+                    : {}),
                 },
               ],
             },
@@ -512,7 +525,7 @@ describe('core/patterns groundCrawl', () => {
     const hh = 6;
     const b = body(40, 0, BodyAnchor.Floor, hh);
     // Start standing on the floor below.
-    for (let y = 0; y < 200; y++) {
+    for (let y = 0; y < v1rel(200); y++) {
       if (terrainSolidAt(map, 40, y)) {
         b.y = y - hh;
         break;
@@ -530,7 +543,7 @@ describe('core/patterns groundCrawl', () => {
       maxY = Math.max(maxY, b.y);
     }
     expect(b.x).toBeGreaterThan(1800);
-    expect(maxY - minY).toBeGreaterThan(24); // it really went up and down the slopes
+    expect(maxY - minY).toBeGreaterThan(v1rel(24)); // it really went up and down the slopes
   });
 
   it('keeps a ceiling crawler hanging from the surface', () => {
@@ -538,7 +551,7 @@ describe('core/patterns groundCrawl', () => {
     const ctx = context({ x: 0, y: 0 }, map);
     const hh = 5;
     const b = body(60, 0, BodyAnchor.Ceiling, hh);
-    for (let y = 100; y >= 0; y--) {
+    for (let y = v1rel(100); y >= 0; y--) {
       if (terrainSolidAt(map, 60, y)) {
         b.y = y + 1 + hh;
         break;
@@ -563,7 +576,7 @@ describe('core/patterns groundCrawl', () => {
     const ctx = context({ x: 0, y: 0 }, map);
     const hh = 4;
     const b = body(100, 0, BodyAnchor.Floor, hh);
-    for (let y = 0; y < 200; y++) {
+    for (let y = 0; y < v1rel(200); y++) {
       if (terrainSolidAt(map, 100, y)) {
         b.y = y - hh;
         break;
@@ -573,7 +586,7 @@ describe('core/patterns groundCrawl', () => {
     let turned = false;
     for (let t = 0; t < 200; t++) {
       updateMover(b, ctx);
-      expect(b.x).toBeLessThan(160); // never enters the wall at x 160…167
+      expect(b.x).toBeLessThan(20 * TILE); // never enters the wall (tile column 20)
       if (b.vx < 0) turned = true;
     }
     expect(turned).toBe(true);

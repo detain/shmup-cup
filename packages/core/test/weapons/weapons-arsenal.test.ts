@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyFlag, type Enemy } from '../../src/enemies/index.js';
@@ -39,6 +39,7 @@ import {
   weaponsOfSlot,
 } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -54,6 +55,15 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** The shipped tileset's tile size — 8 px until R2-02's port, 12 px after it. */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** The fixture stage is one playfield of these tiles tall. */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** The flat floor's surface: four tile rows high, at each scale. */
+const SURF = PLAYFIELD_H - 4 * TILE;
 
 /**
  * An enemy entry: a scriptless flying target that stays where it spawns.
@@ -77,8 +87,8 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
 
 /**
  * Test content: the KESTREL, the shipped Type A and Types B–D weapons, the shipped tileset, test
- * enemies (`target` 1000 hp, `weak` 1 hp, `armor`) and a static stage `t` with a flat floor 32 px
- * high (its surface at y 168).
+ * enemies (`target` 1000 hp, `weak` 1 hp, `armor`) and a static stage `t` one playfield tall with
+ * a flat four-row floor (its surface at `SURF`).
  */
 const DB: ContentDb = ((): ContentDb => {
   const files: ContentFile[] = [
@@ -107,12 +117,14 @@ const DB: ContentDb = ((): ContentDb => {
         checkpoints: [{ x: 0 }],
         parallax: [],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              { from: 0, to: 3384, floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 } },
+            ],
           },
         },
         events: [],
@@ -298,7 +310,8 @@ describe('core/weapons arsenal (M2-03): presets and Weapon Edit', () => {
 
 describe('core/weapons arsenal (M2-03): missile slot', () => {
   it('Spread Bomb: falls in an arc, bursts on the floor into a blast that burns 12 ticks', () => {
-    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-b' }, 40, 100);
+    // Parked 68 px (at K=1) above the floor so the arc's fall and burst window match v1's.
+    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-b' }, 40, SURF - v1rel(68));
     w.weapons.spawnShot(WeaponRole.Missile, 0, w.players[0].x, w.players[0].y);
     const falls: ShotRecord[] = [];
     let blast: ShotRecord | undefined;
@@ -321,12 +334,12 @@ describe('core/weapons arsenal (M2-03): missile slot', () => {
       expect(falls[k].x).toBeGreaterThan(falls[k - 1].x);
       expect(falls[k].vy).toBeGreaterThan(falls[k - 1].vy);
     }
-    // It burst where it met the floor (y 168): a piercing 28×28 blast drawn with the blast sprite.
+    // It burst where it met the floor (at `SURF`): a piercing blast of the file's radius.
     const b = blast!;
-    expect(b.y + 3).toBeGreaterThanOrEqual(168);
-    expect(b.y).toBeLessThan(172);
+    expect(b.y + v1rel(3)).toBeGreaterThanOrEqual(SURF);
+    expect(b.y).toBeLessThan(SURF + v1rel(4));
     expect(b.flags & ShotFlag.Pierce).toBe(ShotFlag.Pierce);
-    expect([b.hw, b.hh, b.vx, b.vy]).toEqual([14, 14, 0, 0]);
+    expect([b.hw, b.hh, b.vx, b.vy]).toEqual([v1rel(14), v1rel(14), 0, 0]);
     expect(b.sprite).toBe(DB.sprites.index.get(SPREAD_BLAST_SPRITE));
     // World-anchored and gone after 12 ticks; the next bomb waits for it (cap 1).
     let ticks = 0;
@@ -418,11 +431,11 @@ describe('core/weapons arsenal (M2-03): missile slot', () => {
   });
 
   it('Photon Torpedo: slides fast along the floor through what it destroys, stops at a survivor', () => {
-    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-d' }, 30, 150);
-    const weak1 = spawn(w, 'weak', 150, 164);
-    const weak2 = spawn(w, 'weak', 190, 164);
-    const wall = spawn(w, 'target', 260, 164);
-    const beyond = spawn(w, 'weak', 320, 164);
+    const w = world({ ...MANUAL, stage: 't', weaponPreset: 'type-d' }, 30, SURF - v1rel(18));
+    const weak1 = spawn(w, 'weak', 150, SURF - v1rel(4));
+    const weak2 = spawn(w, 'weak', 190, SURF - v1rel(4));
+    const wall = spawn(w, 'target', 260, SURF - v1rel(4));
+    const beyond = spawn(w, 'weak', 320, SURF - v1rel(4));
     w.weapons.spawnShot(WeaponRole.Missile, 0, w.players[0].x, w.players[0].y);
     const xs: number[] = [];
     for (let t = 0; t < 120; t++) {
@@ -431,9 +444,9 @@ describe('core/weapons arsenal (M2-03): missile slot', () => {
       if (torpedo === undefined) break;
       if ((torpedo.flags & ShotFlag.Sliding) !== 0) xs.push(torpedo.x);
     }
-    // Sliding at 5 px/tick (the static camera adds nothing).
+    // Sliding at the file's speed (5 px/tick at K=1; the static camera adds nothing).
     expect(xs.length).toBeGreaterThan(5);
-    for (let k = 1; k < xs.length; k++) expect(xs[k] - xs[k - 1]).toBeCloseTo(5, 9);
+    for (let k = 1; k < xs.length; k++) expect(xs[k] - xs[k - 1]).toBeCloseTo(v1speed(5), 9);
     // Through both 1-hp enemies, stopped by the 1000-hp one (damage 2), never reached the last.
     expect(weak1.hp).toBeLessThanOrEqual(0);
     expect(weak2.hp).toBeLessThanOrEqual(0);
@@ -518,15 +531,15 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
       most = Math.max(most, rings.length);
       for (const ring of rings) {
         expect(ring.hw).toBeCloseTo(ring.hh / 2, 9);
-        expect(ring.hh).toBeLessThanOrEqual(20);
-        expect(ring.hh).toBeGreaterThanOrEqual(4);
+        expect(ring.hh).toBeLessThanOrEqual(v1rel(20));
+        expect(ring.hh).toBeGreaterThanOrEqual(v1rel(4));
       }
       if (rings.length > 0) sizes.push(rings[0].hh);
     }
     expect(most).toBe(3);
-    expect(sizes).toContain(20);
-    // The first ring's size over its first ticks: 4.5, 5, 5.5 …
-    expect(sizes.slice(0, 3)).toEqual([4.5, 5, 5.5]);
+    expect(sizes).toContain(v1rel(20));
+    // The first ring's size over its first ticks: 4.5, 5, 5.5 … (at K=1).
+    expect(sizes.slice(0, 3)).toEqual([v1rel(4.5), v1rel(5), v1rel(5.5)]);
   });
 
   it('Ripple: its ring hits (and dies on) what it touches, not what is wholly inside it', () => {
@@ -543,7 +556,7 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
     expect(i).toBeGreaterThanOrEqual(0);
     run(v, 36);
     const [ring] = shots(v, ShotKind.Ripple);
-    expect(ring.hh).toBe(20);
+    expect(ring.hh).toBe(v1rel(20));
     const inside = v.enemies.spawn(v.content.enemyIndex.get('target')!, ring.x + ring.vx, ring.y)!;
     run(v, 1);
     expect(inside.hp).toBe(1000);
@@ -552,7 +565,7 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
     run(v, 1);
     expect(inside.hp).toBe(999);
     expect(shots(v, ShotKind.Ripple)).toEqual([]);
-    expect(RIPPLE_RING_WIDTH).toBe(4);
+    expect(RIPPLE_RING_WIDTH).toBe(v1rel(4));
   });
 
   it('Cyclone Laser: a piercing 8-px-thick beam up to 80 px with swirling segments', () => {
@@ -565,9 +578,9 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
       run(w, 1);
       const [beam] = shots(w, ShotKind.Laser);
       lengths.push(beam.length);
-      expect(beam.hh).toBe(4);
+      expect(beam.hh).toBe(v1rel(4));
     }
-    expect(lengths[11]).toBe(80);
+    expect(lengths[11]).toBe(v1rel(80));
     // Pierced: both targets hit, several times each (cooldown 6).
     expect(small.hp).toBeLessThan(1000);
     expect(wide.hp).toBeLessThan(1000);
@@ -590,8 +603,8 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
       most = Math.max(most, beams.length);
       const ship = w.players[0];
       for (const beam of beams) {
-        expect(Math.abs(beam.y - ship.y)).toBe(4);
-        expect(beam.length).toBeLessThanOrEqual(16);
+        expect(Math.abs(beam.y - ship.y)).toBe(v1rel(4));
+        expect(beam.length).toBeLessThanOrEqual(v1rel(16));
       }
     }
     expect(most).toBe(4);

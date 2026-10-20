@@ -32,7 +32,7 @@ import {
   fireBendingLaser,
 } from '../../src/bullets/index.js';
 import { findFloor, terrainSolidAt } from '../../src/collision/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -143,7 +143,10 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** A static stage `t` with a flat 32-px floor. */
+/** Tile edge of the shipped tileset — 8 while the content is v1's, 12 once R2-02 ports it (the kit). */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
+/** A static stage `t` with a flat four-row floor (one playfield tall at each scale). */
 const TERRAIN_DB: ContentDb = (() => {
   const { db, issues } = loadContent(
     [
@@ -162,12 +165,14 @@ const TERRAIN_DB: ContentDb = (() => {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TILE,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                { from: 0, to: 3384, floor: { base: 4 * TILE, amp: 0, period: 64, seed: 1 } },
+              ],
             },
           },
           events: [],
