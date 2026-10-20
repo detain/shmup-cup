@@ -31,7 +31,8 @@
  *   mid-game loading)
  * - shmup_tech.md §2.5 — boot on the TV from `file://` (no `fetch`), fast launch
  *
- * **Public API.** {@link loadImages}, {@link loadImagesTimed}, {@link ImageTiming},
+ * **Public API.** {@link loadImages}, {@link loadImagesTimed}, {@link loadImageTimed},
+ * {@link ImageTiming},
  * {@link ImageFactory}, {@link LoadableImage}, {@link AssetLoadError}, {@link loadAtlasManifest},
  * {@link LoadedAtlasManifest}, {@link parseAtlasManifest}, {@link manifestDigest},
  * {@link atlasPageUrls}, {@link AtlasManifestError}, {@link AtlasManifestFailure},
@@ -221,6 +222,38 @@ export function loadImagesTimed<T extends LoadableImage>(
       }),
   );
   return Promise.all(pending).then((images) => ({ images, timings }));
+}
+
+/**
+ * Loads and times one image — the single-page call site of the lazy atlas residency (plan
+ * R3-04.M3b: a page's image is fetched exactly when its stage is prepared, through this, and
+ * {@link loadImagesTimed} does the work). Like it, an image with `decode()` is decoded before the
+ * result settles; a rejected decode still counts.
+ *
+ * @param url - The image URL (relative to the page).
+ * @param createImage - Image factory (normally `() => new Image()`).
+ * @param now - Optional clock in milliseconds (normally `performance.now`).
+ * @returns A promise of the image and its timing; resolves once the image is loaded (and decoded,
+ *   where the engine has `decode()`).
+ * @throws Rejects with {@link AssetLoadError} naming the URL when the request or the load fails.
+ *
+ * @example
+ * ```ts
+ * const { image, timing } = await loadImageTimed(urls[p], createImage, () => performance.now());
+ * atlas.loadPage(p, image);
+ * ```
+ */
+export async function loadImageTimed<T extends LoadableImage>(
+  url: string,
+  createImage: () => T,
+  now?: () => number,
+): Promise<{ readonly image: T; readonly timing: ImageTiming }> {
+  const result = await loadImagesTimed([url], createImage, undefined, now);
+  const image = result.images[0];
+  const timing = result.timings[0];
+  // loadImagesTimed fills both for every URL it settles; a hole would be a bug, not a miss.
+  if (image === undefined || timing === undefined) throw new AssetLoadError(url);
+  return { image, timing };
 }
 
 /** Manifest format versions this shell reads: 1, and 2 since plan R1-05 (pages carry `group`). */

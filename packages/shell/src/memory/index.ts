@@ -46,9 +46,15 @@
  *   without a GPU copy is uploaded there and then (the renderer's `uploadTextureSource`), so none
  *   uploads on its first draw mid-play. A stage outside the campaign (the dev ranges) needs every
  *   page. Since R1-05 the shipped atlas is split into a `common` page and one page per zone
- *   (`assets/source/atlas-groups.json`), so a zone keeps `common` plus its own page on the GPU;
- *   the decoded images of every page stay in memory (policy "all", W3-2 — dropping them needs a
- *   re-fetch after a WebGL context loss). The residency **owns** the pages' GPU lifetime: Pixi's
+ *   (`assets/source/atlas-groups.json`), so a zone keeps `common` plus its own page on the GPU.
+ *   Since R3-04 the residency runs in two modes: eager (the default, R1-05) keeps the decoded
+ *   images of every page in memory (policy "all", W3-2 — dropping them needs a re-fetch after a
+ *   WebGL context loss); lazy ({@link createLazyAtlasResidency}, decision W5-15) starts the atlas
+ *   with unloaded pages, fetches, decodes, attaches and uploads a stage's pages at the stage
+ *   change, and drops the pages it does not need with their decoded images (policy "resident") —
+ *   when a page's image is dropped its bytes leave memory, so a WebGL context loss must re-fetch
+ *   the resident pages (plan R3-04.M3d).
+ *   The residency **owns** the pages' GPU lifetime: Pixi's
  *   texture GC never drops an atlas page (`@shmup/render-pixi` `createAtlas` turns its
  *   `autoGarbageCollect` off), and a prepare unloads every page the next stage does not need,
  *   **whether or not it believes the page resident** — a page drawn behind its back (the weapon
@@ -71,8 +77,11 @@
  * {@link stageSpriteSets}, {@link StageSpriteSets}, {@link atlasPageNeeds}, {@link AtlasPageNeeds},
  * {@link potBytes}, {@link FILTER_TARGETS}, {@link fixedTargetBytes}, {@link textureBudgetFor},
  * {@link DEFAULT_DISPLAY}, {@link ImagePolicy},
- * {@link stagePages}, {@link createAtlasResidency}, {@link AtlasResidency},
- * {@link AtlasResidencyOptions}, {@link AtlasPageLike}, {@link connectAtlasResidency},
+ * {@link stagePages}, {@link createAtlasResidency}, {@link createLazyAtlasResidency},
+ * {@link AtlasResidency},
+ * {@link AtlasResidencyOptions}, {@link AtlasResidencyLazyOptions}, {@link AtlasPageLike}, {@link connectAtlasResidency},
+ * {@link LazyAtlasResidency}, {@link AtlasResidencyLazy}, {@link AtlasLazyPages},
+ * {@link AtlasPageImageLoader},
  * {@link prepareShownWorld}, {@link worldOfView}, {@link stageIndexOfWorld},
  * {@link ResidencyGameLike}, {@link ResidencyWorldLike}, {@link MEMORY_BUDGET_BYTES},
  * {@link TEXTURE_BUDGET_BYTES},
@@ -105,7 +114,7 @@ import {
   type ContentDb,
   type CrtFilter,
 } from '@shmup/core';
-import type { AtlasManifest } from '@shmup/render-pixi';
+import type { AtlasManifest, AtlasPageImage } from '@shmup/render-pixi';
 import type { EventDispatcher } from '../dispatch/index.js';
 import { SCENE_VIEW_SPRITES } from '../scene-view/index.js';
 
@@ -734,6 +743,53 @@ export interface AtlasPageLike {
   unload(): void;
 }
 
+/**
+ * The atlas page API a lazy residency drives — render-pixi's `Atlas` satisfies it (plan R3-04.M3a,
+ * decision W5-15: pages may start unloaded, be attached with {@link AtlasLazyPages.loadPage} and
+ * detached with {@link AtlasLazyPages.unloadPage}, which also drops the decoded image).
+ */
+export interface AtlasLazyPages {
+  /**
+   * Attaches a decoded image to a page and points its frames at it (the atlas's `loadPage`).
+   *
+   * @param page - Page index.
+   * @param image - The decoded page image; its size must match the manifest entry.
+   */
+  loadPage(page: number, image: AtlasPageImage): void;
+  /**
+   * Detaches a page: frees its GPU copy and drops its decoded image (the atlas's `unloadPage`).
+   *
+   * @param page - Page index.
+   */
+  unloadPage(page: number): void;
+  /**
+   * Whether a page's image is attached now (the atlas's `isPageLoaded`).
+   *
+   * @param page - Page index.
+   * @returns `true` when the page holds its image.
+   */
+  isPageLoaded(page: number): boolean;
+}
+
+/**
+ * One page image fetched and decoded — the bound single-page `loadImageTimed` of the shell's
+ * loader (plan R3-04.M3b).
+ *
+ * @param page - The page index.
+ * @returns A promise that resolves with the decoded image once the fetch and the decode are done;
+ *   rejects with the loader's `AssetLoadError` naming the page's URL when the fetch or the load
+ *   fails (a rejected decode still counts as loaded, as in {@link loadImagesTimed}).
+ */
+export type AtlasPageImageLoader = (page: number) => Promise<AtlasPageImage>;
+
+/** What {@link AtlasResidencyLazyOptions.lazy} carries (plan R3-04.M3b, decision W5-15). */
+export interface AtlasResidencyLazy {
+  /** The atlas's deferred-page API (`Atlas.loadPage` / `unloadPage` / `isPageLoaded`). */
+  readonly atlas: AtlasLazyPages;
+  /** Fetches and decodes one page's image (the loader's single-page timed load). */
+  readonly loadImage: AtlasPageImageLoader;
+}
+
 /** Options of {@link createAtlasResidency} (plan R1-05). */
 export interface AtlasResidencyOptions {
   /**
@@ -748,7 +804,8 @@ export interface AtlasResidencyOptions {
   readonly upload?: (page: number) => void;
   /**
    * Called after the first prepare and after every prepare that unloaded or uploaded a page (the
-   * shell writes `data-shmup-atlas-pages` / `data-shmup-atlas-load-ms` from it).
+   * shell writes `data-shmup-atlas-pages` / `data-shmup-atlas-load-ms` from it). In lazy mode a
+   * prepare that attached page images reports too, even when nothing left the GPU.
    *
    * @param resident - The pages now resident, ascending (a new array).
    * @param unloads - Pages unloaded so far.
@@ -763,6 +820,18 @@ export interface AtlasResidencyOptions {
   readonly now?: () => number;
 }
 
+/** Options of {@link createLazyAtlasResidency} (plan R3-04.M3b, decision W5-15). */
+export interface AtlasResidencyLazyOptions extends AtlasResidencyOptions {
+  /**
+   * Lazy residency (plan R3-04): the atlas's pages start unloaded and
+   * {@link LazyAtlasResidency.prepare} fetches and decodes the images of the pages the stage
+   * needs, attaches and uploads them, and detaches the pages it does not need (with their decoded
+   * images). The residency's {@link AtlasResidency.imagePolicy} is `resident`; the eager
+   * {@link createAtlasResidency} keeps every page's image (`all`).
+   */
+  readonly lazy: AtlasResidencyLazy;
+}
+
 /** Keeps on the GPU the atlas pages the stage about to play needs (see the module docs). */
 export interface AtlasResidency {
   /** Per page: whether it is (or will be, on its next draw) on the GPU. */
@@ -773,6 +842,13 @@ export interface AtlasResidency {
   readonly uploads: number;
   /** How long the last prepare that changed something took, in ms (0 before any, or untimed). */
   readonly lastPrepareMs: number;
+  /**
+   * Which decoded page images the runtime holds ({@link ImagePolicy}): `all` for the eager
+   * residency — every page keeps its image (W3-2); `resident` for the lazy one — only the pages
+   * attached now hold theirs, the rest were dropped with their images (plan R3-04, W5-15). The
+   * boot's memory estimates read it ({@link StageMemoryInputs.imagePolicy}).
+   */
+  readonly imagePolicy: ImagePolicy;
   /**
    * Prepares the next stage: unloads every page it does not need, marks the needed ones resident
    * and — with {@link AtlasResidencyOptions.upload} — uploads every needed page that has no GPU
@@ -797,9 +873,246 @@ export interface AtlasResidency {
 }
 
 /**
- * Creates the residency over the renderer's atlas pages (every page starts resident; none is known
- * to be on the GPU, so the first prepare with `upload` uploads — or, for a page Pixi already
- * uploaded, just binds — every needed page).
+ * A residency over an atlas whose pages start unloaded (plan R3-04.M3b, decision W5-15): the same
+ * page bookkeeping as {@link AtlasResidency}, but its prepare loads images — fetch, decode,
+ * attach, upload — and so runs asynchronously. {@link createLazyAtlasResidency} builds one.
+ */
+export interface LazyAtlasResidency {
+  /** Per page: whether it is (or will be, on its next draw) on the GPU. */
+  readonly resident: readonly boolean[];
+  /** Pages unloaded so far (only those it believed resident — {@link LazyAtlasResidency.prepare}). */
+  readonly unloads: number;
+  /** Pages uploaded by prepares so far (always 0 without {@link AtlasResidencyOptions.upload}). */
+  readonly uploads: number;
+  /** How long the last prepare that changed something took, in ms (0 before any, or untimed). */
+  readonly lastPrepareMs: number;
+  /** Always `resident` — only attached pages hold a decoded image ({@link ImagePolicy}). */
+  readonly imagePolicy: ImagePolicy;
+  /**
+   * Whether a prepare's page loads are in flight (plan R3-04.M3c: the frame loop redraws the last
+   * frame instead of ticking while the shown World's pages load). A plain field read — the frame
+   * loop may poll it every frame; it never allocates.
+   */
+  readonly loading: boolean;
+  /**
+   * Prepares the next stage (lazy mode): detaches and drops every page the stage does not need,
+   * fetches and decodes the images of the needed pages that are not attached yet (in parallel,
+   * through {@link AtlasResidencyLazy.loadImage}), attaches them, and uploads every needed page
+   * with {@link AtlasResidencyOptions.upload}. Idempotent: preparing the stage already prepared
+   * loads nothing and reports nothing.
+   *
+   * @remarks
+   * Cold path — a `PrepareStage` event, a new World, boot; it allocates. Detaching a page frees
+   * both its GPU copy and its decoded image; the residency still calls `unload` on **every** page
+   * the stage does not need, resident or not (the self-healing rule of {@link AtlasResidency}).
+   * A prepare superseded by a newer one before its loads settle attaches its images (they are
+   * decoded bytes worth keeping) but leaves the GPU pass and the report to the newer prepare;
+   * a page the newer stage does not need leaves the atlas at the next prepare. A failed load
+   * rejects the prepare **after** its detach pass: the pages the stage does not need are already
+   * gone; the needed ones stay as they were and the next prepare retries them.
+   *
+   * @param stageIndex - The stage about to play (`content.stages` index), -1 = none (every page:
+   *   the menus, the dev scenes, linked stages — W5-18).
+   * @returns Resolves when every needed page is attached and the GPU pass is done.
+   * @throws Rejects with the loader error of the first page whose image failed to load — the
+   *   `AssetLoadError` of {@link AtlasResidencyLazy.loadImage}.
+   */
+  prepare(stageIndex: number): Promise<void>;
+}
+
+/**
+ * The shared residency state (both factories below build on it).
+ *
+ * @param pages - The atlas's texture sources (`Atlas.pages`).
+ * @param needs - {@link atlasPageNeeds} of the same atlas.
+ * @param options - Eager upload, change callback and clock.
+ * @param lazy - The lazy inputs ({@link AtlasResidencyLazyOptions.lazy}), `undefined` for the
+ *   eager residency.
+ * @returns The residency — a {@link LazyAtlasResidency} when `lazy` is set.
+ * @throws {RangeError} When the page counts differ.
+ */
+function residencyCore(
+  pages: readonly AtlasPageLike[],
+  needs: AtlasPageNeeds,
+  options: AtlasResidencyOptions,
+  lazy: AtlasResidencyLazy | undefined,
+): AtlasResidency | LazyAtlasResidency {
+  if (pages.length !== needs.global.length) {
+    throw new RangeError(`residency: ${pages.length} pages but needs for ${needs.global.length}`);
+  }
+  const { upload, onChange, now } = options;
+  // Eager: every page holds its image and starts resident. Lazy: none is attached yet, so none is
+  // resident until a prepare loads it (and a page stops being resident the moment it is dropped).
+  const resident = pages.map(() => lazy === undefined);
+  /** Per page: uploaded by a prepare and not unloaded since. */
+  const onGpu = pages.map(() => false);
+  const state = {
+    unloads: 0,
+    uploads: 0,
+    lastPrepareMs: 0,
+    prepared: false,
+    /** Prepares between their detach pass and their settle (the lazy `loading` flag). */
+    pending: 0,
+  };
+  /** The generation of the last-started lazy prepare (supersession, see `prepareLazy`). */
+  let generation = 0;
+
+  /**
+   * The detach pass both modes share: unload every page the stage does not need (self-healing:
+   * `unload` reaches every one of them, and lazy also drops its image), mark the rest resident.
+   *
+   * @param needed - The stage's page indices, ascending.
+   * @param dropImages - Whether a dropped page also loses its decoded image (lazy mode).
+   * @returns Pages unloaded that it believed resident.
+   */
+  function detachUnneeded(needed: readonly number[], dropImages: boolean): number {
+    let unloaded = 0;
+    for (let p = 0; p < pages.length; p++) {
+      const need = needed.indexOf(p) >= 0;
+      if (!need) {
+        // Resident or not: a page drawn behind the residency's back (the weapon select's
+        // preview) has a GPU copy it does not know of. Without one, `unload` frees nothing.
+        if (dropImages) lazy?.atlas.unloadPage(p);
+        pages[p].unload();
+        onGpu[p] = false;
+        if (resident[p]) unloaded++;
+      }
+      resident[p] = need;
+    }
+    return unloaded;
+  }
+
+  /**
+   * The upload pass both modes share: put every needed page with no known GPU copy on the GPU.
+   *
+   * @param needed - The stage's page indices, ascending.
+   * @returns Pages uploaded.
+   */
+  function uploadNeeded(needed: readonly number[]): number {
+    if (upload === undefined) return 0;
+    let uploaded = 0;
+    for (const p of needed) {
+      if (onGpu[p]) continue;
+      try {
+        upload(p);
+      } catch (_error) {
+        // Pixi uploads the page on its first draw instead; the next prepare tries again.
+        continue;
+      }
+      onGpu[p] = true;
+      uploaded++;
+    }
+    return uploaded;
+  }
+
+  /**
+   * Reports a prepare that changed something (or the first one).
+   *
+   * @param needed - The stage's page indices, ascending.
+   * @param unloaded - Pages this prepare detached that it believed resident.
+   * @param uploaded - Pages this prepare uploaded.
+   * @param startMs - The prepare's clock start.
+   * @param changed - Whether anything moved beyond the counters (`prepared` alone reports once).
+   */
+  function reportPrepare(
+    needed: readonly number[],
+    unloaded: number,
+    uploaded: number,
+    startMs: number,
+    changed: boolean,
+  ): void {
+    state.unloads += unloaded;
+    state.uploads += uploaded;
+    if (changed || unloaded > 0 || uploaded > 0 || !state.prepared) {
+      state.prepared = true;
+      state.lastPrepareMs = (now === undefined ? 0 : now()) - startMs;
+      onChange?.(needed, state.unloads, state.lastPrepareMs);
+    }
+  }
+
+  if (lazy !== undefined) {
+    const { atlas, loadImage } = lazy;
+    const prepareLazy = async (stageIndex: number): Promise<void> => {
+      const startMs = now === undefined ? 0 : now();
+      const gen = ++generation;
+      state.pending++;
+      try {
+        const needed = stagePages(needs, stageIndex);
+        const unloaded = detachUnneeded(needed, true);
+        // Pages to fetch: needed and not attached. The loads run in parallel (`Promise.all`,
+        // not `allSettled` — Chromium 68); a rejecting load settles the whole prepare.
+        const missing: number[] = [];
+        for (const p of needed) if (!atlas.isPageLoaded(p)) missing.push(p);
+        const images = await Promise.all(missing.map((p) => loadImage(p)));
+        let attached = 0;
+        for (let i = 0; i < missing.length; i++) {
+          const image = images[i];
+          const page = missing[i];
+          if (image === undefined || page === undefined) continue;
+          atlas.loadPage(page, image);
+          attached++;
+        }
+        // Superseded: the images are attached (they are decoded bytes worth keeping) but the
+        // newer prepare owns the GPU pass and the report; a page its stage does not need leaves
+        // the atlas at the next prepare.
+        if (gen !== generation) return;
+        const uploaded = uploadNeeded(needed);
+        reportPrepare(needed, unloaded, uploaded, startMs, attached > 0);
+      } finally {
+        state.pending--;
+      }
+    };
+    const residency: LazyAtlasResidency = {
+      resident,
+      imagePolicy: 'resident',
+      get unloads() {
+        return state.unloads;
+      },
+      get uploads() {
+        return state.uploads;
+      },
+      get lastPrepareMs() {
+        return state.lastPrepareMs;
+      },
+      get loading() {
+        return state.pending > 0;
+      },
+      prepare(stageIndex) {
+        return prepareLazy(stageIndex);
+      },
+    };
+    return residency;
+  }
+  const residency: AtlasResidency = {
+    resident,
+    imagePolicy: 'all',
+    get unloads() {
+      return state.unloads;
+    },
+    get uploads() {
+      return state.uploads;
+    },
+    get lastPrepareMs() {
+      return state.lastPrepareMs;
+    },
+    prepare(stageIndex) {
+      const startMs = now === undefined ? 0 : now();
+      const needed = stagePages(needs, stageIndex);
+      const unloaded = detachUnneeded(needed, false);
+      const uploaded = uploadNeeded(needed);
+      reportPrepare(needed, unloaded, uploaded, startMs, false);
+      return unloaded;
+    },
+  };
+  return residency;
+}
+
+/**
+ * Creates the residency over the renderer's atlas pages (the R1-05 eager shape): every page
+ * starts resident and none is known to be on the GPU, so the first prepare with `upload` uploads
+ * — or, for a page Pixi already uploaded, just binds — every needed page; every page keeps its
+ * decoded image ({@link ImagePolicy} `all`). The lazy residency over an atlas whose pages start
+ * unloaded is {@link createLazyAtlasResidency} (plan R3-04, decision W5-15).
  *
  * @param pages - The atlas's texture sources (`Atlas.pages`).
  * @param needs - {@link atlasPageNeeds} of the same atlas.
@@ -820,64 +1133,42 @@ export function createAtlasResidency(
   needs: AtlasPageNeeds,
   options: AtlasResidencyOptions = {},
 ): AtlasResidency {
-  if (pages.length !== needs.global.length) {
-    throw new RangeError(`residency: ${pages.length} pages but needs for ${needs.global.length}`);
-  }
-  const { upload, onChange, now } = options;
-  const resident = pages.map(() => true);
-  /** Per page: uploaded by a prepare and not unloaded since. */
-  const onGpu = pages.map(() => false);
-  const state = { unloads: 0, uploads: 0, lastPrepareMs: 0, prepared: false };
-  return {
-    resident,
-    get unloads() {
-      return state.unloads;
-    },
-    get uploads() {
-      return state.uploads;
-    },
-    get lastPrepareMs() {
-      return state.lastPrepareMs;
-    },
-    prepare(stageIndex) {
-      const startMs = now === undefined ? 0 : now();
-      const needed = stagePages(needs, stageIndex);
-      let unloaded = 0;
-      for (let p = 0; p < pages.length; p++) {
-        const need = needed.indexOf(p) >= 0;
-        if (!need) {
-          // Resident or not: a page drawn behind the residency's back (the weapon select's
-          // preview) has a GPU copy it does not know of. Without one, `unload` frees nothing.
-          pages[p].unload();
-          onGpu[p] = false;
-          if (resident[p]) unloaded++;
-        }
-        resident[p] = need;
-      }
-      let uploaded = 0;
-      if (upload !== undefined) {
-        for (const p of needed) {
-          if (onGpu[p]) continue;
-          try {
-            upload(p);
-          } catch (_error) {
-            // Pixi uploads the page on its first draw instead; the next prepare tries again.
-            continue;
-          }
-          onGpu[p] = true;
-          uploaded++;
-        }
-      }
-      state.unloads += unloaded;
-      state.uploads += uploaded;
-      if (unloaded > 0 || uploaded > 0 || !state.prepared) {
-        state.prepared = true;
-        state.lastPrepareMs = (now === undefined ? 0 : now()) - startMs;
-        onChange?.(needed, state.unloads, state.lastPrepareMs);
-      }
-      return unloaded;
-    },
-  };
+  return residencyCore(pages, needs, options, undefined) as AtlasResidency;
+}
+
+/**
+ * Creates the **lazy** residency over an atlas whose pages start unloaded (plan R3-04.M3b,
+ * decision W5-15): {@link LazyAtlasResidency.prepare} fetches and decodes the images of the pages
+ * the stage needs, attaches and uploads them, and detaches the pages it does not need with their
+ * decoded images — the runtime {@link ImagePolicy} `resident`. The page bookkeeping
+ * (`resident`, `unloads`, `uploads`, `lastPrepareMs`, the `onChange` contract and the self-healing
+ * unload rule) is the eager residency's; the mode is selected by this factory, not by the
+ * options. (A sibling factory rather than an overload of {@link createAtlasResidency}: with
+ * overloads, the lint's export analysis flags every statement of the implementation — the two
+ * single-signature exports keep the rule honest.)
+ *
+ * @param pages - The atlas's texture sources (`Atlas.pages`).
+ * @param needs - {@link atlasPageNeeds} of the same atlas.
+ * @param options - The eager options plus {@link AtlasResidencyLazyOptions.lazy}.
+ * @returns The lazy residency.
+ * @throws {RangeError} When the page counts differ.
+ *
+ * @example
+ * ```ts
+ * // The atlas was built with `null` images (R3-04.M3a); the residency loads what it needs.
+ * const residency = createLazyAtlasResidency(atlas.pages, needs, {
+ *   upload: (p) => renderer.uploadTextureSource(atlas.pages[p]),
+ *   lazy: { atlas, loadImage: (p) => loadImageTimed(urls[p], createImage).then((r) => r.image) },
+ * });
+ * await residency.prepare(content.stageIndex.get('zone-b') ?? -1);
+ * ```
+ */
+export function createLazyAtlasResidency(
+  pages: readonly AtlasPageLike[],
+  needs: AtlasPageNeeds,
+  options: AtlasResidencyLazyOptions,
+): LazyAtlasResidency {
+  return residencyCore(pages, needs, options, options.lazy) as LazyAtlasResidency;
 }
 
 /**
@@ -1044,10 +1335,12 @@ export function connectAtlasResidency(
 }
 
 /**
- * Which decoded page images an estimate charges (plan R1-05): `all` — every page's (what the
- * runtime does, W3-2: all pages load at boot and Pixi keeps each image); `resident` — only the
- * stage's own pages' (the lazy policy R3-04 may build, B3b: other zones' pages hold nothing);
- * `none` — no image at all (`keepPageImages: false`).
+ * Which decoded page images an estimate charges (plan R1-05, used at runtime since R3-04.M3b —
+ * {@link AtlasResidency.imagePolicy} reports what the residency actually keeps): `all` — every
+ * page's (the eager residency, what the runtime did until R3-04: all pages load at boot and Pixi
+ * keeps each image); `resident` — only the stage's own pages' (the lazy residency of plan R3-04,
+ * W5-15: a detached page holds nothing, its image is dropped with it); `none` — no image at all
+ * (`keepPageImages: false`).
  */
 export type ImagePolicy = 'all' | 'resident' | 'none';
 
