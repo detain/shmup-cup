@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FX_CUES, FX_CUE_NAMES, PLAYFIELD_Y, SFX_CUES } from '@shmup/core';
+import { FX_CUES, FX_CUE_NAMES, PLAYFIELD_Y, SFX_CUES, WORLD_SCALE } from '@shmup/core';
 import type { Sprite } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -135,7 +135,7 @@ describe('render-pixi/particles content (kind fx)', () => {
     const bound = new Set(content.triggers.filter((t) => t.event === 'fx').map((t) => t.cue));
     expect([...bound].sort()).toEqual([...FX_CUE_NAMES].sort());
     expect(content.triggers.find((t) => t.cue === 'Clink')?.preset).toBe('clink');
-    expect(content.triggers.find((t) => t.cue === 'PlayerShot')?.dx).toBe(9);
+    expect(content.triggers.find((t) => t.cue === 'PlayerShot')?.dx).toBe(9 * WORLD_SCALE);
     // Defaults are applied.
     const spark = content.presets[ids.indexOf('spark')];
     expect([spark.direction, spark.spread, spark.gravity, spark.blend, spark.frames]).toEqual([

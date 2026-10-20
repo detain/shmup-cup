@@ -92,6 +92,9 @@ export const MAX_PARTICLE_STEP = 60;
 /** Most particles one burst may spawn (`count × intensity`). */
 const MAX_BURST = 64;
 
+/** Offset row for bursts not fired from a cue row: slot 0 is zero. */
+const NO_OFFSETS = new Float64Array(1);
+
 /** Binary-angle units per degree (1024 units per turn). */
 const UNITS_PER_DEGREE = 1024 / 360;
 
@@ -803,13 +806,27 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
   };
 
   /**
-   * Spawns one particle of preset `p` around `(x, y)`.
+   * Spawns one particle of preset `p` around `(x, y)` plus `dx[slot]` / `dy[slot]`.
    *
    * @param p - Preset index (valid).
    * @param x - World x of the burst's centre.
    * @param y - World y of the burst's centre.
+   * @param dx - The cue table's x offsets ({@link NO_OFFSETS} without a row).
+   * @param dy - The cue table's y offsets.
+   * @param slot - The trigger's slot in both rows.
+   * @remarks
+   * The offset travels as the row and its slot, never as a sum: a fractional `dx` added at the
+   * call would box on every shot through the un-inlined {@link emitSlot} call (the muzzle's 13.5
+   * px after the world port). It is read here, where the position is stored.
    */
-  const spawn = (p: number, x: number, y: number): void => {
+  const spawn = (
+    p: number,
+    x: number,
+    y: number,
+    dx: Float64Array,
+    dy: Float64Array,
+    slot: number,
+  ): void => {
     const i = takeSlot();
     // No branch on the radius: merging the caller's (possibly small-integer) x with a fractional
     // sum would make V8 box the result — an allocation per particle.
@@ -819,8 +836,8 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
     const turn = spread > 0 ? (rand16() * spread) >>> 16 : 0;
     const angle = (pDir[p] - (spread >> 1) + turn) & 1023;
     const speed = pSpeedMin[p] + (pSpeedSpan[p] * rand16()) / 65536;
-    px[i] = x + cosB(a) * d;
-    py[i] = y + sinB(a) * d;
+    px[i] = x + dx[slot] + cosB(a) * d;
+    py[i] = y + dy[slot] + sinB(a) * d;
     pvx[i] = cosB(angle) * speed;
     pvy[i] = sinB(angle) * speed;
     const lifeSpan = pLifeSpan[p];
@@ -834,6 +851,38 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
   };
 
   /**
+   * Spawns one burst of a preset. The shared body behind {@link emit} and {@link emitRow}: the
+   * whole `(x, y)` and the trigger row's slot travel separately to {@link spawn}, so no
+   * fractional sum is computed at a call and boxed on the way in.
+   *
+   * @param p - Preset index.
+   * @param x - World x.
+   * @param y - World y.
+   * @param intensity - Multiplier.
+   * @param dx - The cue table's x offsets ({@link NO_OFFSETS} without a row).
+   * @param dy - The cue table's y offsets.
+   * @param slot - The trigger's slot in both rows.
+   * @returns Particles spawned.
+   */
+  const emitSlot = (
+    p: number,
+    x: number,
+    y: number,
+    intensity: number,
+    dx: Float64Array,
+    dy: Float64Array,
+    slot: number,
+  ): number => {
+    // A fractional index would read `pCount[0.5]` (undefined) and return NaN.
+    if (!(p >= 0 && p < pCount.length) || p % 1 !== 0) return 0;
+    const times = intensity >= 4 ? 4 : intensity >= 1 ? Math.floor(intensity) : 1;
+    let n = pCount[p] * times;
+    if (n > MAX_BURST) n = MAX_BURST;
+    for (let k = 0; k < n; k++) spawn(p | 0, x, y, dx, dy, slot);
+    return n;
+  };
+
+  /**
    * See {@link ParticleSystem.emit}.
    *
    * @param p - Preset index.
@@ -842,15 +891,8 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
    * @param intensity - Multiplier.
    * @returns Particles spawned.
    */
-  const emit = (p: number, x: number, y: number, intensity: number): number => {
-    // A fractional index would read `pCount[0.5]` (undefined) and return NaN.
-    if (!(p >= 0 && p < pCount.length) || p % 1 !== 0) return 0;
-    const times = intensity >= 4 ? 4 : intensity >= 1 ? Math.floor(intensity) : 1;
-    let n = pCount[p] * times;
-    if (n > MAX_BURST) n = MAX_BURST;
-    for (let k = 0; k < n; k++) spawn(p | 0, x, y);
-    return n;
-  };
+  const emit = (p: number, x: number, y: number, intensity: number): number =>
+    emitSlot(p, x, y, intensity, NO_OFFSETS, NO_OFFSETS, 0);
 
   /**
    * Spawns every preset of one cue slot row.
@@ -878,9 +920,10 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
     if (base >= table.length) return 0;
     let spawnedNow = 0;
     for (let k = 0; k < MAX_TRIGGERS_PER_CUE; k++) {
-      const p = table[base + k];
+      const slot = base + k;
+      const p = table[slot];
       if (p < 0) break;
-      spawnedNow += emit(p, x + dx[base + k], y + dy[base + k], intensity);
+      spawnedNow += emitSlot(p, x, y, intensity, dx, dy, slot);
     }
     return spawnedNow;
   };
