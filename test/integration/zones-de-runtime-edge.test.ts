@@ -46,6 +46,7 @@ import {
   itPortPending,
 } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -125,6 +126,22 @@ function expectInOpenSpace(world: World, where: string): void {
   expect(ship.y - world.camera.y, where).toBeLessThan(PLAYFIELD_H - 8);
 }
 
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
 describe('integration: zones D and E, edge cases (M2-12)', () => {
   const starts: [string, number, number, number][] = [];
   for (const [letter, stageId] of [
@@ -134,7 +151,7 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
     stage.checkpoints.forEach((checkpoint, i) => {
       // Zone D's camera is down in the caves from the dive (x 3,560) on.
-      const y = stageId === 'zone-d' && checkpoint.x > 3560 ? 200 : 0;
+      const y = stageId === 'zone-d' && checkpoint.x > v1rel(3560) ? v1rel(200) : 0;
       starts.push([letter, i, checkpoint.x, y]);
     });
   }
@@ -152,7 +169,7 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expect(Math.floor(world.camera.x)).toBe(x);
+      expectCameraAt(world, x);
       expect(world.camera.y).toBe(y);
       steps(game, 90);
       expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)}`);
@@ -162,7 +179,7 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
 
   it('checks four checkpoints per zone, two of zone D in the caves', () => {
     expect(starts).toHaveLength(8);
-    expect(starts.filter((s) => s[3] === 200)).toHaveLength(2);
+    expect(starts.filter((s) => s[3] === v1rel(200))).toHaveLength(2);
   });
 
   it('skips into the caves: the camera at y 200, the ship flown in there, CINDER BASTION fighting in view', () => {
@@ -173,19 +190,19 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    expect(world.camera.y).toBe(200);
+    expect(world.camera.y).toBe(v1rel(200));
     steps(game, 90);
     expectInOpenSpace(world, 'after the skip');
     const bastion = DB.enemyIndex.get('cinder-bastion');
     const boss = world.bosses.boss;
     stepUntil(game, () => boss.specIndex === bastion && boss.state === 3, 1500);
-    expect(world.camera.y).toBe(200);
-    expect(boss.y - world.camera.y).toBeGreaterThanOrEqual(44 - 1e-9);
-    expect(boss.y - world.camera.y).toBeLessThanOrEqual(PLAYFIELD_H - 44 + 1e-9);
+    expect(world.camera.y).toBe(v1rel(200));
+    expect(boss.y - world.camera.y).toBeGreaterThanOrEqual(v1rel(44) - 1e-9);
+    expect(boss.y - world.camera.y).toBeLessThanOrEqual(PLAYFIELD_H - v1rel(44) + 1e-9);
     // Its core and arms are drawn inside the view, below the cave roof's rows.
     const core = boss.parts.find((p) => p.name === 'core');
-    expect((core?.y ?? 0) - world.camera.y).toBeGreaterThan(30);
-    expect((core?.y ?? 0) - world.camera.y).toBeLessThan(PLAYFIELD_H - 30);
+    expect((core?.y ?? 0) - world.camera.y).toBeGreaterThan(v1rel(30));
+    expect((core?.y ?? 0) - world.camera.y).toBeLessThan(PLAYFIELD_H - v1rel(30));
     expectInOpenSpace(world, 'while the boss fights');
   });
 
@@ -200,10 +217,10 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
       const world = game.world;
       world.debugFlags.godMode = true;
       const full = bricks(world);
-      world.stage?.jumpTo(4300);
+      world.stage?.jumpTo(v1x(4300));
       // `jumpTo` moves the camera, not the ship: fly it in anew down in the caves.
       spawnPlayer(world.players[0], world.camera);
-      stepUntil(game, () => world.camera.x >= 5400, 3000);
+      stepUntil(game, () => world.camera.x >= v1x(5400), 3000);
       const broken = full - bricks(world);
       expect(broken).toBeGreaterThan(10);
       // A crash (god mode off for the hit).
@@ -217,9 +234,9 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
       stepUntil(game, () => ship.state === 'alive', 600);
       expect(ship.lives).toBe(2);
       // Back at the checkpoint in the caves, every brick standing again.
-      expect(world.camera.x).toBeGreaterThanOrEqual(4000);
-      expect(world.camera.x).toBeLessThan(4400);
-      expect(world.camera.y).toBe(200);
+      expect(world.camera.x).toBeGreaterThanOrEqual(v1x(4000));
+      expect(world.camera.x).toBeLessThan(v1x(4400));
+      expect(world.camera.y).toBe(v1rel(200));
       expect(bricks(world)).toBe(full);
       expectInOpenSpace(world, 'after the restart');
     },
@@ -233,27 +250,27 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(3300);
+    world.stage?.jumpTo(v1x(3300));
     spawnPlayer(world.players[0], world.camera);
     // The scroll stop over the pit: the camera half-way down.
-    stepUntil(game, () => world.camera.y >= 100, 2000);
-    expect(world.camera.x).toBeLessThan(4000);
+    stepUntil(game, () => world.camera.y >= v1rel(100), 2000);
+    expect(world.camera.x).toBeLessThan(v1x(4000));
     world.debugFlags.godMode = false;
     const ship = world.players[0];
     stepUntil(game, () => ship.state === 'alive' && ship.invulnTicks === 0, 400);
-    expect(world.camera.x).toBeLessThan(4000);
+    expect(world.camera.x).toBeLessThan(v1x(4000));
     expect(playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags)).toBe(true);
     game.step();
     world.debugFlags.godMode = true;
     stepUntil(game, () => ship.state === 'alive', 600);
     // Back up on the surface at the checkpoint at 2,200.
-    expect(world.camera.x).toBeGreaterThanOrEqual(2200);
-    expect(world.camera.x).toBeLessThan(2600);
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(2200));
+    expect(world.camera.x).toBeLessThan(v1x(2600));
     expect(world.camera.y).toBe(0);
     expectInOpenSpace(world, 'after the restart');
     // And down again at the pit.
-    stepUntil(game, () => world.camera.x >= 3700, 4000);
-    expect(world.camera.y).toBe(200);
+    stepUntil(game, () => world.camera.x >= v1x(3700), 4000);
+    expect(world.camera.y).toBe(v1rel(200));
     expectInOpenSpace(world, 'after the second dive');
   });
 

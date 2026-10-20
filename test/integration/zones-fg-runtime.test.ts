@@ -36,6 +36,7 @@ import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
+import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -85,6 +86,22 @@ function placed(world: World, tile: number): number {
   return count;
 }
 
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
 describe('integration: zones F and G in the game (M2-13)', () => {
   it('opens PRISM LABYRINTH’s gallery entrance when every turret is shot and plays GLIMMER CACHE', () => {
     const platform = createHeadlessPlatform();
@@ -107,20 +124,24 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     expect(stageOf(game)).toBe('zone-g');
     expect(prepared).toContain(DB.stageIndex.get('zone-g'));
     const zone = game.world;
-    expect(Math.floor(zone.camera.x)).toBe(2200);
+    expectCameraAt(zone, v1x(2200));
     const entrance = zone.stage?.stage.events.find((e) => e.type === 'bonus');
     expect(entrance?.type === 'bonus' ? entrance.entrance : '').toBe('ground');
     const until = entrance?.type === 'bonus' ? entrance.until : 0;
     // Shoot down every ground enemy of the gallery as it comes on screen (the player's kills).
-    let shot = 0;
+    // The count rides the stats, not the kill calls: in the ported world the ship's shots can
+    // destroy a turret in the very tick its OnScreen flag first rises (checkView before the
+    // damage phase of one step), which a flag-polling loop can never see. groundKilled counts
+    // every player kill of a ground enemy either way.
+    const killed = zone.enemies.stats.groundKilled;
     for (let i = 0; i < 3000 && zone.camera.x <= until; i++) {
       for (const e of zone.enemies.enemies) {
         if (e.state !== EnemyState.Live || e.anchor === BodyAnchor.Air) continue;
-        if ((e.flags & EnemyFlag.OnScreen) !== 0 && zone.enemies.kill(e, 0)) shot++;
+        if ((e.flags & EnemyFlag.OnScreen) !== 0) zone.enemies.kill(e, 0);
       }
       step(0);
     }
-    expect(shot).toBeGreaterThanOrEqual(4);
+    expect(zone.enemies.stats.groundKilled - killed).toBeGreaterThanOrEqual(4);
     for (let i = 0; i < 10 && zone.bonus.entered < 0; i++) step(0);
     expect(zone.bonus.entered).toBeGreaterThanOrEqual(0);
     expect(DB.stages[zone.bonus.enteredStage()].id).toBe('glimmer-cache');
@@ -219,8 +240,9 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     let cell = -1;
     for (let i = 0; i < map.tiles.length && cell < 0; i++) if (map.tiles[i] === tissue) cell = i;
     expect(cell).toBeGreaterThanOrEqual(0);
-    const px = (cell % map.cols) * 8 + 4;
-    const py = Math.floor(cell / map.cols) * 8 + 4;
+    const ts = map.tileSize;
+    const px = (cell % map.cols) * ts + ts / 2;
+    const py = Math.floor(cell / map.cols) * ts + ts / 2;
     let hit: number = TerrainHit.None;
     for (let k = 0; k < 5 && hit !== TerrainHit.Destroyed; k++) hit = destructible.hit(px, py, 1);
     expect(hit).toBe(TerrainHit.Destroyed);
@@ -237,7 +259,7 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     expect(map.tiles[cell]).toBe(tissue);
     // Broken again with a ship's box over it (the cell on screen, the ship held on it): it waits
     // until the ship has gone.
-    world.stage?.jumpTo(px - 300);
+    world.stage?.jumpTo(px - v1rel(300));
     const ship = world.players[0];
     spawnPlayer(ship, world.camera);
     for (let k = 0; k < 5 && map.tiles[cell] !== 0; k++) destructible.hit(px, py, 1);

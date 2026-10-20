@@ -31,6 +31,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -47,7 +48,7 @@ const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
 /** The zones and their bosses. */
 const ZONES = [
-  { stage: 'zone-d', boss: 'cinder-bastion', depth: 200 },
+  { stage: 'zone-d', boss: 'cinder-bastion', depth: v1rel(200) },
   { stage: 'zone-e', boss: 'squall-steed', depth: 0 },
 ] as const;
 

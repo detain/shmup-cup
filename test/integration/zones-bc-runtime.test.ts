@@ -27,10 +27,12 @@ import {
   type ContentDb,
   type Game,
   type SceneFlow,
+  type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
+import { v1x, v1y, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -49,6 +51,22 @@ const DB: ContentDb = (() => {
  * @returns The stage id.
  */
 const stageOf = (game: Game): string => game.world.stage?.stage.id ?? '';
+
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
 
 describe('integration: zones B and C in the game (M2-11)', () => {
   it('flies into BRINE NEBULA’s marked gap and plays PEARL GROTTO — its clear is the zone’s', () => {
@@ -73,18 +91,20 @@ describe('integration: zones B and C in the game (M2-11)', () => {
     expect(stageOf(game)).toBe('zone-b');
     expect(prepared).toContain(DB.stageIndex.get('zone-b'));
     const zone = game.world;
-    expect(Math.floor(zone.camera.x)).toBe(4600); // the third checkpoint
+    expectCameraAt(zone, v1x(4600)); // the third checkpoint
     // The gap: world x 5616–5680 at the top, between two blocks 24 px tall.
     const entrance = zone.stage?.stage.events.find((e) => e.type === 'bonus');
     const region = entrance?.type === 'bonus' ? entrance.region : null;
-    expect(region).toMatchObject({ x: 5616, y: 0, w: 64, h: 24 });
+    // The ported gap: world-x stretches plain, the top block's bottom row picks up
+    // the playfield pad (v1y), so h = 1.5·24 + 36 on the ported frame.
+    expect(region).toMatchObject({ x: v1x(5616), y: 0, w: v1rel(64), h: v1y(24) });
     const ship = zone.players[0];
     // Under the blocks (y ≈ 40), then up into the gap once the ship is past the left block.
-    for (let i = 0; i < 3000 && ship.x < 5630; i++) {
+    for (let i = 0; i < 3000 && ship.x < v1x(5630); i++) {
       const y = ship.y - zone.camera.y;
-      step(ship.state !== 'alive' ? 0 : y > 44 ? Action.Up : y < 36 ? Action.Down : 0);
+      step(ship.state !== 'alive' ? 0 : y > v1y(44) ? Action.Up : y < v1y(36) ? Action.Down : 0);
     }
-    expect(ship.x).toBeGreaterThanOrEqual(5630);
+    expect(ship.x).toBeGreaterThanOrEqual(v1x(5630));
     for (let i = 0; i < 60 && zone.bonus.entered < 0; i++) step(Action.Up);
     expect(zone.bonus.entered).toBeGreaterThanOrEqual(0);
     expect(DB.stages[zone.bonus.enteredStage()].id).toBe('brine-grotto');
@@ -108,7 +128,7 @@ describe('integration: zones B and C in the game (M2-11)', () => {
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-b' }, DB);
     game.world.debugFlags.godMode = true;
     const world = game.world;
-    world.stage?.jumpTo(3700);
+    world.stage?.jumpTo(v1x(3700));
     let captain = false;
     let scrolled = false;
     for (let i = 0; i < 1200; i++) {
@@ -127,7 +147,7 @@ describe('integration: zones B and C in the game (M2-11)', () => {
     expect(scrolled).toBe(true); // a captain never locks the scroll
     expect(world.status).toBe('playing');
     // Then the WARNING names the stage boss.
-    world.stage?.jumpTo(9200);
+    world.stage?.jumpTo(v1x(9200));
     for (let i = 0; i < 600 && world.status === 'playing'; i++) {
       game.step();
       game.events.clear();
@@ -140,7 +160,7 @@ describe('integration: zones B and C in the game (M2-11)', () => {
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-c' }, DB);
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(4500);
+    world.stage?.jumpTo(v1x(4500));
     const worm = DB.enemyIndex.get('dune-worm');
     let lowest = Number.NEGATIVE_INFINITY;
     let highest = Number.POSITIVE_INFINITY;

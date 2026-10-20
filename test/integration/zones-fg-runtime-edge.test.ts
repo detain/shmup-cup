@@ -53,6 +53,7 @@ import {
   itPortPending,
 } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -185,6 +186,22 @@ function crash(game: Game): void {
   world.debugFlags.godMode = true;
 }
 
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
 describe('integration: zones F and G, edge cases (M2-13)', () => {
   const starts: [string, number, number][] = [];
   for (const [letter, stageId] of [
@@ -208,7 +225,7 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expect(Math.floor(world.camera.x)).toBe(x);
+      expectCameraAt(world, x);
       expect(world.camera.y).toBe(0);
       steps(game, 90);
       expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)}`);
@@ -274,16 +291,20 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
       const destructible = world.gimmicks.destructible;
       expect(destructible).not.toBeNull();
       if (destructible === null) return;
-      world.stage?.jumpTo(2700);
+      world.stage?.jumpTo(v1x(2700));
       spawnPlayer(world.players[0], world.camera);
-      stepUntil(game, () => world.camera.x >= 2800, 400);
+      stepUntil(game, () => world.camera.x >= v1x(2800), 400);
       // Shoot open every tissue cell of the first three walls (world x < 3,300).
       const map = destructible.map;
       let broken = 0;
       for (let i = 0; i < map.tiles.length; i++) {
-        if (map.tiles[i] !== tissue || (i % map.cols) * 8 >= 3300) continue;
+        if (map.tiles[i] !== tissue || (i % map.cols) * map.tileSize >= v1x(3300)) continue;
         for (let k = 0; k < 5 && map.tiles[i] !== 0; k++) {
-          destructible.hit((i % map.cols) * 8 + 4, Math.floor(i / map.cols) * 8 + 4, 1);
+          destructible.hit(
+            (i % map.cols) * map.tileSize + map.tileSize / 2,
+            Math.floor(i / map.cols) * map.tileSize + map.tileSize / 2,
+            1,
+          );
         }
         broken++;
       }
@@ -298,8 +319,8 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
         DB.tilesets.find((t) => t.id === 'terrain-vault')?.tiles[tissue - 1]?.regen ?? 0;
       expect(world.tick - brokeAt).toBeLessThan(regen);
       expect(ship.lives).toBe(2);
-      expect(world.camera.x).toBeGreaterThanOrEqual(2200);
-      expect(world.camera.x).toBeLessThan(2500);
+      expect(world.camera.x).toBeGreaterThanOrEqual(v1x(2200));
+      expect(world.camera.x).toBeLessThan(v1x(2500));
       expect(cellsOf(world, tissue)).toBe(full);
       expect(destructible.destroyed).toBe(0);
       expectInOpenSpace(world, 'after the restart');
@@ -353,7 +374,7 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     const disarmed = world.bonus.armed[0] === 0;
     // The window again: shoot the first `shootAfter` ground enemies, spare the rest.
     let after = 0;
-    for (let i = 0; i < 4000 && world.camera.x <= until + 60; i++) {
+    for (let i = 0; i < 4000 && world.camera.x <= until + v1rel(60); i++) {
       if (world.bonus.armed[0] === 1) after += shootGround(world, (n) => after + n >= shootAfter);
       game.step();
       game.events.clear();
@@ -365,8 +386,8 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     const run = galleryRestart(99);
     expect(run.before).toBe(2);
     expect(run.disarmed).toBe(true);
-    expect(run.cameraBack).toBeGreaterThanOrEqual(2200);
-    expect(run.cameraBack).toBeLessThan(2300);
+    expect(run.cameraBack).toBeGreaterThanOrEqual(v1x(2200));
+    expect(run.cameraBack).toBeLessThan(v1x(2300));
     expect(run.after).toBeGreaterThanOrEqual(4);
     expect(run.entered).toBe(0);
   });
@@ -401,7 +422,7 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     for (let i = 0; i < 100 && stageOf(game) === 'zone-g'; i++) step();
     expect(stageOf(game)).toBe('glimmer-cache');
     const returnX = flow.run.bonusReturnX;
-    expect(returnX).toBe(2300);
+    expect(returnX).toBe(v1x(2300));
     const cache = game.world;
     for (let i = 0; i < 200 && cache.players[0].state !== 'alive'; i++) step();
     game.debug.godMode = false;
@@ -422,14 +443,16 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     expect(back.bonus.locked).toBe(true);
     expect(back.players[0].lives).toBe(lives - 1);
     expect([flow.run.inBonus, flow.run.bonusLocked]).toEqual([false, true]);
-    // Every gallery turret shot down again: the locked entrance stays shut.
+    // Every gallery turret shot down again: the locked entrance stays shut. Counted through the
+    // stats (the ship's shots can take a turret in the tick it first shows — see the runtime
+    // suite's note), as the entry loop's flag test cannot see those.
     game.debug.godMode = true;
-    let shot = 0;
-    for (let i = 0; i < 3000 && back.camera.x <= 3160; i++) {
-      shot += shootGround(back);
+    const killed = back.enemies.stats.groundKilled;
+    for (let i = 0; i < 3000 && back.camera.x <= v1x(3160); i++) {
+      shootGround(back);
       step();
     }
-    expect(shot).toBeGreaterThanOrEqual(4);
+    expect(back.enemies.stats.groundKilled - killed).toBeGreaterThanOrEqual(4);
     expect(back.bonus.entered).toBe(-1);
     expect(stageOf(game)).toBe('zone-g');
   }, 60_000);

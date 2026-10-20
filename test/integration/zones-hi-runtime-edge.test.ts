@@ -46,6 +46,7 @@ import {
   itPortPending,
 } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -120,6 +121,22 @@ function enemyIndex(id: string): number {
   return index;
 }
 
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
 describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
   const starts: [string, number, number][] = [];
   for (const [letter, stageId] of [
@@ -143,7 +160,7 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expect(Math.floor(world.camera.x)).toBe(x);
+      expectCameraAt(world, x);
       expect(world.camera.y).toBe(0);
       // A while in open space: the fly-in, then the pistons swinging round the ship.
       for (let k = 0; k < 4; k++) {
@@ -169,8 +186,8 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
       world.debugFlags.godMode = true;
       steps(game, 90);
       expectInOpenSpace(world, 'after the skip');
-      expect(world.camera.x).toBeGreaterThan(4400);
-      expect(world.camera.x).toBeLessThan(4520);
+      expect(world.camera.x).toBeGreaterThan(v1x(4400));
+      expect(world.camera.x).toBeLessThan(v1x(4520));
       const boss = world.bosses.boss;
       stepUntil(
         game,
@@ -198,8 +215,8 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     world.debugFlags.godMode = true;
     steps(game, 90);
     expectInOpenSpace(world, 'after the skip');
-    expect(world.camera.x).toBeGreaterThan(8800);
-    expect(world.camera.x).toBeLessThan(9000);
+    expect(world.camera.x).toBeGreaterThan(v1x(8800));
+    expect(world.camera.x).toBeLessThan(v1x(9000));
     const boss = world.bosses.boss;
     stepUntil(
       game,

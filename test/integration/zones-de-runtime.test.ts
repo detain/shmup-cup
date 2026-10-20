@@ -27,6 +27,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
+import { v1x, v1y, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -54,15 +55,31 @@ function bricks(world: World): number {
   return count;
 }
 
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
 describe('integration: zones D and E in the game (M2-12)', () => {
   it('dives MAGMA DEEP’s camera 200 px into the caves at a scroll stop, then scrolls on', () => {
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, DB);
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(3300);
+    world.stage?.jumpTo(v1x(3300));
     let stopped = 0;
     let deepest = 0;
-    for (let i = 0; i < 1200 && world.camera.x < 3700; i++) {
+    for (let i = 0; i < 1200 && world.camera.x < v1x(3700); i++) {
       const x = world.camera.x;
       const y = world.camera.y;
       game.step();
@@ -72,9 +89,9 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     }
     // The pan ran while the scroll stood still, down to the caves, and the scroll went on.
     expect(stopped).toBeGreaterThan(100);
-    expect(deepest).toBe(200);
-    expect(world.camera.x).toBeGreaterThanOrEqual(3700);
-    expect(world.camera.y).toBe(200);
+    expect(deepest).toBe(v1rel(200));
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(3700));
+    expect(world.camera.y).toBe(v1rel(200));
     expect(world.status).toBe('playing');
   });
 
@@ -95,14 +112,14 @@ describe('integration: zones D and E in the game (M2-12)', () => {
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-d');
       expect(prepared).toContain(DB.stageIndex.get('zone-d'));
-      expect(Math.floor(world.camera.x)).toBe(4000);
-      expect(world.camera.y).toBe(200);
+      expectCameraAt(world, v1x(4000));
+      expect(world.camera.y).toBe(v1rel(200));
       // The ship flies in down there too, in the open band of the caves.
       for (let i = 0; i < 90; i++) game.step();
       const ship = world.players[0];
       expect(ship.state).toBe('alive');
-      expect(ship.y - world.camera.y).toBeGreaterThan(40);
-      expect(ship.y - world.camera.y).toBeLessThan(160);
+      expect(ship.y - world.camera.y).toBeGreaterThan(v1y(40));
+      expect(ship.y - world.camera.y).toBeLessThan(v1y(160));
     },
   );
 
@@ -114,17 +131,17 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(4300);
+    world.stage?.jumpTo(v1x(4300));
     // Fly in anew where the camera is now (down in the caves), at the middle row.
     spawnPlayer(world.players[0], world.camera);
     game.step();
     const before = bricks(world);
     expect(before).toBeGreaterThan(200);
-    for (let i = 0; i < 2400 && world.camera.x < 5700; i++) {
+    for (let i = 0; i < 2400 && world.camera.x < v1x(5700); i++) {
       game.step();
       game.events.clear();
     }
-    expect(world.camera.x).toBeGreaterThanOrEqual(5500);
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(5500));
     // Autofire (and the Options) chewed holes into the walls the ship flew at.
     expect(bricks(world)).toBeLessThan(before - 10);
   });
