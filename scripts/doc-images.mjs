@@ -262,9 +262,9 @@ function loosePlate(content, scale, pad) {
  * @throws {Error} When a sprite source is invalid (every issue is listed).
  */
 function loadArt() {
-  // The v1 art (artScale 1, R2-01 decision W4-6) until R2-03 regenerates: the boss portraits
-  // assemble part art by v1 part offsets, which need v1 art until R2-02 ports the offsets.
-  const { sprites, fonts, issues } = collectSprites({ artScale: 1 });
+  // The shipped interim art (the `interim.mjs` default scale, ×3/2) since R2-03.I1: R2-02
+  // ported the boss part offsets ×3/2, so the portraits assemble v2 art at v2 offsets.
+  const { sprites, fonts, issues } = collectSprites();
   if (issues.length > 0) {
     throw new Error(
       `asset sources are invalid:\n${issues.map((i) => `  - ${i.path} ${i.message}`).join('\n')}`,
@@ -359,6 +359,9 @@ function tileBand(target, tile, y, height, offset) {
  *   (1920×432 at the 640-wide frame; 1152×432 at v1's 384).
  */
 function buildLogoBanner(art) {
+  // The layout is measured on the interim (×3/2) art (R2-03.I1): the logo is 248×41, the
+  // taglines 9-wide glyphs, the KESTREL 24×14, its thruster 9×5, the orb 12×12, the shot
+  // 12×5, and the planet rim one 192×72 tile tall (its height drives the band below).
   const width = FRAME_W;
   const height = 144;
   const canvas = createImage(width, height);
@@ -367,31 +370,31 @@ function buildLogoBanner(art) {
   const mid = art.frames.get('bg/stars-mid')?.[0];
   const near = art.frames.get('bg/stars-near')?.[0];
   if (far !== undefined) tileBand(canvas, far, 0, height, 0);
-  if (mid !== undefined) tileBand(canvas, mid, 0, height, 37);
-  if (near !== undefined) tileBand(canvas, near, 0, height, 91);
+  if (mid !== undefined) tileBand(canvas, mid, 0, height, 55);
+  if (near !== undefined) tileBand(canvas, near, 0, height, 136);
   const rim = art.frames.get('bg/azure-verge')?.[0];
-  if (rim !== undefined) tileBand(canvas, rim, height - 48, 48, 12);
+  if (rim !== undefined) tileBand(canvas, rim, height - rim.height, rim.height, 18);
   const logo = art.frames.get('ui/logo')?.[0];
   if (logo !== undefined) {
-    draw(canvas, logo, Math.floor((width - logo.width) / 2), 34);
+    draw(canvas, logo, Math.floor((width - logo.width) / 2), 18);
   }
-  shadeBand(canvas, 66, 42, 0.6);
-  drawText(canvas, art, 'THE IRON TIDE HAS RISEN', width / 2, 76, TITLE_INK, true);
-  drawText(canvas, art, 'NINE ZONES - TWO SHIPS - ONE CUP', width / 2, 90, TEXT_INK, true);
+  shadeBand(canvas, 68, 52, 0.6);
+  drawText(canvas, art, 'THE IRON TIDE HAS RISEN', width / 2, 78, TITLE_INK, true);
+  drawText(canvas, art, 'NINE ZONES - TWO SHIPS - ONE CUP', width / 2, 99, TEXT_INK, true);
   const kestrel = art.frames.get('ships/kestrel')?.[1];
   const thruster = art.frames.get('ships/kestrel-thruster')?.[0];
   const orb = art.frames.get('options/orb')?.[0];
   if (kestrel !== undefined) {
-    const shipX = 150;
-    const shipY = 112;
+    const shipX = 225;
+    const shipY = 122;
     if (orb !== undefined) {
-      for (let i = 0; i < 4; i++) draw(canvas, orb, shipX - 16 - i * 13, shipY + 1 + (i % 2) * 2);
+      for (let i = 0; i < 4; i++) draw(canvas, orb, shipX - 24 - i * 19, shipY + 1 + (i % 2) * 3);
     }
-    if (thruster !== undefined) draw(canvas, thruster, shipX - 6, shipY + 3);
+    if (thruster !== undefined) draw(canvas, thruster, shipX - 9, shipY + 4);
     draw(canvas, kestrel, shipX, shipY);
     const shot = art.frames.get('shots/basic')?.[0];
     if (shot !== undefined) {
-      for (let i = 0; i < 3; i++) draw(canvas, shot, shipX + 24 + i * 34, shipY + 3);
+      for (let i = 0; i < 3; i++) draw(canvas, shot, shipX + 36 + i * 51, shipY + 4);
     }
   }
   return magnify(canvas, 3);
@@ -432,12 +435,14 @@ function assembleBoss(frames, boss) {
   const placed = [];
   for (const part of boss.parts ?? []) {
     const parent = part.parent === undefined ? null : (anchors.get(part.parent) ?? null);
+    // The ported offsets are world pixels and can be halves (an odd v1 offset × 3/2);
+    // the anchor keeps the exact sum a parent inherits, the sprite centres on a whole pixel.
     const x = (parent?.x ?? 0) + (part.x ?? 0);
     const y = (parent?.y ?? 0) + (part.y ?? 0);
     anchors.set(part.name, { x, y });
     const frame = frames.get(part.sprite)?.[0];
     if (frame === undefined) continue;
-    placed.push({ frame, x, y, core: part.core === true });
+    placed.push({ frame, x: Math.round(x), y: Math.round(y), core: part.core === true });
   }
   if (placed.length === 0) return null;
   // Cores sit inside the hull: draw them last so a picture always shows the weak point.
