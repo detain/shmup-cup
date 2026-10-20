@@ -318,9 +318,10 @@ Rules the combinators follow:
 
 ## Units and the rescale tool (R1-03)
 
-v2 ports every content file from the 384×216 frame to 640×360 with a ×1.5 world (plan
-[R1-03 / R2-02](../../plan_resolution.md), §2.6). The frame grows ×5/3 but the world only ×3/2, so
-one factor cannot port a number: it depends on what the number **means**. So every number of every
+v2's content port — R2-02, run for real at `8dbe858` — moved every shipped file from v1's world to the
+×1.5 world inside the 640×360 frame (plan [R1-03 / R2-02](../../plan_resolution.md), §2.6). The frame
+grew ×5/3 but the world only ×3/2, so one factor cannot port a number: it depends on what the number
+**means**. So every number of every
 content kind declares a unit, and a tool ports the content by those units. The unit table for content
 authors — every unit, examples, its rule — is in [`content/README.md`](../../content/README.md#units);
 signatures are in [api-reference.md](api-reference.md#data--content-schemas-and-loader) (*Content
@@ -357,8 +358,8 @@ own rule would pull apart what lines up in v1. An object declares them with `s.o
   screenX′`). A ground enemy's spawn carries the same pair with `when: 'ground-enemy'`, applied only when
   the event's enemy has a `ground` anchor (owner decision O11): it keeps its terrain spot and appears
   64 px of camera travel earlier than ×k. An absent `screenX` stands for `fromWidth + screenPastEnd` —
-  the block pair reads it from `DEFAULT_BLOCK_SCREEN_X`, which is why R2-02 runs the tool before it
-  changes that constant;
+  the block pair reads it from `DEFAULT_BLOCK_SCREEN_X`, which is why R2-02 ran the tool before W5
+  re-expressed that constant and its siblings in `WORLD_SCALE` terms (`ed2edfe`);
 - a **box** (`rule: 'box-y'`) — the `y` + `h` of a block, a trigger region or a bonus region port as two
   edges (`rescaleBoxY`), so a box hanging from the top edge grows by the pad instead of moving down.
 
@@ -421,13 +422,29 @@ by `--art-scale`. The tool never guesses that scale: it measures it from the atl
 the tilesets' `tileSize`, refuses to run without `--art-scale` when they say anything but ×1, and refuses a
 given `--art-scale` they contradict (exit 2). `--force-art-scale` overrides the tiles for an atlas whose
 bands are drawn at another scale than its tiles — the one split it cannot see, so pass `--art-scale 1.5`
-only once both the 12-px tiles and the ×1.5 bands are in the atlas. The real ×1.5 run is R2-02's, after
-R2-01 flipped core: `--factor 1.5 --top-pad 36 --from-width 384 --from-height 200 --tile-size 8 --to-width
-640 --art-scale 1.5`.
+only once both the 12-px tiles and the ×1.5 bands are in the atlas.
+
+**The port's run (R2-02).** After R2-01 flipped core, the real run used the geometry v1's content was
+written for: `--factor 1.5 --top-pad 36 --from-width 384 --from-height 200 --tile-size 8 --to-width 640
+--art-scale 1.5` — **126 files (10 skipped), 10,623 values, 4,035 changes in 77 files, 0 unclassified,
+0 errors** (`8dbe858`). The same command at today's defaults — `--factor 1 --dry-run` — is the identity
+check that must keep passing on every later content edit: it reports **126 files (10 skipped), 11,372
+values, 0 changes, 0 unclassified, 0 errors** on the ported tree. (The walk's value total grows with the
+ported tilemaps' padded rows, which is why the two lines count different values.)
+
+The run's report demanded hand review, and the commit records the fixes it accepted (`test/port-v2/handfix.patch`,
+applied before the flip): gimmick-range `events[8]` gained `"until": 2275` so the took-low trigger cannot
+stay open past the high falling-rock at 2276; zone-g `events[15]` (the facet-turret spawn) moved from x 3446
+to x 3450, back inside `events[14]`'s ground-bonus window; zone G's rising walls went one row up in the
+tilemap; the captain-circler's content home became x 530 where the raw port gave 562 ([enemies-and-behaviors.md](enemies-and-behaviors.md#frame-anchored-or-world-r1-01-for-r2-02)
+derives why). hunter-range needed no hand fix — `hunter.option` flies to its `lineY` (72 at the port).
 
 **Adding a numeric field or a tunable:** give the field a `unit` (or build an `s.custom` with its meta), a
 new tunable a row in `BEHAVIOR_PARAM_UNITS`; if the value only makes sense with a sibling, declare the pair.
-Run `--factor 1 --dry-run` (zero changes) and `--factor 1.5 --top-pad 36 --dry-run` (zero unclassified).
+Since R2-02 one run is the rule — `node scripts/content/rescale.mjs --factor 1 --dry-run` with the tool's
+own defaults must report **zero changes, zero unclassified, zero errors** on the shipped content. (Before
+the port these were two checks: factor 1 as identity at the content's own v1 geometry, and the ×1.5 run for
+zero unclassified; with the content ported, factor 1 at the live geometry covers both.)
 
 **The guards:** `test/integration/content-units.test.ts` (every number of every kind, shipped and examples,
 has a unit; every tunable resolves), `packages/core/test/data/content-file-units.test.ts` and
@@ -436,8 +453,9 @@ has a unit; every tunable resolves), `packages/core/test/data/content-file-units
 moves a parsed value fails; re-pin on purpose with `SHMUP_FINGERPRINT_PRINT=1`),
 `packages/core/test/data/schema-meta.test.ts` / `units-pairs.test.ts`, and the tool's
 `test/scripts/content/rescale.test.ts` / `rescale-edge.test.ts` (the fixtures in `fixtures/rescale/` with
-their expected ×1.5 output and a round trip through the loaders, the shipped content at factor 1 and at the
-real v1 → v2 geometry, the command line; they do not depend on core's frame, so they hold through R2-01).
+their expected ×1.5 output and a round trip through the loaders, the command line, and the shipped content
+at factor 1 — the identity runs on either tree. The four shipped ×1.5 port cases read `content/` as v1 data
+and are `it.runIf(CONTENT_STILL_V1)`, so they skip by design now that the content is ported).
 
 ## Extending it
 

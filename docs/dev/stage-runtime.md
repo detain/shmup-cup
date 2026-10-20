@@ -25,7 +25,8 @@ plugs into is [sim-world.md](sim-world.md); how views reach the screen is
 Background: `shmup_feat.md` §14 (scroll-driven timeline, scripted camera path, tilemap
 terrain, parallax), §10 (invisible checkpoints), §22 (stage runtime, tilemap collider,
 parallax manager, determinism); plan §3.2 (tick phase 3), §3.4 (render contract) and
-decisions **D20** (384×200 playfield) and **D26** (world-space coordinates).
+decisions **D20** (384×200 playfield — v1's; today 640×336 inside the 640×360 frame) and **D26**
+(world-space coordinates).
 
 ## The picture at a glance
 
@@ -95,19 +96,19 @@ per stage; that the named stage is of type `bonus` is checked after the referenc
    tilemap gets `stage.terrain = { tileSize, cols, rows, tiles, tilesetId }`: a row-major
    `Uint8Array` of tile ids (0 = empty), `cols = ceil((length + PLAYFIELD_W) / tileSize)` (the
    camera's right edge reaches `length + PLAYFIELD_W`; `stageMapWidth`), `rows = rowsTall`
-   (`PLAYFIELD_H / TILE_SIZE` rows fill the playfield: 25 today). The same
+   (`PLAYFIELD_H / TILE_SIZE` rows fill the playfield: 28 today). The same
    pass resolves each `block` event's `tile` name (default `solid`) into `tileId` (M2-07).
 
 ### Tilesets (`content/tilesets/`, kind `tileset`)
 
 One tileset per file: `id`, `sprite` (the atlas sprite whose frames draw the tiles),
-`tileSize` (`TILE_SIZE` = 8 — fixed in M1; `core/config`'s since R1-01; since R1-04 the loader
-accepts 8 or 12, `MIN_TILE_SIZE` / `MAX_TILE_SIZE`, and `test/integration/tile-size.test.ts` holds
+`tileSize` (`TILE_SIZE` = 12 since R2-01's flip — v1 had 8; `core/config`'s since R1-01; since R1-04
+the loader accepts 8 or 12, `MIN_TILE_SIZE` / `MAX_TILE_SIZE`, and `test/integration/tile-size.test.ts` holds
 shipped content to `TILE_SIZE`) and up to 255 `tiles`. **Tile id = position in
 `tiles` + 1**; id 0 is the empty cell. Each tile has a unique `name`, a `type` (`solid`,
 `hazard`, or `empty` = drawn but never colliding), the `frame` of the sprite that draws it, an
 `anchor` (`floor` = heights grow up from the bottom edge, `ceiling` = down from the top edge)
-and a `mask` of `tileSize` column heights (0 … `tileSize`; 8 today). At load, `buildTilesetTables` turns them into
+and a `mask` of `tileSize` column heights (0 … `tileSize`; 12 today). At load, `buildTilesetTables` turns them into
 per-id typed arrays — `type` (`TerrainType` code), `anchor` (`TerrainAnchor` code), `mask`
 (`[id * tileSize + column]`), `frame` (`-1` for id 0) and `byName` — which the queries and the
 renderer read. Since M2-07 a colliding tile may also have `hp` (destructible, 1–255), `regen`
@@ -116,9 +117,23 @@ per id ([advanced-stages.md](advanced-stages.md#destructible-terrain-corecollisi
 
 `terrain-a.tileset.json` mirrors the 20 tiles the asset pipeline draws for `tiles/terrain-a`
 (solid, floor, ceiling, two walls, 45° and 22.5° slopes for both anchors, and since M2-07 the
-destructible `brick`, `cube` and regenerating `tissue` — ids 18–20);
-`test/integration/stage-terrain.test.ts` compares every mask with the opaque pixels of its
-atlas frame, so art and collision cannot drift apart.
+destructible `brick`, `cube` and regenerating `tissue` — ids 18–20).
+
+**The mask checks are shared.** "Every mask equals the opaque pixels of its frame" and "the
+heightfield finds a tile for every cell it shapes" live in `test/integration/terrain-checks.ts`
+(R3-03.V4b, `87d8087`), which takes a tileset as loaded data (a `ContentFile`) — `stage-terrain.test.ts`
+and the ingest-side checks run the same bodies; V4c (`07194ac`) deleted the spec's private copies, so
+the module holds the only ones. They exist because art and collision may never drift apart.
+
+**Moving masks when art is re-ingested.** `scripts/assets/tileset-masks.mjs` (R3-03.V4b) ports a
+real-art tileset's sidecar masks (`shmup-ingest-masks@1`) onto a new frame order:
+`--write <tileset> <masks.json>` moves each mask by frame **index** (a mask whose frame *name* changed
+only warns), splices the text and Prettier-formats it, and touches `content/` only when a `content/`
+path is given. A **solid** tile whose mask changes is refused without `--allow-remap` — the heightfield
+places partial cells by `anchor` + mask (W5-11), so a solidity change silently renumbers the whole map;
+hazard and empty masks are free to move. `--check <tileset> <masks.json>` compares one pair; bare
+`--check` scans every sidecar mask under `assets/source/sprites/` and `art-prompts/v2/ingested/` (never
+candidates) and exits non-zero on any disagreement.
 
 ### The heightfield generator
 
@@ -408,8 +423,8 @@ a `StageParallaxView` of typed arrays: per band the layer (`far` → `BgFar`, `m
 sprite id, `spacing` (horizontal repeat distance, normally the sprite width), scroll `factor`
 and `baseY` (playfield row at camera y 0). `updateParallaxView(view, camera.x, camera.y)` —
 called by the World in phase 9 — sets `offsetX = (camera.x · factor) mod spacing` and `y =
-baseY − camera.y · factor`. Bands repeat horizontally only: for two rows of 128-px star tiles,
-list the band twice with `y` 0 and 128 (as `test-range` does).
+baseY − camera.y · factor`. Bands repeat horizontally only: for two rows of 192-px star tiles (the
+art's v1 128 × `WORLD_SCALE`), list the band twice with `y` 0 and 192 (as `test-range` does).
 
 **Terrain view.** `createTerrainView(map, stage, db, changes?)` gives the renderer a
 `TerrainView` over the collision map's own `tiles` array (not a copy) plus the tileset's sprite id
@@ -595,7 +610,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/core/test/debug/` | `hashWorld` covers the stage state and the players' hit fields |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts`, `renderer/` | The terrain ring and parallax bands ([rendering-and-shell.md](rendering-and-shell.md#tests)) |
 | `packages/shell/test/flight/`, `apps/web/test/boot/` | The flight scene with a stage (no starfield, stage name, the World's views); `stageFromSearch`, `contentStageIds`, the unknown-id warning |
-| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames and a pinned grid fingerprint; **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint — since M2-12 measured in the rows the camera shows when the ship (view x ≈ 64) reaches the column (a stage runner alongside; zone D's caves are map rows 200–399); every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
+| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels (through the shared `terrain-checks.ts` since V4b/V4c); `test-range` expands with existing frames and a pinned grid fingerprint — pinned per scale (v1's on a `K = 1` tree, v2's today: 654 columns × 28 rows); **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint — since M2-12 measured in the rows the camera shows when the ship (view x ≈ 64) reaches the column (a stage runner alongside; zone D's caves are map rows 200–399); every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
 | `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
 | `test/e2e/gimmicks.spec.ts` | M2-07: `?stage=gimmick-range` draws the brick pillar; breaking it in the sim takes it off the next frame, the rollback draws it again |
 

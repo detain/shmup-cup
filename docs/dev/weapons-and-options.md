@@ -50,11 +50,11 @@ stepWorld, every tick
  │               → every shooter (ship, then Options) fires main + missile when timer 0 and cap free
  ├─ 5 movement   … enemies.move(), bullets.update(), then weapons.update():
  │               camera ride, straight / Double flight, laser head + length, missile fall / slide,
- │               cull at view ± 16 px and on terrain, cooldown tables counted down
+ │               cull at view ± 24 px and on terrain, cooldown tables counted down
  ├─ 6 collision  enemy hurtboxes → grid.build() → … → weapons.collide(grid): hits found
  ├─ 7 damage     weapons.applyHits(): clink on armour, enemies.damage(e, dmg, player) → kill record
  ├─ 8 removal    pools.flushAll() frees the dead shots
- └─ 9 fx         weapons.sync(): PlayerShots batch (lasers as 8-px segments), Options batch
+ └─ 9 fx         weapons.sync(): PlayerShots batch (lasers as 12-px segments), Options batch
 ```
 
 ## Content: the Type A arsenal
@@ -70,10 +70,13 @@ shipped `type-a.weapons.json`:
 
 | Weapon | Slot / behaviour | Damage | Speed | Cap | Pierce | Sprite | SFX |
 |---|---|---|---|---|---|---|---|
-| `shot.basic` | main / `shot.straight` | 1 | 7 | 2 | no | `shots/basic` | `PlayerShot` |
-| `shot.double` | double / `shot.double` | 1 | 7 | 2 | no | `shots/double` | `PlayerShot` |
-| `laser.pierce` | laser / `laser.beam` | 1 | 10 | 1 | yes | `shots/laser` | `PlayerShot` |
-| `missile.ground` | missile / `missile.groundSlide` | 2 | 2.5 | 1 | no | `shots/missile` | `PlayerMissile` |
+| `shot.basic` | main / `shot.straight` | 1 | 10.5 | 2 | no | `shots/basic` | `PlayerShot` |
+| `shot.double` | double / `shot.double` | 1 | 10.5 | 2 | no | `shots/double` | `PlayerShot` |
+| `laser.pierce` | laser / `laser.beam` | 1 | 15 | 1 | yes | `shots/laser` | `PlayerShot` |
+| `missile.ground` | missile / `missile.groundSlide` | 2 | 3.75 | 1 | no | `shots/missile` | `PlayerMissile` |
+
+(The speeds are R2-02's ported ones — v1 flew at 7 / 7 / 10 / 2.5 px/tick; shots cross the ×1.5
+world in the same ticks.)
 
 No shipped weapon has `refireTicks`: the session's `GameConfig.autofireInterval` (4) and
 `missileInterval` (10, the missile slot) pace them — values in the replay header, as
@@ -81,14 +84,17 @@ No shipped weapon has `refireTicks`: the session's `GameConfig.autofireInterval`
 
 **Behaviour tunables** live in `params`, with defaults in `WEAPON_BEHAVIOR_PARAMS` (angles in
 binary units, 1024 per turn; `ox` / `oy` = spawn offset from the shooter's centre, `hw` / `hh` =
-hitbox half sizes):
+hitbox half sizes). Every **world** number on the shots side is `v1 · WORLD_SCALE` since R2-02 — the
+defaults below, the shipped `content/weapons/` values, the player-shot cull margin `SHOT_CULL_MARGIN`
+24 (was 16), the beam's drawn segment length `LASER_SEGMENT_LENGTH` 12 (was 8) and the Ripple's
+`RIPPLE_RING_WIDTH` 6 (was 4); ticks, angles, caps and frame counts do not scale:
 
-| Behaviour | Tunables (defaults) |
+| Behaviour | Tunables (defaults, world units at `v1 · WORLD_SCALE` since R2-02) |
 |---|---|
-| `shot.straight` | `ox` 8, `oy` 0, `hw` 4, `hh` 2 |
-| `shot.double` | `angle` 128 (the second shot climbs 45°), `ox` 4, `oy` −2, `hw` 3, `hh` 3 |
-| `laser.beam` | `maxLength` 64, `hitCooldownTicks` 6 (clamped 1–255), `ox` 8, `oy` 0, `hh` 2 |
-| `missile.groundSlide` | `slideSpeed` 3, `angle` 128 (falls 45°), `ox` 0, `oy` 4, `hw` 4, `hh` 1.5, `frames` 2 |
+| `shot.straight` | `ox` 12, `oy` 0, `hw` 6, `hh` 3 |
+| `shot.double` | `angle` 128 (the second shot climbs 45°), `ox` 6, `oy` −3, `hw` 4.5, `hh` 4.5 |
+| `laser.beam` | `maxLength` 96, `hitCooldownTicks` 6 (clamped 1–255), `ox` 12, `oy` 0, `hh` 3 |
+| `missile.groundSlide` | `slideSpeed` 4.5, `angle` 128 (falls 45°), `ox` 0, `oy` 6, `hw` 6, `hh` 2.25, `frames` 2 |
 
 **Load-time checks.** `loadContent` rejects script ids the engine does not know when it is given
 `knownScripts` (the hosts pass `core/behaviors` `KNOWN_SCRIPT_IDS` = the enemy behaviours ∪
@@ -244,7 +250,7 @@ Fields (`SHOT_SCHEMA`, hashed in sorted name order):
 Shots live in world pixels and **ride the camera** like enemy bullets (`x += camera.dx` every
 tick), so their on-screen speed does not depend on the scroll. Per live shot, per kind:
 
-- **Straight / Double** — move by velocity; removed outside the view ± `SHOT_CULL_MARGIN` (16 px)
+- **Straight / Double** — move by velocity; removed outside the view ± `SHOT_CULL_MARGIN` (24 px)
   or on a non-empty terrain pixel (player shots die on terrain).
 - **Laser** (and the Cyclone Laser, a `Laser` with other tunables) — its row follows the shooter
   while that shooter is in play (an `alive` ship, or an Option it still flies; afterwards it keeps
@@ -256,10 +262,10 @@ tick), so their on-screen speed does not depend on the scroll. Per live shot, pe
   and is removed at length 0. Culled by its tail on the right and its head on the left. The
   whole beam, tail to head, is the hitbox — the Gradius quirk that misses enemies entering the
   middle of the beam is deliberately not copied (§7A).
-- **Missile** — falls along its heading (`angle` 128 = 45° down at 2.5 px/tick) riding the
+- **Missile** — falls along its heading (`angle` 128 = 45° down at 3.75 px/tick) riding the
   camera; it **lands** when its bottom pixel meets terrain — the surface above the contact is
   found with `findFloor` from `ceil(slideSpeed) + 1` px higher (a solid pixel at the top of that
-  scan means a wall: removed). Sliding, it moves `slideSpeed` (3) px/tick **screen-relative**
+  scan means a wall: removed). Sliding, it moves `slideSpeed` (4.5) px/tick **screen-relative**
   and re-snaps to `findFloor` within that step up or down each tick: it climbs and descends
   slopes, dies at a higher step (a wall), and falls again over a cliff. Its frame advances every
   4 ticks through `frames`. A missile at a non-finite position never touches terrain and is
@@ -309,7 +315,7 @@ The hit list (`hitShot` / `hitEnemy`, at most `MAX_SHOT_HITS` 1024 a tick, the r
 does it) and its **blast** is piercing but keeps burning on armour: it clinks at most once per
 cooldown instead of dying. A **Photon Torpedo** flies on through every enemy its hit destroys. A
 **Ripple** is hit-tested with its ring, not its box: a target wholly inside the ring's inner edge
-(`RIPPLE_RING_WIDTH` 4 px in) is not hit — with the box, the lowest-slot rule gave every ring to
+(`RIPPLE_RING_WIDTH` 6 px in) is not hit — with the box, the lowest-slot rule gave every ring to
 HALCYON BULWARK's fringe armour ([meter-arsenal.md](meter-arsenal.md#the-nine-behaviours)).
 
 **Cooldown tables.** Instead of a 64-entry table per shot slot, a pool of `PIERCE_TABLES` (32)
@@ -346,7 +352,7 @@ ships, enemy bullets.
 
 - `weapons.batch` is a mirror `SpriteBatch` on `LayerId.PlayerShots` with
   `SHOT_BATCH_CAPACITY` (192) slots, refilled in phase 9 by `sync()`: one sprite per shot, and a
-  laser as `ceil(length / LASER_SEGMENT_LENGTH)` `shots/laser` segments (8 px, anchored on their
+  laser as `ceil(length / LASER_SEGMENT_LENGTH)` `shots/laser` segments (12 px, anchored on their
   left edge) laid back from the head, the last clamped to the tail — a Twin beam the same way, and
   a Cyclone's segments stepping its swirl frames along the beam and every 4 ticks (M2-03). A full
   batch drops sprites (drawing only).

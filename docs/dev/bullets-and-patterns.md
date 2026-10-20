@@ -48,7 +48,7 @@ stepWorld, every tick
  │               └─ fire rule (canFire) → core/patterns primitive → bullets.emit / fireLaser
  ├─ 5 movement   enemies.move()  then  bullets.update(): ride camera, delay, age, the bullet's
  │               DSL program (M2-02), change, homing, accel / angVel (timed terms), move, cull
- │               (view ± 16 px, terrain); lasers follow their enemy or ride the camera, step
+ │               (view ± 24 px, terrain); lasers follow their enemy or ride the camera, step
  │               telegraph → grow → active → fade; bending lasers fly and record a node or
  │               shrink; point items drift, then fly to the score and credit it
  ├─ 6 collision  … enemies × ships …  then  bullets.collidePlayers(): circles × hurt radius,
@@ -69,9 +69,22 @@ procedural bullet art in the readability palette of §12:
 
 | Code | Kind | Sprite | Hit radius | Frames |
 |---|---|---|---|---|
-| 0–2 | `RoundPink`, `RoundRed`, `RoundPurple` | `bullets/round-{pink,red,purple}` (7×7) | 2 px | 1 |
-| 3–5 | `OvalPink`, `OvalRed`, `OvalPurple` | `bullets/oval-…` (9×9) | 2 px | 8 directional |
-| 6–8 | `NeedlePink`, `NeedleRed`, `NeedlePurple` | `bullets/needle-…` (11×11, fast bullets) | 1.5 px | 8 directional |
+| 0–2 | `RoundPink`, `RoundRed`, `RoundPurple` | `bullets/round-{pink,red,purple}` (7×7) | 3 px | 1 |
+| 3–5 | `OvalPink`, `OvalRed`, `OvalPurple` | `bullets/oval-…` (9×9) | 3 px | 8 directional |
+| 6–8 | `NeedlePink`, `NeedleRed`, `NeedlePurple` | `bullets/needle-…` (11×11, fast bullets) | 2.25 px | 8 directional |
+
+(Sprite sizes are the atlas' art sizes; v2's native bullet art is R3's round.)
+
+**Everything world-scaled (R2-02).** Every bullet- and pattern-side **world** number is the v1 one
+through `WORLD_SCALE`: the per-kind hit radii above (`2 · K` = 3, needles `1.5 · K` = 2.25), the cull
+margin `BULLET_CULL_MARGIN` 24, the speed clamp `MAX_BULLET_SPEED` 24, the default beam width
+`LASER_WIDTH` 9, `GRAZE_MARGIN` 10.5, the bending laser's `BENDING_LASER_SPEED` 4.5 and
+`BENDING_LASER_WIDTH` 9, the DSL's `DEFAULT_PATTERN_SPEED` 1.5 and the mover's `CRAWL_STEP` 12 — the
+pattern `px-per-tick` tunables in content came over ×1.5 in the same run. Angles, ticks, counts and
+node sizes never scale. One deliberate exception: `BENDING_LASER_LENGTH` (48) is a **node count**,
+not a distance — the beam's reach is `length · speed`, which already grows through the scaled
+`BENDING_LASER_SPEED` alone, so the constant stays 48 (scaling it too would scale the reach ×2.25);
+the plan's Appendix B "48 → 72" cannot port on a 64-node ring and was not applied.
 
 Every built-in kind dies on terrain and is cancelable. The directional frame of an 8-frame kind
 for a heading `a` (whole binary units) is `((a + 32) >> 6) & 7`: frame `k` points `k · 22.5°`
@@ -120,7 +133,7 @@ bullet program runner.
 | `vx`, `vy` | f64 | Velocity (px/tick) before the camera ride |
 | `speed`, `angle` | f64 | Speed; heading in binary units `[0, 1024)` (may be fractional — rounded for the tables) |
 | `accel`, `angVel` | f64 | Speed change and heading change per tick |
-| `minSpeed`, `maxSpeed` | f64 | Clamp while accelerating (defaults 0 and `MAX_BULLET_SPEED` = 16) |
+| `minSpeed`, `maxSpeed` | f64 | Clamp while accelerating (defaults 0 and `MAX_BULLET_SPEED` = 24) |
 | `radius` | f64 | Hit radius (from the kind) |
 | `sprite`, `frame`, `draw` | u16, u16, u8 | What the renderer draws: sprite id, directional frame, `SpriteFlag` bits |
 | `kind`, `flags` | u8, u8 | `BulletKind`; `BulletFlag` bits |
@@ -192,7 +205,7 @@ For each live bullet, in slot order:
    the speed / heading lands exactly on `termSpeed` / `termAngle` (when not `NaN`).
 7. **Velocity** recomputed from the sine table — and the directional frame — only when speed or
    heading changed this tick; then `x += vx`, `y += vy`.
-8. **Cull**: removed unless inside the camera view ± `BULLET_CULL_MARGIN` (16) px on all four
+8. **Cull**: removed unless inside the camera view ± `BULLET_CULL_MARGIN` (24) px on all four
    sides (exact, closed); a bullet with `DieOnTerrain` is removed when its centre pixel is
    terrain (`terrainAt` — one lookup, hazards count; since M2-07 the moving blocks count too, and a
    bullet never damages a destructible tile). The test is written as "not inside", so a
@@ -240,9 +253,10 @@ that flies and leaves a body of its recent positions — a homing snake. They li
 its ring of `BENDING_LASER_NODES` (64) node positions, so a slot index is stable for the laser's
 life (unlike pool slots) and the table is also the render contract's `BendingLaserView`.
 
-`fireBendingLaser(world, src, angle = AIM_AT_TARGET, speed = 3, turnRate = 6, homing = 60,
-length = 48, width = 6, life = 120)` (or `BulletSystem.fireBendingLaser(origin, …)`) takes the first
-free slot → its index, or `-1` when all eight are busy or a value is bad (speed outside `(0, 16]`,
+`fireBendingLaser(world, src, angle = AIM_AT_TARGET, speed = 4.5, turnRate = 6, homing = 60,
+length = 48, width = 9, life = 120)` (defaults `BENDING_LASER_SPEED` and `BENDING_LASER_WIDTH`, each
+`v1 · WORLD_SCALE`; the length is the node count above) (or `BulletSystem.fireBendingLaser(origin, …)`) takes the first
+free slot → its index, or `-1` when all eight are busy or a value is bad (speed outside `(0, 24]`,
 width ≤ 0, life < 1, length outside `2 … 64`, a non-finite angle or origin). Like `fireLaser` it
 is raw — no fire rule, no rank scaling; `ScriptApi.bendingLaser(…)` fires from the enemy's centre
 through the fire rule, with the speed × the rank's speed scale. The laser does **not** follow its
@@ -271,7 +285,8 @@ each slot's active flag, and an active slot's fields and body nodes.
 
 Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
 
-- **Bullets**: circle (`radius`) against the ship's `hurtRadius` (1.5 px for the KESTREL),
+- **Bullets**: circle (`radius`) against the ship's `hurtRadius` (2.25 px for the KESTREL since
+  R2-02; v1 1.5),
   closed — touching hits. The first overlap ends the test for that ship: `playerHit(ship,
   PlayerHitCause.Bullet, …)`; an **accepted** hit removes the bullet, a refused one (the
   fly-in, invulnerability, god mode) leaves it flying.
@@ -376,9 +391,10 @@ from the boss's gun parts: `boss.hover` aimed `RoundRed` spreads, `boss.lanes` a
 (not attached) from each gun in turn, fired by the test boss's last phase
 ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)); since M1-18
 `boss.bulwark` fires the same lanes **attached** to HALCYON BULWARK's emitters (they sweep with its
-tracking) and 3-ways of `NeedlePurple` at 1.5 px/tick. All speeds stay within D17's "aimed ≤ 2.0
-px/tick on Normal in zone A" — `pnpm content:check` enforces it for zone A, together with "no two
-simultaneous laser lanes closer than 16 px"
+tracking) and 3-ways of `NeedlePurple` at 2.25 px/tick (the ported 1.5 · `WORLD_SCALE`). All speeds
+stay within D17's rule — v1 said "aimed ≤ 2.0 px/tick on Normal in zone A", the ported check reads
+`2.0 · WORLD_SCALE` = 3.0 — and `pnpm content:check` enforces it for zone A, together with "no two
+simultaneous laser lanes closer than 24 px"
 ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules)).
 
 A firing behaviour:
@@ -553,7 +569,7 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | Where | Covers |
 |---|---|
 | `packages/core/test/bullets/bullets.test.ts` | Kinematics (accel with min / max, angular velocity, changes, delays, homing), aimed quantisation on 32 directions, pool exhaustion dropping quietly, off-screen and terrain culling, laser phases and the hitbox only while `Active`, attached / fixed lasers, cancel clearing cancelable only (sparkle events), collision and `playerHit`, determinism |
-| `packages/core/test/bullets/bullets-edge.test.ts` | Directional frames of all 1024 headings, `spawn` = `emit` = `spawnBullet`, bad kinds / angles, aim at 4 and 1024 directions, setter edge cases, exact culling at view ± 16 px while scrolling, phase-8 compaction, two ships, laser timing sums, capsule reach, detach edges, the cancel sparkle formula, restarts, views, hash coverage; the NaN regressions |
+| `packages/core/test/bullets/bullets-edge.test.ts` | Directional frames of all 1024 headings, `spawn` = `emit` = `spawnBullet`, bad kinds / angles, aim at 4 and 1024 directions, setter edge cases, exact culling at view ± 24 px while scrolling, phase-8 compaction, two ships, laser timing sums, capsule reach, detach edges, the cancel sparkle formula, restarts, views, hash coverage; the NaN regressions |
 | `packages/core/test/bullets/bullets-alloc*.test.ts` | The allocation guards above (own workers) |
 | `packages/core/test/patterns/patterns-fire*.test.ts` | Every primitive: spreads (even / wrapping, centred in all 32 directions), rings, spirals, stacks, sprays (two RNG draws per bullet, cosmetic stream untouched), homing, delayed, partial pools, `rankedWait` exact on Normal |
 | `packages/core/test/behaviors/behaviors-fire*.test.ts` | The roster firing in a World: turret interval in `aimTicks` steps and rank-scaled, orbiter rings, walker 3-way, the `ScriptApi` fire rule (off screen, unsettled, ghosts), `laser()` defaults, bullets outliving their enemy, a detached laser never following the next enemy in the slot |
@@ -587,14 +603,15 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | A boss's death gave no cancel points | Nobody was credited with the kill (`killer` -1 — e.g. `defeat()` without a player), the content's `bulletCancel` is 0, or the bullets were not `Cancelable` |
 | The score rises for a few seconds after the boss exploded | By design: the point items fly to the score first (≤ 180 ticks); the replay hashes include them |
 | `fireBendingLaser` returns -1 | All 8 slots are busy, or a value is out of range (speed ≤ 0 or > 16, length outside 2–64, width ≤ 0, life < 1) |
-| A bending laser vanished early | Its head left the view ± 16 px or touched terrain: the head stops and the tail catches up at once — aim it into open space |
+| A bending laser vanished early | Its head left the view ± 24 px or touched terrain: the head stops and the tail catches up at once — aim it into open space |
 | A bending laser slipped past the ship between two nodes | With `stride ≥ 1` from the formula the hit circles overlap; only a laser whose head speed exceeds `width` + twice the ship's hurt radius (the stride is then 1, every node, and the nodes are further apart than the reach) leaves gaps — keep `width` ≥ `speed` |
 | The allocation guard fails after a change to `update()` | A fractional argument / return across a non-inlined call, a field loaded through a polymorphic object, or the loops split into a tiny wrapper — see the table above |
 
 ## Next steps that build on this page
 
 - **M1-10** (done) — player shots in their own pool (`playerShots`, 96), riding the camera and
-  culled at view ± 16 px like bullets; they hit enemies through the grid (boxes, not capsules —
+  culled at view ± 24 px like bullets (`SHOT_CULL_MARGIN` and `BULLET_CULL_MARGIN`, each `16 ·
+  WORLD_SCALE`); they hit enemies through the grid (boxes, not capsules —
   the laser weapon's box spans its whole length) ([weapons-and-options.md](weapons-and-options.md)).
 - **M1-11** (done) — Mega Crash cancels every cancelable bullet and laser with sparkles; the
   Force Field absorbs bullet and laser hits inside `playerHit` (an absorbed bullet is used up

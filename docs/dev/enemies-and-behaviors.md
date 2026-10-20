@@ -151,8 +151,8 @@ by id (`path` → `pathId`, `-1` = none).
 ### Stage events
 
 `spawn` and `formation` events (M1-07's timeline) gained `screenX` (spawn x in playfield
-pixels, default `DEFAULT_SPAWN_SCREEN_X` = `PLAYFIELD_W + 16` — 400 today —, 16 px past the right
-edge; negative = behind
+pixels, default `DEFAULT_SPAWN_SCREEN_X` = `PLAYFIELD_W + 16 · WORLD_SCALE` — 664 today —, 24 px past
+the right edge; negative = behind
 the player) next to `y` (default: mid-playfield) and a real `path` reference; `formation` also
 gained `drop` (default `'capsule'`, `null` = nothing) and `bonus` (points, default 0). All
 members of a formation spawn at the same view point. Since M1-13 `spawn` / `formation` events
@@ -517,34 +517,57 @@ drones (`sovereign-drone`, `cell.chase`) from its emitters, the ABYSS ARK its ho
 ### Frame-anchored or world? (R1-01, for R2-02)
 
 v2's R1-01 derived the behaviour defaults that mean the frame (plan_resolution.md §2.6), with every
-value unchanged at 384×216: the seven `laserLength` defaults (`emitter.laser`, `boss.lanes`,
-`boss.bulwark`, `boss.widow`, `boss.bastion`, `boss.facet`, `boss.sovereign`) are one screen
-width, `PLAYFIELD_W`; `captain.circler`'s ellipse centre (`cx`, `cy`) is the playfield's centre,
-`PLAYFIELD_W / 2` and `PLAYFIELD_CY` (192, 100); `boss.steed`'s is a boss's default home,
-`core/data` `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` (`PLAYFIELD_W − 88`, `PLAYFIELD_CY` — 296, 100); the
-Option Hunter's front line-up is `PLAYFIELD_W − lineX`. `packages/core/test/behaviors/behaviors-frame-defaults.test.ts`
-pins them. Margins, radii (`boss.suction`'s `pullRadius` 200 is a world radius) and speeds stay
-literal — R2-02's ×1.5 port scales them.
+value unchanged at 384×216; R2-02's port moved them to their v2 numbers. The seven `laserLength`
+defaults (`emitter.laser`, `boss.lanes`, `boss.bulwark`, `boss.widow`, `boss.bastion`, `boss.facet`,
+`boss.sovereign`) are one screen width, `PLAYFIELD_W` (640); `captain.circler`'s ellipse centre
+(`cx`, `cy`) is the playfield's centre, `PLAYFIELD_W / 2` and `PLAYFIELD_CY` (320, 168); `boss.steed`'s
+is a boss's default home, `core/data` `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` (`PLAYFIELD_W − 88 ·
+WORLD_SCALE`, `PLAYFIELD_CY` — 508, 168); the Option Hunter's front line-up is `PLAYFIELD_W − lineX`.
+`packages/core/test/behaviors/behaviors-frame-defaults.test.ts` pins them. Margins, radii
+(`boss.suction`'s `pullRadius` 200 was a world radius) and speeds were literals — R2-02's ×1.5 port
+scales them.
 
-**What the rescale tool will not see.** These are code defaults, not content, so R2-02's
-`rescale` run never touches them; each is a view point (playfield pixels) that is neither
-edge-anchored nor derived, and R2-02 decides by hand whether it is frame-anchored or world (×1.5):
+**The port's code rule (W5–W7).** World-unit defaults and bounds are now written as products of the v1
+number and `WORLD_SCALE` — `pullRadius: 200 · WORLD_SCALE` (300), `HUNTER_EDGE = 12 · WORLD_SCALE`,
+`captain.ram`'s row-clamp margins `24 · WORLD_SCALE` off the frame anchors, the weapon and behaviour
+world-unit defaults likewise — so the flip itself scales them and the frame-literal scans still read a
+plain literal only where one belongs. A value that is zero (a `trackSpeed`, a `gape`, a `stompShake`)
+stays a bare literal; zero has no scale.
 
-| Behaviour | Default | Used by |
+**What the rescale tool could not see.** These were code defaults, not content, so R2-02's `rescale`
+run never touched them; each is a view point (playfield pixels) that is neither edge-anchored in code
+nor derived, and R2-02 wrote fifteen of them by hand — the last row excepted, whose defaults were
+already `WORLD_SCALE` products — each at exactly what the content's own `screen-x` / `screen-y` snap
+rule gives (nearest of the edge, the centre and the far edge, distance ×k):
+
+| Behaviour | Default, v1 → v2 | Used by |
 |---|---|---|
-| `orbiter.loop` | waypoint `x` 256, `y` 100 (without a path) | `test-range` only |
-| `cube.pincer` | `meetX` 176 | the Direct-mode pincer waves |
-| `captain.ram` | `ramX` 40 | the captains, also in the boss rush |
-| `captain.crab` | box `minX` 250 – `maxX` 340 × `minY` 40 – `maxY` 160 | the captains, also in the boss rush |
-| `boss.widow` | box `minX` 250 – `maxX` 320 × `minY` 56 – `maxY` 144 | zone C overrides `minX` / `maxX` (270 / 316) and **uses the default `minY` / `maxY`** |
-| `rear.swoop` | `turnX` 280 | zone E's rear attackers |
-| `boss.walker` | `frontX` 96, `backX` 280 | its pacing columns |
-| `boss.steed` | `rx` 8 (the bob's x radius; `ry` 40) | zone E's SQUALL STEED, whose content home x 304 is `DEFAULT_BOSS_X + rx`: the port moves the home to 520 (88 + 8 from the right edge, ×1.5) and `DEFAULT_BOSS_X` to 508, so `rx` must become 12 too, or the orbit starts with a jump |
+| `orbiter.loop` | waypoint `x` 256 → 416, `y` 100 → 186 (without a path) | `test-range` only |
+| `cube.pincer` | `meetX` 176 → 296 | the Direct-mode pincer waves |
+| `captain.ram` | `ramX` 40 → 60 | the captains, also in the boss rush |
+| `captain.crab` | box 250–340 × 40–160 → 407–574 × 60–276 | the captains, also in the boss rush |
+| `boss.widow` | box 250–320 × 56–144 → 407–544 × 102–234 | zone C overrides `minX` / `maxX` as **content** (270 / 316), which the tool did snap — the left edge to the centre (437), the right to the edge (538) — and **uses the default `minY` / `maxY`** |
+| `rear.swoop` | `turnX` 280 → 452 | zone E's rear attackers |
+| `boss.walker` | `frontX` 96 → 176, `backX` 280 → 452 | its pacing columns |
+| `boss.steed` | `rx` 8 → 12 — the one already a `WORLD_SCALE` product | zone E's SQUALL STEED, whose content home x 304 is `DEFAULT_BOSS_X + rx`: the port moved the home to 520 and `DEFAULT_BOSS_X` to 508, so `rx` at 12 starts the orbit without a jump |
 
-**`captain.circler`'s content home needs a hand fix after R2-02:** `content/enemies/advanced-bosses.enemies.json`
-puts `captain-circler` at x 332 = `cx + rx` (192 + 140), so its orbit starts without a jump. After
-the port `cx` follows the frame (320) while `rx` is a world radius (210), so the home must become
-530 — neither 332 × 1.5 (498) nor the right-edge rule (640 − 52 × 1.5 = 562) gives it.
+**`captain.circler`'s content home took the hand fix.** `content/enemies/advanced-bosses.enemies.json`
+put `captain-circler` at x 332 = `cx + rx` (192 + 140), a centre-plus-radius sum that happens to sit
+nearer the right edge (52 px) than the centre (140) — so the tool snapped it to the edge, and the raw
+port gave 562 = 640 − 1.5 × 52. But `cx` follows the frame (320) and `rx` is a world radius (140 → 210),
+so the orbit would start with a 32-px jump: the home is **530** (the commit's hand fix), which neither
+332 × 1.5 (498) nor the edge rule (562) gives.
+
+**The port is audited by two snapshot tests (R2-02's A1).**
+`packages/core/test/config/world-scale.test.ts` freezes the world-unit values the barrel exports
+(`V1_WORLD`, read from the pre-flip tree) and requires every one to equal `rescaleNumber(unit, v1, …)`
+at the live scale — and that the frozen lists (incl. the formation `offset` arrays) cover every such
+export. `packages/core/test/behaviors/behavior-defaults-port.test.ts` compares every behaviour's and
+weapon's defaults against a frozen v1 fixture
+(`packages/core/test/behaviors/fixtures/v1-behavior-defaults.json`, made by
+`docs/v2-run/helpers/w5/defaults.mjs` at `d4de048`), one row per `<id>.<param>` with its unit; its
+completeness check fails a new world-unit tunable that has no row. Together they turn "the ×1.5 was
+applied to exactly the right numbers, and only to them" into a test.
 
 ## The `test-range` roster
 
@@ -590,7 +613,8 @@ no new enemy behaviour was needed — and its own tunables: `skeet` / `skeet-cha
 `lancer` (rammer), `picket` / `picket-ceiling` (turrets, 1.25 px/tick), `strider` (walker),
 `burrow` + `burrow-mite` (hatch, at most 4 mites), `gyre` (orbiter, a ring every 150 ticks at
 1 px/tick; since M2-01 the `vane` fans fire an aimed revenge bullet from rank 12). Two new pixel-map sprites, `enemies/vane` and `enemies/gyre`; the rest reuse the M1-03
-art. Every aimed `bulletSpeed` stays ≤ 2.0 px/tick (D17 — checked by `pnpm content:check`), and
+art. Every aimed `bulletSpeed` stayed ≤ 2.0 px/tick in v1 (D17 — the `pnpm content:check` gate
+reads `2.0 · WORLD_SCALE`, 3.0 px/tick, since R2-02's port), and
 ground enemies are only spawned in the stage's floor-and-ceiling corridor. The full table, the
 stage's sections and the boss are in
 [zone-a-and-playtest.md](zone-a-and-playtest.md#the-roster). Because the shipped content now

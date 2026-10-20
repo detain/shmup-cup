@@ -171,10 +171,14 @@ the plan's **next** item in Direct mode. With the default 0.5 every second drop 
 ## Player 2's palette swap
 
 - **Assets.** `scripts/assets/coop.mjs` adds a `<name>@p2` sibling for every `ships/*` sprite and
-  for `hud/life`: the source frames with the **red and blue channels swapped** (the KESTREL's blue
-  hull stripe turns red-orange, its cyan canopy gold, its orange engine glow blue). Exact integer
-  work, so the atlas stays byte-identical everywhere; a real-art PNG override of a ship gets its
-  variant from the override. `collectSprites` adds them after the `@flash` siblings; the oversize
+  for `hud/life`: the source frames through a **per-sprite colour map** — the sprite's own `p2`
+  field in its `.sprite.json` (every colour the map names exchanges with its target; unlisted
+  colours and alpha stay), or, for a real-art PNG override, the sidecar's `meta.shmup.p2`
+  (`sprite-source.mjs`, R3-03.V2a `8416da5`). This map replaced the old red↔blue **channel swap**:
+  the KESTREL's map turns its blue hull stripe red-orange, its cyan canopy gold and its orange
+  engine glow blue — the atlas stayed byte-identical to the swap's — and the variant of a real-art
+  ship now comes from the override's own map. Exact integer work, so the atlas is byte-identical
+  everywhere. `collectSprites` adds them after the `@flash` siblings; the oversize
   report skips them (reported for their source). The atlas stays 512×512.
 - **Data.** `loadContent` interns `<ship sprite>@p2` (`P2_SPRITE_SUFFIX`) for every ship and
   resolves it into `PlayerShipSpec.spriteP2Id` (-1 without it — the built-in `DEFAULT_PLAYER_SHIP`
@@ -350,7 +354,7 @@ the shell).
 | Another join button | Add its action to `JOIN_ACTIONS` (and keep the game scene's pause exception in step); for pads the join press comes from the gamepad profile's **menu** table (`joinButtonsOf`), so binding Confirm / Pause to another button there is enough |
 | A host-driven leave (e.g. a menu entry) | It must be recorded input: a new action or a pause-menu choice that the World reads — never a call from the host into the World |
 | Tune the item scaling | `coopExtra` in the config (0 – 4); replays record it |
-| Colours of player 2 | `scripts/assets/coop.mjs` (`swapRedBlue`, `P2_VARIANT_PREFIXES`, `P2_VARIANT_SPRITES`); a real-art `@p2` would need the pipeline to prefer an override (not supported yet — the variant is always derived) |
+| Colours of player 2 | `scripts/assets/coop.mjs` (`makeP2Sprite(sprite, map)`, `wantsP2Variant`, `P2_VARIANT_PREFIXES`, `P2_VARIANT_SPRITES`); the variant's colours are the sprite's own `p2` map — a field of the `.sprite.json`, or the sidecar's `meta.shmup.p2` on a real-art PNG override (since R3-03.V2a) |
 | Another split preset | A `keyboard` profile with a `split` section in `content/input/` — validated by `checkSplit`, offered by CONTROLS when its menu tables are reachable |
 
 ## Tests
@@ -368,7 +372,7 @@ the shell).
 | `packages/input-web/test/web-input/web-input-seats.test.ts`, `web-input-seats-edge.test.ts` | One seat never seats, the join press as an edge from the menu table, a custom profile's join button, seat persistence, disconnect (null / `connected: false` / a shorter list), held buttons across a seat change, the split keyboard (routing, tap, context, destroy), the package exports, allocation |
 | `packages/input-web/test/rebind/rebind-split.test.ts` | `splitTables` (the other context's keys at 0), keyboard profiles only, the required actions, a key in both halves and gamepad buttons refused, the shipped `keyboard-split` offered on the web and never on the TV |
 | `packages/shell/test/boot/boot.test.ts` | `setSeats` forwarded at boot and on a change before the frame's polls; an adapter without it |
-| `test/scripts/assets/coop.test.ts` | The core's suffix, `wantsP2Variant` (ships and the stock icon only), `swapRedBlue` (green and alpha kept), `makeP2Sprite` (anchor, frames, animations), every ship's and the stock icon's variant in the atlas |
+| `test/scripts/assets/coop.test.ts` | The core's suffix, `wantsP2Variant` (ships and the stock icon only), `makeP2Sprite` (mapped colours exchanged, unlisted colours and alpha kept; anchor, frames, animations), that every ship's and the stock icon's variant is in the atlas, and that the shipped maps exchange exactly the colours the old red ↔ blue channel swap did |
 | `test/integration/coop-remote-pad.test.ts` | The remote plays player 1, a pad's START takes player 2's seat and joins; pause / resume with player 2's held START; an unplugged seated pad; each device's OK in the countdown |
 | `test/e2e/coop.spec.ts`, `coop-gamepad.spec.ts` | The built web page: the split keyboard (2 PLAYERS, Enter joins player 2, the split HUD, player 2 moves, Esc still pauses); a fake `navigator.getGamepads()` pad driving the menus, joining with START, moving player 2 only, pausing and resuming without a phantom press |
 | `test/golden/` | `zone-a-coop`, `zone-a-coop-deaths` |

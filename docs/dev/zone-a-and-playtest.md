@@ -24,7 +24,8 @@ own guides: [stage-runtime.md](stage-runtime.md) (camera path, checkpoints, terr
 Background: `shmup_feat.md` §14 (zone themes, stage length 3–6 minutes), §11 (enemy
 archetypes), §13 (the core-battleship boss archetype), §10 (checkpoints and the recovery rule),
 §4 rule 2 (everything must be playable with four directions); plan §1.4 (the headless playtest
-bot) and decision **D17** (aimed shots ≤ 2.0 px/tick on Normal).
+bot) and decision **D17** (aimed shots ≤ 2.0 px/tick on Normal in v1 — since R2-02's port the rule
+reads `2.0 · WORLD_SCALE`, 3.0 px/tick, and the content carries ported tunables).
 
 ## The picture at a glance
 
@@ -43,14 +44,21 @@ apps/web  ?stage= › (scene flow) defaultStageId(files) = 'zone-a' ; ?skip=boss
 apps/tizen   START → defaultStageId(files)                         ; no dev parameters
 
 test/playtest/                                    pnpm content:check (content.test.ts)
-  runStage(stageId, bot, flags) ─► report          static: bulletSpeed tunables ≤ 2.0,
-  fourWayBot() — 12 lanes × 16 px, one direction   sections, capsule budget, terrain
+  runStage(stageId, bot, flags) ─► report          static: bulletSpeed tunables ≤ 3.0,
+  fourWayBot() — 14 lanes × 24 px, one direction   sections, capsule budget, terrain
   rules.ts — createRuleWatch().observe             dynamic: HB-01 fight with the bot →
-  replayStage(stageId, inputs, flags)              createRuleWatch — no bullet > 2.0,
-                                                   no two lanes < 16 px apart
+  replayStage(stageId, inputs, flags)              createRuleWatch — no bullet > 3.0,
+                                                   no two lanes < 24 px apart
 ```
 
 ## The stage: AZURE VERGE
+
+*The zone's own narrative — the at-a-glance diagram and the section table with its scroll x,
+checkpoints, camera keys and warning x — lists v1's composition: R2-02 ported every position and
+speed ×1.5 (the file today carries length 13,500, checkpoints 0 / 5,250 / 9,000 and the WARNING at
+12,900), and R2-03 re-derives this section from the ported content with fresh bot runs. The
+machinery written around it — the 4-way rule numbers, the bot geometry, the skip lead, the capsule
+budget below — already reads at v2 numbers.*
 
 `content/stages/zone-a.stage.json` — `id` `zone-a`, `name` `AZURE VERGE`, `length` 9,000,
 `music` `{ stage: 'Stage', boss: 'Boss' }` (the M1-15 songs `zone-a` / `boss`; no new song was
@@ -68,13 +76,15 @@ with the bot.
 
 **Capsule budget** (the recovery rule of `shmup_feat.md` §10): a *source* is a `spawn` of an
 enemy with `drop: "capsule"` or a `formation` whose `drop` is not `null`. Zone A has 28 before the
-boss, and 5 / 3 / 4 within 900 px after the checkpoints at 0 / 3,500 / 6,000 (the rule asks ≥ 3),
+boss, and 5 / 3 / 4 within 1,350 px after the checkpoints at 0 / 5,250 / 9,000 (the rule asks ≥ 3;
+the window is `900 · WORLD_SCALE`, R2-02's port),
 2 in the calm. The same sources serve the Direct-mode MANTA (M2-05): its ship has no meter, so
 every `capsule` drop becomes the next colour item of the stage's **`directItems`** plan — 27
 entries, eight each of red, green and blue plus an octagon, a yellow and an orange, cycling and
 never rewound at a checkpoint ([direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
 
-**Terrain.** The heightfield generator of M1-07 on `terrain-a` (8-px tiles, 25 rows): three
+**Terrain.** The heightfield generator of M1-07 on `terrain-a` (12-px tiles, 28 rows since
+R2-02's port; 8-px, 25 rows in v1): three
 segments — a low floor (base 20, amplitude 12), the corridor (floor base 40 ± 16, ceiling base
 36 ± 16) and a low floor under the high-speed section (base 14 ± 8). Ground enemies are only
 spawned inside the corridor (their spawn x + 400 lies before 6,400), so they always have rock to
@@ -124,23 +134,25 @@ right quarter of the playfield.
 The plates stand **in a row along the core's lane**, in front of it: shots meet the outer one
 (`plate-4`) first, and the core is hittable only once all four are gone. The emitters are the
 `gun`s — they fire the lanes and the spreads — and are armour, so the lanes cannot be shot off
-(unlike TRIAL WARDEN's guns). Their lanes are 50 px apart (edge to edge 42 px with the 8-px beam),
-and the core's lane lies between them.
+(unlike TRIAL WARDEN's guns). In v1 their lanes were 50 px apart (edge to edge 42 px with the
+8-px beam), and the core's lane lay between them — the ported plate offsets and lane gaps are
+re-derived at R2-03.
 
 **Phases** — all three run `boss.bulwark`:
 
 | Phase | Until | Params (over the defaults) | What the player sees |
 |---|---|---|---|
-| 0 | two plates destroyed | `trackSpeed` 0.35, `laserTicks` 110 | Lane lasers only, alternating top / bottom |
-| 1 | all four plates destroyed | `trackSpeed` 0.45, `laserTicks` 100, `ways` 3, `fireTicks` 120, `firstLaser` 40 | + aimed 3-ways of purple needles at 1.5 px/tick from each emitter |
-| 2 | the core's death | `trackSpeed` 0.55, `laserTicks` 55, `telegraph` 40, `active` 60, `ways` 3, `fireTicks` 90, `firstLaser` 30 | A lane every 55 ticks, each closed for 108 ticks (warning 40 + grow 8 + beam 60), so **both emitters' lanes overlap in time** — the gap between them stays ≥ 16 px |
+| 0 | two plates destroyed | `trackSpeed` 0.525, `laserTicks` 110 | Lane lasers only, alternating top / bottom |
+| 1 | all four plates destroyed | `trackSpeed` 0.675, `laserTicks` 100, `ways` 3, `fireTicks` 120, `firstLaser` 40 | + aimed 3-ways of purple needles at 2.25 px/tick from each emitter |
+| 2 | the core's death | `trackSpeed` 0.825, `laserTicks` 55, `telegraph` 40, `active` 60, `ways` 3, `fireTicks` 90, `firstLaser` 30 | A lane every 55 ticks, each closed for 108 ticks (warning 40 + grow 8 + beam 60), so **both emitters' lanes overlap in time** — the gap between them stays ≥ 24 px (the phase values are R2-02's ported ones; v1 ran 0.35 / 0.45 / 0.55 at 1.5 px/tick and a 16 px gap) |
 
 ### `boss.bulwark`
 
 Added to `DEFAULT_BOSS_BEHAVIOR_DEFS` (so it is in `BOSS_BEHAVIOR_IDS` and `KNOWN_SCRIPT_IDS`).
-Tunables (defaults): `trackSpeed` 0.35, `margin` 40, `laserTicks` 110, `firstLaser` 60,
-`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 120, `bulletSpeed`
-1.5, `ways` 0, `spread` 40.
+Tunables (defaults, world units in `v1 · WORLD_SCALE` form since R2-02): `trackSpeed` 0.35 · 3/2 =
+0.525, `margin` 60, `laserTicks` 110, `firstLaser` 60, `laserLength` `PLAYFIELD_W` (640),
+`laserWidth` 12, `telegraph` 45, `active` 50, `fireTicks` 120, `bulletSpeed` 2.25, `ways` 0,
+`spread` 40 (binary angle units — not a length, never scaled).
 
 - `api.track(trackSpeed, margin, PLAYFIELD_H − margin)` — slow vertical tracking of the nearest
   player (the boss system's motion).
@@ -168,9 +180,9 @@ geometry for every phase (below).
 
 | Rule | Constant | How it is measured |
 |---|---|---|
-| Aimed bullet speed ≤ 2.0 px/tick (Normal) | `MAX_AIMED_BULLET_SPEED` | Statically: every `bulletSpeed` tunable of zone A's enemies and boss phases, behaviour defaults merged. Dynamically: `maxBulletSpeed(world)` — the fastest live enemy bullet (zone A fires nothing faster than its aimed shots, so every bullet is held to it) |
-| No simultaneous laser lanes leaving < 16 px of safe gap | `MIN_LANE_GAP` | `laserLaneGaps(world)`: a **lane** is a laser in its telegraph, grow or active phase (a warned lane is as good as closed), its rows = the beam's vertical extent ± half its width, **widened by the ship's hurt radius** and clipped to the playfield (a beam wholly above or below it is no lane); overlapping or touching lanes merge. Reports the narrowest gap between separate lanes and the widest open band |
-| The ship's column keeps ≥ 16 px open (M2-18) | `MIN_LANE_GAP`, `COLUMN_HALF_WIDTH` (8) | `columnGap(world, player = 0)`: every live enemy bullet whose circle comes within 8 px of the ship's x closes its rows ± its radius and the hurt radius, every live laser lane its rows as above; the widest open band left must be ≥ 16 px. The laser-lane rule generalised to bullet walls — no pattern walls a remote player in. Measured on all 16 routes × both ships: never under 38 px ([release-hardening.md](release-hardening.md#the-ships-open-column-columngap)) |
+| Aimed bullet speed ≤ 3.0 px/tick (Normal; `2.0 · WORLD_SCALE`) | `MAX_AIMED_BULLET_SPEED` | Statically: every `bulletSpeed` tunable of zone A's enemies and boss phases, behaviour defaults merged. Dynamically: `maxBulletSpeed(world)` — the fastest live enemy bullet (zone A fires nothing faster than its aimed shots, so every bullet is held to it) |
+| No simultaneous laser lanes leaving < 24 px of safe gap (`16 · WORLD_SCALE`) | `MIN_LANE_GAP` | `laserLaneGaps(world)`: a **lane** is a laser in its telegraph, grow or active phase (a warned lane is as good as closed), its rows = the beam's vertical extent ± half its width, **widened by the ship's hurt radius** and clipped to the playfield (a beam wholly above or below it is no lane); overlapping or touching lanes merge. Reports the narrowest gap between separate lanes and the widest open band |
+| The ship's column keeps ≥ 24 px open (`MIN_LANE_GAP`; half-width `COLUMN_HALF_WIDTH` 12 = `8 · WORLD_SCALE`) | `MIN_LANE_GAP`, `COLUMN_HALF_WIDTH` | `columnGap(world, player = 0)`: every live enemy bullet whose circle comes within 12 px of the ship's x closes its rows ± its radius and the hurt radius, every live laser lane its rows as above; the widest open band left must be ≥ 24 px. The laser-lane rule generalised to bullet walls — no pattern walls a remote player in. Measured on all 16 routes × both ships; v1 never saw it under 38 px ([release-hardening.md](release-hardening.md#the-ships-open-column-columngap)) — R2-03 re-measures the ported world |
 
 **Rank (M2-01).** The rules are written for Normal's speeds. With rank growth on, a fully
 powered ship raises the rank and so the bullet speeds; the static check reads the content's
@@ -187,20 +199,23 @@ narrowest gap, the narrowest widest-open band while lanes were live, the narrowe
 What `pnpm content:check` (`test/integration/content.test.ts`, "zone A holds to the 4-way design
 rules") asserts:
 
-- the stage's shape: name, 8,500–9,500 px, checkpoints 0 / 3,500 / 6,000, the 1.5 key at 6,000
-  and a slower one at 8,000, the WARNING at 8,500–8,700 naming HB-01; HB-01's plates (4 × 12),
+- the stage's shape (since R2-02 the test states these as v1 numbers mapped through `v1x` / `v1speed`
+  helpers — the shape is v1's scaled): name, length 8,500–9,500 px → 12,750–14,250, checkpoints
+  0 / 3,500 / 6,000 → 0 / 5,250 / 9,000, the 1.5 px/tick key at 6,000 → 2.25 at 9,000 and a slower
+  one at 8,000 → 12,000, the WARNING at
+  8,500–8,700 → 12,750–13,050 naming HB-01; HB-01's plates (4 × 12),
   core (40, `afterParts` of the plates), armoured hull and the two emitter guns; 6–8 behaviours;
 - every section's archetypes (popcorn and carriers only in section 1, fans on paths and rammers in
   2, floor / ceiling turrets, walkers and hatches in 3, orbiters in 4, exactly two carriers in the
   calm), ground enemies only in the corridor, the songs and the planet band drawn last on `mid`;
 - the terrain: ceiling only 3,400–6,500, floors where expected, no rock from 8,000 on;
 - the capsule budget above; the scroll takes 2.5–4.5 minutes to the WARNING;
-- every `bulletSpeed` tunable ≤ 2.0; HB-01's lane geometry per phase (the two lanes ≥ 16 px
+- every `bulletSpeed` tunable ≤ 3.0; HB-01's lane geometry per phase (the two lanes ≥ 24 px
   apart after widening, the core's lane between them, both on the playfield at the tracking
   limits, `trackSpeed` < 1);
 - a whole HB-01 fight played by the bot (god mode, stage skip) through phases 0, 1, 2: no
-  violation, bullets > 0 and ≤ 2.0, exactly two separate lanes at once in the last phase with
-  ≥ 16 px between them;
+  violation, bullets > 0 and ≤ 3.0, exactly two separate lanes at once in the last phase with
+  ≥ 24 px between them;
 - every zone A sprite has its atlas frames and white hit-flash frames.
 
 ## The debug stage skip
@@ -212,8 +227,9 @@ queuing the stage theme when it is `'boss'`:
 
 1. find the stage's **first** `warning` or `boss` event; none (or free flight) → `false`, nothing
    changes;
-2. `runner.jumpTo(max(0, event.x − BOSS_SKIP_LEAD))` — `BOSS_SKIP_LEAD` is 96 px, about two
-   seconds of the calm's scroll before zone A's WARNING;
+2. `runner.jumpTo(max(0, event.x − BOSS_SKIP_LEAD))` — `BOSS_SKIP_LEAD` is `96 · WORLD_SCALE`,
+   144 px today, about two seconds of the calm's scroll before zone A's WARNING (lead and scroll
+   speed both scaled ×1.5, so the tick count — the time — is unchanged);
 3. `spawnPlayer(ship, camera)` for every active ship that is not dying or dead — the fly-in starts
    again at the new view.
 
@@ -289,17 +305,20 @@ mask }` at player 1's controls.
 ### `fourWayBot()` — the remote player
 
 `four-way-bot.ts` has the Samsung remote's limits (`shmup_feat.md` §4 rule 2): it **never holds two
-directions**, relies on the forced autofire and keeps its ship at playfield x ≈ `BOT_X` (64).
+directions**, relies on the forced autofire and keeps its ship at playfield x ≈ `BOT_X` — since R2-02
+that is `ENTER_END_X`, 96 px (v1's 64 · `WORLD_SCALE`, the end of the fly-in).
 `fourWayBot(player = 0)` flies the given player slot (M2-06: the co-op golden replays fly player 2
 with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 
-- **Lane scan** (`scanLanes`, into a reused `LaneScan`): `LANES` = 12 lanes of `LANE_HEIGHT` 16 px;
+- **Lane scan** (`scanLanes`, into a reused `LaneScan`): `LANES` = `⌊PLAYFIELD_H / LANE_HEIGHT⌋` =
+  14 lanes of `LANE_HEIGHT` `16 · WORLD_SCALE` = 24 px;
   `SLOTS` = 20 time slots of `SLOT_TICKS` 2 over `BULLET_HORIZON` 40 ticks. Per lane two bit masks
   — `centre` (a threat near the lane's centre, where the ship settles) and `span` (anywhere in the
   lane, what a ship passing through meets) — from enemy bullets followed along their velocity
   (delays honoured), enemy bodies (ground enemies scroll past, fliers ride the camera), boss parts
   with hurtboxes near the ship's column, and lasers from 12 ticks before the beam grows until it
-  fades; plus terrain danger per lane within `TERRAIN_AHEAD` 56 px and a `wall` flag for rock right
+  fades; plus terrain danger per lane within `TERRAIN_AHEAD` 84 px (`56 · WORLD_SCALE`) and a
+  `wall` flag for rock right
   at the ship.
 - **Choice**: each lane's cost = terrain + the **trip** (every lane crossed, while the ship is in
   it, at its speed) + the **stay** (the destination's centre from arrival on, sooner threats
@@ -363,7 +382,7 @@ broken) and the rollbacks of `gimmick-range-deaths`.
 | File | What |
 |---|---|
 | `zone-a.test.ts` | God mode: the bot kills HB-01 and reaches `stageClear` in 3–6 minutes, never diagonal, x within ±4 of 64, the rules hold, and HB-01's last phase really overlaps two lanes. Without god mode: the run is recorded, `replayStage` reproduces its deaths and hash, the deaths are **printed, not asserted** (they measure the balance). With `stageSkip: 'boss'`: everything but the fight takes < 15 s |
-| `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 900 px are exactly the ≥ 3 sources of the window — since M2-11 through the shared helper `recovery.ts` (`capsuleSources`, `perfectFrom`, `recoveryAt`) |
+| `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 1,350 px (`RECOVERY_WINDOW`, 900 · `WORLD_SCALE`) are exactly the ≥ 3 sources of the window — since M2-11 through the shared helper `recovery.ts` (`capsuleSources`, `perfectFrom`, `recoveryAt`) |
 | `zone-b.test.ts`, `zone-c.test.ts`, `zone-bc-recovery.test.ts` (M2-11) | The same for BRINE NEBULA and DUNE EXPANSE: god-mode clears in 3–6 minutes with the boss's three phases (and zone B's captain), the rules on every tick, a reported no-god run; the recovery rule at all eight checkpoints ([zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)) |
 | `zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts` (M2-12) | The same for MAGMA DEEP (the camera reaching the caves, y 200) and TEMPEST RIDGE (the rear attackers): god-mode clears in 3–6 minutes (228 s and 246 s), the rules on every tick, a reported no-god run (one death each); the recovery rule at all eight checkpoints — zone D's third restarts down in the caves ([zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule)) |
 | `zone-f.test.ts`, `zone-g.test.ts`, `zone-fg-recovery.test.ts` (M2-13) | The same for CELL VAULT (shots break tissue, the claws lunge) and PRISM LABYRINTH (the rush stacks cubes into the terrain): god-mode clears in 3–6 minutes (219.8 s and 234.1 s), the rules on every tick, a reported no-god run (no death in either); the recovery rule at all eight checkpoints ([zones-f-and-g.md](zones-f-and-g.md#playtests-and-the-recovery-rule)) |
@@ -412,7 +431,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 |---|---|
 | A zone | The full recipe is in [zones-b-and-c.md](zones-b-and-c.md#building-the-next-zone-m2-12--m2-14) (and what a taller map, a maze or rear attackers add to it in [zones-d-and-e.md](zones-d-and-e.md), regenerating walls, a cube rush, a `ground` bonus entrance or a boss with curling arms in [zones-f-and-g.md](zones-f-and-g.md)). In short: `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
 | Another default stage | `DEFAULT_STAGE_ID` in `@shmup/shell`; since M2-10 only a stage that is the campaign's `start` zone gives campaign runs (else the flow plays it as a single stage) |
-| A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 16 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
+| A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 24 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
 | A new rule for the 4-way checks | A pure function of the World in `rules.ts`, collected in `createRuleWatch`, with a hand-made test in `rules.test.ts` |
 | A different playtester (8-way, a sloppy player) | Another `PlaytestBot` (`decide(world)` → mask); reuse `scanLanes`; the harness records and replays any bot |
 | A skip target (a given x, a named section) | Build on `StageRunner.jumpTo` / `restartAt` like `skipToBoss` and `jumpToCheckpoint` do (M1-19) — cold code, call it at creation or from a `DebugCommand`, and fly the ships in again |

@@ -132,10 +132,14 @@ named weapons. It allocates (load time) and throws `RangeError`
   `VERTICAL`, `FREE WAY`, `RIPPLE`, `CYCLONE`, `TWIN`; Type A's `SHOT`, `DOUBLE`, `LASER`,
   `MISSILE`).
 - **`WeaponSystem.setArsenal(roles)`** swaps the arsenal in place — the preview's tool: it copies
-  `roles` into `roleWeapons` (no longer frozen), recompiles the `RoleTables` in place
-  (`compileRoles` now resets every entry of existing tables instead of building new ones), empties
-  the shot pool, the hit list and the cooldown tables and restarts the autofire timers. It never
-  allocates. It is a cold path that a recorded session must never call — a replay header only
+  `roles` into `roleWeapons` (no longer frozen), restores each role's columns **by row number**
+  from the per-weapon row cache (`ROLE_ROW_CACHE`) — a weapon seen for the first time on this
+  system compiles into a fresh row, so the first swaps build the cache (R2-02.prepB.FIX1:
+  `compileRole` runs only on these changes, in a tier where every fractional tunable materialises
+  a heap number — the port's `hh` 4.5, `ox` 7.5 …, each a whole number at v1's scale, which is why
+  only the port showed the cost) — then empties the shot pool, the hit list and the cooldown
+  tables and restarts the autofire timers. Nothing allocates per swap once every weapon has a row.
+  It is a cold path that a recorded session must never call — a replay header only
   knows the config's arsenal.
 
 ## The nine behaviours
@@ -145,22 +149,25 @@ named weapons. It allocates (load time) and throws `RangeError`
 defaults: `shot.tailGun` and `shot.vertical` are `Double` pairs, `laser.cyclone` is a `Laser`. New
 tunables (defaults in `WEAPON_BEHAVIOR_PARAMS`, compiled into new `RoleTables` arrays): `gravity`,
 `blastRadius`, `blastTicks`, `startSize`, `maxSize`, `growth`, `aspect`, `gap`. Angles are binary
-units (1024 per turn, 0 = forward, 256 = down).
+units (1024 per turn, 0 = forward, 256 = down). Since R2-02 every **world** tunable of this arsenal
+reads `v1 · WORLD_SCALE` — in the defaults, in the shipped `content/weapons/` values below, and in
+`SHOT_CULL_MARGIN` (24) and `LASER_SEGMENT_LENGTH` (12) — ratios (`aspect`) and angles never scale
+([weapons-and-options.md](weapons-and-options.md)).
 
 | Behaviour (kind) | Motion | Hits |
 |---|---|---|
-| `missile.spreadBomb` (`SpreadBomb`) | Launched `angle` 64 below forward at `speed`, `vy` gains `gravity` 0.12 each tick (an arc), riding the camera; **bursts** where its bottom — or its centre, for a wall — meets terrain, or on the first target it touches | The bomb itself does no damage: the burst turns the same slot into the **blast** (below) |
+| `missile.spreadBomb` (`SpreadBomb`) | Launched `angle` 64 below forward at `speed`, `vy` gains `gravity` 0.18 each tick (an arc; v1 0.12), riding the camera; **bursts** where its bottom — or its centre, for a wall — meets terrain, or on the first target it touches | The bomb itself does no damage: the burst turns the same slot into the **blast** (below) |
 | `missile.twoWay` (`TwoWay`) | A volley of two: one `angle` 128 up from forward, one down (frames 0 / 1); straight flight, dies on terrain | Non-piercing; the next volley waits until both are gone (the Double rule); cap 1 fires only the climbing one |
-| `missile.torpedo` (`Torpedo`) | A `missile.groundSlide` (falls at `angle` 96, slides at `slideSpeed` 5 px/tick) | Flies on through every **enemy** its hit destroys ("pierces small enemies"); a survivor, armour or a boss part stops it |
-| `shot.tailGun` (`Double`) | A forward shot + one straight back (`angle` 512, `ox` −6) | Double rule |
-| `shot.vertical` (`Double`) | A forward shot + one straight up (`angle` 256, `oy` −6, a tall box) | Double rule |
+| `missile.torpedo` (`Torpedo`) | A `missile.groundSlide` (falls at `angle` 96, slides at `slideSpeed` 7.5 px/tick) | Flies on through every **enemy** its hit destroys ("pierces small enemies"); a survivor, armour or a boss part stops it |
+| `shot.tailGun` (`Double`) | A forward shot + one straight back (`angle` 512, `ox` −9) | Double rule |
+| `shot.vertical` (`Double`) | A forward shot + one straight up (`angle` 256, `oy` −9, a tall box) | Double rule |
 | `shot.freeWay` (`FreeWay`) | A forward shot + one in the player's **last 8-way direction** | Double rule |
-| `laser.ripple` (`Ripple`) | A ring flying forward at `speed` 6; its half height grows from `startSize` 4 by `growth` 0.5 per tick to `maxSize` 20, its half width is `aspect` 0.5 × that; the sprite frame follows the size | Non-piercing; the **ring**, not the box, is the hitbox (below) |
-| `laser.cyclone` (`Laser`) | A `laser.beam` 80 px long, 8 px thick (`hh` 4); its 8-px segments step `frames` 4 swirl frames along the beam and over time | Piercing with the 6-tick hit cooldown, like Type A's laser |
-| `laser.twin` (`Twin`) | Two short beams (`maxLength` 16) `gap` 8 px apart that follow their shooter's row | Non-piercing in the shipped content; a pair fires while two more beams fit under the cap (cap 4 = two pairs) |
+| `laser.ripple` (`Ripple`) | A ring flying forward at `speed` 9; its half height grows from `startSize` 6 by `growth` 0.75 per tick to `maxSize` 30, its half width is `aspect` 0.5 × that; the sprite frame follows the size | Non-piercing; the **ring**, not the box, is the hitbox (below) |
+| `laser.cyclone` (`Laser`) | A `laser.beam` 120 px long, 12 px thick (`hh` 6); its 12-px segments step `frames` 4 swirl frames along the beam and over time | Piercing with the 6-tick hit cooldown, like Type A's laser |
+| `laser.twin` (`Twin`) | Two short beams (`maxLength` 24) `gap` 12 px apart that follow their shooter's row | Non-piercing in the shipped content; a pair fires while two more beams fit under the cap (cap 4 = two pairs) |
 
 **The Spread Bomb's blast.** `detonate()` sets `ShotFlag.Blast` (new, 16) and `Pierce` on the
-slot, stops it, makes its box `blastRadius` (14 px half size, both axes), restarts `age` (ticks
+slot, stops it, makes its box `blastRadius` (21 px half size, both axes), restarts `age` (ticks
 since the burst), swaps the sprite for `shots/blast` (`SPREAD_BLAST_SPRITE`, an **engine sprite** —
 `WEAPON_SPRITES` is part of `ENGINE_SPRITES`) and pushes `Sfx EnemyExplodeSmall` and
 `Particles ExplosionSmall` at whole pixels. The blast is **world-anchored** (it does not ride the
@@ -176,7 +183,7 @@ that die on armour).
 every ring to HALCYON BULWARK's fringe armour plates (the box overlapped them first) and Type B
 could not damage the boss. So `collide()` adds an exact ring test (`ringTouches`, on the ellipse
 scaled to a circle): a target is hit when its box reaches into the ring's outer ellipse (closed)
-and is **not wholly inside** its inner edge, `RIPPLE_RING_WIDTH` (4) px in from the outer one
+and is **not wholly inside** its inner edge, `RIPPLE_RING_WIDTH` (6 px, `4 · WORLD_SCALE`) in from the outer one
 (measured on the height). A small enemy the ring has already swallowed is no longer hit.
 
 **The Free Way's direction.** `WeaponSystem.freeWayHeading` (an `Int32Array` per player,
@@ -344,7 +351,9 @@ methods and write typed arrays and class fields only. The guards:
   weaving (the Free Way turning), enemies respawned and armoured ones clinking — under 64 KB over
   6,000 ticks after a 12,000-tick warm-up.
 - `scenes-weapon-select-alloc.test.ts` — the weapon select open through a scene flow, TYPE and
-  `!` stepping (each TYPE change calls `setArsenal`), a frame composed every tick, the range
+  `!` stepping (each TYPE change calls `setArsenal`; the A → B → C → D → EDIT cycle has handed the
+  row cache every weapon by the time the window measures, so measured swaps only restore rows), a
+  frame composed every tick, the range
   restarting again and again — under 64 KB over 12,000 ticks after a 12,000-tick warm-up. Every
   spawn creates its enemy's behaviour coroutine (a generator per spawn, D29 — covered by the stage
   and enemy guards), so this guard flies a copy of the range **without targets**; the shipped
@@ -354,7 +363,7 @@ methods and write typed arrays and class fields only. The guards:
 |---|---|
 | The Twin's lane travels in a class field (`lane`) set around `emit`, not as an argument | A fractional argument to a call V8 does not inline is boxed (the M1-10 lesson) |
 | The ring test reads its centre, scale and radii from class fields (`qcx`, `qcy`, `qk`, `qb`, `qInner`) set once per queried shot | The grid visitor is called per candidate: no fractional arguments, no closures |
-| `setArsenal` recompiles the existing `RoleTables` and copies into the existing `roleWeapons` | Swapping the preview's arsenal on every menu change must not allocate |
+| `setArsenal` restores cached `RoleTables` rows by number into the existing tables and copies into the existing `roleWeapons` | Swapping the preview's arsenal on every menu change must not allocate — and must not recompile a weapon whose fractional tunables would box (R2-02.prepB.FIX1) |
 | The burst pushes its events at whole pixels (`Math.floor(x) \| 0`) | The event push is a non-inlined call |
 | The preview reuses one input snapshot, one event queue, one debug-flag set and one role list | Its tick is part of the flow's tick |
 

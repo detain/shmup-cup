@@ -96,7 +96,7 @@ flags join the stage's `flagNames` with those of `flag` and `trigger` events (st
 | `type` | Fields | Checks |
 |---|---|---|
 | `trigger` (`StageTriggerEvent`) | `flag` (→ `flagId`), `region: StageRegion { x, y, w, h }` (world px), `value?` (default `true`), `until?` (camera x; default `region.x + region.w`) | ≤ `MAX_STAGE_TRIGGERS` (32) per stage; `until` not before the event's `x` |
-| `block` (`StageBlockEvent`) | `y` (world, top edge), `w`, `h` (px, whole tiles), `screenX?` (default `DEFAULT_BLOCK_SCREEN_X` = `PLAYFIELD_W + 16`, 400 today — 16 px past the view's right edge, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`; the left edge is world x `x + screenX`, so the ×1.5 port moves `x` and `screenX` together — a world-sum pair, [content-data.md](content-data.md#units-and-the-rescale-tool-r1-03)), `tile?` (a tile **name**, default `solid` → `tileId`, resolved in the terrain pass), `vx?`, `vy?` (drift px/tick), `dx?`, `dy?` (swing px), `period?` (ticks, default `DEFAULT_BLOCK_PERIOD` 120), `phase?` (binary units) | on the tile grid, at most `MAX_BLOCK_CELLS` (64) tiles; the stage needs a tilemap; the tile must exist |
+| `block` (`StageBlockEvent`) | `y` (world, top edge), `w`, `h` (px, whole tiles), `screenX?` (default `DEFAULT_BLOCK_SCREEN_X` = `PLAYFIELD_W + 16 · WORLD_SCALE`, 664 today — 24 px past the view's right edge, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`; the left edge is world x `x + screenX`, so R2-02's ×1.5 port moved `x` and `screenX` together — a world-sum pair, [content-data.md](content-data.md#units-and-the-rescale-tool-r1-03)), `tile?` (a tile **name**, default `solid` → `tileId`, resolved in the terrain pass), `vx?`, `vy?` (drift px/tick), `dx?`, `dy?` (swing px), `period?` (ticks, default `DEFAULT_BLOCK_PERIOD` 120), `phase?` (binary units) | on the tile grid, at most `MAX_BLOCK_CELLS` (64) tiles; the stage needs a tilemap; the tile must exist |
 
 **The `ballistic` mover** (`EnemyMoverSpec`): `{ type: 'ballistic', vx, vy, gravity?, maxFall?,
 trigger?, land? }` — `land` is a `BallisticLandName` (`'pass' | 'stop' | 'shatter'`, default
@@ -363,7 +363,8 @@ every shipped stage.
 ## Importing a Tiled map (`pnpm content:tiled`)
 
 `scripts/content/tiled-import.mjs` converts a Tiled JSON map (`.tmj`: orthogonal, not infinite,
-`TILED_TILE_SIZE` tiles — 8 × 8 px today) into stage content. The output is ordinary content — `loadContent` validates it
+`TILED_TILE_SIZE` tiles — 12 × 12 px since R2-01's flip, 8 × 8 px in v1) into stage content.
+The output is ordinary content — `loadContent` validates it
 like a hand-written stage; the importer only translates.
 
 ```sh
@@ -394,10 +395,10 @@ must convert to exactly `tiled-sample.stage.json` / `.paths.json`, and a test ru
 y.
 
 `TILED_TILE_SIZE`, `VIEW_WIDTH` and `SPAWN_LEAD` come from `scripts/frame.mjs` since R1-02 — the
-scripts' pinned copy of core's `TILE_SIZE`, `PLAYFIELD_W` and `PLAYFIELD_W + 16` — so after R2-01's
-flip the importer expects 12-px tiles and a 640-px view by itself; the 16-px spawn lead is a world
-margin, which R2-02 scales with `DEFAULT_SPAWN_SCREEN_X` (plan R2-02: "the Tiled importer at 12-px
-tiles and a 640 view").
+scripts' pinned mirror of core's `TILE_SIZE`, `PLAYFIELD_W` and the spawn lead — so since R2-01's flip
+the importer expects 12-px tiles and a 640-px view by itself; the lead's 16-px world margin scaled
+with `DEFAULT_SPAWN_SCREEN_X` in R2-02 (`SPAWN_LEAD` = `PLAYFIELD_W + 16 · WORLD_SCALE` = 664 today —
+plan R2-02: "the Tiled importer at 12-px tiles and a 640 view").
 
 ## Using it headlessly
 
