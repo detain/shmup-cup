@@ -155,6 +155,7 @@ const V1_WORLD: readonly V1World[] = Object.freeze([
   { name: 'BOSS_FIRE_MARGIN', v1: 8, unit: 'world-px' },
   { name: 'BOSS_SKIP_LEAD', v1: 96, unit: 'world-px' },
   { name: 'CARRIED_OPTION_SPACING', v1: 10, unit: 'world-px' },
+  { name: 'CHAIN_SPREAD', v1: 8, unit: 'world-px' },
   { name: 'DEFAULT_GRID_CELL_SIZE', v1: 32, unit: 'world-px' },
   { name: 'DESPAWN_MARGIN', v1: 32, unit: 'world-px' },
   { name: 'GHOST_MARGIN', v1: 128, unit: 'world-px' },
