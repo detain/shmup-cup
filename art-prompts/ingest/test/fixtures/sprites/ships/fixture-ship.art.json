@@ -1,0 +1,60 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "ships/fixture-ship",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "heavy",
+  "handCleaned": true,
+  "reviewed": {
+    "on": "2026-10-17",
+    "by": "the ingest tool's test suite"
+  },
+  "ingestedAt": "2026-10-17",
+  "author": null,
+  "sources": [
+    {
+      "path": "sources/drone-sheet.png",
+      "sha256": "949b075d9e1d30df4d2e5cb82b3eb4e183aee1d9d13b6f32bdeeaf37db4842d1",
+      "format": "png",
+      "width": 128,
+      "height": 96,
+      "model": "Qwen/Qwen-Image",
+      "modelKey": "qwenvl",
+      "weights": {
+        "repo": "Qwen/Qwen-Image",
+        "revision": null,
+        "transformer": null
+      },
+      "licence": "apache-2.0",
+      "prompt": null,
+      "seed": 9,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "sprites/ships/fixture-ship.recipe.json",
+    "sha256": "d7e8abe328d925e17851672d530d231f96e03893ec96e53a95dafd719eedce98"
+  },
+  "edit": null,
+  "output": {
+    "png": "fixture-ship.png",
+    "sha256": "4ff78368dcc7d27ed9c57d44d1550e1d8a91c0962b046470fc426b6d3d7b81bb",
+    "sidecar": "fixture-ship.json",
+    "sidecarSha256": "660ee4f664aa8207a9cc0555b23a703fb0a9633c3963c6e0808d50f4fd4e4c30",
+    "frames": 4,
+    "frameWidth": 16,
+    "frameHeight": 12,
+    "colors": 5,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: a ship sliced from the same sheet as the enemy drone, provenance stated in the recipe, a p2 palette map written to the sidecar's meta.shmup.p2."
+}

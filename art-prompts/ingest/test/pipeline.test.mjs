@@ -128,7 +128,7 @@ describe('the committed fixture outputs', () => {
   it('are exactly what the recipes produce (--check: PNG, sidecar and record byte for byte)', () => {
     const run = cli(['--root', FIXTURES, '--palettes', PALETTES, '--check', SPRITES]);
     assert.equal(run.code, 0, run.err);
-    assert.match(run.out, /5 recipe\(s\): 5 ok, 0 failed, 2 with warnings, 0 out of date/);
+    assert.match(run.out, /6 recipe\(s\): 6 ok, 0 failed, 2 with warnings, 0 out of date/);
   });
 
   it('come out byte-identical on a re-run into another folder, twice', () => {
@@ -165,7 +165,7 @@ describe('the committed fixture outputs', () => {
       0,
     );
     const first = snapshot(a);
-    assert.equal(first.size, 15);
+    assert.equal(first.size, 18);
     assert.deepEqual(first, snapshot(b));
     for (const [rel, bytes] of first) {
       assert.deepEqual(bytes, readFileSync(join(SPRITES, rel)), rel);
@@ -179,6 +179,7 @@ describe('the committed fixture outputs', () => {
       'bosses/fringe-hull',
       'backdrops/fixture-far',
       'fx/fixture-glow',
+      'ships/fixture-ship',
     ]) {
       const bytes = readFileSync(join(SPRITES, `${name}.png`));
       assert.deepEqual(
@@ -212,6 +213,7 @@ describe('what each fixture shows', () => {
       { name: 'idle', from: 0, to: 3, direction: 'forward' },
       { name: 'blink', from: 1, to: 2, direction: 'pingpong' },
     ]);
+    assert.equal(sidecar.meta.shmup, undefined, 'no p2 recipe — no shmup block, old bytes kept');
     const record = JSON.parse(readFileSync(join(SPRITES, 'enemies', 'drone.art.json'), 'utf8'));
     assert.equal(record.origin, 'ai-assisted');
     assert.equal(record.handCleaned, true);
@@ -228,6 +230,31 @@ describe('what each fixture shows', () => {
     assert.equal(source.weights.transformer, 'lmsys/flux2-dev-modelopt-fp8-sglang-transformer');
     assert.equal(source.generator.sidecar, 'sources/drone-sheet.json');
     assert.deepEqual([record.edit.painted, record.edit.erased], [1, 1]);
+  });
+
+  it('fixture-ship (p2): the recipe p2 map is written to the sidecar as meta.shmup.p2', () => {
+    const strip = output('ships/fixture-ship');
+    assert.equal(strip.width, 64);
+    assert.equal(strip.height, 12);
+    const sidecar = JSON.parse(readFileSync(join(SPRITES, 'ships', 'fixture-ship.json'), 'utf8'));
+    assert.deepEqual(sidecar.meta.shmup, {
+      p2: { '#3a4a68': '#4a683a', '#5a7090': '#70905a', '#a8c0d8': '#c0d8a8' },
+    });
+    const colours = opaqueColours(strip);
+    for (const from of ['#3a4a68', '#5a7090', '#a8c0d8'])
+      assert.ok(colours.has(parseInt(from.slice(1), 16)), `${from} is in the art`);
+    for (const to of ['#4a683a', '#70905a', '#c0d8a8'])
+      assert.ok(!colours.has(parseInt(to.slice(1), 16)), `${to} is not pre-mapped in the art`);
+    const record = JSON.parse(
+      readFileSync(join(SPRITES, 'ships', 'fixture-ship.art.json'), 'utf8'),
+    );
+    assert.deepEqual([record.origin, record.cleanup, record.use], [
+      'ai-assisted',
+      'heavy',
+      'pixels',
+    ]);
+    assert.deepEqual(record.reviewed, { on: '2026-10-17', by: "the ingest tool's test suite" });
+    assert.equal(record.sources[0].modelKey, 'qwenvl');
   });
 
   it('gyre (JPEG): the key seen between the spokes is keyed as enclosed holes', () => {
@@ -941,7 +968,7 @@ describe('the CLI', () => {
       0,
     );
     const report = JSON.parse(readFileSync(file, 'utf8'));
-    assert.equal(report.length, 5);
+    assert.equal(report.length, 6);
     const far = report.find(
       (/** @type {{ name: string }} */ r) => r.name === 'backdrops/fixture-far',
     );

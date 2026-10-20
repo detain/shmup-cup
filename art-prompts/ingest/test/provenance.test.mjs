@@ -283,8 +283,8 @@ describe('checkProvenanceTree', () => {
   it('finds the fixture tree fully traced', () => {
     const result = checkProvenanceTree(SPRITES, 'fixtures');
     assert.deepEqual(result.issues, []);
-    assert.equal(result.pngs, 5);
-    assert.equal(result.records, 5);
+    assert.equal(result.pngs, 6);
+    assert.equal(result.records, 6);
   });
 
   it('reports a PNG without provenance, and accepts a LICENSES.md entry instead', () => {

@@ -336,6 +336,27 @@ describe('parseRecipe', () => {
     assert.equal(recipe.key.test, null);
   });
 
+  it('normalises a p2 map and rejects colours that are not exact lowercase "#rrggbb"', () => {
+    assert.equal(parse({}).recipe?.p2, null, 'a recipe without p2 parses null');
+    const map = parse({ p2: { '#a8c0d8': '#c0d8a8', '#3a4a68': '#4a683a' } });
+    assert.ok(map.recipe !== null);
+    assert.deepEqual(map.issues, []);
+    assert.deepEqual(map.recipe.p2, { '#3a4a68': '#4a683a', '#a8c0d8': '#c0d8a8' }, 'keys sorted');
+    const notMap = parse({ p2: '#4a683a' });
+    assert.equal(notMap.recipe, null);
+    assert.match(at(notMap, 'p2')[0], /^error: must be a map/);
+    const empty = parse({ p2: {} });
+    assert.equal(empty.recipe, null);
+    assert.match(at(empty, 'p2')[0], /^error: must map at least one colour/);
+    const bad = parse({ p2: { '#FFF000': '#4a683a', '#3a4a68': '#4a6' } });
+    assert.equal(bad.recipe, null);
+    assert.match(at(bad, 'p2.#FFF000')[0], /^error: must be a "#rrggbb" colour/);
+    assert.match(at(bad, 'p2.#3a4a68')[0], /^error: must map to a "#rrggbb" colour/);
+    const nonString = parse({ p2: { '#3a4a68': 16 } });
+    assert.equal(nonString.recipe, null);
+    assert.match(at(nonString, 'p2.#3a4a68')[0], /^error: must map to a "#rrggbb" colour/);
+  });
+
   it('defaults translucent and additive art to a black key and no outline', () => {
     const { recipe } = parse({ category: 'shield', alpha: 'translucent' });
     assert.equal(recipe?.key.mode, 'black');

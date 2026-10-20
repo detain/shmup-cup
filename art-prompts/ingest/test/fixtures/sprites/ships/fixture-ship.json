@@ -1,0 +1,132 @@
+{
+  "frames": [
+    {
+      "filename": "ships/fixture-ship 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/fixture-ship 1",
+      "frame": {
+        "x": 16,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/fixture-ship 2",
+      "frame": {
+        "x": 32,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/fixture-ship 3",
+      "frame": {
+        "x": 48,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "fixture-ship.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 64,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 16,
+              "h": 12
+            },
+            "pivot": {
+              "x": 8,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ],
+    "shmup": {
+      "p2": {
+        "#3a4a68": "#4a683a",
+        "#5a7090": "#70905a",
+        "#a8c0d8": "#c0d8a8"
+      }
+    }
+  }
+}

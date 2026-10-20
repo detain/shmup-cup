@@ -986,6 +986,9 @@ export function ingestRecipe(recipeFile, options) {
                 ],
               },
             ],
+      // The player-2 palette map rides to the asset pipeline in the sidecar (`scripts/assets/
+      // sprite-source.mjs` reads `meta.shmup.p2`); a recipe without one changes no byte.
+      ...(recipe.p2 === null ? {} : { shmup: { p2: recipe.p2 } }),
     },
   };
   const sidecarText = `${JSON.stringify(sidecar, null, 2)}\n`;

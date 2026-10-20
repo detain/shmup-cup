@@ -21,6 +21,9 @@ export const SPRITE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[
 /** Animation names, as the asset pipeline defines them. */
 const ANIMATION_NAME_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 
+/** A `p2` map colour, as `scripts/assets/sprite-source.mjs` reads them back: exact lowercase. */
+const P2_COLOR_PATTERN = /^#[0-9a-f]{6}$/;
+
 /** The largest frame an atlas page holds (2048 minus the 1-px extrusion each side). */
 export const MAX_FRAME_SIZE = 2046;
 
@@ -96,6 +99,7 @@ const RECIPE_KEYS = [
   'coverage',
   'alpha',
   'palette',
+  'p2',
   'dither',
   'outline',
   'cycles',
@@ -190,6 +194,9 @@ const CLEANUPS = ['none', 'light', 'heavy', 'redrawn'];
  * @property {'binary' | 'translucent' | 'additive'} alpha - Alpha recipe.
  * @property {{ name: string | null, colors: number[] | null, max: number, outline: number | null }} palette
  *   - Palette: a named file, an explicit list, or adaptive (`colors` null) up to `max`.
+ * @property {Record<string, string> | null} p2 - Player-2 palette map, `"#rrggbb"` to
+ *   `"#rrggbb"` (keys sorted); written to the sidecar's `meta.shmup.p2`, null when the recipe
+ *   has none.
  * @property {{ size: 0 | 2 | 4, strength: number }} dither - Ordered dither.
  * @property {{ enabled: boolean, color: number | null, edges: 'open' | 'closed' }} outline -
  *   Outline pass.
@@ -651,6 +658,34 @@ export function parseRecipe(json) {
     }
   }
 
+  // ---- p2 --------------------------------------------------------------------------------
+  // The player-2 palette map, stored verbatim in the sidecar's `meta.shmup.p2` so the asset
+  // pipeline derives the `@p2` sibling without code (the `@flash` route of M2-06's coop art).
+  /** @type {Record<string, string> | null} */
+  let p2 = null;
+  if (json.p2 !== undefined) {
+    const p = json.p2;
+    if (!isObject(p)) error('p2', 'must be a map of "#rrggbb" colours to "#rrggbb" colours');
+    else {
+      const entries = Object.entries(p).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+      if (entries.length === 0) error('p2', 'must map at least one colour');
+      else {
+        let ok = true;
+        for (const [from, to] of entries) {
+          if (!P2_COLOR_PATTERN.test(from)) {
+            error(`p2.${from}`, 'must be a "#rrggbb" colour');
+            ok = false;
+          }
+          if (typeof to !== 'string' || !P2_COLOR_PATTERN.test(to)) {
+            error(`p2.${from}`, 'must map to a "#rrggbb" colour');
+            ok = false;
+          }
+        }
+        if (ok) p2 = Object.fromEntries(entries);
+      }
+    }
+  }
+
   /** @type {Recipe['dither']} */
   const dither = { size: 0, strength: 24 };
   if (json.dither !== undefined && json.dither !== 'off' && json.dither !== false) {
@@ -853,6 +888,7 @@ export function parseRecipe(json) {
       },
       alpha: /** @type {'binary' | 'translucent' | 'additive'} */ (alpha),
       palette,
+      p2,
       dither,
       outline,
       cycles,

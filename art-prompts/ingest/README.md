@@ -24,7 +24,7 @@ cd art-prompts/ingest && npm test        # node --check + the node:test suite on
 | Path | What |
 |---|---|
 | `ingest.mjs` | the CLI |
-| `lib/recipe.mjs` | recipe parsing and the bible's rules per category |
+| `lib/recipe.mjs` | recipe parsing and the bible's rules per category; a recipe's `p2` map (`"#rrggbb"` → `"#rrggbb"`) rides into the sidecar's `meta.shmup.p2`, and the asset pipeline derives the sprite's `@p2` sibling from it |
 | `lib/key.mjs` | border-sampled key, flood fill, holes, cleanup, despill, black key |
 | `lib/scale.mjs` | area downscale, pixel snap, binary / translucent / additive alpha |
 | `lib/quantise.mjs` | median cut, a fixed palette reduced to the colour cap, reserved palette-cycle ramps, nearest mapping, Bayer dither |

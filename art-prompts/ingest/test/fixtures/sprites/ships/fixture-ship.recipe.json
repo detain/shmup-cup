@@ -1,0 +1,23 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "ships/fixture-ship",
+  "category": "ship",
+  "frame": { "width": 16, "height": 12 },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "sources/drone-sheet.png",
+      "grid": { "cellWidth": 64, "cellHeight": 48, "columns": 2, "rows": 2 },
+      "provenance": { "model": "qwenvl", "seed": 9, "sidecar": false }
+    }
+  ],
+  "cleanup": { "minIsland": 40 },
+  "palette": { "max": 8 },
+  "p2": { "#3a4a68": "#4a683a", "#5a7090": "#70905a", "#a8c0d8": "#c0d8a8" },
+  "anchor": [8, 6],
+  "provenance": {
+    "cleanup": "heavy",
+    "reviewed": { "on": "2026-10-17", "by": "the ingest tool's test suite" }
+  },
+  "notes": "Synthetic fixture: a ship sliced from the same sheet as the enemy drone, provenance stated in the recipe, a p2 palette map written to the sidecar's meta.shmup.p2."
+}

@@ -38,13 +38,14 @@ afterAll(() => {
   rmSync(tmp, { recursive: true, force: true });
 });
 
-/** The five fixture sprites the ingest tool's tests produce. */
+/** The six fixture sprites the ingest tool's tests produce. */
 const FIXTURE_NAMES = [
   'backdrops/fixture-far',
   'bosses/fringe-hull',
   'enemies/drone',
   'enemies/gyre',
   'fx/fixture-glow',
+  'ships/fixture-ship',
 ];
 
 describe('R3-02 — provenance of real art', () => {
