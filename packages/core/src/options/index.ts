@@ -61,7 +61,7 @@
  *
  * @module
  */
-import type { OptionChoice } from '../config/index.js';
+import { WORLD_SCALE, type OptionChoice } from '../config/index.js';
 import { Action } from '../input/index.js';
 import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
@@ -97,10 +97,10 @@ export const STOLEN_OPTION_SPRITE = 'options/stolen';
 export const OPTION_ANIM_TICKS = 8;
 
 /** Radius of an option's body (the Option Hunter grabs an option it touches), in pixels. */
-export const OPTION_RADIUS = 4;
+export const OPTION_RADIUS = 4 * WORLD_SCALE;
 
 /** Length of each link of the Snake chain, in pixels. */
-export const SNAKE_LINK = 16;
+export const SNAKE_LINK = 16 * WORLD_SCALE;
 
 /**
  * Offsets of the Formation's options from the ship when retracted — a tight `>` behind it — as
@@ -116,10 +116,10 @@ export const FORMATION_SPREAD: readonly number[] = Object.freeze([
 ]);
 
 /** Radius of the Rotate Options' orbit, in pixels. */
-export const ROTATE_RADIUS = 20;
+export const ROTATE_RADIUS = 20 * WORLD_SCALE;
 
 /** Radius of the Rotate Options' orbit when extended, in pixels. */
-export const ROTATE_RADIUS_EXTENDED = 40;
+export const ROTATE_RADIUS_EXTENDED = 40 * WORLD_SCALE;
 
 /** Binary units the Rotate Options turn per tick (one turn in ≈ 1.4 s). */
 export const ROTATE_SPEED = 12;

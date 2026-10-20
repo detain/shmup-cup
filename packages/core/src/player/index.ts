@@ -92,7 +92,7 @@
  *
  * @module
  */
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, WORLD_SCALE } from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
 import { Action, type InputDeviceKind, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
@@ -132,10 +132,10 @@ export const PLAYER_STATES: readonly PlayerState[] = Object.freeze([
 export const DIAGONAL_SCALE = 0.7071;
 
 /** Camera-relative x where the fly-in starts (the ship is off-screen to the left). */
-export const ENTER_START_X = -24;
+export const ENTER_START_X = -24 * WORLD_SCALE;
 
 /** Camera-relative x where the fly-in ends and control starts. */
-export const ENTER_END_X = 64;
+export const ENTER_END_X = 64 * WORLD_SCALE;
 
 /** Camera-relative y of a fresh spawn: the middle of the playfield. */
 export const SPAWN_Y = PLAYFIELD_H / 2;
@@ -153,15 +153,15 @@ export const PLAYER_DEAD_TICKS = 60;
  * Acceleration of the stage-clear fly-out (plan M2-10, shmup_feat.md §5 "stage-clear fly-out"):
  * a `leaving` ship's speed over the scroll grows by this many px/tick every tick.
  */
-export const LEAVE_ACCELERATION = 0.125;
+export const LEAVE_ACCELERATION = 0.125 * WORLD_SCALE;
 
 /** Top speed of the fly-out over the scroll, px/tick. */
-export const LEAVE_MAX_SPEED = 8;
+export const LEAVE_MAX_SPEED = 8 * WORLD_SCALE;
 
 /**
  * Camera-relative x where a `leaving` ship stops — past the playfield's right edge, out of view.
  */
-export const LEAVE_END_X = PLAYFIELD_W + 32;
+export const LEAVE_END_X = PLAYFIELD_W + 32 * WORLD_SCALE;
 
 /** Runtime state of one player ship. */
 export interface PlayerShip {

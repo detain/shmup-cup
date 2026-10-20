@@ -91,7 +91,7 @@
  *
  * @module
  */
-import type { ShieldChoice } from '../config/index.js';
+import { WORLD_SCALE, type ShieldChoice } from '../config/index.js';
 import { ANGLE_MASK, ANGLE_QUARTER } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
@@ -154,13 +154,13 @@ export const SHIELD_HIT_IFRAMES = 8;
 export const MAX_SHIELD_PODS = 4;
 
 /** Radius of a pod's hit circle, in pixels. */
-export const POD_RADIUS = 4;
+export const POD_RADIUS = 4 * WORLD_SCALE;
 
 /** Distance of the front and Free Shield pods from the ship's centre, in pixels. */
-export const POD_ORBIT = 13;
+export const POD_ORBIT = 13 * WORLD_SCALE;
 
 /** Radius of the Rotate Shield's orbit, in pixels. */
-export const ROTATE_POD_ORBIT = 16;
+export const ROTATE_POD_ORBIT = 16 * WORLD_SCALE;
 
 /** Binary units the front Shield's pods sit above / below the ship's heading (≈ 22°). */
 export const FRONT_POD_ANGLE = 64;

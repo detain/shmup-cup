@@ -204,6 +204,7 @@ import {
   METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  WORLD_SCALE,
   type DeathPenaltyPreset,
   type GameConfig,
   type MegaChoice,
@@ -265,7 +266,7 @@ import {
  * How far below a power-up drop the co-op extra item appears, in pixels (M2-06 —
  * `GameConfig.coopExtra`), so the two items do not overlap.
  */
-export const COOP_EXTRA_OFFSET = 12;
+export const COOP_EXTRA_OFFSET = 12 * WORLD_SCALE;
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -413,16 +414,16 @@ export const MAX_ITEMS = 32;
 export const CAPSULE_SCORE = 300;
 
 /** Collision radius of an item (the 12×8 capsule). */
-export const ITEM_RADIUS = 5;
+export const ITEM_RADIUS = 5 * WORLD_SCALE;
 
 /** The pickup magnet reaches items this many pixels outside a ship's pickup box (D33). */
-export const PICKUP_MAGNET_RANGE = 16;
+export const PICKUP_MAGNET_RANGE = 16 * WORLD_SCALE;
 
 /** Speed in px/tick at which the magnet pulls an item towards the ship. */
-export const PICKUP_MAGNET_SPEED = 2;
+export const PICKUP_MAGNET_SPEED = 2 * WORLD_SCALE;
 
 /** Items are removed once they are this many pixels outside the camera view. */
-export const ITEM_CULL_MARGIN = 32;
+export const ITEM_CULL_MARGIN = 32 * WORLD_SCALE;
 
 /** Ticks per frame of an item's two-frame blink. */
 export const ITEM_BLINK_TICKS = 8;

@@ -50,7 +50,7 @@
  *
  * @module
  */
-import type { GameConfig } from '../config/index.js';
+import { WORLD_SCALE, type GameConfig } from '../config/index.js';
 import { VORTEX_FALLOFF, type BulletSystem } from '../bullets/index.js';
 import type { BossSystem } from '../bosses/index.js';
 import type { EnemySystem } from '../enemies/index.js';
@@ -92,13 +92,13 @@ export const BLACK_HOLE_PULL_TICKS = 96;
 export const BLACK_HOLE_BURST_TICKS = 36;
 
 /** Reach of the vortex in pixels. */
-export const BLACK_HOLE_RADIUS = 88;
+export const BLACK_HOLE_RADIUS = 88 * WORLD_SCALE;
 
 /** Bullets inside this radius of the centre are swallowed. */
-export const BLACK_HOLE_CORE_RADIUS = 10;
+export const BLACK_HOLE_CORE_RADIUS = 10 * WORLD_SCALE;
 
 /** Strongest pull on an enemy bullet, in pixels per tick (at the centre). */
-export const BLACK_HOLE_PULL = 2;
+export const BLACK_HOLE_PULL = 2 * WORLD_SCALE;
 
 /**
  * How much of the pull the falloff takes away at the rim (`core/bullets` `VORTEX_FALLOFF`): the
@@ -108,13 +108,13 @@ export const BLACK_HOLE_PULL = 2;
 export const BLACK_HOLE_FALLOFF = VORTEX_FALLOFF;
 
 /** Strongest pull on an enemy, in pixels per tick. */
-export const BLACK_HOLE_ENEMY_PULL = 1;
+export const BLACK_HOLE_ENEMY_PULL = 1 * WORLD_SCALE;
 
 /** Pixels per tick the vortex drifts to the right (it is thrown forward). */
-export const BLACK_HOLE_DRIFT = 0.25;
+export const BLACK_HOLE_DRIFT = 0.25 * WORLD_SCALE;
 
 /** Pixels ahead of the ship a vortex opens. */
-export const BLACK_HOLE_THROW_X = 48;
+export const BLACK_HOLE_THROW_X = 48 * WORLD_SCALE;
 
 /** Ticks between two lightning bolts of the burst. */
 export const BLACK_HOLE_BOLT_INTERVAL = 6;
