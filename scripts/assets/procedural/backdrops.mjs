@@ -13,7 +13,7 @@
  */
 import { createImage, setPixel } from '../image.mjs';
 import { createAssetRng } from '../rng.mjs';
-import { color, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
+import { SOFT_ALPHA, color, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
 
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
@@ -50,7 +50,7 @@ export function generate() {
     for (let x = 0; x < w; x++) setPixel(image, x, y, withAlpha(haze, alpha));
   }
   // The lit rim, then the planet body (opaque gradient).
-  for (let x = 0; x < w; x++) setPixel(image, x, AZURE_RIM_ROW, withAlpha(rim, 200));
+  for (let x = 0; x < w; x++) setPixel(image, x, AZURE_RIM_ROW, withAlpha(rim, SOFT_ALPHA));
   /** @type {import('../image.mjs').Rgba[]} */
   const body = [];
   for (let y = AZURE_RIM_ROW + 1; y < h; y++) {

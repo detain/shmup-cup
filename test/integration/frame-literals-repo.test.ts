@@ -229,28 +229,11 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     reason: "alphas: the debug overlay's two frame-graph guide lines are drawn at 200 / 255",
   },
   {
-    file: 'scripts/assets/procedural/backdrops.mjs',
-    symbol: 'generate',
+    file: 'scripts/assets/procedural/common.mjs',
+    symbol: 'SOFT_ALPHA',
     value: 200,
-    reason: "an alpha: the azure planet's lit rim row is drawn at 200 / 255",
-  },
-  {
-    file: 'scripts/assets/procedural/brine.mjs',
-    symbol: 'bubbleFrame',
-    value: 200,
-    reason: "an alpha: the bubble's film is drawn at 200 / 255",
-  },
-  {
-    file: 'scripts/assets/procedural/dune.mjs',
-    symbol: 'geyserFrame',
-    value: 200,
-    reason: "an alpha: the geyser's cloud puff is drawn at 200 / 255",
-  },
-  {
-    file: 'scripts/assets/procedural/magma.mjs',
-    symbol: 'wispFrame',
-    value: 200,
-    reason: "an alpha: the wisp's flame stroke is drawn at 200 / 255",
+    count: 1,
+    reason: "an alpha: the generators' shared soft-alpha constant (200 / 255), R5-P.P9",
   },
   {
     file: 'scripts/doc-images.mjs',

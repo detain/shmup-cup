@@ -6,9 +6,9 @@
  * used for geometry, so the generated pixels are identical on every engine — no
  * `Math.sin`/`Math.cos` (rotations use the exact 22.5° constants below).
  *
- * **Public API.** {@link DIRECTIONS_8}, {@link color}, {@link mix}, {@link withAlpha},
- * {@link seedOf}, {@link makeSprite}; the shape helpers of the zone generators (M2-11)
- * {@link fillEllipse} and {@link drawLine}.
+ * **Public API.** {@link DIRECTIONS_8}, {@link SOFT_ALPHA}, {@link color}, {@link mix},
+ * {@link withAlpha}, {@link seedOf}, {@link makeSprite}; the shape helpers of the zone
+ * generators (M2-11) {@link fillEllipse} and {@link drawLine}.
  *
  * @module
  */
@@ -81,6 +81,15 @@ export function mix(a, b, t) {
 export function withAlpha(rgba, alpha) {
   return [rgba[0], rgba[1], rgba[2], alpha];
 }
+
+/**
+ * The soft alpha (200 / 255) the generators draw glows, rims and puffs at — hoisted out
+ * of the four per-generator literals (R5-P.P9) so the frame-literal allow-list carries a
+ * single entry for it.
+ *
+ * @type {number}
+ */
+export const SOFT_ALPHA = 200;
 
 /**
  * 32-bit FNV-1a hash of a string — gives every generated sprite its own seed, derived

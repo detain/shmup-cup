@@ -29,7 +29,16 @@
  */
 import { createImage, flipVertical, setPixel } from '../image.mjs';
 import { hash2 } from '../rng.mjs';
-import { color, drawLine, fillEllipse, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
+import {
+  SOFT_ALPHA,
+  color,
+  drawLine,
+  fillEllipse,
+  makeSprite,
+  mix,
+  seedOf,
+  withAlpha,
+} from './common.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
@@ -292,7 +301,7 @@ function geyserFrame(puff) {
   const image = createImage(w, h);
   fillEllipse(image, 9.5, 10, 9.5, 7, (u, v) => (u + v < -0.9 ? lit : mound));
   fillEllipse(image, 9.5, 4, 2.5, 1.2, () => vent);
-  if (puff) fillEllipse(image, 9.5, 1.5, 3.5, 1.5, () => withAlpha(cloud, 200));
+  if (puff) fillEllipse(image, 9.5, 1.5, 3.5, 1.5, () => withAlpha(cloud, SOFT_ALPHA));
   return image;
 }
 

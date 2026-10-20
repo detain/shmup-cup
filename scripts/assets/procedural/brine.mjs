@@ -33,7 +33,16 @@
  */
 import { createImage, flipVertical, setPixel } from '../image.mjs';
 import { createAssetRng, hash2 } from '../rng.mjs';
-import { color, drawLine, fillEllipse, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
+import {
+  SOFT_ALPHA,
+  color,
+  drawLine,
+  fillEllipse,
+  makeSprite,
+  mix,
+  seedOf,
+  withAlpha,
+} from './common.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../image.mjs').Rgba} Rgba */
@@ -234,7 +243,7 @@ function bubbleFrame(size, frame) {
     const hy = v + 0.42 - shift;
     if (hx * hx + hy * hy < 0.05) return shine;
     const t = (u + v + 1.4) / 2.8;
-    return withAlpha(mix(film, iris, t > 1 ? 1 : t < 0 ? 0 : t), 200);
+    return withAlpha(mix(film, iris, t > 1 ? 1 : t < 0 ? 0 : t), SOFT_ALPHA);
   });
   return image;
 }

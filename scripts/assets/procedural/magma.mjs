@@ -33,7 +33,16 @@
  */
 import { createImage, setPixel } from '../image.mjs';
 import { hash2 } from '../rng.mjs';
-import { color, drawLine, fillEllipse, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
+import {
+  SOFT_ALPHA,
+  color,
+  drawLine,
+  fillEllipse,
+  makeSprite,
+  mix,
+  seedOf,
+  withAlpha,
+} from './common.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../image.mjs').Rgba} Rgba */
@@ -220,7 +229,7 @@ function wispFrame(frame) {
   const flame = color('#e8641c');
   const heart = color('#f8c860');
   const image = createImage(w, h);
-  drawLine(image, 5, 4.5, 10, 3 + frame * 2, withAlpha(flame, 200), 2);
+  drawLine(image, 5, 4.5, 10, 3 + frame * 2, withAlpha(flame, SOFT_ALPHA), 2);
   drawLine(image, 6, 4.5, 11, 5 - frame, withAlpha(edge, 160));
   fillEllipse(image, 4, 4.5, 3.6, 3.6, (u, v, e) => (e > 0.75 ? edge : e > 0.4 ? flame : heart));
   return image;
