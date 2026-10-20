@@ -232,7 +232,11 @@ tools/input-probe/
   results/analyze.mjs            re-analysis of an input-probe session
   results/analyze-render.mjs     the game's render profile → the §11 tables (M3-02f)
   results/analyze-bench.mjs      the TV render bench → the §12 tables, relative to 384×216 (R0-02), and the
-                                 decode scenario's file → GPU table with R3-04's zone-load estimate (R1-05 B4)
+                                 decode scenario's file → GPU table with R3-04's zone-load estimate (R1-05 B4;
+                                 since R3-04.M4a a session with the measured stand-in pages is estimated from
+                                 those pages directly, an older one from the synthetic 2048² shape). The run's
+                                 last load, `standin-zone`, is kept out of the campaign aggregation and printed
+                                 on its own line
 ```
 
 ## Tests
@@ -265,4 +269,7 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
   that are not the shape the sender produces. `logServerBench.test.ts` stores and summarises a whole TV render-bench
   session (`test/fixtures/bench-session.jsonl`, plan R0-02), and `analyzeBench.test.ts` turns that fixture into the
   relative tables, plan §13's outcome and the WebGL 1-vs-2 verdict — and, with the decode scenario's payload appended
-  (`test/fixtures/bench-decode.jsonl`, plan R1-05 B4), into the decode table and the zone-load estimate.
+  (`test/fixtures/bench-decode.jsonl`, plan R1-05 B4), into the decode table and the zone-load estimate — the
+  estimate's synthetic shape from that fixture, and its measured-stand-in shape (the `standin-zone-a[-2]` pages,
+  plan R3-04.M4a) plus the `standin-zone` record's exclusion from the campaign aggregation from fixtures built in
+  the test.

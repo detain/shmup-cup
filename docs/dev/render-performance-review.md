@@ -494,3 +494,45 @@ GPU misses vsync).
   `packages/render-pixi/src/debug/index.ts:837`. The viewport maths is already parameterised
   (`computeIntegerViewport(displayW, displayH, baseWidth, baseHeight)`), so that part is ready.
 - **Launch time** (≤ 10 s, guarded by M2-18's boot check) and the **512 KB** `APP_JS_GZIP_BUDGET` both still apply.
+
+> **Update (v2, 2026-10-20).** The two budget limits above moved with the art round, and a third
+> question this section left open — what a zone load costs on the M7 — now has a target and a
+> scenario.
+>
+> - **`DIST_BUDGET` is 16 MiB since R3-04.M2b** (owner decision W5-16; it was the 8 MB quoted
+>   above). The number is not a cushion but a projection: the art-bible **stand-in** set — the
+>   interim zone art packed through the real pipeline at the density the bible plans
+>   (`scripts/assets/standin.mjs`, gate `test/scripts/assets/standin.test.ts` rule RR-7: 0.3–0.6 MB
+>   per 2048×1024 PNG-8 page) — plus `app.js`, the manifest and one natural play-through of
+>   recorded audio measures **11,066,371 B ≈ 10.55 MiB**, leaving ≈ 5.45 MiB
+>   (`apps/tizen/scripts/check-bundle.mjs`'s docblock; the bytes breakdown in
+>   [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)). The atlas's own
+>   share is capped by `test/scripts/assets/atlas-budget.ts`: 300,000 B `common` + 9 × 600,000 B
+>   zone = **5,700,000 B** against the stand-in's measured 3,401,438 B (interim placeholder art:
+>   143,775 B).
+> - **The atlas size and texture-memory limits above are history**: R1-05 split the atlas into
+>   `common` + one group per zone, and the art-bible density fits the GPU share only because the
+>   residency runs **lazy** (R3-04, decision W5-15) — `test/integration/standin-budget.test.ts`
+>   (W5-14) showed a zone's `common` + one 2048×1024 page charges 12,582,912 B without its decoded
+>   image but 25,165,824 B with, over the 23 MiB share, so the shipped default drops images and
+>   re-fetches them after a context loss.
+> - **Zone load on the M7 has a gate now**: decision W5-19 sets plan R3-04's target at **≤ 2 s per
+>   zone load on the M7**. The TV bench grew the scenario to answer it (R3-04.M4a): its decode load
+>   fetches, decodes and uploads ×8 the stand-in zone A's own PNG-8 page (or two — the page is
+>   now a real band page, not the synthetic 2048² sheet it was, decisions RR-8 / W5-17) plus the
+>   shipped `common` and zone A pages, and the run's **last page load, `standin-zone`**, draws one
+>   640×360 frame from the pages just decoded through the real bindings. The headless twin
+>   (`?scenario=standin-zone`, R3-04.M4b) is gated in `pnpm bench` and runs fast.
+> - **The status of the 2 s verdict**: *projected on the TV, unmeasured on the TV*. What exists is
+>   the ratio estimate R3-04.M4b carried: the headless stand-in page load measures **62.3 ms**
+>   File→GPU p50 (fetch 5.8 + decode 26.4 + upload 30.1 for the ≈ 340 KB page), and the same
+>   pipeline's shipped `common` page ran **26.1 ms** headless against **196.7 ms** on the M7
+>   (three sessions) — a ×7.5 TV factor on the size-correct sample; applied to the stand-in page
+>   that is **≈ 470 ms**, and the whole v2 zone A lazy load (its `common` + stand-in page + the
+>   interim zone page) lands at ≈ 450–720 ms against the 2000 ms gate. The headless decode medians
+>   drift run-to-run (the same page measured 26.1 and 19.9 ms in two runs, so the estimate spans
+>   ≈ 350–620 ms): ×7.5 is a scale factor, not a 3-sigma-stable ratio. Two anchors say the
+>   estimate is safe: the M7 already measured **1.49–1.56 s cold** for the synthetic campaign load
+>   (two synthetic 2048² pages — a heavier set than any v2 zone ships), and every real v2 zone page
+>   sits inside the RR-7 band the stand-in models. Closing the verdict is the owner's **R0-03**
+>   bench run on the monitors with the stand-in scenario (`docs/client/outstanding-work.md`).

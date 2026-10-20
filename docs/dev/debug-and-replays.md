@@ -731,11 +731,13 @@ heap without V8's code spaces — `dataHeapBytes()` — flat within 1 MB), one f
 |---|---|---|---|
 | `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **512 KB since M3-02** (350 KB until M2-16, 384 KB until M3-02; the owner's agreed ceiling — going above it needs their say-so. Launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised), **383.4 KB after M3-02** (the two new shaders, the Mode-7 floor, the CRT pass, the black-hole module, the extras' options page and the dimension / escape stages — the budget was not touched) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
-| Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
+| Whole `dist/` | `DIST_BUDGET` | **16 MB since R3-04.M2b** (8 MB from W3-4 until the stand-in projection; owner decision W5-16 — the docblock carries it: 10.55 MiB projected, ≈ 5.45 MiB of margin; [platform-polish.md § Memory budget](platform-polish.md#memory-budget-shmupshell-memory)) | 812.4 KB |
 
 The OK line prints the sizes against the budgets:
 `Tizen bundle OK: app.js 773.6 KB (228.6 KB gzip of 350.0 KB), classic script, ES2018, 5 files
-in dist/ (812.4 KB of 8192.0 KB)`. `checkTizenBundle(dir)` also returns `gzipBytes` and
+in dist/ (812.4 KB of 8192.0 KB)` — the M1-19 print; the same line today measures against the
+512.0 KB gzip budget and the 16,384.0 KB `dist/` budget (`app.js` stood at 385.8 KB gzip at the
+budget's R3-04.M2b re-derivation). `checkTizenBundle(dir)` also returns `gzipBytes` and
 `distBytes`.
 
 ## Browser tests of M1-19

@@ -149,6 +149,23 @@ archive in a browser before you publish it.
   server fill [`input-probe-results.md` §11](../dev/input-probe-results.md). Since M3-02e the
   headless bench already gates the render work, so this is confirmation on real silicon, not a
   gate. Owner's recipe: [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred).
+- **The v2 TV-bench run on the M7** (plan_resolution.md R0-03, decisions W5-15 / W5-19). The
+  2026-10-19 sessions ran R0-02's 18-scenario matrix and the synthetic decode pages; since then the
+  matrix grew to **172 rows** (fifteen resolutions × two art densities + knob rows), R3-04.M4a
+  rebuilt the decode load around the **stand-in zone pages** (real band PNG-8 pages, not synthetic
+  sheets) and appended a last load, **`standin-zone`**, that draws a 640×360 frame from what it just
+  decoded. That run *is* the measurement for decision **W5-19** — ≤ 2 s per zone load on the M7 —
+  which today has only the headless-ratio projection (**≈ 0.5 s** against the 2 s gate, ~4×
+  headroom; [render-performance-review.md § 7.6](../dev/render-performance-review.md#76-hard-limits-to-check-before-committing-to-b)).
+  It also reads the **lazy residency's** timings on firmware (since R3-04.M3e pages fetch, decode
+  and upload at the stage change — `data-shmup-atlas-load-ms` on the canvas covers the whole load),
+  and while the TV is up: a WebGL context loss on the real device (the recovery re-fetches the
+  resident pages — R3-04.M3d; `WEBGL_lose_context` in the remote Web Inspector does it on demand),
+  and the two play confirmations the wave asks the owner to make — **W5-2** (the ship's spawn row is
+  the frame centre) and **W5-15** (the lazy memory policy is the right one on a real set). Recipe:
+  [`build-test-deploy.md` § The TV render bench](../dev/build-test-deploy.md#the-tv-render-bench-r0-02);
+  commit the sessions to `tools/input-probe/results/<date>-m7-bench/` and print them with
+  `results/analyze-bench.mjs` (it estimates from the measured stand-in pages since R3-04.M4a).
 - **The tracker-music CPU benchmark** (plan §8.9). The *size* half is already answered in code —
   libopenmpt's worklet is ≈ 518 KB gzip against a 512 KB bundle budget, so a tracker player can
   only ever be a separately loaded file. The *CPU* half needs the library and a monitor. Doing it
@@ -199,5 +216,6 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | A Steam Deck (§8.8) | Deck Verified only | [`steam.md`](steam.md#steam-deck-verification-plan-88) |
 | An itch.io account (§8.9) | The web release only | [`web-release.md`](web-release.md) |
 | 240 fps latency video, two pads at once, the render capture (§8.2, §8.4) | Nothing — measurement | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
+| The v2 TV-bench run on the M7 — stand-in scenario, lazy-load and context-loss timings (plan_resolution.md R0-03, W5-15 / W5-19) | Nothing — it produces the measured zone-load verdict R3-04 waits on | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
 | Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |

@@ -13,7 +13,10 @@ reload** to the TV (`tizen:watch`) and the `productinfo` privilege. Both browser
 got a **memory budget**: an estimator that keeps every campaign zone under 100 MB and the atlas-page
 residency that unloads pages between zones. Plan step **R1-05** (v2) gave that budget real work: the
 atlas is split into a `common` page and one page per zone, the residency uploads the next zone's
-pages eagerly, and the texture and audio shares are derived anew — [below](#memory-budget-shmupshell-memory).
+pages eagerly, and the texture and audio shares are derived anew. Plan step **R3-04** then made the
+residency **lazy** — pages fetch, decode, upload and drop their images at the stage change — and set
+the atlas byte caps and `DIST_BUDGET` from the art-bible stand-in projection —
+[below](#memory-budget-shmupshell-memory).
 
 This page is the *how and why* and the map of the step's code. Exact signatures are in
 [api-reference.md](api-reference.md) (`save`, `@shmup/render-pixi` `debug`, `@shmup/shell`
@@ -355,17 +358,56 @@ atlas gets the rest:
 | Fixed render targets (`fixedTargetBytes(frame, DEFAULT_DISPLAY, FILTER_TARGETS)`) | 26,263,552 B (25.05 MiB) at 384×216; 29,999,104 B (28.61 MiB) at 640×360 | the frame target, two pooled filter passes and the canvas's three 1080p buffers (table below) |
 | **Atlas** (`TEXTURE_BUDGET_BYTES` = `textureBudgetFor({ FRAME_W, FRAME_H })`) | **26 MiB** at 384×216, **23 MiB at 640×360** (32 MiB flat until R1-05) | 100 − 24 − 24 − the targets, floored to whole MiB — derived from core's frame, so R2-01's flip lowers it with no edit; `memory-hand.test.ts` pins both values |
 
-The atlas share holds the GPU copies **and** the decoded images. `DIST_BUDGET` (8 MiB, the packaged
-widget — `apps/tizen/scripts/check-bundle.mjs`) stays as it is until R3-04 measures detailed art; its
-docblock gives the derivation (≈ 1.7 MB of code and atlas today, ≈ 2.4 MB with the code at its
-ceiling, ≈ 5.5 MiB left for art) and how R3-04 re-derives it: pages × measured bytes per page + code
-+ recorded audio.
+The atlas share holds the GPU copies **and** the decoded images — and the two cannot both be kept
+at the art-bible density. `test/integration/standin-budget.test.ts` (R3-04.M2a, decision W5-14)
+measured the stand-in against `TEXTURE_BUDGET_BYTES`: a zone's `common` (1024×1024) plus one
+2048×1024 stand-in page charges 12,582,912 B of textures + images under `imagePolicy: 'none'` —
+inside the 23 MiB share — while the same row under `'resident'` charges 25,165,824 B, **1 MiB over
+it**. That split is why the stand-in is gated at `'none'` and why the lazy residency (below,
+decision W5-15) drops the decoded images: at the bible's density, keeping them does not fit.
+
+**The download budget.** `DIST_BUDGET` (the packaged widget, `apps/tizen/scripts/check-bundle.mjs`)
+is **16 MiB since R3-04.M2b** (owner decision W5-16; it was 8 MiB, decision W3-4, kept through the
+flip until the projection could say more). The script's docblock carries the full derivation, built
+from the stand-in set re-measured byte-identical at `7baeb4d`: the stand-in atlas **3,401,438 B**
+(`common` 91,921 + the nine zone-group pages 3,309,517 together — the residency rows of M2a's table
+Σ 4,228,727, less the nine repeated `common` copies 827,289 because a download ships each page
+once), `app.js` raw **1,450,743 B** (385.8 KB gzip of the 512 KB `APP_JS_GZIP_BUDGET`), the atlas
+manifest + `index.html` + `config.xml` + icon **211,360 B** (`main.json` alone is 204,896), and the
+recorded audio as one natural play-through **6,002,830 B** (the 24 music tracks as intro + one loop
+— 818.7 s — at 5,838,044 B, the 26 SFX one-shots at 164,786 B; `oggenc -q5` at 22,050 Hz mono, the
+rate `real-assets.md` prescribes). Sum **11,066,371 B ≈ 10.55 MiB**, a margin of **5,710,845 B
+(≈ 5.45 MiB)**. The audio term and the code term count the same music **twice, on purpose**:
+`app.js` carries the inlined chip-song JSONs until R5 replaces them with recordings, so until then
+the budget carries both costs (W5-16). Three ceilings sit around the projection and R6-02
+adjudicates them with evidence — a budget moves to a new measurement, never to quiet a check: art at
+the RR-7 band's top (the atlas byte caps below stand 2,298,562 B above the measured stand-in), code
+at its gzip ceiling (≈ 1.93 MB raw at today's compression), longer v2 tracks (the audio term is
+≈ 7.1 KB a natural second, ≈ 57 kbit/s mono). The corrected sum exceeds the old 8 MiB by
+2,677,763 B — what W5-16 weighed against keeping it ("R4 / R5 trip it zone by zone"). The real caps
+are far above — the Tizen dev-install cap is 120 MB, the TV memory budget 100 MB — so `DIST_BUDGET`
+is a download regression guard, not a platform limit; `dist-bench/` shares it (rule 8). A change
+updates the pins in `check-bundle.test.ts`, `check-bundle-budgets.test.ts`,
+`test/integration/tv-engine-floor.test.ts`, `apps/webos/test/scripts/check-bundle.test.ts`, both
+apps' READMEs and the budget tables of `docs/dev`.
+
+**The atlas byte caps** (`test/scripts/assets/atlas-budget.ts`, the same decision W5-16) hold an
+atlas *build* to the projection: `ATLAS_COMMON_PNG_CAP` 300,000 B for the `common` group (the RR-7
+band's top — 0.6 MB per 2048×1024 page — scaled to `common`'s 1024×1024; the stand-in measures
+91,921 B, the band's floor for this size 150,000 B), `ATLAS_ZONE_PNG_CAP` 600,000 B for one zone's
+**own** pages summed (the band's top; the worst stand-in zone sits at 446,323 B — the cap is the
+band, not a number the art already hides under), and `ATLAS_PNG_BYTES_CAP` = common + 9 × zone =
+5,700,000 B for the whole set (stand-in 3,401,438 B; the interim placeholder art 143,775 B today).
+Two gates read them: `test/integration/cjk-budget.test.ts` (the shipped zone-split atlas) and
+`test/scripts/assets/interim-pipeline.test.ts` (the interim ×1.5 atlas), and the first pins
+`ATLAS_PNG_BYTES_CAP < DIST_BUDGET`.
 
 **The estimator.** `estimateMemory(inputs)` adds up what stays resident: the atlas pages on the GPU
 (`w × h × 4`, `pageBytes`) plus the decoded images (Pixi keeps each page's `HTMLImageElement` as the
-texture's resource, to re-upload it; since R1-05 the estimate charges the images of the
-`imagePages` it is given, default the GPU pages, because the shell keeps **every** page's image —
-policy "all", W3-2), the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
+texture's resource, to re-upload it; the estimate charges the images of the `imagePages` it is
+given, default the GPU pages, under the `imagePolicy` it is given — the conservative `all`, every
+page's image, is its default; the shipped runtime reports its real policy from the residency, see
+below), the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
 (`trackBytes`: chip songs from their rows — `songFrameBound`, `renderSong`'s length without
 rendering —, recorded tracks up to their loop end, else `FILE_TRACK_FALLBACK_SECONDS` of stereo),
 the render targets and a
@@ -374,13 +416,16 @@ on-device check compares it with DevTools' heap). `withinBudget` also needs the 
 images) within `textureBudgetFor` of the estimate's own frame — so a 640×360 estimate is judged
 against 23 MiB — and the audio within `AUDIO_BUDGET_BYTES`.
 `estimateStageMemory({ content, manifest, sfx, music, stageIndex, imagePolicy? })` estimates one
-stage: its pages (`stagePages`), the images its `imagePolicy` charges — `all` (the default, what the
-runtime does: every page), `resident` (only the stage's own pages — the lazy policy R3-04 may build)
-or `none` (no image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
-stage can ask for). Today every campaign zone passes: A–G ≈ 64.7 MiB, H ≈ 71.7, I ≈ 72.5 at 384×216
-(2.1–2.25 MiB of GPU pages — `common` plus the zone's page — and 3.5 MiB of images, 0.76 MiB SFX,
+stage: its pages (`stagePages`), the images its `imagePolicy` charges — `all` (the estimator's
+conservative default — every page), `resident` (only the stage's own pages — what the shipped lazy
+residency keeps) or `none` (no image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
+stage can ask for). Every campaign zone passes, the figures pinned at R1-05's v1-era atlas:
+A–G ≈ 64.7 MiB, H ≈ 71.7, I ≈ 72.5 at 384×216 (2.1–2.25 MiB of GPU pages — `common` plus the
+zone's page — and 3.5 MiB of images, 0.76 MiB SFX,
 9.2–16.9 MiB music, 25.05 MiB targets, 24 MiB heap); at 640×360 the targets add 3.56 MiB (≈ 68.2 /
-75.3 / 76.0 MiB).
+75.3 / 76.0 MiB). Since R2-01's interim ×1.5 art the `common` page is 1024² where these rows had
+1024×512, so its GPU and image terms grew — the hand calculation below recomputes every sum from
+the manifest on each run, so the gate stays honest though the quoted figures drift.
 
 **The hand calculation (R1-05).** `memory-hand.test.ts` recomputes every campaign zone from
 `manifest.pages` and the constants alone — the GPU copies of `stagePages`, the images of every page,
@@ -389,12 +434,14 @@ at the current frame, at 384×216 and at 640×360, and asserts the estimate equa
 budget.
 
 **The render-target term, corrected by M3-02d** (the render review's **F3** — it used to model
-`frame × (1 + FILTER_TARGETS)` flat and miss the CRT's target entirely):
+`frame × (1 + FILTER_TARGETS)` flat and miss the CRT's target entirely). The rows walk M3-02d's
+384×216 default; at today's 640×360 the same formulas hold, and `memory-hand.test.ts` pins the sum
+at both frames:
 
 | Term | Bytes at the defaults | Why |
 |---|---|---|
 | The 384×216 frame | `384 × 216 × 4` = 331,776 | Created directly by `RenderTexture.create`, so it is **exactly** its own size |
-| `filterTargets` (default `FILTER_TARGETS` = 2) filter passes | `potBytes(384, 216) × 2` = 1,048,576 | Pooled by Pixi's `TexturePool`, which rounds each axis up to a power of two: a 384×216 pass is really a 512×256 texture. `FILTER_TARGETS` is the **nesting depth** (one texture per size class, handed back when a filter pops), not the number of filtered layers |
+| `filterTargets` (default `FILTER_TARGETS` = 2) filter passes | `potBytes(384, 216) × 2` = 1,048,576 | Pooled by Pixi's `TexturePool`: each axis is the next power of two — since pixi.js **8.21** capped by the smallest registered screen (the renderer's own backbuffer) the request fits inside, so a 384×216 pass is a 512×256 texture at the 1080p default and no bigger than the screen itself on a smaller one. `FILTER_TARGETS` is the **nesting depth** (one texture per size class, handed back when a filter pops), not the number of filtered layers |
 | The canvas | `1920 × 1080 × 4 × 3` = 24,883,200 | Front, back and depth / stencil |
 | The CRT | **0** | Since M3-02d it is the pass-2 blit's own shader and pools nothing, at any setting |
 
@@ -404,9 +451,14 @@ should stay that way:** it ignores `crtResolution`'s `CRT_MAX_HEIGHT` cap (so a 
 charged four times the target the capped pass would really pool) and it charges the whole display
 even when an aspect mode pillarboxes the picture into part of it. The estimator exists to defend a
 budget, so over-charging a path nothing ships on is the safe direction; `memory-edge.test.ts` pins
-both behaviours on purpose so that nobody "fixes" them into an exact model.
+both behaviours on purpose so that nobody "fixes" them into an exact model. Since pixi.js **8.21**
+the pool caps each pooled axis at the smallest registered screen (a renderer's own backbuffer) the
+request fits inside — so `potBytes`' bare power of two is an **upper bound** on what a pass really
+pools, never an under-booking, and the estimator needs no screen term; the render benches model the
+cap exactly (`test/bench/render-harness/gates.ts` `pooledAxisSize`, pinned digit-for-digit against
+measured records since the 8.22 upgrade).
 
-**Atlas unloading between zones.** At boot (load time, once):
+**Atlas residency between zones.** At boot (load time, once):
 
 1. `stageSpriteSets(content)` walks each campaign zone's stage spec and everything it names — enemy
    references (`enemyId`, `bossId`, `innerId`, `doubleId`, `partnerId`, `minionId`, `childId`),
@@ -418,20 +470,29 @@ both behaviours on purpose so that nobody "fixes" them into an exact model.
 2. `atlasPageNeeds(manifest, spriteNames, sets)` maps that onto the pages: a page is global when it
    holds a global sprite (a content sprite covers its `name@…` siblings — hit flash, player 2,
    palettes), a font glyph or a frame of no sprite;
-3. `createAtlasResidency(atlas.pages, needs, { upload, onChange, now })` starts with every page
-   resident; a `prepare(stageIndex)` unloads every page the stage does not need (Pixi
+3. `createAtlasResidency(atlas.pages, needs, { upload, onChange, now })` (eager) starts with every
+   page resident; a `prepare(stageIndex)` unloads every page the stage does not need (Pixi
    `TextureSource.unload`) and then — R1-05, W3-2 — **uploads every needed page that has no GPU
    copy** through the renderer's `uploadTextureSource`, so nothing uploads on its first draw
    mid-play. It runs at boot for the boot stage (before the warm-up frame), on each `PrepareStage`
    (`connectAtlasResidency`: the zone map's launch, a run or practice start, the title's return) and
    — W3-9 — whenever the frame shows a **new World** (`prepareShownWorld`: the attract demo, which
    never emits `PrepareStage`, a replay). A stage outside the campaign needs every page.
+   `createLazyAtlasResidency(pages, needs, { …, lazy: { atlas, loadImage } })` keeps the same page
+   bookkeeping and the same call sites, but its `prepare` **loads**: it fetches and decodes the
+   images of the pages the stage needs, attaches and uploads them, and detaches the pages it does
+   not need **with their decoded images** (policy "resident"). Its prepare is asynchronous; the
+   shell exposes the eager contract over it with `asAtlasResidency` so the debug tools and the event
+   wiring see one shape.
 
-**Since R1-05 the atlas is really split** — `main.png` (`common`, 1024×512) and one 256×128 /
-256×256 page per zone, from the content-derived `assets/source/atlas-groups.json`
+**Since R1-05 the atlas is really split** — `main.png` (`common`, 1024×512 at the split and 1024²
+since R2-01's interim art) and one 256-wide page per zone (256×128 / 256×256 then, up to 256×512
+with the interim art), from the content-derived `assets/source/atlas-groups.json`
 ([asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05)) — so a zone keeps `common` + its own
-page on the GPU (≈ 2.1–2.25 MiB instead of the old 4 MiB page) while the decoded images of all ten
-pages stay in memory (3.5 MiB). Three rules keep the residency honest:
+page on the GPU (≈ 2.1–2.25 MiB at the v1 scale instead of the old 4 MiB page; ≈ 4.25–4.5 MiB with
+the interim ×1.5 pages). Under eager the decoded images of
+all ten pages also stay in memory (3.5 MiB); the lazy default (below) keeps only the shown stage's
+own images and drops the rest. Three rules keep the residency honest:
 
 - **It owns the pages' GPU lifetime.** `createAtlas` turns each page's `autoGarbageCollect` off
   (Pixi's `ImageSource` forces it on, and its texture GC dropped a page no frame bound for 60 s —
@@ -446,18 +507,48 @@ pages stay in memory (3.5 MiB). Three rules keep the residency honest:
   page on the GPU for a menu.
 - **It is measured** (W3-6). The canvas carries `data-shmup-atlas-pages` (resident pages),
   `data-shmup-atlas-load-ms` (the boot's manifest + pages + uploads, then each stage change's
-  unload + upload) and `data-shmup-atlas-page-ms` (per page — fetch / decode / upload at boot, the
+  unload + upload — in lazy mode a prepare loads as it prepares, so the change's figure covers its
+  fetches and decodes too) and `data-shmup-atlas-page-ms` (per page — fetch / decode / upload at
+  boot, the
   uploads of a stage change), and `Shell.atlasTiming` holds the boot's figures; dev / test builds
   expose `window.__shmupDebug.atlas` ([debug tools](../client/debug-tools.md)). The owner reads
-  them on the M7 (plan R1-05, Manual).
+  them on the M7 (plan R1-05, Manual; the lazy timings and the context-loss path ride the same
+  marks — the on-device confirmation R3-04 asks for).
 
-**Not built yet** (W3-2): the lazy "resident" policy — other zones' pages holding nothing, loaded
-and decoded before the zone starts — which needs deferred pages in `createAtlas`, a hold while the
-shown World's pages load, and a re-fetch after a WebGL context loss (dropping images before that
-exists would lose them for good). R3-04 builds it when the estimate crosses the budget, at the
-latest. Linked and dev stages (the bonus stages, `escape`, boss rush, the ranges) still need every
-page. `Shell.atlasResidency` exposes the residency. Music was already one set resident (M1-15 /
-M2-10); the SFX bank is pre-rendered once.
+**The lazy residency (R3-04.M3a–M3e — the shipped default).** The paragraph above held until the
+art came: with the stand-in measurement showing images of every page cannot fit the atlas share
+(W5-14, above), W5-15 made laziness the plan and R3-04 built it:
+
+- **M3a — deferred pages** in `createAtlas`: a page may start unloaded (`null` in the image list)
+  and be brought in later by `Atlas.loadPage` / freed again by `Atlas.unloadPage`. Until a page is
+  loaded, every frame of it draws nothing — its texture points at Pixi's empty source with a 0×0
+  frame, so no sampling of a missing image ever happens; page sources and frame textures keep their
+  object identity across load/unload, only their contents move.
+- **M3b — `createLazyAtlasResidency`** (above): pages start detached; a stage change fetches,
+  decodes, attaches and uploads what the stage needs and drops the rest **with their decoded
+  images** — the bytes leave memory, policy "resident".
+- **M3c/M3e — the boot switch**: `ShellOptions.atlasPages` (`'eager' | 'lazy'`) defaults to
+  `'lazy'` since M3e. No page is fetched at boot; boot awaits its own prepare, so the first frame
+  draws the boot stage. While the shown World's pages are in flight the frame loop **holds the
+  game**: the last displayed frame is redrawn, no tick runs and no input is consumed — a slow page
+  load cannot move a replay (decision W5-16). A malformed page URL rejects at once
+  (`AtlasPageUrlError`, review M3RV F1) and a failed load is tagged with its page URL, so the boot
+  error screen prints the same `${url}: ${describe(error)}` line the eager page load prints.
+- **Preview parity (M3e)**: the weapon select's preview World stays outside the residency — boot
+  attaches only the **images** of unloaded pages; the preview's page uploads on its first draw
+  exactly as under eager, and the next real prepare unloads it again (the self-healing rule above).
+- **M3d — context loss**: because a dropped image's bytes are gone, recovery re-fetches. On
+  `webglcontextlost` the shell calls `preventDefault` (Pixi's own listener agrees — the two calls
+  are one intention); on `webglcontextrestored`, after Pixi has cleared its texture bookkeeping,
+  `recoverAtlasPages` walks the resident pages: re-fetch (`loadImageTimed`), swap the image
+  (`Atlas.loadPage`), `unload()` the dead GPU copy, `uploadTextureSource`. A failed re-fetch keeps
+  the old image standing in (it still decodes from its bytes; the next prepare retries), and a
+  failed upload leaves Pixi's own lazy re-creation to heal the page on its next drawn frame.
+
+Linked and dev stages (the bonus stages, `escape`, boss rush, the ranges) still need every page.
+`Shell.atlasResidency` exposes the residency — in lazy mode as the eager-contract view built by
+`asAtlasResidency`, counters and `resident` forwarding live. Music was already one set resident
+(M1-15 / M2-10); the SFX bank is pre-rendered once.
 
 ## The LG webOS host (`apps/webos`, M3-03)
 
@@ -568,7 +659,7 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **More atlas pages**: nothing to do — `atlasPageNeeds` follows the manifest, and since R1-05 the
   packer keeps each zone's sprites on pages of their own (`atlas-groups.json`, re-derived from the
   content — [asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05)); check a zone with
-  `estimateStageMemory` (and `imagePolicy: 'resident'` for the lazy policy's figure).
+  `estimateStageMemory` (and `imagePolicy: 'resident'` for the shipped lazy residency's figure).
 - **A new sprite reference field** in content specs: name it `sprite…Id` (picked up by the walk), or
   add an enemy-reference key to `ENEMY_REF_KEYS`, or the sprite counts as global.
 
@@ -590,10 +681,22 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
   `memory/*.test.ts` (every campaign zone under budget, song bounds, the residency on a three-page
   atlas and on the shipped zone-split one; R1-05: `memory-hand.test.ts` — the hand calculation at
   both frames and both budgets pinned —, `residency-eager.test.ts` — unload before upload,
-  idempotence, the self-healing unload, the World-change trigger), `boot/boot-residency.test.ts`
-  (the boot stage's pages before `warmUp`, the canvas attributes), `debug/debug-atlas.test.ts`
+  idempotence, the self-healing unload, the World-change trigger; R3-04: `residency-lazy.test.ts` —
+  nothing attached at creation, prepare loads / uploads / detaches the rest with their images,
+  parallel page loads, a failed load or upload retried by the next prepare, a superseded prepare
+  handing the GPU pass to the newer one —, `residency-lazy-alloc.test.ts`),
+  `boot/boot-residency.test.ts`
+  (the boot stage's pages before `warmUp`, the canvas attributes; R3-04.M3e lazy cases: the boot
+  awaits and uploads only its stage's pages, a stage change fetches its own and detaches the others
+  with their images, the showcase keeps every page; the tagged `AtlasPageUrlError` on the boot
+  error screen is in `boot/boot.test.ts`), `boot/residency-hold.test.ts` (M3c: a replay across a
+  zone change hashes the same with and without the hold, a frame advance asked for mid-load runs
+  exactly one tick once the pages are in), `debug/debug-atlas.test.ts`
   (`__shmupDebug.atlas`), `debug/debug-save.test.ts`, `debug/debug-device-alloc.test.ts`; the real
-  browser path is `test/e2e/atlas-residency.spec.ts` (WebGL's own view of the pages).
+  browser path is `test/e2e/atlas-residency.spec.ts` (WebGL's own view of the pages) and
+  `test/e2e/atlas-context-loss.spec.ts` (R3-04.M3d: through `WEBGL_lose_context` the web build
+  draws again after a restore, still ticks, still takes input, and the residency's marks agree
+  with the GPU).
 - webOS (`apps/webos/test/`, M3-03 — every one against fakes): `platform/platform.test.ts` (Back on
   **461** and not on 10009, auto-repeat, the two-reason lifecycle, exit through `platformBack` with
   the `close` fallback, the capabilities), `boot/boot-wiring.test.ts` (the real `@shmup/shell` on a
