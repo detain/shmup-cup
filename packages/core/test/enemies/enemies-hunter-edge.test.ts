@@ -48,6 +48,7 @@ import { OPTION_ANIM_TICKS } from '../../src/options/index.js';
 import { spawnPlayer } from '../../src/player/index.js';
 import { FREE_OPTION_DRIFT, ItemFlag, ItemKind, MeterSlot } from '../../src/powerups/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1x, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -491,7 +492,7 @@ describe('M2-04 Option Hunter edges: behaviour tunables', () => {
     const dive = spawnAt(w, 'h-variant-9', w.camera.x + 60, w.camera.y - 20)!;
     for (let t = 0; t < 100; t++) stepWorld(w, createInputSnapshot());
     expect(dive.x - w.camera.x).toBeCloseTo(250, 0);
-    expect(dive.y - w.camera.y).toBeCloseTo(24, 0);
+    expect(dive.y - w.camera.y).toBeCloseTo(v1y(24), 0);
     const v = world(1, {}, 250, 150);
     const rear = spawnAt(v, 'h-variant-neg', v.camera.x - 20, v.camera.y + 20)!;
     // One aim (a line-up of 1 tick) and no windup: it flies to the row it saw, then charges.
@@ -504,7 +505,7 @@ describe('M2-04 Option Hunter edges: behaviour tunables', () => {
     const top = world(1, {}, 250, 2);
     const h1 = spawnAt(top, 'h-rear', top.camera.x - 20, top.camera.y + 100)!;
     for (let t = 0; t < 80; t++) stepWorld(top, createInputSnapshot());
-    expect(h1.y - top.camera.y).toBeCloseTo(12, 0);
+    expect(h1.y - top.camera.y).toBeCloseTo(v1rel(12), 0);
     const bottom = world(1, {}, 250, PLAYFIELD_H - 1);
     // As far from its line-up point as the top one (100 px below the top at 384×216).
     const h2 = spawnAt(
@@ -514,11 +515,11 @@ describe('M2-04 Option Hunter edges: behaviour tunables', () => {
       bottom.camera.y + PLAYFIELD_H - 100,
     )!;
     for (let t = 0; t < 80; t++) stepWorld(bottom, createInputSnapshot());
-    expect(h2.y - bottom.camera.y).toBeCloseTo(PLAYFIELD_H - 12, 0);
+    expect(h2.y - bottom.camera.y).toBeCloseTo(PLAYFIELD_H - v1rel(12), 0);
     const right = world(1, {}, PLAYFIELD_W - 2, 150);
     const h3 = spawnAt(right, 'h-dive', right.camera.x + PLAYFIELD_W - 84, right.camera.y - 20)!;
     for (let t = 0; t < 80; t++) stepWorld(right, createInputSnapshot());
-    expect(h3.x - right.camera.x).toBeCloseTo(PLAYFIELD_W - 12, 0);
+    expect(h3.x - right.camera.x).toBeCloseTo(PLAYFIELD_W - v1rel(12), 0);
   });
 
   it('without a living player it lines up where it is (its own row) and never fires', () => {
@@ -527,7 +528,7 @@ describe('M2-04 Option Hunter edges: behaviour tunables', () => {
     w.players[0].active = false;
     for (let t = 0; t < 80; t++) stepWorld(w, createInputSnapshot());
     expect(h.y - w.camera.y).toBeCloseTo(77, 0);
-    expect(h.x - w.camera.x).toBeCloseTo(48, 0);
+    expect(h.x - w.camera.x).toBeCloseTo(v1x(48), 0);
     expect(bullets(w)).toBe(0);
   });
 });

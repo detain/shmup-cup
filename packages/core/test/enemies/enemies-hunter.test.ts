@@ -31,6 +31,7 @@ import {
   MeterSlot,
 } from '../../src/powerups/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1speed, v1x, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -211,13 +212,14 @@ describe('M2-04 Option Hunter: line up, charge, steal', () => {
     const hunter = spawn(w, 'option-hunter-rear', -24, 40)!;
     const input = createInputSnapshot();
     const events = run(w, input, 100);
-    // Lined up on the ship's row at view x 48, holding before the charge.
+    // Lined up on the ship's row at view x 48 (the line-up column, ported), holding before the
+    // charge.
     expect(hunter.y - w.camera.y).toBeCloseTo(130, 0);
-    expect(hunter.x - w.camera.x).toBeCloseTo(48, 0);
+    expect(hunter.x - w.camera.x).toBeCloseTo(v1x(48), 0);
     expect(sfx(events, SFX_CUES.OptionStolen)).toBe(0);
     const stolen = run(w, input, 80);
     expect(sfx(stolen, SFX_CUES.OptionStolen)).toBe(1);
-    expect(hunter.vx).toBeCloseTo(4.5, 9);
+    expect(hunter.vx).toBeCloseTo(v1speed(4.5), 9);
     expect(w.weapons.loadouts[0].options).toBe(0);
     expect(hunter.carried).toBe(4);
     expect(w.weapons.options[0].stolen).toBe(4);
@@ -239,10 +241,24 @@ describe('M2-04 Option Hunter: line up, charge, steal', () => {
     expect(h1.vy).toBe(0);
     const dive = world(1, {}, 250, 150);
     const h2 = spawn(dive, 'option-hunter-dive', 60, -24)!;
-    run(dive, createInputSnapshot(), 110);
+    const input = createInputSnapshot();
+    // The line is the top pad's row (v1y(24)) and the charge starts after a tick-counted windup,
+    // so when the hunter is on the line travels with the scale — poll for it, bounded.
+    const line = v1y(24);
+    let ticks = 0;
+    while (ticks < 250 && (h2.vx !== 0 || h2.vy !== 0 || h2.y - dive.camera.y < line - 0.5)) {
+      run(dive, input, 1);
+      ticks++;
+    }
+    expect(ticks).toBeLessThan(250); // it lined up on the ship's column
     expect(h2.x - dive.camera.x).toBeCloseTo(250, 0);
-    expect(h2.y - dive.camera.y).toBeCloseTo(24, 0);
-    run(dive, createInputSnapshot(), 30);
+    expect(h2.y - dive.camera.y).toBeCloseTo(line, 0);
+    ticks = 0;
+    while (ticks < 100 && h2.vy <= 0) {
+      run(dive, input, 1);
+      ticks++;
+    }
+    expect(ticks).toBeLessThan(100); // the windup ended — it drops down the column
     expect(h2.vy).toBeGreaterThan(0);
     expect(h2.vx).toBe(0);
   });

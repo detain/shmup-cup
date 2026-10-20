@@ -1,6 +1,6 @@
 /**
  * Edge cases of the M2-07 additions to `core/enemies`, with test behaviours in a World on a still
- * stage with a flat floor (top at y 168):
+ * stage with a flat floor (a 4-row floor under a 25-row map — surface at 21 · TILE):
  *
  * - the `ScriptApi` gimmick calls (`pull`, `release`, `chain`, `placeTile`, `tileId`) through the
  *   World's stage gimmicks, and all of them doing nothing without a gimmick host;
@@ -72,6 +72,13 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
+/**
+ * The shipped tileset's tile edge: 8 px until R2-02's port, 12 px after. The fixture's map pairs
+ * with `terrain-a`, so it takes that tileset's size (wave-03 rules). The 25-row map hangs from
+ * the view top and its 4-row floor's surface is at 21 · TILE (168 / 252).
+ */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
+
 /** The test DB: the KESTREL, `terrain-a`, the test enemies, a still stage with a flat floor. */
 const DB: ContentDb = (() => {
   const { db, issues } = loadContent(
@@ -110,12 +117,14 @@ const DB: ContentDb = (() => {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE,
             tileset: 'terrain-a',
             rowsTall: 25,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                { from: 0, to: 3384, floor: { base: 4 * TILE, amp: 0, period: 8 * TILE, seed: 1 } },
+              ],
             },
           },
           events: [],
@@ -276,7 +285,9 @@ describe('core/enemies ScriptApi — gimmick calls', () => {
     expect(w.gimmicks.chainOwner[0]).toBe(e.slot);
     const map = w.terrain;
     if (map === null) throw new Error('no terrain');
-    expect(map.tiles[Math.floor(60 / 8) * map.cols + Math.floor(200 / 8)]).toBe(cube);
+    expect(
+      map.tiles[Math.floor(60 / map.tileSize) * map.cols + Math.floor(200 / map.tileSize)],
+    ).toBe(cube);
   });
 
   it('does nothing without a gimmick host', () => {
@@ -412,9 +423,10 @@ describe('core/enemies — landing', () => {
     expect(landedAt).toBeGreaterThan(0);
     run(w, 2);
     expect(wakes).toEqual([[landedAt + 1, true]]);
-    // Its bottom rests just above the floor (y 168).
-    expect(e.y + 4).toBeLessThanOrEqual(168);
-    expect(e.y + 4).toBeGreaterThan(160);
+    // Its bottom rests just above the floor (the 25-row map's 4-row floor: surface at
+    // 21 · TILE = 168 / 252).
+    expect(e.y + 4).toBeLessThanOrEqual(21 * TILE);
+    expect(e.y + 4).toBeGreaterThan(21 * TILE - 8);
     // The 200-tick sleep ran out on its own (no second wake from the landing).
     run(w, 199);
     expect(wakes).toHaveLength(2);

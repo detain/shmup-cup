@@ -20,6 +20,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -124,7 +125,9 @@ describe('core/behaviors — the boss roster (M1-13)', () => {
       'captain.launcher',
       'captain.ram',
     ]);
-    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.hover')?.params).toMatchObject({ trackSpeed: 0.5 });
+    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.hover')?.params).toMatchObject({
+      trackSpeed: v1speed(0.5),
+    });
     expect(Object.isFrozen(DEFAULT_BOSS_BEHAVIOR_DEFS[0].params)).toBe(true);
     expect(() =>
       createBossBehaviorRegistry([DEFAULT_BOSS_BEHAVIOR_DEFS[0], DEFAULT_BOSS_BEHAVIOR_DEFS[0]]),
@@ -177,13 +180,14 @@ describe('core/behaviors — the boss roster (M1-13)', () => {
     const before = w.bullets.count;
     run(w, 70);
     expect(w.bullets.count - before).toBeLessThanOrEqual(1);
-    // Tracking: the ship high up pulls the boss up, 0.5 px/tick, no further than the margin.
+    // Tracking: the ship high up pulls the boss up, 0.5 px/tick (ported), no further than the
+    // 32-px margin (ported too).
     ship.y = 20;
     const y = boss.screenY;
     run(w, 10);
-    expect(boss.screenY).toBeCloseTo(y - 5, 9);
+    expect(boss.screenY).toBeCloseTo(y - v1speed(5), 9);
     run(w, 400);
-    expect(boss.screenY).toBe(32);
+    expect(boss.screenY).toBe(v1rel(32));
   });
 
   it('boss.hover opens the whenOpen parts for openTicks after every closedTicks', () => {

@@ -44,6 +44,7 @@ import { SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
 import { SpriteFlag } from '../../src/presentation/index.js';
 import { SHOOTERS_PER_PLAYER, WeaponRole } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -908,24 +909,28 @@ describe('core/bosses — edge cases (M1-13)', () => {
       expect(grunt).not.toBeNull();
       if (grunt === null) return;
       const hp = grunt.hp;
-      // A main shot starts 8 px ahead of its spawn point and moves 7 px before the hit test.
-      w.weapons.spawnShot(WeaponRole.Main, 0, lid.x - 16, lid.y);
+      // A main shot starts 8 px ahead of its spawn point and moves 7 px before the hit test —
+      // both are world-unit values (× the scale), so the spawn offset carries the launch reach
+      // plus 5 px: one tick later its (scaled) box overlaps the unscaled lid and grunt boxes on
+      // the left, where the armoured hull's does not reach.
+      w.weapons.spawnShot(WeaponRole.Main, 0, lid.x - v1rel(15) - 5, lid.y);
       run(w, 1);
       expect(lid.hp).toBe(3);
       expect(grunt.hp).toBe(hp - 1);
       w.enemies.clear();
       // An Option's shot of player 2 destroys the lid: player 2 gets its points.
       lid.hp = 1;
-      w.weapons.spawnShot(WeaponRole.Main, SHOOTERS_PER_PLAYER + 1, lid.x - 16, lid.y);
+      w.weapons.spawnShot(WeaponRole.Main, SHOOTERS_PER_PLAYER + 1, lid.x - v1rel(15) - 5, lid.y);
       run(w, 1);
       expect(lid.destroyed).toBe(true);
       expect(w.scoring.board.scores[1].score).toBe(30);
       // Two shots on core A in one tick, the first destroys it: the second flies on.
       const core = parts[E.coreA];
       core.hp = 1;
-      // Above the hull's box (y 90…110): both shots overlap core A only.
-      w.weapons.spawnShot(WeaponRole.Main, 0, core.x - 17, core.y - 5);
-      w.weapons.spawnShot(WeaponRole.Main, 0, core.x - 18, core.y - 5);
+      // Above the hull's box (y 90…110): both shots overlap core A only (the same scaled
+      // approach: 6 px and 7 px before the launch reach).
+      w.weapons.spawnShot(WeaponRole.Main, 0, core.x - v1rel(15) - 6, core.y - 5);
+      w.weapons.spawnShot(WeaponRole.Main, 0, core.x - v1rel(15) - 7, core.y - 5);
       run(w, 1);
       expect(core.destroyed).toBe(true);
       expect(w.weapons.countShots(0, WeaponRole.Main)).toBe(1);

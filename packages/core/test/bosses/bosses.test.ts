@@ -65,6 +65,7 @@ import { SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
 import { LayerId, SpriteFlag } from '../../src/presentation/index.js';
 import { WeaponRole } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -708,8 +709,9 @@ describe('core/bosses', () => {
     const parts = w.bosses.boss.parts;
     const plate = parts[P.plate];
     const events: Recorded[] = [];
-    // A main shot 20 px left of the plate: one tick later it overlaps the plate only.
-    const shot = w.weapons.spawnShot(WeaponRole.Main, 0, plate.x - 20, plate.y);
+    // A main shot 20 px (× the scale — the shot's launch offset, speed and half-width are all
+    // world-unit values) left of the plate: one tick later it overlaps the plate only.
+    const shot = w.weapons.spawnShot(WeaponRole.Main, 0, plate.x - v1rel(20), plate.y);
     expect(shot).toBeGreaterThanOrEqual(0);
     run(w, 1, events);
     expect(plate.hp).toBe(3);

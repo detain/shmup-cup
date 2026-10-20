@@ -118,16 +118,22 @@ const ENEMIES = [
   enemy('badspawn', { script: 'test.badspawn' }),
 ];
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/**
+ * The shipped tileset's tile edge: 8 px until R2-02's port, 12 px after. The fixture's map pairs
+ * with `terrain-a`, so it takes that tileset's size and its row count together (wave-03 rules).
+ */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8 px, 28 at 12 px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's top: a 4-row floor above the map's bottom edge (32 / 48 px). */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
 
 /**
  * Test content: the KESTREL, the shipped tileset, two paths, the test enemies and a stage.
  *
- * @param stage - Stage fields over the defaults (flat floor 32 px high, static camera).
+ * @param stage - Stage fields over the defaults (flat 4-row floor, static camera).
  * @returns The DB.
  */
 function db(stage: Record<string, unknown> = {}): ContentDb {
@@ -174,13 +180,17 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
         checkpoints: [{ x: 0 }],
         parallax: [],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
           rowsTall: ROWS,
           generator: {
             type: 'heightfield',
             segments: [
-              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+              {
+                from: 0,
+                to: 3000 + PLAYFIELD_W,
+                floor: { base: 4 * TILE, amp: 0, period: 8 * TILE, seed: 1 },
+              },
             ],
           },
         },
@@ -844,18 +854,23 @@ describe('core/enemies edge — contact', () => {
   }
 
   it('is a closed circle-vs-box test (hurt radius 1.5 px, hurtbox 4×4)', () => {
-    const r = 1.5;
-    expect(touches(4 + r, 0)).toBe(true);
-    expect(touches(-(4 + r), 0)).toBe(true);
-    expect(touches(0, 4 + r)).toBe(true);
-    expect(touches(4 + r + 0.01, 0)).toBe(false);
-    expect(touches(0, -(4 + r + 0.01))).toBe(false);
-    // Corners: inside the rounded corner (0.8² + 1.1² < 1.5²), outside it (1² + 1.2² > 1.5²),
-    // though both offsets are inside the circle's bounding square (the grid's broad phase).
-    expect(touches(4.8, 5.1)).toBe(true);
-    expect(touches(-4.8, -5.1)).toBe(true);
-    expect(touches(5.0, 5.2)).toBe(false);
-    expect(touches(-5.0, 5.2)).toBe(false);
+    // The ship's circle is the KESTREL's hurt radius, ported with the world (1.5 px × the scale);
+    // the enemy's 4-px half-box is this fixture's own, unscaled.
+    const r = world().ship.hurtRadius;
+    const hw = 4;
+    expect(touches(hw + r, 0)).toBe(true);
+    expect(touches(-(hw + r), 0)).toBe(true);
+    expect(touches(0, hw + r)).toBe(true);
+    expect(touches(hw + r + 0.01, 0)).toBe(false);
+    expect(touches(0, -(hw + r + 0.01))).toBe(false);
+    // Corners: inside the rounded corner (the v1 probe's 0.8² + 1.1² < 1.5², its offsets carried
+    // at the circle's scale), outside it (1² + 1.2² > 1.5² likewise), though both offsets are
+    // inside the circle's bounding square (the grid's broad phase).
+    const s = r / 1.5;
+    expect(touches(hw + 0.8 * s, hw + 1.1 * s)).toBe(true);
+    expect(touches(-(hw + 0.8 * s), -(hw + 1.1 * s))).toBe(true);
+    expect(touches(hw + 1.0 * s, hw + 1.2 * s)).toBe(false);
+    expect(touches(-(hw + 1.0 * s), hw + 1.2 * s)).toBe(false);
   });
 
   it('never hits a ship during its fly-in, from a ghost, or in god mode', () => {

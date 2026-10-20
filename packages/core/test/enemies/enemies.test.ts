@@ -36,6 +36,7 @@ import { PlayerHitCause } from '../../src/player/index.js';
 import { LayerId, SpriteFlag } from '../../src/presentation/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
+import { v1rel } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -96,16 +97,22 @@ const ENEMIES = [
   enemy('leader', { script: 'test.leader' }),
 ];
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/**
+ * The shipped tileset's tile edge: 8 px until R2-02's port, 12 px after. The fixture's map pairs
+ * with `terrain-a`, so it takes that tileset's size and its row count together (wave-03 rules).
+ */
+const TILE = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's surface, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8 px, 28 at 12 px). */
+const ROWS = PLAYFIELD_H / TILE;
+
+/** World y of the flat floor's surface: a 4-row floor above the map's bottom edge (32 / 48 px). */
+const FLOOR_Y = PLAYFIELD_H - 4 * TILE;
 
 /**
  * Test content: the KESTREL, the shipped tileset, a path, the test enemies and a stage.
  *
- * @param stage - Stage fields over the defaults (flat floor 32 px high, static camera).
+ * @param stage - Stage fields over the defaults (flat 4-row floor, static camera).
  * @returns The DB.
  */
 function db(stage: Record<string, unknown> = {}): ContentDb {
@@ -150,13 +157,17 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
         checkpoints: [{ x: 0 }],
         parallax: [],
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE,
           tileset: 'terrain-a',
           rowsTall: ROWS,
           generator: {
             type: 'heightfield',
             segments: [
-              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+              {
+                from: 0,
+                to: 3000 + PLAYFIELD_W,
+                floor: { base: 4 * TILE, amp: 0, period: 8 * TILE, seed: 1 },
+              },
             ],
           },
         },
@@ -326,7 +337,7 @@ describe('core/enemies spawning', () => {
   it('snaps ground enemies onto the floor / under the ceiling', () => {
     const content = db({
       tilemap: {
-        tileSize: 8,
+        tileSize: TILE,
         tileset: 'terrain-a',
         rowsTall: ROWS,
         generator: {
@@ -335,8 +346,8 @@ describe('core/enemies spawning', () => {
             {
               from: 0,
               to: 3000 + PLAYFIELD_W,
-              floor: { base: 32, amp: 0, period: 64, seed: 1 },
-              ceiling: { base: 24, amp: 0, period: 64, seed: 2 },
+              floor: { base: 4 * TILE, amp: 0, period: 8 * TILE, seed: 1 },
+              ceiling: { base: 3 * TILE, amp: 0, period: 8 * TILE, seed: 2 },
             },
           ],
         },
@@ -345,10 +356,10 @@ describe('core/enemies spawning', () => {
     const w = world(content);
     const floor = w.enemies.spawn(spec(w, 'floor'), 200, Number.NaN);
     const ceiling = w.enemies.spawn(spec(w, 'ceiling'), 220, Number.NaN);
-    // Floor surface at PLAYFIELD_H − 32 (168 at 384×216) → centre 4 above it; ceiling surface at
-    // 24 → centre 28.
+    // Floor surface a 4-row floor below the playfield's bottom → centre 4 above it; ceiling
+    // surface 3 rows below the top → centre 4 below that.
     expect(floor?.y).toBe(FLOOR_Y - 4);
-    expect(ceiling?.y).toBe(28);
+    expect(ceiling?.y).toBe(3 * TILE + 4);
     run(w, 30);
     expect(floor?.y).toBe(FLOOR_Y - 4); // world-anchored: no camera ride, no mover
     const batch = w.enemies.groundBatch;
@@ -573,10 +584,11 @@ describe('core/enemies off-screen rules', () => {
       run(w, 1);
       if (e.state !== EnemyState.Live) removedAt = t;
     }
-    // x after t+1 ticks: 20 − 2(t+1); gone when x + hw < −32 → x < −36 → t+1 > 28.
-    expect(removedAt).toBe(28);
+    // x after t+1 ticks: 20 − 2(t+1); gone when x + hw < −DESPAWN_MARGIN → t+1 >
+    // (20 + 4 + DESPAWN_MARGIN) / 2. (Spawn x, the hurt half-width and vx are the fixture's own.)
+    expect(removedAt).toBe(Math.floor((20 + 4 + DESPAWN_MARGIN) / 2));
     expect(e.state).toBe(EnemyState.Free); // freed in phase 8 of that tick
-    expect(DESPAWN_MARGIN).toBe(32);
+    expect(DESPAWN_MARGIN).toBe(v1rel(32));
   });
 
   it('removes an enemy that never shows up after UNSEEN_TICKS', () => {
@@ -760,13 +772,15 @@ describe('core/enemies determinism and allocation', () => {
     for (let r = 0; r < 25; r++) rows.push(r >= 12 ? '4*0, 1, 39*0, 1' : '');
     const content = db({
       tilemap: {
-        tileSize: 8,
+        tileSize: TILE,
         tileset: 'terrain-a',
         rowsTall: 25,
         rle: rows,
         generator: {
           type: 'heightfield',
-          segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+          segments: [
+            { from: 0, to: 3384, floor: { base: 4 * TILE, amp: 0, period: 8 * TILE, seed: 1 } },
+          ],
         },
       },
     });
