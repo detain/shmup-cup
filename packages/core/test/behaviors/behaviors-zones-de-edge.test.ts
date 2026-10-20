@@ -45,6 +45,7 @@ import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1screenX, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -408,38 +409,38 @@ function untilChest(w: World, open: boolean): number {
 describe('core/behaviors — zones D and E, edge cases (M2-12)', () => {
   it('has the documented default tunables', () => {
     expect(DEFAULT_BEHAVIORS.get('rear.swoop')?.params).toEqual({
-      speed: 1.6,
-      turnX: 280,
+      speed: v1speed(1.6),
+      turnX: v1screenX(280),
       hold: 18,
       ways: 1,
       spread: 40,
-      bulletSpeed: 1.3,
-      leaveSpeed: 1.4,
+      bulletSpeed: v1speed(1.3),
+      leaveSpeed: v1speed(1.4),
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.bastion')?.params).toEqual({
-      trackSpeed: 0.35,
-      margin: 44,
+      trackSpeed: v1speed(0.35),
+      margin: v1rel(44),
       spin: 4,
       reverseTicks: 0,
       laserTicks: 120,
       firstLaser: 60,
       laserLength: PLAYFIELD_W,
-      laserWidth: 8,
+      laserWidth: v1rel(8),
       telegraph: 45,
       active: 50,
       fireTicks: 100,
       ways: 0,
       spread: 40,
-      bulletSpeed: 1.3,
+      bulletSpeed: v1speed(1.3),
       ring: 0,
       ringTicks: 150,
-      ringSpeed: 1,
+      ringSpeed: v1speed(1),
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.steed')?.params).toEqual({
       cx: DEFAULT_BOSS_X,
       cy: DEFAULT_BOSS_Y,
-      rx: 8,
-      ry: 40,
+      rx: v1rel(8),
+      ry: v1rel(40),
       bobSpeed: 3,
       closedTicks: 150,
       openTicks: 110,
@@ -448,9 +449,9 @@ describe('core/behaviors — zones D and E, edge cases (M2-12)', () => {
       fireTicks: 80,
       ways: 3,
       spread: 44,
-      bulletSpeed: 1.3,
+      bulletSpeed: v1speed(1.3),
       ring: 0,
-      ringSpeed: 1,
+      ringSpeed: v1speed(1),
       gape: 0,
     });
   });
@@ -501,22 +502,29 @@ describe('core/behaviors rear.swoop — edge cases (M2-12)', () => {
   it('flies the defaults: in at 1.6 to view x 280, an 18-tick hold with one needle, away at 1.4', () => {
     const w = world();
     // (280 + 41) / 1.6 → 201 ticks in; the shot on the 10th of 18 hold ticks; away after them.
-    const { jumper, arrive, fire, leave, most } = flight(w, 'jumper-default', -41, 280, 260);
-    expect(arrive).toBe(201);
+    const { jumper, arrive, fire, leave, most } = flight(
+      w,
+      'jumper-default',
+      -41,
+      v1screenX(280),
+      260,
+    );
+    // (280 + 41) / 1.6 in ported units → 201 ticks (206 on the ported frame).
+    expect(arrive).toBe(Math.ceil((v1screenX(280) + 41) / v1speed(1.6)));
     expect(fire).toBe(arrive + 11);
     expect(leave).toBe(arrive + 19);
     expect(most).toBe(1);
-    expect(jumper.vx).toBeCloseTo(-1.4, 9);
+    expect(jumper.vx).toBeCloseTo(-v1speed(1.4), 9);
     expect(jumper.vy).toBe(0);
   });
 
   it('floors ways: 0 fires nothing, 2.7 a pair of needles', () => {
     const quiet = world();
-    const none = flight(quiet, 'jumper-quiet', -41, 280, 260);
-    expect(none.arrive).toBe(201);
+    const none = flight(quiet, 'jumper-quiet', -41, v1screenX(280), 260);
+    expect(none.arrive).toBe(Math.ceil((v1screenX(280) + 41) / v1speed(1.6)));
     expect(none.most).toBe(0);
     const volley = world();
-    const { fire, arrive, most } = flight(volley, 'jumper-volley', -41, 280, 260);
+    const { fire, arrive, most } = flight(volley, 'jumper-volley', -41, v1screenX(280), 260);
     expect(fire).toBe(arrive + 11);
     expect(most).toBe(2);
   });
@@ -529,17 +537,19 @@ describe('core/behaviors rear.swoop — edge cases (M2-12)', () => {
     // before the mover takes its first step away).
     expect(leave).toBe(arrive + 2);
     expect(fire).toBe(leave);
-    expect(jumper.vx).toBeCloseTo(-1.4, 9); // the default leave speed
+    expect(jumper.vx).toBeCloseTo(-v1speed(1.4), 9); // the default leave speed
   });
 
   it('times the shot from the view on a scrolling camera: half-way through the hold', () => {
     const w = world(true);
     const x0 = w.camera.x;
-    const { arrive, fire, leave } = flight(w, 'squall-jumper', -24, 290, 260);
+    const { arrive, fire, leave } = flight(w, 'squall-jumper', -24, v1screenX(290), 260);
     expect(w.camera.x - x0).toBeGreaterThan(200); // the camera scrolled the whole time
     // (290 + 24) / 1.6 → 197 ticks in view space (a flying body rides the scroll).
-    expect(arrive).toBe(197);
-    expect(fire).toBe(arrive + 12);
+    expect(arrive).toBe(Math.ceil((v1screenX(290) + 24) / v1speed(1.6)));
+    // The camera has scrolled a pixel when the script reads its distance on the first tick, so
+    // the wake counts ⌈(turnX − x0 + 1) / speed⌉ approach ticks; the needle shows a tick later.
+    expect(fire).toBe(Math.ceil((v1screenX(290) + 25) / v1speed(1.6)) + (20 >> 1) + 2);
     expect(leave).toBe(arrive + 21);
   });
 
@@ -549,8 +559,14 @@ describe('core/behaviors rear.swoop — edge cases (M2-12)', () => {
     // the enemy's settle time. Before the fix the wake was timed as if it stood at its turn point
     // already (11 ticks after the spawn, inside the settle time): the shot was dropped, and it
     // never fired at all.
-    const { jumper, arrive, fire, leave, most } = flight(w, 'squall-jumper', 350, 290, 120);
-    expect(arrive).toBe(38);
+    const { jumper, arrive, fire, leave, most } = flight(
+      w,
+      'squall-jumper',
+      v1screenX(290) + v1rel(60),
+      v1screenX(290),
+      120,
+    );
+    expect(arrive).toBe(Math.ceil(v1rel(60) / v1speed(1.6)));
     expect(fire).toBe(arrive + 12);
     expect(leave).toBe(arrive + 21);
     expect(most).toBe(1);
@@ -562,7 +578,7 @@ describe('core/behaviors rear.swoop — edge cases (M2-12)', () => {
     const w = world();
     // The wake comes 12 ticks after the spawn, before the 30 settle ticks of shmup_feat.md §11
     // (a rear attacker spawns behind the view, so its settle time runs out long before its turn).
-    const { arrive, fire, leave } = flight(w, 'squall-jumper', 290, 290, 120);
+    const { arrive, fire, leave } = flight(w, 'squall-jumper', v1screenX(290), v1screenX(290), 120);
     expect(arrive).toBe(1);
     expect(leave).toBe(22);
     expect(fire).toBe(-1);
@@ -733,8 +749,8 @@ describe('core/behaviors boss.bastion — edge cases (M2-12)', () => {
     const w = fighting('cinder-bastion');
     const b = w.bosses.boss;
     const ship = w.players[0];
-    const margin = 44;
-    const speed = 0.35; // phase 0
+    const margin = v1rel(44);
+    const speed = v1speed(0.35); // phase 0
     for (const shipY of [4, PLAYFIELD_H - 4, PLAYFIELD_H / 2 - 9]) {
       for (let t = 0; t < 500; t++) {
         ship.y = w.camera.y + shipY;
@@ -805,7 +821,7 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
       }
       expect(b.phase).toBe(1);
       // One tick's bob at 3 units on ry 16 (≈ 0.3 px) plus the 2 px the ellipse grew.
-      expect(most, `after ${String(wait)} ticks`).toBeLessThanOrEqual(2 + 0.3);
+      expect(most, `after ${String(wait)} ticks`).toBeLessThanOrEqual(v1rel(2) + 0.3);
     }
   });
 
@@ -931,18 +947,23 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
     const parts = w.bosses.boss.parts;
     const top = parts[part(w, 'lid-top')];
     const bottom = parts[part(w, 'lid-bottom')];
-    expect([top.restX, top.restY, bottom.restX, bottom.restY]).toEqual([-3, -11, -3, 11]);
+    expect([top.restX, top.restY, bottom.restX, bottom.restY]).toEqual([
+      -v1rel(3),
+      -v1rel(11),
+      -v1rel(3),
+      v1rel(11),
+    ]);
     for (const open of [true, false, true, false]) {
       untilChest(w, open);
-      expect([top.localX, top.localY]).toEqual([-3, open ? -17 : -11]);
-      expect([bottom.localX, bottom.localY]).toEqual([-3, open ? 17 : 11]);
+      expect([top.localX, top.localY]).toEqual([-v1rel(3), open ? -v1rel(11) - 6 : -v1rel(11)]);
+      expect([bottom.localX, bottom.localY]).toEqual([-v1rel(3), open ? v1rel(11) + 6 : v1rel(11)]);
     }
     const still = fighting('steed-shut-lids');
     const lids = still.bosses.boss.parts;
     const lid = lids[part(still, 'lid-top')];
     for (const open of [true, false]) {
       untilChest(still, open);
-      expect([lid.localX, lid.localY]).toEqual([-3, -11]);
+      expect([lid.localX, lid.localY]).toEqual([-v1rel(3), -v1rel(11)]);
     }
   });
 
@@ -956,7 +977,7 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
       [26, 2],
     ] as const) {
       untilChest(w, true);
-      expect(lid.localY).toBe(lid.restY + (phase === 1 ? 3 : 3));
+      expect(lid.localY).toBe(lid.restY + Math.floor(v1rel(3)));
       expect(w.bosses.damagePart(chest, damage, 0)).toBe(BossHit.Damaged);
       run(w, 2);
       expect(b.phase).toBe(phase);
@@ -966,6 +987,6 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
     }
     // Phase 2 gapes 4 px.
     untilChest(w, true);
-    expect(lid.localY).toBe(lid.restY + 4);
+    expect(lid.localY).toBe(lid.restY + Math.floor(v1rel(4)));
   });
 });

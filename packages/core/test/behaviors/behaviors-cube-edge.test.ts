@@ -13,6 +13,7 @@ import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 import { aliveWorld, directDb, shipped } from '../helpers/direct.js';
 
 /** The shared content. */
@@ -60,8 +61,8 @@ describe('core/behaviors cube.pincer — edges', () => {
     idle(w, 1);
     expect(cube.y - w.camera.y).toBeLessThan(HALF); // still above the middle
     idle(w, 200);
-    expect(cube.y - w.camera.y).toBeCloseTo(HALF - 8, 6);
-    expect(cube.vx).toBeCloseTo(-1.75, 6);
+    expect(cube.y - w.camera.y).toBeCloseTo(HALF - v1rel(8), 6);
+    expect(cube.vx).toBeCloseTo(-v1speed(1.75), 6);
     idle(w, 300);
     expect(cube.state).not.toBe(EnemyState.Live); // gone off the left edge
   });
@@ -71,7 +72,7 @@ describe('core/behaviors cube.pincer — edges', () => {
     w.players[0].active = false;
     const cube = lone(w, DB, 'cube', 300, HALF);
     idle(w, 200);
-    expect(cube.y - w.camera.y).toBeCloseTo(HALF + 8, 6);
+    expect(cube.y - w.camera.y).toBeCloseTo(HALF + v1rel(8), 6);
   });
 
   itPortPending(
@@ -103,7 +104,7 @@ describe('core/behaviors cube.pincer — edges', () => {
       );
       expect(live.length).toBeGreaterThan(0);
       for (const e of live) {
-        expect(Math.abs(Math.abs(e.y - w.camera.y - HALF) - 8)).toBeLessThan(1e-6);
+        expect(Math.abs(Math.abs(e.y - w.camera.y - HALF) - v1rel(8))).toBeLessThan(1e-6);
       }
     },
   );

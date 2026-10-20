@@ -41,6 +41,7 @@ import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
 import { BALLISTIC_LANDED, MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed, v1screenX, v1screenY, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -56,6 +57,9 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** Terrain-dune's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (shipped('tilesets/terrain-dune.tileset.json').data as { tileSize: number }).tileSize;
 
 /** A roster entry as JSON (only the fields the variants touch are typed). */
 interface Entry {
@@ -249,17 +253,17 @@ const DB: ContentDb = (() => {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-dune',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TS,
             generator: {
               type: 'heightfield',
               segments: [
                 {
                   from: 0,
                   to: 2384,
-                  floor: { base: 40, amp: 0, period: 64, seed: 1 },
-                  ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
+                  floor: { base: v1rel(40), amp: 0, period: 64, seed: 1 },
+                  ceiling: { base: v1y(32), amp: 0, period: 64, seed: 2 },
                 },
               ],
             },
@@ -415,48 +419,48 @@ describe('core/behaviors — zones B and C, edge cases (M2-11)', () => {
   it('has the documented default tunables', () => {
     expect(DEFAULT_BEHAVIORS.get('rocket.homing')?.params).toEqual({
       launchTicks: 24,
-      launchSpeed: 1,
-      speed: 1.25,
+      launchSpeed: v1speed(1),
+      speed: v1speed(1.25),
       turnRate: 5,
       homeTicks: 60,
     });
     expect(DEFAULT_BEHAVIORS.get('worm.burst')?.params).toEqual({
-      trigger: 128,
-      vx: -0.8,
-      up: 3.4,
-      gravity: 0.075,
-      maxFall: 4,
+      trigger: v1rel(128),
+      vx: -v1speed(0.8),
+      up: v1speed(3.4),
+      gravity: v1speed(0.075),
+      maxFall: v1speed(4),
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.maw')?.params).toEqual({
-      trackSpeed: 0.4,
-      margin: 44,
+      trackSpeed: v1speed(0.4),
+      margin: v1rel(44),
       closedTicks: 140,
       openTicks: 90,
       fireTicks: 36,
-      bulletSpeed: 1.4,
+      bulletSpeed: v1speed(1.4),
       ways: 3,
       spread: 48,
       ring: 0,
-      ringSpeed: 1,
+      ringSpeed: v1speed(1),
       launchTicks: 150,
       count: 1,
-      gape: 0,
+      gape: v1rel(0),
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.widow')?.params).toEqual({
       stepTicks: 100,
-      minX: 250,
-      maxX: 320,
-      minY: 56,
-      maxY: 144,
+      minX: v1screenX(250),
+      maxX: v1screenX(320),
+      minY: v1screenY(56),
+      maxY: v1screenY(144),
       fireTicks: 80,
-      bulletSpeed: 1.3,
+      bulletSpeed: v1speed(1.3),
       ways: 3,
       spread: 40,
       launchTicks: 160,
       count: 1,
       laserTicks: 0,
       laserLength: PLAYFIELD_W,
-      laserWidth: 6,
+      laserWidth: v1rel(6),
       telegraph: 50,
       active: 40,
     });
@@ -519,8 +523,8 @@ describe('core/behaviors rocket.homing — edge cases (M2-11)', () => {
     expect(e.m1).toBe(0);
     for (let t = 0; t < 20; t++) {
       run(w, 1);
-      expect(e.vx).toBeCloseTo(-1.25 * Math.SQRT1_2, 2);
-      expect(e.vy).toBeCloseTo(-1.25 * Math.SQRT1_2, 2);
+      expect(e.vx).toBeCloseTo(-v1speed(1.25) * Math.SQRT1_2, 2);
+      expect(e.vy).toBeCloseTo(-v1speed(1.25) * Math.SQRT1_2, 2);
     }
   });
 
@@ -539,14 +543,14 @@ describe('core/behaviors worm.burst — edge cases (M2-11)', () => {
   it('bursts at once with a trigger of 0, a lone spawn leading itself, and never fires', () => {
     const w = world();
     const ship = w.players[0];
-    const e = spawn(w, 'worm-now', w.camera.x + 360, w.camera.y + 170);
-    expect(Math.abs(e.x - ship.x)).toBeGreaterThan(190);
+    const e = spawn(w, 'worm-now', w.camera.x + v1screenX(360), w.camera.y + 170);
+    expect(Math.abs(e.x - ship.x)).toBeGreaterThan(v1rel(190));
     run(w, 3);
     expect(e.mover).toBe(MoverKind.Ballistic);
     expect(e.vy).toBeLessThan(0);
-    expect(e.vx).toBeCloseTo(-0.8, 9); // the default (the variant sets only the trigger)
-    // The shipped worm with the same spawn waits (the ship is beyond its 190-px trigger).
-    const waiting = spawn(w, 'dune-worm', w.camera.x + 360, w.camera.y + 170);
+    expect(e.vx).toBeCloseTo(-v1speed(0.8), 9); // the default (the variant sets only the trigger)
+    // The shipped worm with the same spawn waits (the ship is beyond its 190-px trigger, ported).
+    const waiting = spawn(w, 'dune-worm', w.camera.x + v1screenX(360), w.camera.y + 170);
     run(w, 60);
     expect(waiting.vx).toBe(0);
     expect(waiting.vy).toBe(0);
@@ -737,8 +741,8 @@ describe('core/behaviors boss.maw — edge cases (M2-11)', () => {
     for (const open of [true, false, true]) {
       untilMouth(w, open);
       expect([tongue.localX, tongue.localY]).toEqual([-14, 0]);
-      expect([top.localX, top.localY]).toEqual([-8, open ? -15 : -9]);
-      expect([bottom.localX, bottom.localY]).toEqual([-8, open ? 15 : 9]);
+      expect([top.localX, top.localY]).toEqual([-v1rel(8), open ? -(v1rel(9) + 6) : -v1rel(9)]);
+      expect([bottom.localX, bottom.localY]).toEqual([-v1rel(8), open ? v1rel(9) + 6 : v1rel(9)]);
     }
   });
 
@@ -746,8 +750,8 @@ describe('core/behaviors boss.maw — edge cases (M2-11)', () => {
     const w = fighting('galvanic-maw');
     const boss = w.bosses.boss;
     const ship = w.players[0];
-    const margin = 44;
-    const speed = 0.35; // phase 0
+    const margin = v1rel(44); // the shipped phase-0 margins (world px)
+    const speed = v1speed(0.35); // phase 0
     for (const shipY of [4, PLAYFIELD_H - 4, PLAYFIELD_H / 2 + 7]) {
       for (let t = 0; t < 500; t++) {
         ship.y = w.camera.y + shipY;
@@ -772,8 +776,8 @@ describe('core/bosses BossPart.restX / restY (M2-11 review fix)', () => {
     });
     untilMouth(w, true);
     const jaw = parts[part(w, 'jaw-top')];
-    expect(jaw.localY).toBe(-17); // the shipped gape 8 (M2-18: the MANTA's biggest disc fits)
-    expect(jaw.restY).toBe(-9);
+    expect(jaw.localY).toBe(-(v1rel(9) + v1rel(8))); // the shipped gape 8 (M2-18: the MANTA's biggest disc fits)
+    expect(jaw.restY).toBe(-v1rel(9));
   });
 
   it('is reset for the next boss in the slot, which starts at its own offsets', () => {
@@ -790,7 +794,12 @@ describe('core/bosses BossPart.restX / restY (M2-11 review fix)', () => {
     w.bosses.clear();
     expect(w.bosses.startBoss(indexOf('galvanic-maw'))).toBe(true);
     const jaw = parts[part(w, 'jaw-top')];
-    expect([jaw.localX, jaw.localY, jaw.restX, jaw.restY]).toEqual([-8, -9, -8, -9]);
+    expect([jaw.localX, jaw.localY, jaw.restX, jaw.restY]).toEqual([
+      -v1rel(8),
+      -v1rel(9),
+      -v1rel(8),
+      -v1rel(9),
+    ]);
   });
 });
 
@@ -798,6 +807,9 @@ describe('core/behaviors boss.widow — edge cases (M2-11)', () => {
   it('orders swapped box bounds and rests on whole pixels inside the box', () => {
     const w = fighting('widow-box');
     const boss = w.bosses.boss;
+    // The box is the variant's own inline params (never ported); the boss walks to it from its
+    // shipped home (a screen-x, ported at the kit's ×1.5) after the first step (20 + 12 ticks).
+    run(w, 40);
     const rests = new Set<string>();
     let x = boss.screenX;
     let y = boss.screenY;

@@ -13,13 +13,17 @@ import {
   defineBehavior,
 } from '../../src/behaviors/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
-import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
-import type { Enemy, ScriptApi } from '../../src/enemies/index.js';
+import { EnemyState, type Enemy, type ScriptApi } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind, SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
 import { grantShield } from '../../src/shields/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
+
+/** Terrain-a's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
 /**
  * A shipped content file.
@@ -89,12 +93,14 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 24, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                { from: 0, to: 3384, floor: { base: v1rel(24), amp: 0, period: 64, seed: 1 } },
+              ],
             },
           },
           events: [],
@@ -264,7 +270,12 @@ describe('core/behaviors firing (M1-09)', () => {
     spawn(w, 'hatch', 250, Number.NaN);
     spawn(w, 'rammer', 380, 40);
     expect(watch(w, 200)).toEqual([]);
-    expect(w.enemies.count).toBeGreaterThan(5); // the hatch released children
+    // The hatch released children: at the ported speeds the parents have left the screen by the
+    // end of the watch, so name a live hatchling rather than counting the whole screen.
+    const hatchling = DB.enemyIndex.get('hatchling') ?? -1;
+    expect(
+      w.enemies.enemies.some((e) => e.state === EnemyState.Live && e.specIndex === hatchling),
+    ).toBe(true);
   });
 });
 

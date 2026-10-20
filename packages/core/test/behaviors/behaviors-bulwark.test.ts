@@ -18,6 +18,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -148,7 +149,7 @@ describe('core/behaviors boss.bulwark — HALCYON BULWARK (M1-18)', () => {
     const f = w.bullets.pool.fields;
     for (let i = 0; i < fired; i++) {
       expect(f.kind[i]).toBe(BulletKind.NeedlePurple);
-      expect(f.speed[i]).toBeCloseTo(1.5, 9);
+      expect(f.speed[i]).toBeCloseTo(v1speed(1.5), 9);
     }
   });
 

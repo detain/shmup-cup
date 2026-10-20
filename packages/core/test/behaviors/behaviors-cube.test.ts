@@ -12,6 +12,7 @@ import { DropKind, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ItemKind, directItemKind } from '../../src/powerups/index.js';
 import { stepWorld, type World } from '../../src/world/index.js';
+import { v1rel } from '../helpers/v1-port.js';
 import { aliveWorld, directDb } from '../helpers/direct.js';
 
 /** The shared content. */
@@ -72,7 +73,7 @@ describe('core/behaviors cube.pincer (M2-05)', () => {
       for (const e of cubes(w)) {
         expect(e.vx).toBeLessThan(0);
         const dy = viewY(e) - PLAYFIELD_H / 2;
-        expect(Math.abs(Math.abs(dy) - 8)).toBeLessThan(1e-6);
+        expect(Math.abs(Math.abs(dy) - v1rel(8))).toBeLessThan(1e-6);
       }
       expect(w.enemies.formations.drop[all[0].formation]).toBe(DropKind.PowerUp);
     },

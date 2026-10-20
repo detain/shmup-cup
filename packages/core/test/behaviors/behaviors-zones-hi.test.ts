@@ -25,6 +25,7 @@ import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -151,18 +152,18 @@ describe('core/behaviors — zones H and I (M2-14)', () => {
       laserTicks: 150,
       heading: 512,
       laserLength: PLAYFIELD_W,
-      laserWidth: 6,
+      laserWidth: v1rel(6),
       telegraph: 50,
       active: 40,
     });
     expect(DEFAULT_BEHAVIORS.get('mine.burst')?.params).toEqual({
-      speed: 0.5,
-      amp: 10,
+      speed: v1speed(0.5),
+      amp: v1rel(10),
       period: 140,
-      trigger: 64,
+      trigger: v1rel(64),
       fuse: 36,
       ring: 8,
-      bulletSpeed: 1,
+      bulletSpeed: v1speed(1),
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.sovereign')?.params).toMatchObject({
       spin: 0,
@@ -182,7 +183,7 @@ describe('core/behaviors — zones H and I (M2-14)', () => {
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.angler')?.params).toMatchObject({
       closedTicks: 150,
       openTicks: 100,
-      gape: 6,
+      gape: v1rel(6),
       sway: 1,
       swayTicks: 40,
       gunTicks: 0,
@@ -256,7 +257,11 @@ describe('core/behaviors — zones H and I (M2-14)', () => {
   it('mine.burst: out of reach it keeps drifting; shot first, it scores and never bursts', () => {
     const w = freeFlight();
     const ship = w.players[0];
-    const far = w.enemies.spawn(DB.enemyIndex.get('depth-mine') ?? -1, ship.x + 300, ship.y - 90);
+    const far = w.enemies.spawn(
+      DB.enemyIndex.get('depth-mine') ?? -1,
+      ship.x + v1rel(300),
+      ship.y - 90,
+    );
     expect(far).not.toBeNull();
     if (far === null) return;
     run(w, 300);
@@ -369,7 +374,7 @@ describe('core/behaviors — zones H and I (M2-14)', () => {
     expect(w.bosses.damagePart(maw, 1, 0)).toBe(BossHit.Clink);
     // After its 150 closed ticks it opens: the jaws 6 px further apart each, the throat takes hits.
     run(w, 152);
-    expect(jawBottom.y - jawTop.y).toBeCloseTo(shut + 12, 6);
+    expect(jawBottom.y - jawTop.y).toBeCloseTo(shut + v1rel(12), 6);
     expect(w.bosses.damagePart(maw, 1, 0)).toBe(BossHit.Damaged);
     // The lure sways (its bulb's height relative to the body changes) and fires needles.
     const lure = boss.parts[part(w, 'lure')];

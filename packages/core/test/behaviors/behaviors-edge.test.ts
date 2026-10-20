@@ -37,6 +37,7 @@ import {
   type Script,
 } from '../../src/patterns/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -122,15 +123,29 @@ const ENEMIES = [
   }),
 ];
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Terrain-a's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (
+  JSON.parse(
+    readFileSync(
+      new URL('../../../../content/tilesets/terrain-a.tileset.json', import.meta.url),
+      'utf8',
+    ),
+  ) as { tileSize: number }
+).tileSize;
 
-/** World y of the flat floor's surface, 32 px above the map's bottom edge (168 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 32;
+/** Rows of the test stage's map: one playfield tall (42 at 8 px, 28 at 12). */
+const ROWS = PLAYFIELD_H / TS;
+
+/** World y of the flat floor's surface, a v1 32-px band above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - v1rel(32);
+
+/** World y of the flat ceiling's surface: a v1 24-px depth below the playfield's top (its world-y port). */
+const CEILING_Y = v1y(24);
 
 /**
  * Test content: KESTREL, the shipped tileset, the roster above and a stage one playfield tall
- * with a flat floor (surface at {@link FLOOR_Y}) and a flat ceiling (surface at 24).
+ * with a flat floor (surface at {@link FLOOR_Y}) and a flat ceiling (surface at
+ * {@link CEILING_Y}).
  *
  * @returns The DB.
  */
@@ -156,7 +171,7 @@ function db(): ContentDb {
           checkpoints: [],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             generator: {
@@ -165,8 +180,8 @@ function db(): ContentDb {
                 {
                   from: 0,
                   to: 3000 + PLAYFIELD_W,
-                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
-                  ceiling: { base: 24, amp: 0, period: 64, seed: 2 },
+                  floor: { base: v1rel(32), amp: 0, period: 64, seed: 1 },
+                  ceiling: { base: CEILING_Y, amp: 0, period: 64, seed: 2 },
                 },
               ],
             },
@@ -384,7 +399,7 @@ describe('core/behaviors edge — the roster in detail', () => {
     const floor = put(w, 'turret', 200, Number.NaN);
     const ceiling = put(w, 'turret-top', 220, Number.NaN);
     expect([floor.anchor, floor.y]).toEqual([BodyAnchor.Floor, FLOOR_Y - 4]);
-    expect([ceiling.anchor, ceiling.y]).toEqual([BodyAnchor.Ceiling, 28]);
+    expect([ceiling.anchor, ceiling.y]).toEqual([BodyAnchor.Ceiling, CEILING_Y + 4]);
     const spawned = w.tick;
     run(w, 1); // first wake: faces the ship on the left
     expect(floor.flags & EnemyFlag.FaceRight).toBe(0);
@@ -396,7 +411,12 @@ describe('core/behaviors edge — the roster in detail', () => {
     }
     expect(flips).toEqual([spawned + 20]);
     expect(ceiling.flags & EnemyFlag.FaceRight).toBe(EnemyFlag.FaceRight);
-    expect([floor.x, floor.y, ceiling.x, ceiling.y]).toEqual([200, FLOOR_Y - 4, 220, 28]);
+    expect([floor.x, floor.y, ceiling.x, ceiling.y]).toEqual([
+      200,
+      FLOOR_Y - 4,
+      220,
+      CEILING_Y + 4,
+    ]);
   });
 
   it('walker.floor: walks left without a target, then towards the player at each walk start', () => {
@@ -430,7 +450,7 @@ describe('core/behaviors edge — the roster in detail', () => {
     const e = put(w, 'walker-top', 200, Number.NaN);
     for (let t = 0; t < 120; t++) {
       run(w, 1);
-      expect(e.y).toBe(24 + 4);
+      expect(e.y).toBe(CEILING_Y + 4);
     }
     expect(e.x).not.toBe(200);
   });

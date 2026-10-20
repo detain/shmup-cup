@@ -22,6 +22,7 @@ import { DropKind, EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/i
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed, v1screenX, v1screenY } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -123,8 +124,8 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
   it('registers the rockets, the worms and the two zone bosses', () => {
     expect(BEHAVIOR_IDS).toEqual(expect.arrayContaining(['rocket.homing', 'worm.burst']));
     expect(BOSS_BEHAVIOR_IDS).toEqual(expect.arrayContaining(['boss.maw', 'boss.widow']));
-    expect(DEFAULT_BEHAVIORS.get('rocket.homing')?.params).toMatchObject({ speed: 1.25 });
-    expect(DEFAULT_BEHAVIORS.get('worm.burst')?.params).toMatchObject({ trigger: 128 });
+    expect(DEFAULT_BEHAVIORS.get('rocket.homing')?.params).toMatchObject({ speed: v1speed(1.25) });
+    expect(DEFAULT_BEHAVIORS.get('worm.burst')?.params).toMatchObject({ trigger: v1rel(128) });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.maw')?.params).toMatchObject({ gape: 0, ring: 0 });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.widow')?.params).toMatchObject({ laserTicks: 0 });
   });
@@ -143,11 +144,11 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     expect(high.vx).toBeLessThan(0);
     expect(high.vy).toBeLessThan(0);
     expect(low.vy).toBeGreaterThan(0);
-    expect(Math.hypot(high.vx, high.vy)).toBeCloseTo(1, 6);
+    expect(Math.hypot(high.vx, high.vy)).toBeCloseTo(v1speed(1), 6);
     // Homing (from tick 20, 5 units a tick): it turns towards the ship, below-left of it.
     run(w, 20);
     expect(high.mover).toBe(MoverKind.Homing);
-    expect(Math.hypot(high.vx, high.vy)).toBeCloseTo(1.25, 4);
+    expect(Math.hypot(high.vx, high.vy)).toBeCloseTo(v1speed(1.25), 4);
     const early = high.vy;
     run(w, 45);
     expect(high.vy).toBeGreaterThan(early);
@@ -166,8 +167,17 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
   it('worm.burst: the leader waits in the sand, bursts out, the segments follow its arc', () => {
     const w = freeFlight();
     const index = DB.enemyIndex.get('dune-worm') ?? -1;
-    // Far to the right (400 px from the ship: beyond the 190-px trigger) — it waits there.
-    const slot = w.enemies.startFormation(index, 4, 7, 380, 150, -1, DropKind.Capsule, 0);
+    // Far to the right (a screen column beyond the 190-px trigger, ported) — it waits there.
+    const slot = w.enemies.startFormation(
+      index,
+      4,
+      7,
+      v1screenX(380),
+      150,
+      -1,
+      DropKind.Capsule,
+      0,
+    );
     expect(slot).toBeGreaterThanOrEqual(0);
     run(w, 40);
     const worm = live(w, 'dune-worm');
@@ -217,7 +227,7 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     // MANTA's biggest disc) — and the cutters come.
     run(w, 60);
     expect(boss.parts[maw].open).toBe(true);
-    expect(boss.parts[jaw].localY).toBe(jawY - 8);
+    expect(boss.parts[jaw].localY).toBe(jawY - v1rel(8));
     expect(w.bosses.damagePart(maw, 1, 0)).toBe(BossHit.Damaged);
     run(w, 20);
     expect(w.bullets.count).toBeGreaterThanOrEqual(3);
@@ -246,7 +256,7 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     // Phase 1 opens it again later (130 shut): 8 px apart, not 16.
     run(w, 135);
     expect(boss.parts[maw].open).toBe(true);
-    expect(boss.parts[jaw].localY).toBe(jawY + 8);
+    expect(boss.parts[jaw].localY).toBe(jawY + v1rel(8));
   });
 
   it('boss.maw: after every phase change the shut jaws stand at their spec offsets, whatever the gapes', () => {
@@ -259,13 +269,13 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     const spec = DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.parts ?? [];
     const topY = spec[top].y;
     const bottomY = spec[bottom].y;
-    expect([topY, bottomY]).toEqual([-9, 9]);
+    expect([topY, bottomY]).toEqual([-v1rel(9), v1rel(9)]);
     expect(boss.parts[top].restY).toBe(topY);
     expect(boss.parts[bottom].restY).toBe(bottomY);
     const gapes = (DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.phases ?? []).map(
       (phase) => phase.params.gape,
     );
-    expect(gapes).toEqual([8, 8, 9]);
+    expect(gapes).toEqual([v1rel(8), v1rel(8), v1rel(9)]);
     /**
      * Steps until the mouth is open (or shut).
      *
@@ -281,8 +291,10 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
      * @param apart - Pixels.
      */
     const jaws = (apart: number): void => {
-      expect(boss.parts[top].localY).toBe(topY - apart);
-      expect(boss.parts[bottom].localY).toBe(bottomY + apart);
+      // The behaviour floors the gape (the shipped 9 ports to 13.5, floored to 13).
+      const g = Math.floor(apart);
+      expect(boss.parts[top].localY).toBe(topY - g);
+      expect(boss.parts[bottom].localY).toBe(bottomY + g);
     };
     // Each phase change comes while the mouth is open (only then does the core take damage).
     for (const [phase, hp] of [
@@ -309,10 +321,10 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     const boss = w.bosses.boss;
     for (let t = 0; t < 400; t++) {
       run(w, 1);
-      expect(boss.screenX).toBeGreaterThanOrEqual(270 - 1e-9);
-      expect(boss.screenX).toBeLessThanOrEqual(316 + 1e-9);
-      expect(boss.screenY).toBeGreaterThanOrEqual(56 - 1e-9);
-      expect(boss.screenY).toBeLessThanOrEqual(144 + 1e-9);
+      expect(boss.screenX).toBeGreaterThanOrEqual(v1screenX(270) - 1e-9);
+      expect(boss.screenX).toBeLessThanOrEqual(v1screenX(316) + 1e-9);
+      expect(boss.screenY).toBeGreaterThanOrEqual(v1screenY(56) - 1e-9);
+      expect(boss.screenY).toBeLessThanOrEqual(v1screenY(144) + 1e-9);
     }
     expect(live(w, 'widow-drone').length).toBeGreaterThanOrEqual(1);
     // Phase 0 has no silk lines; the head is armoured behind the fangs.

@@ -28,6 +28,7 @@ import { EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1screenX, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -142,7 +143,10 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
   it('registers the rear attacker and the two zone bosses', () => {
     expect(BEHAVIOR_IDS).toContain('rear.swoop');
     expect(BOSS_BEHAVIOR_IDS).toEqual(expect.arrayContaining(['boss.bastion', 'boss.steed']));
-    expect(DEFAULT_BEHAVIORS.get('rear.swoop')?.params).toMatchObject({ speed: 1.6, turnX: 280 });
+    expect(DEFAULT_BEHAVIORS.get('rear.swoop')?.params).toMatchObject({
+      speed: v1speed(1.6),
+      turnX: v1screenX(280),
+    });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.bastion')?.params).toMatchObject({
       spin: 4,
       reverseTicks: 0,
@@ -165,13 +169,15 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
     run(w, 5);
     // Overtaking: flying right at its speed along its row, drawn facing right.
     expect(jumper.mover).toBe(MoverKind.Waypoint);
-    expect(jumper.vx).toBeCloseTo(1.6, 9);
+    expect(jumper.vx).toBeCloseTo(v1speed(1.6), 9);
     expect(jumper.vy).toBe(0);
     expect(jumper.flags & EnemyFlag.FaceRight).not.toBe(0);
     expect(w.bullets.count).toBe(0);
-    // (290 + 24) / 1.6 → 197 ticks to the turn point, then half of its 20-tick hold: one needle.
-    run(w, 200);
-    expect(jumper.x - w.camera.x).toBeCloseTo(290, 6);
+    // (290 + 24) / 1.6 → 197 ticks to the turn point (205 with the ported geometry), then half
+    // of its 20-tick hold: one needle.
+    const arrive = Math.ceil((v1screenX(290) + 24) / v1speed(1.6));
+    run(w, arrive + 3);
+    expect(jumper.x - w.camera.x).toBeCloseTo(v1screenX(290), 6);
     expect(jumper.y - w.camera.y).toBeCloseTo(60, 6);
     expect(w.bullets.count).toBe(0);
     run(w, 12);
@@ -179,7 +185,7 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
     // It turned to the ship (behind it) and leaves to the left along its row.
     expect(jumper.flags & EnemyFlag.FaceRight).toBe(0);
     run(w, 20);
-    expect(jumper.vx).toBeCloseTo(-1.3, 9);
+    expect(jumper.vx).toBeCloseTo(-v1speed(1.3), 9);
     expect(jumper.vy).toBe(0);
     expect(w.bullets.count).toBeLessThanOrEqual(1);
   });
@@ -198,8 +204,8 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
     expect((boss.parts[hub].worldAngle - a0 + 1024) % 1024).toBe(40);
     for (let t = 0; t < 8; t++) {
       run(w, 16);
-      expect(apart(w, core, inner)).toBeCloseTo(19, 3);
-      expect(apart(w, core, outer)).toBeCloseTo(28, 3);
+      expect(apart(w, core, inner)).toBeCloseTo(v1rel(19), 3);
+      expect(apart(w, core, outer)).toBeCloseTo(v1rel(28), 3);
     }
     // The arms clink, the core takes the hits.
     expect(w.bosses.damagePart(inner, 1, 0)).toBe(BossHit.Clink);
@@ -265,13 +271,13 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
     // Phase 0 bobs 14 px round its row DEFAULT_BOSS_Y (100 at 384×216; 2 units a tick: a quarter
     // turn in 128 ticks).
     expect(low).toBeGreaterThanOrEqual(DEFAULT_BOSS_Y - 14 - 1e-6);
-    expect(high).toBeLessThanOrEqual(DEFAULT_BOSS_Y + 14 + 1e-6);
+    expect(high).toBeLessThanOrEqual(DEFAULT_BOSS_Y + v1rel(14) + 1e-6);
     expect(high - low).toBeGreaterThan(10);
     // Open after its 130 shut ticks: the lids 3 px apart, the chest takes hits, a mini comes out.
     expect(opened).toBeGreaterThan(120);
     expect(opened).toBeLessThanOrEqual(131);
     expect(boss.parts[chest].open).toBe(true);
-    expect(boss.parts[lid].localY).toBe(lidY - 3);
+    expect(boss.parts[lid].localY).toBe(lidY - Math.floor(v1rel(3)));
     expect(w.bosses.damagePart(chest, 1, 0)).toBe(BossHit.Damaged);
     run(w, 12);
     expect(live(w, 'steed-foal')).toHaveLength(1);

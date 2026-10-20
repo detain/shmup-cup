@@ -25,6 +25,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed, v1screenX } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -260,11 +261,15 @@ describe('core/behaviors — the P2 roster (M3-02)', () => {
       expect(DEFAULT_BOSS_BEHAVIORS.get(id)).toBeDefined();
     }
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.suction')?.params).toMatchObject({
-      pullRadius: 200,
-      pullStrength: 1.1,
+      pullRadius: v1rel(200),
+      pullStrength: v1speed(1.1),
     });
-    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.grabber')?.params).toMatchObject({ grabRadius: 104 });
-    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.walker')?.params).toMatchObject({ frontX: 96 });
+    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.grabber')?.params).toMatchObject({
+      grabRadius: v1rel(104),
+    });
+    expect(DEFAULT_BOSS_BEHAVIORS.get('boss.walker')?.params).toMatchObject({
+      frontX: v1screenX(96),
+    });
   });
 
   it('reports an unknown tunable on each of them', () => {

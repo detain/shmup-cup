@@ -43,6 +43,7 @@ import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -567,15 +568,15 @@ function biggestStep(values: readonly number[]): number {
 describe('core/behaviors — zones F and G, edge cases (M2-13)', () => {
   it('has the documented default tunables', () => {
     expect(DEFAULT_BEHAVIORS.get('cell.chase')?.params).toEqual({
-      speed: 1.1,
+      speed: v1speed(1.1),
       enterTicks: 50,
       turnRate: 6,
       chaseTicks: 150,
       scatterTicks: 24,
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.squid')?.params).toEqual({
-      trackSpeed: 0.35,
-      margin: 48,
+      trackSpeed: v1speed(0.35),
+      margin: v1rel(48),
       curl: 1,
       sweepTicks: 48,
       guardTicks: 60,
@@ -583,28 +584,28 @@ describe('core/behaviors — zones F and G, edge cases (M2-13)', () => {
       fireTicks: 70,
       ways: 3,
       spread: 40,
-      bulletSpeed: 1.3,
+      bulletSpeed: v1speed(1.3),
       gunTicks: 0,
       ring: 0,
-      ringSpeed: 1,
+      ringSpeed: v1speed(1),
       launchTicks: 0,
       count: 1,
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.facet')?.params).toEqual({
-      trackSpeed: 0.3,
-      margin: 50,
+      trackSpeed: v1speed(0.3),
+      margin: v1rel(50),
       wave: 1,
       waveTicks: 40,
       fireTicks: 90,
       ways: 1,
       spread: 32,
-      bulletSpeed: 1.25,
+      bulletSpeed: v1speed(1.25),
       ring: 0,
       ringTicks: 150,
-      ringSpeed: 1,
+      ringSpeed: v1speed(1),
       laserTicks: 0,
       laserLength: PLAYFIELD_W,
-      laserWidth: 6,
+      laserWidth: v1rel(6),
       telegraph: 50,
       active: 40,
     });
@@ -624,9 +625,9 @@ describe('core/behaviors cell.chase — edge cases (M2-13)', () => {
       return moverOf(cell);
     });
     expect(out).toEqual(['S×50', 'H6×150', 'H0×60']);
-    expect(vx).toBeCloseTo(-1.1, 9);
-    expect(cell.m0).toBeCloseTo(1.1, 9);
-    expect(Math.hypot(cell.vx, cell.vy)).toBeCloseTo(1.1, 3);
+    expect(vx).toBeCloseTo(-v1speed(1.1), 9);
+    expect(cell.m0).toBeCloseTo(v1speed(1.1), 9);
+    expect(Math.hypot(cell.vx, cell.vy)).toBeCloseTo(v1speed(1.1), 3);
     expect(cell.s0).toBe(heading);
     expect(w.bullets.count).toBe(0);
   });
@@ -1057,9 +1058,9 @@ describe('core/behaviors boss.squid / boss.facet — tracking (M2-13)', () => {
           ship.y = w.camera.y + shipY;
           const y = b.screenY;
           run(w, 1);
-          expect(Math.abs(b.screenY - y)).toBeLessThanOrEqual(speed + 1e-9);
-          expect(b.screenY).toBeGreaterThanOrEqual(margin - 1e-9);
-          expect(b.screenY).toBeLessThanOrEqual(PLAYFIELD_H - margin + 1e-9);
+          expect(Math.abs(b.screenY - y)).toBeLessThanOrEqual(v1speed(speed) + 1e-9);
+          expect(b.screenY).toBeGreaterThanOrEqual(v1rel(margin) - 1e-9);
+          expect(b.screenY).toBeLessThanOrEqual(PLAYFIELD_H - v1rel(margin) + 1e-9);
         }
       }
       expect(b.phase).toBe(0);

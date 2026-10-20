@@ -7,6 +7,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../helpers/port-pending.js';
+import { v1speed } from '../helpers/v1-port.js';
 import {
   BEHAVIOR_IDS,
   BOSS_BEHAVIOR_IDS,
@@ -265,14 +266,14 @@ describe('core/behaviors — the roster in a World', () => {
     ]);
     const alone = spawn(w, 'fan', 350, 50);
     run(w, 1);
-    expect([alone.mover, alone.vx]).toEqual([MoverKind.Straight, -1.75]);
+    expect([alone.mover, alone.vx]).toEqual([MoverKind.Straight, -v1speed(1.75)]);
   });
 
   it('carrier.straight flies straight left and carries a capsule', () => {
     const w = world();
     const e = spawn(w, 'carrier', 300, 100);
     run(w, 1);
-    expect([e.mover, e.vx, e.vy]).toEqual([MoverKind.Straight, -0.75, 0]);
+    expect([e.mover, e.vx, e.vy]).toEqual([MoverKind.Straight, -v1speed(0.75), 0]);
     expect(DB.enemies[e.specIndex].drop).toBe('capsule');
   });
 

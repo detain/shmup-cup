@@ -16,6 +16,7 @@ import { DropKind, EnemyState } from '../../src/enemies/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
+import { v1screenX } from '../helpers/v1-port.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
 
 /**
@@ -90,12 +91,12 @@ describe('core/behaviors rocket.homing / worm.burst allocation (M2-11)', () => {
       const y = w.camera.y + 30 + Math.floor(k / 4) * 60;
       expect(w.enemies.spawn(rocket, x, y)).not.toBeNull();
     }
-    expect(w.enemies.startFormation(worm, 4, 7, 370, 150, -1, DropKind.None, 0)).toBeGreaterThan(
-      -1,
-    );
-    expect(w.enemies.startFormation(worm, 4, 7, 380, 180, -1, DropKind.None, 0)).toBeGreaterThan(
-      -1,
-    );
+    expect(
+      w.enemies.startFormation(worm, 4, 7, v1screenX(370), 150, -1, DropKind.None, 0),
+    ).toBeGreaterThan(-1);
+    expect(
+      w.enemies.startFormation(worm, 4, 7, v1screenX(380), 180, -1, DropKind.None, 0),
+    ).toBeGreaterThan(-1);
     // Every spawn and script wake happens here (the rockets' last wake is at tick 11).
     for (let i = 0; i < 300; i++) step();
     const live = (id: number): number =>

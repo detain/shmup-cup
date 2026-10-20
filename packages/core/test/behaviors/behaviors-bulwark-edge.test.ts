@@ -33,6 +33,7 @@ import { loadContent, type ContentDb, type ContentFile } from '../../src/data/in
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -153,16 +154,16 @@ describe('core/behaviors boss.bulwark — edge cases (M1-18)', () => {
   it('registers the documented defaults, frozen', () => {
     const def = DEFAULT_BOSS_BEHAVIORS.get('boss.bulwark');
     expect(def?.params).toEqual({
-      trackSpeed: 0.35,
-      margin: 40,
+      trackSpeed: v1speed(0.35),
+      margin: v1rel(40),
       laserTicks: 110,
       firstLaser: 60,
       laserLength: PLAYFIELD_W,
-      laserWidth: 8,
+      laserWidth: v1rel(8),
       telegraph: 45,
       active: 50,
       fireTicks: 120,
-      bulletSpeed: 1.5,
+      bulletSpeed: v1speed(1.5),
       ways: 0,
       spread: 40,
     });

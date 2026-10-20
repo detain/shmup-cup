@@ -29,7 +29,12 @@ import {
   LASER_WIDTH,
   LaserPhase,
 } from '../../src/bullets/index.js';
-import { PLAYFIELD_W, resolveGameConfig, type DifficultyPreset } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type DifficultyPreset,
+} from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import {
   DESPAWN_MARGIN,
@@ -41,6 +46,10 @@ import {
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind, SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
+
+/** Terrain-a's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
 /**
  * A shipped content file.
@@ -122,12 +131,14 @@ function db(): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 24, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                { from: 0, to: 3384, floor: { base: v1rel(24), amp: 0, period: 64, seed: 1 } },
+              ],
             },
           },
           events: [],
@@ -326,7 +337,7 @@ describe('core/behaviors fire edge: turret.floor tunables', () => {
       expect(shot.kind).toBe(BulletKind.RoundPink);
       expect(shot.angle).toBeGreaterThan(256); // down and to the left
       expect(shot.angle).toBeLessThan(512);
-      expect(shot.speed).toBe(1.5);
+      expect(shot.speed).toBe(v1speed(1.5));
     }
   });
 });
@@ -361,7 +372,7 @@ describe('core/behaviors fire edge: orbiter.loop and walker.floor tunables', () 
     const shots = watch(w, 150);
     expect(shots).toHaveLength(3);
     expect(new Set(shots.map((s) => s.angle)).size).toBe(1);
-    expect(shots.every((s) => s.speed === 1.25)).toBe(true);
+    expect(shots.every((s) => s.speed === v1speed(1.25))).toBe(true);
   });
 });
 

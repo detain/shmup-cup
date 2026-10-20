@@ -1,7 +1,8 @@
 /**
  * The stage gimmick behaviours of plan M2-07 (`core/behaviors`) driving their enemies in a World
  * with the shipped `gimmick-range` roster on a still camera between a flat floor
- * (y `PLAYFIELD_H − 40`, 160 at 384×216) and a flat ceiling (y 32): the falling rock (proximity
+ * (a v1 40-px band above the bottom edge) and a flat ceiling (a v1 32-px depth below the top):
+ * the falling rock (proximity
  * trigger, shatters on the floor, no score), the splitting bubble (children fanned out, none from a
  * Mega Crash), the volcano (seeded lobs that shatter), the suction pod (pull field while it lives),
  * the grabbing tentacle (chain, lunge with a short pull, retract) and the seeded cube rush (cubes
@@ -19,6 +20,7 @@ import { FX_CUES, SimEventKind } from '../../src/events/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { BALLISTIC_LANDED, MoverKind } from '../../src/patterns/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -35,11 +37,17 @@ function shipped(path: string): ContentFile {
   };
 }
 
-/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
-const ROWS = PLAYFIELD_H / 8;
+/** Terrain-a's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
-/** World y of the flat floor's surface, 40 px above the map's bottom edge (160 at 384×216). */
-const FLOOR_Y = PLAYFIELD_H - 40;
+/** Rows of the test stage's map: one playfield tall (42 at 8 px, 28 at 12). */
+const ROWS = PLAYFIELD_H / TS;
+
+/** World y of the flat floor's surface, a v1 40-px band above the map's bottom edge (160 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - v1rel(40);
+
+/** World y of the flat ceiling's surface: a v1 32-px depth below the top (its world-y port). */
+const CEIL_Y = v1y(32);
 
 /**
  * The KESTREL, `terrain-a`, the gimmick roster and a still stage between a flat floor and ceiling.
@@ -66,7 +74,7 @@ function db(rle?: string[]): ContentDb {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-a',
             rowsTall: ROWS,
             ...(rle === undefined ? {} : { rle }),
@@ -76,8 +84,8 @@ function db(rle?: string[]): ContentDb {
                 {
                   from: 0,
                   to: 2000 + PLAYFIELD_W,
-                  floor: { base: 40, amp: 0, period: 64, seed: 1 },
-                  ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
+                  floor: { base: v1rel(40), amp: 0, period: 64, seed: 1 },
+                  ceiling: { base: CEIL_Y, amp: 0, period: 64, seed: 2 },
                 },
               ],
             },
@@ -151,18 +159,18 @@ describe('core/behaviors gimmicks — rock.fall', () => {
     const w = world();
     const ship = w.players[0];
     const rock = spawn(w, 'falling-rock', 300, Number.NaN);
-    expect(rock.y).toBe(32 + 5); // under the ceiling surface
+    expect(rock.y).toBe(CEIL_Y + rock.hh); // under the ceiling surface
     run(w, 60);
-    expect([rock.state, rock.y]).toEqual([EnemyState.Live, 37]);
+    expect([rock.state, rock.y]).toEqual([EnemyState.Live, CEIL_Y + rock.hh]);
     expect(rock.mover).toBe(MoverKind.Ballistic);
-    ship.x = 300 - 56; // exactly at the trigger distance
+    ship.x = 300 - v1rel(56); // exactly at the trigger distance
     w.events.clear();
     const score = w.scoring.board.scores[0].score;
     let landed = -1;
     for (let t = 0; t < 120 && landed < 0; t++) {
       run(w, 1);
       if (rock.state !== EnemyState.Live) landed = t;
-      ship.x = 244; // keep it there (the ship does not move by itself)
+      ship.x = 300 - v1rel(56); // keep it there (the ship does not move by itself)
     }
     expect(landed).toBeGreaterThan(10);
     // Shattered by the enemy system: its explosion, no kill credit.
@@ -210,7 +218,7 @@ describe('core/behaviors gimmicks — volcano.lob', () => {
     const b = world();
     for (const w of [a, b]) spawn(w, 'volcano', w.camera.x + 250, Number.NaN);
     const volcano = live(a, 'volcano')[0];
-    expect(volcano.y).toBe(FLOOR_Y - 5); // on the floor
+    expect(volcano.y).toBe(FLOOR_Y - volcano.hh); // on the floor
     let seen = 0;
     let shattered = false;
     for (let t = 0; t < 400; t++) {
@@ -220,8 +228,8 @@ describe('core/behaviors gimmicks — volcano.lob', () => {
       if (stones.length > seen) {
         for (const stone of stones.slice(seen)) {
           expect(stone.mover).toBe(MoverKind.Ballistic);
-          expect(stone.m1).toBeLessThan(-2.4); // thrown up
-          expect(Math.abs(stone.m0)).toBeLessThanOrEqual(1.25);
+          expect(stone.m1).toBeLessThan(-v1speed(2.4)); // thrown up
+          expect(Math.abs(stone.m0)).toBeLessThanOrEqual(v1speed(1.25));
         }
       }
       if (seen > 0 && stones.length < seen) shattered = true;
@@ -244,7 +252,7 @@ describe('core/behaviors gimmicks — field.suction', () => {
     expect(w.gimmicks.fieldOwner[0]).toBe(pod.slot);
     const before = ship.x;
     run(w, 20);
-    expect(ship.x).toBeGreaterThan(before + 8); // 0.5 px a tick towards the pod
+    expect(ship.x).toBeGreaterThan(before + v1rel(8)); // 0.5 px a tick towards the pod
     expect(ship.y).toBe(100);
     w.enemies.kill(pod, 0);
     run(w, 2);
@@ -262,7 +270,7 @@ describe('core/behaviors gimmicks — tentacle.grab', () => {
     const tentacle = spawn(w, 'tentacle', w.camera.x + 250, Number.NaN);
     const anchorX = tentacle.x;
     const anchorY = tentacle.y;
-    expect(anchorY).toBe(32 + 4);
+    expect(anchorY).toBe(CEIL_Y + tentacle.hh);
     run(w, 40); // settled, ship out of reach (x 64)
     expect(w.gimmicks.chainOwner[0]).toBe(tentacle.slot);
     expect(w.gimmicks.chainBatch.count).toBe(8);
@@ -279,7 +287,7 @@ describe('core/behaviors gimmicks — tentacle.grab', () => {
     expect(lunged).toBe(true);
     expect(w.gimmicks.fieldOwner[0]).toBe(tentacle.slot); // the grab's pull
     run(w, 20);
-    expect(tentacle.y).toBeGreaterThan(anchorY + 10); // reaching down at the ship
+    expect(tentacle.y).toBeGreaterThan(anchorY + v1rel(10)); // reaching down at the ship
     run(w, 30); // past the lunge: back to the anchor
     expect(tentacle.mover).toBe(MoverKind.Waypoint);
     expect(w.gimmicks.fieldOwner[0]).toBe(-1);
@@ -294,8 +302,8 @@ describe('core/behaviors gimmicks — tentacle.grab', () => {
 });
 
 describe('core/behaviors gimmicks — cube.stack (the seeded cube rush)', () => {
-  // A solid wall at tile column 5 (x 40…47), rows 5 … ROWS − 6 (y 40 down to the floor; rows
-  // 5…19, y 40…159 at 384×216), behind the ship.
+  // A solid wall at tile column 5 (x 40…47 at 8 px), rows 5 … ROWS − 6 (from below the ceiling
+  // down to the floor), behind the ship.
   const rows: string[] = [];
   for (let r = 0; r < ROWS; r++) rows.push(r >= 5 && r <= ROWS - 6 ? '5*0, 1' : '');
   const WALL_DB = db(rows);
@@ -341,8 +349,8 @@ describe('core/behaviors gimmicks — cube.stack (the seeded cube rush)', () => 
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
-          const px = (col + dx) * 8 + 4;
-          const py = (row + dy) * 8 + 4;
+          const px = (col + dx) * map.tileSize + map.tileSize / 2;
+          const py = (row + dy) * map.tileSize + map.tileSize / 2;
           if (terrainAt(map, px, py) === TerrainType.Solid) touches = true;
         }
       }

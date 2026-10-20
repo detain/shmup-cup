@@ -23,6 +23,7 @@ import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -146,7 +147,7 @@ describe('core/behaviors — zones F and G (M2-13)', () => {
     expect(BEHAVIOR_IDS).toContain('cell.chase');
     expect(BOSS_BEHAVIOR_IDS).toEqual(expect.arrayContaining(['boss.squid', 'boss.facet']));
     expect(DEFAULT_BEHAVIORS.get('cell.chase')?.params).toEqual({
-      speed: 1.1,
+      speed: v1speed(1.1),
       enterTicks: 50,
       turnRate: 6,
       chaseTicks: 150,
@@ -175,13 +176,13 @@ describe('core/behaviors — zones F and G (M2-13)', () => {
     if (cell === null) return;
     run(w, 5);
     expect(cell.mover).toBe(MoverKind.Straight);
-    expect(cell.vx).toBeCloseTo(-1.05, 9);
+    expect(cell.vx).toBeCloseTo(-v1speed(1.05), 9);
     expect(cell.vy).toBe(0);
     // The shipped cell drifts in for 46 ticks, then homes (the ship is below it).
     run(w, 42);
     expect(cell.mover).toBe(MoverKind.Homing);
     const speed = Math.hypot(cell.vx, cell.vy);
-    expect(speed).toBeCloseTo(1.05, 4);
+    expect(speed).toBeCloseTo(v1speed(1.05), 4);
     run(w, 40);
     expect(cell.vy).toBeGreaterThan(0); // turning down towards the ship
     expect(ship.y).toBeGreaterThan(cell.y);
@@ -283,8 +284,8 @@ describe('core/behaviors — zones F and G (M2-13)', () => {
     }
     // The top arm hangs 28 px above the body’s centre and sweeps ±56 units of curl per segment:
     // its tip swings from well above the arm's root row to near the core's row.
-    expect(high).toBeGreaterThan(-12);
-    expect(low).toBeLessThan(-44);
+    expect(high).toBeGreaterThan(-v1rel(12));
+    expect(low).toBeLessThan(-v1rel(44));
     expect(w.bullets.count).toBeGreaterThan(0);
     // Both crystals broken: the core takes damage and the second phase starts.
     w.bosses.damagePart(part(w, 'crystal-top'), 999, 0);

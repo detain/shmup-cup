@@ -31,6 +31,7 @@ import {
   type Script,
 } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { v1rel, v1speed, v1y } from '../helpers/v1-port.js';
 
 /**
  * A shipped content file.
@@ -46,6 +47,9 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** Terrain-a's tile edge as shipped (8 until R2-02's port, 12 after): this fixture pairs with it. */
+const TS = (shipped('tilesets/terrain-a.tileset.json').data as { tileSize: number }).tileSize;
 
 /**
  * A test roster entry.
@@ -127,17 +131,17 @@ const DB: ContentDb = (() => {
           checkpoints: [{ x: 0 }],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TS,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / TS,
             generator: {
               type: 'heightfield',
               segments: [
                 {
                   from: 0,
                   to: 2000 + PLAYFIELD_W,
-                  floor: { base: 40, amp: 0, period: 64, seed: 1 },
-                  ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
+                  floor: { base: v1rel(40), amp: 0, period: 64, seed: 1 },
+                  ceiling: { base: v1y(32), amp: 0, period: 64, seed: 2 },
                 },
               ],
             },
@@ -250,7 +254,7 @@ describe('core/behaviors gimmicks — definitions', () => {
 describe('core/behaviors gimmicks — rock.fall and bubble.split edges', () => {
   it('drops a stone with trigger 0 at once and shatters it on the floor', () => {
     const w = world();
-    const stone = spawn(w, 'stone', 250, 60);
+    const stone = spawn(w, 'stone', 250, v1y(60));
     run(w, 1);
     expect([stone.mover, stone.s0]).toEqual([MoverKind.Ballistic, BALLISTIC_FLYING]);
     run(w, 80);
@@ -278,8 +282,8 @@ describe('core/behaviors gimmicks — rock.fall and bubble.split edges', () => {
     w.enemies.kill(one, 0);
     const [piece] = live(w, 'piece');
     expect(live(w, 'piece')).toHaveLength(1);
-    expect(piece.m0).toBeCloseTo(cosB(ANGLE_UNITS / 2) * 1.25, 9);
-    expect(piece.m1).toBeCloseTo(sinB(ANGLE_UNITS / 2) * 1.25, 9);
+    expect(piece.m0).toBeCloseTo(cosB(ANGLE_UNITS / 2) * v1speed(1.25), 9);
+    expect(piece.m1).toBeCloseTo(sinB(ANGLE_UNITS / 2) * v1speed(1.25), 9);
     expect(piece.m0).toBeLessThan(0);
     const w3 = world();
     const three = spawn(w3, 'three', 250, 100);
