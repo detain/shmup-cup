@@ -6,7 +6,20 @@
  * non-code pipeline files are ignored; pipeline scripts that are config dependencies stay
  * silent because Vite restarts for them); build failures and multi-page emission (every page and
  * the manifest — plan R1-05); and the premise of the review-round-1 fix — the real app configs
- * list every pipeline module as a config dependency, so editing one restarts the dev server.
+ * list every pipeline module the shipped pipeline IMPORTS as a config dependency, so editing one
+ * restarts the dev server, while a pipeline-dir module nothing imports goes through the plugin's
+ * documented warn branch instead (`vite.shared.ts` `onPipelineChange`).
+ *
+ * Wording ruling (wave 4, found by lane FIXE; w04-FIXG): the config test used to over-assert —
+ * "an edit to ANY scripts/assets/*.mjs restarts the dev server" — against the design's two
+ * branches. `9979be3` made `standin.mjs` a pure leaf on purpose (M1bRV1 NIT-1: its sole importer
+ * is its own test), so it is in no config's `configFileDependencies` and cannot trigger Vite's
+ * restart — and editing the stand-in generator must not restart atlas dev servers (option b,
+ * force-watching the whole dir, was rejected). The restart guarantee is therefore scoped to the
+ * modules `pipeline.mjs` transitively imports, derived in-file from its static import graph
+ * (parsed with the TypeScript compiler — never a hand-maintained list that can rot), and the two
+ * modules outside that set (`standin.mjs`, `tileset-masks.mjs`) are pinned by name to the branch
+ * that warns.
  *
  * Regression (M1-03 test pass): a malformed percent-encoded URL under `assets/atlas/`
  * threw a URIError inside the middleware and the dev server answered 500 instead of 404.
@@ -22,9 +35,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
+import ts from 'typescript';
 import {
   build,
   createLogger,
@@ -119,6 +133,78 @@ function recordingLogger() {
       },
     },
   };
+}
+
+const pipelineRoot = normalizePath(PIPELINE_DIR);
+
+/**
+ * Every `.mjs` file in the pipeline folder (the walk the restart-guarantee tests split in
+ * two: imported set below, everything else on the warning branch).
+ *
+ * @returns The normalized absolute paths, sorted.
+ */
+function listPipelineModules(): string[] {
+  const out: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.mjs')) out.push(normalizePath(full));
+    }
+  };
+  walk(PIPELINE_DIR);
+  return out.sort();
+}
+
+/**
+ * The pipeline modules the shipped pipeline TRANSITIVELY IMPORTS: follow the static ESM
+ * specifiers from `pipeline.mjs` that resolve inside the pipeline folder, parsing each
+ * file with the TypeScript compiler (the frame-literal scans' parser, so comments and
+ * strings never fake an edge). This is the mechanism the w04-FIXG ruling names — derived
+ * from the import graph, never a hand-maintained literal list: a module that gains an
+ * importer joins the set on its own, and one imported by nothing (the stand-in and the
+ * tileset-mask generators) is on the warning branch by that same fact.
+ *
+ * @returns The normalized absolute paths, sorted.
+ */
+function importedPipelineModules(): string[] {
+  const seen = new Set<string>();
+  const queue: string[] = [join(pipelineRoot, 'pipeline.mjs')];
+  while (queue.length > 0) {
+    const file = queue.pop();
+    if (file === undefined || seen.has(file)) continue;
+    seen.add(file);
+    const source = ts.createSourceFile(
+      file,
+      readFileSync(file, 'utf8'),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    );
+    /** Reads one node's module specifier (import, re-export, literal dynamic import) and queues it. */
+    const visit = (node: ts.Node): void => {
+      let specifier: string | undefined;
+      if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+        if (node.moduleSpecifier !== undefined && ts.isStringLiteral(node.moduleSpecifier)) {
+          specifier = node.moduleSpecifier.text;
+        }
+      } else if (
+        ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+        node.arguments.length === 1 &&
+        ts.isStringLiteral(node.arguments[0])
+      ) {
+        specifier = node.arguments[0].text;
+      }
+      if (specifier !== undefined && specifier.startsWith('.')) {
+        const target = normalizePath(resolve(dirname(file), specifier));
+        if (target.startsWith(`${pipelineRoot}/`) && !seen.has(target)) queue.push(target);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+  return [...seen].sort();
 }
 
 describe('integration: shmupAssets() hooks (edge)', () => {
@@ -375,37 +461,81 @@ describe('integration: shmupAssets() dev watcher (edge)', () => {
       await server.close();
     }
   }, 60_000);
+
+  it('warns (no restart path, no regeneration) for the real pipeline modules nothing imports', async () => {
+    // The design's second branch, named by the w04-FIXG ruling: standin.mjs and
+    // tileset-masks.mjs live in the pipeline folder but no shipped import chain reaches
+    // them (M1bRV1 NIT-1), so no app config carries them as dependencies (the config
+    // tests below pin that for the real configs) and a change must only print the
+    // documented restart hint — the running pipeline keeps the last good atlas.
+    const outDir = join(tmp, 'watch-unimported-out');
+    const { logger, warnings } = recordingLogger();
+    const { server } = await startServer({
+      customLogger: logger,
+      plugins: [shmupAssets({ outDir })],
+    });
+    try {
+      const send = vi.fn();
+      server.ws.send = send as typeof server.ws.send;
+      const manifestFile = join(outDir, 'atlas', 'main.json');
+      rmSync(manifestFile); // any regeneration would put it back
+      const names = ['standin.mjs', 'tileset-masks.mjs'];
+      for (const name of names) {
+        const file = join(PIPELINE_DIR, name);
+        expect(existsSync(file), name).toBe(true); // by name, and they exist
+        expect(server.config.configFileDependencies, name).not.toContain(normalizePath(file));
+        server.watcher.emit('change', file);
+      }
+      expect(warnings).toEqual(
+        names.map(
+          (name) =>
+            `[shmup:assets] scripts/assets/${name} changed; restart the dev server to ` +
+            'regenerate the atlas with the new pipeline code',
+        ),
+      );
+      expect(existsSync(manifestFile)).toBe(false);
+      expect(send).not.toHaveBeenCalled();
+    } finally {
+      await server.close();
+    }
+  }, 60_000);
 });
 
-describe('integration: the app configs make every pipeline module a config dependency', () => {
-  const pipelineModules = (): string[] => {
-    const out: string[] = [];
-    const walk = (dir: string): void => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const full = join(dir, entry.name);
-        if (entry.isDirectory()) walk(full);
-        else if (entry.name.endsWith('.mjs')) out.push(normalizePath(full));
-      }
-    };
-    walk(PIPELINE_DIR);
-    return out.sort();
+describe('integration: the app configs watch the pipeline modules the shipped pipeline imports', () => {
+  const resolveAppDeps = async (app: string): Promise<Set<string>> => {
+    const config = await resolveConfig(
+      {
+        root: join(repo, app),
+        configFile: join(repo, app, 'vite.config.ts'),
+        logLevel: 'silent',
+      },
+      'serve',
+    );
+    return new Set(config.configFileDependencies);
   };
 
   it.each([['apps/web'], ['apps/tizen']])(
-    '%s: an edit to any scripts/assets/**/*.mjs restarts the dev server (no stale atlas)',
+    '%s: an edit to a pipeline module the shipped pipeline imports restarts the dev server (no stale atlas)',
     async (app) => {
-      const config = await resolveConfig(
-        {
-          root: join(repo, app),
-          configFile: join(repo, app, 'vite.config.ts'),
-          logLevel: 'silent',
-        },
-        'serve',
-      );
-      const modules = pipelineModules();
-      expect(modules.length).toBeGreaterThanOrEqual(15);
-      const deps = new Set(config.configFileDependencies);
-      for (const file of modules) expect(deps.has(file), file).toBe(true);
+      const deps = await resolveAppDeps(app);
+      const imported = importedPipelineModules();
+      expect(imported.length).toBeGreaterThanOrEqual(15);
+      for (const file of imported) expect(deps.has(file), file).toBe(true);
+    },
+    60_000,
+  );
+
+  it.each([['apps/web'], ['apps/tizen']])(
+    '%s: a pipeline module the shipped pipeline does not import is not a config dependency (the warning branch owns it)',
+    async (app) => {
+      const deps = await resolveAppDeps(app);
+      const imported = new Set(importedPipelineModules());
+      const outside = listPipelineModules().filter((file) => !imported.has(file));
+      // The ruling names these two; the derivation above, not this list, decides the branch.
+      const names = outside.map((file) => normalizePath(relative(repo, file)));
+      expect(names).toContain('scripts/assets/standin.mjs');
+      expect(names).toContain('scripts/assets/tileset-masks.mjs');
+      for (const file of outside) expect(deps.has(file), file).toBe(false);
     },
     60_000,
   );
