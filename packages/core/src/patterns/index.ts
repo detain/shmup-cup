@@ -125,6 +125,7 @@ import {
   type BulletSystem,
 } from '../bullets/index.js';
 import { findCeiling, findFloor, terrainRectHit, type TerrainMap } from '../collision/index.js';
+import { WORLD_SCALE } from '../config/index.js';
 import { MOVER_TYPES, PATH_SAMPLE_STEP, type MoverType, type PathSpec } from '../data/index.js';
 import {
   ANGLE_MASK,
@@ -342,8 +343,8 @@ export type BodyAnchor = (typeof BodyAnchor)[keyof typeof BodyAnchor];
  */
 export const AIM_DIRECTIONS = 32;
 
-/** Highest step (up or down, in pixels) a crawler takes in one tick before it turns round. */
-export const CRAWL_STEP = 8;
+/** Highest step (up or down, in world pixels) a crawler takes in one tick before it turns round. */
+export const CRAWL_STEP = 8 * WORLD_SCALE;
 
 /** Ticks of leader history a {@link FollowTrack} keeps: followers may trail by at most this. */
 export const FOLLOW_HISTORY = 256;

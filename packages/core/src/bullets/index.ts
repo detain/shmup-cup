@@ -113,7 +113,13 @@
  * @module
  */
 import { TerrainType, terrainAt, type TerrainMap } from '../collision/index.js';
-import { HUD_BAR_HEIGHT, PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
+import {
+  HUD_BAR_HEIGHT,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  WORLD_SCALE,
+  type GameConfig,
+} from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
 import type { DebugFlags } from '../debug/index.js';
 import { FX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
@@ -160,11 +166,11 @@ export const MAX_ENEMY_BULLETS = 512;
 /** Enemy laser slots. */
 export const MAX_ENEMY_LASERS = 16;
 
-/** Bullets are removed once they are this many pixels outside the camera view. */
-export const BULLET_CULL_MARGIN = 16;
+/** Bullets are removed once they are this many world pixels outside the camera view. */
+export const BULLET_CULL_MARGIN = 16 * WORLD_SCALE;
 
-/** Default `maxSpeed` of a bullet (px/tick): the upper clamp of accelerating bullets. */
-export const MAX_BULLET_SPEED = 16;
+/** Default `maxSpeed` of a bullet (world px/tick): the upper clamp of accelerating bullets. */
+export const MAX_BULLET_SPEED = 16 * WORLD_SCALE;
 
 /** Most `BulletCancel` particle events one {@link cancelAllBullets} call emits (event budget). */
 export const CANCEL_SPARKLE_LIMIT = 64;
@@ -193,8 +199,8 @@ export const LASER_ACTIVE_TICKS = 60;
 /** Default laser fade time in ticks. */
 export const LASER_FADE_TICKS = 8;
 
-/** Default laser width in pixels (the capsule radius is half of it). */
-export const LASER_WIDTH = 6;
+/** Default laser width in world pixels (the capsule radius is half of it). */
+export const LASER_WIDTH = 6 * WORLD_SCALE;
 
 /** The warning line blinks: shown this many ticks, hidden as many. */
 export const LASER_BLINK_TICKS = 4;
@@ -234,10 +240,10 @@ const PUBLIC_FLAGS = BulletFlag.DieOnTerrain | BulletFlag.Cancelable | BulletFla
 export const VORTEX_FALLOFF = 0.75;
 
 /**
- * Extra reach of the graze test beyond the bullet's radius and the ship's hurt radius, in pixels
- * (M3-02 — shmup_feat.md §22 "radius > hurtbox"): a bullet must pass this close to score.
+ * Extra reach of the graze test beyond the bullet's radius and the ship's hurt radius, in world
+ * pixels (M3-02 — shmup_feat.md §22 "radius > hurtbox"): a bullet must pass this close to score.
  */
-export const GRAZE_MARGIN = 7;
+export const GRAZE_MARGIN = 7 * WORLD_SCALE;
 
 /** How {@link cancelAllBullets} turns bullets into something else. */
 export const CancelMode = {
@@ -260,7 +266,7 @@ export interface BulletKindSpec {
   readonly name: string;
   /** Sprite name (an engine sprite — {@link BULLET_SPRITES}). */
   readonly sprite: string;
-  /** Hit radius in pixels (smaller than the art, as usual). */
+  /** Hit radius in world pixels (smaller than the art, as usual). */
   readonly radius: number;
   /** Directional frames: 1 (round) or 8 (see {@link BULLET_KINDS}). */
   readonly frames: number;
@@ -311,7 +317,7 @@ export const BULLET_KINDS: readonly BulletKindSpec[] = Object.freeze(
           Object.freeze({
             name: shape + '-' + color,
             sprite: 'bullets/' + shape + '-' + color,
-            radius: shape === 'needle' ? 1.5 : 2,
+            radius: (shape === 'needle' ? 1.5 : 2) * WORLD_SCALE,
             frames: shape === 'round' ? 1 : 8,
             flags: KIND_FLAGS,
           }),
@@ -345,8 +351,8 @@ export const MAX_BENDING_LASERS = 8;
 /** Recorded head positions per bending laser (a power of two): its longest body in nodes. */
 export const BENDING_LASER_NODES = 64;
 
-/** Default speed of a bending laser's head, px/tick. */
-export const BENDING_LASER_SPEED = 3;
+/** Default speed of a bending laser's head, world px/tick. */
+export const BENDING_LASER_SPEED = 3 * WORLD_SCALE;
 
 /** Default turn cap of a bending laser's head while it homes, binary units per tick. */
 export const BENDING_LASER_TURN = 6;
@@ -354,11 +360,20 @@ export const BENDING_LASER_TURN = 6;
 /** Default homing ticks of a bending laser's head. */
 export const BENDING_LASER_HOMING = 60;
 
-/** Default body length of a bending laser, in nodes (one node per tick). */
+/**
+ * Default body length of a bending laser, in nodes (one node per tick).
+ *
+ * @remarks
+ * A node count — ticks of head history kept — so it is in the unchanged class (W5-1), not a
+ * world length: the body's world extent is `length · speed` and scales ×{@link WORLD_SCALE}
+ * through {@link BENDING_LASER_SPEED} alone. (Plan Appendix B's "48 → 72" cannot port:
+ * 48 × 1.5 = 72 exceeds {@link BENDING_LASER_NODES}, the 64-node ring, which would reject every
+ * default fire, and scaling both count and speed would scale the extent ×2.25, not ×1.5.)
+ */
 export const BENDING_LASER_LENGTH = 48;
 
-/** Default width of a bending laser (its hit circles' diameter), px. */
-export const BENDING_LASER_WIDTH = 6;
+/** Default width of a bending laser (its hit circles' diameter), world px. */
+export const BENDING_LASER_WIDTH = 6 * WORLD_SCALE;
 
 /**
  * Default emission time of a bending laser: its head flies this many ticks, then the tail catches
@@ -372,11 +387,11 @@ export const MAX_POINT_ITEMS = MAX_ENEMY_BULLETS;
 /** Ticks a new point item drifts (slowing down) before it flies to the score. */
 export const POINT_ITEM_HOVER_TICKS = 12;
 
-/** How much faster a point item flies each tick after hovering, px/tick². */
-export const POINT_ITEM_ACCEL = 0.35;
+/** How much faster a point item flies each tick after hovering, world px/tick². */
+export const POINT_ITEM_ACCEL = 0.35 * WORLD_SCALE;
 
-/** Top speed of a point item, px/tick. */
-export const POINT_ITEM_MAX_SPEED = 9;
+/** Top speed of a point item, world px/tick. */
+export const POINT_ITEM_MAX_SPEED = 9 * WORLD_SCALE;
 
 /** A point item still flying after this many ticks is credited anyway. */
 export const POINT_ITEM_LIFETIME = 180;
@@ -903,9 +918,10 @@ export interface BulletSystem {
   /**
    * Fires a **bending laser** (plan M2-02, shmup_feat.md §12): a head that flies from `origin` at
    * `speed`, homing on the nearest living player for `homing` ticks (turning at most `turnRate`
-   * units per tick), leaving a body of its last `length` positions — one node per tick in a ring of
-   * {@link BENDING_LASER_NODES}. After `life` ticks, or when the head leaves the view (± 16 px) or
-   * enters terrain, the head stops and the tail catches up, one node per tick; the laser ends
+   * units per tick), leaving a body of its last `length` positions — one node per tick in a ring
+   * of {@link BENDING_LASER_NODES}. After `life` ticks, or when the head leaves the view (±
+   * {@link BULLET_CULL_MARGIN} px) or enters terrain, the head stops and the tail catches up, one
+   * node per tick; the laser ends
    * when its body is empty. The hitbox is a chain of circles (diameter `width`) on every
    * `stride`-th node, `stride` = `max(1, floor(width / 2 / speed))` so neighbouring circles
    * overlap. Bending lasers ride the camera and are cancelable.

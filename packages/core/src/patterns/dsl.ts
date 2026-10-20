@@ -72,6 +72,7 @@
  * @module
  */
 import { BULLET_KIND_NAMES } from '../bullets/kinds.js';
+import { WORLD_SCALE } from '../config/index.js';
 import { s, type Schema, type ValidationIssue } from '../data/schema.js';
 import type { NumberUnit } from '../data/units.js';
 import { ANGLE_MASK, ANGLE_QUARTER } from '../math/index.js';
@@ -197,8 +198,11 @@ export const MAX_PATTERN_LOCALS = 16;
 /** Largest compiled bank, in numbers (2 MB of `Float64Array`). */
 export const MAX_PATTERN_CODE = 262144;
 
-/** Speed of a `fire` without a speed (and the start of a `sequence` speed), px/tick on Normal. */
-export const DEFAULT_PATTERN_SPEED = 1;
+/**
+ * Speed of a `fire` without a speed (and the start of a `sequence` speed), world px/tick on
+ * Normal.
+ */
+export const DEFAULT_PATTERN_SPEED = 1 * WORLD_SCALE;
 
 /** Kind of a bullet without a `kind`: `round-pink`. */
 export const DEFAULT_PATTERN_KIND = 'round-pink';
