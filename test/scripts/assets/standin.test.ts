@@ -17,36 +17,50 @@
  *   across a fresh Node process), a different seed draws a different zone, zones differ,
  *   and an unknown zone id throws.
  *
- * The enemy and boss colour caps (§4.3's 16 / 24) are checked by part 2 (R3-04.M1b) when
- * this file gains the sprites. Nothing here measures PNG-8 bytes: the entropy constants
- * are uncalibrated (RR-7), and R3-04.M2a performs the calibration and the budget gate.
+ * Part 2 (R3-04.M1b) adds the enemy, boss and atlas describes at the foot of this file:
+ * `standinAtlas` through the real pipeline, the `standin-zone-<x>` groups, the RR-7 PNG-8
+ * byte band, the §4.3 enemy / boss colour caps, the `@flash` siblings and the deterministic
+ * atlas bytes.
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { FRAME_H, FRAME_W, TILE_SIZE } from '@shmup/core';
+import { FRAME_H, FRAME_W, PLAYFIELD_H, TILE_SIZE } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { MAX_PAGE_SIZE } from '../../../scripts/assets/packer.mjs';
 import {
   BAND_MAX_COUNT,
   BAND_MAX_HEIGHT,
   BAND_MIN_COUNT,
   BAND_MIN_HEIGHT,
   BAND_WINDOW,
+  BOSS_HEIGHT,
+  BOSS_STATES,
+  BOSS_WIDTH,
   chebyshev,
   DEFAULT_SEED,
+  ENEMY_FRAME_MAX,
+  ENEMY_FRAME_MIN,
   FAR_WINDOW,
   KEY,
   PALETTE_SIZE,
   RAMP_MARGIN,
   RESERVED_FAMILY_COLORS,
   RESERVED_RAMP_COLORS,
+  STANDIN_BOSS_PARTS,
+  STANDIN_ENEMY_KINDS,
   STANDIN_TILES,
   TILE_WINDOW,
   ZONE_IDS,
+  standinAtlas,
+  standinGroupName,
+  standinSpriteName,
   standinZone,
   type StandinZone,
 } from '../../../scripts/assets/standin.mjs';
+import { formatManifest } from '../../../scripts/assets/manifest.mjs';
 
 /** Repository root, for the cross-process determinism check. */
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -304,5 +318,234 @@ describe('standin determinism (W5-14)', () => {
   it('refuses an unknown zone', () => {
     expect(() => standinZone('z')).toThrow(RangeError);
     expect(() => standinZone('')).toThrow(RangeError);
+  });
+});
+
+/* ------------------------------------------------------------------------ *
+ * Part 2 (R3-04.M1b): the enemy and boss sprites, the @flash siblings, and
+ * standinAtlas through the real pipeline (groups, PNG-8, the RR-7 band).
+ * ------------------------------------------------------------------------ */
+
+/** The full nine-zone stand-in atlas, packed once for the whole file to share. */
+const atlas = standinAtlas();
+
+/** The `buildAtlas` result type, as `standinAtlas` returns it. */
+type StandinAtlas = ReturnType<typeof standinAtlas>;
+
+/** Atlas groups as the shipped `atlas-groups.json` lists them (without `common`). */
+const shippedGroups = Object.keys(
+  (
+    JSON.parse(
+      readFileSync(join(repo, 'assets/source', 'atlas-groups.json'), 'utf8'),
+    ) as AtlasGroupsJson
+  ).groups,
+);
+
+/** Sprite-name regex: a stand-in sprite and its zone letter. */
+const STANDIN_NAME = /^standin\/zone-([a-z])\//;
+
+/** The shipped `atlas-groups.json` shape (only `groups` is read here). */
+interface AtlasGroupsJson {
+  groups: Record<string, string[]>;
+}
+
+/**
+ * The distinct RGB colours one sprite draws (the `@flash` silhouette's white excluded —
+ * the caps of §4.3 are about the art itself).
+ *
+ * @param name - Sprite name.
+ * @returns The colour count.
+ */
+function spriteColors(name: string): number {
+  const sd = atlas.sprites.find((s) => s.name === name);
+  expect(sd, name).toBeDefined();
+  const colors = new Set<number>();
+  for (const frame of sd!.frames) {
+    for (let i = 0; i < frame.data.length; i += 4) {
+      if (frame.data[i + 3] === 0) continue;
+      colors.add((frame.data[i] << 16) | (frame.data[i + 1] << 8) | frame.data[i + 2]);
+    }
+  }
+  return colors.size;
+}
+
+/**
+ * A digest of a whole packed atlas: the serialised manifest plus every page's PNG bytes.
+ *
+ * @param built - A `standinAtlas()` result.
+ * @returns Lower-case hex sha256.
+ */
+function digestAtlas(built: StandinAtlas): string {
+  const hash = createHash('sha256');
+  hash.update(formatManifest(built.manifest));
+  for (const page of built.pages) hash.update(page.png);
+  return hash.digest('hex');
+}
+
+/**
+ * The pages of one atlas group: summed PNG bytes over summed page area.
+ *
+ * @param group - The group name.
+ * @returns `{ bytes, area }` over that group's pages.
+ */
+function groupTotals(group: string): { bytes: number; area: number } {
+  const totals = { bytes: 0, area: 0 };
+  atlas.manifest.pages.forEach((page, i) => {
+    if (page.group !== group) return;
+    totals.bytes += atlas.pages[i].png.length;
+    totals.area += page.w * page.h;
+  });
+  return totals;
+}
+
+describe('standin atlas groups (W5-14)', () => {
+  it('packs common, the shipped zone groups and one stand-in group per zone', () => {
+    const expected = new Set([
+      'common',
+      ...shippedGroups,
+      ...ZONE_IDS.map((zoneId) => standinGroupName(zoneId)),
+    ]);
+    const actual = new Set(atlas.manifest.pages.map((page) => page.group));
+    expect([...actual].sort()).toEqual([...expected].sort());
+  });
+
+  it('keeps every page inside the packer limit', () => {
+    for (const page of atlas.manifest.pages) {
+      expect(page.w).toBeLessThanOrEqual(MAX_PAGE_SIZE);
+      expect(page.h).toBeLessThanOrEqual(MAX_PAGE_SIZE);
+    }
+  });
+
+  it('writes every stand-in page as PNG-8 indexed', () => {
+    let standin = 0;
+    atlas.manifest.pages.forEach((page, i) => {
+      if (!page.group.startsWith('standin-')) return;
+      standin++;
+      const png = atlas.pages[i].png;
+      expect(png[24], page.group).toBe(8); // IHDR bit depth
+      expect(png[25], page.group).toBe(3); // IHDR colour type (indexed)
+    });
+    expect(standin).toBe(ZONE_IDS.length);
+  });
+
+  it('lands every stand-in group in the RR-7 band of 0.3–0.6 MB per 2048×1024 page', () => {
+    for (const zoneId of ZONE_IDS) {
+      const { bytes, area } = groupTotals(standinGroupName(zoneId));
+      const scaled = Math.round((bytes * MAX_PAGE_SIZE * (MAX_PAGE_SIZE / 2)) / area);
+      expect(scaled, `${zoneId} bytes ${bytes} area ${area}`).toBeGreaterThanOrEqual(300_000);
+      expect(scaled, `${zoneId} bytes ${bytes} area ${area}`).toBeLessThanOrEqual(600_000);
+    }
+  });
+
+  it('keeps stand-in frames off the shipped pages and shipped art off theirs', () => {
+    for (const [name, sprite] of Object.entries(atlas.manifest.sprites)) {
+      const match = STANDIN_NAME.exec(name);
+      if (!match) continue;
+      for (const frameId of sprite.frames) {
+        const page = atlas.manifest.pages[atlas.manifest.frames[frameId].p];
+        expect(page.group, `${name} ${frameId}`).toBe(standinGroupName(match[1]));
+      }
+    }
+  });
+
+  it('never writes into the real source tree', () => {
+    expect(existsSync(join(repo, 'assets', 'source', 'sprites', 'standin'))).toBe(false);
+    expect(shippedGroups.some((g) => g.startsWith('standin'))).toBe(false);
+  });
+});
+
+describe('standin sprites (W5-14)', () => {
+  it('draws ten enemies of four to six frames per zone', () => {
+    expect(STANDIN_ENEMY_KINDS.length).toBe(10);
+    for (const zoneId of ZONE_IDS) {
+      for (const kind of STANDIN_ENEMY_KINDS) {
+        const name = standinSpriteName(zoneId, kind.name);
+        const sprite = atlas.manifest.sprites[name];
+        expect(sprite, name).toBeDefined();
+        expect(sprite.frames.length, name).toBeGreaterThanOrEqual(ENEMY_FRAME_MIN);
+        expect(sprite.frames.length, name).toBeLessThanOrEqual(ENEMY_FRAME_MAX);
+        expect(spriteColors(name), name).toBeLessThanOrEqual(16);
+      }
+    }
+  });
+
+  it('draws the boss at its v2 size in three states, with parts', () => {
+    expect(BOSS_HEIGHT).toBe(Math.round(0.6 * PLAYFIELD_H));
+    for (const zoneId of ZONE_IDS) {
+      const boss = atlas.manifest.sprites[standinSpriteName(zoneId, 'boss')];
+      expect(boss, zoneId).toBeDefined();
+      expect(boss.frames.length, zoneId).toBe(BOSS_STATES);
+      for (const frameId of boss.frames) {
+        const frame = atlas.manifest.frames[frameId];
+        expect(frame.w, zoneId).toBe(BOSS_WIDTH);
+        expect(frame.h, zoneId).toBe(BOSS_HEIGHT);
+      }
+      expect(spriteColors(standinSpriteName(zoneId, 'boss')), zoneId).toBeLessThanOrEqual(24);
+      for (const part of STANDIN_BOSS_PARTS) {
+        const name = standinSpriteName(zoneId, part.name);
+        const sprite = atlas.manifest.sprites[name];
+        expect(sprite, name).toBeDefined();
+        expect(sprite.frames.length, name).toBe(part.frames);
+        const frame = atlas.manifest.frames[sprite.frames[0]];
+        expect([frame.w, frame.h], name).toEqual([part.width, part.height]);
+        expect(spriteColors(name), name).toBeLessThanOrEqual(24);
+      }
+    }
+  });
+
+  it('gives enemies, boss and parts a @flash sibling; tiles and layers none', () => {
+    for (const zoneId of ZONE_IDS) {
+      const flashNames = STANDIN_ENEMY_KINDS.map((k) => k.name).concat(
+        'boss',
+        STANDIN_BOSS_PARTS.map((p) => p.name),
+      );
+      for (const base of flashNames) {
+        const name = standinSpriteName(zoneId, base);
+        expect(atlas.manifest.sprites[name].flash, name).toBe(`${name}@flash`);
+        expect(atlas.manifest.sprites[`${name}@flash`], name).toBeDefined();
+      }
+      for (const tile of STANDIN_TILES) {
+        expect(atlas.manifest.sprites[standinSpriteName(zoneId, 'tiles', tile)].flash, tile).toBe(
+          null,
+        );
+      }
+      expect(atlas.manifest.sprites[standinSpriteName(zoneId, 'far')].flash, zoneId).toBeNull();
+    }
+  });
+});
+
+describe('standin atlas determinism (W5-14)', () => {
+  it('packs byte-identical atlases from the same arguments', () => {
+    expect(digestAtlas(standinAtlas())).toBe(digestAtlas(atlas));
+  });
+
+  it('packs another atlas from another seed', () => {
+    expect(digestAtlas(standinAtlas(['e', 'h'], { seed: 4242 }))).not.toBe(
+      digestAtlas(standinAtlas(['e', 'h'])),
+    );
+  });
+
+  it('reproduces the bytes in a fresh Node process', () => {
+    const moduleUrl = pathToFileURL(join(repo, 'scripts', 'assets', 'standin.mjs')).href;
+    const manifestUrl = pathToFileURL(join(repo, 'scripts', 'assets', 'manifest.mjs')).href;
+    const script =
+      'const { createHash } = await import("node:crypto");\n' +
+      `const m = await import(${JSON.stringify(moduleUrl)});\n` +
+      `const f = await import(${JSON.stringify(manifestUrl)});\n` +
+      'const a = m.standinAtlas(["e"], { seed: 4242 });\n' +
+      'const h = createHash("sha256");\n' +
+      'h.update(f.formatManifest(a.manifest));\n' +
+      'for (const p of a.pages) h.update(p.png);\n' +
+      'process.stdout.write(h.digest("hex"));\n';
+    const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      cwd: repo,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+    }).trim();
+    expect(out).toBe(digestAtlas(standinAtlas(['e'], { seed: 4242 })));
+  });
+
+  it('refuses an unknown zone before writing anything', () => {
+    expect(() => standinAtlas(['q'])).toThrow(RangeError);
   });
 });
