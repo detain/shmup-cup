@@ -54,9 +54,13 @@
  * measured by R3-04.M1b).** `NOISE_CELL`, `HAZE_CELL`, `FAR_STREAK_ROWS`,
  * `DETAIL_DENSITY`, `RIBBON_DENSITY`, `BAND_STEP`, `BAND_WINDOW_DENSITY` and
  * `TILE_TEXTURE_LEVELS` (with part 2's `SPRITE_DETAIL_DENSITY`) land every stand-in
- * group page at 339–446 KB scaled to a 2048×1024 PNG-8 page — inside RR-7's 0.3–0.6 MB
- * band — and the band test of `test/scripts/assets/standin.test.ts` is the gate that
- * holds them there. What remains uncalibrated is the comparison against **real AI
+ * zone's own page at 338,822–446,323 B — each zone packs to a single 2048×1024 PNG-8 page,
+ * so the page's bytes are the band's scaled figure already; the worst (zone d, measured fresh
+ * at `7baeb4d`) sits 153,677 B inside RR-7's 600,000 B ceiling — and the band test of
+ * `test/scripts/assets/standin.test.ts` is the gate that holds them there. (The residency rows
+ * of `test/integration/standin-budget.test.ts` read 430,743–538,244 B for the same zones: each
+ * row carries the shared 1024×1024 `common` page of 91,921 B beside the zone's own.)
+ * What remains uncalibrated is the comparison against **real AI
  * art** — R3-04.M1c's pending job; the per-knob lines below point here.
  *
  * This module is **never loaded by the shipped pipeline**. Nothing under

@@ -82,37 +82,57 @@ export const ATLAS_PAGE_MAX_SIZE = 2048;
  * Most bytes the whole `dist/` may take (16 MiB — the packaged widget).
  *
  * @remarks
- * **The v2 value, set by plan R3-04.M2b from the stand-in projection (owner decision W5-16).**
- * Plan R1-05 (decision W3-4) had kept it at 8 MiB with this docblock as the derivation note and
- * asked R3-04 to re-derive it from measured art. Every part below is measured on myadmin1:
+ * **The v2 value, set by plan R3-04.M2b from the stand-in projection (owner decision W5-16) and
+ * re-derived digit-for-digit from fresh measurements by the M2RV1 follow-up.** Plan R1-05
+ * (decision W3-4) had kept it at 8 MiB with this docblock as the derivation note and asked R3-04
+ * to re-derive it from measured art. Every part below was re-measured on myadmin1 at `7baeb4d`,
+ * and each term says what actually ships:
  *
- * - `common` + the nine stand-in zone atlas PNGs — **3,401,438** B, from
- *   `test/integration/standin-budget.test.ts` (M2a: 91,921 + 3,309,517);
+ * - the stand-in atlas — **3,401,438** B, every page counted once: `common` 91,921 plus the nine
+ *   zone-group pages 3,309,517 B together (per zone 338,822…446,323). The source is
+ *   `test/integration/standin-budget.test.ts` run with `SHMUP_STANDIN_PRINT=1` (M2a's table,
+ *   re-measured byte-identical here): it prints the ten **residency rows** — 91,921 and
+ *   430,743…538,244 B, Σ 4,228,727 — and a zone row carries the shared 1024×1024 `common` page
+ *   beside its own, because that is what a stage holds on the GPU. A download ships each page
+ *   once, so the nine repeated `common` copies (827,289 B) come back out:
+ *   4,228,727 − 827,289 = 3,401,438;
  * - `app.js` raw — **1,450,743** B, from `pnpm --filter @shmup/tizen build` (385.8 KB gzip of
  *   the 512 KB {@link APP_JS_GZIP_BUDGET});
  * - the atlas manifest, `index.html`, `config.xml` and the icon — **211,360** B, the same
- *   `dist/` (`main.json` 204,896, the three widget files 6,464);
- * - recorded audio — 24 music tracks (821.7 s of play-through) + 26 SFX cues, OGG Vorbis —
- *   **10,989,427** B: `pnpm audio:preview`'s WAVs encoded as `docs/dev/real-assets.md`
- *   prescribes, `oggenc -q5` (music 10,824,641, SFX 164,786).
+ *   `dist/` (`main.json` 204,896; the three widget files 557 + 1,694 + 4,213 = 6,464);
+ * - recorded audio — one natural play-through, **6,002,830** B: the 24 music tracks as
+ *   intro + one loop (818.7 s) at 5,838,044 B, the 26 SFX one-shots at 164,786 B. Recipe:
+ *   `pnpm audio:preview` logs every loop track's loop window in samples and writes the loop
+ *   **twice** for the seam demo — that doubled material encodes to music 10,824,641 B, which is
+ *   not what ships; truncating every looping file to its printed `loopEnd` sample is exactly the
+ *   shipped play-through, and each of the 50 files then goes through `oggenc -q5` (vorbis-tools
+ *   1.4.2) at 22,050 Hz mono as `docs/dev/real-assets.md` prescribes.
  *
- * Sum: **16,052,968 B = 15.31 MiB** — the budget leaves a **margin of 724,248 B (≈ 0.69 MiB)**.
- * The margin is small on purpose: this is the guard that notices when the product outgrows the
- * projection, exactly what W5-16 weighed against keeping 8 MiB ("R4 / R5 trip it zone by zone").
- * Three ceilings sit around it, and R6-02 (the final art re-measure) adjudicates them with
- * evidence — a budget moves to a new measurement, never to quiet a check:
+ * The audio term and the code term count the same music **twice, on purpose**: `app.js`'s
+ * 1,450,743 B carry the inlined chip-song JSONs of `content/audio/music/` while the audio term
+ * projects those very songs as recorded OGGs. This is deliberate conservatism for the pre-R5
+ * projection — the plan's R5 step replaces the chip JSONs with the real recordings, and until
+ * then the budget carries both costs (W5-16).
+ *
+ * Sum: **11,066,371 B = 10.55 MiB** — the budget leaves a **margin of 5,710,845 B (≈ 5.45 MiB)**.
+ * The guard still notices when the product outgrows the projection — exactly what W5-16 weighed
+ * against keeping 8 MiB ("R4 / R5 trip it zone by zone"): the corrected sum exceeds 8 MiB by
+ * 2,677,763 B. Three ceilings sit around it, and R6-02 (the final art re-measure) adjudicates
+ * them with evidence — a budget moves to a new measurement, never to quiet a check:
  *
  * - art at the RR-7 band's top: `test/scripts/assets/atlas-budget.ts` caps the atlas at 5,700,000 B
- *   (300,000 `common` + 9 × 600,000 zone bytes), 2,298,562 B above the measured stand-in;
- * - code at its gzip ceiling: ≈ 1.9 MB raw against {@link APP_JS_GZIP_BUDGET} (≈ 450 KB more
- *   than measured today; the shipped content is inlined, so R4/R5 add to it);
- * - longer v2 tracks: the audio term is today's material at `oggenc -q5` ≈ 13.2 KB a second
- *   (≈ 105 kbit/s mono — chiptune-derived); R5's real recordings ride the same rate.
+ *   (300,000 `common` + 9 × 600,000 zone bytes), 2,298,562 B above the measured stand-in pages;
+ * - code at its gzip ceiling: ≈ 1.93 MB raw at today's compression (1,450,743 × 524,288 ÷ the
+ *   393,539 B `gzip -6` takes it to; ≈ 482 KB more than measured today; the shipped content is
+ *   inlined, so R4/R5 add to it);
+ * - longer v2 tracks: the audio term is today's material at `oggenc -q5` ≈ 7.1 KB a natural
+ *   second (≈ 57 kbit/s mono — chiptune-derived); R5's real recordings ride their own rate.
  *
  * The real caps are far above it — the Tizen dev install cap is 120 MB and the TV's memory budget
  * 100 MB (`@shmup/shell` `memory`) — so this is a download regression guard, not a platform limit.
- * `dist-bench/` shares it (rule 8 checks both; it is ≈ 4.7 MB since R1-05's B4 and the stand-in
- * decode scenario). A change updates the pins in `check-bundle.test.ts`,
+ * `dist-bench/` shares it (rule 8 checks both; `turbo run build:bench --force` measures 3,943.0 KB
+ * on Tizen and 3,940.0 KB on webOS of the 16,384.0 KB budget at `7baeb4d` — R1-05's B4 and the
+ * stand-in decode scenario). A change updates the pins in `check-bundle.test.ts`,
  * `check-bundle-budgets.test.ts`, `test/integration/tv-engine-floor.test.ts`,
  * `apps/webos/test/scripts/check-bundle.test.ts`, both apps' READMEs and the budget tables of
  * `docs/dev`.

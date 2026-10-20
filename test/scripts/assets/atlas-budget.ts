@@ -6,8 +6,12 @@
  * **Since R3-04.M2b (decision W5-16) the caps are the stand-in projection, in bytes.** The
  * stand-in set (decision W5-14, `scripts/assets/standin.mjs`) models the art-bible density; the
  * M1b gate (`test/scripts/assets/standin.test.ts`, rule RR-7) holds every 2048×1024 stand-in page
- * to 0.3–0.6 MB, and `test/integration/standin-budget.test.ts` (M2a) measures the packed atlas at
- * 91,921 B for `common` (one 1024×1024 page) and 338,822–446,323 B for a zone's page.
+ * to the 0.3–0.6 MB band. `test/integration/standin-budget.test.ts` (M2a; its table re-measured
+ * byte-identical at `7baeb4d`) prints the **residency rows**: `common` 91,921 B (one 1024×1024
+ * page) and a zone row 430,743–538,244 B, Σ 4,228,727 — and a zone row carries the shared
+ * `common` page beside the zone's own, because that is what a stage keeps on the GPU. The bytes
+ * these caps gate are each group's **own** pages: a stand-in zone sits at 338,822–446,323 B (the
+ * row minus `common`), `common` alone at 91,921 B.
  *
  * @module
  */
@@ -20,18 +24,23 @@
 export const ATLAS_COMMON_PNG_CAP = 300_000;
 
 /**
- * Cap on one campaign zone's atlas PNG bytes (its pages summed; R3-04.M2b): the RR-7 band's top,
- * 0.6 MB per 2048×1024 page — the page a bible-density zone stands on. The worst stand-in page
- * measures 446,323 B (zone D), so the cap is the band, not a number the art already sits under.
+ * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
+ * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a
+ * bible-density zone stands on. The worst real stand-in zone page measures 446,323 B (zone d;
+ * `standin-budget.test.ts` prints 538,244 B for its residency row because every row carries the
+ * shared 91,921 B `common` page too, which {@link ATLAS_COMMON_PNG_CAP} gates separately) —
+ * 153,677 B under this cap, so the cap is the band, not a number the art already sits under.
  */
 export const ATLAS_ZONE_PNG_CAP = 600_000;
 
 /**
  * Cap on an atlas's total PNG bytes, every page summed (R1-05's guard, set to the measured v2
  * projection by R3-04.M2b): {@link ATLAS_COMMON_PNG_CAP} plus one
- * {@link ATLAS_ZONE_PNG_CAP} for each of the campaign's nine zones — 5,700,000 B. The interim
- * placeholder art is far under it (143,775 B today); the cap is what detailed art may grow into,
- * and `DIST_BUDGET`'s docblock (`apps/tizen/scripts/check-bundle.mjs`) is where these bytes meet
- * the code and the audio.
+ * {@link ATLAS_ZONE_PNG_CAP} for each of the campaign's nine zones — 5,700,000 B. The stand-in
+ * set measures 3,401,438 B against it (`common` once plus the nine zone pages — the same
+ * table's Σ rows, 4,228,727 B, less its nine repeated `common` copies, 827,289 B); the interim
+ * placeholder art is far under both (143,775 B today). The cap is what detailed art may grow
+ * into, and `DIST_BUDGET`'s docblock (`apps/tizen/scripts/check-bundle.mjs`) is where these
+ * bytes meet the code and the audio.
  */
 export const ATLAS_PNG_BYTES_CAP = ATLAS_COMMON_PNG_CAP + 9 * ATLAS_ZONE_PNG_CAP;
