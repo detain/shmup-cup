@@ -139,7 +139,8 @@
  * timers, firing. Phase 5 — {@link WeaponSystem.update}: movement, terrain, culling, cooldowns.
  * Phase 6 — {@link WeaponSystem.collide}. Phase 7 — {@link WeaponSystem.applyHits}. Phase 8 —
  * the World flushes the pool. Phase 9 — {@link WeaponSystem.sync}: the `PlayerShots` batch
- * (lasers as rows of 8-px beam segments) and the Options batch (`Player` layer).
+ * (lasers as rows of {@link LASER_SEGMENT_LENGTH}-px beam segments) and the Options batch
+ * (`Player` layer).
  *
  * **Content.** Without a weapons file (or with nothing usable in a role) the role is empty: a
  * World built from content without weapons never fires. The config's preset (`type-a` by default;
@@ -192,6 +193,7 @@ import {
 import {
   PLAYFIELD_H,
   PLAYFIELD_W,
+  WORLD_SCALE,
   type GameConfig,
   type StartingLoadout,
 } from '../config/index.js';
@@ -252,8 +254,11 @@ export const SHOOTERS_PER_PLAYER = 1 + MAX_OPTIONS;
 /** Shooter ids of a session: `player × SHOOTERS_PER_PLAYER + k`. */
 export const MAX_SHOOTERS = MAX_PLAYERS * SHOOTERS_PER_PLAYER;
 
-/** Shots are removed once they are this many pixels outside the camera view. */
-export const SHOT_CULL_MARGIN = 16;
+/**
+ * Shots are removed once they are this many pixels outside the camera view. A world distance:
+ * R2-02's `v1 * WORLD_SCALE` (16 → 24 px on the 640×360 remaster).
+ */
+export const SHOT_CULL_MARGIN = 16 * WORLD_SCALE;
 
 /** A weapon's SFX cue is pushed at most once per this many ticks (per cue). */
 export const SFX_RATE_TICKS = 4;
@@ -267,8 +272,11 @@ export const MAX_SHOT_HITS = 1024;
 /** Capacity of the `PlayerShots` sprite batch: the shots plus the extra laser segments. */
 export const SHOT_BATCH_CAPACITY = 192;
 
-/** Laser beams are drawn as rows of segments this many pixels long (the `shots/laser` art). */
-export const LASER_SEGMENT_LENGTH = 8;
+/**
+ * Laser beams are drawn as rows of segments this many pixels long (the `shots/laser` art).
+ * A world length: R2-02's `v1 * WORLD_SCALE` (8 → 12 px on the 640×360 remaster).
+ */
+export const LASER_SEGMENT_LENGTH = 8 * WORLD_SCALE;
 
 /** The preset a session uses when the content has it (meter-mode Type A). */
 export const DEFAULT_WEAPON_PRESET = 'type-a';
@@ -358,70 +366,125 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
  * (the still frame a `direct.bolt` / `direct.bomb` shows) and `turn` (1 = a `direct.bolt` shows the
  * frame of its heading's octant instead: 0 right, 1 down-right … 7 up-right); M2-18 adds
  * `passArmour` (1 = a piercing `direct.bolt` is not stopped by armour — see {@link ShotFlag}).
+ *
+ * Since R2-02 the world-unit defaults (the `ox` / `oy` / `gap` rel-px offsets, the `hw` / `hh` /
+ * `maxLength` / `startSize` / `maxSize` / `blastRadius` world px, the `slideSpeed` / `growth`
+ * px/tick and the `gravity` px/tick²) read `v1 * WORLD_SCALE` — neutral at scale 1, ×1.5 when the
+ * port flips it — exactly as `scripts/content/rescale.mjs` scales the same units in content.
+ * Angles, ticks, frame counts, ratios (`aspect`, `track`) and frame indices never scale; a zero
+ * world-unit value stays plain (`0 × K = 0` for every K). Key order is load-bearing: these frozen
+ * literals share one hidden class per shape (conventions, "Mind V8's number boxing").
  */
 export const WEAPON_BEHAVIOR_PARAMS: Readonly<
   Record<WeaponBehaviorId, Readonly<Record<string, number>>>
 > = Object.freeze({
-  'shot.straight': Object.freeze({ ox: 8, oy: 0, hw: 4, hh: 2 }),
-  'shot.double': Object.freeze({ angle: 128, ox: 4, oy: -2, hw: 3, hh: 3 }),
-  'laser.beam': Object.freeze({ maxLength: 64, hitCooldownTicks: 6, ox: 8, oy: 0, hh: 2 }),
+  'shot.straight': Object.freeze({
+    ox: 8 * WORLD_SCALE,
+    oy: 0,
+    hw: 4 * WORLD_SCALE,
+    hh: 2 * WORLD_SCALE,
+  }),
+  'shot.double': Object.freeze({
+    angle: 128,
+    ox: 4 * WORLD_SCALE,
+    oy: -2 * WORLD_SCALE,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+  }),
+  'laser.beam': Object.freeze({
+    maxLength: 64 * WORLD_SCALE,
+    hitCooldownTicks: 6,
+    ox: 8 * WORLD_SCALE,
+    oy: 0,
+    hh: 2 * WORLD_SCALE,
+  }),
   'missile.groundSlide': Object.freeze({
-    slideSpeed: 3,
+    slideSpeed: 3 * WORLD_SCALE,
     angle: 128,
     ox: 0,
-    oy: 4,
-    hw: 4,
-    hh: 1.5,
+    oy: 4 * WORLD_SCALE,
+    hw: 4 * WORLD_SCALE,
+    hh: 1.5 * WORLD_SCALE,
     frames: 2,
   }),
   'missile.spreadBomb': Object.freeze({
     angle: 64,
-    gravity: 0.12,
-    ox: 2,
-    oy: 4,
-    hw: 3,
-    hh: 3,
-    blastRadius: 14,
+    gravity: 0.12 * WORLD_SCALE,
+    ox: 2 * WORLD_SCALE,
+    oy: 4 * WORLD_SCALE,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+    blastRadius: 14 * WORLD_SCALE,
     blastTicks: 12,
     hitCooldownTicks: 6,
     frames: 4,
   }),
-  'missile.twoWay': Object.freeze({ angle: 128, ox: 2, oy: 0, hw: 3, hh: 3 }),
+  'missile.twoWay': Object.freeze({
+    angle: 128,
+    ox: 2 * WORLD_SCALE,
+    oy: 0,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+  }),
   'missile.torpedo': Object.freeze({
-    slideSpeed: 5,
+    slideSpeed: 5 * WORLD_SCALE,
     angle: 96,
     ox: 0,
-    oy: 4,
-    hw: 5,
-    hh: 1.5,
+    oy: 4 * WORLD_SCALE,
+    hw: 5 * WORLD_SCALE,
+    hh: 1.5 * WORLD_SCALE,
     frames: 2,
   }),
-  'shot.tailGun': Object.freeze({ angle: 512, ox: -6, oy: 0, hw: 4, hh: 2 }),
-  'shot.vertical': Object.freeze({ angle: 256, ox: 0, oy: -6, hw: 2, hh: 4 }),
-  'shot.freeWay': Object.freeze({ angle: 128, ox: 0, oy: 0, hw: 3, hh: 3 }),
+  'shot.tailGun': Object.freeze({
+    angle: 512,
+    ox: -6 * WORLD_SCALE,
+    oy: 0,
+    hw: 4 * WORLD_SCALE,
+    hh: 2 * WORLD_SCALE,
+  }),
+  'shot.vertical': Object.freeze({
+    angle: 256,
+    ox: 0,
+    oy: -6 * WORLD_SCALE,
+    hw: 2 * WORLD_SCALE,
+    hh: 4 * WORLD_SCALE,
+  }),
+  'shot.freeWay': Object.freeze({
+    angle: 128,
+    ox: 0,
+    oy: 0,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+  }),
   'laser.ripple': Object.freeze({
-    startSize: 4,
-    maxSize: 20,
-    growth: 0.5,
+    startSize: 4 * WORLD_SCALE,
+    maxSize: 20 * WORLD_SCALE,
+    growth: 0.5 * WORLD_SCALE,
     aspect: 0.5,
-    ox: 8,
+    ox: 8 * WORLD_SCALE,
     oy: 0,
     frames: 6,
   }),
   'laser.cyclone': Object.freeze({
-    maxLength: 80,
+    maxLength: 80 * WORLD_SCALE,
     hitCooldownTicks: 6,
-    ox: 8,
+    ox: 8 * WORLD_SCALE,
     oy: 0,
-    hh: 4,
+    hh: 4 * WORLD_SCALE,
     frames: 4,
   }),
-  'laser.twin': Object.freeze({ maxLength: 16, gap: 8, ox: 8, oy: 0, hh: 1.5 }),
-  'direct.bolt': Object.freeze({
-    ox: 8,
+  'laser.twin': Object.freeze({
+    maxLength: 16 * WORLD_SCALE,
+    gap: 8 * WORLD_SCALE,
+    ox: 8 * WORLD_SCALE,
     oy: 0,
-    hw: 4,
-    hh: 2,
+    hh: 1.5 * WORLD_SCALE,
+  }),
+  'direct.bolt': Object.freeze({
+    ox: 8 * WORLD_SCALE,
+    oy: 0,
+    hw: 4 * WORLD_SCALE,
+    hh: 2 * WORLD_SCALE,
     frame: 0,
     turn: 0,
     hitCooldownTicks: 6,
@@ -429,52 +492,79 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
   }),
   'direct.bomb': Object.freeze({
     gravity: 0,
-    ox: 2,
+    ox: 2 * WORLD_SCALE,
     oy: 0,
-    hw: 3,
-    hh: 3,
-    blastRadius: 8,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+    blastRadius: 8 * WORLD_SCALE,
     blastTicks: 8,
     hitCooldownTicks: 6,
     frames: 4,
     frame: 0,
   }),
-  'missile.control': Object.freeze({ track: 0.25, ox: 4, oy: 4, hw: 4, hh: 1.5, frames: 2 }),
+  'missile.control': Object.freeze({
+    track: 0.25,
+    ox: 4 * WORLD_SCALE,
+    oy: 4 * WORLD_SCALE,
+    hw: 4 * WORLD_SCALE,
+    hh: 1.5 * WORLD_SCALE,
+    frames: 2,
+  }),
   'missile.upper': Object.freeze({
-    slideSpeed: 3,
+    slideSpeed: 3 * WORLD_SCALE,
     angle: 128,
     ox: 0,
-    oy: -4,
-    hw: 4,
-    hh: 1.5,
+    oy: -4 * WORLD_SCALE,
+    hw: 4 * WORLD_SCALE,
+    hh: 1.5 * WORLD_SCALE,
     frames: 2,
     flip: 2,
   }),
   'missile.smallSpread': Object.freeze({
     angle: 448,
-    gravity: 0.12,
-    ox: -2,
-    oy: 4,
-    hw: 3,
-    hh: 3,
-    blastRadius: 8,
+    gravity: 0.12 * WORLD_SCALE,
+    ox: -2 * WORLD_SCALE,
+    oy: 4 * WORLD_SCALE,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+    blastRadius: 8 * WORLD_SCALE,
     blastTicks: 10,
     hitCooldownTicks: 5,
     frames: 4,
     flip: 1,
   }),
   'missile.hawkWind': Object.freeze({
-    slideSpeed: 3,
+    slideSpeed: 3 * WORLD_SCALE,
     angle: 128,
     ox: 0,
     oy: 0,
-    hw: 4,
-    hh: 1.5,
+    hw: 4 * WORLD_SCALE,
+    hh: 1.5 * WORLD_SCALE,
     frames: 2,
   }),
-  'missile.twoWayBack': Object.freeze({ angle: 384, ox: -2, oy: 0, hw: 3, hh: 3, flip: 1 }),
-  'shot.backDouble': Object.freeze({ angle: 384, ox: 4, oy: -2, hw: 3, hh: 3, flip: 1 }),
-  'shot.spreadGun': Object.freeze({ angle: 128, ox: 4, oy: 0, hw: 3, hh: 3 }),
+  'missile.twoWayBack': Object.freeze({
+    angle: 384,
+    ox: -2 * WORLD_SCALE,
+    oy: 0,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+    flip: 1,
+  }),
+  'shot.backDouble': Object.freeze({
+    angle: 384,
+    ox: 4 * WORLD_SCALE,
+    oy: -2 * WORLD_SCALE,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+    flip: 1,
+  }),
+  'shot.spreadGun': Object.freeze({
+    angle: 128,
+    ox: 4 * WORLD_SCALE,
+    oy: 0,
+    hw: 3 * WORLD_SCALE,
+    hh: 3 * WORLD_SCALE,
+  }),
 });
 
 /** The loadout slot each behaviour belongs in (checked by {@link checkWeaponBehaviors}). */
@@ -535,9 +625,10 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
 
 /**
  * Width of the Ripple's ring in pixels (measured on its height): a target the ring has grown
- * around further than this is inside it and no longer hit.
+ * around further than this is inside it and no longer hit. A world length: R2-02's
+ * `v1 * WORLD_SCALE` (4 → 6 px on the 640×360 remaster).
  */
-export const RIPPLE_RING_WIDTH = 4;
+export const RIPPLE_RING_WIDTH = 4 * WORLD_SCALE;
 
 /**
  * The Spread Gun's behaviour id (M3-01): a Double role firing it may be equipped twice
