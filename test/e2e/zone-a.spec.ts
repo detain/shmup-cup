@@ -24,7 +24,6 @@ import {
   sy,
   uiPx,
 } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS, tap, waitTicks } from './ticks.js';
 
 /** The WARNING band's edge colour (core `ui` `UI_COLORS.alert`, 0xf85858). */
@@ -65,7 +64,10 @@ async function capture(page: Page): Promise<Capture> {
   let band = 0;
   for (let fx = 0; fx < FRAME_W; fx++) if (is(fx, BAND_Y, WARNING_RED)) band++;
   let hull = 0;
-  for (let fy = PLAYFIELD_Y; fy < 160; fy++) {
+  // The hull's held rows: HALCYON BULWARK's art spans playfield rows 139 … 222 in its hold
+  // (`content/enemies/zone-a.enemies.json`'s boss at the ported world — measured with the e2e
+  // build at the settled fight), so the count window runs one row past its bottom.
+  for (let fy = PLAYFIELD_Y; fy < 223; fy++) {
     for (let fx = FRAME_CX; fx < FRAME_W; fx++) if (is(fx, fy, BULWARK_HULL)) hull++;
   }
   return { band, hull };
@@ -75,7 +77,6 @@ test.describe('zone A (web build)', () => {
   test('?skip=boss: START reaches the WARNING and HALCYON BULWARK within seconds', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on('console', (message) => {

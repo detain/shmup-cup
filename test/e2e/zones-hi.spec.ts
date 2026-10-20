@@ -38,8 +38,8 @@ import {
   pixelIndex,
   sx,
   sy,
+  uiPx,
 } from './frame-pixels.js';
-import { CONTENT_REASON, PORT_REASON, PORT_UNMEASURED, R2_03_PENDING } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -95,8 +95,22 @@ const PLAYFIELD: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: FRAME_H };
 /** The top of the playfield below the HUD bar (the far bands). */
 const SKY: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 100 };
 
-/** The ending's sprite scene (above its epilogue panel). */
-const SCENE: Area = { x0: 0, y0: 0, x1: FRAME_W, y1: 122 };
+/**
+ * The whole murk field of zone I: its three parallax bands sit at rows 0, 96 and 192
+ * (`content/stages/zone-i.stage.json`, each 96 rows tall — the R2-02 port, so murk covers the
+ * rows up to 288). The spires band (y 252) draws no ramp colour, its sparse silhouettes only
+ * hide specks behind them. The specks' cycle is measured here, not in `SKY`: at the ported
+ * scale the band drifts ~3 frame px per 15 ticks, so the sparse specks of the top band alone
+ * re-overlap only ~6 of their pixels (all 141 of rows 12 … 100) — over the full field they
+ * re-overlap 46.
+ */
+const MURK: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 280 };
+
+/**
+ * The ending's sprite scene (above its epilogue panel): core `ENDING_SCENE_LAYOUT`'s horizon
+ * (art rows 104, 16 tall → the panel starts at uiPx(104) + uiPx(16)) plus a 2-row margin.
+ */
+const SCENE: Area = { x0: 0, y0: 0, x1: FRAME_W, y1: uiPx(104) + uiPx(16) + 2 };
 
 /**
  * The frame's pixels (the centre sample of each one's screenshot block).
@@ -411,7 +425,6 @@ test.describe('zones H and I (web build)', () => {
   test('IRON CITADEL: the cycling fortress wall, then IRON SOVEREIGN holds the right half', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-h');
@@ -428,9 +441,9 @@ test.describe('zones H and I (web build)', () => {
     expect(stepped(lights, later)).toBeGreaterThan(10);
     // (The same greys show here and there in the zone's rock: count what the finale adds.)
     const before = (await find(page, SOVEREIGN_HULL, RIGHT_HALF)).count;
-    // The end of the stage: the WARNING (x 9,100), then the finale.
+    // The end of the stage: the WARNING (x 13,650), then the finale.
     await page.evaluate(() => {
-      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(9000);
+      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(13500);
     });
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('iron-sovereign');
@@ -441,23 +454,22 @@ test.describe('zones H and I (web build)', () => {
   test('ABYSSAL THRONE: the cycling murk, then the ABYSS ARK`s bone plating fills the raid`s view', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-i');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-i');
-    const specks = await rampMap(page, SPECKS, SKY);
+    const specks = await rampMap(page, SPECKS, MURK);
     expect(specks.filter((k) => k >= 0).length).toBeGreaterThan(50);
     let later = specks;
     for (let k = 1; k <= 6 && stepped(specks, later) === 0; k++) {
       await stepTo(page, start + 15 * k);
-      later = await rampMap(page, SPECKS, SKY);
+      later = await rampMap(page, SPECKS, MURK);
     }
     expect(stepped(specks, later)).toBeGreaterThan(10);
     expect((await find(page, ARK_BONE, PLAYFIELD)).count).toBe(0);
     await page.evaluate(() => {
-      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(8900);
+      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(13350);
     });
     const fight = await stepUntilFight(page, 60);
     expect(fight.boss).toBe('abyss-ark');
@@ -468,7 +480,6 @@ test.describe('zones H and I (web build)', () => {
   test('the endings: the flagship sails off under the dawn; the citadel falls under its blasts', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './');
@@ -507,7 +518,6 @@ test.describe('zones H and I (Tizen build via file://)', () => {
   test('IRON SOVEREIGN and the ABYSS ARK, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');
@@ -529,7 +539,6 @@ test.describe('zones H and I (Tizen build via file://)', () => {
   });
 
   test('the citadel`s ending scene draws on the TV build', async ({ page }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX);

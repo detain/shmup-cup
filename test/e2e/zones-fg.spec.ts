@@ -35,7 +35,6 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -312,13 +311,13 @@ test.describe('zones F and G (web build)', () => {
   test('CELL VAULT: the cycling cell wall over the fleshy folds, then MANTLE REGENT curls its tentacles', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-f');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-f');
-    // Three rows of the cell wall (y 0–192) in its ramp colours; the cycle (12 ticks a step)
+    // Three rows of the cell wall (content/stages/zone-f.stage.json `vault-membrane` at band-y 0,
+    // 96 and 192 — R2-02's port) in its ramp colours; the cycle (12 ticks a step)
     // recolours the same pixels a few steps later.
     const wall = await rampMap(page, MEMBRANE, SKY);
     expect(wall.filter((k) => k >= 0).length).toBeGreaterThan(20000);
@@ -326,13 +325,13 @@ test.describe('zones F and G (web build)', () => {
     const later = await rampMap(page, MEMBRANE, SKY);
     expect(later.filter((k) => k >= 0).length).toBeGreaterThan(20000);
     expect(stepped(wall, later)).toBeGreaterThan(1000);
-    // The folds band (y 152 on).
+    // The folds band (`vault-folds`, band-y 264).
     expect(
-      await countColours(page, FOLDS, { x0: 0, y0: 152, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+      await countColours(page, FOLDS, { x0: 0, y0: 264, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(3000);
     expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 9,100), then the boss.
-    await jumpTo(page, 9000);
+    // The end of the stage: the WARNING (x 13,650), then the boss.
+    await jumpTo(page, 13500);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('mantle-regent');
     expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBeGreaterThan(700);
@@ -351,7 +350,6 @@ test.describe('zones F and G (web build)', () => {
   test('PRISM LABYRINTH: the cycling crystal facets over the spires, then FACET MONARCH waves its arms', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-g');
@@ -364,11 +362,12 @@ test.describe('zones F and G (web build)', () => {
     expect(later.filter((k) => k >= 0).length).toBeGreaterThan(20000);
     expect(stepped(facets, later)).toBeGreaterThan(1000);
     expect(
-      await countColours(page, SPIRES, { x0: 0, y0: 144, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+      // The spires band (content/stages/zone-g.stage.json `prism-spires`, band-y 252).
+      await countColours(page, SPIRES, { x0: 0, y0: 252, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(3000);
     expect(await countColours(page, MONARCH_FACE, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 9,300), then the boss.
-    await jumpTo(page, 9200);
+    // The end of the stage: the WARNING (x 13,950), then the boss.
+    await jumpTo(page, 13800);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('facet-monarch');
     expect(await countColours(page, MONARCH_FACE, RIGHT_HALF)).toBeGreaterThan(700);
@@ -385,7 +384,6 @@ test.describe('zones F and G (Tizen build via file://)', () => {
   test('MANTLE REGENT and FACET MONARCH, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');

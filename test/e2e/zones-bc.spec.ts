@@ -33,7 +33,6 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -234,20 +233,20 @@ test.describe('zones B and C (web build)', () => {
   test('BRINE NEBULA: the cycling brine sea, then GALVANIC MAW fights with its mouth opening', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-b');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-b');
-    // The sea band (y 152 on) in its ramp colours, before and after a few cycle steps.
-    const sea = { x0: 0, y0: 156, x1: FRAME_W, y1: 196 };
+    // The sea band — content/stages/zone-b.stage.json `brine-sea` starts at band-y 264 (R2-02's
+    // port) — in its ramp colours, before and after a few cycle steps.
+    const sea = { x0: 0, y0: 270, x1: FRAME_W, y1: 330 };
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
     await stepTo(page, start + 25);
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
     expect(await countColours(page, [MAW_PLATE], RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 9,300), then the boss.
-    await jumpTo(page, 9200);
+    // The end of the stage: the WARNING (x 13,950), then the boss.
+    await jumpTo(page, 13800);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('galvanic-maw');
     expect(await countColours(page, [MAW_PLATE], RIGHT_HALF)).toBeGreaterThan(500);
@@ -263,17 +262,18 @@ test.describe('zones B and C (web build)', () => {
   });
 
   test('DUNE EXPANSE: the dune ridge, then SANDGRAVE WIDOW fights', async ({ page }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-c');
     await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-c');
     expect(
-      await countColours(page, RIDGE, { x0: 0, y0: 136, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+      // The dune ridge band — content/stages/zone-c.stage.json `dune-ridge` starts at band-y 240
+      // (R2-02's port) — to the playfield's bottom.
+      await countColours(page, RIDGE, { x0: 0, y0: 243, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(4000);
     expect(await countColours(page, [WIDOW_CHITIN], RIGHT_HALF)).toBe(0);
-    await jumpTo(page, 9000); // the WARNING is at 9,100
+    await jumpTo(page, 13500); // the WARNING is at 13,650
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('sandgrave-widow');
     expect(await countColours(page, [WIDOW_CHITIN], RIGHT_HALF)).toBeGreaterThan(450);
@@ -283,7 +283,6 @@ test.describe('zones B and C (web build)', () => {
   test('PEARL GROTTO: the bonus stage draws its reef floor and ceiling over the brine sea', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=brine-grotto');
@@ -300,7 +299,6 @@ test.describe('zones B and C (Tizen build via file://)', () => {
   test('SANDGRAVE WIDOW, brought in through the debug API, draws on the TV build', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');

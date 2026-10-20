@@ -4,7 +4,7 @@
  *
  * - **MAGMA DEEP** — `?scene=flight&stage=zone-d`: on the surface the volcano peaks band
  *   (`bg/magma-peaks`, its ash) is drawn low in the view and the lava lake (`bg/magma-lava`) is
- *   still below it, out of sight; the stage jumped past the dive (the camera 200 px down in the
+ *   still below it, out of sight; the stage jumped past the dive (the camera 300 px down in the
  *   caves) the palette-cycled lava lake — only ever the four ramp colours zone D cycles — has
  *   risen into the bottom of the view; at the end CINDER BASTION's iron hull
  *   (`bosses/bastion-hull`) holds the right half of the playfield while it fights, its shield arms
@@ -31,12 +31,12 @@ import {
   FRAME_CX,
   FRAME_W,
   HUD_BOTTOM_Y,
+  PLAYFIELD_H,
   PLAYFIELD_Y,
   pixelIndex,
   sx,
   sy,
 } from './frame-pixels.js';
-import { CONTENT_REASON, PORT_REASON, PORT_UNMEASURED, R2_03_PENDING } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -268,14 +268,18 @@ function startBoss(page: Page, id: string): Promise<boolean> {
   }, id);
 }
 
-/** The bottom band of the playfield (the lower quarter). */
-const BOTTOM: Area = { x0: 0, y0: 158, x1: FRAME_W, y1: HUD_BOTTOM_Y };
+/** The bottom quarter of the playfield: rows 264 to its bottom. */
+const BOTTOM: Area = {
+  x0: 0,
+  y0: PLAYFIELD_Y + (3 * PLAYFIELD_H) / 4,
+  x1: FRAME_W,
+  y1: HUD_BOTTOM_Y,
+};
 
 test.describe('zones D and E (web build)', () => {
   test('MAGMA DEEP: the volcano peaks, the lava lake rising into view with the dive, then CINDER BASTION', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-d');
@@ -283,26 +287,28 @@ test.describe('zones D and E (web build)', () => {
     const surface = await bossNow(page);
     expect(surface.stage).toBe('zone-d');
     expect(surface.cameraY).toBe(0);
-    // The peaks band (y 128 on) low in the view; the lava lake (y 256) still out of sight.
+    // The peaks band (content/stages/zone-d.stage.json `magma-peaks`, band-y 228; the sprite is
+    // 80 v1 art rows → 120 frame rows, so the band covers 228 to the playfield's bottom) low in
+    // the view; the lava lake (`magma-lava`, band-y 420) still out of sight.
     expect(
-      await countColours(page, PEAKS, { x0: 0, y0: 136, x1: FRAME_W, y1: 200 }),
+      await countColours(page, PEAKS, { x0: 0, y0: 240, x1: FRAME_W, y1: 336 }),
     ).toBeGreaterThan(4000);
     expect(await countColours(page, LAVA, BOTTOM)).toBe(0);
     expect(await countColours(page, BASTION_PLATE, RIGHT_HALF)).toBe(0);
-    // Past the dive: the camera 200 px down, the lava lake (factor 0.5) risen 100 px into view,
+    // Past the dive: the camera 300 px down, the lava lake (factor 0.5) risen 150 px into view,
     // in its ramp colours before and after a few cycle steps.
-    await jumpTo(page, 4400);
+    await jumpTo(page, 6600);
     const caves = await stepTo(page, surface.tick + 5);
-    expect((await bossNow(page)).cameraY).toBe(200);
+    expect((await bossNow(page)).cameraY).toBe(300);
     const lava = await countColours(page, LAVA, BOTTOM);
     expect(lava).toBeGreaterThan(3000);
     await stepTo(page, caves + 20);
     expect(await countColours(page, LAVA, BOTTOM)).toBeGreaterThan(3000);
-    // The end of the stage: the WARNING (x 9,100), then the boss, down in the caves.
-    await jumpTo(page, 9000);
+    // The end of the stage: the WARNING (x 13,650), then the boss, down in the caves.
+    await jumpTo(page, 13500);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('cinder-bastion');
-    expect(fight.cameraY).toBe(200);
+    expect(fight.cameraY).toBe(300);
     expect(await countColours(page, BASTION_PLATE, RIGHT_HALF)).toBeGreaterThan(500);
     // Its shield arms turn (4 units a tick in phase 0).
     await stepTo(page, fight.tick + 10);
@@ -315,25 +321,25 @@ test.describe('zones D and E (web build)', () => {
   test('TEMPEST RIDGE: the cycling storm clouds over the jagged ridge, then SQUALL STEED opens its chest', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-e');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-e');
-    // Two rows of clouds (y 0–96) in their ramp colours, before and after a few cycle steps (the
+    // Two rows of clouds (content/stages/zone-e.stage.json `storm-clouds` at band-y 0 and 60,
+    // R2-02's port — rows 0 to 144) in their ramp colours, before and after a few cycle steps (the
     // rain in front of them blends only its streaks).
-    const sky = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 100 };
+    const sky = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 144 };
     expect(await countColours(page, CLOUDS, sky)).toBeGreaterThan(15000);
     await stepTo(page, start + 30);
     expect(await countColours(page, CLOUDS, sky)).toBeGreaterThan(15000);
-    // The mountain band (y 152 on).
+    // The mountain band (`storm-ridge`, band-y 264).
     expect(
-      await countColours(page, RIDGE, { x0: 0, y0: 160, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+      await countColours(page, RIDGE, { x0: 0, y0: 276, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(2000);
     expect(await countColours(page, STEED_PLATE, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 9,300), then the boss.
-    await jumpTo(page, 9200);
+    // The end of the stage: the WARNING (x 13,950), then the boss.
+    await jumpTo(page, 13800);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('squall-steed');
     expect(await countColours(page, STEED_PLATE, RIGHT_HALF)).toBeGreaterThan(300);
@@ -353,7 +359,6 @@ test.describe('zones D and E (Tizen build via file://)', () => {
   test('CINDER BASTION and SQUALL STEED, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');
