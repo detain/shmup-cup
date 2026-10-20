@@ -111,7 +111,7 @@ worked into the plan as R6-04 by that directive's own order.
 | **W4-13** | v1's hi-score tables are archived under `legacyScores` on the 2 → 3 migration; v2's tables start empty | R2-01 |
 | **W4-14** | A `v1.x` build reading a format-3 save falls back to defaults — no back-migration, no rewrite | R2-01, `v1.x` |
 | **W5-6** | The e2e content gate is keyed on R2-03's re-measure, not on `CONTENT_PORT_PENDING`: `PORT_UNMEASURED` holds only from R2-02's port until R2-03, so the specs that pass at 640 on v1 content keep running through R2-02 (built as `test/e2e/gates.ts`, cited there and in `e2e-gates.test.ts`) | R2-01, R2-02, R2-03 |
-| **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick 1.5–2.7 points and synced p95 ±23–26 %. The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
+| **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick spread medians 1.5–2.7 points and synced-p95 spread medians 8–9 % (p90 23–26 %). The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
 
 ---
 
@@ -2170,11 +2170,13 @@ recorded in §17's R0-03 row).
       ([`apps/tizen/src/bench/output.ts`](apps/tizen/src/bench/output.ts)), *the lever the sweep measured*, made
       user-facing ("what a real 720p / 540p output mode would do", says its docblock). **Auto is 1280×720 on the
       TVs and the window's native size on desktop and web.** From the sweep: the M7's cost is the full-screen
-      fill, not the 640×360 scene, so at 720p output every 640×360 variant lands in §13's tv-profile band
-      (640×360-worst: 59.5 % two-tick at 1080p output → 11.3 % at 720p → 1.8 % at 540p; even CRT-full costs
-      0.2 % two-tick at 720p), and 540p only helps the heaviest rows — a few light rows are 1–4 points *worse*
-      there. Synced p95 stays flat ≈ 12–16 ms at every output (the scene's own render barely moves). Native art
-      from 1280×720n up is dead at any setting; ≤ 640×360n is fine.
+      fill, not the 640×360 scene, so at 720p output the two-tick share of every 640×360 variant but the stress
+      row collapses to ≤ 0.8 % (busy 7.5 → 0.8, filter 22.6 → 0.2, mode7 10.4 → 0.3, crt-light 8.8 → 0.4,
+      crt-full 42.3 → 0.2 — §13's tv-profile band is reached at 720p by crt-full on both GLs and by busy and
+      mode7 on GL 2), and the 640×360-worst row itself moves 59.5 % → 11.3 % → 1.8 % across the three outputs;
+      540p only helps those heaviest rows — a few light native rows are 1–4 points *worse* there. Synced p95
+      stays flat ≈ 12–16 ms at every output (the scene's own render barely moves). Native art from 1280×720n up
+      is dead at any setting; ≤ 640×360n is fine.
     - **RENDERER** — `Auto | WebGL 2 | WebGL 1`: Auto asks the engine for WebGL 2 only where the directive's
       floor clears it — **Chromium ≥ 71** — and the context actually exists; **both TVs (68 / 69) therefore keep
       WebGL 1, exactly today's shipped behaviour**, even though the M7s do expose WebGL 2

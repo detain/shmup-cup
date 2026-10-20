@@ -736,8 +736,9 @@ by the quoted code or test title before you edit it.
   `APPLIES AT RESTART` on the two boot knobs, and `SAVE_VERSION` bumped 3 → 4 with the migration and the
   defensive law. Defaults `Auto` everywhere — the sweep
   (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`) is the evidence: at 720p output every
-  640×360 variant is in the §13 tv-profile band (640×360-worst 59.5 % → 11.3 % → 1.8 % two-tick across the three
-  outputs; CRT-full costs 0.2 % at 720p; 540p only helps the heaviest rows; synced p95 flat ≈ 12–16 ms), and
+  640×360 variant but the stress row falls to ≤ 0.8 % two-tick (crt-full reaches the §13 tv-profile band on both
+  GLs, busy and mode7 on GL 2; 640×360-worst moves 59.5 % → 11.3 % → 1.8 % across the three outputs),
+  540p only helps those heaviest rows, and synced p95 stays flat ≈ 12–16 ms — and
   GL 2's 21-better / 0-worse is a 1080p-fill-only win, so Auto never loses at the recommended output.
 - **Files (only these):**
   - `packages/core/src/config/index.ts` — the two unions and their tables next to `CRT_FILTERS` /
