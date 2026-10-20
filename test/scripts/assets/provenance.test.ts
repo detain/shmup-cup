@@ -9,9 +9,9 @@
  * - **The pipeline picks up ingested art:** the ingest tool's committed fixture outputs load
  *   through `loadSpriteSources` with the recipe, the record and the hand-edit layer ignored,
  *   and pack into an atlas with the sidecar's frames, tags and anchor — the sidecar anchor
- *   beating a code-defined one.
+ *   and palette map beating code-defined ones.
  */
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -112,7 +112,15 @@ describe('R3-02 — the pipeline picks up ingested art', () => {
         join(src, 'sprites', 'enemies', `drone${suffix}`),
       );
     }
-    // The same art over a code-defined sprite: its sidecar anchor wins over the code's.
+    // The same art over a code-defined sprite: its sidecar anchor wins over the code's —
+    // and so does its sidecar palette map. V2a (8416da5) made a code map whose colours left
+    // the art an error (pipeline.mjs p2MapIssues: a key colour must be in the frames, and
+    // the map must change a pixel), and the drone art holds none of the kestrel's v1
+    // colours; the copy therefore carries its own map in `meta.shmup.p2`. sprite-source.mjs
+    // applyPngOverrides (:682-719, `merged.p2 = png.p2` when the sidecar has one) keeps the
+    // sidecar map over the code's, and pipeline.mjs (:430-451) draws the sibling from the
+    // merged sprite. The map exchanges the first two opaque colours of the art: both keys
+    // are colours the frames hold and both values differ, so it maps the art.
     cpSync(
       join(FIXTURE_SPRITES, 'enemies', 'drone.png'),
       join(src, 'sprites', 'ships', 'kestrel.png'),
@@ -121,9 +129,28 @@ describe('R3-02 — the pipeline picks up ingested art', () => {
       join(FIXTURE_SPRITES, 'enemies', 'drone.json'),
       join(src, 'sprites', 'ships', 'kestrel.json'),
     );
+    const strip = decodePng(readFileSync(join(FIXTURE_SPRITES, 'enemies', 'drone.png')));
+    const artColours: number[] = [];
+    for (let i = 0; i < strip.data.length; i += 4) {
+      if (strip.data[i + 3] === 0) continue;
+      const packed = (strip.data[i] << 16) | (strip.data[i + 1] << 8) | strip.data[i + 2];
+      if (!artColours.includes(packed)) artColours.push(packed);
+    }
+    expect(artColours.length).toBeGreaterThanOrEqual(2);
+    const hexOf = (packed: number) => `#${packed.toString(16).padStart(6, '0')}`;
+    const sidecarPath = join(src, 'sprites', 'ships', 'kestrel.json');
+    const sidecar = JSON.parse(readFileSync(sidecarPath, 'utf8')) as {
+      meta: Record<string, unknown>;
+    };
+    sidecar.meta.shmup = {
+      p2: {
+        [hexOf(artColours[0])]: hexOf(artColours[1]),
+        [hexOf(artColours[1])]: hexOf(artColours[0]),
+      },
+    };
+    writeFileSync(sidecarPath, JSON.stringify(sidecar));
 
     const { manifest, pages } = buildAtlas({ sourceDir: src });
-    const strip = decodePng(readFileSync(join(FIXTURE_SPRITES, 'enemies', 'drone.png')));
     expect(manifest.sprites['enemies/drone'].frames).toEqual(
       [0, 1, 2, 3].map((i) => `enemies/drone#${i}`),
     );
@@ -142,5 +169,34 @@ describe('R3-02 — the pipeline picks up ingested art', () => {
     }
     const kestrel = manifest.frames['ships/kestrel#0'];
     expect([kestrel.w, kestrel.h, kestrel.ax, kestrel.ay]).toEqual([16, 12, 8, 6]);
+    // The sidecar map won over the code's: `ships/kestrel@p2` exists, and frame 0 is the
+    // drone art with exactly the two map colours exchanged — every other colour and every
+    // alpha stays (makeP2Sprite, coop.mjs).
+    expect(manifest.sprites['ships/kestrel@p2'].frames).toEqual([
+      'ships/kestrel@p2#0',
+      'ships/kestrel@p2#1',
+      'ships/kestrel@p2#2',
+      'ships/kestrel@p2#3',
+    ]);
+    const p2frame = manifest.frames['ships/kestrel@p2#0'];
+    expect([p2frame.w, p2frame.h, p2frame.ax, p2frame.ay]).toEqual([16, 12, 8, 6]);
+    for (let y = 0; y < 12; y++) {
+      for (let x = 0; x < 16; x++) {
+        const [r, g, b, a] = getPixel(strip, x, y);
+        const packed = (r << 16) | (g << 8) | b;
+        const to =
+          packed === artColours[0]
+            ? artColours[1]
+            : packed === artColours[1]
+              ? artColours[0]
+              : packed;
+        expect(getPixel(pages[p2frame.p].image, p2frame.x + x, p2frame.y + y)).toEqual([
+          (to >> 16) & 0xff,
+          (to >> 8) & 0xff,
+          to & 0xff,
+          a,
+        ]);
+      }
+    }
   });
 });

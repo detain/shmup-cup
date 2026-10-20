@@ -40,7 +40,15 @@ describe('scripts/assets/coop (M2-06, R3-03.V2a)', () => {
 
   it('throws on a map entry that is not a colour pair', () => {
     const sprite = frameSprite(createImage(1, 1));
-    for (const map of [{ '#0a141e': 'x' }, { nope: '#000000' }, { '#0a141e': '#ff000' }]) {
+    // Typed as the parameter's map so the three literals keep their own keys: without the
+    // annotation the array's element type widens to a union of optional-undefined props,
+    // which is not assignable to Readonly<Record<string, string>>.
+    const badMaps: Readonly<Record<string, string>>[] = [
+      { '#0a141e': 'x' },
+      { nope: '#000000' },
+      { '#0a141e': '#ff000' },
+    ];
+    for (const map of badMaps) {
       expect(() => makeP2Sprite(sprite, map)).toThrow(TypeError);
     }
   });

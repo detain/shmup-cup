@@ -295,7 +295,7 @@ describe('scripts/assets/sprite-source — the p2 palette map key (R3-03.V2a)', 
     expect(sprite?.p2).toEqual(MAP);
     expect(sprite?.p2).not.toBe(json.p2);
     json.p2['#ffffff'] = '#00ff00';
-    expect(sprite?.p2['#ffffff']).toBe('#ff0000');
+    expect(sprite?.p2?.['#ffffff']).toBe('#ff0000');
   });
 
   it('leaves the field off a sprite that declares no map', () => {
