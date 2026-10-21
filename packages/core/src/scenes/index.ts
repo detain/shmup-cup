@@ -7152,17 +7152,18 @@ const ENDING_SCENE_BOTTOM = ENDING_SCENE_LAYOUT.groundY + uiPx(16);
 const ENDING_TEXT_MARGIN = uiPx(4);
 
 /**
- * The epilogue's panel under the sprite scene (M2-14): left, top, width, height — as wide as the
- * result card, from 4 px under the scene to 4 px above the frame's bottom edge (124 and 88 tall at
- * 384×216; 186 and 168 tall at 640×360 — R2-01: the scene grows with the art, ×1.5, the frame
- * ×5/3, so the panel takes the room left under it). It holds an epilogue's most lines,
- * {@link MAX_ENDING_TEXT_LINES} of `LINE_H`, and 8 px.
+ * The epilogue's panel under the sprite scene (M2-14): left, top, width. One rule with the
+ * story's crawl panel since R4-03.C7 (U3 review 1 O2/O3): both hug the sprite scene's panel line
+ * (4 px), span as wide as the result card (`TEXT_PANEL_INSET` each side), and their height fits
+ * the text they hold — {@link ENDING_TEXT_DY} above the first line, one line's room under the
+ * last — so a short epilogue no longer stands in a half-empty box (the v1 region panel, 88 px at
+ * 384×216 and 168 at 640×360, left 36–95 px of empty panel under short texts; R4-05.E4 moved the
+ * scene bands under the panel line, so the room below a short panel now reads as the scene).
  */
 const ENDING_TEXT_PANEL = Object.freeze({
   x: TEXT_PANEL_INSET,
   y: ENDING_SCENE_BOTTOM + ENDING_TEXT_MARGIN,
   w: FRAME_W - 2 * TEXT_PANEL_INSET,
-  h: FRAME_H - ENDING_SCENE_BOTTOM - 2 * ENDING_TEXT_MARGIN,
 });
 
 /** From the epilogue panel's top to its first line (5). */
@@ -7349,7 +7350,18 @@ export class EndingScene extends SceneBase {
         ? FRAME_CY - ((lines.length * LINE_H) >> 1)
         : p.y + ENDING_TEXT_DY;
     if (this.scene !== EndingSceneCode.None) {
-      drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+      // The one text-panel rule (R4-03.C7): the height fits this epilogue's lines — the rows,
+      // the first row's inset above them and a row's room under the last.
+      drawPanel(
+        list,
+        p.x,
+        p.y,
+        p.w,
+        lines.length * LINE_H + ENDING_TEXT_DY + ENDING_TEXT_MARGIN,
+        UI_COLORS.panel,
+        UI_COLORS.border,
+        255,
+      );
     }
     for (let i = 0; i < this.shown && i < lines.length; i++) {
       list.setString(base + i, lines[i]);
@@ -7792,13 +7804,14 @@ const STORY_WINDOW_H = 6 * STORY_ROW_HEIGHT + GLYPH_H;
 const STORY_PANEL_H = STORY_WINDOW_H + uiPx(8);
 
 /**
- * The story's text panel under the sprite scene: left, top, width, height — the frame's width
- * less 40 px each side, centred in the room between the scene's lowest row and the frame's bottom
- * edge (R2-01: the scene grows with the art, ×1.5, the frame ×5/3 — 210 at 640×360).
+ * The story's text panel under the sprite scene: left, top, width, height — one rule with the
+ * epilogue's panel (R4-03.C7, U3 review 1 O2/O3): it hugs the scene's panel line 4 px under it
+ * (210 at 640×360 before; the crawl no longer floats centred in the band), spans as wide as the
+ * result card, and its height is its content — the window and the 4 px around it.
  */
 const STORY_PANEL = Object.freeze({
   x: TEXT_PANEL_INSET,
-  y: (STORY_SCENE_BOTTOM + FRAME_H - STORY_PANEL_H) >> 1,
+  y: STORY_SCENE_BOTTOM + ENDING_TEXT_MARGIN,
   w: FRAME_W - 2 * TEXT_PANEL_INSET,
   h: STORY_PANEL_H,
 });

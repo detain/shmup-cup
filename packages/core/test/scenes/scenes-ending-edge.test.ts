@@ -60,6 +60,7 @@ import { shipped, stage } from '../helpers/campaign.js';
 import {
   ENDING_TEXT_PANEL,
   TEXT_PANEL_INSET,
+  epiloguePanelH,
   scenePx,
   scrollPx,
   scrollSteps,
@@ -453,10 +454,12 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     }
     expect(panel).toBeGreaterThanOrEqual(0);
     expect(ui.y[panel]).toBe(ENDING_TEXT_PANEL.y);
-    // From under the scene to 4 px above the bottom edge (R2-01), with room for the most lines.
-    expect(ui.h[panel]).toBe(ENDING_TEXT_PANEL.h);
-    expect(ui.y[panel] + ui.h[panel]).toBe(FRAME_H - uiPx(4));
-    expect(ui.h[panel]).toBeGreaterThanOrEqual(MAX_ENDING_TEXT_LINES * LINE_H + uiPx(8));
+    // The panel fits this one-line epilogue (R4-03.C7's one text-panel rule), and the most lines
+    // a campaign may write still fit the room under the scene.
+    expect(ui.h[panel]).toBe(epiloguePanelH(1));
+    expect(epiloguePanelH(MAX_ENDING_TEXT_LINES)).toBeLessThanOrEqual(
+      FRAME_H - uiPx(4) - ENDING_TEXT_PANEL.y,
+    );
     const left = ui.x[panel];
     const w = ui.w[panel];
     const pad = uiPx(32);

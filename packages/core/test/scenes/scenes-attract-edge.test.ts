@@ -417,15 +417,13 @@ describe('core/scenes attract loop — the story at its limits (M2-15 edge cases
     expect(x0).toBeGreaterThanOrEqual(left + pad);
     expect(x0 + line.length * GLYPH_W).toBeLessThanOrEqual(left + w - pad);
     expect((MAX_STORY_LINE_LENGTH + 1) * GLYPH_W).toBeGreaterThan(w - 2 * pad);
-    // The panel holds the window and 4 px around it, centred between the dawn's sea (its lowest
-    // row, 100 down and 24 tall) and the frame's bottom edge (R2-01).
+    // The panel holds the window and 4 px around it and hugs the dawn's sea line (R4-03.C7's one
+    // text-panel rule — the crawl no longer floats centred in the band, as the epilogue never did).
     const top = ui.y[panel];
     const h = ui.h[panel];
     expect([top, h]).toEqual([STORY_WINDOW.top - uiPx(4), STORY_WINDOW.height + uiPx(8)]);
-    const above = top - (uiPx(100) + uiPx(24));
-    const below = FRAME_H - (top + h);
-    expect(above).toBeGreaterThan(0);
-    expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
+    expect(top - (uiPx(100) + uiPx(24))).toBe(uiPx(4)); // 4 px under the scene's panel row
+    expect(top + h).toBeLessThanOrEqual(FRAME_H - uiPx(4));
   });
 
   it('a `none` page draws no sprites; an `invasion` page draws its blasts', () => {

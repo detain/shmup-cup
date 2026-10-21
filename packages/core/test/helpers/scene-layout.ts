@@ -28,12 +28,11 @@ const STORY_SCENE_BOTTOM = uiPx(100) + uiPx(24);
 const STORY_WINDOW_H = 6 * STORY_ROW + GLYPH_H;
 
 /**
- * The story crawl's window: its top and bottom rows (133 and 207; 216 and 330 at 640×360) and its
- * height — 4 px inside the story's panel, which is centred between the scene's lowest row and the
- * frame's bottom edge (R2-01).
+ * The story crawl's window: its top and bottom rows (133 and 207; 216 and 330 before R4-03.C7,
+ * 198 and 312 at 640×360 now) and its height — 4 px inside the story's panel, which hugs the
+ * scene's panel line 4 px under it (the one text-panel rule R4-03.C7, with the epilogue's).
  */
-const STORY_WINDOW_TOP =
-  ((STORY_SCENE_BOTTOM + FRAME_H - (STORY_WINDOW_H + uiPx(8))) >> 1) + uiPx(4);
+const STORY_WINDOW_TOP = STORY_SCENE_BOTTOM + uiPx(4) + uiPx(4);
 
 /** See {@link STORY_WINDOW_TOP}. */
 export const STORY_WINDOW = Object.freeze({
@@ -63,9 +62,10 @@ export function scenePx(px: number): number {
 }
 
 /**
- * The ending's epilogue panel (under its sprite scene): its top, first line and height — from 4 px
- * under the scene's lowest row (the horizon band, 104 down and 16 tall) to 4 px above the frame's
- * bottom edge (124, 129 and 88; 186, 194 and 168 at 640×360 — R2-01).
+ * The ending's epilogue panel (under its sprite scene): its top and first line — 4 px under the
+ * scene's panel line, the text 5 px inside the top (124 and 129; 186 and 194 at 640×360). Its
+ * height fits the lines shown, per {@link epiloguePanelH} (R4-03.C7's one text-panel rule; the
+ * v1 region panel — 88 tall, 168 since R2-01 — left short epilogues half-empty).
  */
 const ENDING_TEXT_Y = uiPx(104) + uiPx(16) + uiPx(4);
 
@@ -73,8 +73,18 @@ const ENDING_TEXT_Y = uiPx(104) + uiPx(16) + uiPx(4);
 export const ENDING_TEXT_PANEL = Object.freeze({
   y: ENDING_TEXT_Y,
   lineY: ENDING_TEXT_Y + uiPx(5),
-  h: FRAME_H - uiPx(4) - ENDING_TEXT_Y,
 });
+
+/**
+ * The epilogue panel's height for some lines (`core/scenes`' rule, R4-03.C7): the rows, the 5 px
+ * above the first and the 4 px under the last.
+ *
+ * @param lines - Epilogue lines (at most `MAX_ENDING_TEXT_LINES`).
+ * @returns The panel height.
+ */
+export function epiloguePanelH(lines: number): number {
+  return lines * LINE_H + uiPx(5) + uiPx(4);
+}
 
 /**
  * The WARNING band (R4-05.E3): its height a fifth of the frame (72 at 640×360; 48 at 384×216),
