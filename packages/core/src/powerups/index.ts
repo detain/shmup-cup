@@ -585,14 +585,14 @@ export function directItemKind(item: DirectItem): number {
 
 /** Item kinds by {@link ItemKind} code. */
 export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
-  Object.freeze({ sprite: CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
-  Object.freeze({ sprite: BLUE_CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
-  Object.freeze({ sprite: STOLEN_OPTION_SPRITE, frames: 2, score: 0 }),
+  Object.freeze({ sprite: CAPSULE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: BLUE_CAPSULE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: STOLEN_OPTION_SPRITE, frames: 4, score: 0 }),
   ...DIRECT_ITEM_SPRITES.map((sprite) =>
-    Object.freeze({ sprite, frames: 2, score: DIRECT_ITEM_SCORE }),
+    Object.freeze({ sprite, frames: 4, score: DIRECT_ITEM_SCORE }),
   ),
-  Object.freeze({ sprite: ONE_UP_SPRITE, frames: 2, score: 0 }),
-  Object.freeze({ sprite: BONUS_CAPSULE_SPRITE, frames: 2, score: BONUS_CAPSULE_SCORE }),
+  Object.freeze({ sprite: ONE_UP_SPRITE, frames: 4, score: 0 }),
+  Object.freeze({ sprite: BONUS_CAPSULE_SPRITE, frames: 4, score: BONUS_CAPSULE_SCORE }),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */

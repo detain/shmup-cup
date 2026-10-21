@@ -111,7 +111,7 @@ describe('core/powerups Direct mode — the tables', () => {
     expect([ItemKind.OneUp, ItemKind.BonusCapsule]).toEqual([9, 10]);
     for (let i = 0; i < DIRECT_ITEMS.length; i++) {
       const spec = ITEM_KINDS[DIRECT_ITEM_KINDS[i]];
-      expect(spec).toEqual({ sprite: 'items/direct-' + DIRECT_ITEMS[i], frames: 2, score: 300 });
+      expect(spec).toEqual({ sprite: 'items/direct-' + DIRECT_ITEMS[i], frames: 4, score: 300 });
       expect(DIRECT_ITEM_SPRITES[i]).toBe(spec.sprite);
       expect(ITEM_SPRITES).toContain(spec.sprite);
       expect(ENGINE_SPRITES).toContain(spec.sprite);

@@ -220,16 +220,16 @@ describe('core/powerups M2-04 edges: regainOption', () => {
 });
 
 describe('core/powerups M2-04 edges: blue capsules and freed Options as items', () => {
-  it('the item kinds: blue capsule 300 points, freed Option 0, both two frames', () => {
+  it('the item kinds: blue capsule 300 points, freed Option 0, both four frames (R4-02.B2)', () => {
     expect(ITEM_KINDS[ItemKind.BlueCapsule]).toMatchObject({
       sprite: 'items/capsule-blue',
       score: CAPSULE_SCORE,
-      frames: 2,
+      frames: 4,
     });
     expect(ITEM_KINDS[ItemKind.FreeOption]).toMatchObject({
       sprite: 'options/stolen',
       score: 0,
-      frames: 2,
+      frames: 4,
     });
     expect(FREE_OPTION_DRIFT).toHaveLength(16);
     for (let k = 0; k < 8; k++) expect(FREE_OPTION_DRIFT[k * 2]).toBeLessThan(0); // drift left

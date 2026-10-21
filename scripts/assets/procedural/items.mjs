@@ -7,10 +7,17 @@
  *
  * The point item `items/point` (5×5, 2 frames, plan M2-02): a small gold diamond with a dark
  * rim that cancelled bullets turn into; frame 1 is its twinkle (a white centre and tips).
+ * Its v2 art is `R4-02.B3`'s; this generator draws it at 5×5, 2 frames at every scale.
  *
  * The bonus stages' items (plan M2-10): `items/capsule-bonus` (12×8, 2 frames) — the pill in gold,
  * worth 1,000 points — and `items/1up` (12×8, 2 frames) — the pill in green with a white `+`, an
  * extra life.
+ *
+ * From R4-02.B2 the four pills (capsule, capsule-blue, capsule-bonus, 1up) draw native on the
+ * v2 path (`artScale !== 1`): the art bible §5's **18×12** pills glinting over four frames — the
+ * spark appears on the dim body (frame 1), the pill lights with it (frame 2) and the flash alone
+ * fades (frame 3) before the cycle restarts — `blink: [0, 1, 2, 3]`, the count `core/powerups`
+ * indexes through `ITEM_KINDS`. v1's colours only; at art scale 1 the v1 pills, byte for byte.
  *
  * @module
  */
@@ -18,6 +25,7 @@ import { createImage, setPixel } from '../image.mjs';
 import { color, makeSprite } from './common.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
+/** @typedef {import('./index.mjs').GeneratorOptions} GeneratorOptions */
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
 /**
@@ -50,14 +58,19 @@ const CAPSULE_COLORS = {
 /**
  * Draws one capsule frame.
  *
- * @param {boolean} bright - The lit blink frame.
+ * @param {boolean} bright - The lit blink frame (the v2 cycle's frames 2–3).
  * @param {'red' | 'blue' | 'gold' | 'green'} [tint] - The capsule's colours (default the red
  *   power capsule).
- * @returns {Image} 12×8 frame.
+ * @param {boolean} [v2] - Draw the art bible §5's native 18×12 pill: the v1 shape ×1.5, the band
+ *   on rows 3–4, the spark the 3×2 white block at columns 5–7 of the band (the v1 glint's
+ *   (3,2)–(4,2) ×1.5).
+ * @param {boolean} [spark] - Whether the white spark is drawn — the v1 blink lights it exactly on
+ *   the bright frame, the v2 cycle carries it on frames 1–2 and drops it before the fade.
+ * @returns {Image} 12×8 frame (18×12 at `v2`).
  */
-function capsule(bright, tint = 'red') {
-  const w = 12;
-  const h = 8;
+function capsule(bright, tint = 'red', v2 = false, spark = bright) {
+  const w = v2 ? 18 : 12;
+  const h = v2 ? 12 : 8;
   const colors = CAPSULE_COLORS[tint];
   const rim = color(colors.rim);
   const body = color(colors.body[bright ? 1 : 0]);
@@ -68,12 +81,19 @@ function capsule(bright, tint = 'red') {
     for (let x = 0; x < w; x++) {
       if (!insidePill(x, y, w, h, 0)) continue;
       if (!insidePill(x, y, w, h, 1)) setPixel(image, x, y, rim);
-      else setPixel(image, x, y, y === 2 ? band : body);
+      else setPixel(image, x, y, (v2 ? y === 3 || y === 4 : y === 2) ? band : body);
     }
   }
-  if (bright) {
-    setPixel(image, 3, 2, glint);
-    setPixel(image, 4, 2, glint);
+  if (spark) {
+    if (v2) {
+      for (let x = 5; x <= 7; x++) {
+        setPixel(image, x, 3, glint);
+        setPixel(image, x, 4, glint);
+      }
+    } else {
+      setPixel(image, 3, 2, glint);
+      setPixel(image, 4, 2, glint);
+    }
   }
   return image;
 }
@@ -81,15 +101,29 @@ function capsule(bright, tint = 'red') {
 /**
  * Draws one 1UP frame: the green pill with a white `+` in its middle.
  *
- * @param {boolean} bright - The lit blink frame.
- * @returns {Image} 12×8 frame.
+ * @param {boolean} bright - The lit blink frame (the v2 cycle's frames 2–3).
+ * @param {boolean} [v2] - Draw the native 18×12 pill: the `+` is the v1 one ×1.5 — the bar on
+ *   rows 6–7, columns 6–12, the stem in columns 9–10, rows 3–8.
+ * @param {boolean} [spark] - Whether the pill's white spark is drawn (see {@link capsule}).
+ * @returns {Image} 12×8 frame (18×12 at `v2`).
  */
-function oneUp(bright) {
-  const image = capsule(bright, 'green');
+function oneUp(bright, v2 = false, spark = bright) {
+  const image = capsule(bright, 'green', v2, spark);
   const white = color('#ffffff');
-  for (let d = -2; d <= 2; d++) {
-    setPixel(image, 6 + d, 4, white);
-    setPixel(image, 6, 4 + (d < 0 ? d : d > 1 ? 1 : d), white);
+  if (v2) {
+    for (let x = 6; x <= 12; x++) {
+      setPixel(image, x, 6, white);
+      setPixel(image, x, 7, white);
+    }
+    for (let y = 3; y <= 8; y++) {
+      setPixel(image, 9, y, white);
+      setPixel(image, 10, y, white);
+    }
+  } else {
+    for (let d = -2; d <= 2; d++) {
+      setPixel(image, 6 + d, 4, white);
+      setPixel(image, 6, 4 + (d < 0 ? d : d > 1 ? 1 : d), white);
+    }
   }
   return image;
 }
@@ -117,28 +151,71 @@ function point(twinkle) {
   return image;
 }
 
+/** The v2 glint cycle's stages: 0 dim, 1 dim + spark, 2 lit + spark, 3 lit plain. */
+const V2_STAGES = [0, 1, 2, 3];
+
 /**
  * Generates the item sprites.
  *
+ * @param {GeneratorOptions} [options] - `artScale`, the art scale the four pills are drawn at
+ *   (default 1; the point item is `R4-02.B3`'s v2 art and stays at its v1 size here).
  * @returns {SpriteDef[]} `items/capsule`, `items/point`, `items/capsule-blue`,
  *   `items/capsule-bonus` and `items/1up`.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const v2 = (options.artScale ?? 1) !== 1;
+  const blink = v2 ? { blink: [0, 1, 2, 3] } : { blink: [0, 1] };
+  /**
+   * The four v2 frames of one pill (or the two v1 ones).
+   *
+   * @param {(bright: boolean, v2: boolean, spark: boolean) => Image} frame - Draws one frame.
+   * @returns {Image[]} The sprite's frames.
+   */
+  const pill = (frame) =>
+    v2
+      ? V2_STAGES.map((stage) => frame(stage >= 2, true, stage === 1 || stage === 2))
+      : [frame(false, false, false), frame(true, false, true)];
   return [
-    makeSprite('items/capsule', [capsule(false), capsule(true)], 'items', {
-      animations: { blink: [0, 1] },
-    }),
+    makeSprite(
+      'items/capsule',
+      pill((b, n, s) => capsule(b, 'red', n, s)),
+      'items',
+      {
+        animations: blink,
+        native: v2,
+      },
+    ),
     makeSprite('items/point', [point(false), point(true)], 'items', {
       animations: { twinkle: [0, 1] },
     }),
-    makeSprite('items/capsule-blue', [capsule(false, 'blue'), capsule(true, 'blue')], 'items', {
-      animations: { blink: [0, 1] },
-    }),
-    makeSprite('items/capsule-bonus', [capsule(false, 'gold'), capsule(true, 'gold')], 'items', {
-      animations: { blink: [0, 1] },
-    }),
-    makeSprite('items/1up', [oneUp(false), oneUp(true)], 'items', {
-      animations: { blink: [0, 1] },
-    }),
+    makeSprite(
+      'items/capsule-blue',
+      pill((b, n, s) => capsule(b, 'blue', n, s)),
+      'items',
+      {
+        animations: blink,
+        native: v2,
+      },
+    ),
+    makeSprite(
+      'items/capsule-bonus',
+      pill((b, n, s) => capsule(b, 'gold', n, s)),
+      'items',
+      {
+        animations: blink,
+        native: v2,
+      },
+    ),
+    makeSprite(
+      'items/1up',
+      pill((b, n, s) => oneUp(b, n, s)),
+      'items',
+      {
+        animations: blink,
+        native: v2,
+      },
+    ),
   ];
 }

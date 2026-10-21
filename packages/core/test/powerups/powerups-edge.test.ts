@@ -339,7 +339,7 @@ describe('core/powerups edge — meter helpers', () => {
     expect(Object.values(MeterSlot)).toEqual([0, 1, 2, 3, 4, 5, 6]);
     expect(ITEM_KINDS[ItemKind.Capsule]).toEqual({
       sprite: CAPSULE_SPRITE,
-      frames: 2,
+      frames: 4,
       score: CAPSULE_SCORE,
     });
     expect(Object.isFrozen(ITEM_KINDS)).toBe(true);
@@ -749,15 +749,17 @@ describe('core/powerups edge — items', () => {
     const input = createInputSnapshot();
     const i = capsule(w, 300, 40);
     const frames: number[] = [];
-    for (let t = 0; t < 3 * ITEM_BLINK_TICKS; t++) {
+    for (let t = 0; t < 4 * ITEM_BLINK_TICKS; t++) {
       tick(w, input);
       // Drawn in phase 9 of tick `w.tick − 1` (the tick counter advances after the phases).
       const drawn = w.tick - 1;
-      expect(w.powerups.itemBatch.frame[0]).toBe(Math.floor(drawn / ITEM_BLINK_TICKS) % 2);
+      expect(w.powerups.itemBatch.frame[0]).toBe(
+        Math.floor(drawn / ITEM_BLINK_TICKS) % ITEM_KINDS[ItemKind.Capsule].frames,
+      );
       frames.push(w.powerups.itemBatch.frame[0]);
     }
-    expect(new Set(frames)).toEqual(new Set([0, 1]));
-    expect(w.powerups.pool.fields.age[i]).toBe(3 * ITEM_BLINK_TICKS);
+    expect(new Set(frames)).toEqual(new Set([0, 1, 2, 3]));
+    expect(w.powerups.pool.fields.age[i]).toBe(4 * ITEM_BLINK_TICKS);
     expect(w.powerups.itemBatch.flags[0]).toBe(0);
   });
 

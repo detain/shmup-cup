@@ -1643,7 +1643,9 @@ function ending(w: Walk, run: string): void {
  * hash whose walk banks the ship moved (`p.bank` indexes frames 1 … 4 now); the HUD rows carry the
  * C5 re-pin. R4-01.A3 moved the ten segments whose walk draws Options: the pulse frame is
  * `floor(tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1)` now — four frames instead of two, no
- * drawn position changed.
+ * drawn position changed. R4-02.B2 moved the four world hashes whose walk shows an item: every
+ * `ITEM_KINDS` entry carries four frames now, the glint's frames 1 and 3 drawn where the old
+ * blink held one of its two — no item position changed.
  */
 const PINNED: Record<string, Record<string, string>> = {
   front: {
@@ -1669,7 +1671,7 @@ const PINNED: Record<string, Record<string, string>> = {
     weaponSelect: 'e6e99b71 78c5388d 1385a200 0f7c1465',
     autoOrder: '46268a65 b1382dc9 8c9688e7 3a21ce85',
     'game.card': '0e219dfd c00882d5 23c53b5c 6cdc9245',
-    'game.play': '0cfccb05 689be265 d5bf1c44 b952d9c5',
+    'game.play': '0cfccb05 689be265 efcf60f2 b952d9c5',
     pause: '7eb86045 8e43757d edd29f92 94897405',
     'pause.options': '8ac7ca1d 2f9b7fa5 6cb5e472 83b688c5',
     'pause.quit': '3bdffd05 6d794ce5 ceecb972 fdb096c5',
@@ -1680,17 +1682,17 @@ const PINNED: Record<string, Record<string, string>> = {
     nameEntry: '3178a77d b1382dc9 56caab8a 70a36b85',
     'hiScore.result': 'abc91ac5 3bd76f29 ac4eb872 4cf8f185',
     'replays.lastGame': '7efce891 6b1ab597 725d1cb6 3f198b25',
-    replay: '90dfc2a6 96b9e1bc f6577d62 4e80eaa8',
+    replay: '90dfc2a6 96b9e1bc 2210b790 4e80eaa8',
   },
   coopDirect: {
     'coop.waiting': '06f4a445 4e789b32 46ac1c3a 2786acc5',
     'coop.join': 'a9fd96ba 6e7521e5 64c98acf 6cdc9245',
-    'coop.continue': 'a325452e 8d73aafa 167a5116 8a5296aa',
+    'coop.continue': 'a325452e 8d73aafa e6db9c44 8a5296aa',
     direct: '9e288f6e 3838b3cd eecea595 15723ac5',
   },
   attract: {
     'attract.idle': '351f400a 35d34843 b53f158f b9fbf7c5',
-    'attract.demo': 'e97f9e81 3adc99ee 0a01d686 7e4bc9c5',
+    'attract.demo': 'e97f9e81 3adc99ee cc948c2e 7e4bc9c5',
     'attract.hiScores': 'd4825c5a e5de0f9d 21e55742 4a222345',
     'attract.story': 'fff6403d 0f56de91 543ba9fe f7412c05',
     'attract.demo2': '35e94bc3 052ed31c b0891503 a3a65905',
