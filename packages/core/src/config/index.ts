@@ -81,7 +81,10 @@
  * {@link GameConfig.blackHole}, all four offered as `UserOptions.play` rows — and the display
  * options {@link DisplayOptions.crtFilter} ({@link CRT_FILTERS}, {@link CrtFilter},
  * {@link CRT_MAX_HEIGHT}) and {@link DisplayOptions.aspect} ({@link ASPECT_MODES},
- * {@link AspectMode}).
+ * {@link AspectMode}). R6-04: the GRAPHICS page's boot knobs {@link DisplayOptions.output}
+ * ({@link OUTPUT_CAPS}, {@link OutputCap}) and {@link DisplayOptions.renderer}
+ * ({@link RENDERER_CHOICES}, {@link RendererChoice}) — both read when the renderer is created,
+ * so a change takes effect at the next boot.
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
@@ -1540,6 +1543,46 @@ export const ASPECT_MODES = Object.freeze(['normal', 'wide', 'classic'] as const
 export type AspectMode = (typeof ASPECT_MODES)[number];
 
 /**
+ * The canvas backbuffer cap (R6-04, plan §12, decision W5-20 — the GRAPHICS page's OUTPUT row):
+ * every value but `auto` is the **display rows** the backbuffer is capped at — the game frame is
+ * rendered at the internal frame's size and upscaled into a backbuffer of at most that height,
+ * the compositor then stretches it to the screen. The M7 render bench (
+ * `tools/input-probe/results/2026-10-19-m7-bench-resolutions/`) measured the effect: at `720`
+ * every scene but the stress run keeps two-tick overruns at or below 0.8 %, and the worst fill
+ * drops from 59.5 % to 11.3 % to 1.8 % as the cap goes down.
+ *
+ * - `auto` (the default) — **720p on a TV**, the window's native size on desktop / web (no cap).
+ * - `1080` / `720` / `540` — cap the backbuffer at that many display rows (a smaller window is
+ *   never upscaled; the cap only ever lowers the buffer).
+ *
+ * Applied when the renderer is created, so a change takes effect at the next boot. Presentation
+ * only: the simulation never reads it.
+ */
+export const OUTPUT_CAPS = Object.freeze(['auto', '1080', '720', '540'] as const);
+
+/** One of {@link OUTPUT_CAPS}. */
+export type OutputCap = (typeof OUTPUT_CAPS)[number];
+
+/**
+ * Which WebGL version the host asks the canvas for (R6-04, decision W5-20 — the GRAPHICS page's
+ * RENDERER row):
+ *
+ * - `auto` (the default) — WebGL 2 only where the engine floor clears Chromium **71** and a
+ *   WebGL 2 context probe exists; both TVs (Chromium 68 / 69) therefore stay on WebGL 1, the
+ *   shipped behaviour. The floor sits deliberately at 71 so the M7s' late GL2 exposure never makes
+ *   `auto` flip a TV onto an unmeasured path; the bench saw GL2's 21 better / 0 worse variants
+ *   only at 1080p fill.
+ * - `webgl2` / `webgl1` — pin the version; the row is the explicit choice, the probe is `auto`'s
+ *   safety net (webOS 5 has never run on hardware).
+ *
+ * Applied when the renderer is created, so a change takes effect at the next boot.
+ */
+export const RENDERER_CHOICES = Object.freeze(['auto', 'webgl2', 'webgl1'] as const);
+
+/** One of {@link RENDERER_CHOICES}. */
+export type RendererChoice = (typeof RENDERER_CHOICES)[number];
+
+/**
  * Display options (presentation only). M2-02 brought the bullet palette, M2-08 the scale mode, the
  * screen-shake switch, reduced flashing and the hitbox marker, M2-09 the boss HP bar.
  */
@@ -1569,6 +1612,18 @@ export interface DisplayOptions {
   readonly crtFilter: CrtFilter;
   /** How the picture is shaped on the display ({@link ASPECT_MODES}; default `normal`; M3-02). */
   readonly aspect: AspectMode;
+  /**
+   * The canvas backbuffer cap ({@link OUTPUT_CAPS}; default `auto`; R6-04). Read when the renderer
+   * is created — a change takes effect at the next boot (`@shmup/shell` `boot` caps the display
+   * size; the TVs' `auto` resolves to 720p there, not here).
+   */
+  readonly output: OutputCap;
+  /**
+   * Which WebGL version to ask for ({@link RENDERER_CHOICES}; default `auto`; R6-04). Read when
+   * the renderer is created — a change takes effect at the next boot (`@shmup/shell` `boot`
+   * resolves it: an explicit row pins, `auto` takes WebGL 2 only above the Chromium 71 floor).
+   */
+  readonly renderer: RendererChoice;
   /**
    * The UI language (M3-03): a `content/strings/<id>.strings.json` language id, default
    * {@link DEFAULT_LANGUAGE} (`en`). Presentation only — the simulation never reads it, so a
@@ -1680,6 +1735,8 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     bossHpBar: false,
     crtFilter: 'off',
     aspect: 'normal',
+    output: 'auto',
+    renderer: 'auto',
     language: DEFAULT_LANGUAGE,
   }),
   play: DEFAULT_PLAY_OPTIONS,
@@ -1852,6 +1909,8 @@ export function resolveUserOptions(value: unknown): UserOptions {
       bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
       crtFilter: oneOf(display.crtFilter, CRT_FILTERS) ?? dd.crtFilter,
       aspect: oneOf(display.aspect, ASPECT_MODES) ?? dd.aspect,
+      output: oneOf(display.output, OUTPUT_CAPS) ?? dd.output,
+      renderer: oneOf(display.renderer, RENDERER_CHOICES) ?? dd.renderer,
       language:
         typeof display.language === 'string' && LANGUAGE_ID_PATTERN.test(display.language)
           ? display.language

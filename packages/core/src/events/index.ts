@@ -117,7 +117,10 @@ export const SimEventKind = {
    * the scene flow's profile choices (the host applies that profile to its input adapter), or, for
    * `BulletPalette` (M2-02), the index of the bullet palette in `BULLET_PALETTES`; for `ScaleMode`
    * (M2-08) the index in `SCALE_MODES`; for `ScreenShake` / `ReduceFlashing` / `ShowHitbox` (M2-08)
-   * and `BossHpBar` (M2-09) 1 = on, 0 = off. Pushed
+   * and `BossHpBar` (M2-09) 1 = on, 0 = off; for `CrtFilter` (M3-02) the index in `CRT_FILTERS`,
+   * for `Aspect` (M3-02) the index in `ASPECT_MODES`; for `Output` / `Renderer` (R6-04) the index
+   * in `OUTPUT_CAPS` / `RENDERER_CHOICES` — those two are boot knobs: stored when the page closes
+   * and applied when the next renderer is created. Pushed
    * live, on every change; the save is written when the screen closes.
    */
   UserOption: 13,
@@ -223,6 +226,18 @@ export const UserOptionKind = {
    * is stored and shows from the next launch; the host only has to persist it.
    */
   Language: 13,
+  /**
+   * OUTPUT (R6-04): `param` = index of the chosen canvas backbuffer cap in `core/config`
+   * `OUTPUT_CAPS` (the GRAPHICS page's boot knob — the host marks it restart-pending; the cap is
+   * read when the next renderer is created).
+   */
+  Output: 14,
+  /**
+   * RENDERER (R6-04): `param` = index of the chosen WebGL version request in `core/config`
+   * `RENDERER_CHOICES` (the GRAPHICS page's boot knob — the host marks it restart-pending; the
+   * choice is read when the next renderer is created).
+   */
+  Renderer: 15,
 } as const;
 
 /** A {@link UserOptionKind} code. */

@@ -333,7 +333,9 @@ import {
   MEGA_CHOICES,
   METER_SLOT_NAMES,
   OPTION_CHOICES,
+  OUTPUT_CAPS,
   POWER_UP_MODES,
+  RENDERER_CHOICES,
   SHIELD_CHOICES,
   VOLUME_LEVELS,
   ART_SCALE,
@@ -596,6 +598,7 @@ export type SceneId =
   | 'soundTest'
   | 'controls'
   | 'display'
+  | 'graphics'
   | 'gameOptions'
   | 'extras'
   | 'rebind'
@@ -1150,13 +1153,16 @@ export const OptionsItem = {
   Display: 4,
   /** GAME: the {@link GameOptionsScene} page. */
   Game: 5,
+  /** GRAPHICS: the {@link GraphicsScene} page (R6-04). */
+  Graphics: 6,
   /** EXTRAS: the {@link ExtrasScene} page (M3-02). */
-  Extras: 6,
+  Extras: 7,
   /** BACK: store the volumes, write the save and close. */
-  Back: 7,
+  Back: 8,
 } as const;
 
-/** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09). */
+/** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09; R6-04 moved the
+ * CRT and ASPECT rows to {@link GraphicsItem}). */
 export const DisplayItem = {
   /** BULLETS: the enemy bullet palette choice (M2-02). */
   Bullets: 0,
@@ -1170,15 +1176,29 @@ export const DisplayItem = {
   Hitbox: 4,
   /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
   BossHp: 5,
-  /** CRT: the CRT / scanline filter — `CRT_FILTERS` (M3-02). */
-  Crt: 6,
-  /** ASPECT: how the picture is shaped on the display — `ASPECT_MODES` (M3-02). */
-  Aspect: 7,
   /** LANGUAGE: the UI language — `core/ui` `uiLanguageIds` (M3-03). */
-  Language: 8,
+  Language: 6,
   /** BACK: store and return to the Options screen. */
-  Back: 9,
+  Back: 7,
 } as const;
+
+/** The GRAPHICS page's items (R6-04 — {@link GraphicsScene}; the CRT / ASPECT rows of M3-02,
+ * moved from the DISPLAY page, and the two new boot knobs OUTPUT / RENDERER). */
+export const GraphicsItem = {
+  /** OUTPUT: the canvas backbuffer cap — `OUTPUT_CAPS` (boot knob). */
+  Output: 0,
+  /** RENDERER: the WebGL version to ask for — `RENDERER_CHOICES` (boot knob). */
+  Renderer: 1,
+  /** CRT: the CRT / scanline filter — `CRT_FILTERS` (M3-02). */
+  Crt: 2,
+  /** ASPECT: how the picture is shaped on the display — `ASPECT_MODES` (M3-02). */
+  Aspect: 3,
+  /** BACK: store and return to the Options screen. */
+  Back: 4,
+} as const;
+
+/** A {@link GraphicsItem} code. */
+export type GraphicsItem = (typeof GraphicsItem)[keyof typeof GraphicsItem];
 
 /** The CONTROLS page's items (M2-16). */
 export const ControlsItem = {
@@ -1459,6 +1479,10 @@ export interface SceneLabels {
   readonly crt: readonly string[];
   /** ASPECT, in `core/config` `ASPECT_MODES` order (M3-02). */
   readonly aspect: readonly string[];
+  /** OUTPUT, in `core/config` `OUTPUT_CAPS` order (R6-04). */
+  readonly outputCaps: readonly string[];
+  /** RENDERER, in `core/config` `RENDERER_CHOICES` order (R6-04). */
+  readonly rendererChoices: readonly string[];
 }
 
 /**
@@ -1492,6 +1516,8 @@ export function buildSceneLabels(t: UiText): SceneLabels {
     flash: list(t.flashNormal, t.flashReduced),
     crt: list(t.crtOff, t.crtLight, t.crtFull),
     aspect: list(t.aspectNormal, t.aspectWide, t.aspectClassic),
+    outputCaps: list(t.outputAuto, t.output1080, t.output720, t.output540),
+    rendererChoices: list(t.rendererAuto, t.rendererWebGL2, t.rendererWebGL1),
     shipModes: list(t.shipModeMeter, t.shipModeDirect),
     shipHints: Object.freeze([
       list(t.shipHintMeter1, t.shipHintMeter2, t.shipHintMeter3),
@@ -1918,6 +1944,8 @@ interface FlowControl {
   readonly controlsPage: ControlsScene;
   /** The Options screen's DISPLAY page (M2-16). */
   readonly displayPage: DisplayScene;
+  /** The Options screen's GRAPHICS page (R6-04). */
+  readonly graphicsPage: GraphicsScene;
   /** The Options screen's GAME page (M2-16). */
   readonly gameOptionsPage: GameOptionsScene;
   /** The Options screen's EXTRAS page (M3-02). */
@@ -2445,6 +2473,7 @@ function hidesTitleHi(id: SceneId): boolean {
     case 'rebind':
     case 'inputTest':
     case 'display':
+    case 'graphics':
     case 'gameOptions':
     case 'extras':
     case 'difficulty':
@@ -3265,6 +3294,7 @@ export class OptionsScene extends SceneBase {
       t.optControls,
       t.optDisplay,
       t.optGame,
+      t.optGraphics,
       t.optExtras,
       t.back,
     ]);
@@ -3330,9 +3360,11 @@ export class OptionsScene extends SceneBase {
             ? flow.displayPage
             : menu.focus === OptionsItem.Game
               ? flow.gameOptionsPage
-              : menu.focus === OptionsItem.Extras
-                ? flow.extrasPage
-                : null;
+              : menu.focus === OptionsItem.Graphics
+                ? flow.graphicsPage
+                : menu.focus === OptionsItem.Extras
+                  ? flow.extrasPage
+                  : null;
       // OK on a slider changes nothing and makes no sound.
       if (page === null) return;
       flow.sfx(SFX_CUES.MenuSelect);
@@ -3367,25 +3399,25 @@ export class OptionsScene extends SceneBase {
   }
 }
 
-/** From the DISPLAY page's bottom edge up to its LANGUAGE hint (12). */
+/** From the DISPLAY / GRAPHICS page's bottom edge up to its hint (12; R6-04). */
 const DISPLAY_HINT_DY = uiPx(12);
 
 /**
  * The Options screen's DISPLAY page (M2-16 — shmup_feat.md §21 "Display: scale mode, screen shake
  * on/off, flash reduction, show hitbox"; accessibility "colorblind bullet palettes"): BULLETS (the
  * enemy bullet colour set — M2-02), SCALE (integer / fit / stretch), SHAKE, FLASHES (normal /
- * reduced), HITBOX (M2-08), BOSS HP (M2-09), CRT (off / light / full) and ASPECT (normal /
- * ultra-wide / classic 4:3) — both M3-02 — and BACK.
+ * reduced), HITBOX (M2-08), BOSS HP (M2-09), LANGUAGE (M3-03) and BACK — the CRT and ASPECT rows
+ * moved to {@link GraphicsScene} in v2's R6-04.
  *
  * @remarks
  * An overlay over the Options screen (opaque panel). Opening it reads the save's display options.
  * Every change applies **live** through a `UserOption` event with the choice's index
  * (`BulletPalette` — the index in `BULLET_PALETTES` —, `ScaleMode` — in `SCALE_MODES` —,
- * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on —, `CrtFilter` — the index in
- * `CRT_FILTERS` — and `Aspect` — the index in `ASPECT_MODES`; the host applies them to the
- * renderer; the game's HUD follows the saved boss HP bar once the page closes). SHAKE, HITBOX and
- * BOSS HP are toggles (Left = OFF, Right = ON, OK flips). BACK or Back stores them in the save,
- * writes it when it changed and returns to the Options screen.
+ * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on —; the host applies them to
+ * the renderer; the game's HUD follows the saved boss HP bar once the page closes). SHAKE, HITBOX
+ * and BOSS HP are toggles (Left = OFF, Right = ON, OK flips). BACK or Back stores them in the save
+ * — the GRAPHICS page's four fields carry over untouched —, writes it when it changed and returns
+ * to the Options screen.
  */
 export class DisplayScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -3406,10 +3438,6 @@ export class DisplayScene extends SceneBase {
   readonly hitbox: Toggle = createToggle(false);
   /** BOSS HP: the boss HP bar on / off. */
   readonly bossHp: Toggle = createToggle(false);
-  /** CRT: the CRT / scanline filter (`CRT_FILTERS`; M3-02). */
-  readonly crt: Choice;
-  /** ASPECT: the picture's shape (`ASPECT_MODES`; M3-02). */
-  readonly aspect: Choice;
   /** LANGUAGE: the UI language, one of {@link FlowControl.languages} (M3-03). */
   readonly language: Choice;
   /** The menu ({@link DisplayItem} order). */
@@ -3427,8 +3455,6 @@ export class DisplayScene extends SceneBase {
     this.bullets = createChoice(labels.bulletPalette, 0);
     this.scale = createChoice(labels.scaleMode, 0);
     this.flashes = createChoice(labels.flash, 0);
-    this.crt = createChoice(labels.crt, 0);
-    this.aspect = createChoice(labels.aspect, 0);
     this.language = createChoice(flow.languageLabels.slice(), 0);
     this.menu = createListMenu([
       { label: t.optBullets, choice: this.bullets },
@@ -3437,8 +3463,6 @@ export class DisplayScene extends SceneBase {
       { label: t.optFlashes, choice: this.flashes },
       { label: t.optHitbox, toggle: this.hitbox },
       { label: t.optBossHp, toggle: this.bossHp },
-      { label: t.optCrt, choice: this.crt },
-      { label: t.optAspect, choice: this.aspect },
       { label: t.optLanguage, choice: this.language },
       t.back,
     ]);
@@ -3461,10 +3485,6 @@ export class DisplayScene extends SceneBase {
     this.flashes.index = display.reduceFlashing ? 1 : 0;
     this.hitbox.value = display.showHitbox;
     this.bossHp.value = display.bossHpBar;
-    const crt = CRT_FILTERS.indexOf(display.crtFilter);
-    this.crt.index = crt >= 0 ? crt : 0;
-    const aspect = ASPECT_MODES.indexOf(display.aspect);
-    this.aspect.index = aspect >= 0 ? aspect : 0;
     const language = this.flow.languages.indexOf(display.language);
     this.language.index = language >= 0 ? language : 0;
     this.menu.focus = DisplayItem.Bullets;
@@ -3478,14 +3498,13 @@ export class DisplayScene extends SceneBase {
     save.setOptions({
       ...save.options,
       display: {
+        ...save.options.display,
         bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard',
         scaleMode: SCALE_MODES[this.scale.index] ?? 'integer',
         screenShake: this.shake.value,
         reduceFlashing: this.flashes.index === 1,
         showHitbox: this.hitbox.value,
         bossHpBar: this.bossHp.value,
-        crtFilter: CRT_FILTERS[this.crt.index] ?? 'off',
-        aspect: ASPECT_MODES[this.aspect.index] ?? 'normal',
         language: flow.languages[this.language.index] ?? DEFAULT_LANGUAGE,
       },
     });
@@ -3528,12 +3547,6 @@ export class DisplayScene extends SceneBase {
         case DisplayItem.BossHp:
           flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
           break;
-        case DisplayItem.Crt:
-          flow.userOption(UserOptionKind.CrtFilter, this.crt.index);
-          break;
-        case DisplayItem.Aspect:
-          flow.userOption(UserOptionKind.Aspect, this.aspect.index);
-          break;
         case DisplayItem.Language:
           flow.userOption(UserOptionKind.Language, this.language.index);
           break;
@@ -3557,6 +3570,173 @@ export class DisplayScene extends SceneBase {
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     list.setString(base, t.displayTitle);
     list.setString(base + 1, t.languageHint);
+    list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 2, OPTIONS_MENU_LAYOUT, t);
+    list.text(
+      base + 1,
+      FRAME_CX,
+      p.y + p.h - DISPLAY_HINT_DY,
+      UI_COLORS.disabled,
+      TextAlign.Center,
+    );
+  }
+}
+
+/**
+ * The Options screen's GRAPHICS page (v2's R6-04 — plan_resolution.md §12, owner decision W5-20):
+ * OUTPUT (the canvas backbuffer cap — `auto` / 1080 / 720 / 540 display rows), RENDERER (which
+ * WebGL version to ask for — `auto` / WebGL 2 / WebGL 1), CRT (off / light / full) and ASPECT
+ * (normal / ultra-wide / classic 4:3) — the latter two moved here from the DISPLAY page — and BACK.
+ *
+ * @remarks
+ * An overlay over the Options screen (opaque panel). CRT and ASPECT apply **live**, exactly as
+ * they did on the DISPLAY page before the move: a `UserOption` event (`CrtFilter` / `Aspect`)
+ * with the choice's index — the host switches the renderer's CRT pass or re-places the picture.
+ * OUTPUT and RENDERER are **boot knobs**: the renderer reads them when it is created, so changing
+ * one only stores the choice — the `UserOption` event (`Output` / `Renderer`) marks it
+ * restart-pending, and while either row is focused the page's hint reads `APPLIES AT RESTART`
+ * (the GAME / EXTRAS pages' "next game" hint pattern). BACK or Back stores the four values in the
+ * save — the DISPLAY page's fields carry over untouched —, writes it when it changed and returns
+ * to the Options screen. An explicit RENDERER row pins its version; `auto` keeps the host's rule
+ * (WebGL 2 only above the Chromium 71 floor with a working context probe — both TVs stay on
+ * WebGL 1).
+ */
+export class GraphicsScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'graphics' as const;
+  /** An overlay over the Options screen. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** OUTPUT: the canvas backbuffer cap (`OUTPUT_CAPS`; boot knob). */
+  readonly output: Choice;
+  /** RENDERER: the WebGL version to ask for (`RENDERER_CHOICES`; boot knob). */
+  readonly renderer: Choice;
+  /** CRT: the CRT / scanline filter (`CRT_FILTERS`; M3-02, moved here by R6-04). */
+  readonly crt: Choice;
+  /** ASPECT: the picture's shape (`ASPECT_MODES`; M3-02, moved here by R6-04). */
+  readonly aspect: Choice;
+  /** The menu ({@link GraphicsItem} order). */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the page.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const labels = flow.labels;
+    this.output = createChoice(labels.outputCaps, 0);
+    this.renderer = createChoice(labels.rendererChoices, 0);
+    this.crt = createChoice(labels.crt, 0);
+    this.aspect = createChoice(labels.aspect, 0);
+    this.menu = createListMenu([
+      { label: t.optOutput, choice: this.output },
+      { label: t.optRenderer, choice: this.renderer },
+      { label: t.optCrt, choice: this.crt },
+      { label: t.optAspect, choice: this.aspect },
+      t.back,
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 2 + menuStringSlots(this.menu);
+  }
+
+  /** Reads the save's graphics options; focus on OUTPUT, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const display = this.flow.save.options.display;
+    const output = OUTPUT_CAPS.indexOf(display.output);
+    this.output.index = output >= 0 ? output : 0;
+    const renderer = RENDERER_CHOICES.indexOf(display.renderer);
+    this.renderer.index = renderer >= 0 ? renderer : 0;
+    const crt = CRT_FILTERS.indexOf(display.crtFilter);
+    this.crt.index = crt >= 0 ? crt : 0;
+    const aspect = ASPECT_MODES.indexOf(display.aspect);
+    this.aspect.index = aspect >= 0 ? aspect : 0;
+    this.menu.focus = GraphicsItem.Output;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Stores the graphics options, writes the save when it changed, and closes the page. */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    save.setOptions({
+      ...save.options,
+      display: {
+        ...save.options.display,
+        output: OUTPUT_CAPS[this.output.index] ?? 'auto',
+        renderer: RENDERER_CHOICES[this.renderer.index] ?? 'auto',
+        crtFilter: CRT_FILTERS[this.crt.index] ?? 'off',
+        aspect: ASPECT_MODES[this.aspect.index] ?? 'normal',
+      },
+    });
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /**
+   * Moves the focus, announces a change at once (live for CRT / ASPECT, restart-pending for
+   * OUTPUT / RENDERER), BACK / Back stores and closes. Never allocates.
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === GraphicsItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Changed) {
+      switch (menu.focus) {
+        case GraphicsItem.Output:
+          flow.userOption(UserOptionKind.Output, this.output.index);
+          break;
+        case GraphicsItem.Renderer:
+          flow.userOption(UserOptionKind.Renderer, this.renderer.index);
+          break;
+        case GraphicsItem.Crt:
+          flow.userOption(UserOptionKind.CrtFilter, this.crt.index);
+          break;
+        case GraphicsItem.Aspect:
+          flow.userOption(UserOptionKind.Aspect, this.aspect.index);
+          break;
+        default:
+          break;
+      }
+    }
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `GRAPHICS`, the menu and the boot-knob hint (while OUTPUT or RENDERER is
+   * focused).
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    const focus = this.menu.focus;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.graphicsTitle);
+    list.setString(
+      base + 1,
+      focus === GraphicsItem.Output || focus === GraphicsItem.Renderer ? t.graphicsHint : '',
+    );
     list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
     drawMenu(list, this.menu, base + 2, OPTIONS_MENU_LAYOUT, t);
     list.text(
@@ -9914,6 +10094,8 @@ export interface SceneFlow {
   readonly controlsPage: ControlsScene;
   /** The Options screen's DISPLAY page (M2-16). */
   readonly displayPage: DisplayScene;
+  /** The Options screen's GRAPHICS page (R6-04). */
+  readonly graphicsPage: GraphicsScene;
   /** The Options screen's GAME page (M2-16). */
   readonly gameOptionsPage: GameOptionsScene;
   /** The Options screen's EXTRAS page (M3-02). */
@@ -10683,6 +10865,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.soundTest = new SoundTestScene(control);
   control.controlsPage = new ControlsScene(control);
   control.displayPage = new DisplayScene(control);
+  control.graphicsPage = new GraphicsScene(control);
   control.gameOptionsPage = new GameOptionsScene(control);
   control.extrasPage = new ExtrasScene(control);
   control.rebind = new RebindScene(control);
@@ -10722,6 +10905,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.soundTest,
     control.controlsPage,
     control.displayPage,
+    control.graphicsPage,
     control.gameOptionsPage,
     control.extrasPage,
     control.rebind,
@@ -10785,6 +10969,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     soundTest: control.soundTest,
     controlsPage: control.controlsPage,
     displayPage: control.displayPage,
+    graphicsPage: control.graphicsPage,
     gameOptionsPage: control.gameOptionsPage,
     extrasPage: control.extrasPage,
     rebind: control.rebind,

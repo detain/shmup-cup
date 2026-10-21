@@ -87,6 +87,7 @@ const STATIC_UI_TEXT = {
   optControls: 'CONTROLS',
   optDisplay: 'DISPLAY',
   optGame: 'GAME',
+  optGraphics: 'GRAPHICS',
   // The DISPLAY page.
   displayTitle: 'DISPLAY',
   optBullets: 'BULLETS',
@@ -408,6 +409,20 @@ const STATIC_UI_TEXT = {
   // M3-03: the DISPLAY page's LANGUAGE row.
   optLanguage: 'LANGUAGE',
   languageHint: 'LANGUAGE: FROM THE NEXT LAUNCH',
+  // v2's R6-04: the GRAPHICS page — the OUTPUT / RENDERER boot knobs and the CRT / ASPECT rows
+  // moved from DISPLAY. The output value labels spell the product sign with an ASCII X: the
+  // bitmap font carries no U+00D7.
+  graphicsTitle: 'GRAPHICS',
+  optOutput: 'OUTPUT',
+  optRenderer: 'RENDERER',
+  outputAuto: 'AUTO',
+  output1080: '1920X1080',
+  output720: '1280X720',
+  output540: '960X540',
+  rendererAuto: 'AUTO',
+  rendererWebGL2: 'WEBGL 2',
+  rendererWebGL1: 'WEBGL 1',
+  graphicsHint: 'APPLIES AT RESTART',
 } as const;
 
 /** Id of a UI label with a fixed id (a key of the built-in table). */

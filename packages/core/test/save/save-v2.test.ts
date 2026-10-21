@@ -57,6 +57,8 @@ describe('core/save version 2 (M2-16)', () => {
         bossHpBar: true,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
       // M3-01: the assists and feel resolve to their defaults (no migration needed).

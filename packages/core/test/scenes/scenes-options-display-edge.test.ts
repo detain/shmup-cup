@@ -241,6 +241,8 @@ describe('core/scenes options: display rows (edges)', () => {
         bossHpBar: false,
         crtFilter: 'light',
         aspect: 'classic',
+        output: '1080',
+        renderer: 'webgl2',
         language: 'en',
       },
     });
@@ -328,8 +330,6 @@ describe('core/scenes options: display rows (edges)', () => {
       'FLASHES',
       'HITBOX',
       'BOSS HP',
-      'CRT',
-      'ASPECT',
       'LANGUAGE',
       'BACK',
     ];

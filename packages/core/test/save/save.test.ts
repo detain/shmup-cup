@@ -75,8 +75,9 @@ describe('core/save module', () => {
   });
 
   it('has one migration per older version, chained up to the current one', () => {
-    // 3 since v2's R2-01 (v1's hi-score tables archived); the key stays the format family's.
-    expect(SAVE_VERSION).toBe(3);
+    // 3 since v2's R2-01 (v1's hi-score tables archived), 4 since v2's R6-04 (the graphics boot
+    // knobs); the key stays the format family's.
+    expect(SAVE_VERSION).toBe(4);
     expect(SAVE_STORAGE_KEY).toBe('save.v1');
     expect(SAVE_MIGRATIONS).toHaveLength(SAVE_VERSION);
     SAVE_MIGRATIONS.forEach((step, n) => expect([step.from, step.to]).toEqual([n, n + 1]));
@@ -127,6 +128,8 @@ describe('core/save round trip', () => {
         bossHpBar: false,
         crtFilter: 'full',
         aspect: 'wide',
+        output: '720',
+        renderer: 'webgl2',
         language: 'en',
       },
       // The assists and feel of M3-01 round-trip too.
@@ -166,6 +169,8 @@ describe('core/save round trip', () => {
       bossHpBar: false,
       crtFilter: 'full',
       aspect: 'wide',
+      output: '720',
+      renderer: 'webgl2',
       language: 'en',
     });
   });
@@ -190,6 +195,8 @@ describe('core/save round trip', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
   });
@@ -231,6 +238,8 @@ describe('core/save round trip', () => {
           bossHpBar: false,
           crtFilter: 'off',
           aspect: 'normal',
+          output: 'auto',
+          renderer: 'auto',
           language: 'en',
         },
         // M3-01: the assists and feel; M3-02: the mechanic extras.
@@ -281,6 +290,8 @@ describe('core/save migrations', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,
@@ -318,10 +329,11 @@ describe('core/save migrations', () => {
       { from: 0, to: 1, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, a: 1 }) },
       { from: 1, to: 2, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, b: 2 }) },
       { from: 2, to: 3, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, c: 3 }) },
+      { from: 3, to: 4, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, e: 4 }) },
     ];
     expect(steps).toHaveLength(SAVE_VERSION);
     expect(migrateSave({ version: 0 }, steps)).toEqual({
-      data: { version: 0, a: 1, b: 2, c: 3 },
+      data: { version: 0, a: 1, b: 2, c: 3, e: 4 },
       fromVersion: 0,
     });
     expect(() => migrateSave({ version: 0 }, [])).toThrow(RangeError);
@@ -416,6 +428,8 @@ describe('core/save sanitising', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,

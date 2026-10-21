@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import {
   BULLET_PALETTES,
   DEFAULT_USER_OPTIONS,
+  OUTPUT_CAPS,
+  RENDERER_CHOICES,
   SCALE_MODES,
   VOLUME_LEVELS,
   resolveUserOptions,
@@ -43,6 +45,8 @@ describe('core/config user options', () => {
         // M3-02: the CRT filter and the picture's shape.
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
       // M3-01: the assists and feel; M3-02: the mechanic extras.
@@ -81,6 +85,8 @@ describe('core/config user options', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
   });
@@ -106,6 +112,8 @@ describe('core/config user options', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
     // Anything but a boolean takes the default.
@@ -114,6 +122,23 @@ describe('core/config user options', () => {
         .display,
     ).toMatchObject({ screenShake: true, reduceFlashing: false, showHitbox: false });
     expect(Object.isFrozen(resolveUserOptions({}).display)).toBe(true);
+  });
+
+  it('resolves the GRAPHICS boot knobs (R6-04): known names, else auto', () => {
+    expect(OUTPUT_CAPS).toEqual(['auto', '1080', '720', '540']);
+    expect(RENDERER_CHOICES).toEqual(['auto', 'webgl2', 'webgl1']);
+    for (const cap of OUTPUT_CAPS) {
+      expect(resolveUserOptions({ display: { output: cap } }).display.output).toBe(cap);
+    }
+    for (const choice of RENDERER_CHOICES) {
+      expect(resolveUserOptions({ display: { renderer: choice } }).display.renderer).toBe(choice);
+    }
+    for (const bad of ['1080p', '', 720, null, undefined]) {
+      expect(resolveUserOptions({ display: { output: bad } }).display.output).toBe('auto');
+    }
+    for (const bad of ['WebGL2', 'webgl', 2, null]) {
+      expect(resolveUserOptions({ display: { renderer: bad } }).display.renderer).toBe('auto');
+    }
   });
 
   it('maps volume levels to a squared gain', () => {
@@ -147,6 +172,8 @@ describe('core/config user options', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,

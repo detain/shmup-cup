@@ -221,6 +221,7 @@ describe('core/save migrateSave (edge)', () => {
       { from: 0, to: 1, migrate: () => ({ options: 5, hiScores: [1, 2], stats: 'x' }) },
       { from: 1, to: 2, migrate: (doc) => ({ ...doc }) },
       { from: 2, to: 3, migrate: (doc) => ({ ...doc, legacyScores: 'x' }) },
+      { from: 3, to: 4, migrate: (doc) => ({ ...doc }) },
     ];
     expect(parseSave('{}', garbage)).toEqual({
       data: createDefaultSave(),
@@ -587,6 +588,8 @@ describe('core/save SaveStore (edge)', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
     });
@@ -604,6 +607,8 @@ describe('core/save SaveStore (edge)', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       },
     });

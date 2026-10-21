@@ -221,12 +221,16 @@ export {
   ASPECT_MODES,
   CRT_FILTERS,
   CRT_MAX_HEIGHT,
+  OUTPUT_CAPS,
+  RENDERER_CHOICES,
   DEFAULT_DEATH_BOMB_TICKS,
   MAX_DEATH_BOMB_TICKS,
   SLOWDOWN_RUN_TICKS,
   SLOWDOWN_THRESHOLD,
   type AspectMode,
   type CrtFilter,
+  type OutputCap,
+  type RendererChoice,
 } from './config/index.js';
 
 export {
@@ -1413,6 +1417,8 @@ export {
   ExtrasItem,
   ExtrasScene,
   DisplayScene,
+  GraphicsItem,
+  GraphicsScene,
   GameOptionsItem,
   GameOptionsScene,
   INPUT_TEST_EXIT_TICKS,

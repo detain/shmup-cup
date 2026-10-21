@@ -76,8 +76,8 @@ function row(name: string, score: number): Record<string, unknown> {
 }
 
 describe('core/save version 3 (R2-01)', () => {
-  it('is version 3 with a step from version 2, under the same storage key', () => {
-    expect(SAVE_VERSION).toBe(3);
+  it('keeps the version-2 step in the chain, under the same storage key', () => {
+    expect(SAVE_VERSION).toBe(4);
     expect(SAVE_MIGRATIONS).toHaveLength(SAVE_VERSION);
     expect([SAVE_MIGRATIONS[2].from, SAVE_MIGRATIONS[2].to]).toEqual([2, 3]);
     expect(SAVE_STORAGE_KEY).toBe('save.v1');
@@ -85,9 +85,13 @@ describe('core/save version 3 (R2-01)', () => {
 
   it('the fixture is a version-2 document in the layout v1.0.0 writes', () => {
     expect(V2_DOC.version).toBe(2);
-    // The serialiser is v1.0.0's (the format adds only `legacyScores`, absent here): a version-2
-    // copy of the sanitised fixture writes the fixture's own fields, in its order.
-    const asV1Wrote = serializeSave({ ...sanitizeSave(V2_DOC), version: 2 });
+    // The serialiser is v1.0.0's apart from `legacyScores` (absent here) and — since R6-04 — the
+    // display group's two boot knobs, which a version-2 document never carried: take them out of
+    // the new write and the fixture's own bytes stand.
+    const asV1Wrote = serializeSave({ ...sanitizeSave(V2_DOC), version: 2 }).replace(
+      '"output":"auto","renderer":"auto",',
+      '',
+    );
     expect(asV1Wrote).toBe(JSON.stringify(V2_DOC));
     // It holds the three table kinds, an assisted row and unlocks.
     expect(Object.keys(V2_DOC.hiScores)).toEqual([
@@ -101,9 +105,17 @@ describe('core/save version 3 (R2-01)', () => {
   it('loads the v1 save migrated from version 2: options kept, tables archived, v2 tables empty', async () => {
     const storage = createMemoryStorage({ [SAVE_STORAGE_KEY]: V2 });
     const loaded = await loadSave(storage);
-    expect([loaded.status, loaded.fromVersion, loaded.data.version]).toEqual(['migrated', 2, 3]);
-    // Every option of every page, as v1 stored it.
-    expect(loaded.data.options).toEqual(V2_DOC.options);
+    // The chain runs on through R6-04's 3 → 4 step: the document lands at the current format.
+    expect([loaded.status, loaded.fromVersion, loaded.data.version]).toEqual(['migrated', 2, 4]);
+    // Every option of every page, as v1 stored it — plus the boot knobs at their defaults.
+    expect(loaded.data.options).toEqual({
+      ...V2_DOC.options,
+      display: {
+        ...(V2_DOC.options['display'] as Record<string, unknown>),
+        output: 'auto',
+        renderer: 'auto',
+      },
+    });
     expect(loaded.data.options.display).toMatchObject({
       scaleMode: 'fit',
       crtFilter: 'light',
@@ -124,14 +136,14 @@ describe('core/save version 3 (R2-01)', () => {
     expect(await storage.get(SAVE_CORRUPT_KEY)).toBeNull();
   });
 
-  it('writes the migrated save as version 3 on the next flush, then leaves it', async () => {
+  it('writes the migrated save at the current version on the next flush, then leaves it', async () => {
     const storage = createMemoryStorage({ [SAVE_STORAGE_KEY]: V2 });
     const store = createSaveStore(storage, await loadSave(storage));
     expect(store.dirty).toBe(true);
     expect(await store.flush()).toBe(true);
     const text = (await storage.get(SAVE_STORAGE_KEY)) ?? '';
     const doc = JSON.parse(text) as Record<string, unknown>;
-    expect(doc.version).toBe(3);
+    expect(doc.version).toBe(4);
     expect(Object.keys(doc)).toEqual([
       'version',
       'options',
@@ -143,18 +155,18 @@ describe('core/save version 3 (R2-01)', () => {
     expect(doc.legacyScores).toEqual(V2_DOC.hiScores);
     expect(doc.hiScores).toEqual({});
     const again = await loadSave(storage);
-    expect([again.status, again.fromVersion]).toEqual(['ok', 3]);
+    expect([again.status, again.fromVersion]).toEqual(['ok', 4]);
     expect(again.data).toEqual(store.data);
     expect(await createSaveStore(storage, again).flush()).toBe(false);
   });
 
-  it('migrates the version-0 and version-1 fixtures through to version 3', () => {
+  it('migrates the version-0 and version-1 fixtures through to the current version', () => {
     const v0 = parseSave(fixture('save-v0.json'));
-    expect([v0.status, v0.fromVersion, v0.data.version]).toEqual(['migrated', 0, 3]);
+    expect([v0.status, v0.fromVersion, v0.data.version]).toEqual(['migrated', 0, 4]);
     expect(v0.data.hiScores).toEqual({});
     expect(Object.keys(v0.data.legacyScores ?? {})).toEqual(['meter-normal']);
     const v1 = parseSave(fixture('save-v1.json'));
-    expect([v1.status, v1.fromVersion, v1.data.version]).toEqual(['migrated', 1, 3]);
+    expect([v1.status, v1.fromVersion, v1.data.version]).toEqual(['migrated', 1, 4]);
     expect(v1.data.hiScores).toEqual({});
     // The version-1 → 2 move happened first: the co-op and practice rows have their own tables.
     expect(Object.keys(v1.data.legacyScores ?? {})).toEqual([
@@ -180,8 +192,9 @@ describe('core/save version 3 (R2-01)', () => {
     expect(JSON.stringify(doc)).toBe(snapshot);
     expect(migrated.fromVersion).toBe(2);
     expect(migrated.data).toEqual({
-      version: 3,
-      options: { audio: { music: 1 } },
+      version: 4,
+      // The chain's R6-04 step ran on too: the display group carries the boot knobs.
+      options: { audio: { music: 1 }, display: { output: 'auto', renderer: 'auto' } },
       // A version-2 document has no legacyScores of its own: whatever it carried is replaced.
       legacyScores: doc.hiScores,
       hiScores: {},
@@ -205,7 +218,7 @@ describe('core/save version 3 (R2-01)', () => {
     expect(Object.keys(data.legacyScores ?? {})).toEqual(['direct-easy-2p', 'meter-normal']);
     const text = serializeSave(data);
     const parsed = parseSave(text);
-    expect(parsed).toEqual({ data, status: 'ok', fromVersion: 3, reason: '' });
+    expect(parsed).toEqual({ data, status: 'ok', fromVersion: 4, reason: '' });
     expect(serializeSave(parsed.data)).toBe(text);
     expect(text).toContain('"legacyScores":{"direct-easy-2p":[');
     expect(text).toContain('"assisted":true');

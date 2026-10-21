@@ -38,6 +38,7 @@ import {
   GLYPH_H,
   GLYPH_W,
   GameOptionsItem,
+  GraphicsItem,
   KNOWN_SCRIPT_IDS,
   LINE_H,
   OptionsItem,
@@ -743,6 +744,7 @@ function frontEnd(w: LayoutWalk): void {
   w.at('options');
   for (const [item, menu] of [
     [OptionsItem.Display, (): ListMenu => flow.displayPage.menu],
+    [OptionsItem.Graphics, (): ListMenu => flow.graphicsPage.menu],
     [OptionsItem.Game, (): ListMenu => flow.gameOptionsPage.menu],
     [OptionsItem.Extras, (): ListMenu => flow.extrasPage.menu],
   ] as const) {
@@ -758,8 +760,23 @@ function frontEnd(w: LayoutWalk): void {
   w.focus(flow.options.menu, OptionsItem.Display);
   w.press(Action.Confirm);
   w.hold(0, 2);
-  for (const item of [DisplayItem.Bullets, DisplayItem.Scale, DisplayItem.Crt]) {
+  for (const item of [DisplayItem.Bullets, DisplayItem.Scale]) {
     w.focus(flow.displayPage.menu, item);
+    w.press(Action.Right);
+  }
+  w.press(Action.Back);
+  w.hold(0, 2);
+  // The GRAPHICS page (R6-04): all four choices stepped — the two boot knobs included.
+  w.focus(flow.options.menu, OptionsItem.Graphics);
+  w.press(Action.Confirm);
+  w.hold(0, 2);
+  for (const item of [
+    GraphicsItem.Output,
+    GraphicsItem.Renderer,
+    GraphicsItem.Crt,
+    GraphicsItem.Aspect,
+  ]) {
+    w.focus(flow.graphicsPage.menu, item);
     w.press(Action.Right);
   }
   w.press(Action.Back);
@@ -1039,6 +1056,7 @@ const SCENES: Readonly<Record<SceneId, true>> = {
   soundTest: true,
   controls: true,
   display: true,
+  graphics: true,
   gameOptions: true,
   extras: true,
   rebind: true,

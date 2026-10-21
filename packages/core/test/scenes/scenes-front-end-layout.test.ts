@@ -279,6 +279,7 @@ describe('core/scenes front-end layout in the session language (R2-01)', () => {
     expectTitleHi(w, false);
     const pages: Array<[number, string]> = [
       [OptionsItem.Display, 'display'],
+      [OptionsItem.Graphics, 'graphics'],
       [OptionsItem.Game, 'gameOptions'],
       [OptionsItem.Extras, 'extras'],
     ];

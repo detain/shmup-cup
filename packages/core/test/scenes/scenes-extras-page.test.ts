@@ -4,24 +4,21 @@
  * save (`UserOptions.play`) and reach the *next* game's `GameConfig`, never the World in play, and
  * the BLACK HOLE hint that only shows while that row is focused.
  *
- * The DISPLAY page's two M3-02 rows are here too: CRT and ASPECT apply **live** through
- * `UserOption` events and are stored as `UserOptions.display`.
+ * The DISPLAY page's two M3-02 rows moved to the GRAPHICS page in v2's R6-04 — their live-event
+ * tests are in `scenes-graphics-page.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import {
-  ASPECT_MODES,
-  CRT_FILTERS,
   DEFAULT_DEATH_BOMB_TICKS,
   DEFAULT_PLAY_OPTIONS,
   DEFAULT_USER_OPTIONS,
   resolveUserOptions,
   userGameOverrides,
 } from '../../src/config/index.js';
-import { SimEventKind, UserOptionKind } from '../../src/events/index.js';
 import { Action } from '../../src/input/index.js';
 import { createMemoryStorage } from '../../src/platform/index.js';
 import { createSaveStore, loadSave } from '../../src/save/index.js';
-import { DisplayItem, ExtrasItem, OptionsItem, TitleItem } from '../../src/scenes/index.js';
+import { ExtrasItem, OptionsItem, TitleItem } from '../../src/scenes/index.js';
 import { frontEndContent } from '../helpers/front-end.js';
 import { FrontEndSession } from '../helpers/front-end-session.js';
 import type { SaveStore } from '../../src/save/index.js';
@@ -58,20 +55,6 @@ function openPage(s: FrontEndSession, item: number): void {
   while (s.flow.options.menu.focus !== item) s.press(Action.Down);
   s.press(Action.Confirm);
   s.hold(0, 2);
-}
-
-/**
- * The `UserOption` events since an index.
- *
- * @param s - The session.
- * @param from - First event index.
- * @returns `[kind, value]` pairs.
- */
-function userOptions(s: FrontEndSession, from: number): Array<[number, number]> {
-  return s.events
-    .slice(from)
-    .filter((e) => e[0] === SimEventKind.UserOption)
-    .map((e) => [e[1], e[2]]);
 }
 
 describe('core/scenes — the EXTRAS page (M3-02)', () => {
@@ -208,69 +191,5 @@ describe('core/scenes — the EXTRAS page (M3-02)', () => {
       blackHole: false,
     });
     expect(userGameOverrides(DEFAULT_USER_OPTIONS)).toEqual({});
-  });
-});
-
-describe('core/scenes — the DISPLAY page CRT and ASPECT rows (M3-02)', () => {
-  it('applies both live and stores them', async () => {
-    const storage = createMemoryStorage();
-    const save = createSaveStore(storage);
-    const s = optionsSession(save);
-    openPage(s, OptionsItem.Display);
-    const page = s.flow.displayPage;
-    /**
-     * The page's focused row (read through a call, so nothing narrows it).
-     *
-     * @returns The `DisplayItem` row.
-     */
-    const focus = (): number => page.menu.focus;
-    while (focus() !== DisplayItem.Crt) s.press(Action.Down);
-    const from = s.events.length;
-    s.press(Action.Right); // LIGHT
-    s.press(Action.Right); // FULL
-    s.press(Action.Down);
-    expect(focus()).toBe(DisplayItem.Aspect);
-    s.press(Action.Right); // WIDE
-    s.press(Action.Right); // CLASSIC
-    expect(userOptions(s, from)).toEqual([
-      [UserOptionKind.CrtFilter, 1],
-      [UserOptionKind.CrtFilter, 2],
-      [UserOptionKind.Aspect, 1],
-      [UserOptionKind.Aspect, 2],
-    ]);
-    expect(CRT_FILTERS[page.crt.index]).toBe('full');
-    expect(ASPECT_MODES[page.aspect.index]).toBe('classic');
-    while (focus() !== DisplayItem.Back) s.press(Action.Down);
-    s.press(Action.Confirm);
-    expect(save.options.display).toMatchObject({ crtFilter: 'full', aspect: 'classic' });
-    await settle();
-    const again = optionsSession(createSaveStore(storage, await loadSave(storage)));
-    openPage(again, OptionsItem.Display);
-    expect(CRT_FILTERS[again.flow.displayPage.crt.index]).toBe('full');
-    expect(ASPECT_MODES[again.flow.displayPage.aspect.index]).toBe('classic');
-  });
-
-  it('wraps around the ends of both lists', () => {
-    const s = optionsSession();
-    openPage(s, OptionsItem.Display);
-    const page = s.flow.displayPage;
-    while (page.menu.focus !== DisplayItem.Crt) s.press(Action.Down);
-    expect(page.crt.index).toBe(0);
-    s.press(Action.Left);
-    expect(page.crt.index).toBe(CRT_FILTERS.length - 1);
-    for (let i = 0; i < CRT_FILTERS.length; i++) s.press(Action.Right);
-    expect(page.crt.index).toBe(CRT_FILTERS.length - 1);
-    s.press(Action.Down);
-    expect(page.aspect.index).toBe(0);
-    s.press(Action.Left);
-    expect(page.aspect.index).toBe(ASPECT_MODES.length - 1);
-    for (let i = 0; i < ASPECT_MODES.length; i++) s.press(Action.Right);
-    expect(page.aspect.index).toBe(ASPECT_MODES.length - 1);
-  });
-
-  it('a saved display section with unknown names falls back to off / normal', () => {
-    const options = resolveUserOptions({ display: { crtFilter: 'plasma', aspect: 'square' } });
-    expect(options.display.crtFilter).toBe('off');
-    expect(options.display.aspect).toBe('normal');
   });
 });

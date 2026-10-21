@@ -200,7 +200,8 @@ describe('core/scenes options: opening and drawing', () => {
     expect([o.master.value, o.music.value, o.sfx.value]).toEqual([6, 4, 9]);
     expect(o.menu.focus).toBe(OptionsItem.Master);
     const texts = s.uiTexts();
-    // M2-16: the sound sliders, then the CONTROLS / DISPLAY / GAME pages; M3-02: EXTRAS.
+    // M2-16: the sound sliders, then the CONTROLS / DISPLAY / GAME pages; M3-02: EXTRAS;
+    // R6-04: GRAPHICS.
     expect(texts.slice(texts.lastIndexOf('OPTIONS'))).toEqual([
       'OPTIONS',
       '→',
@@ -210,6 +211,7 @@ describe('core/scenes options: opening and drawing', () => {
       'CONTROLS',
       'DISPLAY',
       'GAME',
+      'GRAPHICS',
       'EXTRAS',
       'BACK',
     ]);
@@ -356,6 +358,8 @@ describe('core/scenes options: saving', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
     s.hold(0, 3);
@@ -549,9 +553,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
     ]);
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['STRETCH', 'OFF', 'REDUCED', 'ON']));
     s.press(Action.Down); // BOSS HP (M2-09), left OFF
-    s.press(Action.Down); // CRT (M3-02), left OFF
-    s.press(Action.Down); // ASPECT (M3-02), left NORMAL
-    s.press(Action.Down); // LANGUAGE (M3-03), left ENGLISH
+    s.press(Action.Down); // LANGUAGE (M3-03), left ENGLISH (R6-04: CRT / ASPECT live on GRAPHICS)
     s.press(Action.Down);
     expect(o.menu.focus).toBe(DisplayItem.Back);
     s.press(Action.Confirm);
@@ -564,6 +566,8 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
     await settle();

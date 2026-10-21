@@ -11,12 +11,13 @@
  * inspection. Storage is async so Electron can use files (M2-17) and the web / Tizen
  * `localStorage`; Tizen deletes it on uninstall.
  *
- * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 3 since v2's R2-01) under the
+ * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 4 since v2's R6-04; 3 since
+ *   v2's R2-01) under the
  *   storage key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's
  *   `version` drives the migrations): `{ version, options: { audio: { master, music, sfx },
  *   input: { profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
  *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar, crtFilter,
- *   aspect, language }, game: {
+ *   aspect, output, renderer, language }, game: {
  *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
  *   [modeKey]: HiScoreEntry[≤ 10] }, legacyScores?: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
  *   gamesStarted, gameOvers, stagesCleared }, unlocks? }`. The
@@ -30,9 +31,12 @@
  *   one-player tables into their own tables (see {@link SAVE_MIGRATIONS}). **Version 3** (v2's
  *   R2-01 — plan_resolution.md §3.4, owner decisions W4-8 / W4-13) archives the hi-score tables of
  *   v1 (384×216 — scores made in a different game) under the read-only `legacyScores`, kept but
- *   shown nowhere, and starts v2's tables empty; options, stats and unlocks carry over. A v1.x
- *   build reading a version-3 document treats it as newer than itself — the defaults, with the text
- *   kept under {@link SAVE_CORRUPT_KEY} (W4-14).
+ *   shown nowhere, and starts v2's tables empty; options, stats and unlocks carry over. **Version
+ *   4** (v2's R6-04 — owner decision W5-20) adds the GRAPHICS page's two boot knobs to the display
+ *   group, `output` and `renderer`, both defaulting to `auto` — the behaviour shipped before the
+ *   rows existed (native output on desktop, 720p on a TV, WebGL 1 under the Chromium 71 floor). A
+ *   v1.x build reading a document newer than itself treats it as corrupt-by-version — the defaults,
+ *   with the text kept under {@link SAVE_CORRUPT_KEY} (W4-14).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`; since M2-15 the
@@ -87,6 +91,10 @@
  * migration moves the v1 hi-score tables there (see {@link SAVE_MIGRATIONS}). The storage key stays
  * `save.v1`.
  *
+ * **R6-04 (v2).** {@link SAVE_VERSION} 4: the version-3 → 4 migration keeps every old field and
+ * gives the display group the two boot knobs at their `auto` defaults (see
+ * {@link SAVE_MIGRATIONS}). The storage key stays `save.v1`.
+ *
  * **Planned.** More stats as their screens arrive.
  *
  * @module
@@ -114,9 +122,10 @@ export const moduleInfo = defineModule({
 
 /**
  * The save format this build writes (2 since M2-16 — the controls and game options; 3 since v2's
- * R2-01 — the v1 hi-score tables archived under {@link SaveData.legacyScores}).
+ * R2-01 — the v1 hi-score tables archived under {@link SaveData.legacyScores}; 4 since v2's R6-04
+ * — the GRAPHICS page's boot knobs `output` / `renderer` in the display group).
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /** `Platform.storage` key of the save document (the web adapter prefixes it: `shmup-cup:save.v1`). */
 export const SAVE_STORAGE_KEY = 'save.v1';
@@ -397,16 +406,42 @@ function migrateV2(data: Readonly<Record<string, unknown>>): Record<string, unkn
 }
 
 /**
+ * Version 3 → 4 (v2's R6-04 — plan_resolution.md §12, owner decision W5-20). The GRAPHICS page's
+ * two boot knobs join the display group: `output` (the canvas backbuffer cap) and `renderer` (the
+ * WebGL version to ask for). Every version-3 field carries over as it is — the two new ones take
+ * their `auto` defaults, exactly the behaviour shipped before the rows existed (native output on
+ * desktop, 720p on a TV, WebGL 1 under the Chromium 71 floor). The sanitiser resolves anything a
+ * hostile document hid in those fields afterwards.
+ *
+ * @param data - A version-3 document.
+ * @returns The same data in the version-4 layout (sanitised afterwards).
+ */
+function migrateV3(data: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  const options = asRecord(data.options) ?? {};
+  const display = asRecord(options.display) ?? {};
+  return {
+    ...data,
+    version: 4,
+    options: {
+      ...options,
+      display: { output: 'auto', renderer: 'auto', ...display },
+    },
+  };
+}
+
+/**
  * The migration steps: `SAVE_MIGRATIONS[n]` turns version `n` into `n + 1`. Append one (and bump
  * {@link SAVE_VERSION}) whenever the format changes; never edit a shipped step. Version 0 → 1 is
  * the skeleton's pre-release layout (M1-17); 1 → 2 adds the controls and game options and moves
  * the older co-op / practice rows (M2-16); 2 → 3 archives v1's hi-score tables under
- * `legacyScores` and starts v2's empty (v2's R2-01).
+ * `legacyScores` and starts v2's empty (v2's R2-01); 3 → 4 adds the display group's two GRAPHICS
+ * boot knobs, `output` and `renderer`, at their `auto` defaults (v2's R6-04).
  */
 export const SAVE_MIGRATIONS: readonly SaveMigration[] = Object.freeze([
   Object.freeze({ from: 0, to: 1, migrate: migrateV0 }),
   Object.freeze({ from: 1, to: 2, migrate: migrateV1 }),
   Object.freeze({ from: 2, to: 3, migrate: migrateV2 }),
+  Object.freeze({ from: 3, to: 4, migrate: migrateV3 }),
 ]);
 
 /**
@@ -719,6 +754,9 @@ export function serializeSave(data: SaveData): string {
         // M3-02: the CRT filter and the picture's shape.
         crtFilter: display.crtFilter,
         aspect: display.aspect,
+        // R6-04: the GRAPHICS page's boot knobs (a save written before them gets `auto`).
+        output: display.output,
+        renderer: display.renderer,
         // M3-03: the UI language (a save written before it resolves to `en`).
         language: display.language,
       },
