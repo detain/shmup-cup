@@ -329,8 +329,8 @@ test.describe('advanced bosses (web build)', () => {
     const now = await page.evaluate(
       () => (window as unknown as DebugWindow).__shmupDebug.worldTick,
     );
-    // The intro fills it; then it is full (94 px of fill in the 96-px frame at x 296 at 640×360;
-    // 62, 64 and 176 at 384×216).
+    // The intro fills it; then it is full (158 px of fill in the 160-px frame at x 264 at
+    // 640×360; 94, 96 and x 160 at 384×216).
     await stepTo(page, now + 200);
     is = await colourAt(page, BAR_RED);
     red = 0;

@@ -66,6 +66,9 @@ export const GAME_OVER_DELAY_TICKS = 30;
 /** Ticks between the zone map's OK and the next zone (core `scenes` `MAP_LAUNCH_TICKS`). */
 export const MAP_LAUNCH_TICKS = 60;
 
+/** Ticks a campaign launch draws its zone title card (core `scenes` `ZONE_CARD_TICKS`). */
+export const ZONE_CARD_TICKS = 150;
+
 /**
  * Ticks between a hidden bonus entrance opening and the players in the bonus stage (core `scenes`
  * `BONUS_WARP_TICKS`).

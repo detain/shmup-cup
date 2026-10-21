@@ -48,6 +48,7 @@ import {
   GAME_OVER_DELAY_TICKS,
   SCENE_SLACK_TICKS,
   STAGE_CLEAR_DELAY_TICKS,
+  ZONE_CARD_TICKS,
   expectScene,
   tap,
   waitTicks,
@@ -90,8 +91,11 @@ const PIP_LABEL = rgb(0x9aa0c0);
 /** Normal menu text (`UI_COLORS.text`). */
 const MENU_TEXT = rgb(0xe8e8f0);
 
-/** A panel's 1-px border (`UI_COLORS.border`). */
-const PANEL_BORDER = rgb(0x5a6a98);
+/** A panel rim's magenta top and bottom line (`UI_COLORS.border`, two-tone since R4-03.C6). */
+const PANEL_BORDER = rgb(0xb838a8);
+
+/** A panel rim's cyan side rails (`UI_COLORS.rimInner`) — only along the default border. */
+const PANEL_RAIL = rgb(0x38c8e8);
 
 /** The zone map's focused node and cleared zone (`UI_COLORS.focus`). */
 const FOCUS_YELLOW = rgb(0xf8d030);
@@ -208,7 +212,9 @@ const FRAME_BOX: Box = { x0: 0, y0: 0, x1: FRAME_W - 1, y1: FRAME_H - 1 };
 /**
  * Finds the one panel of a screen and checks it is drawn whole inside the frame: the bounding box
  * of its border colour, every one of its four 1-px edges on screen along its whole length (a
- * panel larger than the frame would lose an edge), not touching the frame's edge.
+ * panel larger than the frame would lose an edge), not touching the frame's edge. As
+ * `drawPanel` (R4-03.C6) draws it: the default rim is magenta top and bottom with cyan
+ * side rails on the rows between the corners; an explicit border colour rings all four edges.
  *
  * @param shot - The screenshot.
  * @param border - The border's colour (default the UI kit's panel border).
@@ -223,14 +229,39 @@ function wholePanel(shot: Shot, border: Rgb = PANEL_BORDER, region: Box = FRAME_
   expect(b.y0).toBeGreaterThan(0);
   expect(b.x1).toBeLessThan(FRAME_W - 1);
   expect(b.y1).toBeLessThan(FRAME_H - 1);
-  const edge = (points: readonly [number, number][]): number =>
-    points.filter(([fx, fy]) => near(at(shot, fx, fy), border)).length / points.length;
+  const side = border === PANEL_BORDER ? PANEL_RAIL : border;
+  const edge = (points: readonly [number, number][], colour: Rgb): number =>
+    points.filter(([fx, fy]) => near(at(shot, fx, fy), colour)).length / points.length;
   const columns = Array.from({ length: b.x1 - b.x0 + 1 }, (_, i) => b.x0 + i);
-  const rows = Array.from({ length: b.y1 - b.y0 + 1 }, (_, i) => b.y0 + i);
-  expect(edge(columns.map((fx) => [fx, b.y0])), 'top edge').toBeGreaterThan(0.95);
-  expect(edge(columns.map((fx) => [fx, b.y1])), 'bottom edge').toBeGreaterThan(0.95);
-  expect(edge(rows.map((fy) => [b.x0, fy])), 'left edge').toBeGreaterThan(0.95);
-  expect(edge(rows.map((fy) => [b.x1, fy])), 'right edge').toBeGreaterThan(0.95);
+  const railRows = Array.from({ length: b.y1 - b.y0 - 1 }, (_, i) => b.y0 + 1 + i);
+  expect(
+    edge(
+      columns.map((fx) => [fx, b.y0]),
+      border,
+    ),
+    'top edge',
+  ).toBeGreaterThan(0.95);
+  expect(
+    edge(
+      columns.map((fx) => [fx, b.y1]),
+      border,
+    ),
+    'bottom edge',
+  ).toBeGreaterThan(0.95);
+  expect(
+    edge(
+      railRows.map((fy) => [b.x0, fy]),
+      side,
+    ),
+    'left edge',
+  ).toBeGreaterThan(0.95);
+  expect(
+    edge(
+      railRows.map((fy) => [b.x1, fy]),
+      side,
+    ),
+    'right edge',
+  ).toBeGreaterThan(0.95);
   return b;
 }
 
@@ -583,6 +614,9 @@ test.describe('frame layout (web build): the screens', () => {
     const errors = await openTitle(page, './');
     const canvas = page.locator('#game');
     await startGame(page);
+    // Past the launch zone card (R4-05.E3): it is a frame-wide v2-rimmed band and the paused
+    // world keeps its card, so the pause-menu screenshot must wait the card's 150 ticks out.
+    await waitTicks(page, ZONE_CARD_TICKS);
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
     await waitTicks(page, 4);
