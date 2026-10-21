@@ -559,7 +559,11 @@ export interface World {
   readonly pools: PoolRegistry;
   /** Broad-phase grid over the camera view (+ {@link GRID_MARGIN}), rebuilt in phase 6. */
   readonly grid: SpatialGrid;
-  /** The player ships' mirror batch (`LayerId.Player`). */
+  /**
+   * The player ships' mirror batch (`LayerId.Player`): every alive ship's thruster first
+   * (R4-01.A2, when the content gives the ships one), then the hulls — so a flame is always
+   * behind every ship. With both players alive: flame 0, flame 1, ship 0, ship 1.
+   */
   readonly playerBatch: SpriteBatch;
   /**
    * The ships' hurtboxes (M2-08, `view.hitboxes`): refilled with {@link World.playerBatch} at the
@@ -1779,6 +1783,13 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Pixels between a ship's centre and the point its thruster flame is anchored to (R4-01.A2):
+ * the hull's rear edge — both v2 ships' anchor x, the v1 showcase's `at[0] - 8` × 1.5
+ * (`packages/shell/src/showcase` `drawShip`).
+ */
+const PLAYER_THRUSTER_REAR_OFFSET = 12;
+
+/**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship `config.shipId` from
  * `content` (M2-05; the content's first ship when it has no such one), the stage
  * `config.stage` (camera at its start — or just before its boss with `config.stageSkip: 'boss'` —,
@@ -1828,7 +1839,7 @@ export function createWorld(
   players[0].active = true;
   spawnPlayer(players[0], camera);
 
-  const playerBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS);
+  const playerBatch = createSpriteBatch(LayerId.Player, 2 * MAX_PLAYERS);
   const hitboxBatch = createHitboxBatch(MAX_PLAYERS);
   const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
   const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
@@ -2102,6 +2113,49 @@ function syncHitboxes(world: World): void {
 }
 
 /**
+ * Refill the thruster half of {@link World.playerBatch} (R4-01.A2, presentation only — the
+ * flame is never hashed): every active ship's flame at its whole-pixel rear point, frame
+ * `(tick >> 2) & 3`, pushed before the hulls so every flame sits behind every ship.
+ *
+ * @remarks
+ * A separate function for the reason M2-04 / M3-01 learned: {@link syncWorldView} is on the
+ * weapon-select preview's every-frame path, and growing it (even a byte-identical hull loop
+ * with a pre-pass above) pushes it past V8's inlining budget there — the hull push's
+ * fractional position and `playerBankFrame`'s result then box on every tick (20 bytes under
+ * the preview's allocation guard). This cold-shaped call keeps both loops small; its own
+ * arguments are whole numbers, so nothing boxes either way.
+ *
+ * @param world - The world (its tick drives the burn frame).
+ * @param batch - The player batch, already emptied by `syncWorldView`.
+ * @param thrusterId - The ship's thruster sprite, or -1 when the content has none.
+ * @param thrusterP2Id - Player 2's flame, or -1 to reuse `thrusterId`.
+ */
+function syncThrusters(
+  world: World,
+  batch: SpriteBatch,
+  thrusterId: number,
+  thrusterP2Id: number,
+): void {
+  if (thrusterId < 0) return;
+  const p2Thruster = thrusterP2Id >= 0 ? thrusterP2Id : thrusterId;
+  const frame = (world.tick >> 2) & 3;
+  const players = world.players;
+  for (let i = 0; i < players.length; i++) {
+    const p = players[i];
+    if (p.active && p.state !== 'dying' && p.state !== 'dead') {
+      pushSprite(
+        batch,
+        (Math.floor(p.x) | 0) - PLAYER_THRUSTER_REAR_OFFSET,
+        Math.floor(p.y) | 0,
+        i === 1 ? p2Thruster : thrusterId,
+        frame,
+        p.invulnTicks > 0 && (p.invulnTicks & 4) !== 0 ? SpriteFlag.Hidden : 0,
+      );
+    }
+  }
+}
+
+/**
  * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
  * the items and shields, the player ships), scrolls the parallax bands with the camera and refills
  * the decor batches (R3-06). Runs at the end of every tick (phase 9) and once at creation. Never
@@ -2135,6 +2189,7 @@ export function syncWorldView(world: World): void {
   if (spec.spriteId < 0) return;
   // Player 2 flies the palette swap (M2-06), when the content has it.
   const p2Sprite = spec.spriteP2Id >= 0 ? spec.spriteP2Id : spec.spriteId;
+  syncThrusters(world, batch, spec.thrusterId, spec.thrusterP2Id);
   const players = world.players;
   for (let i = 0; i < players.length; i++) {
     const p = players[i];

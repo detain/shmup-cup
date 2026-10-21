@@ -337,12 +337,16 @@ function galleryWalk(): string {
  * 640×360 frame (12-px HUD bars, the 9×12 font, the ×3/2 interim art), then for free flight's HUD
  * and WARNING band laid out from the font's cell and the art's scale like the scene flow's (C5),
  * then at R4-01.A1b: the v2 ships' five bank frames deepen the bank the flight and showcase
- * walks draw (the third hash of three walks moved).
+ * walks draw (the third hash of three walks moved), then at R4-01.A2: every core player batch
+ * now leads with the thruster sprite (the interned `ships/*-thruster[@p2]` names renumber the
+ * flight walk's sprite ids — open-space, test-range and the WARNING band moved; the showcase
+ * pushes its own thruster through its own sprite list, unchanged here, and the fx-gallery draws
+ * no ship — both stay).
  */
 const PINNED: Readonly<Record<string, string>> = {
-  'flight.open-space': '78890175 ff7f3235 a5a99036',
-  'flight.test-range': '3073f2fd ff7f3235 42cda03f',
-  'flight.warning': '36597e30 e3b808bd a1b20503',
+  'flight.open-space': 'ba1bfc5d ff7f3235 9acada6b',
+  'flight.test-range': '920316b5 ff7f3235 757cb2ec',
+  'flight.warning': '9f231bd8 e3b808bd 6c6d569e',
   showcase: 'b9c2aea8 57ecce45 58a99e5f',
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };

@@ -6,6 +6,7 @@
       "id": "example-ship",
       "name": "EXAMPLE",
       "sprite": "ships/example",
+      "thruster": "ships/example-thruster",
       "speeds": [3, 4.5],
       "hurtRadius": 2.25,
       "terrainBox": { "hw": 6, "hh": 5 },

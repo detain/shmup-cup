@@ -1,15 +1,17 @@
 /**
- * R4-01.A1a + R4-01.A1b: the v2 ship pixel maps (art bible v2 § 5.3). `ships/kestrel` and
- * `ships/manta` are redrawn at 24 × 14 and 24 × 15 with the five bank frames of
- * `playerBankFrame` order (0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive), `ships/
- * kestrel-thruster` at 9 × 5 with its two flicker frames (grown to four by `R4-01.A2`). All
- * three are v2 sources (`*.v2.sprite.json`, decision RR-1: `native` implied, v1 untouched), so
- * `buildAtlas({ artScale: 1 })` still holds the v1 maps — three frames, the scale-1 digest pin in
- * `interim-pipeline.test.ts` stays byte-identical (RR-1b: `bankFrames` 2 indexes frames the
- * scale-1 build never draws, because it never flies a ship).
+ * R4-01.A1a + R4-01.A1b + R4-01.A2: the v2 ship pixel maps (art bible v2 § 5.3). `ships/kestrel`
+ * and `ships/manta` are redrawn at 24 × 14 and 24 × 15 with the five bank frames of
+ * `playerBankFrame` order (0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive), and both
+ * thrusters burn at 9 × 5 with the four flicker frames core cycles by `(tick >> 2) & 3` —
+ * `ships/kestrel-thruster` grown from two by `R4-01.A2`, `ships/manta-thruster` new with it
+ * (decision RR-1a: a v2-only name has no v1 stand-in, so it is absent from the scale-1 build).
+ * All of them are v2 sources (`*.v2.sprite.json`, decision RR-1: `native` implied, v1 untouched),
+ * so `buildAtlas({ artScale: 1 })` still holds the v1 maps — three frames, the scale-1 digest pin
+ * in `interim-pipeline.test.ts` stays byte-identical (RR-1b: `bankFrames` 2 and the thruster's
+ * `& 3` index frames the scale-1 build never draws, because it never flies a ship).
  *
  * The ships carry no `@flash` (the game never flashes a ship — `syncWorldView` only hides it),
- * and their `@p2` sibling (rule 11: R3-03.V2a demands a `p2` map from every `ships/*`) changes
+ * and their `@p2` siblings (rule 11: R3-03.V2a demands a `p2` map from every `ships/*`) change
  * **exactly** the colours of the map's ramp: every other colour and every alpha stay.
  *
  * Sizes, anchors and frame counts are the bible's (§ 5.3) — the v1 columns are derived from the
@@ -43,7 +45,8 @@ interface ShipSpec {
 const SHIPS: Readonly<Record<string, ShipSpec>> = Object.freeze({
   'ships/kestrel': { size: [24, 14], anchor: [12, 6], frames: 5 },
   'ships/manta': { size: [24, 15], anchor: [12, 7], frames: 5 },
-  'ships/kestrel-thruster': { size: [9, 5], anchor: [9, 2], frames: 2 },
+  'ships/kestrel-thruster': { size: [9, 5], anchor: [9, 2], frames: 4 },
+  'ships/manta-thruster': { size: [9, 5], anchor: [9, 2], frames: 4 },
 });
 
 /**
@@ -118,15 +121,23 @@ describe('ships v2 (R4-01.A1a + A1b) — the bible sizes, anchors and five bank 
     for (const [name, [w, h, ax, ay]] of Object.entries(v1Size)) {
       const f = v1.manifest.frames[`${name}#0`];
       expect([f.w, f.h, f.ax, f.ay], `${name} at scale 1`).toEqual([w, h, ax, ay]);
-      // RR-1b: the ships keep the untouched v1 three frames at scale 1 — `bankFrames` 2 indexes
-      // frames 3–4 only in the v2 build (scale 1 never flies a ship: bench, CJK figures, icons).
+      // RR-1b: the ships keep the untouched v1 three frames, and the v1 KESTREL thruster its
+      // two, at scale 1 — `bankFrames` 2 and the `(tick >> 2) & 3` index frames the scale-1
+      // build never draws, because it never flies a ship (bench, CJK figures, icons).
       expect(v1.manifest.sprites[name].frames, `${name} at scale 1`).toHaveLength(
-        name === 'ships/kestrel-thruster' ? v2.manifest.sprites[name].frames.length : 3,
+        name === 'ships/kestrel-thruster' ? 2 : 3,
       );
     }
     // The v1 thruster map is the v1 one: its frame count is the v1 file's, not a v2 leak.
     expect(v1.manifest.sprites['ships/kestrel-thruster'].frames).toHaveLength(2);
     expect(v1.manifest.sprites['ships/kestrel-thruster@p2'].frames).toHaveLength(2);
+    // `ships/manta-thruster` is a new v2-only name (R4-01.A2, decision RR-1a): it has no v1
+    // stand-in, so it is absent from the scale-1 build (and present in the shipped one).
+    expect(
+      v1.manifest.sprites['ships/manta-thruster'],
+      'manta-thruster at scale 1',
+    ).toBeUndefined();
+    expect(v1.manifest.sprites['ships/manta-thruster@p2']).toBeUndefined();
   });
 
   it('keeps the bank-frame animations (R4-01.A1b: up 1–2, down 3–4; burn)', () => {
@@ -140,7 +151,8 @@ describe('ships v2 (R4-01.A1a + A1b) — the bible sizes, anchors and five bank 
       level: [0],
       up: [1, 2],
     });
-    expect(v2.manifest.animations['ships/kestrel-thruster']).toEqual({ burn: [0, 1] });
+    expect(v2.manifest.animations['ships/kestrel-thruster']).toEqual({ burn: [0, 1, 2, 3] });
+    expect(v2.manifest.animations['ships/manta-thruster']).toEqual({ burn: [0, 1, 2, 3] });
   });
 
   it('has no @flash of any ship sprite — the game never flashes a ship', () => {
@@ -156,6 +168,7 @@ describe('ships v2 (R4-01.A1a + A1b) — the bible sizes, anchors and five bank 
       'ships/kestrel': 'kestrel.v2.sprite.json',
       'ships/manta': 'manta.v2.sprite.json',
       'ships/kestrel-thruster': 'kestrel-thruster.v2.sprite.json',
+      'ships/manta-thruster': 'manta-thruster.v2.sprite.json',
     };
     for (const [name, file] of Object.entries(files)) {
       const map = p2MapOf(file);

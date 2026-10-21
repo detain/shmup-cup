@@ -6,6 +6,7 @@
       "id": "kestrel",
       "name": "KESTREL",
       "sprite": "ships/kestrel",
+      "thruster": "ships/kestrel-thruster",
       "speeds": [2.25, 3, 3.75, 4.5, 5.25, 6],
       "hurtRadius": 2.25,
       "terrainBox": { "hw": 8, "hh": 5 },

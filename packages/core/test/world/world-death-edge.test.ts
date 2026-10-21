@@ -470,7 +470,9 @@ describe('core/world after a respawn', () => {
     const ship = w.players[0];
     const batch = w.playerBatch;
     expect(w.ship.spriteId).toBeGreaterThanOrEqual(0);
-    expect([batch.count, batch.flags[0]]).toEqual([1, 0]);
+    // R4-01.A2: the shipped KESTREL burns its thruster — two slots per alive player, both with
+    // the ship's blink flags.
+    expect([batch.count, batch.flags[0]]).toEqual([2, 0]);
     aim(w, ship);
     tick(w, input);
     let drawn = 0;
@@ -482,7 +484,7 @@ describe('core/world after a respawn', () => {
     // From the first fly-in tick to the end of the invulnerability: Hidden when bit 2 is set.
     const hidden: boolean[] = [];
     while (ship.invulnTicks > 0) {
-      expect(batch.count).toBe(1);
+      expect(batch.count).toBe(2);
       const flag = (batch.flags[0] & SpriteFlag.Hidden) !== 0;
       expect(flag).toBe((ship.invulnTicks & 4) !== 0);
       hidden.push(flag);

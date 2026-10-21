@@ -1,6 +1,6 @@
 {
   "name": "ships/kestrel-thruster",
-  "description": "KESTREL thruster flame v2 (R4-01.A1a, art bible v2 § 5.3): the v1 6 × 3 flame at 9 × 5, anchor at the attachment point on its right edge, with a two-pixel white-hot nozzle. Frames 0 and 1 of the 4-frame flicker loop (R4-01.A2 grows it). Drawn behind the ship (the shell showcase today).",
+  "description": "KESTREL thruster flame v2 (R4-01.A1a, art bible v2 § 5.3; four frames R4-01.A2): the v1 6 × 3 flame at 9 × 5, anchor at the attachment point on its right edge, with a two-pixel white-hot nozzle. The four-frame flicker loop core cycles by (tick >> 2) & 3: thin, long, spark, thick surge.",
   "palette": {
     ".": null,
     "r": "#e84818",
@@ -12,36 +12,24 @@
     "#f8c030": "#30c0f8",
     "#fff8d0": "#d0f8ff"
   },
-  "anchor": [
-    9,
-    2
-  ],
+  "anchor": [9, 2],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": [
-        ".....ryy.",
-        ".....ryy.",
-        "..rrryyww",
-        ".....ryy.",
-        ".....ryy."
-      ]
+      "rows": [".....ryy.", ".....ryy.", "..rrryyww", ".....ryy.", ".....ryy."]
     },
     {
-      "rows": [
-        "...rrryy.",
-        "...rrryy.",
-        "rrrrryyww",
-        "...rrryy.",
-        "...rrryy."
-      ]
+      "rows": ["...rrryy.", "...rrryy.", "rrrrryyww", "...rrryy.", "...rrryy."]
+    },
+    {
+      "rows": [".....ryy.", "..r..ryy.", "..rrryyww", "..r..ryy.", ".....ryy."]
+    },
+    {
+      "rows": ["...rrryy.", "..rrrryy.", "rrrrryyww", "..rrrryy.", "...rrryy."]
     }
   ],
   "animations": {
-    "burn": [
-      0,
-      1
-    ]
+    "burn": [0, 1, 2, 3]
   }
 }

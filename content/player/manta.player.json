@@ -6,6 +6,7 @@
       "id": "manta",
       "name": "MANTA",
       "sprite": "ships/manta",
+      "thruster": "ships/manta-thruster",
       "speeds": [2.625, 3.375, 4.125],
       "hurtRadius": 2.25,
       "terrainBox": { "hw": 9, "hh": 5 },

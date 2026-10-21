@@ -293,6 +293,8 @@ export const DEFAULT_PLAYER_SHIP: PlayerShipSpec = Object.freeze({
   sprite: '',
   spriteId: -1,
   spriteP2Id: -1,
+  thrusterId: -1,
+  thrusterP2Id: -1,
   speeds: Object.freeze([1.5, 2.0, 2.5, 3.0, 3.5, 4.0]),
   hurtRadius: 1.5,
   terrainBox: Object.freeze({ hw: 5, hh: 3 }),

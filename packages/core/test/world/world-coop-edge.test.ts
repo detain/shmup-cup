@@ -298,7 +298,8 @@ describe('core/world co-op edge: player 2`s sprite (M2-06)', () => {
     w.players[1].invulnTicks = 0;
     syncWorldView(w);
     expect(DB.sprites.names[w.ship.spriteP2Id]).toBe('ships/manta@p2');
-    expect(w.playerBatch.spriteId[1]).toBe(w.ship.spriteP2Id);
+    // R4-01.A2: both flames first (slots 0 and 1), then the hulls — player 1's MANTA in slot 3.
+    expect(w.playerBatch.spriteId[3]).toBe(w.ship.spriteP2Id);
   });
 
   it('draws player 2 with the ship`s own sprite when the spec has no palette swap', () => {
@@ -307,8 +308,9 @@ describe('core/world co-op edge: player 2`s sprite (M2-06)', () => {
     w.players[0].invulnTicks = 0;
     w.players[1].invulnTicks = 0;
     syncWorldView(w);
-    expect(w.playerBatch.count).toBe(2);
-    expect([w.playerBatch.spriteId[0], w.playerBatch.spriteId[1]]).toEqual([
+    expect(w.playerBatch.count).toBe(4);
+    // R4-01.A2: the two flames fill slots 0 and 1, the hulls (both the plain sprite) slots 2 and 3.
+    expect([w.playerBatch.spriteId[2], w.playerBatch.spriteId[3]]).toEqual([
       w.ship.spriteId,
       w.ship.spriteId,
     ]);
@@ -318,12 +320,12 @@ describe('core/world co-op edge: player 2`s sprite (M2-06)', () => {
     const w = aliveWorld(DB, COOP);
     w.players[0].invulnTicks = 0;
     syncWorldView(w);
-    expect(w.playerBatch.count).toBe(1);
+    expect(w.playerBatch.count).toBe(2); // R4-01.A2: player 0's thruster and ship
     const { w: both } = bothAlive();
     knockOut(both, 1);
     both.players[0].invulnTicks = 0;
     syncWorldView(both);
-    expect(both.playerBatch.count).toBe(1);
-    expect(both.playerBatch.spriteId[0]).toBe(both.ship.spriteId);
+    expect(both.playerBatch.count).toBe(2);
+    expect(both.playerBatch.spriteId[1]).toBe(both.ship.spriteId);
   });
 });

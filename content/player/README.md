@@ -22,6 +22,7 @@ ship in file order; the chosen ship's `mode` becomes the session's power-up mode
       "id": "kestrel",                 // unique across all player files
       "name": "KESTREL",               // shown on the ship-select screen
       "sprite": "ships/kestrel",       // atlas sprite name; resolved to a numeric id at load
+      "thruster": "ships/kestrel-thruster", // optional: flame sprite drawn behind the hull (R4-01.A2)
       "speeds": [2.25, 3, 3.75, 4.5, 5.25, 6], // px/tick per speed level (index = Speed Ups taken)
       "hurtRadius": 2.25,              // tiny centred hitbox, in pixels
       "terrainBox": { "hw": 8, "hh": 5 },  // half-extents used against terrain
@@ -43,7 +44,12 @@ Units: pixels in the 640×360 internal resolution, time in ticks (60 per second)
 the ship moves at `speeds[0]` px/tick (diagonals × 0.7071 per axis, decision D4), stops
 `margins` pixels inside the 640×336 playfield, flies in over `enterTicks` ticks, and tilts
 through `bankFrames` frames each way (the sprite needs `1 + 2 × bankFrames` frames: level,
-then the up frames, then the down frames). The session flies the ship with id `kestrel`, else
+then the up frames, then the down frames). The optional `thruster` names a second sprite the
+World draws behind the hull (R4-01.A2 — presentation only, never hashed): `core/world`
+`syncWorldView` pushes it at the ship's centre minus the hull's rear offset, cycling the
+sprite's four frames by `(tick >> 2) & 3`, and player 2 burns its `@p2` variant when the atlas
+has one; a ship without the field (and the built-in default ship) draws no flame.
+The session flies the ship with id `kestrel`, else
 the first ship listed. `hurtRadius`, `terrainBox`, `pickupBox` and `respawnInvulnTicks` are
 validated now; the terrain box is used since M1-07, the pickup box since M1-11 (power capsules
 and the pickup magnet), the hurt radius for bullets since M1-09 (and enemy contact), and since

@@ -373,10 +373,17 @@ describe('core/world co-op: drawing and determinism (M2-06)', () => {
     w.players[1].invulnTicks = 0;
     syncWorldView(w);
     const batch = w.playerBatch;
-    expect(batch.count).toBe(2);
+    // R4-01.A2: the flames fill the batch first, then the hulls (the thruster pre-pass keeps
+    // syncWorldView's ship loop at its old shape — see its allocation note).
+    expect(batch.count).toBe(4);
     expect(w.ship.spriteP2Id).toBeGreaterThanOrEqual(0);
     expect(DB.sprites.names[w.ship.spriteP2Id]).toBe('ships/kestrel@p2');
-    expect([batch.spriteId[0], batch.spriteId[1]]).toEqual([w.ship.spriteId, w.ship.spriteP2Id]);
+    expect([batch.spriteId[2], batch.spriteId[3]]).toEqual([w.ship.spriteId, w.ship.spriteP2Id]);
+    expect([batch.spriteId[0], batch.spriteId[1]]).toEqual([
+      w.ship.thrusterId,
+      w.ship.thrusterP2Id,
+    ]);
+    expect(DB.sprites.names[w.ship.thrusterP2Id]).toBe('ships/kestrel-thruster@p2');
   });
 
   it('keeps two co-op worlds fed the same two inputs in lockstep (a join and a continue)', () => {

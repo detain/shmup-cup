@@ -497,6 +497,20 @@ export interface PlayerShipSpec {
    * without it, e.g. the built-in default ship: player 2 then uses {@link PlayerShipSpec.spriteId}).
    */
   readonly spriteP2Id: number;
+  /**
+   * Thruster-flame sprite drawn behind the hull by `core/world` `syncWorldView` (R4-01.A2 —
+   * presentation only: it is pushed every frame and never hashed), or `undefined` when the ship
+   * has no thruster.
+   */
+  readonly thruster?: string;
+  /** Resolved {@link ContentDb.sprites} index of {@link PlayerShipSpec.thruster}; -1 when absent. */
+  readonly thrusterId: number;
+  /**
+   * Resolved {@link ContentDb.sprites} index of player 2's palette-swap thruster variant
+   * `<thruster>`{@link P2_SPRITE_SUFFIX}; -1 without a thruster or without the variant (player 2
+   * then uses {@link PlayerShipSpec.thrusterId}).
+   */
+  readonly thrusterP2Id: number;
   /** Movement speed per speed level, in pixels per tick (decision D3). */
   readonly speeds: readonly number[];
   /** Radius of the tiny centred hurtbox, in pixels. */
@@ -2389,7 +2403,10 @@ const MARGIN_SCHEMA = s.object({
 
 /** One entry of `ships` in a `player` file. */
 const SHIP_SCHEMA: Schema<
-  Omit<PlayerShipSpec, 'spriteId' | 'spriteP2Id' | 'mode' | 'startSpeedLevel'> & {
+  Omit<
+    PlayerShipSpec,
+    'spriteId' | 'spriteP2Id' | 'thrusterId' | 'thrusterP2Id' | 'mode' | 'startSpeedLevel'
+  > & {
     mode?: PowerUpMode;
     startSpeedLevel?: number;
   }
@@ -2398,6 +2415,7 @@ const SHIP_SCHEMA: Schema<
     id: s.str(),
     name: s.str(),
     sprite: s.ref('sprite'),
+    thruster: s.ref('sprite'),
     speeds: s.array(s.num({ min: 0.1, max: 16, unit: 'px-per-tick' }), { min: 1, max: 16 }),
     hurtRadius: s.num({ min: 0.25, max: 16, unit: 'world-px' }),
     terrainBox: BOX_SCHEMA,
@@ -2409,7 +2427,7 @@ const SHIP_SCHEMA: Schema<
     mode: s.enumOf(POWER_UP_MODES),
     startSpeedLevel: s.int({ min: 0, max: 15, unit: 'index' }),
   },
-  { optional: ['mode', 'startSpeedLevel'] },
+  { optional: ['mode', 'startSpeedLevel', 'thruster'] },
 );
 
 /** A `content/player/*.player.json` file. */
@@ -4057,6 +4075,11 @@ export function loadContent(
   }
   // Player 2's palette swap of every ship (M2-06).
   for (const ship of db.ships) spriteNames.add(ship.sprite + P2_SPRITE_SUFFIX);
+  // Player 2's palette swap of every ship's thruster (R4-01.A2) — the thruster's own name is
+  // interned by its ref site above; the @p2 sibling is a plain derived name like the ship's.
+  for (const ship of db.ships) {
+    if (ship.thruster !== undefined) spriteNames.add(ship.thruster + P2_SPRITE_SUFFIX);
+  }
   // The glow sprites (R3-06.L4) are plain names on enemies, boss parts and decor entries —
   // the systems resolve them through `sprites.index` at load, never per tick; a name missing
   // from the atlas is a `pnpm content:check` error exactly like a referenced sprite.
@@ -4082,6 +4105,11 @@ export function loadContent(
   for (const ship of db.ships) {
     (ship as { spriteP2Id: number }).spriteP2Id =
       sprites.index.get(ship.sprite + P2_SPRITE_SUFFIX) ?? -1;
+    // R4-01.A2: player 2's thruster palette swap, mirroring the ship's (undefined thruster → -1).
+    (ship as { thrusterP2Id: number }).thrusterP2Id =
+      ship.thruster === undefined
+        ? -1
+        : (sprites.index.get(ship.thruster + P2_SPRITE_SUFFIX) ?? -1);
   }
   checkBossReferences(db, issues);
   checkWeaponFamilies(db, issues);

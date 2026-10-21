@@ -1,0 +1,35 @@
+{
+  "name": "ships/manta-thruster",
+  "description": "MANTA thruster flame v2 (R4-01.A2, art bible v2 § 5.3): the KESTREL thruster's 9 × 5 four-frame flicker grammar in the MANTA's green-to-cyan engine ramp, anchor at the attachment point on its right edge. New v2-only name — the scale-1 build has no thruster for the MANTA (decision RR-1a: a new name gets no v1 stand-in).",
+  "palette": {
+    ".": null,
+    "r": "#30c870",
+    "y": "#a8f8c0",
+    "w": "#f0fff4"
+  },
+  "p2": {
+    "#30c870": "#70c830",
+    "#a8f8c0": "#c0f8a8",
+    "#f0fff4": "#f4fff0"
+  },
+  "anchor": [9, 2],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [".....ryy.", ".....ryy.", "..rrryyww", ".....ryy.", ".....ryy."]
+    },
+    {
+      "rows": ["...rrryy.", "...rrryy.", "rrrrryyww", "...rrryy.", "...rrryy."]
+    },
+    {
+      "rows": [".....ryy.", "..r..ryy.", "..rrryyww", "..r..ryy.", ".....ryy."]
+    },
+    {
+      "rows": ["...rrryy.", "..rrrryy.", "rrrrryyww", "..rrrryy.", "...rrryy."]
+    }
+  ],
+  "animations": {
+    "burn": [0, 1, 2, 3]
+  }
+}

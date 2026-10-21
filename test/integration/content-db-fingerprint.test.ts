@@ -209,14 +209,17 @@ describe('integration: the content-DB fingerprint (R1-03)', () => {
 });
 
 /** The pinned digests (re-pin with `SHMUP_FINGERPRINT_PRINT=1`). Re-pinned at R4-01.A1b:
- * `core.ships` moved — the shipped player files carry `bankFrames` 2. */
+ * `core.ships` moved — the shipped player files carry `bankFrames` 2. Re-pinned again at
+ * R4-01.A2: the player files reference thrusters — the four interned names sort inside
+ * `ships/…` and shift every later sprite id, so sprites, ships, weapons, tilesets and the
+ * sprite keys move in both the shipped and the examples set. */
 const PINNED: Record<string, Record<string, string>> = {
   shipped: {
-    'core.sprites': 'a8b0b41420e6fa7e',
+    'core.sprites': '7f4fb60bb90433f4',
     'core.scripts': 'bd6454be7a35f079',
-    'core.ships': '511069e909ee8c37',
+    'core.ships': '6ae42fff5c2249d2',
     'core.shipIndex': 'f64a98b92e84e3a6',
-    'core.weapons': '4fd123d0216d41be',
+    'core.weapons': 'cb3b351ca198fbb7',
     'core.weaponIndex': '9801dfd70acb6066',
     'core.weaponPresets': '7319e77e71352828',
     'core.weaponPresetIndex': '3118718d4dc3ae19',
@@ -228,7 +231,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.pathIndex': '7f7714633ec51cc2',
     'core.stages': '991d742e6bd48fc0',
     'core.stageIndex': 'feb2f555121ae45d',
-    'core.tilesets': '2138e5dc21f022ef',
+    'core.tilesets': 'eba4f5da419650d1',
     'core.tilesetIndex': 'efd99091fe1dce30',
     'core.difficulty': '1f340af9648e812c',
     'core.scoring': 'b2430506b3320967',
@@ -237,7 +240,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.demos': 'f09429db1c64adba',
     'core.demoIndex': 'b37bbd0e0ad0fca7',
     'core.uiStrings': 'a6b7a37bb5260ca5',
-    'core.spriteKeys': '5bbd2e896ea5e4d3',
+    'core.spriteKeys': 'b4cf1458deb097b2',
     'core.enemyKeys': '5a56e83c1c08a427',
     'core.pathKeys': '61c248914d0f8cba',
     'core.patternKeys': '0667d64d81d0f3a5',
@@ -248,11 +251,11 @@ const PINNED: Record<string, Record<string, string>> = {
     fx: '110c6250dedf116b',
   },
   examples: {
-    'core.sprites': 'fd4dc4411777e001',
+    'core.sprites': '177a893134e6a61e',
     'core.scripts': '6d67dc1c2e597b85',
-    'core.ships': 'cedc0ac6e739b17a',
+    'core.ships': '51315410e89bfe38',
     'core.shipIndex': '577ab8323709a683',
-    'core.weapons': '497c30a7d4016b9b',
+    'core.weapons': '1b79e48983305db9',
     'core.weaponIndex': '9ab51a61d042ac2c',
     'core.weaponPresets': 'e4755fda79fe5fff',
     'core.weaponPresetIndex': 'a327dbd448a9db22',
@@ -264,7 +267,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.pathIndex': '1a4e800e937e9c65',
     'core.stages': 'df02d4417a9c629b',
     'core.stageIndex': '2bd1d4c7fc744d4f',
-    'core.tilesets': '5eb80d326813d6aa',
+    'core.tilesets': '382a10e6029b6f82',
     'core.tilesetIndex': '2bd1d4c7fc744d4f',
     'core.difficulty': '863868aa2944ce81',
     'core.scoring': '066431982ca208da',
@@ -273,7 +276,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.demos': 'e7111349156c02ed',
     'core.demoIndex': '2bd1d4c7fc744d4f',
     'core.uiStrings': '17f4f9e9a78dae4a',
-    'core.spriteKeys': 'f79f31ef57196443',
+    'core.spriteKeys': 'd38209c16fcefc04',
     'core.enemyKeys': '46273e525e523166',
     'core.pathKeys': '0a26f9ecc3851d53',
     'core.patternKeys': '94bf9ed92f5f47d6',

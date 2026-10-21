@@ -58,8 +58,9 @@ describe('shell/flight', () => {
     const flight = createFlightScene(game);
     const names = game.content.sprites.names;
     expect(flight.spriteNames).toEqual([...names, ...FLIGHT_SPRITES]);
-    const shipId = game.world.playerBatch.spriteId[0];
+    const shipId = game.world.playerBatch.spriteId[1]; // R4-01.A2: the ship behind its thruster
     expect(flight.spriteNames[shipId]).toBe('ships/kestrel');
+    expect(flight.spriteNames[game.world.playerBatch.spriteId[0]]).toBe('ships/kestrel-thruster');
   });
 
   it("draws the starfield under the game World's batches, on the game's camera", () => {
@@ -257,13 +258,13 @@ describe('shell/flight', () => {
     const player = flight.world.batches[6];
     expect(player).toBe(game.world.playerBatch);
     flight.update(game.renderFrame());
-    const x = player.x[0];
+    const x = player.x[1]; // R4-01.A2: the ship is slot 1, behind its thruster in slot 0
     commitPlayerInput(platform.snapshot.players[0], Action.Right | Action.Down);
     for (let i = 0; i < 10; i++) game.step();
     flight.update(game.renderFrame());
-    expect(player.count).toBe(1);
-    expect(player.x[0]).toBeGreaterThan(x + 10);
-    expect(player.frame[0]).toBe(4); // banking down: playerBankFrame(2, 2) with five bank frames
+    expect(player.count).toBe(2);
+    expect(player.x[1]).toBeGreaterThan(x + 10);
+    expect(player.frame[1]).toBe(4); // banking down: playerBankFrame(2, 2) with five bank frames
   });
 
   it('draws a stage with its own parallax and terrain instead of the starfield (M1-07)', () => {
