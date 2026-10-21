@@ -3,9 +3,11 @@
  *
  * **Responsibility.** The fixed draw order of the low-res scene: one Pixi container per core
  * `LayerId`, created once, bottom → top (shmup_feat.md §18, plan §3.4):
- * `BG_FAR, BG_MID, TERRAIN, GROUND_ENEMIES, AIR_ENEMIES, PLAYER_SHOTS, PLAYER, HITBOX, ITEMS,
- * FX, ENEMY_BULLETS, HUD, UI, DEBUG`. Enemy bullets are drawn above explosions and items so
- * they stay readable. The layers up to `ENEMY_BULLETS` sit in a **world** group (the renderer
+ * `BG_FAR, BG_MID, DECOR_BACK, TERRAIN, DECOR_FRONT, GROUND_ENEMIES, AIR_ENEMIES,
+ * PLAYER_SHOTS, PLAYER, HITBOX, ITEMS, FX, FOREGROUND, ENEMY_BULLETS, HUD, UI, DEBUG` (the two
+ * decor layers and the fore band are R3-06). Enemy bullets are drawn above explosions, the fore
+ * band and items so they stay readable. The layers up to `ENEMY_BULLETS` sit in a **world**
+ * group (the renderer
  * offsets it for screen shake); `HUD`, `UI` and `DEBUG` stay fixed to the screen. Since M3-02e
  * the layers that toggle sprites every frame are each their own Pixi **render group**
  * ({@link RENDER_GROUP_LAYERS}), so one hidden bullet no longer rebuilds the whole scene's
@@ -477,8 +479,8 @@ export interface ParallaxBinding {
  *
  * @param options - Atlas, tables, view, visible width and y offset.
  * @returns The binding.
- * @throws {RangeError} When a band's layer is not a world layer below `TERRAIN` (`BG_FAR` /
- *   `BG_MID`) or its spacing is not a positive integer.
+ * @throws {RangeError} When a band's layer is not `BG_FAR`, `BG_MID` or `FOREGROUND` (R3-06.L3:
+ *   the fore band) or its spacing is not a positive integer.
  *
  * @example
  * ```ts
@@ -497,8 +499,10 @@ export function createParallaxBinding(options: ParallaxBindingOptions): Parallax
   for (let i = 0; i < view.count; i++) {
     const layer = view.layer[i];
     const spacing = view.spacing[i];
-    if (layer !== LayerId.BgFar && layer !== LayerId.BgMid) {
-      throw new RangeError(`parallax band ${i} has layer ${layer} (BG_FAR or BG_MID expected)`);
+    if (layer !== LayerId.BgFar && layer !== LayerId.BgMid && layer !== LayerId.Foreground) {
+      throw new RangeError(
+        `parallax band ${i} has layer ${layer} (BG_FAR, BG_MID or FOREGROUND expected)`,
+      );
     }
     if (!Number.isInteger(spacing) || spacing <= 0) {
       throw new RangeError(`parallax band ${i} has spacing ${spacing}`);
@@ -539,7 +543,13 @@ export function createParallaxBinding(options: ParallaxBindingOptions): Parallax
     const container = containers[i];
     container.x = x;
     container.y = y;
-    const frameId = resolveFrame(atlas, tables, source.spriteId[i], 0, 0);
+    const frameId = resolveFrame(
+      atlas,
+      tables,
+      source.spriteId[i],
+      source.frameIndex === undefined ? 0 : source.frameIndex[i] | 0,
+      0,
+    );
     const sprites = bands[i];
     const spacing = source.spacing[i];
     for (let k = 0; k < sprites.length; k++) show(sprites[k], atlas, frameId, k * spacing, 0);

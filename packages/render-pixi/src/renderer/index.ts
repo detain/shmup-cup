@@ -15,7 +15,8 @@
  * a lifted navy background, the layer stack (`layers`), one sprite binding per
  * `SpriteBatchView` of the frame's `WorldView` (`sprites`), the HUD and UI draw lists
  * (`ui` + `text`), the world's parallax bands and tile terrain (`layers`: repeated sprites on
- * `BG_FAR` / `BG_MID`, a ring-buffered tile-sprite grid on `TERRAIN` — plan M1-07), the enemy
+ * `BG_FAR` / `BG_MID` / `FOREGROUND` — the fore band is R3-06.L3 —, a ring-buffered tile-sprite
+ * grid on `TERRAIN` — plan M1-07), the enemy
  * lasers (`layers`: rotated warning lines / stretched beams on `ENEMY_BULLETS`, above the bullet
  * batch — plan M1-09), the bending lasers (`layers`: a segment sprite per node, above the lasers —
  * plan M2-02), screen shake
@@ -570,7 +571,8 @@ export interface PixiRenderer extends IRenderer {
    */
   setSpriteNames(names: readonly string[]): void;
   /**
-   * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID`), the terrain
+   * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID` /
+   * `FOREGROUND`), the terrain
    * tile grid (on `TERRAIN`), one sprite binding per batch (in its layer, batch order) and the
    * laser sprites of `world.lasers` and the segment sprites of `world.bendingLasers` (on
    * `ENEMY_BULLETS`, after the batches, in that order), the hitbox markers of `world.hitboxes` (on
@@ -590,7 +592,8 @@ export interface PixiRenderer extends IRenderer {
    *
    * @param world - The world to draw, or `null` to unbind.
    * @throws {RangeError} When a batch's `layer` is not a core `LayerId`, or a parallax band is
-   *   not on `BG_FAR` / `BG_MID` (the previous world's bindings are already destroyed then).
+   *   not on `BG_FAR` / `BG_MID` / `FOREGROUND` (the previous world's bindings are already
+   *   destroyed then).
    */
   bindWorld(world: WorldView | null): void;
 }
@@ -1119,9 +1122,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       if (bands !== null) {
         for (let i = 0; i < bands.count; i++) {
           const layer = bands.layer[i];
-          if (layer !== LayerId.BgFar && layer !== LayerId.BgMid) {
+          if (layer !== LayerId.BgFar && layer !== LayerId.BgMid && layer !== LayerId.Foreground) {
             throw new RangeError(
-              `parallax band ${i} has layer ${layer} (BG_FAR or BG_MID expected)`,
+              `parallax band ${i} has layer ${layer} (BG_FAR, BG_MID or FOREGROUND expected)`,
             );
           }
         }

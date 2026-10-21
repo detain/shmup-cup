@@ -327,7 +327,16 @@ describe('render-pixi/effects layer effects (edges)', () => {
   });
 
   it('counts only the layers it was given as the world group', () => {
-    const layers = [new Container(), new Container(), new Container()];
+    // Five containers = the world prefix up to (not including) GROUND_ENEMIES since R3-06.L2
+    // (BG_FAR, BG_MID, DECOR_BACK, TERRAIN, DECOR_FRONT), so Terrain is a world layer here and
+    // GroundEnemies, the sixth, is outside what the stack was given.
+    const layers = [
+      new Container(),
+      new Container(),
+      new Container(),
+      new Container(),
+      new Container(),
+    ];
     const { create } = fakeFactory();
     const effects = createLayerEffects({ layers, createFilter: create });
     expect(() =>
