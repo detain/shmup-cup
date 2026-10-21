@@ -1,0 +1,12 @@
+{
+  "name": "shots/double",
+  "description": "Double (diagonal) shot, travelling up and to the right, v2 (R4-01.A6, art bible v2 § 5.3): the v1 5 × 5 stair widened to 7 × 7, the white core row two pixels thick.",
+  "palette": { ".": null, "c": "#38c8e8", "w": "#ffffff" },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": ["....cw.", "....cw.", "...ccwc", "..cwwc.", "..cwwc.", "ccwcc..", "wwc...."]
+    }
+  ]
+}

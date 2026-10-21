@@ -1,0 +1,44 @@
+{
+  "name": "shots/missile",
+  "description": "Ground missile with a flickering exhaust, v2 (R4-01.A6, art bible v2 § 5.3): the v1 8 × 3 missile at 12 × 5 with the grey body three rows deep.",
+  "palette": {
+    ".": null,
+    "o": "#2a3a4a",
+    "g": "#a0a8b8",
+    "w": "#ffffff",
+    "r": "#e84818",
+    "y": "#f8c030"
+  },
+  "anchor": [
+    6,
+    2
+  ],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "...oooooooo.",
+        "yyrooggggwwo",
+        "yyrooggggwwo",
+        "yyrooggggwwo",
+        "...oooooooo."
+      ]
+    },
+    {
+      "rows": [
+        "...oooooooo.",
+        "rrrooggggwwo",
+        "rrrooggggwwo",
+        "rrrooggggwwo",
+        "...oooooooo."
+      ]
+    }
+  ],
+  "animations": {
+    "fly": [
+      0,
+      1
+    ]
+  }
+}

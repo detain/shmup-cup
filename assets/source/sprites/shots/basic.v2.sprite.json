@@ -1,0 +1,13 @@
+{
+  "name": "shots/basic",
+  "description": "Main shot, v2 (R4-01.A6, art bible v2 § 5.3): the v1 8 × 3 dart at 12 × 5, the white core three rows deep under a one-row shell.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "anchor": [6, 2],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": ["...bccccc...", "bccwwwwwwwww", "bccwwwwwwwww", "bccwwwwwwwww", "...bccccc..."]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "shots/free",
+  "description": "Free Way: the round shot fired in the last direction held, v2 (R4-01.A6, art bible v2 § 5.3): the v1 5 × 5 diamond widened to 7 × 7, the white core three pixels across.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": ["..bccb.", "..bccb.", "bbcwwcb", "bbcwwcb", "ccwwwwc", "bbcwwcb", "..bccb."]
+    }
+  ]
+}

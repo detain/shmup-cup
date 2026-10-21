@@ -1,0 +1,13 @@
+{
+  "name": "shots/laser",
+  "description": "Laser beam segment, v2 (R4-01.A6, art bible v2 § 5.3): tiles horizontally (anchor at its left end); the v1 8 × 3 segment at 12 × 5 with the core three rows deep.",
+  "palette": { ".": null, "c": "#9fe8ff", "w": "#ffffff" },
+  "anchor": [0, 2],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": ["cccccccccccc", "wwwwwwwwwwww", "wwwwwwwwwwww", "wwwwwwwwwwww", "cccccccccccc"]
+    }
+  ]
+}

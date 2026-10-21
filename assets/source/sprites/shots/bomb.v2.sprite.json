@@ -1,0 +1,22 @@
+{
+  "name": "shots/bomb",
+  "description": "Spread Bomb while it falls (it bursts into shots/blast), v2 (R4-01.A6, art bible v2 § 5.3): the v1 6 × 6 shell at 9 × 9, the hot core and the fuse highlight kept.",
+  "palette": { ".": null, "o": "#5a3010", "r": "#e86018", "y": "#f8c030", "w": "#ffffff" },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "..ooooo..",
+        "..ooooo..",
+        "oorrrryoo",
+        "ooryywwoo",
+        "ooryywwoo",
+        "ooryyrroo",
+        "oorrrrroo",
+        "..ooooo..",
+        "..ooooo.."
+      ]
+    }
+  ]
+}

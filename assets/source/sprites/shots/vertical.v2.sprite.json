@@ -1,0 +1,26 @@
+{
+  "name": "shots/vertical",
+  "description": "Vertical: the shot fired straight up, v2 (R4-01.A6, art bible v2 § 5.3): the v1 3 × 8 slug at 5 × 12, the white core two columns deep under the cyan shell.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "anchor": [2, 6],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "..w..",
+        "..w..",
+        "..w..",
+        "ccwcc",
+        "ccwcc",
+        "ccwcc",
+        "ccwcc",
+        "ccwcc",
+        "..w..",
+        "..c..",
+        "..b..",
+        "..b.."
+      ]
+    }
+  ]
+}
