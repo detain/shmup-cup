@@ -56,12 +56,14 @@
  * **Keeping it green.** Through R1 it must stay green without any edit: a red run is a moved pixel
  * (or a moved sim value — then the goldens fail too). It is re-pinned on purpose only — R2-01 (the
  * 640×360 flip) and any later step that changes what is drawn — by running it with
- * `SHMUP_FINGERPRINT_PRINT=1` and pasting the printed table, with the reason in the commit message.
+ * `SHMUP_FINGERPRINT_UPDATE=1` (which rewrites this file's `PINNED` entries itself, R5-P.P10 — or
+ * `SHMUP_FINGERPRINT_PRINT=1` to only print the table), with the reason in the commit message.
  * A change of the shipped content (strings, stages, the campaign) changes it too.
  *
  * Run it: `VITEST_MAX_WORKERS=8 pnpm exec vitest run --project integration
  * test/integration/presentation-fingerprint.test.ts`.
  */
+import { fileURLToPath } from 'node:url';
 import {
   Action,
   CaptureStatus,
@@ -114,6 +116,7 @@ import {
   type WorldView,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { rewritePinned } from '../../packages/core/test/helpers/pin-writer.js';
 import { shippedContent } from '../playtest/harness.js';
 
 // ------------------------------------------------------------------------------ hashing
@@ -742,16 +745,40 @@ class Walk {
   }
 }
 
+/** The file whose `PINNED` the update mode rewrites (R5-P.P10). */
+const PIN_FILE = fileURLToPath(import.meta.url);
+
+/** Whether this run rewrites its own pins (`SHMUP_FINGERPRINT_UPDATE=1`). */
+const updating = process.env.SHMUP_FINGERPRINT_UPDATE === '1';
+
 /**
- * Prints a walk's table (with `SHMUP_FINGERPRINT_PRINT=1`) for re-pinning.
+ * Prints a walk's table (with `SHMUP_FINGERPRINT_PRINT=1`) for re-pinning, or — with
+ * `SHMUP_FINGERPRINT_UPDATE=1` — rewrites its `PINNED` entry in this file (R5-P.P10: the update
+ * run stays green exactly when only the pin moved; every other check of the walk still runs).
  *
  * @param name - The walk's name.
  * @param table - Its table.
  */
 function print(name: string, table: Record<string, string>): void {
+  if (updating) {
+    rewritePinned(PIN_FILE, name, table);
+    return;
+  }
   if (process.env.SHMUP_FINGERPRINT_PRINT !== '1') return;
   const lines = Object.keys(table).map((k) => `    '${k}': '${table[k]}',`);
   process.stdout.write(`  ${name}: {\n${lines.join('\n')}\n  },\n`);
+}
+
+/**
+ * Compares a walk's table with its pinned entry — skipped in update mode, where {@link print}
+ * just rewrote that entry and the `PINNED` in memory is still the old table.
+ *
+ * @param name - The walk's name.
+ * @param table - Its table.
+ */
+function expectPinned(name: string, table: Record<string, string>): void {
+  if (updating) return;
+  expect(table).toEqual(PINNED[name]);
 }
 
 /** Scene ids every walk saw (checked against {@link SCENE_IDS} by the last test). */
@@ -978,7 +1005,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('front', w.table);
-    expect(w.table).toEqual(PINNED.front);
+    expectPinned('front', w.table);
   });
 
   it('a game: the selects, HUD and zone card, pause, continue, game over, replays', () => {
@@ -1120,7 +1147,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('game', w.table);
-    expect(w.table).toEqual(PINNED.game);
+    expectPinned('game', w.table);
   });
 
   it('co-op (the join, both HUD halves, the co-op continue) and a Direct-mode game', () => {
@@ -1158,7 +1185,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('coopDirect', w.table);
-    expect(w.table).toEqual(PINNED.coopDirect);
+    expectPinned('coopDirect', w.table);
   });
 
   it('the attract loop: demo play, the hi-score tables, the story crawl', () => {
@@ -1197,7 +1224,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('attract', w.table);
-    expect(w.table).toEqual(PINNED.attract);
+    expectPinned('attract', w.table);
   });
 
   it('a single stage (no campaign): the title code, STAGE CLEAR and TO BE CONTINUED', () => {
@@ -1222,7 +1249,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('single', w.table);
-    expect(w.table).toEqual(PINNED.single);
+    expectPinned('single', w.table);
   });
 
   it('a campaign run at the bosses: WARNING, HP bar, zone B bonus, H, escape, ending', () => {
@@ -1264,7 +1291,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('runA', w.table);
-    expect(w.table).toEqual(PINNED.runA);
+    expectPinned('runA', w.table);
   });
 
   it('a campaign run from each zone start: A, C, E, zone G bonus, I, escape, ending', () => {
@@ -1298,7 +1325,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('runB', w.table);
-    expect(w.table).toEqual(PINNED.runB);
+    expectPinned('runB', w.table);
   });
 
   it('the EXTRA modes: Extra Edit types, BOSS RUSH, CARAVAN and its TIME UP, ARCADE LOOP 2', () => {
@@ -1364,7 +1391,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('extraModes', w.table);
-    expect(w.table).toEqual(PINNED.extraModes);
+    expectPinned('extraModes', w.table);
   });
 
   it('the shipped translations: title, options, a game and the pause menu in es and ja', () => {
@@ -1410,7 +1437,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
       Object.assign(table, w.table);
     }
     print('languages', table);
-    expect(table).toEqual(PINNED.languages);
+    expectPinned('languages', table);
   });
 
   it('bare gameplay (no scene flow): the World view alone', () => {
@@ -1419,7 +1446,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.play(240);
     w.end();
     print('bare', w.table);
-    expect(w.table).toEqual(PINNED.bare);
+    expectPinned('bare', w.table);
   });
 
   it('co-op on a single stage: shield pips, a player out, STAGE CLEAR, GAME OVER, Direct', () => {
@@ -1513,7 +1540,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     for (const id of d.seen) SEEN.add(id);
     Object.assign(table, d.table);
     print('coopSingle', table);
-    expect(table).toEqual(PINNED.coopSingle);
+    expectPinned('coopSingle', table);
   });
 
   it('a co-op campaign run: the zone tallies, the escape and the abyss ending a boss escaped', () => {
@@ -1549,7 +1576,7 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.end();
     for (const id of w.seen) SEEN.add(id);
     print('coopRun', w.table);
-    expect(w.table).toEqual(PINNED.coopRun);
+    expectPinned('coopRun', w.table);
   });
 
   it('the walks show every scene of the flow', (ctx) => {

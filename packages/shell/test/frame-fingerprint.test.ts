@@ -18,8 +18,10 @@
  *
  * **Keeping it green.** Through R1 it must stay green without an edit. It is re-pinned on purpose
  * only — R2-01 (the 640×360 flip) or a deliberate drawing change — by running it with
- * `SHMUP_FINGERPRINT_PRINT=1` and pasting the printed table, the reason in the commit message.
+ * `SHMUP_FINGERPRINT_UPDATE=1`, which rewrites this file's own entries (R5-P.P10), or with
+ * `SHMUP_FINGERPRINT_PRINT=1` to only print the table, the reason in the commit message.
  */
+import { fileURLToPath } from 'node:url';
 import {
   Action,
   addScore,
@@ -43,6 +45,7 @@ import {
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../../vite.shared.js';
+import { rewritePinned } from '../../../packages/core/test/helpers/pin-writer.js';
 import { createFlightScene } from '../src/flight/index.js';
 import { FX_GALLERY_STATION_TICKS, createFxGallery } from '../src/fx-gallery/index.js';
 import { createShowcase } from '../src/showcase/index.js';
@@ -353,6 +356,12 @@ const PINNED: Readonly<Record<string, string>> = {
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };
 
+/** The file whose `PINNED` the update mode rewrites (R5-P.P10). */
+const PIN_FILE = fileURLToPath(import.meta.url);
+
+/** Whether this run rewrites its own pins (`SHMUP_FINGERPRINT_UPDATE=1`). */
+const updating = process.env.SHMUP_FINGERPRINT_UPDATE === '1';
+
 /** The walks, by name. */
 const WALKS: Readonly<Record<string, () => string>> = {
   'flight.open-space': () => flightWalk(null, 600),
@@ -368,6 +377,10 @@ describe('shell frame fingerprint (R1-02: the shell scenes stay pixel-identical)
       name,
       () => {
         const got = WALKS[name]();
+        if (updating) {
+          rewritePinned(PIN_FILE, name, got);
+          return;
+        }
         if (process.env.SHMUP_FINGERPRINT_PRINT === '1') {
           process.stdout.write(`  '${name}': '${got}',\n`);
           return;

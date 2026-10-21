@@ -20,8 +20,9 @@
  * issues.
  *
  * **Re-pinning.** Only on purpose — a change of the shipped content (R2-02's ×1.5 port, a zone
- * remaster) or of what a loader produces. Run it with `SHMUP_FINGERPRINT_PRINT=1`, paste the
- * printed tables and say why in the commit message.
+ * remaster) or of what a loader produces. Run it with `SHMUP_FINGERPRINT_UPDATE=1`, which
+ * rewrites the `PINNED` tables in this file (R5-P.P10), or with `SHMUP_FINGERPRINT_PRINT=1` to
+ * only print them, and say why in the commit message.
  *
  * Run it: `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
  * test/integration/content-db-fingerprint.test.ts`.
@@ -42,6 +43,7 @@ import { loadInputProfiles } from '@shmup/input-web';
 import { loadFxContent } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
+import { rewritePinned } from '../../packages/core/test/helpers/pin-writer.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const contentRoot = join(repo, 'content');
@@ -165,24 +167,48 @@ function fingerprint(files: readonly ContentFile[]): {
   };
 }
 
+/** The file whose `PINNED` the update mode rewrites (R5-P.P10). */
+const PIN_FILE = fileURLToPath(import.meta.url);
+
+/** Whether this run rewrites its own pins (`SHMUP_FINGERPRINT_UPDATE=1`). */
+const updating = process.env.SHMUP_FINGERPRINT_UPDATE === '1';
+
 /**
- * Prints a table (with `SHMUP_FINGERPRINT_PRINT=1`) for re-pinning.
+ * Prints a table (with `SHMUP_FINGERPRINT_PRINT=1`) for re-pinning, or — with
+ * `SHMUP_FINGERPRINT_UPDATE=1` — rewrites its `PINNED` entry in this file (R5-P.P10: the update
+ * run stays green exactly when only the pin moved; the walk's other checks still run).
  *
  * @param name - Which set.
  * @param table - Its digests.
  */
 function print(name: string, table: Record<string, string>): void {
+  if (updating) {
+    rewritePinned(PIN_FILE, name, table);
+    return;
+  }
   if (process.env.SHMUP_FINGERPRINT_PRINT !== '1') return;
   const rows = Object.keys(table).map((key) => `    '${key}': '${table[key]}',`);
   process.stdout.write(`  ${name}: {\n${rows.join('\n')}\n  },\n`);
 }
 
+/**
+ * Compares a table with its pinned entry — skipped in update mode, where {@link print} just
+ * rewrote that entry and the `PINNED` in memory is still the old table.
+ *
+ * @param name - Which set.
+ * @param table - Its digests.
+ */
+function expectPinned(name: string, table: Record<string, string>): void {
+  if (updating) return;
+  expect(table).toEqual(PINNED[name]);
+}
+
 describe('integration: the content-DB fingerprint (R1-03)', () => {
   it('loads the shipped content into exactly the pinned data', () => {
     const { issues, table } = fingerprint(readContentFiles(contentRoot));
-    print('shipped', table);
     expect(issues).toEqual([]);
-    expect(table).toEqual(PINNED.shipped);
+    print('shipped', table);
+    expectPinned('shipped', table);
   });
 
   it('loads the example format samples into exactly the pinned data', () => {
@@ -191,9 +217,9 @@ describe('integration: the content-DB fingerprint (R1-03)', () => {
       data: JSON.parse(readFileSync(join(contentRoot, path), 'utf8')) as unknown,
     }));
     const { issues, table } = fingerprint(files);
-    print('examples', table);
     expect(issues).toEqual([]);
-    expect(table).toEqual(PINNED.examples);
+    print('examples', table);
+    expectPinned('examples', table);
   });
 
   it('writes out what a hash must tell apart', () => {
