@@ -2601,8 +2601,9 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
     TV bundles green in budget (1,429.2 / 1,428.1 KB). No later step regenerates the icons before
     `R6-03.D3`.
   - **Docs images** (`E6` `45739d8` — the last R4 push): the final-art pass — the logo plate redrawn with it
-    (the banner 1920×432; `doc-images.mjs` derives the row from the loaded height, the `E1` logo being nine
-    rows taller than the 248×41 interim sheet, which reproduces the old y), all 18 screens re-shot on the
+    (the banner 1920×432; `doc-images.mjs` derives the row from the loaded height, the `E1` logo being
+    thirteen rows taller than the 248×41 interim sheet — 54 over 41 — which reproduces the old y), all 18
+    screens re-shot on the
     shipped v2 look; `docs:images` 145 images, 1 written, then `--check` green; the enemy, boss and shot
     plates rode `75dc7c0` (the W08.E2E pass) and the shot plates `4a9602f`. No fingerprints, no goldens.
   - **The trailer** was optional and was **not made**: no wave-8 or wave-9 commit packages clips; it stays
