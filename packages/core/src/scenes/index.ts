@@ -1161,8 +1161,9 @@ export const OptionsItem = {
   Back: 8,
 } as const;
 
-/** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09; R6-04 moved the
- * CRT and ASPECT rows to {@link GraphicsItem}). */
+/** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09; R6-04
+ * moved the CRT and ASPECT rows to {@link GraphicsItem}).
+ */
 export const DisplayItem = {
   /** BULLETS: the enemy bullet palette choice (M2-02). */
   Bullets: 0,
@@ -1182,8 +1183,9 @@ export const DisplayItem = {
   Back: 7,
 } as const;
 
-/** The GRAPHICS page's items (R6-04 — {@link GraphicsScene}; the CRT / ASPECT rows of M3-02,
- * moved from the DISPLAY page, and the two new boot knobs OUTPUT / RENDERER). */
+/** The GRAPHICS page's items (R6-04 — {@link GraphicsScene}; the CRT / ASPECT rows of
+ * M3-02, moved from the DISPLAY page, and the two new boot knobs OUTPUT / RENDERER).
+ */
 export const GraphicsItem = {
   /** OUTPUT: the canvas backbuffer cap — `OUTPUT_CAPS` (boot knob). */
   Output: 0,
