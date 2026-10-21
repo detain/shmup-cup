@@ -252,6 +252,28 @@ describe('core/scenes — the GRAPHICS page (R6-04)', () => {
     expect(page.renderer.index).toBe(RENDERER_CHOICES.length - 1);
   });
 
+  it('wraps around the ends of the CRT and ASPECT lists (the M3-02 rows, moved)', () => {
+    // The case scenes-extras-page.test.ts held before the rows moved (RT-R604 F2): Left at
+    // zero lands on the last entry, and a full sweep of Right crosses the right edge.
+    const s = optionsSession();
+    openPage(s, OptionsItem.Graphics);
+    const page = s.flow.graphicsPage;
+    page.menu.focus = GraphicsItem.Crt;
+    s.hold(0, 1);
+    expect(page.crt.index).toBe(0); // CRT_FILTERS[0] = 'off'
+    s.press(Action.Left);
+    expect(page.crt.index).toBe(CRT_FILTERS.length - 1);
+    for (let i = 0; i < CRT_FILTERS.length; i++) s.press(Action.Right);
+    expect(page.crt.index).toBe(CRT_FILTERS.length - 1);
+    page.menu.focus = GraphicsItem.Aspect;
+    s.hold(0, 1);
+    expect(page.aspect.index).toBe(0); // ASPECT_MODES[0] = 'normal'
+    s.press(Action.Left);
+    expect(page.aspect.index).toBe(ASPECT_MODES.length - 1);
+    for (let i = 0; i < ASPECT_MODES.length; i++) s.press(Action.Right);
+    expect(page.aspect.index).toBe(ASPECT_MODES.length - 1);
+  });
+
   it('a saved display section with unknown boot names falls back to auto', () => {
     const options = resolveUserOptions({ display: { output: '4K', renderer: 'webgl3' } });
     expect(options.display.output).toBe('auto');
