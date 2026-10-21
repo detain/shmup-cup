@@ -180,14 +180,18 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
   });
 
   it('contains the initial original sprite set', () => {
-    const count = (name: string): number => manifest.sprites[name]?.frames.length ?? 0;
+    // R4-P.P3 (RR-1): these are v1 identities, so the case reads the scale-1 build — a v2
+    // source replacing one of these names in wave 8 cannot move it (the shared default-scale
+    // `atlas` above still serves the other cases).
+    const m = buildAtlas({ artScale: 1 }).manifest;
+    const count = (name: string): number => m.sprites[name]?.frames.length ?? 0;
     expect(count('ships/kestrel')).toBe(3);
     expect(count('ships/kestrel-thruster')).toBe(2);
-    expect(manifest.animations['ships/kestrel']).toEqual({ down: [2], level: [0], up: [1] });
+    expect(m.animations['ships/kestrel']).toEqual({ down: [2], level: [0], up: [1] });
     expect(count('options/orb')).toBeGreaterThan(0);
     for (const shot of ['basic', 'double', 'laser', 'missile'])
       expect(count(`shots/${shot}`)).toBeGreaterThan(0);
-    const enemies = Object.keys(manifest.sprites).filter(
+    const enemies = Object.keys(m.sprites).filter(
       (n) => n.startsWith('enemies/') && !n.endsWith('@flash'),
     );
     // The six initial enemies, the ground hatch of M1-08, zone A's vane and gyre (M1-18), the
@@ -200,14 +204,14 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     // generators), plus the dimension stage's pylon (M3-02, the `dimension` generator).
     expect(enemies).toHaveLength(73);
     expect(count('gimmicks/chain-link')).toBe(1);
-    expect(manifest.sprites['enemies/bubble'].flash).toBe('enemies/bubble@flash');
+    expect(m.sprites['enemies/bubble'].flash).toBe('enemies/bubble@flash');
     // The Direct-mode ship MANTA (M2-05): level, banking up, banking down.
     expect(count('ships/manta')).toBe(3);
     expect(count('enemies/hatch')).toBe(2);
-    expect(manifest.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
+    expect(m.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
     for (const part of ['core', 'shield-plate', 'hull-block', 'emitter']) {
       expect(count(`bosses/${part}`)).toBeGreaterThan(0);
-      expect(manifest.sprites[`bosses/${part}`].flash).toBe(`bosses/${part}@flash`);
+      expect(m.sprites[`bosses/${part}`].flash).toBe(`bosses/${part}@flash`);
     }
     for (const name of [
       'items/capsule',
@@ -248,7 +252,7 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
       }
     }
     expect(count('tiles/terrain-a')).toBe(TERRAIN_TILES.length);
-    expect(manifest.animations['tiles/terrain-a']?.['slope-up']).toEqual([
+    expect(m.animations['tiles/terrain-a']?.['slope-up']).toEqual([
       TERRAIN_TILES.indexOf('slope-up'),
     ]);
   });
@@ -459,6 +463,8 @@ describe('scripts/assets/pipeline — generateAssets (disk, cache)', () => {
     const root = join(tmp, 'stale-code');
     const pipelineDir = join(root, 'scripts', 'assets');
     cpSync(join(repo, 'scripts', 'assets'), pipelineDir, { recursive: true });
+    // CODE_HASH reads the frame mirror next to the copied code (R4-P.P3) — it must exist.
+    cpSync(join(repo, 'scripts', 'frame.mjs'), join(root, 'scripts', 'frame.mjs'));
     symlinkSync(join(repo, 'node_modules'), join(root, 'node_modules'), 'junction');
     const ui = join(pipelineDir, 'procedural', 'ui.mjs');
     const options = { sourceDir: DEFAULT_SOURCE_DIR, outDir: join(root, 'generated') };

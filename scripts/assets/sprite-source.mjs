@@ -1,6 +1,9 @@
 /**
  * Sprite sources: `assets/source/sprites/**\/*.sprite.json` pixel maps, and real-art PNG
  * files (`*.png` + optional Aseprite `*.json` sidecar) that override frames by name.
+ * A `<path>.v2.sprite.json` ({@link SPRITE_SOURCE_V2_SUFFIX}) is the **v2 source** of the
+ * sprite `<path>` (R4-P.P3, RR-1): its `native` flag is implied, and the pipeline uses it
+ * only at an art scale ≠ 1, beside — never inside — the v1 map of the same path.
  *
  * **Pixel-map format** (one file per sprite, `name` = path below `sprites/` without
  * `.sprite.json`, so `ships/kestrel.sprite.json` defines `ships/kestrel`):
@@ -26,7 +29,8 @@
  * pairs, every colour of the art that its `<name>@p2` variant exchanges (`coop.mjs`,
  * R3-03.V2a); the pipeline demands one from every sprite `wantsP2Variant` accepts. `native: true` (optional, default `false`) says the pixels are already at
  * the art's v2 size, so the interim ×1.5 stage leaves them alone (plan_resolution.md R2-01, W4-5 —
- * `scripts/assets/interim.mjs`); a v1-scale map leaves it out.
+ * `scripts/assets/interim.mjs`); a v1-scale map leaves it out. A v2 source's `native` flag is
+ * implied: a `*.v2.sprite.json` always loads as native, even when it declares `native: false`.
  *
  * **Real-art overrides.** `ships/kestrel.png` targets the sprite `ships/kestrel`: without a
  * sidecar the whole PNG is frame 0; with an Aseprite JSON export (`ships/kestrel.json`,
@@ -48,7 +52,8 @@
  * **Public API.** {@link loadSpriteSources}, {@link parseSpriteSource},
  * {@link readPngFrames}, {@link applyPngOverrides}, {@link listFiles},
  * {@link SPRITE_NAME_PATTERN}, {@link ANIMATION_NAME_PATTERN}, {@link SPRITE_SOURCE_SUFFIX},
- * {@link INGEST_SUFFIXES}; typedefs {@link SpriteDef}, {@link PngSprite}, {@link AssetIssue}.
+ * {@link SPRITE_SOURCE_V2_SUFFIX}, {@link INGEST_SUFFIXES}; typedefs {@link SpriteDef},
+ * {@link PngSprite}, {@link AssetIssue}.
  *
  * @module
  */
@@ -115,6 +120,14 @@ export const ANIMATION_NAME_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 
 /** File suffix of pixel-map sprite sources. */
 export const SPRITE_SOURCE_SUFFIX = '.sprite.json';
+
+/**
+ * File suffix of the v2 pixel-map source of a sprite: `<path>.v2.sprite.json` is the v2
+ * source of `<path>` (R4-P.P3, RR-1 — v2 sources beside v1). {@link loadSpriteSources} parses
+ * it with the shortened expected name and implies `native: true`; the pipeline merges it only
+ * at an art scale ≠ 1, so the scale-1 (v1) build never sees it.
+ */
+export const SPRITE_SOURCE_V2_SUFFIX = '.v2.sprite.json';
 
 /**
  * Suffixes of the ingest tool's files that sit next to an override PNG and are not sprite
@@ -584,19 +597,26 @@ export function listFiles(dir, prefix = '') {
  * Reads every sprite source below a `sprites/` directory.
  *
  * @remarks
- * `*.sprite.json` → pixel-map sprites; `*.png` (+ `<same name>.json` sidecar) → real-art
- * overrides; `README.md`, `LICENSES.md`, `.gitkeep`, editor files such as `*.aseprite` and
- * the ingest tool's `*.recipe.json`, `*.art.json` and `*.edit.png` are ignored; a `*.json`
+ * `*.sprite.json` → pixel-map sprites; `*.v2.sprite.json` → the v2 pixel-map sources of the
+ * shortened names, each loaded with `native` implied and collected in `v2` only (R4-P.P3,
+ * RR-1); `*.png` (+ `<same name>.json` sidecar) → real-art overrides; `README.md`,
+ * `LICENSES.md`, `.gitkeep`, editor files such as `*.aseprite` and the ingest tool's
+ * `*.recipe.json`, `*.art.json` and `*.edit.png` are ignored; a `*.json`
  * that is neither a sprite source nor a PNG sidecar is an issue.
  *
  * @param {string} dir - Absolute path of the sprites directory.
  * @param {string} displayRoot - Prefix for issue paths / origins (e.g. `assets/source/sprites`).
- * @returns {{ sprites: SpriteDef[], overrides: PngSprite[], issues: AssetIssue[] }} The
- *   parsed sources in path order, and every problem found.
+ * @returns {{ sprites: SpriteDef[], v2: SpriteDef[], overrides: PngSprite[], issues: AssetIssue[] }}
+ *   The parsed sources in path order (v2 sources with `native` forced on), and every problem
+ *   found.
  */
 export function loadSpriteSources(dir, displayRoot) {
   /** @type {SpriteDef[]} */
   const sprites = [];
+  /** @type {SpriteDef[]} */
+  const v2 = [];
+  /** @type {Map<string, string>} sprite name → first v2 file that defined it */
+  const v2ByName = new Map();
   /** @type {PngSprite[]} */
   const overrides = [];
   /** @type {AssetIssue[]} */
@@ -606,6 +626,8 @@ export function loadSpriteSources(dir, displayRoot) {
   for (const relative of files) {
     const shown = `${displayRoot}/${relative}`;
     if (relative.endsWith(SPRITE_SOURCE_SUFFIX)) {
+      const isV2 = relative.endsWith(SPRITE_SOURCE_V2_SUFFIX);
+      const suffix = isV2 ? SPRITE_SOURCE_V2_SUFFIX : SPRITE_SOURCE_SUFFIX;
       let json;
       try {
         json = JSON.parse(readFileSync(join(dir, relative), 'utf8'));
@@ -616,10 +638,27 @@ export function loadSpriteSources(dir, displayRoot) {
         });
         continue;
       }
-      const expected = relative.slice(0, -SPRITE_SOURCE_SUFFIX.length);
+      const expected = relative.slice(0, -suffix.length);
       const result = parseSpriteSource(json, shown, expected);
       issues.push(...result.issues);
-      if (result.sprite !== null) sprites.push(result.sprite);
+      if (result.sprite === null) continue;
+      if (!isV2) {
+        sprites.push(result.sprite);
+        continue;
+      }
+      // A v2 source is native by definition (RR-1), whatever the file declared.
+      result.sprite.native = true;
+      const first = v2ByName.get(result.sprite.name);
+      if (first !== undefined) {
+        // Unreachable from one real tree (a path defines one shortened name); a guard.
+        issues.push({
+          path: `${shown}:name`,
+          message: `v2 source for sprite "${result.sprite.name}" is defined twice (first ${first})`,
+        });
+        continue;
+      }
+      v2ByName.set(result.sprite.name, shown);
+      v2.push(result.sprite);
     } else if (relative.endsWith('.png')) {
       const name = relative.slice(0, -'.png'.length);
       if (!SPRITE_NAME_PATTERN.test(name)) {
@@ -661,7 +700,7 @@ export function loadSpriteSources(dir, displayRoot) {
       }
     }
   }
-  return { sprites, overrides, issues };
+  return { sprites, v2, overrides, issues };
 }
 
 /**

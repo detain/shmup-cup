@@ -65,7 +65,7 @@ import {
   validateRecord,
 } from '../art-prompts/ingest/lib/provenance.mjs';
 import { DEFAULT_SOURCE_DIR, REPO_ROOT, collectSprites } from './assets/pipeline.mjs';
-import { loadSpriteSources } from './assets/sprite-source.mjs';
+import { SPRITE_SOURCE_V2_SUFFIX, loadSpriteSources } from './assets/sprite-source.mjs';
 
 /** @typedef {import('../art-prompts/ingest/lib/provenance.mjs').ModelEntry} ModelEntry */
 
@@ -502,6 +502,8 @@ function codeOrigin(origin) {
   if (origin.startsWith('palette:')) {
     return { kind: 'palette', source: origin, base: origin.slice('palette:'.length) };
   }
+  if (origin.endsWith(SPRITE_SOURCE_V2_SUFFIX))
+    return { kind: 'pixel-map', source: origin, base: null }; // a v2 map is pixel art too (RR-1)
   if (origin.endsWith('.sprite.json')) return { kind: 'pixel-map', source: origin, base: null };
   if (origin.endsWith('.font.json')) return { kind: 'font', source: origin, base: null };
   return { kind: 'unclassified', source: origin, base: null };

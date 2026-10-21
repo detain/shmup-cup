@@ -150,7 +150,9 @@ describe('player 2 by palette map — PNG overrides carry meta.shmup.p2 (R3-03.V
         meta: { shmup: { p2: { '#00ff00': '#ff0000' } } },
       }),
     });
-    const { sprites, issues } = collectSprites({ sourceDir: dir, artScale: 1 });
+    // Since R4-P.P3 a PNG of a name that has a code source applies only at the art scale
+    // (the scale-1 build stays the untouched v1 atlas), so the override runs at 3/2.
+    const { sprites, issues } = collectSprites({ sourceDir: dir, artScale: 1.5 });
     expect(issues).toEqual([]);
     const variant = sprites.find((s) => s.name === 'ships/boat@p2');
     expect(variant).toBeDefined();

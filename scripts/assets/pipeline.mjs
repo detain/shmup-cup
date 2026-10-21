@@ -35,6 +35,13 @@
  * `buildAtlas({ artScale: 1 })` is the v1 atlas byte for byte at either frame — the art the TV
  * bench, the CJK figures, the store icons and the doc images keep (W4-6).
  *
+ * **v2 sources beside v1 (R4-P.P3, decision RR-1).** A `<path>.v2.sprite.json` is the v2 pixel
+ * map of `<path>` (native implied) and a font file with `"native": true` is the v2 font of its
+ * `name`. At an art scale ≠ 1 each replaces the v1 source of its name, unscaled; at scale 1
+ * they are ignored — and there a PNG override of a name that has a code source is skipped too,
+ * so committing v2 art can never move the scale-1 atlas: the digest pin, the TV bench, the CJK
+ * figures and the store icons stay byte for byte until a step re-pins them on purpose.
+ *
  * **Public API.** {@link generateAssets} (disk, cached — `pnpm assets`, the Vite plugin),
  * {@link buildAtlas} (in memory), {@link collectSprites}, {@link computeInputHash},
  * {@link loadAtlasGroups}, {@link resolveAtlasGroup}, {@link AssetSourceError},
@@ -81,6 +88,7 @@ import { applyPngOverrides, listFiles, loadSpriteSources } from './sprite-source
 /** @typedef {import('./procedural/bullets.mjs').CoreMark} CoreMark */
 /** @typedef {import('./sprite-source.mjs').SpriteDef} SpriteDef */
 /** @typedef {import('./sprite-source.mjs').AssetIssue} AssetIssue */
+/** @typedef {import('./font.mjs').FontDef} FontDef */
 /** @typedef {import('./font.mjs').FontMetrics} FontMetrics */
 /** @typedef {import('./manifest.mjs').AtlasManifest} AtlasManifest */
 /** @typedef {import('./manifest.mjs').ManifestFrame} ManifestFrame */
@@ -337,18 +345,24 @@ function terrainTileSize(artScale) {
  *
  * @remarks
  * Order of work: pixel maps and procedural sprites (a name defined twice is an issue; the
- * terrain tilesets drawn at the art scale's tile size) → the art scale (R2-01, `interim.mjs`:
+ * terrain tilesets drawn at the art scale's tile size) → the v2 sources of the art scale
+ * (R4-P.P3, RR-1: at `artScale` ≠ 1 a `*.v2.sprite.json` replaces the v1 source of its name;
+ * at scale 1 all v2 sources are ignored) → the art scale (R2-01, `interim.mjs`:
  * every sprite but a `native` one scaled nearest-neighbour, its explicit anchor `⌈s·a⌉`) → PNG
- * overrides by name (never scaled: real art is v2-native) → the colour-blind `@<palette>`
+ * overrides by name (never scaled: real art is v2-native; at scale 1 an override of a name that
+ * has a code source is skipped, RR-1) → the colour-blind `@<palette>`
  * variants of an overridden bullet, beam or bend recoloured from that override (R3-03.V5,
  * decision W5-13, {@link recolourBulletOverrides}) → font sprites (`font/<name>`, scaled
- * with their metrics) → `<name>@flash` siblings for `hitFlash` sprites → `<name>@p2` palette
+ * with their metrics — a v2 font only at the art scale, unscaled) → `<name>@flash`
+ * siblings for `hitFlash` sprites → `<name>@p2` palette
  * maps of the ships and the stock icon (M2-06, `coop.mjs`, R3-03.V2a) — both from the scaled
  * sprites →
  * default anchors (centre of the scaled frame 0) → atlas groups ({@link resolveAtlasGroup} over
  * `atlas-groups.json`, R1-05: a listed name the atlas lacks, a listed font and an empty `common`
- * group are issues). Names, animations and groups never depend on the art scale, and frame counts
- * only for the laser beams (one frame per band height: 8 at scale 1, 12 at 3/2 — `lasers.mjs`).
+ * group are issues). Names and groups never depend on the art scale; the animation tables and
+ * frame counts do for `native` art only — the laser beams (one frame per band height: 8 at
+ * scale 1, 12 at 3/2 — `lasers.mjs`) and whatever a v2 source replaces (RR-1b) — the v1-scale
+ * art keeps them at both scales.
  * Never throws for bad sources: everything is reported in `issues`, and the caller decides
  * ({@link buildAtlas} throws {@link AssetSourceError}). With `ungrouped`, every sprite is
  * `common` and the groups file is not read at all.
@@ -395,7 +409,13 @@ export function collectSprites(options = {}) {
     byName.set(sprite.name, sprite);
   };
   for (const sprite of code.sprites) add(sprite);
-  for (const sprite of generateProceduralSprites({ tileSize, artScale })) add(sprite);
+  const procedural = generateProceduralSprites({ tileSize, artScale });
+  for (const sprite of procedural) add(sprite);
+  // v2 sources beside v1 (R4-P.P3, decision RR-1): at the art scale a `*.v2.sprite.json`
+  // replaces the v1 source of its name (and a v2-only name simply joins the build); its
+  // `native` is implied, so the interim stage below leaves it unscaled. At scale 1 the v2
+  // sources are ignored — the v1 build never sees them.
+  if (scaled) for (const sprite of code.v2) byName.set(sprite.name, sprite);
 
   // The interim art stage (R2-01, W4-5): every v1-scale source to the art scale; `native`
   // sources (terrain, ui/pixel, the laser beams, v2 redraws) are already at it. Nothing to do
@@ -403,8 +423,18 @@ export function collectSprites(options = {}) {
   const sources = [...byName.values()].map((sprite) =>
     scaled && sprite.native !== true ? scaleSprite(sprite, artScale) : sprite,
   );
-  // PNG overrides after the scale: real art is v2-native and never scaled.
-  const merged = applyPngOverrides(sources, code.overrides);
+  // PNG overrides after the scale: real art is v2-native and never scaled. At scale 1 an
+  // override of a name that has a code source is skipped (R4-P.P3): the v1 build stays the
+  // v1 art even when the v2 PNG of that name is already committed (a v1-only name, like the
+  // M3-03 CJK figures, still applies at every scale).
+  const codeNames = new Set();
+  for (const sprite of code.sprites) codeNames.add(sprite.name);
+  for (const sprite of procedural) codeNames.add(sprite.name);
+  for (const sprite of code.v2) codeNames.add(sprite.name);
+  const overrides = scaled
+    ? code.overrides
+    : code.overrides.filter((png) => !codeNames.has(png.name));
+  const merged = applyPngOverrides(sources, overrides);
   byName.clear();
   for (const sprite of merged) byName.set(sprite.name, sprite);
 
@@ -415,12 +445,22 @@ export function collectSprites(options = {}) {
 
   const fontSources = loadFontSources(fontsDir, displayPath(fontsDir));
   issues.push(...fontSources.issues);
+  // The font of each name for this build (R4-P.P3, RR-1): at scale 1 a v2 font is ignored;
+  // at the art scale the v2 (native) font of a name replaces its v1 font.
+  /** @type {Map<string, FontDef>} */
+  const chosenFonts = new Map();
+  for (const font of fontSources.fonts) {
+    if (font.native === true) {
+      if (scaled) chosenFonts.set(font.name, font);
+    } else if (!chosenFonts.has(font.name)) chosenFonts.set(font.name, font);
+  }
   /** @type {Record<string, FontMetrics>} */
   const fonts = {};
-  for (const font of fontSources.fonts) {
-    // The interim font (W4-4): the shipped font scaled with the art (6 × 8 → 9 × 12 at 3/2).
+  for (const font of chosenFonts.values()) {
+    // The interim font (W4-4): the shipped font scaled with the art (6 × 8 → 9 × 12 at 3/2);
+    // a v2 font (native, its cells already at the v2 size) is built as it is (R4-P.P3).
     const built = buildFontSprite(font);
-    const { sprite, metrics } = scaled ? scaleFont(built, artScale) : built;
+    const { sprite, metrics } = scaled && font.native !== true ? scaleFont(built, artScale) : built;
     if (byName.has(sprite.name)) {
       issues.push({
         path: `${font.origin}:name`,
@@ -872,7 +912,9 @@ function hashTree(hash, label, dir, skipDocs) {
 
 /**
  * Hash of the code this process runs: the pipeline scripts (`scripts/assets/**`) as they
- * were **when this module was loaded**, plus the zlib (deflate output) and pngjs
+ * were **when this module was loaded**, the frame mirror `scripts/frame.mjs` (R4-P.P3: a
+ * generator may read frame sizes through `scripts/assets/v2kit.mjs`, so the mirror belongs
+ * to the code that drew the atlas), plus the zlib (deflate output) and pngjs
  * (decoding) versions.
  *
  * @remarks
@@ -891,6 +933,9 @@ const CODE_HASH = (() => {
   ).version;
   hash.update(`zlib ${process.versions.zlib}\0pngjs ${pngjsVersion}\0`);
   hashTree(hash, 'pipeline', PIPELINE_DIR, false);
+  const frameBytes = readFileSync(join(REPO_ROOT, 'scripts', 'frame.mjs'));
+  hash.update(`frame/${frameBytes.length}\0`);
+  hash.update(frameBytes);
   return hash.digest('hex');
 })();
 
@@ -899,9 +944,9 @@ const CODE_HASH = (() => {
  *
  * @param {string} [sourceDir] - Source root (default `assets/source/`).
  * @returns {string} Hex SHA-256 of the loaded pipeline code (see {@link CODE_HASH}: the
- *   scripts as loaded by this process, the zlib and pngjs versions), of the sprite and
- *   font sources and of the atlas groups file ({@link ATLAS_GROUPS_FILE}, R1-05) as they
- *   are on disk now.
+ *   scripts as loaded by this process, the frame mirror and the zlib and pngjs versions), of
+ *   the sprite and font sources and of the atlas groups file ({@link ATLAS_GROUPS_FILE}, R1-05)
+ *   as they are on disk now.
  */
 export function computeInputHash(sourceDir = DEFAULT_SOURCE_DIR) {
   const hash = createHash('sha256');
@@ -962,8 +1007,9 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
  * Skips when the cache file records the same input hash and every recorded output still
  * exists with the recorded SHA-256 (a deleted or edited output forces a rebuild). Stale
  * pages from a previous, larger atlas are removed. It always builds at the default art scale
- * (`interim.mjs` `INTERIM_ART_SCALE`, which the input hash covers with `scripts/assets/**`) and
- * takes no `artScale`, so another scale's atlas is never written or cached as the shipped one.
+ * (`interim.mjs` `INTERIM_ART_SCALE`, which the input hash covers with `scripts/assets/**`
+ * and the `scripts/frame.mjs` mirror) and takes no `artScale`, so another scale's atlas is
+ * never written or cached as the shipped one.
  *
  * @param {{ sourceDir?: string, outDir?: string, force?: boolean,
  *   log?: (message: string) => void }} [options] - Source root, output root

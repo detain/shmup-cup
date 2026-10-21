@@ -133,28 +133,43 @@ function sourceAnchor(name: string): [number, number] | null | undefined {
 
 describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’s shape (R2-01)', () => {
   it('has the same sprites, frame counts (but the beams), animations and groups', () => {
-    expect(Object.keys(v2.manifest.sprites)).toEqual(Object.keys(v1.manifest.sprites));
-    const beams = new Set(BEAMS);
-    const extra: string[] = [];
+    // v2 sources beside v1 (R4-P.P3, decision RR-1): a name only the art-scale build has is a
+    // new v2-only native (RR-1a — absent at scale 1), and native art is drawn per scale (the
+    // generators) or replaced wholesale (a `*.v2.sprite.json`), so natives are skipped for the
+    // frame-table, frame-name and animation comparisons; sizes and anchors already skip them.
+    const v1Names = Object.keys(v1.manifest.sprites);
+    const onlyV2 = Object.keys(v2.manifest.sprites).filter((n) => !v1Names.includes(n));
+    for (const name of onlyV2) expect(NATIVE.has(name), name).toBe(true);
+    expect(Object.keys(v2.manifest.sprites).filter((n) => !onlyV2.includes(n))).toEqual(v1Names);
     for (const [name, sprite] of Object.entries(v1.manifest.sprites)) {
-      if (!beams.has(name)) {
-        expect(v2.manifest.sprites[name], name).toEqual(sprite);
-        continue;
-      }
-      // A beam has one frame per band height: frames 0 … 7 keep their names, 8 … 11 are new.
-      const frames = frameNames(name, scaleLength(BEAM_HEIGHT, 1.5));
-      expect(v2.manifest.sprites[name], name).toEqual({ ...sprite, frames });
-      extra.push(...frames.slice(sprite.frames.length));
+      if (NATIVE.has(name)) continue;
+      expect(v2.manifest.sprites[name], name).toEqual(sprite);
     }
-    expect(extra).toHaveLength(BEAMS.length * 4);
-    expect(Object.keys(v2.manifest.frames).sort()).toEqual(
-      [...Object.keys(v1.manifest.frames), ...extra].sort(),
+    // Frame names (`<sprite>#<i>`) of the shared non-native art are the same at both scales;
+    // beams, v2-only names and v2-replaced natives may carry frames the other build lacks
+    // (RR-1b: an extra v2 frame belongs to a native sprite, never to a scaled v1 name).
+    const scaledFrame = (frame: string): boolean => {
+      const at = frame.lastIndexOf('#');
+      const name = at < 0 ? frame : frame.slice(0, at);
+      return !NATIVE.has(name) && !onlyV2.includes(name);
+    };
+    expect(Object.keys(v2.manifest.frames).filter(scaledFrame).sort()).toEqual(
+      Object.keys(v1.manifest.frames).filter(scaledFrame).sort(),
     );
-    expect(v2.manifest.animations).toEqual(v1.manifest.animations);
-    expect(v2.sprites.map((s) => [s.name, s.group])).toEqual(
-      v1.sprites.map((s) => [s.name, s.group]),
+    const sharedAnimations = (animations: Record<string, unknown>) =>
+      Object.fromEntries(Object.entries(animations).filter(([name]) => !NATIVE.has(name)));
+    expect(sharedAnimations(v2.manifest.animations)).toEqual(
+      sharedAnimations(v1.manifest.animations),
     );
-    expect(v2.manifest.pages.map((p) => p.group)).toEqual(v1.manifest.pages.map((p) => p.group));
+    expect(
+      v2.sprites.filter((s) => !onlyV2.includes(s.name)).map((s) => [s.name, s.group]),
+    ).toEqual(v1.sprites.map((s) => [s.name, s.group]));
+    // A v2-only name may add a page to its own group, never a new group (RR-1a): the page
+    // groups match as sets.
+    expect(new Set(v2.manifest.pages.map((p) => p.group))).toEqual(
+      new Set(v1.manifest.pages.map((p) => p.group)),
+    );
+    expect(BEAMS.length).toBe(12); // still 3 colours × 4 palettes (their frames ride the skip)
   });
 
   it('upscales every v1-scale frame to ⌈1.5·w⌉ × ⌈1.5·h⌉, nearest-neighbour', () => {
@@ -197,7 +212,7 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
 });
 
 describe('scripts/assets/pipeline — what the interim stage never upscales (W4-5)', () => {
-  it('marks exactly the terrain tilesets, ui/pixel, the laser beams and the native v2 bullets and bend nodes', () => {
+  it('marks at least the terrain tilesets, ui/pixel, the laser beams and the native v2 bullets and bend nodes (the native set is derived)', () => {
     // The v2 bullets and bend nodes: `bullets.mjs` / `lasers.mjs` draw them at the art bible
     // §5.4 sizes on the `artScale !== 1` path (R3-03.V1), the palette variants with them.
     const V2_SHOTS = Object.keys(BULLET_COLORS).flatMap((colour) =>
@@ -210,9 +225,12 @@ describe('scripts/assets/pipeline — what the interim stage never upscales (W4-
     );
     expect(BEAMS).toHaveLength(12); // 3 colours × (standard + 3 colour-blind palettes)
     expect(V2_SHOTS).toHaveLength(48); // 3 colours × 4 sprites × (standard + 3 palettes)
-    expect([...NATIVE].sort()).toEqual(
-      [...Object.keys(TERRAIN_PALETTES), 'ui/pixel', ...BEAMS, ...V2_SHOTS].sort(),
-    );
+    // R4-P.P3 (RR-1): `NATIVE` is derived from the build, and v2 pixel maps and v2 fonts are
+    // native too — the list below is the floor, never a pin. What the extra natives are is
+    // pinned by the relation case (a new v2-only name is absent at scale 1) and by
+    // `pipeline-v2-sources.test.ts`.
+    for (const name of [...Object.keys(TERRAIN_PALETTES), 'ui/pixel', ...BEAMS, ...V2_SHOTS])
+      expect(NATIVE.has(name), name).toBe(true);
   });
 
   it('draws laser beam frame k as a band k + 1 px tall at both scales', () => {

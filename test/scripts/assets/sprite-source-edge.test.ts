@@ -626,6 +626,51 @@ describe('scripts/assets/sprite-source — loading from disk (edge)', () => {
   });
 });
 
+describe('scripts/assets/sprite-source — v2 sources (R4-P.P3)', () => {
+  const map = (name: string, extra: Record<string, unknown> = {}) =>
+    JSON.stringify({ ...MINI, name, ...extra });
+
+  it('reads a .v2.sprite.json as the v2 source of the stripped name, native implied', () => {
+    const dir = tree('v2-pair', {
+      'ships/kestrel.sprite.json': map('ships/kestrel'),
+      'ships/kestrel.v2.sprite.json': map('ships/kestrel'),
+    });
+    const { sprites, v2, overrides, issues } = loadSpriteSources(dir, 'src');
+    expect(issues).toEqual([]);
+    expect(sprites.map((s) => s.origin)).toEqual(['src/ships/kestrel.sprite.json']);
+    expect(v2.map((s) => [s.name, s.origin, s.native])).toEqual([
+      ['ships/kestrel', 'src/ships/kestrel.v2.sprite.json', true],
+    ]);
+    expect(overrides).toEqual([]);
+  });
+
+  it('forces native on a v2 file that declares native: false', () => {
+    const dir = tree('v2-false', { 'ui/dot.v2.sprite.json': map('ui/dot', { native: false }) });
+    const { sprites, v2, overrides, issues } = loadSpriteSources(dir, 'src');
+    expect(issues).toEqual([]);
+    expect(sprites).toEqual([]);
+    expect(overrides).toEqual([]);
+    expect(v2).toHaveLength(1);
+    expect(v2[0].native).toBe(true);
+  });
+
+  it('reports a v2 file whose declared name is not its path minus the v2 suffix', () => {
+    const dir = tree('v2-name', { 'a/kestrel.v2.sprite.json': map('ships/other') });
+    const { sprites, v2, issues } = loadSpriteSources(dir, 'src');
+    expect(sprites).toEqual([]);
+    expect(v2).toEqual([]);
+    expect(issues.map((i) => i.path)).toEqual(['src/a/kestrel.v2.sprite.json:name']);
+  });
+
+  it('keeps a directory of only v2 files free of v1 sources (the slots stay separate)', () => {
+    const dir = tree('v2-only', { 'top.v2.sprite.json': map('top') });
+    const { sprites, v2, overrides } = loadSpriteSources(dir, 'src');
+    expect(sprites).toEqual([]);
+    expect(overrides).toEqual([]);
+    expect(v2.map((s) => s.name)).toEqual(['top']);
+  });
+});
+
 describe('scripts/assets/sprite-source — applyPngOverrides (edge)', () => {
   const base: SpriteDef = {
     name: 'ships/a',

@@ -146,15 +146,22 @@ describe('integration: the shipped atlas stays inside its budget (R1-05)', () =>
       Object.keys(shippedOnePage.manifest.frames).sort(),
     );
     // …and the same frames as the v1 art the figures below are measured on (only sizes scale) —
-    // but the laser beams', one per band height: the ×1.5 atlas adds frames 8 … 11 to each
-    // (`lasers.mjs`, R2-01), none at scale 1.
-    const beamFrames = Object.entries(shipped.manifest.sprites)
-      .filter(([name]) => name.startsWith('lasers/beam-'))
-      .flatMap(([name, sprite]) => sprite.frames.slice(atlas.sprites[name].frames.length));
-    expect(beamFrames).toHaveLength(INTERIM_ART_SCALE === 1 ? 0 : 12 * 4);
-    expect(Object.keys(shipped.manifest.frames).sort()).toEqual(
-      [...Object.keys(atlas.frames), ...beamFrames].sort(),
+    // except `native` art, which is drawn per scale by its generator or comes from a v2 source
+    // (R4-P.P3, decisions RR-1a/RR-1b): the laser beams' extra band frames (`lasers.mjs`), a
+    // v2-only name and a v2 redraw's frame changes are all native, so every frame the two
+    // builds disagree on belongs to a native sprite; non-native frames are the same set.
+    const nativeNames = new Set(
+      shipped.sprites.filter((s) => s.native === true).map((s) => s.name),
     );
+    const frameSprite = (frame: string): string => {
+      const at = frame.lastIndexOf('#');
+      return at < 0 ? frame : frame.slice(0, at);
+    };
+    const nonNativeFrames = (manifest: typeof atlas): string[] =>
+      Object.keys(manifest.frames)
+        .filter((frame) => !nativeNames.has(frameSprite(frame)))
+        .sort();
+    expect(nonNativeFrames(shipped.manifest)).toEqual(nonNativeFrames(atlas));
   });
 });
 

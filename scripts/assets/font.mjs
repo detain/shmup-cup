@@ -25,6 +25,10 @@
  * Every glyph is a `cellWidth × cellHeight` pixel map (`#` = ink, `.` = empty) keyed by
  * the character it draws (one Unicode code point). Glyphs are white so the renderer can
  * tint them. `advance` (per font, overridable per glyph) is how far the pen moves.
+ * `native: true` (optional, default `false`) makes the file the **v2 font** of its `name`
+ * (R4-P.P3, RR-1): its cells are already at the v2 size, so a v1 font file and a v2 one may
+ * share a name — the pipeline builds the native one only at an art scale ≠ 1 (unscaled) and
+ * the v1 one at every scale (through the interim stage), and never scales the native font.
  *
  * **Output.** The sprite `font/<name>` has one frame per glyph in code-point order
  * (frame names `font/<name>#<i>`, anchor `[0, 0]` = the cell's top-left); the metrics are
@@ -54,6 +58,9 @@ import { listFiles } from './sprite-source.mjs';
  * @property {number} lineHeight - Distance between baselines of consecutive lines.
  * @property {{ code: number, rows: string[], advance: number }[]} glyphs - Sorted by code.
  * @property {string} origin - Source file path.
+ * @property {boolean} [native] - `true` when the cells are already at the art's v2 size (a v2
+ *   font, R4-P.P3): the pipeline builds it unscaled and only at an art scale ≠ 1. Absent for
+ *   a v1-scale font.
  */
 
 /**
@@ -81,6 +88,7 @@ const FONT_KEYS = [
   'cellHeight',
   'lineHeight',
   'advance',
+  'native',
   'glyphs',
 ];
 
@@ -131,6 +139,10 @@ export function parseFontSource(json, file) {
   }
   if (json.description !== undefined && typeof json.description !== 'string') {
     issues.push({ path: `${file}:description`, message: 'must be a string' });
+  }
+  const native = json.native;
+  if (native !== undefined && typeof native !== 'boolean') {
+    issues.push({ path: `${file}:native`, message: 'must be a boolean' });
   }
   for (const [key, value] of Object.entries({ cellWidth, cellHeight, lineHeight })) {
     if (!isIntAtLeast(value, 1))
@@ -190,17 +202,18 @@ export function parseFontSource(json, file) {
   }
   if (issues.length > 0) return { font: null, issues };
   parsed.sort((a, b) => a.code - b.code);
-  return {
-    font: {
-      name: /** @type {string} */ (name),
-      cellWidth: /** @type {number} */ (cellWidth),
-      cellHeight: /** @type {number} */ (cellHeight),
-      lineHeight: /** @type {number} */ (lineHeight),
-      glyphs: parsed,
-      origin: file,
-    },
-    issues,
+  /** @type {FontDef} */
+  const font = {
+    name: /** @type {string} */ (name),
+    cellWidth: /** @type {number} */ (cellWidth),
+    cellHeight: /** @type {number} */ (cellHeight),
+    lineHeight: /** @type {number} */ (lineHeight),
+    glyphs: parsed,
+    origin: file,
   };
+  // Only a v2 font carries the flag, so a v1 file keeps its pre-R4-P.P3 shape.
+  if (native === true) font.native = true;
+  return { font, issues };
 }
 
 /**
@@ -222,15 +235,19 @@ export function buildFontSprite(font) {
     glyphs[String(glyph.code)] = { frame: `${spriteName}#${i}`, advance: glyph.advance };
     return image;
   });
+  /** @type {SpriteDef} */
+  const sprite = {
+    name: spriteName,
+    anchor: [0, 0],
+    hitFlash: false,
+    frames,
+    animations: {},
+    origin: font.origin,
+  };
+  // A v2 font's sprite is native: the pipeline's interim stage never scales it (R4-P.P3).
+  if (font.native === true) sprite.native = true;
   return {
-    sprite: {
-      name: spriteName,
-      anchor: [0, 0],
-      hitFlash: false,
-      frames,
-      animations: {},
-      origin: font.origin,
-    },
+    sprite,
     metrics: {
       sprite: spriteName,
       lineHeight: font.lineHeight,
@@ -244,10 +261,15 @@ export function buildFontSprite(font) {
 /**
  * Reads every `*.font.json` below a directory.
  *
+ * @remarks
+ * A font name may be defined twice when exactly one of the files is the v2 font (a v1 source
+ * and its native source beside it, R4-P.P3); two v1 files, or two v2 files, of one name are
+ * an issue — as is any third file of the name.
+ *
  * @param {string} dir - Absolute path of the fonts directory.
  * @param {string} displayRoot - Prefix for issue paths (e.g. `assets/source/fonts`).
  * @returns {{ fonts: FontDef[], issues: AssetIssue[] }} Fonts in path order and problems
- *   (a repeated font name is an issue).
+ *   (a name defined twice at the same nativeness is an issue).
  */
 export function loadFontSources(dir, displayRoot) {
   /** @type {FontDef[]} */
@@ -270,7 +292,12 @@ export function loadFontSources(dir, displayRoot) {
     const result = parseFontSource(json, shown);
     issues.push(...result.issues);
     if (result.font === null) continue;
-    if (fonts.some((font) => font.name === result.font?.name)) {
+    const clash = fonts.some(
+      (font) =>
+        font.name === result.font?.name &&
+        (font.native === true) === (result.font?.native === true),
+    );
+    if (clash) {
       issues.push({
         path: `${shown}:name`,
         message: `font "${result.font.name}" is defined twice`,

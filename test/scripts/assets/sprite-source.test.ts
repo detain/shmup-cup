@@ -314,6 +314,7 @@ describe('scripts/assets/sprite-source — PNG sources', () => {
   it('returns nothing for a missing directory', () => {
     expect(loadSpriteSources(join(tmp, 'nope'), 'x')).toEqual({
       sprites: [],
+      v2: [],
       overrides: [],
       issues: [],
     });

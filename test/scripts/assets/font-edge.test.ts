@@ -158,6 +158,38 @@ describe('scripts/assets/font — parseFontSource (edge)', () => {
   });
 });
 
+describe('scripts/assets/font — the native key (R4-P.P3, v2 fonts)', () => {
+  it('carries native: true on the font', () => {
+    const { font, issues } = parse({ native: true });
+    expect(issues).toEqual([]);
+    expect(font?.native).toBe(true);
+  });
+
+  it('leaves the flag off for native: false (a v1 font, stated)', () => {
+    const { font, issues } = parse({ native: false });
+    expect(issues).toEqual([]);
+    expect(font).toBeTruthy();
+    expect(font?.native).toBeUndefined();
+  });
+
+  it('reports a non-boolean native and keeps the font without the flag', () => {
+    const { font, issues } = parse({ native: 'yes' });
+    expect(font?.native).toBeUndefined();
+    expect(issues).toEqual([{ path: 't:native', message: 'must be a boolean' }]);
+  });
+
+  it('stamps the built sprite of a native font as native (never scaled)', () => {
+    const { font } = parse({ native: true });
+    if (font === null) throw new Error('fixture invalid');
+    const { sprite, metrics } = buildFontSprite(font);
+    expect(sprite.native).toBe(true);
+    expect(metrics.cellWidth).toBe(2);
+    const base = parse({}).font;
+    if (base === null) throw new Error('fixture invalid');
+    expect(buildFontSprite(base).sprite.native).toBeUndefined();
+  });
+});
+
 describe('scripts/assets/font — buildFontSprite (edge)', () => {
   it('draws exactly the "#" cells in opaque white and leaves the rest transparent', () => {
     const { font } = parse({ glyphs: { A: ['#.', '.#'], B: ['..', '##'] } });
@@ -215,6 +247,26 @@ describe('scripts/assets/font — loadFontSources', () => {
     const dir = tree('dupe', { 'a.font.json': font('same'), 'b.font.json': font('same') });
     const { fonts, issues } = loadFontSources(dir, 'fonts');
     expect(fonts.map((f) => f.origin)).toEqual(['fonts/a.font.json']);
+    expect(issues).toEqual([
+      { path: 'fonts/b.font.json:name', message: 'font "same" is defined twice' },
+    ]);
+  });
+
+  it('accepts a v1 font and its v2 (native) twin under one name (R4-P.P3)', () => {
+    const dir = tree('pair', {
+      'a.font.json': font('same'),
+      'b.font.json': JSON.stringify({ ...TINY, name: 'same', native: true }),
+    });
+    const { fonts, issues } = loadFontSources(dir, 'fonts');
+    expect(issues).toEqual([]);
+    expect(fonts.map((f) => f.native === true)).toEqual([false, true]);
+  });
+
+  it('reports two v2 fonts under one name (the twin rule does not forgive a twin)', () => {
+    const v2 = JSON.stringify({ ...TINY, name: 'same', native: true });
+    const dir = tree('dupev2', { 'a.font.json': v2, 'b.font.json': v2 });
+    const { fonts, issues } = loadFontSources(dir, 'fonts');
+    expect(fonts).toHaveLength(1);
     expect(issues).toEqual([
       { path: 'fonts/b.font.json:name', message: 'font "same" is defined twice' },
     ]);
