@@ -7156,7 +7156,14 @@ const ENDING_SCENE_LAYOUT = Object.freeze({
  */
 const ENDING_SCENE_BOTTOM = ENDING_SCENE_LAYOUT.groundY + uiPx(16);
 
-/** The epilogue panel's margin under the scene's lowest row and above the bottom edge (4). */
+/**
+ * The text panels' margin under the scene's panel line (4) — R4-03.C7's one-rule hug offset,
+ * the room one margin also leaves under the epilogue's last line. Both panels take the UI kit's
+ * single v2 rim: {@link drawPanel}'s magenta top and bottom (`UI_COLORS.border`) over cyan
+ * side rails (`UI_COLORS.rimInner`); the nested outer-plus-inner double rim was declined with
+ * R4-05.E2's ruling — the single rim stands and the scene UI list's {@link UI_COMMANDS}
+ * budget stays 384.
+ */
 const ENDING_TEXT_MARGIN = uiPx(4);
 
 /**

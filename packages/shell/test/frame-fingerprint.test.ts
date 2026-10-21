@@ -341,12 +341,14 @@ function galleryWalk(): string {
  * now leads with the thruster sprite (the interned `ships/*-thruster[@p2]` names renumber the
  * flight walk's sprite ids — open-space, test-range and the WARNING band moved; the showcase
  * pushes its own thruster through its own sprite list, unchanged here, and the fx-gallery draws
- * no ship — both stay).
+ * no ship — both stay), then at R4-05.MIRRORFIX: free flight's WARNING band mirrors the scene
+ * flow's R4-05.E3 layout (the centred text row, the hazard fields at both ends, the alert edges
+ * drawn over them — the warning walk's `ui` hash moved; every other walk and hash stays).
  */
 const PINNED: Readonly<Record<string, string>> = {
   'flight.open-space': 'ba1bfc5d ff7f3235 9acada6b',
   'flight.test-range': '920316b5 ff7f3235 757cb2ec',
-  'flight.warning': '9f231bd8 e3b808bd 6c6d569e',
+  'flight.warning': '9f231bd8 bb66561d 6c6d569e',
   showcase: 'b9c2aea8 57ecce45 58a99e5f',
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };

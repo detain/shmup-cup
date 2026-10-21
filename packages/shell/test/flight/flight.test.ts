@@ -10,13 +10,17 @@ import {
   Action,
   DrawOp,
   ART_SCALE,
+  FRAME_CY,
+  FRAME_H,
   FRAME_W,
+  GLYPH_H,
   GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  uiPx,
   addScore,
   commitPlayerInput,
   createGame,
@@ -297,14 +301,27 @@ describe('shell/flight', () => {
     flight.update(game.renderFrame());
     expect(ui.strings[0]).toBe(warning.text);
     expect(ui.strings[0]).toContain('"TRIAL WARDEN"');
-    expect(Array.from(ui.op.subarray(0, ui.count))).toEqual([
-      DrawOp.Rect,
-      DrawOp.Rect,
-      DrawOp.Rect,
-      DrawOp.Text,
-    ]);
+    // The scene flow's v2 band (R4-05.E3, mirrored): the ground rect, a hazard field at each
+    // end (the alert ground plus eight deep-red stripe cells — nine commands), the two 1-px
+    // alert edges drawn over them, and the text centred between the edge lines.
+    const bandH = FRAME_H / 5;
+    const bandY = FRAME_CY - uiPx(8) - (bandH >> 1);
+    const stripe = bandH / 4;
+    expect(Array.from(ui.op.subarray(0, ui.count))).toEqual(
+      Array.from({ length: 1 + 2 * 9 + 2 }, () => DrawOp.Rect).concat(DrawOp.Text),
+    );
     const text = ui.count - 1;
-    expect([ui.x[text], ui.color[text]]).toEqual([PLAYFIELD_W / 2, 0xf85858]);
+    expect([ui.x[text], ui.y[text], ui.color[text]]).toEqual([
+      PLAYFIELD_W / 2,
+      bandY + ((bandH - GLYPH_H) >> 1),
+      0xf85858,
+    ]);
+    // Command 1 is the left field's alert ground, command 2 its first deep cell (row 0's
+    // `(c + 3 − r) % 4 < 2` cells start at column 1), command 10 the right field's ground,
+    // flush with the band's right end.
+    expect([ui.x[1], ui.y[1], ui.w[1], ui.color[1]]).toEqual([0, bandY, bandH, 0xf85858]);
+    expect([ui.x[2], ui.y[2], ui.w[2], ui.color[2]]).toEqual([stripe, bandY, stripe, 0x881818]);
+    expect([ui.x[10], ui.w[10], ui.h[10]]).toEqual([PLAYFIELD_W - bandH, bandH, bandH]);
     // Unchanged within a colour phase; the colour alternates every 16 ticks.
     const revision = ui.revision;
     game.step();

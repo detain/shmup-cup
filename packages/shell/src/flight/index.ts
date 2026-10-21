@@ -28,10 +28,11 @@
  * the power meter is core `ui`'s, drawn by the scene flow (M1-16, the shell's default scene
  * `game`); free flight keeps this dev HUD and runs bare gameplay — no title, no pause menu.
  *
- * **WARNING (M1-13).** While the World's boss WARNING is active (`view.warning`), the UI draw list
- * shows its text — built once per boss by the core — centred on a translucent band across the
- * playfield, its colour alternating every 16 ticks. The list is rebuilt only when the WARNING
- * starts, ends or changes colour, and the text enters its string slot only when it changed.
+ * **WARNING (M1-13; the band mirrors core `scenes`' R4-05.E3 layout).** While the World's boss
+ * WARNING is active (`view.warning`), the UI draw list shows its text — built once per boss by
+ * the core — centred on a translucent band across the playfield, red hazard fields at its ends,
+ * its colour alternating every 16 ticks. The list is rebuilt only when the WARNING starts, ends
+ * or changes colour, and the text enters its string slot only when it changed.
  *
  * **Implements.**
  * - shmup_feat.md §5 — the ship under the player's control
@@ -47,7 +48,9 @@
 import {
   ART_SCALE,
   FRAME_CY,
+  FRAME_H,
   FRAME_W,
+  GLYPH_H,
   GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
@@ -55,6 +58,7 @@ import {
   PLAYFIELD_H,
   PLAYFIELD_W,
   TextAlign,
+  UI_COLORS,
   createDrawList,
   createSpriteBatch,
   defineModule,
@@ -140,19 +144,41 @@ const STRING = { p1: 0, title: 1, hint: 2, hi: 3, gameOver: 4 } as const;
 
 // The dev HUD and the WARNING band are laid out like the scene flow's (core `ui` / `scenes`,
 // R2-01): text widths from the font's cell `GLYPH_W`, the art's lengths and gaps at its scale
-// (`uiPx`). The numbers in parentheses are the values at 384×216 with the 6×8 font.
+// (`uiPx`). The numbers in parentheses are the values at 384×216 with the 6×8 font, except in
+// the WARNING block: it mirrors core `scenes`' R4-05.E3 band as laid at 640×360, with the values
+// at that frame named in its docs.
 
-/** Height of the WARNING band: three lines of the font plus margins (48; the scene flow's). */
-const WARNING_BAND_H = uiPx(48);
+/**
+ * Height of the WARNING band: a fifth of the frame — the scene flow's R4-05.E3 derivation
+ * (72 at 640×360, the same height the interim `uiPx(48)` and v1's 48 give, frame-anchored now).
+ */
+const WARNING_BAND_H = FRAME_H / 5;
 
 /**
  * Screen row of the WARNING band's top edge: the band is centred 8 px above the frame's centre
- * row (the playfield's middle), `FRAME_CY − uiPx(8) − WARNING_BAND_H / 2` — as the scene flow's.
+ * row (the playfield's middle), `FRAME_CY − uiPx(8) − WARNING_BAND_H / 2` (132 at this frame) —
+ * as the scene flow's.
  */
 const WARNING_BAND_Y = FRAME_CY - uiPx(8) - (WARNING_BAND_H >> 1);
 
-/** The WARNING text's row below the band's top edge (9; the scene flow's `WARNING_TEXT_DY`). */
-const WARNING_TEXT_DY = uiPx(9);
+/**
+ * From the WARNING band's top edge to its text: the centred text row of the band, between the
+ * hazard stripes and under the edge line — `(WARNING_BAND_H − GLYPH_H) / 2` (30, the scene
+ * flow's R4-05.E3; v1's `uiPx(9)` sat it 9 px under the top line).
+ */
+const WARNING_TEXT_DY = (WARNING_BAND_H - GLYPH_H) >> 1;
+
+/** The hazard stripe's pitch: the band's height over four rows (18 at this frame; the scene's). */
+const WARNING_STRIPE = WARNING_BAND_H / 4;
+
+/** Width of the hazard field at each end of the band: one band height (72; the scene flow's). */
+const WARNING_FIELD_W = WARNING_BAND_H;
+
+/**
+ * The hazard stripes' deep red between the `UI_COLORS.alert` bars of the field (the scene
+ * flow's `WARNING_STRIPE_DEEP`).
+ */
+const WARNING_STRIPE_DEEP = 0x881818;
 
 /** Gap between a HUD label and its score (4; core `ui`'s `HUD_LABEL_GAP`). */
 const HUD_LABEL_GAP = uiPx(4);
@@ -184,6 +210,31 @@ const LIVES_STEP = uiPx(10);
  * (`HUD_STOCK_DY`): the same `HUD_BOTTOM_Y + 2` the browser spec's icon band samples.
  */
 const LIVES_Y = HUD_BOTTOM_Y + ((HUD_BAR_HEIGHT - uiPx(5)) >> 1);
+
+/**
+ * Draws one hazard field of the WARNING band at its end — the scene flow's `drawHazardField`
+ * (core `scenes`, R4-05.E3, art bible §5.11's "red hazard stripes"): four rows of four stripe
+ * cells, the deep-red cells stepping one stripe per row so the bars run at 45° over the
+ * `UI_COLORS.alert` ground.
+ *
+ * @param list - The UI list.
+ * @param x0 - Screen column of the field's left edge.
+ */
+const drawHazardField = (list: DrawList, x0: number): void => {
+  list.rect(x0, WARNING_BAND_Y, WARNING_FIELD_W, WARNING_BAND_H, UI_COLORS.alert);
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if ((c + 3 - r) % 4 >= 2) continue;
+      list.rect(
+        x0 + c * WARNING_STRIPE,
+        WARNING_BAND_Y + r * WARNING_STRIPE,
+        WARNING_STRIPE,
+        WARNING_STRIPE,
+        WARNING_STRIPE_DEEP,
+      );
+    }
+  }
+};
 
 /**
  * Creates the free-flight scene for a game.
@@ -235,7 +286,9 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   hud.setString(STRING.gameOver, 'GAME OVER');
   const scoring = game.world.scoring.board;
   const p1Score = scoring.scores[0];
-  const ui = createDrawList(4, 1);
+  // 22 commands: the band's ground rect, both hazard fields (a ground plus eight deep cells
+  // each), the two 1-px alert edges and the text — the scene flow's v2 band, sized to it.
+  const ui = createDrawList(22, 1);
 
   const frame: {
     tick: number;
@@ -296,7 +349,9 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   };
 
   /**
-   * Rebuilds the UI list for a WARNING look: 0 = off, 1 / 2 = on in its two colours.
+   * Rebuilds the UI list for a WARNING look: 0 = off, 1 / 2 = on in its two colours — the
+   * scene flow's v2 band (R4-05.E3): the translucent ground, a hazard field at each end, the
+   * 1-px alert edges drawn over them, and the text centred between the lines.
    *
    * @param look - The look.
    */
@@ -305,13 +360,16 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     if (look === 0 || warning === null) return;
     ui.setString(0, warning.text);
     ui.rect(0, WARNING_BAND_Y, PLAYFIELD_W, WARNING_BAND_H, 0x000000, 144);
-    ui.rect(0, WARNING_BAND_Y, PLAYFIELD_W, 1, 0xf85858);
-    ui.rect(0, WARNING_BAND_Y + WARNING_BAND_H - 1, PLAYFIELD_W, 1, 0xf85858);
+    // As in core: the edge lines come after the fields, so each edge stays one alert line.
+    drawHazardField(ui, 0);
+    drawHazardField(ui, PLAYFIELD_W - WARNING_FIELD_W);
+    ui.rect(0, WARNING_BAND_Y, PLAYFIELD_W, 1, UI_COLORS.alert);
+    ui.rect(0, WARNING_BAND_Y + WARNING_BAND_H - 1, PLAYFIELD_W, 1, UI_COLORS.alert);
     ui.text(
       0,
       PLAYFIELD_W / 2,
       WARNING_BAND_Y + WARNING_TEXT_DY,
-      look === 1 ? 0xf85858 : 0xf8d030,
+      look === 1 ? UI_COLORS.alert : UI_COLORS.focus,
       TextAlign.Center,
     );
   };
