@@ -10,8 +10,8 @@ Files owned by this zone (the LAND scope): `content/stages/zone-f.stage.json`,
 `content/enemies/zone-f.enemies.json`, `content/tilesets/terrain-vault.tileset.json`, and —
 per the patterns note below — **no** patterns file: zone F's action `vault.spores` already lives in
 the split `content/patterns/zone-f.patterns.json` at this tip (`R5-P.P4` has landed; this design
-creates no new pattern file, and the split, when it comes, moves the action, it does not change
-it). Zone F has no paths file (`git ls-files content/paths` holds no zone-f entry).
+creates no new pattern file, and the landed split moved the action; it did not change it).
+Zone F has no paths file (`git ls-files content/paths` holds no zone-f entry).
 
 ## 1. Zone F today (baseline, measured at tip)
 
