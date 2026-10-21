@@ -24,8 +24,8 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { MAGMA_RAMP } from '../../scripts/assets/procedural/magma.mjs';
-import { STORM_RAMP } from '../../scripts/assets/procedural/tempest.mjs';
+import { MAGMA_RAMP_V2 } from '../../scripts/assets/procedural/magma.mjs';
+import { STORM_RAMP_V2 } from '../../scripts/assets/procedural/tempest.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import {
   FRAME_CX,
@@ -67,9 +67,9 @@ const PEAKS = [rgb('#2e2226'), rgb('#4a3634')] as const;
 /** `bg/storm-ridge`'s far and near mountain tones (#242a38, #303848). */
 const RIDGE = [rgb('#242a38'), rgb('#303848')] as const;
 /** The lava lake's ramp (the only colours its palette cycle shows). */
-const LAVA = MAGMA_RAMP.map(rgb);
+const LAVA = MAGMA_RAMP_V2.map(rgb);
 /** The storm clouds' ramp (the only colours their palette cycle shows). */
-const CLOUDS = STORM_RAMP.map(rgb);
+const CLOUDS = STORM_RAMP_V2.map(rgb);
 
 /** A rectangle of frame pixels (inclusive start, exclusive end). */
 interface Area {

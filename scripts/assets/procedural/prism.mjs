@@ -3,9 +3,9 @@
  *
  * - `bg/prism-facets` ({@link FACETS_TILE_W}×{@link FACETS_TILE_H}, the far band): a wall of
  *   crystal facets — a grid of triangles (16-px cells, each cut along a seeded diagonal) whose
- *   faces take one of the four {@link PRISM_RAMP} colours by a position hash, so the stage's palette
- *   cycle makes the facets glint in turn; the grid divides the tile, so it repeats seamlessly
- *   across and down.
+ *   faces take one of the {@link PRISM_RAMP} (v1) / {@link PRISM_RAMP_V2} (the frozen v2 ramp,
+ *   R5-P.P7) colours by a position hash, so the stage's palette cycle makes the facets glint in
+ *   turn; the grid divides the tile, so it repeats seamlessly across and down.
  * - `bg/prism-spires` ({@link SPIRES_TILE_W}×{@link SPIRES_TILE_H}, a mid band): crystal spires
  *   rising from the bottom — sharp triangular profiles whose periods divide the tile width — with
  *   pale lit edges.
@@ -27,12 +27,14 @@
  * `hash2` (seeded from the sprite names), so the pixels are identical on every engine.
  *
  * **Public API.** {@link generate}, {@link PRISM_SPRITES}, {@link PRISM_RAMP} (the colours zone G's
- * palette cycle must name), {@link FACETS_TILE_W} / {@link FACETS_TILE_H}, {@link SPIRES_TILE_W} /
+ * v1 palette cycle named), {@link PRISM_RAMP_V2} (the frozen v2 ramp zone G's cycles name since
+ * R5-P.P7), {@link FACETS_TILE_W} / {@link FACETS_TILE_H}, {@link SPIRES_TILE_W} /
  * {@link SPIRES_TILE_H} (the bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { hash2 } from '../rng.mjs';
 import { color, drawLine, fillEllipse, makeSprite, mix, seedOf } from './common.mjs';
 
@@ -61,6 +63,21 @@ const FACET_CELL = 16;
  */
 export const PRISM_RAMP = Object.freeze(['#0c1424', '#121c32', '#182842', '#203656']);
 
+/**
+ * Zone G's frozen v2 ramp (design `docs/v2-run/designs/zone-g.md` §9): the six colours
+ * `content/stages/zone-g.stage.json` and `content/stages/glimmer-cache.stage.json` name now, deep
+ * blue → ice — drawn by `bg/prism-facets` only at an art scale ≠ 1 (RR-1: the scale-1 build keeps
+ * {@link PRISM_RAMP} byte for byte).
+ */
+export const PRISM_RAMP_V2 = Object.freeze([
+  '#0e1a2e',
+  '#1a2b52',
+  '#24407e',
+  '#3560ad',
+  '#5c8ed1',
+  '#9dbfe8',
+]);
+
 /** The sprites this generator draws, in order. */
 export const PRISM_SPRITES = Object.freeze([
   'bg/prism-facets',
@@ -82,12 +99,26 @@ export const PRISM_SPRITES = Object.freeze([
 /**
  * Generates zone G's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled facet band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link PRISM_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   return [
-    makeSprite('bg/prism-facets', [facets()], 'prism', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/prism-facets',
+      [v2 ? scaleImage(facets(PRISM_RAMP_V2), artScale) : facets()],
+      'prism',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('bg/prism-spires', [spires()], 'prism', { anchor: [0, 0] }),
     makeSprite('enemies/glint-mote', [glintFrame(0), glintFrame(1)], 'prism', {
       hitFlash: true,
@@ -121,17 +152,19 @@ export function generate() {
 
 /**
  * The facet wall: every {@link FACET_CELL}-px cell is cut along one diagonal (a hash of the cell
- * picks which) into two triangles; each triangle's colour is a {@link PRISM_RAMP} colour picked by
- * another hash, and a 1-px lighter seam runs along the cut. Every pixel is opaque and one of the
+ * picks which) into two triangles; each triangle's colour is a `rampHex` colour picked by
+ * another hash (v1's {@link PRISM_RAMP} in full, the frozen v2 {@link PRISM_RAMP_V2} as far as the
+ * pick reaches), and a 1-px lighter seam runs along the cut. Every pixel is opaque and one of the
  * ramp's colours.
  *
+ * @param {readonly string[]} [rampHex] - The ramp to paint, default {@link PRISM_RAMP}.
  * @returns {Image} The tile.
  */
-function facets() {
+function facets(rampHex = PRISM_RAMP) {
   const w = FACETS_TILE_W;
   const h = FACETS_TILE_H;
   const seed = seedOf('bg/prism-facets');
-  const ramp = PRISM_RAMP.map(color);
+  const ramp = rampHex.map(color);
   const cols = w / FACET_CELL;
   const rows = h / FACET_CELL;
   const image = createImage(w, h);

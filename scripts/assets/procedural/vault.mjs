@@ -4,7 +4,8 @@
  * - `bg/vault-membrane` ({@link MEMBRANE_TILE_W}×{@link MEMBRANE_TILE_H}, the far band): a wall of
  *   living cells — a seeded cell pattern (the nearest and second-nearest of scattered nuclei,
  *   wrapped round both tile edges, so the band repeats seamlessly across and down) painted **only**
- *   in the four colours of {@link VAULT_RAMP}: the stage's palette cycle makes it pulse.
+ *   in colours of {@link VAULT_RAMP} (v1) / {@link VAULT_RAMP_V2} (the frozen v2 ramp, R5-P.P7):
+ *   the stage's palette cycle makes it pulse.
  * - `bg/vault-folds` ({@link FOLDS_TILE_W}×{@link FOLDS_TILE_H}, a mid band): soft fleshy folds
  *   rising from the bottom — a lumpy profile summed from rounded bumps whose periods divide the
  *   tile width — with a pale rim and pores.
@@ -25,12 +26,14 @@
  * seeded asset RNG (seeded from the sprite names), so the pixels are identical on every engine.
  *
  * **Public API.** {@link generate}, {@link VAULT_SPRITES}, {@link VAULT_RAMP} (the colours zone F's
- * palette cycle must name), {@link MEMBRANE_TILE_W} / {@link MEMBRANE_TILE_H}, {@link FOLDS_TILE_W}
+ * v1 palette cycle named), {@link VAULT_RAMP_V2} (the frozen v2 ramp zone F's cycle names since
+ * R5-P.P7), {@link MEMBRANE_TILE_W} / {@link MEMBRANE_TILE_H}, {@link FOLDS_TILE_W}
  * / {@link FOLDS_TILE_H} (the bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { createAssetRng, hash2 } from '../rng.mjs';
 import { color, drawLine, fillEllipse, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
 
@@ -56,6 +59,21 @@ export const FOLDS_TILE_H = 48;
  */
 export const VAULT_RAMP = Object.freeze(['#18261e', '#203428', '#2a4434', '#385a44']);
 
+/**
+ * Zone F's frozen v2 ramp (design `docs/v2-run/designs/zone-f.md` §9): the six colours
+ * `content/stages/zone-f.stage.json` names now (v1's four, a darker base and a brighter cell added),
+ * dark → light — drawn by `bg/vault-membrane` only at an art scale ≠ 1 (RR-1: the scale-1 build
+ * keeps {@link VAULT_RAMP} byte for byte).
+ */
+export const VAULT_RAMP_V2 = Object.freeze([
+  '#101e18',
+  '#18261e',
+  '#203428',
+  '#2a4434',
+  '#385a44',
+  '#4c7856',
+]);
+
 /** The sprites this generator draws, in order. */
 export const VAULT_SPRITES = Object.freeze([
   'bg/vault-membrane',
@@ -77,12 +95,26 @@ export const VAULT_SPRITES = Object.freeze([
 /**
  * Generates zone F's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled membrane band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link VAULT_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   return [
-    makeSprite('bg/vault-membrane', [membrane()], 'vault', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/vault-membrane',
+      [v2 ? scaleImage(membrane(VAULT_RAMP_V2), artScale) : membrane()],
+      'vault',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('bg/vault-folds', [folds()], 'vault', { anchor: [0, 0] }),
     makeSprite('enemies/lymph-mote', [moteFrame(0), moteFrame(1)], 'vault', {
       hitFlash: true,
@@ -132,15 +164,17 @@ function wrapped(d, size) {
  * The cell wall: 22 seeded nuclei; every pixel takes the distances to its nearest (`d1`) and second
  * nearest (`d2`) nucleus, both wrapped round the tile edges — near the boundary between two cells
  * (`d2 − d1` small) it is the light wall, deeper inside a cell darker. Every pixel is opaque and one
- * of the {@link VAULT_RAMP} colours.
+ * of the `rampHex` colours (v1's {@link VAULT_RAMP} in full, the frozen v2 {@link VAULT_RAMP_V2}
+ * as far as the ladder reaches).
  *
+ * @param {readonly string[]} [rampHex] - The ramp to paint, default {@link VAULT_RAMP}.
  * @returns {Image} The tile.
  */
-function membrane() {
+function membrane(rampHex = VAULT_RAMP) {
   const w = MEMBRANE_TILE_W;
   const h = MEMBRANE_TILE_H;
   const rng = createAssetRng(seedOf('bg/vault-membrane'));
-  const ramp = VAULT_RAMP.map(color);
+  const ramp = rampHex.map(color);
   /** @type {{ x: number, y: number }[]} */
   const nuclei = [];
   for (let i = 0; i < 22; i++)

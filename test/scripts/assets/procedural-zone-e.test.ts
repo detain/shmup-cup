@@ -56,7 +56,7 @@ describe('scripts/assets/procedural/tempest (M2-12)', () => {
     expect(open).toBeGreaterThan(200);
     expect(seam(image)).toBeLessThan(24);
     const stage = content<{ cycles: { colors: string[] }[] }>('stages/zone-e.stage.json');
-    expect(stage.cycles[0].colors).toEqual([...tempest.STORM_RAMP]);
+    expect(stage.cycles[0].colors).toEqual([...tempest.STORM_RAMP_V2]);
   });
 
   it('draws a jagged ridge band and a translucent rain band, both repeating along x', () => {

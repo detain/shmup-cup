@@ -23,8 +23,8 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { PRISM_RAMP } from '../../scripts/assets/procedural/prism.mjs';
-import { VAULT_RAMP } from '../../scripts/assets/procedural/vault.mjs';
+import { PRISM_RAMP_V2 } from '../../scripts/assets/procedural/prism.mjs';
+import { VAULT_RAMP_V2 } from '../../scripts/assets/procedural/vault.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import {
   FRAME_CX,
@@ -65,9 +65,9 @@ const FOLDS = [rgb('#1e2e26'), rgb('#2c4034')] as const;
 /** `bg/prism-spires`' far and near crystal (#18243c, #22365a). */
 const SPIRES = [rgb('#18243c'), rgb('#22365a')] as const;
 /** The cell wall's ramp (the only colours its palette cycle shows). */
-const MEMBRANE = VAULT_RAMP.map(rgb);
+const MEMBRANE = VAULT_RAMP_V2.map(rgb);
 /** The crystal facets' ramp (the only colours their palette cycle shows). */
-const FACETS = PRISM_RAMP.map(rgb);
+const FACETS = PRISM_RAMP_V2.map(rgb);
 
 /** A rectangle of frame pixels (inclusive start, exclusive end). */
 interface Area {

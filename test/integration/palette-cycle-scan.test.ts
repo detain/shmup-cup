@@ -6,7 +6,7 @@
  * 1. per stage with `cycles`: every pixel of the art on a cycled layer is an exact ramp colour
  *    of that layer's cycle, or at Chebyshev distance ≥ 3 (twice the tolerance, max over
  *    channels) from every ramp colour of that layer;
- * 2. project-wide: every sprite of the atlas keeps the same margin from **all eight reserved
+ * 2. project-wide: every sprite of the atlas keeps the same margin from **all nine reserved
  *    ramps** — the distinct `cycles` colour lists of the shipped stages, read from the stages
  *    and named by the stage that cycles them exactly as the bible's ramp table does — except a
  *    ramp's own cycle art against its own ramp (rule 1 checks that pair) and the bible's
@@ -43,6 +43,7 @@ interface StageFile {
 const RAMPS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   SEA: ['raster-range'],
   BRINE: ['zone-b', 'brine-grotto'],
+  DUNE: ['zone-c'],
   MAGMA: ['zone-d'],
   STORM: ['zone-e'],
   VAULT: ['zone-f'],
@@ -68,15 +69,16 @@ const CYCLE_ART: Readonly<Record<string, string>> = Object.freeze({
  * ramp it sits on no layer cycling): one line per sprite; later subtasks delete the line when
  * they replace the sprite, and an entry that no longer trips fails the scan. */
 const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  STORM: ['bosses/raid-hull', 'bosses/turret', 'bosses/steed-head'],
-  PRISM: [
-    'bosses/bulwark-hull',
-    'bosses/bulwark-wing-top',
-    'bosses/bulwark-wing-bottom',
-    'bosses/bulwark-emitter',
-    'bosses/hull-block',
+  STORM: [
+    'bosses/shield-plate',
+    'enemies/facet-turret',
+    'enemies/prism-cube',
+    'enemies/prism-lens',
   ],
+  DUNE: ['bosses/widow-head'],
   VAULT: ['bosses/regent-eye'],
+  PRISM: ['enemies/hopper'],
+  CITADEL: ['items/capsule-bonus'],
   ABYSS: [
     'bg/brine-sea',
     'bosses/king-lure',
@@ -84,7 +86,6 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'enemies/lumen-mote',
     'enemies/abyss-turret',
   ],
-  MAGMA: ['bosses/bastion-arm'],
   BRINE: ['bg/brine-nebula', 'bg/abyss-murk'],
 });
 
@@ -265,8 +266,8 @@ function spriteTrip(atlas: Atlas, name: string, rampName: string): string | null
 const atlas = buildAtlas();
 
 describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shipped atlas (R3-03.V3)', () => {
-  it('names exactly the eight reserved ramps by the stages that cycle them', () => {
-    expect(rampColors.size).toBe(8);
+  it('names exactly the nine reserved ramps by the stages that cycle them', () => {
+    expect(rampColors.size).toBe(9);
     for (const [ramp, colours] of rampColors) {
       expect(colours.length, ramp).toBeLessThanOrEqual(8); // a layer cycles at most 8 colours
       for (let a = 0; a < colours.length; a++) {
@@ -319,7 +320,7 @@ describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shi
     expect(issues).toEqual([]);
   });
 
-  it('rule 2: every sprite keeps the margin from all eight ramps, bible exemptions tripping', () => {
+  it('rule 2: every sprite keeps the margin from all nine ramps, bible exemptions tripping', () => {
     const failures: string[] = [];
     const tripped = new Set<string>(); // `${ramp}\u0000${sprite}` of exemptions that tripped
     for (const name of Object.keys(atlas.manifest.sprites)) {

@@ -3,9 +3,9 @@
  *
  * - `bg/citadel-wall` ({@link WALL_TILE_W}×{@link WALL_TILE_H}, the far band): the fortress's inner
  *   wall — riveted steel panels on a 32×16 grid with seams, and a running light in every panel
- *   painted in one of the four {@link CITADEL_RAMP} colours (a position hash picks which), so the
- *   stage's palette cycle makes the lights chase along the wall; the grid divides the tile, so it
- *   repeats seamlessly across and down.
+ *   painted in one of the {@link CITADEL_RAMP} (v1) / {@link CITADEL_RAMP_V2} (the frozen v2 ramp,
+ *   R5-P.P7) colours (a position hash picks which), so the stage's palette cycle makes the lights
+ *   chase along the wall; the grid divides the tile, so it repeats seamlessly across and down.
  * - `bg/citadel-pipes` ({@link PIPES_TILE_W}×{@link PIPES_TILE_H}, a mid band): conduits — three
  *   horizontal pipes with flanges every 32 px and struts down to a girder at the bottom.
  * - Enemies (flying ones face left; hit-flash siblings): `enemies/bolt-drone` (a small steel
@@ -25,12 +25,14 @@
  * randomness `hash2` (seeded from the sprite names), so the pixels are identical on every engine.
  *
  * **Public API.** {@link generate}, {@link CITADEL_SPRITES}, {@link CITADEL_RAMP} (the colours
- * zone H's palette cycle must name), {@link WALL_TILE_W} / {@link WALL_TILE_H},
+ * zone H's v1 palette cycle named), {@link CITADEL_RAMP_V2} (the frozen v2 ramp zone H's cycle
+ * names since R5-P.P7), {@link WALL_TILE_W} / {@link WALL_TILE_H},
  * {@link PIPES_TILE_W} / {@link PIPES_TILE_H} (the bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { hash2 } from '../rng.mjs';
 import { color, drawLine, fillEllipse, makeSprite, mix, seedOf } from './common.mjs';
 
@@ -61,6 +63,21 @@ const PANEL_H = 16;
  * names (`content/stages/zone-h.stage.json`); no other pixel of the wall uses them.
  */
 export const CITADEL_RAMP = Object.freeze(['#402a10', '#6a4418', '#a86a20', '#e8a030']);
+
+/**
+ * Zone H's frozen v2 ramp (design `docs/v2-run/designs/zone-h.md` §9): the six colours
+ * `content/stages/zone-h.stage.json` names now, dim rust → bright amber — drawn by
+ * `bg/citadel-wall`'s running lights only at an art scale ≠ 1 (RR-1: the scale-1 build keeps
+ * {@link CITADEL_RAMP} byte for byte).
+ */
+export const CITADEL_RAMP_V2 = Object.freeze([
+  '#2e1a06',
+  '#4a2c10',
+  '#7a4c18',
+  '#b87824',
+  '#e8a838',
+  '#f8d878',
+]);
 
 /** The sprites this generator draws, in order. */
 export const CITADEL_SPRITES = Object.freeze([
@@ -98,12 +115,26 @@ const AMBER = '#e0a040';
 /**
  * Generates zone H's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled wall band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link CITADEL_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   return [
-    makeSprite('bg/citadel-wall', [wall()], 'citadel', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/citadel-wall',
+      [v2 ? scaleImage(wall(CITADEL_RAMP_V2), artScale) : wall()],
+      'citadel',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('bg/citadel-pipes', [pipes()], 'citadel', { anchor: [0, 0] }),
     makeSprite('enemies/bolt-drone', [droneFrame(0), droneFrame(1)], 'citadel', {
       hitFlash: true,
@@ -144,15 +175,17 @@ export function generate() {
 /**
  * The fortress wall: panels on a {@link PANEL_W}×{@link PANEL_H} grid, each a steel tone picked by
  * a hash with a lit top seam and a dark bottom seam, two rivets, and a 3×2 running light whose
- * colour is one of {@link CITADEL_RAMP} (a hash of the panel) — the only ramp pixels of the tile.
+ * colour is one of `rampHex` (v1's {@link CITADEL_RAMP}, the frozen v2 {@link CITADEL_RAMP_V2}) —
+ * the only ramp pixels of the tile.
  *
+ * @param {readonly string[]} [rampHex] - The ramp the lights use, default {@link CITADEL_RAMP}.
  * @returns {Image} The tile.
  */
-function wall() {
+function wall(rampHex = CITADEL_RAMP) {
   const w = WALL_TILE_W;
   const h = WALL_TILE_H;
   const seed = seedOf('bg/citadel-wall');
-  const ramp = CITADEL_RAMP.map(color);
+  const ramp = rampHex.map(color);
   const tones = [color('#22262e'), color('#262a34'), color('#1e2229')];
   const seamLit = color('#3a404c');
   const seamDark = color('#14161c');

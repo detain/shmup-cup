@@ -26,8 +26,8 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { ABYSS_RAMP } from '../../scripts/assets/procedural/abyss.mjs';
-import { CITADEL_RAMP } from '../../scripts/assets/procedural/citadel.mjs';
+import { ABYSS_RAMP_V2 } from '../../scripts/assets/procedural/abyss.mjs';
+import { CITADEL_RAMP_V2 } from '../../scripts/assets/procedural/citadel.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import {
   FRAME_CX,
@@ -74,9 +74,9 @@ const ENDING_SUN = [rgb('#f8d080')] as const;
 /** The sea's surface from below (#a0f0f0 — `ui/ending-surface`). */
 const ENDING_SURFACE = [rgb('#a0f0f0')] as const;
 /** The citadel wall's running lights (the only colours its palette cycle shows). */
-const LIGHTS = CITADEL_RAMP.map(rgb);
+const LIGHTS = CITADEL_RAMP_V2.map(rgb);
 /** The murk's specks (the only colours its palette cycle shows). */
-const SPECKS = ABYSS_RAMP.map(rgb);
+const SPECKS = ABYSS_RAMP_V2.map(rgb);
 
 /** A rectangle of frame pixels (inclusive start, exclusive end). */
 interface Area {

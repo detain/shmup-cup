@@ -46,7 +46,7 @@ describe('scripts/assets/procedural/magma (M2-12)', () => {
     expect([...colours].filter((c) => !magma.MAGMA_RAMP.includes(c))).toEqual(['#2a1a18']);
     for (let i = 3; i < image.data.length; i += 4) expect(image.data[i]).toBe(255);
     const stage = content<{ cycles: { colors: string[] }[] }>('stages/zone-d.stage.json');
-    expect(stage.cycles[0].colors).toEqual([...magma.MAGMA_RAMP]);
+    expect(stage.cycles[0].colors).toEqual([...magma.MAGMA_RAMP_V2]);
   });
 
   it('draws volcano peaks with glowing craters and smoke that join at the tile edge', () => {

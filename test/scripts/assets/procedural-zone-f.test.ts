@@ -69,7 +69,7 @@ describe('scripts/assets/procedural/vault (M2-13)', () => {
     for (let i = 3; i < image.data.length; i += 4) expect(image.data[i]).toBe(255);
     expect(wraps(image)).toBeGreaterThan(0.9);
     const stage = content<{ cycles: { colors: string[] }[] }>('stages/zone-f.stage.json');
-    expect(stage.cycles[0].colors).toEqual([...vault.VAULT_RAMP]);
+    expect(stage.cycles[0].colors).toEqual([...vault.VAULT_RAMP_V2]);
   });
 
   it('draws fleshy folds with a rim, opaque at the bottom and repeating along x', () => {

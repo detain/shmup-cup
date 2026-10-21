@@ -653,7 +653,7 @@
   "cycles": [
     {
       "layer": "mid",
-      "colors": ["#5a1808", "#8a2c0a", "#c04a10", "#e87a1c"],
+      "colors": ["#4a1206", "#7c1e08", "#b0330c", "#d95f14", "#ef8a26", "#f7bd4d"],
       "ticks": 9
     }
   ],

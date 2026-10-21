@@ -3,8 +3,9 @@
  *
  * - `bg/abyss-murk` ({@link MURK_TILE_W}×{@link MURK_TILE_H}, the far band): black-blue deep water,
  *   darker towards the bottom in soft bands, with scattered bioluminescent specks painted in the
- *   four {@link ABYSS_RAMP} colours (a position hash picks which), so the stage's palette cycle makes
- *   them twinkle; every period divides the tile, so it repeats seamlessly across and down.
+ *   {@link ABYSS_RAMP} (v1) / {@link ABYSS_RAMP_V2} (the frozen v2 ramp, R5-P.P7) colours (a
+ *   position hash picks which), so the stage's palette cycle makes them twinkle; every period
+ *   divides the tile, so it repeats seamlessly across and down.
  * - `bg/abyss-spires` ({@link SPIRES_TILE_W}×{@link SPIRES_TILE_H}, a mid band): silhouettes of
  *   rock spires and swaying weed rising from the bottom, their tips faintly lit.
  * - Enemies (flying ones face left; hit-flash siblings): `enemies/lumen-mote` (a glowing plankton
@@ -28,13 +29,16 @@
  * identical on every engine.
  *
  * **Public API.** {@link generate}, {@link ABYSS_SPRITES}, {@link ABYSS_RAMP} (the colours zone I's
- * palette cycle must name), {@link MURK_TILE_W} / {@link MURK_TILE_H}, {@link SPIRES_TILE_W} /
+ * v1 palette cycle named), {@link ABYSS_RAMP_V2} (the frozen v2 ramp zone I's cycle names since
+ * R5-P.P7), {@link MURK_TILE_W} / {@link MURK_TILE_H}, {@link SPIRES_TILE_W} /
  * {@link SPIRES_TILE_H} (the bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { hash2 } from '../rng.mjs';
+import { offRamp } from '../v2kit.mjs';
 import { DIRECTIONS_8, color, drawLine, fillEllipse, makeSprite, mix, seedOf } from './common.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
@@ -58,6 +62,22 @@ export const SPIRES_TILE_H = 56;
  * (`content/stages/zone-i.stage.json`); no other pixel of the murk uses them.
  */
 export const ABYSS_RAMP = Object.freeze(['#0e2a34', '#16485a', '#2a7a8a', '#6ad8e0']);
+
+/**
+ * Zone I's frozen v2 ramp (design `docs/v2-run/designs/zone-i.md` §9): the six colours
+ * `content/stages/zone-i.stage.json` names now — v1's four plus the darker base and the mid glow
+ * that feed it — dim → bright cyan; no other pixel of the murk uses them. Drawn by
+ * `bg/abyss-murk` only at an art scale ≠ 1 (RR-1: the scale-1 build keeps {@link ABYSS_RAMP}
+ * byte for byte).
+ */
+export const ABYSS_RAMP_V2 = Object.freeze([
+  '#08141c',
+  '#0e2a34',
+  '#16485a',
+  '#2a7a8a',
+  '#48b8c8',
+  '#6ad8e0',
+]);
 
 /** The sprites this generator draws, in order. */
 export const ABYSS_SPRITES = Object.freeze([
@@ -104,12 +124,26 @@ const DIRECTIONS_16 = [...DIRECTIONS_8, ...DIRECTIONS_8.map(([c, s]) => [-c, -s]
 /**
  * Generates zone I's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled murk band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link ABYSS_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   return [
-    makeSprite('bg/abyss-murk', [murk()], 'abyss', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/abyss-murk',
+      [v2 ? scaleImage(murk(ABYSS_RAMP_V2, true), artScale) : murk()],
+      'abyss',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('bg/abyss-spires', [spires()], 'abyss', { anchor: [0, 0] }),
     makeSprite('enemies/lumen-mote', [moteFrame(0), moteFrame(1)], 'abyss', {
       hitFlash: true,
@@ -158,17 +192,23 @@ export function generate() {
 /**
  * The murk: four soft horizontal bands of deep blue (16 px each, darker downwards — the tile
  * repeats down, so the bands repeat too) and specks: one per 16×16 cell where a hash says so, a
- * single pixel or a plus, in a {@link ABYSS_RAMP} colour picked by another hash — the only ramp
- * pixels of the tile.
+ * single pixel or a plus, in a `rampHex` colour picked by another hash — the only ramp pixels of
+ * the tile. On the v2 path the bands are nudged through the kit's `offRamp`: the frozen v2 ramp's
+ * base `#08141c` sits 1/255 from v1's second band `#07131c`, and a cycled layer must be an exact
+ * ramp colour or 3/255 from the whole ramp (rule 1 of `palette-cycle-scan.test.ts`).
  *
+ * @param {readonly string[]} [rampHex] - The ramp the specks use, default {@link ABYSS_RAMP}.
+ * @param {boolean} [v2] - Nudge the band colours off the reserved ramps (the frozen v2 ramp's
+ *   default).
  * @returns {Image} The tile.
  */
-function murk() {
+function murk(rampHex = ABYSS_RAMP, v2 = false) {
   const w = MURK_TILE_W;
   const h = MURK_TILE_H;
   const seed = seedOf('bg/abyss-murk');
-  const ramp = ABYSS_RAMP.map(color);
-  const bands = [color('#081620'), color('#07131c'), color('#061018'), color('#050d14')];
+  const ramp = rampHex.map(color);
+  const bandHex = ['#081620', '#07131c', '#061018', '#050d14'];
+  const bands = (v2 ? bandHex.map((c) => offRamp(c)) : bandHex).map(color);
   const image = createImage(w, h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {

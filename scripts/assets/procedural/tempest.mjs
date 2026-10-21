@@ -3,9 +3,9 @@
  * (decision D24):
  *
  * - `bg/storm-clouds` ({@link CLOUDS_TILE_W}×{@link CLOUDS_TILE_H}, the far band): a heavy deck of
- *   storm clouds painted **only** in the four colours of {@link STORM_RAMP} (so the stage's palette
- *   cycle makes it roil), open sky between the billows; the billows wrap round the tile edge, so
- *   the band repeats seamlessly.
+ *   storm clouds painted **only** in the colours of {@link STORM_RAMP} (v1) / {@link STORM_RAMP_V2}
+ *   (the frozen v2 ramp, R5-P.P7) (so the stage's palette cycle makes it roil), open sky between
+ *   the billows; the billows wrap round the tile edge, so the band repeats seamlessly.
  * - `bg/storm-ridge` ({@link RIDGE_TILE_W}×{@link RIDGE_TILE_H}, a mid band): jagged mountain
  *   silhouettes with snow on their crests — saw-tooth profiles whose periods divide the tile width.
  * - `bg/storm-rain` ({@link RAIN_TILE_W}×{@link RAIN_TILE_H}, the near weather band): translucent
@@ -29,13 +29,15 @@
  * pixels are identical on every engine.
  *
  * **Public API.** {@link generate}, {@link TEMPEST_SPRITES}, {@link STORM_RAMP} (the colours zone
- * E's palette cycle must name), {@link CLOUDS_TILE_W} / {@link CLOUDS_TILE_H},
+ * E's v1 palette cycle named), {@link STORM_RAMP_V2} (the frozen v2 ramp zone E's cycles name since
+ * R5-P.P7), {@link CLOUDS_TILE_W} / {@link CLOUDS_TILE_H},
  * {@link RIDGE_TILE_W} / {@link RIDGE_TILE_H}, {@link RAIN_TILE_W} / {@link RAIN_TILE_H} (the
  * bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, flipVertical, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { createAssetRng, hash2 } from '../rng.mjs';
 import { color, drawLine, fillEllipse, makeSprite, mix, seedOf, withAlpha } from './common.mjs';
 
@@ -67,6 +69,14 @@ export const RAIN_TILE_H = 64;
  */
 export const STORM_RAMP = Object.freeze(['#1c2230', '#262e40', '#323c52', '#46526a']);
 
+/**
+ * Zone E's frozen v2 ramp (design `docs/v2-run/designs/zone-e.md` §9): the four colours
+ * `content/stages/zone-e.stage.json` names for its far and mid cycles now, dark → light — drawn by
+ * `bg/storm-clouds` only at an art scale ≠ 1 (RR-1: the scale-1 build keeps {@link STORM_RAMP}
+ * byte for byte).
+ */
+export const STORM_RAMP_V2 = Object.freeze(['#10182a', '#1d2c46', '#2f4166', '#475d84']);
+
 /** The sprites this generator draws, in order. */
 export const TEMPEST_SPRITES = Object.freeze([
   'bg/storm-clouds',
@@ -91,13 +101,27 @@ export const TEMPEST_SPRITES = Object.freeze([
 /**
  * Generates zone E's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled cloud band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link TEMPEST_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   const lid = lidFrame();
   return [
-    makeSprite('bg/storm-clouds', [clouds()], 'tempest', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/storm-clouds',
+      [v2 ? scaleImage(clouds(STORM_RAMP_V2), artScale) : clouds()],
+      'tempest',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('bg/storm-ridge', [ridge()], 'tempest', { anchor: [0, 0] }),
     makeSprite('bg/storm-rain', [rain()], 'tempest', { anchor: [0, 0] }),
     makeSprite('enemies/hail-drifter', [hailFrame(0), hailFrame(1)], 'tempest', {
@@ -139,16 +163,18 @@ export function generate() {
 
 /**
  * The cloud deck: seeded billows (wrapped round the tile's width) whose density picks one of the
- * {@link STORM_RAMP} colours — denser is lighter, the billows' lit tops — and leaves thin places
- * open to the sky. Every painted pixel is opaque and a ramp colour.
+ * `rampHex` colours (v1's {@link STORM_RAMP}, the frozen v2 {@link STORM_RAMP_V2}) — denser is
+ * lighter, the billows' lit tops — and leaves thin places open to the sky. Every painted pixel is
+ * opaque and a ramp colour.
  *
+ * @param {readonly string[]} [rampHex] - The ramp to paint, default {@link STORM_RAMP}.
  * @returns {Image} The tile.
  */
-function clouds() {
+function clouds(rampHex = STORM_RAMP) {
   const w = CLOUDS_TILE_W;
   const h = CLOUDS_TILE_H;
   const rng = createAssetRng(seedOf('bg/storm-clouds'));
-  const ramp = STORM_RAMP.map(color);
+  const ramp = rampHex.map(color);
   /** @type {{ x: number, y: number, r: number }[]} */
   const billows = [];
   for (let i = 0; i < 18; i++) {

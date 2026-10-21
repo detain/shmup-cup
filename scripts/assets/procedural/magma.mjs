@@ -6,8 +6,9 @@
  *   cones in dark ash with glowing craters and faint smoke plumes; the cones wrap round the tile
  *   edge, so the band repeats seamlessly.
  * - `bg/magma-lava` ({@link LAVA_TILE_W}×{@link LAVA_TILE_H}, a mid band seen from the caves): a
- *   lake of lava painted **only** in the four colours of {@link MAGMA_RAMP} (so the stage's palette
- *   cycle rolls it — `bg/sea-swell`'s recipe), plus dark crust floes outside the ramp.
+ *   lake of lava painted **only** in the colours of {@link MAGMA_RAMP} (v1) /
+ *   {@link MAGMA_RAMP_V2} (the frozen v2 ramp, R5-P.P7) (so the stage's palette cycle rolls it —
+ *   `bg/sea-swell`'s recipe), plus dark crust floes outside the ramp.
  * - Enemies (flying ones face left; hit-flash siblings): `enemies/ember-wisp` (a flickering ember,
  *   2 frames), `enemies/cinder-bat` (an ash bat, wings beating, 2 frames), `enemies/magma-cone` (an
  *   erupting cone on the floor, its crater bubbling, 2 frames), `enemies/magma-bomb` (the lava bomb
@@ -26,12 +27,14 @@
  * so the pixels are identical on every engine.
  *
  * **Public API.** {@link generate}, {@link MAGMA_SPRITES}, {@link MAGMA_RAMP} (the colours zone D's
- * palette cycle must name), {@link PEAKS_TILE_W} / {@link PEAKS_TILE_H}, {@link LAVA_TILE_W} /
- * {@link LAVA_TILE_H} (the bands' tile sizes, their parallax `spacing`).
+ * v1 palette cycle named), {@link MAGMA_RAMP_V2} (the frozen v2 ramp zone D's cycle names since
+ * R5-P.P7), {@link PEAKS_TILE_W} / {@link PEAKS_TILE_H}, {@link LAVA_TILE_W} / {@link LAVA_TILE_H}
+ * (the bands' tile sizes, their parallax `spacing`).
  *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleImage } from '../interim.mjs';
 import { hash2 } from '../rng.mjs';
 import {
   SOFT_ALPHA,
@@ -66,6 +69,21 @@ export const LAVA_TILE_H = 40;
  */
 export const MAGMA_RAMP = Object.freeze(['#5a1808', '#8a2c0a', '#c04a10', '#e87a1c']);
 
+/**
+ * Zone D's frozen v2 ramp (R5-P.P7, decision D24's v2 lava — `plan_resolution.md` §6, design
+ * `docs/v2-run/designs/zone-d.md` §9): the six colours `content/stages/zone-d.stage.json` names
+ * now, dark ember → bright — drawn by `bg/magma-lava` only at an art scale ≠ 1 (RR-1: the scale-1
+ * build keeps {@link MAGMA_RAMP} byte for byte).
+ */
+export const MAGMA_RAMP_V2 = Object.freeze([
+  '#4a1206',
+  '#7c1e08',
+  '#b0330c',
+  '#d95f14',
+  '#ef8a26',
+  '#f7bd4d',
+]);
+
 /** The sprites this generator draws, in order. */
 export const MAGMA_SPRITES = Object.freeze([
   'bg/magma-peaks',
@@ -86,13 +104,27 @@ export const MAGMA_SPRITES = Object.freeze([
 /**
  * Generates zone D's art.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   the cycled lava band at (default 1 — the v1 ramp, byte for byte).
  * @returns {SpriteDef[]} The sprites of {@link MAGMA_SPRITES}, in that order.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
   const flash = { hitFlash: true };
   return [
     makeSprite('bg/magma-peaks', [peaks()], 'magma', { anchor: [0, 0] }),
-    makeSprite('bg/magma-lava', [lava()], 'magma', { anchor: [0, 0] }),
+    makeSprite(
+      'bg/magma-lava',
+      [v2 ? scaleImage(lava(MAGMA_RAMP_V2), artScale) : lava()],
+      'magma',
+      {
+        anchor: [0, 0],
+        native: v2,
+      },
+    ),
     makeSprite('enemies/ember-wisp', [wispFrame(0), wispFrame(1)], 'magma', {
       hitFlash: true,
       animations: { flicker: [0, 1] },
@@ -189,14 +221,16 @@ function peaks() {
 }
 
 /**
- * The lava band: 3-px bands stepping through {@link MAGMA_RAMP}, bent by two triangle waves (64 and
- * 32 px — they divide the tile width, so it repeats seamlessly), with dark crust floes (outside the
- * ramp, so the palette cycle leaves them alone).
+ * The lava band: 3-px bands stepping through `rampHex` (v1's {@link MAGMA_RAMP}, the frozen v2
+ * {@link MAGMA_RAMP_V2} on the v2 path), bent by two triangle waves (64 and 32 px — they divide
+ * the tile width, so it repeats seamlessly), with dark crust floes (outside either ramp, so the
+ * palette cycle leaves them alone).
  *
+ * @param {readonly string[]} [rampHex] - The ramp to paint, default {@link MAGMA_RAMP}.
  * @returns {Image} The tile.
  */
-function lava() {
-  const ramp = MAGMA_RAMP.map(color);
+function lava(rampHex = MAGMA_RAMP) {
+  const ramp = rampHex.map(color);
   const crust = color('#2a1a18');
   const image = createImage(LAVA_TILE_W, LAVA_TILE_H);
   for (let x = 0; x < LAVA_TILE_W; x++) {

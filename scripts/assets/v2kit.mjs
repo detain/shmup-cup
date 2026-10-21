@@ -19,7 +19,9 @@
  * - {@link offRamp} — the palette-cycle margin: a colour that sits within
  *   {@link RAMP_MIN_DISTANCE} of any reserved ramp colour is moved just outside it
  *   (decision W5-12's rule, mirrored from `test/integration/palette-cycle-scan.test.ts`);
- *   the eight reserved ramps are read **lazily inside the function** — never through a
+ *   the reserved ramps — v1's eight and the frozen v2 ramps R5-P.P7 pairs with them (zone C
+ *   aside: its DUNE ramp has no generator constant, its art is S2's to paint) — are read
+ *   **lazily inside the function** — never through a
  *   top-level array — so a generator that defines a ramp may import the kit without a
  *   module-cycle TDZ error (the kit imports the zone generators, who may import the kit);
  * - the frame sizes, re-exported from [`../frame.mjs`](../frame.mjs) — the scripts' pinned
@@ -32,14 +34,14 @@
  * @module
  */
 
-import { ABYSS_RAMP } from './procedural/abyss.mjs';
+import { ABYSS_RAMP, ABYSS_RAMP_V2 } from './procedural/abyss.mjs';
 import { BRINE_RAMP } from './procedural/brine.mjs';
-import { CITADEL_RAMP } from './procedural/citadel.mjs';
-import { MAGMA_RAMP } from './procedural/magma.mjs';
-import { PRISM_RAMP } from './procedural/prism.mjs';
+import { CITADEL_RAMP, CITADEL_RAMP_V2 } from './procedural/citadel.mjs';
+import { MAGMA_RAMP, MAGMA_RAMP_V2 } from './procedural/magma.mjs';
+import { PRISM_RAMP, PRISM_RAMP_V2 } from './procedural/prism.mjs';
 import { SEA_RAMP } from './procedural/raster-bands.mjs';
-import { STORM_RAMP } from './procedural/tempest.mjs';
-import { VAULT_RAMP } from './procedural/vault.mjs';
+import { STORM_RAMP, STORM_RAMP_V2 } from './procedural/tempest.mjs';
+import { VAULT_RAMP, VAULT_RAMP_V2 } from './procedural/vault.mjs';
 import { createImage, getPixel, parseColor, setPixel } from './image.mjs';
 
 /**
@@ -245,13 +247,19 @@ export function offRamp(colour) {
   const reserved = [];
   for (const ramp of [
     ABYSS_RAMP,
+    ABYSS_RAMP_V2,
     BRINE_RAMP,
     CITADEL_RAMP,
+    CITADEL_RAMP_V2,
     MAGMA_RAMP,
+    MAGMA_RAMP_V2,
     PRISM_RAMP,
+    PRISM_RAMP_V2,
     SEA_RAMP,
     STORM_RAMP,
+    STORM_RAMP_V2,
     VAULT_RAMP,
+    VAULT_RAMP_V2,
   ]) {
     for (const rampColour of ramp) {
       const parsed = parseColor(rampColour);
