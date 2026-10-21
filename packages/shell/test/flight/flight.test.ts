@@ -263,7 +263,7 @@ describe('shell/flight', () => {
     flight.update(game.renderFrame());
     expect(player.count).toBe(1);
     expect(player.x[0]).toBeGreaterThan(x + 10);
-    expect(player.frame[0]).toBe(2); // banking down
+    expect(player.frame[0]).toBe(4); // banking down: playerBankFrame(2, 2) with five bank frames
   });
 
   it('draws a stage with its own parallax and terrain instead of the starfield (M1-07)', () => {

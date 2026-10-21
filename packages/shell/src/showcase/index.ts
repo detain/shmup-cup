@@ -297,7 +297,7 @@ export function createShowcase(options: ShowcaseOptions = {}): Showcase {
         pushSprite(player, at[0], at[1], SPRITE.orb, (tick >> 3) & 1, 0);
       }
       shipAt(tick, at);
-      const bank = at[2] > 0.35 ? 2 : at[2] < -0.35 ? 1 : 0;
+      const bank = at[2] > 0.7 ? 4 : at[2] > 0.35 ? 3 : at[2] < -0.7 ? 2 : at[2] < -0.35 ? 1 : 0;
       pushSprite(player, at[0] - 8, at[1], SPRITE.thruster, (tick >> 2) & 1);
       pushSprite(player, at[0], at[1], SPRITE.ship, bank, 0);
 

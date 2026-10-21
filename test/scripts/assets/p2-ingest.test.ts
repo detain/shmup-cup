@@ -66,16 +66,18 @@ describe('R3-03.V2b — the sidecar p2 map reaches the atlas', () => {
 
     const { manifest, pages } = buildAtlas({ sourceDir: src });
 
-    // The strip is 4 frames of 16×12; the override replaced both sprites' code frames.
+    // The strip is 4 frames of 16×12; the override replaced the code frames per index, and
+    // the v2 map's fifth frame (R4-01.A1b's steep dive) survives it as #4. The pixel asserts
+    // below walk the PNG's frames 0–3, where the sidecar map is what reaches the atlas.
     expect(manifest.sprites['ships/kestrel'].frames).toEqual(
-      [0, 1, 2, 3].map((i) => `ships/kestrel#${i}`),
+      [0, 1, 2, 3, 4].map((i) => `ships/kestrel#${i}`),
     );
 
     // Player 2: the sidecar's map, exchanged per pixel — not the old red ↔ blue swap (which
     // would have turned the #ff3050 accent into #5030ff; it is unlisted and must stay).
     const p2 = manifest.sprites['ships/kestrel@p2'];
     expect(p2).toBeDefined();
-    expect(p2.frames).toEqual([0, 1, 2, 3].map((i) => `ships/kestrel@p2#${i}`));
+    expect(p2.frames).toEqual([0, 1, 2, 3, 4].map((i) => `ships/kestrel@p2#${i}`));
     let changed = 0;
     for (let i = 0; i < 4; i++) {
       const frame = manifest.frames[`ships/kestrel@p2#${i}`];

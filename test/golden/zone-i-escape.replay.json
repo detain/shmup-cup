@@ -71,18 +71,18 @@
     "AJYv"
   ],
   "hashes": [
-    1391829125,
-    3118838337,
-    1917522935,
-    1139067832,
-    521220063,
-    4056679479,
-    1130506710,
-    1915484656,
-    3390816591,
-    3229421271
+    4072280824,
+    1810822096,
+    3849626706,
+    4284833161,
+    1092364530,
+    4140431766,
+    2981465351,
+    1663120981,
+    692281002,
+    1973197250
   ],
-  "finalHash": 817078343,
+  "finalHash": 3347605274,
   "description": "the stage skip to the ABYSS ARK with a weaving pilot, god mode and no power-ups (M2-14 tests): the ARK outlasts it and sails off after its 90-s time limit — EndingFlag.BossEscaped, THE HOLLOW KING never revealed, stageClear",
   "expected": {
     "status": "stageClear",

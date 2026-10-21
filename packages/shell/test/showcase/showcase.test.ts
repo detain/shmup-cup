@@ -10,6 +10,7 @@ import {
   PLAYFIELD_H,
   PLAYFIELD_W,
   SpriteFlag,
+  cosB,
   createDrawList,
   type RenderFrame,
   type SpriteBatchView,
@@ -80,6 +81,21 @@ describe('shell/showcase', () => {
     }
     const player = showcase.world.batches[3];
     expect(Array.from(player.spriteId).slice(0, player.count)).toEqual([5, 5, 4, 3]);
+  });
+
+  it('banks the ship through all five v2 frames with the showcase mapping (R4-01.A1b)', () => {
+    const showcase = createShowcase();
+    const player = showcase.world.batches[3];
+    const seen = new Set<number>();
+    // Multiples of 3 modulo 1024 visit every angle, so a 1024-tick sweep covers all bands.
+    for (let tick = 0; tick < 1024; tick++) {
+      showcase.update(gameFrame(tick));
+      const vy = cosB((tick * 3) & 1023);
+      const bank = vy > 0.7 ? 4 : vy > 0.35 ? 3 : vy < -0.7 ? 2 : vy < -0.35 ? 1 : 0;
+      expect(player.frame[player.count - 1]).toBe(bank); // the ship is pushed last
+      seen.add(bank);
+    }
+    expect([...seen].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
   });
 
   it('is a pure function of the tick and reuses its objects', () => {

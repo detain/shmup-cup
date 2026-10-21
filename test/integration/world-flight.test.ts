@@ -72,7 +72,7 @@ describe('integration: the shipped KESTREL', () => {
     });
     expect(kestrel.enterTicks).toBe(DEFAULT_PLAYER_SHIP.enterTicks);
     expect(kestrel.respawnInvulnTicks).toBe(DEFAULT_PLAYER_SHIP.respawnInvulnTicks);
-    expect(kestrel.bankFrames).toBe(DEFAULT_PLAYER_SHIP.bankFrames);
+    expect(kestrel.bankFrames).toBe(2); // R4-01.A1b: the v2 ships have five bank frames; DEFAULT_PLAYER_SHIP keeps 1
     expect(kestrel.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4].map(v1speed)); // decision D3
   });
 

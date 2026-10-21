@@ -208,12 +208,13 @@ describe('integration: the content-DB fingerprint (R1-03)', () => {
   });
 });
 
-/** The pinned digests (re-pin with `SHMUP_FINGERPRINT_PRINT=1`). */
+/** The pinned digests (re-pin with `SHMUP_FINGERPRINT_PRINT=1`). Re-pinned at R4-01.A1b:
+ * `core.ships` moved — the shipped player files carry `bankFrames` 2. */
 const PINNED: Record<string, Record<string, string>> = {
   shipped: {
     'core.sprites': 'a8b0b41420e6fa7e',
     'core.scripts': 'bd6454be7a35f079',
-    'core.ships': '020cd05e376eadd6',
+    'core.ships': '511069e909ee8c37',
     'core.shipIndex': 'f64a98b92e84e3a6',
     'core.weapons': '4fd123d0216d41be',
     'core.weaponIndex': '9801dfd70acb6066',
@@ -233,7 +234,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.scoring': 'b2430506b3320967',
     'core.patterns': '1c871854112380c2',
     'core.campaign': 'a53c3c6eda524bb4',
-    'core.demos': 'a56561e7c9990c00',
+    'core.demos': 'f09429db1c64adba',
     'core.demoIndex': 'b37bbd0e0ad0fca7',
     'core.uiStrings': 'a6b7a37bb5260ca5',
     'core.spriteKeys': '5bbd2e896ea5e4d3',

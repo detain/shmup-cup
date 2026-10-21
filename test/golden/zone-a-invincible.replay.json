@@ -71,12 +71,12 @@
     "ANYV"
   ],
   "hashes": [
-    956864468,
-    1295824781,
-    163171595,
-    2853105137
+    1508772885,
+    1144628768,
+    3667368006,
+    2266533240
   ],
-  "finalHash": 16986780,
+  "finalHash": 1743360421,
   "description": "HALCYON BULWARK with the invincibility assist (M3-01): hits ignored like god mode, the replay header flags it in `assists` (not as god mode)",
   "expected": {
     "status": "stageClear",

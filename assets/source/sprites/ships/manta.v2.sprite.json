@@ -1,6 +1,6 @@
 {
   "name": "ships/manta",
-  "description": "MANTA, the Direct-mode ship, v2 redraw (R4-01.A1a, art bible v2 § 5.3): the v1 ray-winged design at 24 × 15 with lit upper wings, the green canopy edged in bright mint with a glint at its upper left and one lit reflection below, deep seams aft and on the folded lower wing, and shaded under-wings. Frames: 0 level, 1 banking up, 2 banking down — frames 0, 1 and 3 of the final five (R4-01.A1b adds the steep climb and dive); its twin thrusters ride the orange rows. Anchor [12, 7] is the bible’s choice (§ 5.3: 7.5 rounds to 7 or 8).",
+  "description": "MANTA, the Direct-mode ship, v2 redraw (R4-01.A1a, art bible v2 § 5.3): the v1 ray-winged design at 24 × 15 with lit upper wings, the green canopy edged in bright mint with a glint at its upper left and one lit reflection below, deep seams aft and on the folded lower wing, and shaded under-wings. Five bank frames in playerBankFrame order (R4-01.A1b): 0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive — the steep pair folds the tail rays one step past the v1 bank; its twin thrusters ride the orange rows. Anchor [12, 7] is the bible’s choice (§ 5.3: 7.5 rounds to 7 or 8).",
   "palette": {
     ".": null,
     "o": "#10281e",
@@ -69,11 +69,49 @@
     },
     {
       "rows": [
+        "...oooooo...............",
+        "...oooooo...............",
+        "..ossHHhhooo............",
+        "ooessHHhhhhhooooo.......",
+        "ooesshhhhhhhooooo.......",
+        "..osssHHhhhcggcooooo....",
+        "ooesshhhhhhhhghhHHHHooo.",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "..ossshhhhhhhhhhhhhSShho",
+        "ooesshhhhhhhSShooo......",
+        "...oooooo...............",
+        "........................",
+        "........................",
+        "........................",
+        "........................"
+      ]
+    },
+    {
+      "rows": [
         "........................",
         "........................",
         "...oooooo...............",
         "..ooosssSoooooo.........",
         "..ooosssSoooooo.........",
+        "ooesshHHhhhhcggccooo....",
+        "ooesshhhhhhhhhghhHHHooo.",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "..ossshhhhhhhhhhhhhSShho",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "ooesshhhhhhhhhhhShhhooo.",
+        "..ossshhhhhoooooo.......",
+        "ooesshhhhooo............",
+        "ooessSShhooo............",
+        "..oooooo................"
+      ]
+    },
+    {
+      "rows": [
+        "........................",
+        "........................",
+        "........................",
+        "...oooooo...............",
+        "..ooosssSoooo...........",
         "ooesshHHhhhhcggccooo....",
         "ooesshhhhhhhhhghhHHHooo.",
         "ooesshhhhhhhhhhhhhhhooo.",
@@ -92,10 +130,12 @@
       0
     ],
     "up": [
-      1
+      1,
+      2
     ],
     "down": [
-      2
+      3,
+      4
     ]
   }
 }

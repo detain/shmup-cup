@@ -335,13 +335,15 @@ function galleryWalk(): string {
 /**
  * The pinned fingerprints (`'<hud> <ui> <world>'`), by walk. Re-pinned at R2-01's flip to the
  * 640×360 frame (12-px HUD bars, the 9×12 font, the ×3/2 interim art), then for free flight's HUD
- * and WARNING band laid out from the font's cell and the art's scale like the scene flow's (C5).
+ * and WARNING band laid out from the font's cell and the art's scale like the scene flow's (C5),
+ * then at R4-01.A1b: the v2 ships' five bank frames deepen the bank the flight and showcase
+ * walks draw (the third hash of three walks moved).
  */
 const PINNED: Readonly<Record<string, string>> = {
-  'flight.open-space': '78890175 ff7f3235 e9d3e6a1',
-  'flight.test-range': '3073f2fd ff7f3235 2bfb7d68',
+  'flight.open-space': '78890175 ff7f3235 a5a99036',
+  'flight.test-range': '3073f2fd ff7f3235 42cda03f',
   'flight.warning': '36597e30 e3b808bd a1b20503',
-  showcase: 'b9c2aea8 57ecce45 f99d41d8',
+  showcase: 'b9c2aea8 57ecce45 58a99e5f',
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };
 

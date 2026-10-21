@@ -171,12 +171,15 @@ describe('R3-02 — the pipeline picks up ingested art', () => {
     expect([kestrel.w, kestrel.h, kestrel.ax, kestrel.ay]).toEqual([16, 12, 8, 6]);
     // The sidecar map won over the code's: `ships/kestrel@p2` exists, and frame 0 is the
     // drone art with exactly the two map colours exchanged — every other colour and every
-    // alpha stays (makeP2Sprite, coop.mjs).
+    // alpha stays (makeP2Sprite, coop.mjs). The 4-frame drone strip replaces the v2 code
+    // map's frames per index, so its fifth frame (R4-01.A1b's steep dive) survives as #4;
+    // the pixel walk below pins the PNG's frame 0, where the sidecar map is what applies.
     expect(manifest.sprites['ships/kestrel@p2'].frames).toEqual([
       'ships/kestrel@p2#0',
       'ships/kestrel@p2#1',
       'ships/kestrel@p2#2',
       'ships/kestrel@p2#3',
+      'ships/kestrel@p2#4',
     ]);
     const p2frame = manifest.frames['ships/kestrel@p2#0'];
     expect([p2frame.w, p2frame.h, p2frame.ax, p2frame.ay]).toEqual([16, 12, 8, 6]);
