@@ -104,14 +104,14 @@ the `rle` rows — both are existing schema features):
 
 | spire | x span (tile-aligned) | opening (playfield y, 36 px = 3 row-aligned tile rows) |
 |---|---|---|
-| spire-1 | 16,128 – 16,164 (3 tiles × 36 px) | y 0 – 36 (top, rows 0–2) |
+| spire-1 | 16,128 – 16,164 (3 tiles, 36 px) | y 0 – 36 (top, rows 0–2) |
 | spire-2 | 16,848 – 16,884 | y 156 – 192 (middle, rows 13–15) |
 | spire-3 | 17,568 – 17,604 | y 300 – 336 (bottom, rows 25–27) |
 
 Each column is full height (0–336) minus its opening — only possible now that the playfield
 is 336 px tall. The ship threads top → middle → bottom across 1,476 px (≈ 16.4 s at the
 section's 1.5 px/tick — section 6 cruises at 1.5); the worst-case vertical reach is
-≈ 0.31 px/tick (142 px between the top/middle hole centres across 684 scroll px ≈ 456
+≈ 0.34 px/tick (156 px between the top/middle hole centres across 684 scroll px ≈ 456
 ticks at 1.5 px/tick) against the ship's 2.25–6.0 px/tick range.
 Two floor pedestals between the spires carry the ground enemies: heightfield floor
 16,440–16,680 (base 36, amp 6, per 240, seed 41) and 17,160–17,400 (base 36, amp 6, per 240,
@@ -391,7 +391,7 @@ Caps (`test/scripts/assets/atlas-budget.ts`): a campaign zone's **own** pages �
 PNG, `common` ≤ 300,000 B, atlas total ≤ 5,700,000 B. Measured today: zone-a own page
 **2,925 B** (interim placeholder art), common page 138,918 B, the stand-in projection puts
 a full bible-density zone row at 338,822–446,323 B of own pages. Zone A's S2 adds 18 new
-sprite entries (the §14 table's 18 distinct names — enemies incl. flash siblings, captain
+sprite entries (the §14 table's 12 names plus their 6 @flash siblings — enemies incl. flash siblings, captain
 shell, 2 backdrop bands, 3 decor, the 26-tile `tiles/terrain-azure`) plus the six rebuilt-
 frozen boss names that only *grow* at S3 — the estimate lands the zone-A page group
 ≈ 200,000–400,000 B ≤ 600,000 ✓ with margin.
