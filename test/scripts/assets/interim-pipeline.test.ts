@@ -198,7 +198,7 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // 96c4e61); A6 set 560 from a pre-rebase count while its landed tree compared 563 — a margin
     // of three. R4-03.C2/C3/C4a moved no frame of this pool (their font left it at C1: still 563
     // at 450349b); R4-01.A3's orb+stolen (−4, 7b07886) and R4-02.B2's ten native pills (−20)
-    // took it to 539 at ba09e57, and R4-02.B3's native point −2 more (measured 537 on that
+    // took it to 539 at ba09e57, and R4-02.B3's native point −2 more (537 measured on the landing
     // tree). R4-01.A2's thruster is v2-only (RR-1a: absent at scale 1), so it moves none of
     // this pool; R4-01.A4's native force field −4 more (its v1 frames leave the comparison).
     // 533 measured at tip 92b4b73. The floor measures what is still compared, not the natives.
