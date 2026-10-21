@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * `pnpm store:assets` — the icon set and the store-listing placeholders of the v1.0 release
- * candidate (plan M2-18, shmup_feat.md §23 "store", shmup_tech.md §2.6), generated from the game's
- * own placeholder art — the atlas sprites (`collectSprites({ artScale: 1 })`: the v1 art until
- * R2-03 — the logo, the two ships, the zone backdrops, the bosses) and the bitmap font — so no
- * image is drawn by hand (plan §1.5):
+ * `pnpm store:assets` — the icon set and the store-listing placeholders of the release
+ * candidate (plan M2-18, R4-05.E5 / RR-3, shmup_feat.md §23 "store", shmup_tech.md §2.6),
+ * generated from the game's own placeholder art — the atlas sprites (`collectSprites()` at its
+ * default v2 art scale since R4-05.E5: the logo, the two ships, the zone backdrops, the bosses)
+ * and the bitmap font — so no image is drawn by hand (plan §1.5):
  *
  * - **Icons (committed)** — {@link ICON_TARGETS}: the Tizen widget / Seller Office icon
  *   `apps/tizen/public/icon.png` (512 × 423, copied into the widget by Vite), the desktop app's
@@ -37,7 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { createImage, imagesEqual } from './assets/image.mjs';
 import { REPO_ROOT, collectSprites } from './assets/pipeline.mjs';
 import { decodePng, encodePng } from './assets/png.mjs';
-import { FRAME_H, FRAME_W, HUD_BAR_HEIGHT, HUD_BOTTOM_Y } from './frame.mjs';
+import { FRAME_H, FRAME_W, HUD_BAR_HEIGHT, HUD_BOTTOM_Y, WORLD_SCALE } from './frame.mjs';
 
 /** @typedef {import('./assets/image.mjs').Image} Image */
 /** @typedef {import('./assets/image.mjs').Rgba} Rgba */
@@ -145,9 +145,10 @@ let art = null;
  */
 function loadArt() {
   if (art !== null) return art;
-  // The v1 art (artScale 1, R2-01 decision W4-6) until R2-03 regenerates the icons: the layouts
-  // below are measured in v1 pixels, and the committed icons stay byte-identical meanwhile.
-  const { sprites, fonts, issues } = collectSprites({ artScale: 1 });
+  // The v2 art: `collectSprites()` at its default interim art scale (R4-05.E5 / RR-3 moved the
+  // icons off `artScale: 1`). The layouts below derive their sizes from the art and from
+  // `scripts/frame.mjs`, never from a literal frame number.
+  const { sprites, fonts, issues } = collectSprites();
   if (issues.length > 0) throw new Error(`asset sources have issues: ${issues[0].message}`);
   const frames = new Map(sprites.map((sprite) => [sprite.name, sprite.frames]));
   const font = fonts.pixel;
@@ -267,7 +268,9 @@ function tile(target, name, y, scale) {
 }
 
 /**
- * Paints the navy playfield: two tones in horizontal bands and the far star field.
+ * Paints the navy playfield: two tones in horizontal bands and the far star field. The rows step by
+ * the star field's own height at the loaded art scale (R4-05.E5: derived from the art, not the v1
+ * sheet's 128), so the field tiles without overlap at either scale.
  *
  * @param {Image} image - Target.
  * @param {number} scale - Scale of the stars.
@@ -276,7 +279,8 @@ function backdrop(image, scale) {
   fill(image, 0, 0, image.width, image.height, NAVY);
   const band = Math.floor(image.height / 3);
   fill(image, 0, band * 2, image.width, image.height - band * 2, NAVY_LIGHT);
-  for (let y = 0; y < image.height; y += 128 * scale) tile(image, 'bg/stars-far', y, scale);
+  const starRow = sprite('bg/stars-far').height * scale;
+  for (let y = 0; y < image.height; y += starRow) tile(image, 'bg/stars-far', y, scale);
 }
 
 /**
@@ -302,15 +306,14 @@ export function renderIcon(width, height) {
   const kestrel = sprite('ships/kestrel');
   const manta = sprite('ships/manta');
   const shipScale = Math.max(1, Math.floor(width / 4 / kestrel.width));
-  const top = logoY + logo.height * logoScale + Math.floor(height * 0.08);
+  // The ships block: the kestrel row, the stagger below it, the manta row (R4-05.E5 re-measured at
+  // the v2 sprite sizes). Below the logo where it fits; on the small icons the block rides the
+  // bottom edge and overlaps the logo's footer instead of falling off the canvas.
+  const stagger = Math.floor(kestrel.height * shipScale * 1.2);
+  const block = stagger + manta.height * shipScale;
+  const top = Math.min(logoY + logo.height * logoScale + Math.floor(height * 0.08), height - block);
   draw(image, kestrel, Math.floor(width * 0.14), top, shipScale);
-  draw(
-    image,
-    manta,
-    Math.floor(width * 0.86) - manta.width * shipScale,
-    top + Math.floor(kestrel.height * shipScale * 1.2),
-    shipScale,
-  );
+  draw(image, manta, Math.floor(width * 0.86) - manta.width * shipScale, top + stagger, shipScale);
   return image;
 }
 
@@ -334,12 +337,39 @@ export function renderScreenshot(index) {
   fill(frame, 0, 0, FRAME_W, HUD_BAR_HEIGHT, NAVY_LIGHT);
   fill(frame, 0, HUD_BOTTOM_Y, FRAME_W, HUD_BAR_HEIGHT, NAVY_LIGHT);
   const boss = sprite(shot.boss);
-  draw(frame, boss, FRAME_W - boss.width - 24, Math.floor((FRAME_H - boss.height) / 2), 1);
+  draw(
+    frame,
+    boss,
+    FRAME_W - boss.width - Math.round(24 * WORLD_SCALE),
+    Math.floor((FRAME_H - boss.height) / 2),
+    1,
+  );
   const ship = sprite(shot.ship);
-  draw(frame, ship, 64, Math.floor((FRAME_H - ship.height) / 2), 1);
+  draw(frame, ship, Math.round(64 * WORLD_SCALE), Math.floor((FRAME_H - ship.height) / 2), 1);
+  // The caption block, re-measured on the v2 font (R4-05.E5): the `PLACEHOLDER` row sits three HUD
+  // bars under the top edge, the zone name one half-cell below the caption's own rows. At v1's
+  // 8-px cell that is y 24 and 44 — the old numbers; at the 12-px v2 cell, 36 and 66, and the
+  // doubled caption no longer runs into the name.
   const caption = 'PLACEHOLDER';
-  drawText(frame, caption, Math.floor((FRAME_W - textWidth(caption) * 2) / 2), 24, 2, CAPTION);
-  drawText(frame, shot.zone, Math.floor((FRAME_W - textWidth(shot.zone)) / 2), 44, 1, WHITE);
+  const cellH = loadArt().font.cellHeight;
+  const captionScale = 2;
+  const captionY = 3 * HUD_BAR_HEIGHT;
+  drawText(
+    frame,
+    caption,
+    Math.floor((FRAME_W - textWidth(caption) * captionScale) / 2),
+    captionY,
+    captionScale,
+    CAPTION,
+  );
+  drawText(
+    frame,
+    shot.zone,
+    Math.floor((FRAME_W - textWidth(shot.zone)) / 2),
+    captionY + cellH * captionScale + Math.floor(cellH / 2),
+    1,
+    WHITE,
+  );
   const out = createImage(FRAME_W * SCREENSHOT_SCALE, FRAME_H * SCREENSHOT_SCALE);
   draw(out, frame, 0, 0, SCREENSHOT_SCALE);
   return out;
