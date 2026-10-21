@@ -23,7 +23,7 @@ import {
   resolveUiText,
 } from '../../src/ui/index.js';
 
-/** The characters of the bitmap font (`pixel6x8`): printable ASCII and a few symbols. */
+/** The characters of the bitmap font (both `pixel` files): printable ASCII and a few symbols. */
 const GLYPHS = /^[\x20-\x7e←↑→↓●★✕]+$/;
 
 describe('core/ui string table (M2-16)', () => {

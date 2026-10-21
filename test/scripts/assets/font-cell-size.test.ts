@@ -7,9 +7,12 @@
  * its sprite ids stay as they are): the font lives in a temporary copy of the sources.
  *
  * Since R2-01 the same upscale is the interim font (decision W4-4): the pipeline's
- * `interim.mjs` `scaleFont` must turn the shipped font into exactly this test font, and core's
- * `GLYPH_W` / `GLYPH_H` / `LINE_H` are the file's metrics × `ART_SCALE`. The atlas built here is
- * the v1 art (`artScale: 1`), so the file passes unchanged at either frame.
+ * `interim.mjs` `scaleFont` must turn the shipped font into exactly this test font. Since
+ * R4-03.C1 that upscale is committed as the native `pixel` font
+ * (`assets/source/fonts/pixel9x12.font.json`) — its cells are core's `GLYPH_W` / `GLYPH_H` /
+ * `LINE_H` directly (pinned in `packages/core/test/config/frame-constants.test.ts`). This test
+ * builds its own copy from the v1 file at `artScale: 1` (no interim stage), under a file name of
+ * its own so the copy of the sources keeps the committed native font beside it.
  */
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -97,7 +100,7 @@ afterAll(() => {
 });
 
 describe('a 9 × 12 test font (R1-04)', () => {
-  const { font, issues } = parseFontSource(FONT_9X12, 'fonts/pixel9x12.font.json');
+  const { font, issues } = parseFontSource(FONT_9X12, 'fonts/pixel9x12-test.font.json');
 
   it('upscales the shipped 6 × 8 font, whose metrics × ART_SCALE core mirrors', () => {
     expect(
@@ -166,7 +169,9 @@ describe('a 9 × 12 test font (R1-04)', () => {
   it('packs into an atlas next to the shipped font; the renderer uses its metrics', () => {
     const sourceDir = join(tmp, 'source');
     cpSync(SOURCES, sourceDir, { recursive: true });
-    writeFileSync(join(sourceDir, 'fonts', 'pixel9x12.font.json'), JSON.stringify(FONT_9X12));
+    // Its own file name: the committed fonts/ dir holds the native v2 `pixel` font at
+    // pixel9x12.font.json (R4-03.C1), and this test font is a different font (named pixel9x12).
+    writeFileSync(join(sourceDir, 'fonts', 'pixel9x12-test.font.json'), JSON.stringify(FONT_9X12));
     // The v1 art (no interim upscale), so both fonts keep the cells of their files.
     const { manifest } = buildAtlas({ sourceDir, artScale: 1 });
     expect(manifest.fonts.pixel).toMatchObject({ cellWidth: 6, cellHeight: 8, lineHeight: 10 });

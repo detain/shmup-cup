@@ -463,7 +463,8 @@ export const DEFAULT_LANGUAGE = 'en';
  *
  * @remarks
  * Written out rather than generated so {@link UI_GLYPHS} is one literal a reader (and the font
- * test) can compare with `assets/source/fonts/pixel6x8.font.json`.
+ * test) can compare with the `pixel` font files
+ * (`assets/source/fonts/pixel6x8.font.json` and the native `pixel9x12.font.json`).
  */
 const ASCII_GLYPHS =
   ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`' +
@@ -509,9 +510,10 @@ const KATAKANA_GLYPHS =
  *
  * @remarks
  * This is the single source of truth for the font's charset: `core/data` refuses a `strings` entry
- * with any other character, and `test/scripts/assets/font.test.ts` asserts the font source holds
- * exactly these code points. Adding a language means adding its glyphs here **and** to
- * `assets/source/fonts/pixel6x8.font.json` in the same commit.
+ * with any other character, and `test/scripts/assets/font.test.ts` asserts the font sources hold
+ * exactly these code points. Adding a language means adding its glyphs here **and** to both `pixel`
+ * font files (`assets/source/fonts/pixel6x8.font.json` and the native `pixel9x12.font.json`) in the
+ * same commit.
  */
 export const UI_GLYPHS: string = ASCII_GLYPHS + SYMBOL_GLYPHS + LATIN_1_GLYPHS + KATAKANA_GLYPHS;
 

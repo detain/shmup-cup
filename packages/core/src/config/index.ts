@@ -796,22 +796,23 @@ export const TILE_SIZE = 12;
 
 /**
  * Width in pixels of a cell of the bitmap font — also its advance, the horizontal pitch text is
- * laid out on: the font file's `cellWidth` / `advance` × {@link ART_SCALE}
- * (`assets/source/fonts/pixel6x8.font.json`: 6 × 3/2 = 9 since R2-01; the atlas pipeline scales
- * the font by the same factor — the interim 9×12 font). A line of `n` characters is `n · GLYPH_W`
- * pixels wide.
+ * laid out on: the native font file's `cellWidth` / `advance`
+ * (`assets/source/fonts/pixel9x12.font.json`, R4-03.C1 — the file the default-scale atlas is built
+ * from; RR-2 pinned it to this). The v1 `assets/source/fonts/pixel6x8.font.json` keeps the old
+ * 6 × 3/2 = 9 relation through {@link ART_SCALE} for the scale-1 build. A line of `n` characters
+ * is `n · GLYPH_W` pixels wide.
  */
 export const GLYPH_W = 9;
 
 /**
- * Height in pixels of a cell of the bitmap font: the font file's `cellHeight` × {@link ART_SCALE}
- * (8 × 3/2 = 12 since R2-01; v1: 8).
+ * Height in pixels of a cell of the bitmap font: the native font file's `cellHeight` (12 since
+ * R4-03.C1; the v1 file's 8 × {@link ART_SCALE}; v1: 8).
  */
 export const GLYPH_H = 12;
 
 /**
- * Line advance in pixels of the bitmap font: the font file's `lineHeight` × {@link ART_SCALE}
- * (10 × 3/2 = 15 since R2-01; v1: 10).
+ * Line advance in pixels of the bitmap font: the native font file's `lineHeight` (15 since
+ * R4-03.C1; the v1 file's 10 × {@link ART_SCALE}; v1: 10).
  */
 export const LINE_H = 15;
 

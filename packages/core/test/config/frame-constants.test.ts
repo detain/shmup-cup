@@ -1,8 +1,9 @@
 /**
  * `core/config` — the frame constants of plan_resolution.md R1-01 (§7: every frame-dependent
  * number derives from a few compile-time constants): their 640×360 values since R2-01's flip, the
- * relations the derived values keep, the font metrics pinned to the font file the atlas is built
- * from (× `ART_SCALE`, the factor the atlas pipeline scales the font by — R2-01, W4-3), and
+ * relations the derived values keep, the font metrics pinned to the native font file the
+ * default-scale atlas is built from (R4-03.C1 — its cell is `GLYPH_W` / `GLYPH_H` / `LINE_H`) and
+ * to the v1 file's × `ART_SCALE` relation (its source at scale 1 — R2-01, W4-3), and
  * `DEFAULT_GAME_CONFIG` recording the frame.
  */
 import { readFileSync } from 'node:fs';
@@ -34,18 +35,14 @@ import {
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** The bitmap font every text command is drawn in (`scripts/assets/font.mjs` reads it). */
-const FONT_FILE = join(
-  here,
-  '..',
-  '..',
-  '..',
-  '..',
-  'assets',
-  'source',
-  'fonts',
-  'pixel6x8.font.json',
-);
+/** The fonts directory (`scripts/assets/font.mjs` reads it). */
+const FONTS_DIR = join(here, '..', '..', '..', '..', 'assets', 'source', 'fonts');
+
+/** The v1 bitmap font: the scale-1 atlas's source, kept for the v1 build (R4-03.C1). */
+const FONT_FILE = join(FONTS_DIR, 'pixel6x8.font.json');
+
+/** The native v2 bitmap font: the file the default-scale atlas is built from (R4-03.C1). */
+const FONT_FILE_NATIVE = join(FONTS_DIR, 'pixel9x12.font.json');
 
 /** The font file's metrics. */
 interface FontMetrics {
@@ -57,6 +54,7 @@ interface FontMetrics {
 }
 
 const FONT = JSON.parse(readFileSync(FONT_FILE, 'utf8')) as FontMetrics;
+const FONT_NATIVE = JSON.parse(readFileSync(FONT_FILE_NATIVE, 'utf8')) as FontMetrics;
 
 /** Every frame constant by name. */
 const CONSTANTS = {
@@ -161,21 +159,33 @@ describe('core/config frame constants (R1-01)', () => {
     expect(LINE_H).toBeGreaterThanOrEqual(GLYPH_H);
   });
 
-  it('mirrors the bitmap font file × ART_SCALE (assets/source/fonts/pixel6x8.font.json)', () => {
-    // The atlas pipeline scales the font by ART_SCALE (R2-01's interim 9×12 is the 6×8 file × 3/2).
+  it('mirrors the native bitmap font file (assets/source/fonts/pixel9x12.font.json — R4-03.C1)', () => {
+    // Since R4-03.C1 the default-scale atlas builds its font from the native file: the metrics
+    // are the file's own cells, not a scaled relation (decision RR-2: 9×12 stays).
+    expect(GLYPH_W).toBe(FONT_NATIVE.cellWidth);
+    expect(GLYPH_H).toBe(FONT_NATIVE.cellHeight);
+    expect(LINE_H).toBe(FONT_NATIVE.lineHeight);
+    // Text is laid out on a GLYPH_W pitch: the advance is the cell width.
+    expect(GLYPH_W).toBe(FONT_NATIVE.advance);
+    // Every glyph of the file is drawn in a cellWidth × cellHeight cell.
+    const glyphs = Object.keys(FONT_NATIVE.glyphs);
+    expect(glyphs.length).toBeGreaterThan(0);
+    for (const glyph of glyphs) {
+      const rows = FONT_NATIVE.glyphs[glyph];
+      expect(rows.length, glyph).toBe(FONT_NATIVE.cellHeight);
+      for (const row of rows) expect(row.length, glyph).toBe(FONT_NATIVE.cellWidth);
+    }
+  });
+
+  it('keeps the v1 font file at GLYPH_* / ART_SCALE (its scale-1 source — R2-01, W4-3)', () => {
+    // The v1 file still ships (the v1 build and the e2e mirror read it): its cells are the
+    // constants ÷ ART_SCALE, and C2 … C4b never touch it (wave rule 1).
     expect(GLYPH_W).toBe(FONT.cellWidth * ART_SCALE);
     expect(GLYPH_H).toBe(FONT.cellHeight * ART_SCALE);
     expect(LINE_H).toBe(FONT.lineHeight * ART_SCALE);
-    // Text is laid out on a GLYPH_W pitch: the advance is the cell width.
     expect(GLYPH_W).toBe(FONT.advance * ART_SCALE);
-    // Every glyph of the file is drawn in a cellWidth × cellHeight cell.
-    const glyphs = Object.keys(FONT.glyphs);
-    expect(glyphs.length).toBeGreaterThan(0);
-    for (const glyph of glyphs) {
-      const rows = FONT.glyphs[glyph];
-      expect(rows.length, glyph).toBe(FONT.cellHeight);
-      for (const row of rows) expect(row.length, glyph).toBe(FONT.cellWidth);
-    }
+    // Both files declare the same charset: the code-point sets agree.
+    expect(new Set(Object.keys(FONT.glyphs))).toEqual(new Set(Object.keys(FONT_NATIVE.glyphs)));
   });
 
   it('records the frame in DEFAULT_GAME_CONFIG (the replay header) and resolved configs', () => {

@@ -192,7 +192,9 @@ describe('scripts/assets/pipeline — collectSprites (edge)', () => {
       join(src, 'sprites', 'font', 'pixel.sprite.json'),
       JSON.stringify({ name: 'font/pixel', palette: { x: '#fff' }, frames: [{ rows: ['x'] }] }),
     );
-    const result = collectSprites({ sourceDir: src });
+    // At scale 1 (R4-03.C1): the clash is with the v1 font the build chooses. At the art scale
+    // the native pixel9x12.font.json replaces it, and the issue would name that file instead.
+    const result = collectSprites({ sourceDir: src, artScale: 1 });
     expect(result.fonts).toEqual({});
     expect(result.issues).toHaveLength(1);
     expect(result.issues[0].path.endsWith('/fonts/pixel6x8.font.json:name')).toBe(true);

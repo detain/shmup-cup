@@ -7,6 +7,11 @@
  * the charset is now declared once, in `@shmup/core` `UI_GLYPHS`, and this file asserts the font
  * source holds **exactly** those code points — so a `strings` entry the loader accepts can always
  * be drawn, and a glyph nothing draws never reaches the atlas.
+ * Since R4-03.C1 a second file of the name ships — the native v2 font
+ * `assets/source/fonts/pixel9x12.font.json`, the file the default-scale atlas is built from —
+ * and holds the same code points at the 9×12 cell. Its glyph pixels are pinned only by the font
+ * file itself and `font-v2.test.ts` (R4-03.C2): this file pins code points, the cell, the line
+ * and the advance (never pixels).
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -22,7 +27,12 @@ import { getPixel } from '../../../scripts/assets/image.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const FONT_FILE = 'assets/source/fonts/pixel6x8.font.json';
+const FONT_FILE_V2 = 'assets/source/fonts/pixel9x12.font.json';
 const pixelJson = JSON.parse(readFileSync(join(repo, FONT_FILE), 'utf8')) as Record<
+  string,
+  unknown
+>;
+const pixelV2Json = JSON.parse(readFileSync(join(repo, FONT_FILE_V2), 'utf8')) as Record<
   string,
   unknown
 >;
@@ -99,6 +109,38 @@ describe('assets/source/fonts/pixel6x8.font.json', () => {
         expect(row.charAt(5), String.fromCodePoint(glyph.code)).toBe('.');
       const inked = glyph.rows.join('').includes('#');
       expect(inked, String.fromCodePoint(glyph.code)).toBe(glyph.code !== 32);
+    }
+  });
+
+  it('draws every digit differently, and 0 differently from O (readable score digits)', () => {
+    const rows = (ch: string) =>
+      font?.glyphs.find((g) => g.code === ch.charCodeAt(0))?.rows.join('');
+    const digits = '0123456789'.split('').map(rows);
+    expect(new Set(digits).size).toBe(10);
+    expect(rows('0')).not.toBe(rows('O'));
+  });
+});
+
+describe('assets/source/fonts/pixel9x12.font.json (the native v2 font — R4-03.C1)', () => {
+  const { font, issues } = parseFontSource(pixelV2Json, FONT_FILE_V2);
+
+  it('is valid, named pixel and native', () => {
+    expect(issues).toEqual([]);
+    expect(font?.name).toBe('pixel');
+    expect(font?.native).toBe(true);
+  });
+
+  it("covers exactly the v1 file's code points — no more, no less (charset identity)", () => {
+    const { font: v1 } = parseFontSource(pixelJson, FONT_FILE);
+    expect(font?.glyphs.map((g) => g.code)).toEqual(v1?.glyphs.map((g) => g.code));
+  });
+
+  it("uses 9×12 cells, advance 9 and a 15-px line (RR-2: today's metrics, native)", () => {
+    expect(font).toMatchObject({ cellWidth: 9, cellHeight: 12, lineHeight: 15 });
+    for (const glyph of font?.glyphs ?? []) {
+      expect(glyph.rows).toHaveLength(12);
+      expect(glyph.rows.every((row) => row.length === 9)).toBe(true);
+      expect(glyph.advance).toBe(9);
     }
   });
 

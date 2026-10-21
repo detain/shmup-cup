@@ -2,7 +2,8 @@
  * The whole localization chain, end to end (plan M3-03).
  *
  * `content/strings/<id>.strings.json` → `core/data` → `core/ui` `UI_GLYPHS` →
- * `assets/source/fonts/pixel6x8.font.json` → the **built atlas** → the save's
+ * `assets/source/fonts/pixel6x8.font.json` and its native v2 file `pixel9x12.font.json`
+ * (R4-03.C1) → the **built atlas** → the save's
  * `options.display.language` → the scene flow's table → the DISPLAY page's LANGUAGE row and back
  * into the save. Every link in it is owned by a different module, and the seams are what a future
  * maintainer breaks without noticing:
@@ -15,6 +16,7 @@
  * `test/integration/content.test.ts` checks the shipped tables' *coverage*; this file checks that
  * the pieces around them still fit together.
  */
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -100,6 +102,26 @@ describe('integration: every accepted glyph really reaches the atlas (M3-03)', (
   it('carries no glyph the charset does not declare — nothing unused is packed', () => {
     const declared = new Set(UI_GLYPHS.split('').map((ch) => String(ch.codePointAt(0) ?? 0)));
     expect(Object.keys(manifest.fonts.pixel.glyphs).sort()).toEqual([...declared].sort());
+  });
+
+  it('keeps both committed font files on the same charset as the built atlas (R4-03.C1)', () => {
+    // The v1 file drives the scale-1 atlas and the e2e mirror; the native file drives the
+    // default-scale one. All three must show one charset — a glyph only one file has would be
+    // accepted by the loader and drawn as a gap on one of the frames.
+    const declared = [
+      ...new Set(UI_GLYPHS.split('').map((ch) => String(ch.codePointAt(0) ?? 0))),
+    ].sort();
+    const built = Object.keys(manifest.fonts.pixel.glyphs).sort();
+    expect(built).toEqual(declared);
+    for (const file of ['pixel6x8.font.json', 'pixel9x12.font.json']) {
+      const json = JSON.parse(
+        readFileSync(join(repo, 'assets', 'source', 'fonts', file), 'utf8'),
+      ) as { glyphs: Record<string, unknown> };
+      const codes = Object.keys(json.glyphs)
+        .map((ch) => String(ch.codePointAt(0)))
+        .sort();
+      expect(codes, file).toEqual(declared);
+    }
   });
 
   it('can draw every text of every shipped table, character for character', () => {

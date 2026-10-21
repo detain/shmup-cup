@@ -12,7 +12,10 @@
  *   every laser beam frame `k` is a band `k + 1` px tall (the renderer reads the frame's number as
  *   the beam's thickness; `lasers.mjs` draws them at the art scale), a real-art PNG override keeps
  *   its size and its sidecar anchor, a `"native": true` map its size.
- * - The interim font (W4-4): 9 × 12 cells, a 15-px line, a 9-px advance.
+ * - The interim font (W4-4): 9 × 12 cells, a 15-px line, a 9-px advance — since R4-03.C1 taken
+ *   from the committed native font file (`fonts/pixel9x12.font.json`, `native: true`, unscaled)
+ *   rather than scaled here; the file was derived through exactly this upscale, so the two agree
+ *   byte for byte (proved by R4-03.C1's ATLAS-SHA, not by a pixel pin in this file).
  * - The budget: every page within 2048², every group's PNG bytes under its R3-04 cap, and the
  *   whole atlas under the total cap.
  * - The guard: at scale 1 the stage is a no-op — the v1 atlas, pinned by digest, at either frame.
@@ -187,8 +190,9 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
       }
     }
     // R3-03.V1: the v2 bullets, bend nodes and their variants are native, so 216 frames left the
-    // upscaled pool — the floor measures what is still compared, not the natives.
-    expect(scaled).toBeGreaterThan(850);
+    // upscaled pool; since R4-03.C1 the native font too (its 195 glyph frames are unscaled). The
+    // floor measures what is still compared, not the natives.
+    expect(scaled).toBeGreaterThan(700);
     expect(wrongPixels).toEqual([]);
   });
 
@@ -339,9 +343,14 @@ describe('scripts/assets/pipeline — what the interim stage never upscales (W4-
   });
 });
 
-describe('scripts/assets/pipeline — the interim font (W4-4)', () => {
+describe('scripts/assets/pipeline — the interim font (W4-4, native file since R4-03.C1)', () => {
   it('is the shipped font at 9 × 12, a 15-px line and a 9-px advance', () => {
     const font = v2.manifest.fonts.pixel;
+    // Since R4-03.C1 the default-scale font comes from the native pixel9x12.font.json unscaled:
+    // it is in NATIVE (so the upscale cases skip it, like every native source), and its names,
+    // cells, line and advance are exactly the scaled v1 file's (the pixels may diverge from the
+    // v1 upscale only once R4-03.C2 … C4b redraw the glyphs — never pinned here).
+    expect(NATIVE.has('font/pixel')).toBe(true);
     expect([font.cellWidth, font.cellHeight, font.lineHeight]).toEqual([9, 12, 15]);
     expect(Object.keys(font.glyphs)).toEqual(Object.keys(v1.manifest.fonts.pixel.glyphs));
     for (const [code, glyph] of Object.entries(font.glyphs)) {
