@@ -277,14 +277,14 @@ batches draws decor, and each batch lands in its own layer container, so the lis
 mix them.
 
 **Bands that move and paint (`parallax`).** Each band gained optional `yFactor` (−4…4 — "0 = the
-band holds its playfield row while the camera pans, 1 = it moves with the playfield; omitted =
-0"), `frames` (1…64 — "the band cycles the sprite and its `@f1` … siblings; omitted = frame 0
-only") and `frameTicks` (1…3600, omitted = 8); the `layer` name gained `fore`. `checkStageDecor`
-caps the list at `MAX_PARALLAX_BANDS` (6) background bands plus at most one `fore`. The renderer
-reads the animated frame through `ParallaxView.frameIndex` — "A core-built view always carries it;
-absent (an older fixture view) means frame 0 everywhere" — so every static shipped band draws
-exactly as before the change; `createParallaxBinding` / `bindWorld` accept the `Foreground` layer
-as the band's home (R3-06.L3).
+band holds its playfield row while the camera pans, 1 = it moves with the playfield; omitted = the
+band's own horizontal factor"), `frames` (1…64 — "the band cycles the sprite and its `@f1` …
+siblings; omitted = frame 0 only") and `frameTicks` (1…3600, omitted = 8); the `layer` name
+gained `fore`. `checkStageDecor` caps the list at `MAX_PARALLAX_BANDS` (6) background bands plus
+at most one `fore`. The renderer reads the animated frame through `ParallaxView.frameIndex` — "A
+core-built view always carries it; absent (an older fixture view) means frame 0 everywhere" — so
+every static shipped band draws exactly as before the change; `createParallaxBinding` / `bindWorld`
+accept the `Foreground` layer as the band's home (R3-06.L3).
 
 **Additive glows (L4).** An enemy, a boss part or a decor entry may name a `glow`: "Atlas sprite
 name of the glow drawn additively over" its owner (R3-06.L4; default none, the key stays absent).

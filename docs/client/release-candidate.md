@@ -15,9 +15,8 @@ find nothing serious, this is what version 1.0 will be.
 > section of [`CHANGELOG.md`](../../CHANGELOG.md)). The checklist for the monitors below was still
 > open when it was tagged, and still is ([what is left](outstanding-work.md)). v1 is kept on the
 > `v1.x` branch — the same 384 × 216 game, fixes only, version 1.0.1-dev — and the `master` branch
-> is now v2, the 640 × 360 remaster, version **2.0.0-alpha.1** (2.0.0 on the monitor), which plays
-> like 1.0.0 until its steps change it. The rest of this page is the candidate's record as it was
-> written.
+> is now v2, the 640 × 360 remaster, version **2.0.0-alpha.1** (2.0.0 on the monitor). The rest of
+> this page is the candidate's record as it was written.
 
 > **Those checks are still open**, and the version is still `1.0.0-rc.1`. The milestone-M3 work that
 > followed — the extra modes and replays, the visual extras, the hardware tuning, the render work,

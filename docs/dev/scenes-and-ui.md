@@ -444,8 +444,8 @@ name entry are centred horizontally and keep v1's small deliberate offsets; the 
 the zone card are centred and full width; the HUD bars are 640×12 at y 0 and 348 and the co-op
 halves split at x 320. The art is v1's sprites and font nearest-neighbour ×1.5 (the interim look
 until R4-03's font and R4-05 / R5's redraws); the content is v2's world since R2-02's port
-(`8dbe858`) — only the goldens and the attract demos still record v1's world, behind
-`GOLDENS_STALE` until R2-03's re-bless.
+(`8dbe858`) — the goldens and the attract demos record the ported world since R2-03's re-bless
+(`d4ba9e8`; the 17-zone set's one retune move: `a285e0e`).
 
 ## The UI kit (`core/ui`)
 
