@@ -601,7 +601,7 @@ export async function bootWebApp(
   // the raw save text from `localStorage`, or (inside Electron, where saves are files) through
   // the bridge. A failed or absent read stands for both defaults (`auto` output = the native
   // size, `auto` renderer = the shell's Chromium 71 floor with a WebGL 2 probe).
-  let bootDisplayText: string | null = null;
+  let bootDisplayText: string | null;
   try {
     bootDisplayText =
       electron === null
