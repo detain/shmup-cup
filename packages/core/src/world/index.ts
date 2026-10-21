@@ -2119,11 +2119,12 @@ function syncHitboxes(world: World): void {
  *
  * @remarks
  * A separate function for the reason M2-04 / M3-01 learned: {@link syncWorldView} is on the
- * weapon-select preview's every-frame path, and growing it (even a byte-identical hull loop
- * with a pre-pass above) pushes it past V8's inlining budget there — the hull push's
- * fractional position and `playerBankFrame`'s result then box on every tick (20 bytes under
- * the preview's allocation guard). This cold-shaped call keeps both loops small; its own
- * arguments are whole numbers, so nothing boxes either way.
+ * weapon-select preview's every-frame path, and growing it past V8's inlining budget — even
+ * keeping the hull loop byte-identical and adding a pre-pass above it — is what the M2-04
+ * lesson warns about; the pre-pass form avoids it there — the hull push's fractional position
+ * and `playerBankFrame`'s result then box on every tick (20 bytes under the preview's
+ * allocation guard). This cold-shaped call keeps both loops small; its own arguments are
+ * whole numbers, so nothing boxes either way.
  *
  * @param world - The world (its tick drives the burn frame).
  * @param batch - The player batch, already emptied by `syncWorldView`.
