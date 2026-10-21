@@ -108,9 +108,9 @@ const V2_STAGES = [0, 1, 2, 3];
  * @param {GeneratorOptions} [options] - `artScale`, the art scale the six items are drawn at
  *   (default 1).
  * @returns {SpriteDef[]} The six items (see the module docs).
- * @throws {RangeError} When `options.artScale` is not a valid art scale: `generate()` throws
- *   the image-embed error first; the RangeError arrives through the caller's `interim.mjs`
- *   `parseArtScale` (the interim path).
+ * @throws {RangeError} When `options.artScale` is not a valid art scale — thrown by the
+ *   caller's `parseArtScale` (`scripts/assets/interim.mjs`) before `generate()` runs;
+ *   `generate()` itself does not validate the scale.
  */
 export function generate(options = {}) {
   const v2 = (options.artScale ?? 1) !== 1;
