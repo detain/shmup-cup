@@ -698,7 +698,8 @@ M2-11 (done) — **no schema change**: zones B and C are content on the existing
 `stages/zone-b.stage.json` and `zone-c.stage.json` (replacing their stubs),
 `stages/brine-grotto.stage.json` (a bonus stage), `enemies/zone-b.enemies.json` /
 `zone-c.enemies.json` (sorting after `zone-a…`, so no earlier spec index moved),
-`paths/zone-c.paths.json`, `patterns/zones.patterns.json`, `tilesets/terrain-reef` /
+`paths/zone-c.paths.json`, `patterns/zones.patterns.json` (R5-P.P4's `a216f14` split it into one
+`patterns/zone-<letter>.patterns.json` per zone), `tilesets/terrain-reef` /
 `terrain-dune.tileset.json` and four stage-scoped songs in `audio/music/`. The shell's boot and
 loader tests list the new files among the shipped ones ([zones-b-and-c.md](zones-b-and-c.md)).
 
@@ -706,7 +707,8 @@ M2-12 (done) — again **no schema change**: zones D and E are content on the ex
 `stages/zone-d.stage.json` (a 50-row map — `tilemap.rowsTall` — with `rle` brick rows over its
 heightfield, a `hold` key with a `yTo` pan) and `zone-e.stage.json` (negative `screenX` spawns for
 the rear attackers, six parallax bands), `enemies/zone-d.enemies.json` / `zone-e.enemies.json`,
-`paths/zone-d.paths.json` / `zone-e.paths.json`, `tempest.bolt` in `patterns/zones.patterns.json`,
+`paths/zone-d.paths.json` / `zone-e.paths.json`, `tempest.bolt` in `patterns/zones.patterns.json`
+(now `patterns/zone-e.patterns.json`),
 `tilesets/terrain-magma` / `terrain-ridge.tileset.json` and four stage-scoped songs. A boss part
 with neither `hurtbox` nor `radius` (CINDER BASTION's `hub`) was already valid: it is never hit or
 touched, only placed — and turned ([zones-d-and-e.md](zones-d-and-e.md)).
@@ -716,7 +718,8 @@ M2-13 (done) — still **no schema change**: zones F and G are content on the ex
 and `zone-g.stage.json` (crystal walls and pillars as `rle` rows, a `bonus` event with
 `"entrance": "ground"`, four `cube.stack` formations), `stages/glimmer-cache.stage.json` (a bonus
 stage), `enemies/zone-f.enemies.json` / `zone-g.enemies.json` (sorting after the earlier zones),
-`vault.spores` and `prism.fan` in `patterns/zones.patterns.json`, `tilesets/terrain-vault` /
+`vault.spores` and `prism.fan` in `patterns/zones.patterns.json`
+(now `patterns/zone-f.patterns.json` / `zone-g.patterns.json`), `tilesets/terrain-vault` /
 `terrain-prism.tileset.json` and four stage-scoped songs; no path file (the halo crystals fly zone
 A's). Boss arms are ordinary parts with a `radius` attached to one another; FACET MONARCH's armour
 is a part with a hurtbox and no sprite, which was already valid ([zones-f-and-g.md](zones-f-and-g.md)).

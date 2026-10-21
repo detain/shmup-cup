@@ -81,16 +81,23 @@ continues).
 | `zone-a-extras` | the 4-way bot pressing SPECIAL every 90 ticks, god mode, full loadout | the M3-02 mechanic extras all on with the MANTA over the whole of AZURE VERGE: black-hole vortices thrown and discharged, bullets grazed, the death-bomb window armed, the authentic slowdown counting the load — no deaths, HALCYON BULWARK shot down, `stageClear` |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
-  the outcome must match. A failure means the simulation changed.
+  the outcome must match. A failure means the simulation changed. Since R5-P.P3 the per-zone
+  **outcome** checks stand beside it in `golden-zone-<letter>.test.ts` (A–I, one file per zone,
+  each reading only its zone's recordings); `golden.test.ts` still plays every hash and keeps the
+  dev-stage and extra-mode outcome blocks.
 - `pnpm golden:update` re-records every scenario from its bot (`golden.ts`) and rewrites the files
   — only for an **intended** simulation change, with the reason in the commit message (plan §1.5:
   steps that change simulation behaviour re-bless in the same commit). Re-recording an unchanged
-  simulation writes byte-identical files.
+  simulation writes byte-identical files. `node scripts/golden-update.mjs --only zone-b,zone-c`
+  (with pnpm: `pnpm golden:update -- --only zone-b,zone-c`) re-records only the listed stages'
+  goldens **and** demos; every other recording is still verified, and an unknown or empty id fails
+  (`0b166c4`). A zone LAND runs exactly this (`docs/v2-run/helpers/land-zone.sh`).
 - The files are generated: never edit them by hand (Prettier skips them).
 - **Stable content keys (R2-03.P1, `6ba1187`).** A state hash now mixes an FNV-1a key of the
   content id instead of its ordinal in the content tables (`spriteKeys` / `enemyKeys` / `pathKeys`
   / `patternKeys`, `docs/dev/debug-and-replays.md`), so a change to one zone's content re-blesses
-  only that zone's goldens — the other zones' hashes stand.
+  only that zone's goldens — the other zones' hashes stand. That is the pairing the LAND scope
+  proof reads: a `--only zone-<letter>` re-bless must leave every other file byte-identical.
 - **R2-03.G1 (`d4ba9e8`)** re-blessed every golden and re-recorded the attract demos on the ported
   640×360 world at replay format 2; the outcomes above are that era's (the v1-era rows that the
   port changed — a clear that became a `gameOver`, a different branch — say so in their text).

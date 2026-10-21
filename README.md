@@ -19,7 +19,9 @@ playable with four directions and one button — and it also runs on **LG webOS 
 
 Everything in it is original: the art is drawn by committed generator scripts, the music and sound
 effects are synthesised from parameter files at load time, and the simulation is deterministic
-enough that a whole run fits in a shareable text string.
+enough that a whole run fits in a shareable text string. Even the banner above goes through that
+pipeline: `docs/images/logo.png` is drawn by `pnpm docs:images` from the in-game `ui/logo` sprite —
+the v2 banner art shipped by R4-05.E1 — so the README wears exactly what the title screen wears.
 
 | | |
 |---|---|

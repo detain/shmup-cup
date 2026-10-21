@@ -627,7 +627,7 @@ to spawn only the enemies it names.
 EXPANSE mostly on existing behaviours with their own tunables — `bubble.split` bubbles (a `froth`
 splitting into two beads, a `brood-bubble` with one `gill-dart` fish inside), `rammer.aimed`
 fish and drones, `pattern.loop` jellies and dust devils (the DSL patterns of
-`content/patterns/zones.patterns.json`), `turret.floor` urchins, `walker.floor` beetles on the
+`content/patterns/zone-b.patterns.json` / `zone-c.patterns.json`, one file per zone since R5-P.P4), `turret.floor` urchins, `walker.floor` beetles on the
 ceiling, `fan.loop` skimmers on `content/paths/zone-c.paths.json`, a `volcano.lob` geyser throwing
 `rock.fall` clods — plus the two new ones above and the bosses. The carriers are zone A's `tender`;
 both files sort after zone A's, so no earlier spec index moved. Tables, hit points and scores:

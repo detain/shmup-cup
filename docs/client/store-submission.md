@@ -50,7 +50,9 @@ Run these on both monitors, on a **release** build (`pnpm --filter @shmup/tizen 
 - [ ] **App registration**: name, category, age rating, region, pricing.
 - [ ] **Store assets.** `pnpm store:assets` writes placeholders into `assets/generated/store/`: the
       icon and four 1920 × 1080 screenshots captioned `PLACEHOLDER`, plus `listing.json` with the
-      texts. **Check the sizes against the Seller Office's current requirements before you upload
+      texts — drawn from the **v2** art since R4-05.E5 (the build moved off `artScale: 1`, closing
+      the last RR-3 hold-out, so the placeholders wear the game's own remaster).
+      **Check the sizes against the Seller Office's current requirements before you upload
       them** — they could not be verified from here, and they are written down in
       `scripts/store-assets.mjs` as an assumption, not as a fact. Replace the screenshots with real
       captures from a monitor.

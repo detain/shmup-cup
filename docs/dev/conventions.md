@@ -81,9 +81,10 @@ frame-dependent number in `@shmup/core` **derives** from the constants of `core/
 playfield is 640×336), `HUD_BOTTOM_Y` (348), `TILE_SIZE` (12), `ART_SCALE` (3/2 — a positive
 rational, not a whole number; the config's whole-number check exempts it and a rational check
 requires its products with the font metrics to be whole) and the font metrics `GLYPH_W` /
-`GLYPH_H` / `LINE_H` (9 / 12 / 15 — the font file's 6 / 8 / 10 × `ART_SCALE`, pinned to the file
-times that scale by `packages/core/test/config/frame-constants.test.ts`; glyph rows stay laid out
-at the file's own cell).
+`GLYPH_H` / `LINE_H` (9 / 12 / 15 — since R4-03.C1 the native font file's own cell,
+`assets/source/fonts/pixel9x12.font.json`, pinned to that file by
+`packages/core/test/config/frame-constants.test.ts` (RR-2); the scale-1 build still reads the v1
+file's 6 / 8 / 10 through `ART_SCALE`; glyph rows stay laid out at the file's own cell).
 
 Since R1-02 the same holds outside core: the other packages and the apps import the constants from
 `@shmup/core`, and code that cannot — Electron's main process, the Node scripts — reads a **pinned
@@ -192,10 +193,17 @@ only, not render-pixi or the shell.
   segment and the
   kind of output that moved: a moved pixel (or a moved sim value — then the goldens fail too).
 - **Re-pinning** is for a step that changes what is drawn on purpose — R2-01's flip, an art or
-  layout step, a change of the shipped content (strings, stages, the campaign): run
+  layout step, a change of the shipped content (strings, stages, the campaign). Since R5-P.P10
+  (`95bc61d`) each of the three fingerprint tests — this one, the content-DB one and the shell's
+  `packages/shell/test/frame-fingerprint.test.ts` — rewrites its own `PINNED` in place when run
+  with `SHMUP_FINGERPRINT_UPDATE=1` (the shared writer is
+  `packages/core/test/helpers/pin-writer.ts`; it refuses to write while `CI` is set and prints the
+  Prettier-clean form, so after a re-pin `pnpm exec prettier --check` the touched file and review
+  `git status`). The print-and-paste path still stands where it is preferred:
   `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-  test/integration/presentation-fingerprint.test.ts`, paste the printed tables over `PINNED`, and
-  say in the commit message why the output changed. Never re-pin to quiet an unexplained change.
+  test/integration/presentation-fingerprint.test.ts` prints the tables to paste over `PINNED`. In
+  both cases say in the commit message why the output changed. Never re-pin to quiet an
+  unexplained change.
 
 **Self-expiring gates (R2-01 → R2-03) — all gone now.** Between the flip, R2-02's port and
 R2-03's re-bless, some checks could not pass. Each gate skipped its cases — the reason rode in
@@ -563,6 +571,32 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   same commit** with `pnpm golden:update`, and the commit message says why; never edit the files
   by hand (Prettier skips them). An unintended golden failure is a bug, not a re-bless
   ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
+- **A zone content change re-blesses one zone** (R5-P.P3, `c284b78`): each zone's outcome checks
+  live in their own file, `test/golden/golden-zone-<letter>.test.ts` (`golden.test.ts` still plays
+  every recording and keeps the dev-stage and extra-mode blocks), and
+  `node scripts/golden-update.mjs --only zone-b[,zone-c,…]` re-records the listed stages' goldens
+  **and demos** while every other recording is still verified against its hash. Through pnpm the
+  flag rides after a `--` (`pnpm golden:update -- --only zone-b`); an unknown or empty id list
+  fails loud (`0b166c4`). The global re-bless of a content round (R5-P.P12, R6-01.B4) is the plain
+  `pnpm golden:update` with no list.
+- **Zone tests are per-zone** (R5-P.P3/P5a/P5e): the zone suites are one file per zone —
+  `packages/core/test/behaviors/behaviors-zone-<letter>.test.ts` with its `-edge` twin,
+  `test/integration/zone-<letter>-runtime.test.ts` (zones B–I; the old `-runtime-edge` pair files
+  are gone — P5e folded every edge case into its zone's runtime file) and
+  `test/integration/zone-<letter>-direct.test.ts` (zones B–G), and
+  `test/playtest/zone-<letter>-recovery.test.ts`, beside the content-side
+  `content-zone-<letter>.test.ts`. A new case for a zone goes into that zone's file, never into a
+  shared pair file. (The Playwright specs kept their pair shape — `test/e2e/zones-bc.spec.ts` and
+  its three siblings are unchanged; only the Vitest trees were split.)
+- **A zone LAND lands one commit** (`docs/v2-run/helpers/land-zone.sh`, R5-P.P1): the branch's
+  sources are squashed to one commit and the derived files are regenerated on the landing base
+  under the land lock — the atlas groups and pages, the zone's `--only` golden re-bless, the three
+  fingerprints re-pinned with `SHMUP_FINGERPRINT_UPDATE=1`, and `pnpm docs:images`. The run then
+  proves the scope (every changed `test/golden/*.replay.json` or `content/demos/*.replay.json`
+  must name a stage from the `--only` list) and stamps a `Changed plates:` line — one
+  `docs/images/…` path per changed plate, or `none` — into the commit body, which is what the
+  post-LAND docs check reads. Exactly one of `--only <ids>` / `--all` is required; `--all` is the
+  global re-bless shape, for the landings that re-record the whole set.
 - **Tests run in parallel** ([build-test-deploy.md](build-test-deploy.md#test-concurrency)):
   every Vitest file in its own forked worker, every Playwright test in its own browser context,
   in any order — a test never depends on another test or file having run first, and never

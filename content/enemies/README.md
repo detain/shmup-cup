@@ -126,7 +126,7 @@ hurtbox and no `megaCrashImmune`.
 BRINE NEBULA: `froth` (a splitting bubble → two `froth-bead`s, `bubble.split`), `froth-bead` (a small
 bubble, also flown in popcorn streams), `brood-bubble` (a bubble with a `gill-dart` fish inside —
 `bubble.split` with `count` 1), `gill-dart` (`rammer.aimed`), `reef-jelly` (`pattern.loop` on a sine
-mover: the `brine.jelly-ring` pattern of `content/patterns/zones.patterns.json`), `urchin` /
+mover: the `brine.jelly-ring` pattern of `content/patterns/zone-b.patterns.json`), `urchin` /
 `urchin-ceiling` (`turret.floor`), `maw-rocket` (`rocket.homing`: launched away from the middle
 row, homing for a while, then straight on), the captain **SPUME HERALD** (`spume-herald`,
 `captain.launcher` launching brood bubbles, a 30-s time limit) and the boss **GALVANIC MAW**

@@ -119,17 +119,22 @@ build's art size instead:
 | Real-art PNG overrides | Already v2-native: drawn at the art bible's sizes ([below](#real-art-png-overrides)) |
 | A `native: true` source | A pixel map's `"native"` key, or `makeSprite({ native })` — what the R3 / R4 redraws set. Since R3-03.V1 the procedural bullets and bend nodes join it at every non-1 scale: `bullets.mjs` draws round 11×11 (1 frame), oval 13×13 and needle 17×17 (8 headings) and `lasers.mjs` the 11×11 bend node — the bible §5.4 sizes, marked `native`, where the interim upscale had landed the oval on 14 px (the one missed frame; round, needle and bend already matched). At scale 1 everything stays the v1 pixel map, byte for byte (`bullets-v2.test.ts`; the scale-1 digest pin never moved) |
 
-**The interim font** (decision W4-4): `assets/source/fonts/pixel6x8.font.json` stays on disk
-unchanged; `scaleFont` turns it into a 9 × 12 cell with a 15-px line and a 9-px advance inside the
-atlas. That is where core's `GLYPH_W` / `GLYPH_H` / `LINE_H` come from — the file's values ×
-`ART_SCALE`, pinned by `packages/core/test/config/frame-constants.test.ts`. The strokes come out
-1 or 2 px wide by position and look uneven; it is temporary until R4-03's redraw.
+**The font** (decision W4-4, redone by R4-03.C1): the default-scale build draws from the native v2
+file `assets/source/fonts/pixel9x12.font.json` — the whole charset hand-redrawn in a true 9 × 12
+cell, `lineHeight` 15 and `advance` 9, marked `native` so it stands at its own cell unscaled. That
+is where core's `GLYPH_W` / `GLYPH_H` / `LINE_H` come from — the native file's own values, pinned to
+it by `packages/core/test/config/frame-constants.test.ts` (RR-2). The v1 `pixel6x8.font.json` stays
+on disk and is still the font the scale-1 builds read, byte for byte; it keeps the old 6 × 3/2 = 9
+relation through `ART_SCALE`, which is exactly why the native cell and the constants never moved.
+The interim was `scaleFont` ×1.5-ing the v1 file (W4-4) — strokes 1 or 2 px wide by position, uneven
+beside the redrawn art; that path still stands for any font without a native sibling.
 
 **The `artScale: 1` builds** (decision W4-6): the TV bench's density atlas is built with
-`buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above) and the store
-icons (`scripts/store-assets.mjs`) build at scale 1 — the store icons keep the v1 art until R4-05
-(W4-6, RR-3); the doc images built at scale 1 too until R2-03 switched them to the default scale
-(`doc-images.mjs` now calls `collectSprites()` plain — `356e7b2`). Scale 1 means *the v1 art at either frame* — the
+`buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above) build at
+scale 1. The store icons and the doc images built at scale 1 too until they moved to the default
+scale — the doc images with R2-03 (`doc-images.mjs` now calls `collectSprites()` plain —
+`356e7b2`), the icons with R4-05.E5 (`scripts/store-assets.mjs`, closing RR-3). Scale 1 means *the
+v1 art at either frame* — the
 bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
 
 **The atlas with interim art** — what `pnpm assets` writes today: 438 sprites and **1,459** frames
@@ -148,11 +153,11 @@ The sprite *names* do not change, so the interim art packs into the same zone gr
 a name that has a code source is dropped, `*.v2.sprite.json` maps and `native: true` fonts are
 never read, and a generator of v2-only art returns nothing — so `interim-pipeline.test.ts`'s
 scale-1 digest pin (`fa4198…47f54`) holds **by construction** and committing v2 art can never move
-it, the TV bench's density atlas, the CJK figures or the store icons with it. `applyPngOverrides`
+it, the TV bench's density atlas or the CJK figures with it. `applyPngOverrides`
 still keeps the remaining base frames when an override has fewer — the partial override a real-art
-step ships on purpose. And `*.font.json` **has** its `native` key now (`font.mjs`): R4-03's
-redrawn font arrives as the v2 font beside the 6×8 file, unscaled at the art scale, so no 3/2
-build turns its 9×12 into 14×18 and the font pin and the scale-1 digest pin never move.
+step ships on purpose. And `*.font.json` **has** its `native` key (`font.mjs`): R4-03.C1's redrawn
+font arrived as the v2 font beside the 6×8 file (`pixel9x12.font.json`), unscaled at the art scale,
+so no 3/2 build turns its 9×12 into 14×18 and the font pin and the scale-1 digest pin never move.
 
 ## Sources
 
@@ -216,9 +221,10 @@ v2 sources arrive through R4-01.A2, R4-03 and R4-05.E2.
 - At scale 1 a PNG override of a name that has a **code source** — a pixel map, a procedural
   sprite, or either's v2 sibling — is **skipped** (`collectSprites`' override filter); a v1-only
   name, like the M3-03 CJK figures, still applies at every scale. Committing v2 art can therefore
-  never move the scale-1 atlas: the digest pin, the TV bench, the CJK figures and the store icons
+  never move the scale-1 atlas: the digest pin, the TV bench and the CJK figures
   stay byte for byte until a step re-pins them on purpose — until a v2.0.x clean-up after the
-  release deletes the v1 sources (deferred from R6-03).
+  release deletes the v1 sources (deferred from R6-03). (The store icons left this set at
+  R4-05.E5: they draw from the v2 art at the default scale now.)
 - `scripts/frame.mjs` (the scripts' pinned frame mirror) joined the pipeline's `CODE_HASH`: the
   hash is `hashTree(PIPELINE_DIR)` plus the `pngjs` / `zlib` versions plus the frame file's bytes
   hashed explicitly, so a frame flip alone invalidates a cached build.
@@ -338,12 +344,16 @@ is byte-identical either way — no override PNG exists yet.
 
 ### Bitmap fonts (`*.font.json`)
 
-`assets/source/fonts/pixel6x8.font.json` is the original 6×8 font: ASCII 32–126 plus
+There are two font files, one per release line. `assets/source/fonts/pixel6x8.font.json` is the
+original 6×8 font: ASCII 32–126 plus
 `← ↑ → ↓ ● ✕ ★`, 5×7 letters with a spacing column and a descender row, `lineHeight` 10,
 `advance` 6. **M3-03** added 93 glyphs for the localization — the Latin-1 capitals Spanish needs
 (`Á É Í Ó Ú Ñ Ü ¿ ¡`) and the katakana subset Japanese is written in — so the font is **195
-glyphs** today. The charset is declared once, in `@shmup/core` `UI_GLYPHS`, and
-`test/scripts/assets/font.test.ts` asserts the font source holds exactly those code points: a
+glyphs** today. Since R4-03.C1 the v2 line has its own native redraw of all 195 glyphs,
+`assets/source/fonts/pixel9x12.font.json` — a true 9 × 12 cell, `lineHeight` 15, `advance` 9,
+`native: true` — and that is the file the default-scale atlas is built from. The charset is
+declared once, in `@shmup/core` `UI_GLYPHS`, and
+`test/scripts/assets/font.test.ts` asserts both font sources hold exactly those code points: a
 `strings` entry the loader accepts can always be drawn, and a glyph nothing draws never reaches the
 atlas.
 
@@ -364,14 +374,14 @@ per glyph in code-point order (anchor `[0, 0]`); its metrics go into the manifes
 section with glyphs keyed by **decimal code point**. Nothing assumes 6×8: the pipeline takes any
 cell, advance and line height from the file, and render-pixi's text module lays text out with them
 (R1-04 proves a 9×12 font in `font-cell-size.test.ts`); core's layout reads the mirrored constants
-`GLYPH_W` / `GLYPH_H` / `LINE_H`, which `frame-constants.test.ts` pins to this file **× `ART_SCALE`**.
-As built, R2-01 did not change this file at all: the interim stage scales it (`scaleFont`, above),
-so the shipped file stays the 6×8 original and the constants are its values × 3/2 — 9 / 12 / 15.
-R4-03's redraw will arrive **beside** this file, not through it (R4-P.P3, decision RR-1, above):
-`*.font.json` now has its `native` key and the interim stage honours it — a `native: true` font
-file is the v2 font of its name, read only at an art scale ≠ 1 and built at its own cell, the v1
-file scaled as here at every scale that has no v2 sibling — so no 3/2 build ever turns a real 9×12
-into 14×18.
+`GLYPH_W` / `GLYPH_H` / `LINE_H`, which `frame-constants.test.ts` pins to the native file — the v2
+`pixel9x12.font.json` (RR-2; the same test keeps the v1 file's 6 / 8 / 10 × `ART_SCALE` relation
+honest for the scale-1 build). R2-01 did not change either file: through the interim the pipeline
+scaled the v1 font (`scaleFont`, above), and R4-03.C1's redraw arrived **beside** it, not through it
+(R4-P.P3, decision RR-1, above): `*.font.json` has its `native` key and the pipeline honours it — a
+`native: true` font file is the v2 font of its name, read only at an art scale ≠ 1 and built at its
+own cell, the v1 file scaled as here at every scale that has no v2 sibling — so no 3/2 build ever
+turns a real 9×12 into 14×18.
 
 #### Katakana and the CJK budget (M3-03)
 
@@ -404,8 +414,11 @@ The number that made this decision is the one a **real kanji set** would cost �
   encodes to **136.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
   these figures are computed on the **v1-scale** art: `test/integration/cjk-budget.test.ts` rebuilds
   `buildAtlas({ ungrouped: true, artScale: 1 })` — decision W4-6, so the interim ×1.5 atlas (2.25×
-  the area) does not move them and the six documents that quote them stand; R2-03 decides whether
-  the docs quote the v2 atlas instead. Grouped or ungrouped, the area is the same.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
+  the area) does not move them and the six documents that quote them stand. That is the landed
+  decision (RR-1, kept through the R4 art rounds): the documents quote the v1-scale figures
+  whatever the shipped atlas is drawn at, and what holds the shipped atlas is the **live budget** —
+  every page inside the packer's limit and every group under its `ATLAS_PNG_BYTES_CAP` share, which
+  the same test checks beside these figures. Grouped or ungrouped, the area is the same.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
@@ -812,9 +825,11 @@ sidecar's `meta.shmup.p2` map (R3-03.V2a) — one PNG per sprite is enough.
 
 ### Adding glyphs or a font
 
-Add a key to `glyphs` in `pixel6x8.font.json` (exactly one character, `cellHeight` rows of
-`cellWidth` `#`/`.` characters), or a new `<name>.font.json` — it becomes `font/<name>` and
-`manifest.fonts[<name>]`.
+Add a key to `glyphs` in **both** font files — the v1 `pixel6x8.font.json` and its native v2
+sibling `pixel9x12.font.json` (exactly one character, `cellHeight` rows of
+`cellWidth` `#`/`.` characters each) — or a new `<name>.font.json` — it becomes `font/<name>` and
+`manifest.fonts[<name>]`. A glyph added to one file alone fails `font.test.ts`, which checks both
+against the charset.
 
 Since M3-03 the charset has a **second owner**: `UI_GLYPHS` in `packages/core/src/ui/strings.ts`,
 which is what `core/data` validates every `strings` file against. The two must be changed in the
@@ -859,7 +874,7 @@ node scripts/assets/tileset-masks.mjs --check # R3-03.V4: tileset art and its ma
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/provenance.test.ts` | R3-02: every override PNG (under `assets/source/sprites/` and the staging folder `art-prompts/v2/ingested/`) has a valid `.art.json` or a `LICENSES.md` entry; a record without its PNG, a PNG or sidecar changed after ingest, a recipe never ingested fail; the ingest tool's fixture outputs load as overrides (its recipes, records and edit layers ignored) and pack pixel for pixel with the sidecar's anchor and tags — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
-| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native` — since R3-03.V1 the set names the native v2 bullets and bend nodes too, pinned exactly, and the comparison's upscaled-frame floor follows it), the 9×12 interim font, the scale-1 digest pin |
+| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native` — since R3-03.V1 the set names the native v2 bullets and bend nodes too, pinned exactly, and the comparison's upscaled-frame floor follows it), the 9×12 font — since R4-03.C1 taken from the native `pixel9x12.font.json`, unscaled — the scale-1 digest pin |
 | `test/scripts/assets/terrain-size.test.ts`, `font-cell-size.test.ts` | R1-04: the terrain generator at 12 px and any even size (masks equal to every shipped mask resampled 8 → 12, the 8-px frames byte-identical to before, its `TILE_SIZE` equal to core's, `INTERIM_ART_SCALE` equal to core's `ART_SCALE`), `resampleMask` both ways; a 9×12 font made in the test (a ×1.5 upscale of `pixel6x8`, exactly the `UI_GLYPHS` code points) parses, packs next to the shipped font and lays out at advance 9 and a 15-px line |
 | `test/integration/tile-size.test.ts`, `stage-terrain.test.ts` | Every shipped tileset and stage uses `TILE_SIZE` (R1-04); every tileset mask equals the opaque pixels of its frame — since R1-04 also at 12 px. Since R3-03.V4b the two terrain checks live in `test/integration/terrain-checks.ts` (the spec imports them) and also run on tilesets ingested from real art |
 | `test/scripts/assets/coop.test.ts` | M2-06, R3-03.V2a: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the palette map's exact colour exchanges with unlisted colours and every alpha kept, `makeP2Sprite`, every ship's and the stock icon's map-declared variant in the atlas — and that the shipped maps exchange exactly the colours v1's red ↔ blue channel swap did (that swap is the M2-06 history the pin keeps honest) |

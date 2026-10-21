@@ -39,6 +39,7 @@ pnpm content:check       # test/integration/content.test.ts + the nine content-z
 pnpm test:integration    # vitest --project integration
 pnpm test:e2e            # needs: pnpm exec playwright install --with-deps chromium firefox
 pnpm golden:update       # scripts/golden-update.mjs re-blesses test/golden/*.replay.json and re-records content/demos/*.replay.json
+node scripts/golden-update.mjs --only zone-b,zone-c   # re-records only the listed zones' goldens + demos; every other recording is still verified (the zone LAND's step; with pnpm: golden:update -- --only …)
 pnpm assets              # scripts/assets/pipeline.mjs -> atlas + manifest
 pnpm bench               # test/bench/vitest.config.ts (not part of pnpm test)
 pnpm bench:tv            # the TV render bench widgets -> apps/{tizen,webos}/dist-bench/ (R0-02; packaging is the owner's)

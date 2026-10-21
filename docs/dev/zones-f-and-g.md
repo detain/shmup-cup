@@ -59,12 +59,12 @@ rule), §4 rule 2 (4-way playable); decisions **D17** (aimed shots ≤ 2.0 px/ti
 | Zone G's bonus stage | `content/stages/glimmer-cache.stage.json` (GLIMMER CACHE, type `bonus`, 2,700 px; v1: 1,800 px) |
 | Rosters and bosses | `content/enemies/zone-f.enemies.json`, `zone-g.enemies.json` |
 | Paths | none new — the halo crystals fly zone A's `gyre-orbit-up` / `-down` (`content/paths/zone-a.paths.json`) |
-| The zones' DSL patterns | `content/patterns/zones.patterns.json` (`vault.spores`, `prism.fan`) |
+| The zones' DSL patterns | `content/patterns/zone-f.patterns.json` (`vault.spores`) and `content/patterns/zone-g.patterns.json` (`prism.fan`) — one file per zone since R5-P.P4 (`a216f14`) |
 | Tilesets | `content/tilesets/terrain-vault.tileset.json`, `terrain-prism.tileset.json` |
 | Songs | `content/audio/music/zone-f`, `boss-f`, `zone-g`, `boss-g` `.music.json` |
 | New behaviours | `packages/core/src/behaviors/index.ts` (`cell.chase`, `boss.squid`, `boss.facet`; the helpers `isArm`, `armSide`, `curlArms`, `setArmCurl`, `armCurl`) |
 | Art as code | `scripts/assets/procedural/vault.mjs` (14 sprites), `prism.mjs` (14); `terrain.mjs` (`TERRAIN_PALETTES` `tiles/terrain-vault` / `-prism`) |
-| Playtests | `test/playtest/zone-f.test.ts`, `zone-g.test.ts`, `zone-fg-recovery.test.ts` |
+| Playtests | `test/playtest/zone-f.test.ts`, `zone-g.test.ts`, `zone-f-recovery.test.ts`, `zone-g-recovery.test.ts` (P3's split) |
 | Goldens | `test/golden/zone-f-god`, `zone-f-arcade`, `zone-f-deaths`, `zone-f-boss`, `zone-g-god`, `zone-g-bot`, `zone-g-boss`, `glimmer-cache-god` |
 
 Nothing in the World's tick pipeline changed. The tentacles and arms that look like a new engine
@@ -434,7 +434,7 @@ loads the next zone's set; `pnpm audio:preview --only zone-f` renders one to a W
 ## Direct-mode item plans
 
 Both stages have a `directItems` plan of 26 entries, handed out in order by the carriers and
-completed formations when the MANTA plays (M2-05). `zones-fg-direct.test.ts` flies both zones with
+completed formations when the MANTA plays (M2-05). `zone-f-direct.test.ts` and `zone-g-direct.test.ts` (R5-P.P5e's split of `zones-fg-direct.test.ts`) fly both zones with
 the MANTA (the 4-way bot, god mode): the items that appear on a tick are exactly the plan's entries
 between the cursors, and the MANTA's weapons shoot both bosses down.
 
@@ -552,7 +552,7 @@ harder.)
   retune): F 220.8 s (MANTLE REGENT 24.4 s), G 240.4 s (FACET MONARCH 41.2 s); without god mode F
   now clears with one death (228.6 s — before the retune it lost all its lives, game over at
   141.4 s), G clears with two deaths.
-- **`zone-fg-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 1,350 px —
+- **`zone-f-recovery.test.ts`** and **`zone-g-recovery.test.ts`** (P3's split of `zone-fg-recovery.test.ts`) — the recovery rule (≥ 3 capsule sources within 1,350 px —
   `RECOVERY_WINDOW` 900 · 3/2 — of every
   checkpoint, all of them really dropped) at all eight checkpoints of F and G through the shared
   `test/playtest/recovery.ts` (M2-11). The dividing cells' halves, the geodes' shards and the cube
@@ -645,9 +645,10 @@ pnpm dev
 # → http://localhost:5173/?stage=zone-g                PRISM LABYRINTH alone (shoot the gallery's four turrets)
 # → http://localhost:5173/?stage=glimmer-cache         zone G's bonus stage alone
 # → http://localhost:5173                              a run: then F or G on the map after D or E
-pnpm exec vitest run --project integration test/playtest/zone-fg-recovery.test.ts
+pnpm exec vitest run --project integration test/playtest/zone-f-recovery.test.ts
+pnpm exec vitest run --project integration test/playtest/zone-g-recovery.test.ts
 pnpm exec vitest run --project integration test/golden -t zone-g
-pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zones-fg.test.ts
+pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-f.test.ts packages/core/test/behaviors/behaviors-zone-g.test.ts
 ```
 
 Headless, the gallery and the bot:
@@ -657,7 +658,7 @@ import { createGame, createHeadlessPlatform, spawnPlayer } from '@shmup/core';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { describeRun, runStage } from '../playtest/harness.js';
 
-// `db`: the shipped content, loaded as in zones-fg-runtime.test.ts (loadContent(readContentFiles(), …)).
+// `db`: the shipped content, loaded as in zone-f-runtime.test.ts (loadContent(readContentFiles(), …)).
 const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
 const world = game.world;
 world.debugFlags.godMode = true;
@@ -676,16 +677,16 @@ console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageCle
 
 | File | Covers |
 |---|---|
-| `packages/core/test/behaviors/behaviors-zones-fg.test.ts` | The three behaviours on the shipped rosters (free flight, the ship holding its fire): a chasing cell in along its row, after the ship with a capped turn, then straight on, the halves of a dividing cell flying out first; MANTLE REGENT's tentacles curling in front of the eye and uncurling in a cycle, the armour clinking while they guard, a broken tentacle ending the first phase; FACET MONARCH's core behind its crystals, the arms waving like claws, needles from the tips, rings and one lane at a time from the core in the last phase |
-| `packages/core/test/behaviors/behaviors-zones-fg-edge.test.ts` | The documented defaults; the chasing cell's timeline (50 ticks in, 150 chasing at 6 units, then straight on with its heading kept), `speed` ≤ 0 → 1 px/tick, tick counts below 1 → one tick, `turnRate` floored and below 0 → no turn, the per-tick turn cap, a dividing cell's halves out for the child's floored `scatterTicks`, a launched cell drifting in; the squid's cycle (each hold one tick longer than its timer), `curl` rounded, timers floored, both tentacles mirrored with every segment alike, a broken tentacle leaving the other's cycle as it was, floored spreads, tip needles, rings as the tentacles open, floored launches; the facet wave's turn points `2 × waveTicks` apart, `wave` rounded, floored needles from both tips, rings from the armoured core, detached lanes one at a time, the shipped arms carried through the crystals breaking; the arm fix (no jump after a wider sweep or a facet wave); tracking margins |
+| `packages/core/test/behaviors/behaviors-zone-f.test.ts` + `behaviors-zone-g.test.ts` (R5-P.P5a2's split) | The three behaviours on the shipped rosters (free flight, the ship holding its fire): a chasing cell in along its row, after the ship with a capped turn, then straight on, the halves of a dividing cell flying out first; MANTLE REGENT's tentacles curling in front of the eye and uncurling in a cycle, the armour clinking while they guard, a broken tentacle ending the first phase; FACET MONARCH's core behind its crystals, the arms waving like claws, needles from the tips, rings and one lane at a time from the core in the last phase |
+| `packages/core/test/behaviors/behaviors-zone-f-edge.test.ts` + `behaviors-zone-g-edge.test.ts` (R5-P.P5a2's split) | The documented defaults; the chasing cell's timeline (50 ticks in, 150 chasing at 6 units, then straight on with its heading kept), `speed` ≤ 0 → 1 px/tick, tick counts below 1 → one tick, `turnRate` floored and below 0 → no turn, the per-tick turn cap, a dividing cell's halves out for the child's floored `scatterTicks`, a launched cell drifting in; the squid's cycle (each hold one tick longer than its timer), `curl` rounded, timers floored, both tentacles mirrored with every segment alike, a broken tentacle leaving the other's cycle as it was, floored spreads, tip needles, rings as the tentacles open, floored launches; the facet wave's turn points `2 × waveTicks` apart, `wave` rounded, floored needles from both tips, rings from the armoured core, detached lanes one at a time, the shipped arms carried through the crystals breaking; the arm fix (no jump after a wider sweep or a facet wave); tracking margins |
 | `behaviors-squid-alloc`, `behaviors-facet-alloc`, `behaviors-chase-alloc` `.test.ts` | Zero allocation |
 | `packages/core/test/behaviors/behaviors.test.ts`, `packages/core/test/bosses/bosses-behaviors.test.ts` | The rosters' id lists |
 | `test/scripts/assets/procedural-zone-f.test.ts` / `-g.test.ts` and their `-edge` files (R5-P.P5c split of `procedural-zones-fg(-edge).test.ts`; shared fixtures in `procedural-zone-helpers.ts`) | Every sprite in order, size and frame count, hit flashes (none on the fin and the housing); the membrane and the facets only in their ramps; bands that tile; every hurtbox inside its sprite; kebab names, every frame visible and deterministic, square arm segments, ramps of their own, the registry, zone A's destructible tiles in the zone tilesets, seven distinct rims |
 | `test/integration/content-zone-f.test.ts`, `content-zone-g.test.ts` | The checks above, the `ground`-window rule for every shipped stage |
-| `test/integration/zones-fg-runtime.test.ts` | Through the real game: the gallery into GLIMMER CACHE through the scene flow from a practice start (the zone's clear, FACET MONARCH skipped), the entrance shut when a turret survives (from checkpoint 0 and 1) and opened from the zone's start when every gallery turret is shot, tissue growing back but not into a ship, a claw's chain, lunge, pull and retract, the rush stacking and a restart rolling it back |
-| `test/integration/zones-fg-runtime-edge.test.ts` | Every practice start of F and G in open space, the stage skips with every boss part in view, an Arcade restart in the tissue passage rolling the walls back before their `regen`, an Arcade restart in the gallery re-arming it afresh (four turrets open it, three keep it shut), a death in GLIMMER CACHE back to the gallery locked out, MANTLE REGENT's launches 200 ticks apart |
-| `test/integration/zones-fg-direct.test.ts` | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
-| `test/playtest/zone-f.test.ts`, `zone-g.test.ts`, `zone-fg-recovery.test.ts` | The playtests and the recovery rule |
+| `test/integration/zone-f-runtime.test.ts` + `zone-g-runtime.test.ts` (R5-P.P5e's split) | Through the real game: the gallery into GLIMMER CACHE through the scene flow from a practice start (the zone's clear, FACET MONARCH skipped), the entrance shut when a turret survives (from checkpoint 0 and 1) and opened from the zone's start when every gallery turret is shot, tissue growing back but not into a ship, a claw's chain, lunge, pull and retract, the rush stacking and a restart rolling it back |
+| `test/integration/zone-f-runtime.test.ts` / `zone-g-runtime.test.ts` (R5-P.P5e folded `zones-fg-runtime-edge.test.ts` into the per-zone runtime files) | Every practice start of F and G in open space, the stage skips with every boss part in view, an Arcade restart in the tissue passage rolling the walls back before their `regen`, an Arcade restart in the gallery re-arming it afresh (four turrets open it, three keep it shut), a death in GLIMMER CACHE back to the gallery locked out, MANTLE REGENT's launches 200 ticks apart |
+| `test/integration/zone-f-direct.test.ts` + `zone-g-direct.test.ts` (R5-P.P5e's split) | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
+| `test/playtest/zone-f.test.ts`, `zone-g.test.ts`, `zone-f-recovery.test.ts`, `zone-g-recovery.test.ts` | The playtests and the recovery rule |
 | `test/golden/*` | The eight goldens above |
 | `test/e2e/zones-fg.spec.ts` | In headless Chromium: the cell wall and the crystal facets recoloured by their palette cycles over the folds and spires, MANTLE REGENT curling its tentacles, FACET MONARCH waving its arms, both bosses on the Tizen build from `file://` |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |

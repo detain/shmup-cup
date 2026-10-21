@@ -100,13 +100,21 @@ bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 [`common.patterns.json`](common.patterns.json) holds the shared library (`common.fan-5`,
 `common.spiral`, `common.ring`, `common.homing-ring`, `common.splitter`);
 [`test-sentry.enemies.json`](../enemies/test-sentry.enemies.json)'s `sentry` runs
-`common.spiral`. [`zones.patterns.json`](zones.patterns.json) (M2-11) holds the zones' own patterns:
-`brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 1.275 px/tick) and
-`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.65 px/tick); M2-12 added
-`tempest.bolt` (zone E's `thunderhead`: a streak of four aimed needles, 1.275 → 2.4 px/tick — the
-first fire aimed, the others `sequence` 0 in direction and +0.375 in speed); M2-13 added
-`vault.spores` (zone F's `spore-sac`: a fan of three round spores, 56 units apart, aimed, at 1.125
-px/tick) and `prism.fan` (zone G's `prism-lens`: two fans of four needles 18 ticks apart, 40 units
-apart round the aim — no bullet on the aimed line — at 1.725 px/tick); M2-14 added `abyss.gulp`
-(zone I's `gulper`: three aimed 3-ways of round red bullets 28 units apart, 14 ticks apart, at 1.5
-px/tick).
+`common.spiral`. The zones' own patterns lived in one `zones.patterns.json` (M2-11 … M2-14) until
+R5-P.P4 (`a216f14`) split them into one file per zone — zones A, D and H name no pattern id, so
+they have no file:
+
+- [`zone-b.patterns.json`](zone-b.patterns.json) — `brine.jelly-ring` (zone B's `reef-jelly`: a
+  six-bullet ring, the first aimed, at 1.275 px/tick);
+- [`zone-c.patterns.json`](zone-c.patterns.json) — `dune.whirl` (zone C's `dust-devil`: a short
+  two-armed spiral of needles at 1.65 px/tick);
+- [`zone-e.patterns.json`](zone-e.patterns.json) — `tempest.bolt` (zone E's `thunderhead`: a
+  streak of four aimed needles, 1.275 → 2.4 px/tick — the first fire aimed, the others `sequence`
+  0 in direction and +0.375 in speed);
+- [`zone-f.patterns.json`](zone-f.patterns.json) — `vault.spores` (zone F's `spore-sac`: a fan of
+  three round spores, 56 units apart, aimed, at 1.125 px/tick);
+- [`zone-g.patterns.json`](zone-g.patterns.json) — `prism.fan` (zone G's `prism-lens`: two fans of
+  four needles 18 ticks apart, 40 units apart round the aim — no bullet on the aimed line — at
+  1.725 px/tick);
+- [`zone-i.patterns.json`](zone-i.patterns.json) — `abyss.gulp` (zone I's `gulper`: three aimed
+  3-ways of round red bullets 28 units apart, 14 ticks apart, at 1.5 px/tick).

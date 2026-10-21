@@ -217,8 +217,10 @@ Windows NSIS (with a chosen folder) + portable, Linux AppImage + tar.gz (categor
 Deck), macOS dmg; output `apps/electron/release/` (git-, Prettier- and ESLint-ignored).
 **electron-builder is not a dependency** — the step names none — so the script runs a pinned version
 through `pnpm dlx`. It cannot read the workspace's `catalog:` specifier, so `electronVersion` is
-pinned in the config and `test/main/packaging.test.ts` keeps its major equal to the catalog's. No
-icons yet (M2-18's icon set); nothing is signed; CI never packages (no binary is downloaded there).
+pinned in the config and `test/main/packaging.test.ts` keeps its major equal to the catalog's. The
+icon is `build/icon.png` — M2-18's set, drawn by `pnpm store:assets`, from the v2 art since
+R4-05.E5 (the last RR-3 hold-out fell there); nothing is signed; CI never packages (no binary is
+downloaded there).
 
 ## Tizen: `config.xml` variants (`apps/tizen/scripts/config-xml.mjs`)
 

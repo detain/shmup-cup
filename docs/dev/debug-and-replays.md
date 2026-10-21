@@ -704,6 +704,9 @@ a co-op run player 2's score, lives, death ticks and continues).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
   session: **every hash** and the outcome must match. A failure means the simulation changed.
+  Since R5-P.P3 the per-zone **outcome** checks live in `golden-zone-<letter>.test.ts` (A–I, each
+  reading only its zone's recordings); `golden.test.ts` still plays every file's hashes and keeps
+  the dev-stage and extra-mode blocks.
 - `golden-edge.test.ts` guards the guards: every file is byte-for-byte what `pnpm golden:update`
   writes for its decoded content (a hand edit or a stale format fails), no file without a
   scenario, re-recording the boss scenario is byte-identical, a tampered replay (other input for a
@@ -715,13 +718,19 @@ a co-op run player 2's score, lives, death ticks and continues).
   **only for an intended simulation change**, in the same commit, and say why in the commit
   message (plan §1.3 / §1.5). Re-recording an unchanged simulation writes identical files, so a
   diff after `golden:update` *is* the behaviour change — review it.
+- **Re-bless one zone** with `node scripts/golden-update.mjs --only zone-b,zone-c` (R5-P.P3;
+  `pnpm` needs `golden:update -- --only zone-b,zone-c`): the listed stage ids' goldens **and**
+  demos re-record, every other recording is still verified byte-for-byte, and an unknown or empty
+  id fails (`0b166c4`). This is what a zone LAND runs (`docs/v2-run/helpers/land-zone.sh`), and
+  the scope proof afterwards asserts that no golden outside the `--only` list moved.
 - The files are generated (`JSON.stringify` with a two-space indent) and excluded from Prettier
   (`.prettierignore`); never edit them by hand.
 - **The attract demos (M2-15)** are recorded and locked the same way: `test/golden/demos.ts`
   (`DEMO_SCENARIOS` — nine zones, the 4-way bot with god mode, 2,400 ticks each) writes
   `content/demos/<id>.replay.json` (bundled content, kind `replay`), `demos.test.ts` plays each back
   through `createDemoPlayback` and `playReplay` with every hash, and `pnpm golden:update` re-records
-  them with the goldens — so a simulation change re-blesses both in one commit
+  them with the goldens — so a simulation change re-blesses both in one commit; `--only` selects
+  the zones on both sides, so an unlisted zone's demo is verified, not rewritten
   ([front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)).
 - **The v1 baseline (v2, for plan R2-02)** lives in the same folder but is not a replay:
   `v1-baseline*.test.ts` pins every shipped stage at 384×216 in the numbers committed in
@@ -733,7 +742,9 @@ a co-op run player 2's score, lives, death ticks and continues).
   in the same commit ([test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02)).
 - **The presentation fingerprint (v2, R1-01)** is the goldens' counterpart for what core *draws*:
   `test/integration/presentation-fingerprint.test.ts`, re-pinned only on purpose with
-  `SHMUP_FINGERPRINT_PRINT=1` ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
+  `SHMUP_FINGERPRINT_UPDATE=1` (since R5-P.P10 the test rewrites its own `PINNED`;
+  `SHMUP_FINGERPRINT_PRINT=1` still prints them for review)
+  ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
 
 ## The stress benchmark (`pnpm bench`)
 

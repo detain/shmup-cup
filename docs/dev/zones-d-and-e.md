@@ -56,12 +56,12 @@ seahorse that "opens its chest to launch homing minis"), §10 (checkpoints and t
 | Zone E's stage | `content/stages/zone-e.stage.json` (TEMPEST RIDGE, 14,700 px, tileset `terrain-ridge`; v1: 9,800 px) |
 | Rosters and bosses | `content/enemies/zone-d.enemies.json`, `zone-e.enemies.json` |
 | Paths | `content/paths/zone-d.paths.json` (`bat-swoop-down`, `bat-swoop-up`), `zone-e.paths.json` (`kite-overtake-high`, `kite-overtake-low`) |
-| The zone's DSL pattern | `content/patterns/zones.patterns.json` (`tempest.bolt`) |
+| The zone's DSL pattern | `content/patterns/zone-e.patterns.json` (`tempest.bolt`) — R5-P.P4's (`a216f14`) per-zone split |
 | Tilesets | `content/tilesets/terrain-magma.tileset.json`, `terrain-ridge.tileset.json` |
 | Songs | `content/audio/music/zone-d`, `boss-d`, `zone-e`, `boss-e` `.music.json` |
 | New behaviours | `packages/core/src/behaviors/index.ts` (`rear.swoop`, `boss.bastion`, `boss.steed`, the helper `spinHubs`) |
 | Art as code | `scripts/assets/procedural/magma.mjs` (13 sprites), `tempest.mjs` (17); `terrain.mjs` (`TERRAIN_PALETTES` `tiles/terrain-magma` / `-ridge`) |
-| Playtests | `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts` |
+| Playtests | `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-d-recovery.test.ts`, `zone-e-recovery.test.ts` (P3's split) |
 | Goldens | `test/golden/zone-d-god`, `zone-d-bot`, `zone-d-boss`, `zone-e-god`, `zone-e-bot` |
 
 Nothing in the World's tick pipeline changed: the zones are content plus behaviours on the existing
@@ -305,7 +305,7 @@ The motion is **one `Waypoint` mover** (approach to `turnX` on the row, hold, le
 used to be timed as if it stood there already, so the shot fell inside the enemy's settle time and
 was dropped). A `hold` below 1 is one tick, a `speed` of 0 is 1 px/tick, `ways` is floored. Like
 every enemy shot, the needle goes through the primitives, so nothing fires off screen or before
-`settleTicks` — every jumper needle starts inside the view (`zones-de-runtime-edge.test.ts`).
+`settleTicks` — every jumper needle starts inside the view (`zone-d-runtime.test.ts` / `zone-e-runtime.test.ts`, since R5-P.P5e folded the old `-runtime-edge` cases into them).
 
 ### `boss.bastion`
 
@@ -400,7 +400,7 @@ audio:preview --only zone-d` renders one to a WAV.
 ## Direct-mode item plans
 
 Both stages have a `directItems` plan of 26 entries, handed out in order by the carriers and
-completed formations when the MANTA plays (M2-05). `zones-de-direct.test.ts` flies both zones with
+completed formations when the MANTA plays (M2-05). `zone-d-direct.test.ts` and `zone-e-direct.test.ts` (R5-P.P5e's split of `zones-de-direct.test.ts`) fly both zones with
 the MANTA (the 4-way bot, god mode): the items that appear on a tick are exactly the plan's entries
 between the cursors, and the MANTA's weapons shoot both bosses down.
 
@@ -451,7 +451,7 @@ and in-line. No spawn-x or density change was proposed, and the wave applied non
   deaths and hash, and its deaths are **reported**. Measured on the ported world (R2-03): D 236.9 s
   (CINDER BASTION 23.0 s), E 228.5 s (SQUALL STEED 34.1 s); without god mode D clears with no death
   (237.6 s), E with one (241.0 s).
-- **`zone-de-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 1,350 px —
+- **`zone-d-recovery.test.ts`** and **`zone-e-recovery.test.ts`** (P3's split of `zone-de-recovery.test.ts`) — the recovery rule (≥ 3 capsule sources within 1,350 px —
   `RECOVERY_WINDOW`, 900 · `WORLD_SCALE` — of every checkpoint, all of them really dropped) at all
   eight checkpoints of D and E through the shared
   `test/playtest/recovery.ts` (M2-11). Zone D's third checkpoint is in the caves: the restart puts
@@ -538,9 +538,10 @@ pnpm dev
 # → http://localhost:5173/?stage=zone-e                TEMPEST RIDGE alone
 # → http://localhost:5173/?stage=zone-e&skip=boss&loadout=full   SQUALL STEED, fully powered
 # → http://localhost:5173                              a run: zone A, B or C, then D or E on the map
-pnpm exec vitest run --project integration test/playtest/zone-de-recovery.test.ts
+pnpm exec vitest run --project integration test/playtest/zone-d-recovery.test.ts
+pnpm exec vitest run --project integration test/playtest/zone-e-recovery.test.ts
 pnpm exec vitest run --project integration test/golden -t zone-d
-pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zones-de.test.ts
+pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-d.test.ts packages/core/test/behaviors/behaviors-zone-e.test.ts
 ```
 
 Headless, the dive and the bot:
@@ -550,7 +551,7 @@ import { createGame, createHeadlessPlatform, spawnPlayer } from '@shmup/core';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { describeRun, runStage } from '../playtest/harness.js';
 
-// `db`: the shipped content, loaded as in zones-de-runtime.test.ts (loadContent(readContentFiles(), …)).
+// `db`: the shipped content, loaded as in zone-d-runtime.test.ts (loadContent(readContentFiles(), …)).
 const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
 const world = game.world;
 world.debugFlags.godMode = true;
@@ -570,16 +571,16 @@ console.info(describeRun(run)); // zone-e four-way (remote) (god mode): stageCle
 
 | File | Covers |
 |---|---|
-| `packages/core/test/behaviors/behaviors-zones-de.test.ts` | The three behaviours on the shipped rosters: a squall jumper in from behind, overtaking, a shot back from its turn point, away left; the bastion's arms turning round the core on their pivot and reversing, the armour clinking, lanes from the emitters in turn, spreads in the later phases; the seahorse on its ellipse, the chest opening with its lids, minis only while open, snout spreads |
-| `packages/core/test/behaviors/behaviors-zones-de-edge.test.ts` | The documented defaults; the jumper's timing (the turn on tick ⌈distance / speed⌉, the shot on hold tick `(hold >> 1) + 1`, also on a scrolling camera, and from right of `turnX` — the fix), `ways` / `hold` / `speed` floors; `spin` rounded and set only on the hub, `reverseTicks` floored, the arms' angle kept through a phase change, lanes attached to their emitter in turn (none once both are gone), floored spreads, ring offsets, tracking margins; the ellipse, a still bob, the phase-change move ≤ the radii's change, sub-1 chest timers, the 10-tick first launch, floored minis, the foal's homing phases, snout spreads and rings only as the chest shuts, floored gape, every phase starting shut |
+| `packages/core/test/behaviors/behaviors-zone-d.test.ts` + `behaviors-zone-e.test.ts` (R5-P.P5a1's split) | The three behaviours on the shipped rosters: a squall jumper in from behind, overtaking, a shot back from its turn point, away left; the bastion's arms turning round the core on their pivot and reversing, the armour clinking, lanes from the emitters in turn, spreads in the later phases; the seahorse on its ellipse, the chest opening with its lids, minis only while open, snout spreads |
+| `packages/core/test/behaviors/behaviors-zone-d-edge.test.ts` + `behaviors-zone-e-edge.test.ts` (R5-P.P5a1's split) | The documented defaults; the jumper's timing (the turn on tick ⌈distance / speed⌉, the shot on hold tick `(hold >> 1) + 1`, also on a scrolling camera, and from right of `turnX` — the fix), `ways` / `hold` / `speed` floors; `spin` rounded and set only on the hub, `reverseTicks` floored, the arms' angle kept through a phase change, lanes attached to their emitter in turn (none once both are gone), floored spreads, ring offsets, tracking margins; the ellipse, a still bob, the phase-change move ≤ the radii's change, sub-1 chest timers, the 10-tick first launch, floored minis, the foal's homing phases, snout spreads and rings only as the chest shuts, floored gape, every phase starting shut |
 | `behaviors-bastion-alloc`, `behaviors-steed-alloc`, `behaviors-swoop-alloc` `.test.ts` | Zero allocation |
 | `packages/core/test/behaviors/behaviors.test.ts`, `packages/core/test/bosses/bosses-behaviors.test.ts` | The rosters' id lists |
 | `test/scripts/assets/procedural-zone-d.test.ts`, `procedural-zone-e.test.ts`, `procedural-zone-d-edge.test.ts`, `procedural-zone-e-edge.test.ts` (R5-P.P5c's split of the `procedural-zones-de(-edge)` pair; shared checks in `procedural-zone-helpers.ts`) | Every sprite in order, size and frame count, hit flashes; the lake and the clouds only in their ramps; bands that tile (the rain both ways); mirrored lids; every hurtbox inside its sprite; kebab names, animated frames that differ (the jumper fix), the registry, zone A's bricks in the zone tilesets, distinct rims |
 | `test/integration/content-zone-d.test.ts`, `content-zone-e.test.ts`, `stage-runtime.test.ts` | The checks above |
-| `test/integration/zones-de-runtime.test.ts` | Through the real game: the dive at the scroll stop, a practice start in the caves (zone D's music set prepared), bricks broken by shots, jumpers and kites overtaking the ship |
-| `test/integration/zones-de-runtime-edge.test.ts` | Every practice start of D and E in open space at its camera height, the stage skip into the caves, an Arcade restart in the caves (the maze rolled back) and one before the dive (back on the surface, diving again), jumper needles only in view |
-| `test/integration/zones-de-direct.test.ts` | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
-| `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts` | The playtests and the recovery rule |
+| `test/integration/zone-d-runtime.test.ts` + `zone-e-runtime.test.ts` (R5-P.P5e's split) | Through the real game: the dive at the scroll stop, a practice start in the caves (zone D's music set prepared), bricks broken by shots, jumpers and kites overtaking the ship |
+| `test/integration/zone-d-runtime.test.ts` / `zone-e-runtime.test.ts` (R5-P.P5e folded `zones-de-runtime-edge.test.ts` into the per-zone runtime files) | Every practice start of D and E in open space at its camera height, the stage skip into the caves, an Arcade restart in the caves (the maze rolled back) and one before the dive (back on the surface, diving again), jumper needles only in view |
+| `test/integration/zone-d-direct.test.ts` + `zone-e-direct.test.ts` (R5-P.P5e's split) | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
+| `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-d-recovery.test.ts`, `zone-e-recovery.test.ts` | The playtests and the recovery rule |
 | `test/golden/*` | `zone-d-god`, `zone-d-bot`, `zone-d-boss`, `zone-e-god`, `zone-e-bot` |
 | `test/e2e/zones-de.spec.ts` | In headless Chromium: the magma peaks, the lava lake rising into view with the dive (only its four ramp colours), CINDER BASTION with its arms turning, the storm clouds and ridge, SQUALL STEED opening its chest, both bosses on the Tizen build from `file://` |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |
