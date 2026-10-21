@@ -368,14 +368,28 @@ void main(void)
 }
 `;
 
-/** Scanline darkening of the `light` CRT setting (a fifth of the brightness on every other row). */
-export const CRT_LIGHT_SCAN = 0.2;
+/**
+ * Scanline darkening of the `light` CRT setting (a quarter of the brightness on the dark rows).
+ * v1's 0.2 retuned for the ×3 pitch: at v1's 1080p scale the band is 5 output rows with 2 dark
+ * (duty 2/5), at the 640×360 frame's ×3 scale it is 3 rows with 1 dark (duty 1/3), so
+ * 0.2 × (2/5) / (1/3) = 0.24 keeps the look's mean darkening.
+ */
+export const CRT_LIGHT_SCAN = 0.24;
 
-/** Scanline darkening of the `full` setting. */
-export const CRT_FULL_SCAN = 0.34;
+/**
+ * Scanline darkening of the `full` setting — v1's 0.34 with the same ×6/5 pitch retune as
+ * {@link CRT_LIGHT_SCAN}.
+ */
+export const CRT_FULL_SCAN = 0.408;
 
-/** Aperture-mask strength of the `full` setting (the `light` one has no mask). */
+/**
+ * Aperture-mask strength of the `full` setting (the `light` one has no mask). Not retuned with
+ * the scans: the triad runs in display columns, so its duty does not depend on the line pitch.
+ */
 export const CRT_FULL_MASK = 0.18;
 
-/** Vignette strength of the `full` setting. */
+/**
+ * Vignette strength of the `full` setting. Not retuned either — it is a spatial factor, the same
+ * at every pitch.
+ */
 export const CRT_FULL_VIGNETTE = 0.22;
