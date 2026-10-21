@@ -1,6 +1,6 @@
 {
   "name": "@shmup/shell",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0-alpha.1",
   "private": true,
   "description": "Shared browser host for apps/web and apps/tizen: boot sequence (atlas + content loading, boot error screen), event dispatch and the rAF frame loop.",
   "license": "MPL-2.0",
