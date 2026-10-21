@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
+  OPTION_FRAMES,
   OPTION_SPACING,
   OPTION_SPRITE,
   OPTION_TRAIL_CAPACITY,
@@ -53,6 +54,7 @@ describe('core/options edge cases — the trail entry by entry', () => {
     expect(OPTION_TRAIL_CAPACITY).toBe(49);
     expect(OPTION_SPRITE).toBe('options/orb');
     expect(OPTION_ANIM_TICKS).toBe(8);
+    expect(OPTION_FRAMES).toBe(4);
     const group = createOptionGroup();
     expect(group).toBeInstanceOf(OptionGroup);
     expect(group.trailX.length).toBe(OPTION_TRAIL_CAPACITY);

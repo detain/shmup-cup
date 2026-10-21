@@ -235,6 +235,7 @@ import {
 import {
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
+  OPTION_FRAMES,
   OPTION_RADIUS,
   STOLEN_OPTION_SPRITE,
   type OptionGroup,
@@ -3238,7 +3239,7 @@ class EnemySystemImpl implements EnemySystem {
     const sprite = this.carriedSprite;
     if (sprite < 0) return;
     const enemies = this.enemies;
-    const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1;
+    const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1);
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       if (e.state !== EnemyState.Live || e.carried <= 0) continue;

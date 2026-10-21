@@ -51,6 +51,7 @@ import { SIN_TABLE_Q16, TRIG_SCALE } from '../../src/math/trig-table.js';
 import {
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
+  OPTION_FRAMES,
   OPTION_SPACING,
   OPTION_SPRITE,
 } from '../../src/options/index.js';
@@ -1692,7 +1693,7 @@ describe('core/weapons edge cases — presentation and restart', () => {
     const batch = w.weapons.optionBatch;
     const orb = w.content.sprites.index.get(OPTION_SPRITE);
     expect(orb).toBeDefined();
-    for (let t = 0; t < 3 * OPTION_ANIM_TICKS; t++) {
+    for (let t = 0; t < 5 * OPTION_ANIM_TICKS; t++) {
       run(w, 1, holding(t % 20 < 10 ? Action.Up : Action.Down));
       const group = w.weapons.options[0];
       expect(batch.count).toBe(4);
@@ -1701,7 +1702,9 @@ describe('core/weapons edge cases — presentation and restart', () => {
         expect(batch.x[k]).toBe(group.x[k]);
         expect(batch.y[k]).toBe(group.y[k]);
         expect(batch.flags[k]).toBe(0);
-        expect(batch.frame[k]).toBe(Math.floor((w.tick - 1) / OPTION_ANIM_TICKS) & 1);
+        expect(batch.frame[k]).toBe(
+          Math.floor((w.tick - 1) / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1),
+        );
       }
     }
     // Content without the engine sprites: the Options fly and fire, but are not drawn.

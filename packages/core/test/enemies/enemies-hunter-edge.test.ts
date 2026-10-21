@@ -44,7 +44,7 @@ import {
 } from '../../src/enemies/index.js';
 import { SFX_CUES, SimEventKind, type SimEvent } from '../../src/events/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
-import { OPTION_ANIM_TICKS } from '../../src/options/index.js';
+import { OPTION_ANIM_TICKS, OPTION_FRAMES } from '../../src/options/index.js';
 import { spawnPlayer } from '../../src/player/index.js';
 import { FREE_OPTION_DRIFT, ItemFlag, ItemKind, MeterSlot } from '../../src/powerups/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
@@ -402,14 +402,16 @@ describe('M2-04 Option Hunter edges: carrying', () => {
     expect(batch.x[0]).toBeCloseTo(still.x - 0.6 * CARRIED_OPTION_SPACING, 9);
     expect(batch.y[0]).toBeCloseTo(still.y - 0.8 * CARRIED_OPTION_SPACING, 9);
     expect(batch.flags[0]).toBe(0);
-    // Pulsing with the Options' two frames.
+    // Pulsing with the Options' four frames.
     const frames = new Set<number>();
-    for (let t = 0; t < 2 * OPTION_ANIM_TICKS; t++) {
+    for (let t = 0; t < OPTION_FRAMES * OPTION_ANIM_TICKS; t++) {
       stepWorld(w, createInputSnapshot());
       still.carried = 2;
       frames.add(batch.frame[0]);
     }
-    expect([...frames].sort()).toEqual([0, 1]);
+    expect([...frames].sort((p, q) => p - q)).toEqual(
+      Array.from({ length: OPTION_FRAMES }, (_, i) => i),
+    );
   });
 
   it('fills the batch up to CARRIED_BATCH_CAPACITY and stops there', () => {

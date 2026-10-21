@@ -1,0 +1,80 @@
+{
+  "name": "options/stolen",
+  "description": "A stolen Option: the orb gone grey (carried by an Option Hunter, or drifting free to be re-collected), v2 redraw (R4-01.A3, art bible v2 § 5): the orb's 12 × 12 four-frame pulse in the v1 grey palette — same shapes as options/orb with its red body as mid grey and its amber glow as light grey, so the browser specs' light-grey census holds.",
+  "palette": {
+    ".": null,
+    "o": "#26262e",
+    "g": "#6c6c78",
+    "l": "#a8a8b4",
+    "w": "#e8e8f0"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "..oggggggo..",
+        ".oggggggggo.",
+        "oggllllllggo",
+        "oggllwwllggo",
+        "oggllwwllggo",
+        "oggllllllggo",
+        "oggggggggggo",
+        "oggggggggggo",
+        ".oggggggggo.",
+        "..oggggggo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oggggggo..",
+        ".ogllllllgo.",
+        "oggllllllggo",
+        "oggllwwllggo",
+        "oggllwwllggo",
+        "oggllllllggo",
+        "oggllllllggo",
+        "oggggggggggo",
+        ".oggggggggo.",
+        "..oggggggo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..ollllllo..",
+        ".ollllllllo.",
+        "ollllllllllo",
+        "olllwwwwlllo",
+        "olllwwwwlllo",
+        "ollllllllllo",
+        "ollllllllllo",
+        "ollllllllllo",
+        ".ollllllllo.",
+        "..ollllllo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oggggggo..",
+        ".oggggggggo.",
+        "ogggllllgggo",
+        "oggglwwlgggo",
+        "oggglwwlgggo",
+        "ogggllllgggo",
+        "oggggggggggo",
+        "oggggggggggo",
+        ".oggggggggo.",
+        "..oggggggo..",
+        "....oooo...."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1, 2, 3] }
+}

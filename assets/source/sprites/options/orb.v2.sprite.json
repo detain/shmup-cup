@@ -1,0 +1,74 @@
+{
+  "name": "options/orb",
+  "description": "Option (trailing multiple): a glowing orb, v2 redraw (R4-01.A3, art bible v2 § 5): the v1 design at 12 × 12 with a full rim and a pulse that breathes over four frames — 0 calm (red body, amber ring, lit core), 1 the glow widens, 2 the flare peak (amber body, big white core, no red), 3 the glow contracts to the red body. Same palette as v1 so the browser specs' colour census holds.",
+  "palette": { ".": null, "o": "#6a1a1a", "r": "#e83838", "y": "#f8a030", "w": "#fff0c0" },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "..orrrrrro..",
+        ".orrrrrrrro.",
+        "orryyyyyyrro",
+        "orryywwyyrro",
+        "orryywwyyrro",
+        "orryyyyyyrro",
+        "orrrrrrrrrro",
+        "orrrrrrrrrro",
+        ".orrrrrrrro.",
+        "..orrrrrro..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..orrrrrro..",
+        ".oryyyyyyro.",
+        "orryyyyyyrro",
+        "orryywwyyrro",
+        "orryywwyyrro",
+        "orryyyyyyrro",
+        "orryyyyyyrro",
+        "orrrrrrrrrro",
+        ".orrrrrrrro.",
+        "..orrrrrro..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oyyyyyyo..",
+        ".oyyyyyyyyo.",
+        "oyyyyyyyyyyo",
+        "oyyywwwwyyyo",
+        "oyyywwwwyyyo",
+        "oyyyyyyyyyyo",
+        "oyyyyyyyyyyo",
+        "oyyyyyyyyyyo",
+        ".oyyyyyyyyo.",
+        "..oyyyyyyo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..orrrrrro..",
+        ".orrrrrrrro.",
+        "orrryyyyrrro",
+        "orrrywwyrrro",
+        "orrrywwyrrro",
+        "orrryyyyrrro",
+        "orrrrrrrrrro",
+        "orrrrrrrrrro",
+        ".orrrrrrrro.",
+        "..orrrrrro..",
+        "....oooo...."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1, 2, 3] }
+}

@@ -53,6 +53,7 @@
  * **Public API.** {@link OptionGroup}, {@link createOptionGroup}, {@link OptionFormation},
  * {@link OptionMode}, {@link OPTION_MODE_NAMES}, {@link MAX_OPTIONS}, {@link OPTION_SPACING},
  * {@link OPTION_TRAIL_CAPACITY}, {@link OPTION_SPRITE}, {@link OPTION_ANIM_TICKS},
+ * {@link OPTION_FRAMES},
  * {@link OPTION_RADIUS}, {@link SNAKE_LINK}, {@link FORMATION_RETRACTED}, {@link FORMATION_SPREAD},
  * {@link ROTATE_RADIUS}, {@link ROTATE_RADIUS_EXTENDED}, {@link ROTATE_SPEED},
  * {@link OPTION_HOLD_TICKS}, {@link OPTION_SPREAD_TICKS}, {@link STOLEN_OPTION_SPRITE}.
@@ -93,7 +94,10 @@ export const OPTION_SPRITE = 'options/orb';
  */
 export const STOLEN_OPTION_SPRITE = 'options/stolen';
 
-/** Ticks per frame of the option's two-frame pulse animation. */
+/** Frame count of the option's pulse animation (R4-01.A3: four frames, the v2 art's own). */
+export const OPTION_FRAMES = 4;
+
+/** Ticks per frame of the option's four-frame pulse animation. */
 export const OPTION_ANIM_TICKS = 8;
 
 /** Radius of an option's body (the Option Hunter grabs an option it touches), in pixels. */

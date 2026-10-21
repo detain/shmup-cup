@@ -225,6 +225,7 @@ import { defineModule } from '../module-info.js';
 import {
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
+  OPTION_FRAMES,
   OPTION_SPRITE,
   createOptionGroup,
   type OptionGroup,
@@ -1347,7 +1348,8 @@ export interface WeaponSystem {
    * `ceil(length / LASER_SEGMENT_LENGTH)` sprites, laid back from its head, the last one clamped
    * to the tail. A full batch ({@link SHOT_BATCH_CAPACITY}) drops what does not fit (drawing only
    * — the shots still simulate). Every option flying this tick goes into
-   * {@link WeaponSystem.optionBatch} with the pulse frame `floor(tick / OPTION_ANIM_TICKS) & 1`;
+   * {@link WeaponSystem.optionBatch} with the pulse frame
+   * `floor(tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1)`;
    * nothing when the content's sprites lack `options/orb`.
    */
   sync(): void;
@@ -3146,7 +3148,7 @@ class WeaponSystemImpl implements WeaponSystem {
     options.count = 0;
     const sprite = this.optionSprite;
     if (sprite < 0) return;
-    const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1;
+    const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1);
     for (let p = 0; p < this.options.length; p++) {
       const group = this.options[p];
       for (let k = 0; k < group.count; k++) {

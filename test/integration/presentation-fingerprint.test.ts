@@ -1641,7 +1641,9 @@ function ending(w: Walk, run: string): void {
  * flip to the 640×360 frame (12-px HUD bars and tiles, the 9×12 font, the ×3/2 interim art): every
  * segment moved. Re-pinned again at R4-01.A1b: the v2 ships draw five bank frames, so every world
  * hash whose walk banks the ship moved (`p.bank` indexes frames 1 … 4 now); the HUD rows carry the
- * C5 re-pin.
+ * C5 re-pin. R4-01.A3 moved the ten segments whose walk draws Options: the pulse frame is
+ * `floor(tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1)` now — four frames instead of two, no
+ * drawn position changed.
  */
 const PINNED: Record<string, Record<string, string>> = {
   front: {
@@ -1664,21 +1666,21 @@ const PINNED: Record<string, Record<string, string>> = {
   game: {
     difficulty: 'aed8211d c94e24e5 c8498595 6d5b6685',
     shipSelect: '123cc129 7fa3520d b768f6f1 82623985',
-    weaponSelect: 'e6e99b71 78c5388d 18a3b5cc 0f7c1465',
-    autoOrder: '46268a65 b1382dc9 970a1d67 3a21ce85',
+    weaponSelect: 'e6e99b71 78c5388d 1385a200 0f7c1465',
+    autoOrder: '46268a65 b1382dc9 8c9688e7 3a21ce85',
     'game.card': '0e219dfd c00882d5 23c53b5c 6cdc9245',
     'game.play': '0cfccb05 689be265 d5bf1c44 b952d9c5',
     pause: '7eb86045 8e43757d edd29f92 94897405',
     'pause.options': '8ac7ca1d 2f9b7fa5 6cb5e472 83b688c5',
     'pause.quit': '3bdffd05 6d794ce5 ceecb972 fdb096c5',
-    'pause.fullPower': 'd43d7b81 562b8059 a682e0cf 1b857fa5',
-    'pause.retry': '4c8e6895 118305a5 357edb92 7c490885',
+    'pause.fullPower': 'd43d7b81 562b8059 1bb5b62f 1b857fa5',
+    'pause.retry': '4c8e6895 118305a5 c28aadd2 7c490885',
     continue: '8c1b033d 19bf12a5 6f44442d 007aec6a',
     gameOver: '9c42a8cb e06f8a89 94088fb2 71c564ba',
     nameEntry: '3178a77d b1382dc9 56caab8a 70a36b85',
     'hiScore.result': 'abc91ac5 3bd76f29 ac4eb872 4cf8f185',
     'replays.lastGame': '7efce891 6b1ab597 725d1cb6 3f198b25',
-    replay: '90dfc2a6 96b9e1bc df44104a 4e80eaa8',
+    replay: '90dfc2a6 96b9e1bc f6577d62 4e80eaa8',
   },
   coopDirect: {
     'coop.waiting': '06f4a445 4e789b32 46ac1c3a 2786acc5',
@@ -1744,7 +1746,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'runB.nameEntry': '251c5398 16eb6249 9d58c8aa 9f7d7385',
   },
   extraModes: {
-    'extra.weaponTypes': '53bf20f9 02773c71 5841ace8 bf9340c5',
+    'extra.weaponTypes': '53bf20f9 02773c71 d84dd898 bf9340c5',
     'extra.bossRush': '12346d00 74c15992 36c4d676 e9642425',
     'extra.caravan': 'ed4bf9ad 6968afaf e6ba2fe2 68aa3e85',
     'extra.arcade': '7a19f228 5031511e ae56d459 cfa20445',
@@ -1762,10 +1764,10 @@ const PINNED: Record<string, Record<string, string>> = {
   },
   coopSingle: {
     'coopSingle.join': 'cb6f9fa1 9fe53a3d 751bcdd3 0d596b05',
-    'coopSingle.shield': '6ad0f861 ed061fd5 48f28b28 44e06d65',
-    'coopSingle.p2Continue': '1f320f34 a4d3b530 69afcee3 4c5faf25',
-    'coopSingle.p2Out': '68e4b4f5 bd5764e5 4e3b6b4c 72a5a2c5',
-    'coopSingle.stageClear': 'af000348 86f52eb9 d2fd7764 3d4db705',
+    'coopSingle.shield': '6ad0f861 ed061fd5 74f56548 44e06d65',
+    'coopSingle.p2Continue': '1f320f34 a4d3b530 6e1ce003 4c5faf25',
+    'coopSingle.p2Out': '68e4b4f5 bd5764e5 e3116914 72a5a2c5',
+    'coopSingle.stageClear': 'af000348 86f52eb9 bb7f9284 3d4db705',
     'coopSingle.nameEntry': 'ce7cf10c 25d9e681 f9f4e9bf 4207f105',
     'coopSingle.gameOver': 'ca39edad 4a8565c5 810b66e1 ed25983a',
     'coopSingle.direct': 'ed426345 59bfd5d5 2d723d31 7af1aac5',
