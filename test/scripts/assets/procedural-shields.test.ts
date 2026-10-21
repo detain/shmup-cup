@@ -1,7 +1,8 @@
 /**
  * The shield sprites (`scripts/assets/procedural/shields.mjs`). Split out of
  * `procedural.test.ts` by plan R4-P.P2. R4-01.A5 adds the native v2 path of the pod and the
- * Reduce shimmer (the art bible §5's 12×12 and 30×21 — the Force Field is R4-01.A4's).
+ * Reduce shimmer (the art bible §5's 12×12 and 30×21); R4-01.A4 adds the Force Field's native
+ * 45×36 path — four wear states in shimmer pairs (bible §5).
  * @module
  */
 import { describe, expect, it } from 'vitest';
@@ -125,12 +126,77 @@ describe('scripts/assets/procedural/shields', () => {
       );
     });
 
-    it('leaves the Force Field at its v1 geometry here (R4-01.A4 owns it)', () => {
+    it('draws the native 45×36 Force Field in four wear states paired with shimmer (bible §5)', () => {
       const field2 = v2[0];
       expect(field2.name).toBe('shields/force-field');
-      expect(field2.native).toBeUndefined();
-      expect(field2.frames.map((f) => [f.width, f.height])).toEqual(Array(4).fill([30, 24]));
-      expect(imagesEqual(field2.frames[0], shields.generate()[0].frames[0])).toBe(true);
+      expect(field2.native).toBe(true);
+      expect(field2.anchor).toBeNull();
+      expect(field2.animations).toEqual({
+        fresh: [0, 1],
+        worn: [2, 3],
+        damaged: [4, 5],
+        critical: [6, 7],
+      });
+      expect(field2.frames.map((f) => [f.width, f.height])).toEqual(Array(8).fill([45, 36]));
+      // Every wear state is a pair: the members differ (the sparkles), and a pair holds the
+      // same ink count (a sparkle recolours a ring pixel, it never adds or drops one).
+      const counts = field2.frames.map(opaqueCount);
+      for (let s = 0; s < 4; s++) {
+        expect(imagesEqual(field2.frames[2 * s], field2.frames[2 * s + 1]), `pair ${s}`).toBe(
+          false,
+        );
+        expect(counts[2 * s], `pair ${s}`).toBe(counts[2 * s + 1]);
+        if (s > 0) expect(counts[2 * s]).toBeLessThan(counts[2 * s - 2]);
+      }
+      // The shimmer member twinkles: strictly more white pixels than its base frame.
+      const white = key(color('#ffffff'));
+      for (let s = 0; s < 4; s++) {
+        const whites = [field2.frames[2 * s], field2.frames[2 * s + 1]].map((frame) => {
+          let n = 0;
+          eachOpaque(frame, (_x, _y, rgba) => {
+            if (key(rgba) === white) n++;
+          });
+          return n;
+        });
+        expect(whites[1], `pair ${s}`).toBeGreaterThan(whites[0]);
+      }
+      // A ring: the middle (where the ship is) stays clear, in every frame.
+      for (const frame of field2.frames) expect(opaque(frame, 22, 18)).toBe(false);
+      // The v1 inks only: the four ring colours at full alpha, their glow alphas, and white.
+      const colours = new Set<string>();
+      for (const frame of field2.frames)
+        eachOpaque(frame, (_x, _y, rgba) => void colours.add(key(rgba)));
+      const palette = [key(color('#ffffff'))];
+      for (const [hex, glow] of [
+        ['#70e8ff', 110],
+        ['#58b0ff', 80],
+        ['#7a70ff', 50],
+        ['#b050e0', 0],
+      ] as const) {
+        palette.push(key(color(hex)));
+        if (glow > 0) palette.push(key(withAlpha(color(hex), glow)));
+      }
+      for (const k of colours) expect(palette, k).toContain(k);
+    });
+
+    it('ships the field, pod and reduce frame counts core reads at the default scale', () => {
+      const two = buildAtlas({ artScale: 1.5 });
+      expect(two.manifest.sprites['shields/force-field'].frames).toHaveLength(8);
+      expect(two.manifest.sprites['shields/pod'].frames).toHaveLength(4);
+      expect(two.manifest.sprites['shields/reduce'].frames).toHaveLength(2);
+      expect([
+        two.manifest.frames['shields/force-field#0'].w,
+        two.manifest.frames['shields/force-field#0'].h,
+      ]).toEqual([45, 36]);
+      expect(two.manifest.frames['shields/force-field#7']).toBeDefined();
+      expect([
+        two.manifest.frames['shields/pod#0'].w,
+        two.manifest.frames['shields/pod#0'].h,
+      ]).toEqual([12, 12]);
+      expect([
+        two.manifest.frames['shields/reduce#0'].w,
+        two.manifest.frames['shields/reduce#0'].h,
+      ]).toEqual([30, 21]);
     });
 
     it('leaves art scale 1 byte-identical to the unmarked call, native unmarked', () => {
@@ -152,20 +218,6 @@ describe('scripts/assets/procedural/shields', () => {
           expect(imagesEqual(frame, v2[k].frames[f]), sprite.name).toBe(true);
         });
       });
-    });
-
-    it('ships the pod and reduce frame counts core reads at the default scale', () => {
-      const two = buildAtlas({ artScale: 1.5 });
-      expect(two.manifest.sprites['shields/pod'].frames).toHaveLength(4);
-      expect(two.manifest.sprites['shields/reduce'].frames).toHaveLength(2);
-      expect([
-        two.manifest.frames['shields/pod#0'].w,
-        two.manifest.frames['shields/pod#0'].h,
-      ]).toEqual([12, 12]);
-      expect([
-        two.manifest.frames['shields/reduce#0'].w,
-        two.manifest.frames['shields/reduce#0'].h,
-      ]).toEqual([30, 21]);
     });
   });
 });

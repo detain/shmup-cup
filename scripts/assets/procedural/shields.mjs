@@ -2,7 +2,10 @@
  * The meter-mode Force Field `shields/force-field` (30×24): an elliptical barrier around
  * the ship in four **wear states** — frame 0 fresh (cyan, solid) … frame 3 about to
  * fail (purple, full of holes). Named animations `fresh`, `worn`, `damaged`, `critical`
- * map each state to its frame.
+ * map each state to its frame. From R4-01.A4 the v2 path draws the art bible §5's
+ * **45×36** field native (the v1 radii exactly ×1.5) in **eight** frames — each wear state
+ * paired with a shimmer frame that sprinkles white sparkles over the ring's outer band, so
+ * the drawn frame is wear × 2 + shimmer; at art scale 1 the v1 field above, byte for byte.
  *
  * The shield pod `shields/pod` (8×8, plan M2-04): one blocker of the front Shield, the Free
  * Shield and the Rotate Shield — a faceted orange-gold gem in the same four wear states (it
@@ -120,47 +123,74 @@ function reduceFrames(v2) {
 }
 
 /**
+ * Draws the Force Field's frames: an elliptical barrier — a bright outer band (e > 0.84)
+ * that loses seeded pixels as it wears, a translucent inner glow, and (fresh) white rim
+ * highlights at the band's outside. The v1 field draws one frame per wear state; the v2 field
+ * pairs every state with a shimmer frame (the art bible §5's native 45×36, the v1 radii
+ * exactly ×1.5) whose ring band additionally catches white sparkles, so the drawn frame is
+ * wear × 2 + shimmer (`core/powerups` `sync`).
+ *
+ * @param {boolean} v2 - Draw the art bible §5's 45×36 field in eight frames.
+ * @returns {import('../image.mjs').Image[]} Four (v1) or eight (v2) frames.
+ */
+function fieldFrames(v2) {
+  const w = v2 ? 45 : 30;
+  const h = v2 ? 36 : 24;
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
+  // The v1 ring insets its radii by half a pixel; the v2 ring is the v1 radii exactly ×1.5,
+  // so the inset is 0.75 (the rule R4-01.A5 set for the Reduce shimmer).
+  const a = w / 2 - (v2 ? 0.75 : 0.5);
+  const b = h / 2 - (v2 ? 0.75 : 0.5);
+  const seed = seedOf('shields/force-field');
+  const white = color('#ffffff');
+  const frames = [];
+  for (let s = 0; s < STATES.length; s++) {
+    const state = STATES[s];
+    for (let t = 0; t < (v2 ? 2 : 1); t++) {
+      const image = createImage(w, h);
+      const ring = color(state.ring);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const u = (x - cx) / a;
+          const v = (y - cy) / b;
+          const e = Math.sqrt(u * u + v * v);
+          if (e > 1) continue;
+          if (e > 0.84) {
+            if (hash2(x, y, seed + s) / 4294967296 < state.holes) continue;
+            // The shimmer pair member: the ring band twinkles (a seeded fraction turns white —
+            // inside the fresh state's white rim cap the sparkles land in its 0.84–0.93 ring).
+            const sparkle = t === 1 && hash2(x, y, seed + 900 + s) / 4294967296 < 0.1;
+            setPixel(image, x, y, (s === 0 && e > 0.93) || sparkle ? white : ring);
+          } else if (e > 0.72 && state.glow > 0) {
+            setPixel(image, x, y, withAlpha(ring, state.glow));
+          }
+        }
+      }
+      frames.push(image);
+    }
+  }
+  return frames;
+}
+
+/**
  * Generates the shield sprites.
  *
- * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale the pod
- *   and the Reduce shimmer are drawn at (default 1; the Force Field is `R4-01.A4`'s and stays at
- *   its v1 geometry here).
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale all
+ *   three sprites are drawn at (default 1; the v2 paths are the art bible §5's natives,
+ *   R4-01.A4 for the Force Field and R4-01.A5 for the pod and the Reduce shimmer).
  * @returns {SpriteDef[]} `shields/force-field`, `shields/pod` and `shields/reduce`.
  * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
  *   `parseArtScale`).
  */
 export function generate(options = {}) {
   const v2 = (options.artScale ?? 1) !== 1;
-  const w = 30;
-  const h = 24;
-  const cx = (w - 1) / 2;
-  const cy = (h - 1) / 2;
-  const a = w / 2 - 0.5;
-  const b = h / 2 - 0.5;
-  const seed = seedOf('shields/force-field');
-  const white = color('#ffffff');
-  const frames = STATES.map((state, s) => {
-    const image = createImage(w, h);
-    const ring = color(state.ring);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const u = (x - cx) / a;
-        const v = (y - cy) / b;
-        const e = Math.sqrt(u * u + v * v);
-        if (e > 1) continue;
-        if (e > 0.84) {
-          if (hash2(x, y, seed + s) / 4294967296 < state.holes) continue;
-          setPixel(image, x, y, e > 0.93 && s === 0 ? white : ring);
-        } else if (e > 0.72 && state.glow > 0) {
-          setPixel(image, x, y, withAlpha(ring, state.glow));
-        }
-      }
-    }
-    return image;
-  });
   return [
-    makeSprite('shields/force-field', frames, 'shields', {
-      animations: { fresh: [0], worn: [1], damaged: [2], critical: [3] },
+    makeSprite('shields/force-field', fieldFrames(v2), 'shields', {
+      animations: v2
+        ? { fresh: [0, 1], worn: [2, 3], damaged: [4, 5], critical: [6, 7] }
+        : { fresh: [0], worn: [1], damaged: [2], critical: [3] },
+      native: v2,
     }),
     makeSprite('shields/pod', podFrames(v2), 'shields', {
       animations: { fresh: [0], worn: [1], damaged: [2], critical: [3] },

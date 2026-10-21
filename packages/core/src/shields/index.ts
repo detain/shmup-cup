@@ -171,10 +171,17 @@ export const FREE_POD_SPREAD = 96;
 /** Binary units the Rotate Shield turns per tick (one turn in ≈ 85 ticks). */
 export const ROTATE_SHIELD_SPIN = 12;
 
-/** The Force Field's sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
+/**
+ * The Force Field's sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). Since
+ * R4-01.A4 it holds {@link FORCE_FIELD_WEAR_FRAMES} wear states × two shimmer frames — the
+ * frame drawn at sync is the wear frame × 2 + the shimmer pair member (`core/powerups` `sync`).
+ */
 export const FORCE_FIELD_SPRITE = 'shields/force-field';
 
-/** Wear frames of {@link FORCE_FIELD_SPRITE}: fresh, worn, damaged, critical. */
+/**
+ * Wear states of {@link FORCE_FIELD_SPRITE}: fresh, worn, damaged, critical (the art pairs
+ * each state with a shimmer frame — R4-01.A4).
+ */
 export const FORCE_FIELD_WEAR_FRAMES = 4;
 
 /** A shield pod's sprite (the front, Free and Rotate Shield — an engine sprite). */

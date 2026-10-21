@@ -344,11 +344,10 @@ describe('core/powerups — in the World', () => {
     const shields = w.powerups.shieldBatch;
     expect(shields.count).toBe(1);
     expect(w.content.sprites.names[shields.spriteId[0]]).toBe('shields/force-field');
-    expect([shields.x[0], shields.y[0], shields.frame[0]]).toEqual([
-      w.players[0].x,
-      w.players[0].y,
-      0,
-    ]);
+    expect([shields.x[0], shields.y[0]]).toEqual([w.players[0].x, w.players[0].y]);
+    // The fresh field shimmers in its pair (R4-01.A4): wear 0, the member from the drawn tick
+    // (phase 9 runs at tick `w.tick − 1`, the counter advances after the phases).
+    expect(shields.frame[0]).toBe(((w.tick - 1) >> 2) & 1);
   });
 
   it('equips only on the pressed edge: holding OK does not re-equip', () => {
@@ -602,11 +601,34 @@ describe('core/powerups — the Force Field in the World', () => {
     ship.shield.hits = 2;
     tick(w, input);
     const batch = w.powerups.shieldBatch;
-    expect(batch.frame[0]).toBe(2);
+    // Wear 2 of 4 in its shimmer pair (R4-01.A4): frame 4 or 5, the member from the drawn tick.
+    expect(batch.frame[0]).toBe(4 + (((w.tick - 1) >> 2) & 1));
     ship.shield.iFrames = 3; // (3 & 2) → hidden this tick
     ship.shield.hitTick = w.tick; // not counted down on the tick it is set
     tick(w, input);
     expect(batch.flags[0] & SpriteFlag.Hidden).toBe(SpriteFlag.Hidden);
+  });
+
+  it("shimmers the Force Field through every wear state's pair (R4-01.A4)", () => {
+    const w = world();
+    const input = createInputSnapshot();
+    grantShield(w.players[0].shield);
+    const ship = w.players[0];
+    const batch = w.powerups.shieldBatch;
+    for (const hits of [4, 3, 2, 1]) {
+      ship.shield.hits = hits;
+      const seen = new Set<number>();
+      for (let t = 0; t < 8; t++) {
+        tick(w, input);
+        // Phase 9 draws at tick `w.tick − 1`; the field's frames are wear × 2 + shimmer, the
+        // wear being 4 − hits at maxHits 4 (shieldWearFrame) and the shimmer flipping every 4.
+        expect(batch.frame[0], `hits ${hits}, tick ${w.tick}`).toBe(
+          (4 - hits) * 2 + (((w.tick - 1) >> 2) & 1),
+        );
+        seen.add(batch.frame[0]);
+      }
+      expect([...seen].sort((a, b) => a - b)).toEqual([2 * (4 - hits), 2 * (4 - hits) + 1]);
+    }
   });
 
   it('does not absorb terrain contact', () => {

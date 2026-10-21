@@ -1648,7 +1648,10 @@ function ending(w: Walk, run: string): void {
  * blink held one of its two — no item position changed. Re-pinned again at R4-01.A2: every game
  * segment's world hash gained the ship's thruster sprite in the player layer (the flame behind
  * the hull, whole-pixel, frame `(tick >> 2) & 3`), and the interned sprite ids shifted with the
- * new names.
+ * new names. R4-01.A4 moved two more world hashes — the game's and the co-op stage's segments
+ * that draw the Force Field: its drawn frame is the wear frame × 2 + a shimmer pair member that
+ * twinkles every four ticks (the art pairs each of its four wear states) — no shield position
+ * changed.
  */
 const PINNED: Record<string, Record<string, string>> = {
   front: {
@@ -1678,14 +1681,14 @@ const PINNED: Record<string, Record<string, string>> = {
     pause: '968d3f25 8e43757d 0f79feba 94897405',
     'pause.options': '48debddd 2f9b7fa5 c533e6d2 83b688c5',
     'pause.quit': '1fae8ed5 6d794ce5 2f3e6f12 fdb096c5',
-    'pause.fullPower': 'fa0559d1 562b8059 67009148 1b857fa5',
+    'pause.fullPower': 'fa0559d1 562b8059 63e25164 1b857fa5',
     'pause.retry': '4fe6d515 118305a5 50d3a8da 7c490885',
     continue: '8c1b033d 19bf12a5 f3f0f6d4 007aec6a',
     gameOver: '1a078253 e06f8a89 2a8198fa 71c564ba',
     nameEntry: 'f5f13525 b1382dc9 56caab8a 70a36b85',
     'hiScore.result': '326582c5 3bd76f29 ac4eb872 4cf8f185',
     'replays.lastGame': 'f12ed919 6b1ab597 24acef67 3f198b25',
-    replay: 'a44f7632 96b9e1bc f88999a1 4e80eaa8',
+    replay: 'a44f7632 96b9e1bc 42a92244 4e80eaa8',
   },
   coopDirect: {
     'coop.waiting': '06f4a445 4e789b32 648d3be2 2786acc5',
@@ -1769,10 +1772,10 @@ const PINNED: Record<string, Record<string, string>> = {
   },
   coopSingle: {
     'coopSingle.join': 'cb6f9fa1 9fe53a3d ae8b1b09 0d596b05',
-    'coopSingle.shield': 'e6223dd1 ed061fd5 36730822 44e06d65',
-    'coopSingle.p2Continue': '1f320f34 a4d3b530 0496a8fe 4c5faf25',
-    'coopSingle.p2Out': '68e4b4f5 bd5764e5 1d21d6e3 72a5a2c5',
-    'coopSingle.stageClear': 'fa434b1c 86f52eb9 5e269fc3 3d4db705',
+    'coopSingle.shield': 'e6223dd1 ed061fd5 b7f3dc3e 44e06d65',
+    'coopSingle.p2Continue': '1f320f34 a4d3b530 ab3eceea 4c5faf25',
+    'coopSingle.p2Out': '68e4b4f5 bd5764e5 5588fd43 72a5a2c5',
+    'coopSingle.stageClear': 'fa434b1c 86f52eb9 c72e52f7 3d4db705',
     'coopSingle.nameEntry': '1ef4d978 25d9e681 f9f4e9bf 4207f105',
     'coopSingle.gameOver': 'ca39edad 4a8565c5 dcc61469 ed25983a',
     'coopSingle.direct': 'ed426345 59bfd5d5 1a6e2334 7af1aac5',

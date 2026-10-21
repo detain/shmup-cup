@@ -684,6 +684,13 @@ export function lifeOptionCount(ship: Readonly<MeterShip>, loadout: Readonly<Loa
 }
 
 /**
+ * Shimmer frames of every wear state of the Force Field's sprite (R4-01.A4): the drawn frame
+ * is {@link shieldWearFrame}'s wear frame × this plus a shimmer pair member read from the tick
+ * at sync; the art holds the four wear states in pairs.
+ */
+const FORCE_FIELD_SHIMMER_FRAMES = 2;
+
+/**
  * Whether the `!` slot can be equipped now (by its {@link MegaEffect}).
  *
  * @param ship - The ship.
@@ -2157,9 +2164,15 @@ class PowerUpSystemImpl implements PowerUpSystem {
         shields.x[slot] = ship.x;
         shields.y[slot] = ship.y;
         shields.spriteId[slot] = sprite;
-        // The Arm (M2-05) draws its tier's colour block of wear frames.
+        // The Arm (M2-05) draws its tier's colour block of wear frames; the Force Field's wear
+        // frame shimmers between its pair every four ticks (R4-01.A4) — the art's frames are
+        // wear × 2 + shimmer. The other kinds keep their plain wear frame.
         shields.frame[slot] =
-          shield.kind === ShieldKind.Arm ? armWearFrame(shield) : shieldWearFrame(shield, frames);
+          shield.kind === ShieldKind.Arm
+            ? armWearFrame(shield)
+            : shield.kind === ShieldKind.ForceField
+              ? shieldWearFrame(shield, frames) * FORCE_FIELD_SHIMMER_FRAMES + ((blink >> 2) & 1)
+              : shieldWearFrame(shield, frames);
         shields.flags[slot] = hidden ? SpriteFlag.Hidden : 0;
         shields.count = slot + 1;
         continue;

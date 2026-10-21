@@ -401,6 +401,12 @@ describe('M2-04 shields in a World (edge): drawing and sounds', () => {
       true,
     );
     expect(batch.frame[0]).toBe(1);
+    // R4-01.A4: the shimmer pair belongs to the Force Field alone — Reduce keeps its two
+    // wear frames 0–1 at every tick (its drawn frame never reaches the field's pair range).
+    for (let t = 0; t < 8; t++) {
+      tick(w);
+      expect(batch.frame[0]).toBe(1);
+    }
   });
 
   it('a pod blinks through its own i-frames; a worn pod shows its wear; a broken one is gone', () => {
