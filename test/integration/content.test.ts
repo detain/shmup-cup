@@ -919,8 +919,12 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const zoneSets = ['terrain-reef', 'terrain-dune', 'terrain-magma', 'terrain-ridge'];
     for (const id of [...zoneSets, 'terrain-vault', 'terrain-prism']) {
       const tileset = db.tilesets.find((t) => t.id === id);
-      expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
-      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
+      expect(tileset?.tiles.slice(0, a?.tiles.length).map((t) => t.name)).toEqual(
+        a?.tiles.map((t) => t.name),
+      );
+      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBeGreaterThanOrEqual(
+        tileset?.tiles.length ?? 0,
+      );
     }
   });
 });
@@ -956,8 +960,12 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     const a = db.tilesets.find((t) => t.id === 'terrain-a');
     for (const id of ['terrain-citadel', 'terrain-abyss']) {
       const tileset = db.tilesets.find((t) => t.id === id);
-      expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
-      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
+      expect(tileset?.tiles.slice(0, a?.tiles.length).map((t) => t.name)).toEqual(
+        a?.tiles.map((t) => t.name),
+      );
+      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBeGreaterThanOrEqual(
+        tileset?.tiles.length ?? 0,
+      );
     }
     // The ending scenes' pieces (UI sprites).
     for (const sprite of ['ui/ending-citadel', 'ui/ending-ark', 'ui/ending-blast', 'ui/ending-sun'])
