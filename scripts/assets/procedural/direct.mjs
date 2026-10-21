@@ -16,12 +16,8 @@
  *   laser bolt pointing in the 8 directions (frame k = k × 45° clockwise from right — the engine
  *   picks the heading's octant, so nothing is rotated at run time).
  * - `shots/sub-disc` (12×12, 2 frames): the sub-weapon's piercing discs (radius 3.5, 5.5).
- * - `items/direct-red`, `-green`, `-blue`, `-orange`, `-yellow` (10×10, 2 frames): the colour
- *   items, glossy orbs with a highlight (frame 1 the bright half of the blink);
- *   `items/direct-octagon` (10×10, 2 frames): the red octagon that switches the main-shot family.
- * - `shields/arm` (26×18, 9 frames): the Arm — an elliptical barrier per tier (frames 0–2 the
- *   green Arm, 3–5 the silver Super Arm, 6–8 the gold Hyper Arm), each fresh, worn and critical
- *   (the ring shrinks and thins as it wears).
+ *
+ * (R4-P.P1 split the six colour items into `direct-items.mjs` and `shields/arm` into `arm.mjs`.)
  *
  * Only exactly rounded maths (square roots, `+ − × ÷`).
  *
@@ -192,119 +188,14 @@ function subLaserFrame(size, k, wide) {
   return image;
 }
 
-/** The colour items: dark, body, light. */
-const ITEM_COLORS = {
-  red: ['#5a0c0c', '#e02828', '#ff9090'],
-  green: ['#0c4014', '#28c040', '#98ff98'],
-  blue: ['#0c1a5a', '#2860e8', '#90b8ff'],
-  orange: ['#5a2c08', '#f08020', '#ffd090'],
-  yellow: ['#5a4808', '#f0d020', '#fff8a0'],
-  octagon: ['#5a0c0c', '#d82020', '#ffb0b0'],
-};
-
 /**
- * Draws one colour item frame: a glossy orb, or for the octagon an eight-sided plate with a white
- * centre mark.
+ * Generates the Direct-mode shots.
  *
- * @param {keyof typeof ITEM_COLORS} name - The item.
- * @param {boolean} bright - The lit half of the blink.
- * @returns {Image} 10×10 frame.
- */
-function itemFrame(name, bright) {
-  const size = 10;
-  const image = createImage(size, size);
-  const [dark, body, light] = ITEM_COLORS[name].map((c) => color(c));
-  const white = color('#ffffff');
-  const c = size / 2;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = x + 0.5 - c;
-      const dy = y + 0.5 - c;
-      const inside =
-        name === 'octagon'
-          ? Math.abs(dx) <= 4.5 && Math.abs(dy) <= 4.5 && Math.abs(dx) + Math.abs(dy) <= 6.5
-          : dx * dx + dy * dy <= 4.6 * 4.6;
-      if (!inside) continue;
-      const rim =
-        name === 'octagon'
-          ? Math.abs(dx) > 3.5 || Math.abs(dy) > 3.5 || Math.abs(dx) + Math.abs(dy) > 5.5
-          : dx * dx + dy * dy > 3.6 * 3.6;
-      setPixel(image, x, y, rim ? dark : bright ? light : body);
-    }
-  }
-  if (name === 'octagon') {
-    for (let i = 3; i <= 6; i++) {
-      setPixel(image, i, 4, white);
-      setPixel(image, i, 5, white);
-    }
-  } else {
-    setPixel(image, 3, 3, white);
-    if (bright) setPixel(image, 4, 3, white);
-  }
-  return image;
-}
-
-/** Arm tiers: ring colour and inner glow colour (green, silver, gold). */
-const ARM_TIERS = [
-  { ring: '#58f070', glow: '#1c6a30' },
-  { ring: '#e8f0ff', glow: '#5a6a88' },
-  { ring: '#ffd840', glow: '#7a5a10' },
-];
-
-/**
- * Draws one Arm frame: an elliptical ring (thinner and smaller as it wears) round a faint glow.
- *
- * @param {number} tier - 0 green, 1 silver, 2 gold.
- * @param {number} wear - 0 fresh, 1 worn, 2 critical.
- * @returns {Image} 26×18 frame.
- */
-function armFrame(tier, wear) {
-  const w = 26;
-  const h = 18;
-  const image = createImage(w, h);
-  const cx = w / 2;
-  const cy = h / 2;
-  const a = w / 2 - 0.5 - wear;
-  const b = h / 2 - 0.5 - wear * 0.75;
-  const thickness = (3 - wear) * 0.9;
-  const ring = color(ARM_TIERS[tier].ring);
-  const glow = color(ARM_TIERS[tier].glow);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const nx = (x + 0.5 - cx) / a;
-      const ny = (y + 0.5 - cy) / b;
-      const e = Math.sqrt(nx * nx + ny * ny);
-      if (e > 1) continue;
-      const off = (1 - e) * b;
-      if (off < thickness) setPixel(image, x, y, ring);
-      else if (wear === 0 && off < thickness + 1.5) setPixel(image, x, y, glow);
-    }
-  }
-  return image;
-}
-
-/**
- * Generates the Direct-mode sprites.
- *
- * @returns {SpriteDef[]} The shots, the colour items and the Arm (see the module docs).
+ * @returns {SpriteDef[]} The eight shot sprites (see the module docs; the items and the Arm
+ *   moved to `direct-items.mjs` and `arm.mjs` in R4-P.P1).
  */
 export function generate() {
   const directions = [0, 1, 2, 3, 4, 5, 6, 7];
-  const items = ['red', 'green', 'blue', 'orange', 'yellow', 'octagon'].map((name) =>
-    makeSprite(
-      `items/direct-${name}`,
-      [
-        itemFrame(/** @type {keyof typeof ITEM_COLORS} */ (name), false),
-        itemFrame(/** @type {keyof typeof ITEM_COLORS} */ (name), true),
-      ],
-      'direct',
-      { animations: { blink: [0, 1] } },
-    ),
-  );
-  const armFrames = [];
-  for (let tier = 0; tier < 3; tier++) {
-    for (let wear = 0; wear < 3; wear++) armFrames.push(armFrame(tier, wear));
-  }
   return [
     makeSprite('shots/direct-missile', [missileFrame(false), missileFrame(true)], 'direct'),
     makeSprite(
@@ -330,9 +221,5 @@ export function generate() {
       [3.5, 5.5].map((r) => discFrame(12, r, '#78f078', '#208838')),
       'direct',
     ),
-    ...items,
-    makeSprite('shields/arm', armFrames, 'direct', {
-      animations: { arm: [0, 1, 2], superArm: [3, 4, 5], hyperArm: [6, 7, 8] },
-    }),
   ];
 }

@@ -34,6 +34,7 @@ import {
 } from '../../../scripts/assets/procedural/index.mjs';
 import * as items from '../../../scripts/assets/procedural/items.mjs';
 import * as lasers from '../../../scripts/assets/procedural/lasers.mjs';
+import * as logoGen from '../../../scripts/assets/procedural/logo.mjs';
 import * as palettes from '../../../scripts/assets/procedural/palettes.mjs';
 import * as particles from '../../../scripts/assets/procedural/particles.mjs';
 import * as shields from '../../../scripts/assets/procedural/shields.mjs';
@@ -1098,8 +1099,9 @@ describe('scripts/assets/procedural/ui', () => {
   });
 
   it('makes ui/logo "SHMUP CUP" in ×3 block letters with outline and shadow, centred (M1-16)', () => {
-    const logo = byName(sprites, 'ui/logo');
-    expect(ui.LOGO_TEXT).toBe('SHMUP CUP');
+    // The logo is its own generator since R4-P.P1 (`logo.mjs`).
+    const logo = byName(logoGen.generate(), 'ui/logo');
+    expect(logoGen.LOGO_TEXT).toBe('SHMUP CUP');
     expect(logo.frames).toHaveLength(1);
     const [frame] = logo.frames;
     // 9 cells of 5 + 8 gaps of 1 = 53 letter pixels ×3, plus a 3-px margin on every side.

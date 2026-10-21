@@ -34,7 +34,7 @@ type Rgb = readonly [number, number, number];
 
 /**
  * Each colour item's body (frame 0) and lit (frame 1, the blink) colours, in `DIRECT_ITEMS` order
- * (`scripts/assets/procedural/direct.mjs` `ITEM_COLORS` — only these sprites use them).
+ * (`scripts/assets/procedural/direct-items.mjs` `ITEM_COLORS` — only these sprites use them).
  */
 const ITEM_COLOURS: readonly (readonly [string, Rgb, Rgb])[] = [
   ['red', [0xe0, 0x28, 0x28], [0xff, 0x90, 0x90]],

@@ -16,12 +16,16 @@
  * @module
  */
 import * as abyss from './abyss.mjs';
+import * as arm from './arm.mjs';
 import * as backdrops from './backdrops.mjs';
+import * as blackhole from './blackhole.mjs';
 import * as bosses from './bosses.mjs';
 import * as brine from './brine.mjs';
 import * as bullets from './bullets.mjs';
 import * as citadel from './citadel.mjs';
+import * as decor from './decor.mjs';
 import * as dimension from './dimension.mjs';
+import * as directItems from './direct-items.mjs';
 import * as direct from './direct.mjs';
 import * as dune from './dune.mjs';
 import * as ending from './ending.mjs';
@@ -29,6 +33,7 @@ import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
 import * as items from './items.mjs';
 import * as lasers from './lasers.mjs';
+import * as logo from './logo.mjs';
 import * as magma from './magma.mjs';
 import * as palettes from './palettes.mjs';
 import * as particles from './particles.mjs';
@@ -38,6 +43,9 @@ import * as shields from './shields.mjs';
 import * as starfield from './starfield.mjs';
 import * as tempest from './tempest.mjs';
 import * as terrain from './terrain.mjs';
+import * as thrusters from './thrusters.mjs';
+import * as title from './title.mjs';
+import * as uiKit from './ui-kit.mjs';
 import * as ui from './ui.mjs';
 import * as vault from './vault.mjs';
 import * as weapons from './weapons.mjs';
@@ -61,19 +69,24 @@ import * as weapons from './weapons.mjs';
  */
 export const PROCEDURAL_GENERATORS = [
   { id: 'abyss', generate: abyss.generate },
+  { id: 'arm', generate: arm.generate },
   { id: 'backdrops', generate: backdrops.generate },
+  { id: 'blackhole', generate: blackhole.generate },
   { id: 'bosses', generate: bosses.generate },
   { id: 'brine', generate: brine.generate },
   { id: 'bullets', generate: bullets.generate },
   { id: 'citadel', generate: citadel.generate },
+  { id: 'decor', generate: decor.generate },
   { id: 'dimension', generate: dimension.generate },
   { id: 'direct', generate: direct.generate },
+  { id: 'direct-items', generate: directItems.generate },
   { id: 'dune', generate: dune.generate },
   { id: 'ending', generate: ending.generate },
   { id: 'explosions', generate: explosions.generate },
   { id: 'hud', generate: hud.generate },
   { id: 'items', generate: items.generate },
   { id: 'lasers', generate: lasers.generate },
+  { id: 'logo', generate: logo.generate },
   { id: 'magma', generate: magma.generate },
   { id: 'palettes', generate: palettes.generate },
   { id: 'particles', generate: particles.generate },
@@ -83,7 +96,10 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'starfield', generate: starfield.generate },
   { id: 'tempest', generate: tempest.generate },
   { id: 'terrain', generate: terrain.generate },
+  { id: 'thrusters', generate: thrusters.generate },
+  { id: 'title', generate: title.generate },
   { id: 'ui', generate: ui.generate },
+  { id: 'ui-kit', generate: uiKit.generate },
   { id: 'vault', generate: vault.generate },
   { id: 'weapons', generate: weapons.generate },
 ];

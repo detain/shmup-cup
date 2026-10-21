@@ -1715,8 +1715,8 @@ const PINNED: Record<string, Record<string, string>> = {
     'runA.escapeClear': '58139a0f 91e2c691 4bbb67aa 11568378',
     'runA.ending.story': 'cbd37286 4c23c6e8 5003ac52 304d08e5',
     'runA.ending.card': '48388809 a1a5e151 bfc125ec c57fb005',
-    'runA.credits': 'f39e1fa9 9c921714 4b8684f5 6ebe5925',
-    'runA.nameEntry': '37d520fc 16eb6249 d5cde623 9f7d7385',
+    'runA.credits': 'e1f178c5 cb29e5ec 4087ac74 54c731a5',
+    'runA.nameEntry': '37d520fc 16eb6249 a9a0eb3e 9f7d7385',
   },
   runB: {
     'runB.zoneA': '2eb5abb6 4bcb72b5 e00e5658 157bb6c5',
@@ -1737,8 +1737,8 @@ const PINNED: Record<string, Record<string, string>> = {
     'runB.escapeClear': '8e48909a 47178171 57b5d80f 11568378',
     'runB.ending.story': 'd30aee32 76a7d22c 6e4899dd 5b18fda5',
     'runB.ending.card': 'a0eb2137 a1a5e151 6aeb0964 c57fb005',
-    'runB.credits': '4ac796fb 9c921714 1e28f345 6ebe5925',
-    'runB.nameEntry': '37457f58 16eb6249 1c809e0a 9f7d7385',
+    'runB.credits': '0f470c6f cb29e5ec 5b15faa5 54c731a5',
+    'runB.nameEntry': '37457f58 16eb6249 9d58c8aa 9f7d7385',
   },
   extraModes: {
     'extra.weaponTypes': '1af672b9 02773c71 290450e2 bf9340c5',

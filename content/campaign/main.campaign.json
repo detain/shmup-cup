@@ -258,7 +258,10 @@
         "raster-bands.mjs  shields.mjs",
         "starfield.mjs  tempest.mjs",
         "terrain.mjs  ui.mjs  vault.mjs",
-        "weapons.mjs"
+        "weapons.mjs",
+        "arm.mjs  blackhole.mjs  decor.mjs",
+        "direct-items.mjs  logo.mjs  thrusters.mjs",
+        "title.mjs  ui-kit.mjs"
       ]
     },
     {
