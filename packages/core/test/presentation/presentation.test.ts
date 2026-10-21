@@ -38,12 +38,14 @@ describe('core/presentation', () => {
 });
 
 describe('core/presentation layers', () => {
-  it('lists the 14 draw layers bottom → top in the shmup_feat.md §18 order', () => {
-    expect(LAYER_COUNT).toBe(14);
+  it('lists the 17 draw layers bottom → top in the shmup_feat.md §18 order', () => {
+    expect(LAYER_COUNT).toBe(17);
     expect(LAYER_NAMES).toEqual([
       'BG_FAR',
       'BG_MID',
+      'DECOR_BACK',
       'TERRAIN',
+      'DECOR_FRONT',
       'GROUND_ENEMIES',
       'AIR_ENEMIES',
       'PLAYER_SHOTS',
@@ -51,6 +53,7 @@ describe('core/presentation layers', () => {
       'HITBOX',
       'ITEMS',
       'FX',
+      'FOREGROUND',
       'ENEMY_BULLETS',
       'HUD',
       'UI',

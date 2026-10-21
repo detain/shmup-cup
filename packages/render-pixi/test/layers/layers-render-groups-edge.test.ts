@@ -95,11 +95,11 @@ describe('render-pixi/layers render groups, edge cases (M3-02e)', () => {
       expect(id).toBeLessThan(LAYER_COUNT);
       expect(LAYER_NAMES[id]).toBeTypeOf('string');
     }
-    // The three deliberate omissions, named rather than counted, so removing a layer from the
+    // The four deliberate omissions, named rather than counted, so removing a layer from the
     // list on purpose has to be written down here too.
     const left = [];
     for (let id = 0; id < LAYER_COUNT; id++) if (ids.indexOf(id) < 0) left.push(LAYER_NAMES[id]);
-    expect(left).toEqual(['BG_FAR', 'BG_MID', 'DEBUG']);
+    expect(left).toEqual(['BG_FAR', 'BG_MID', 'FOREGROUND', 'DEBUG']);
   });
 
   it('draws the same tree grouped and ungrouped: same parents, order, labels and transforms', () => {

@@ -34,7 +34,8 @@
  *
  * **Public API.** Back-ends: {@link IRenderer}, {@link IAudio}, {@link AudioBus},
  * {@link AudioState}. Frame: {@link RenderFrame}, {@link ScreenView}. World:
- * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
+ * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link DecorView} (R3-06),
+ * {@link TerrainView},
  * {@link TerrainChanges} (M2-07),
  * {@link LaserView}, {@link BendingLaserView} (M2-02), {@link WarningView},
  * {@link StageEffectsView}, {@link RasterEffectView}, {@link RasterKind}, {@link ColorCycleView},
@@ -78,43 +79,51 @@ export const LayerId = {
   BgFar: 0,
   /** Mid background. */
   BgMid: 1,
+  /** Decor behind the terrain (R3-06 — {@link DecorView}). */
+  DecorBack: 2,
   /** Tile terrain (floors, ceilings, walls). */
-  Terrain: 2,
+  Terrain: 3,
+  /** Decor in front of the terrain, behind the sprites (R3-06 — {@link DecorView}). */
+  DecorFront: 4,
   /** Ground-bound enemies (turrets, walkers, hatches). */
-  GroundEnemies: 3,
+  GroundEnemies: 5,
   /** Flying enemies and bosses. */
-  AirEnemies: 4,
+  AirEnemies: 6,
   /** The players' shots, lasers and missiles. */
-  PlayerShots: 5,
+  PlayerShots: 7,
   /** Player ships, Options and shields. */
-  Player: 6,
+  Player: 8,
   /** Hitbox marker (shown while focusing / in debug). */
-  Hitbox: 7,
+  Hitbox: 9,
   /** Capsules and other pickups. */
-  Items: 8,
+  Items: 10,
   /** Explosions, sparks and other particles. */
-  Fx: 9,
+  Fx: 11,
+  /** Foreground parallax band (R3-06) — in front of the ship, below the bullets. */
+  Foreground: 12,
   /** Enemy bullets — above explosions so they stay readable. */
-  EnemyBullets: 10,
+  EnemyBullets: 13,
   /** The HUD bars ({@link RenderFrame.hud}). */
-  Hud: 11,
+  Hud: 14,
   /** Menus and overlays ({@link RenderFrame.ui}). */
-  Ui: 12,
+  Ui: 15,
   /** Debug overlay (hitboxes, counters). */
-  Debug: 13,
+  Debug: 16,
 } as const;
 
 /** A draw layer code (see {@link LayerId}). */
 export type LayerId = (typeof LayerId)[keyof typeof LayerId];
 
 /** Number of draw layers. */
-export const LAYER_COUNT = 14;
+export const LAYER_COUNT = 17;
 
 /** Layer names by {@link LayerId} code (debug overlays, container labels). */
 export const LAYER_NAMES: readonly string[] = Object.freeze([
   'BG_FAR',
   'BG_MID',
+  'DECOR_BACK',
   'TERRAIN',
+  'DECOR_FRONT',
   'GROUND_ENEMIES',
   'AIR_ENEMIES',
   'PLAYER_SHOTS',
@@ -122,6 +131,7 @@ export const LAYER_NAMES: readonly string[] = Object.freeze([
   'HITBOX',
   'ITEMS',
   'FX',
+  'FOREGROUND',
   'ENEMY_BULLETS',
   'HUD',
   'UI',
@@ -270,14 +280,17 @@ export interface CameraView {
 
 /**
  * Parallax background bands of the current stage (`core/stage`, shmup_feat.md §14): band `i` is
- * sprite `spriteId[i]` (frame 0) repeated every `spacing[i]` pixels along x, drawn on layer
- * `layer[i]` with its top edge at playfield row `y[i]`, shifted left by `offsetX[i]`. Drawn as
- * preallocated repeated sprites (no `TilingSprite` — WebGL1 NPOT restrictions), integer-snapped.
+ * sprite `spriteId[i]` (frame `frameIndex[i]` — R3-06, 0 without animation) repeated every
+ * `spacing[i]` pixels along x, drawn on layer `layer[i]` with its top edge at playfield row
+ * `y[i]`, shifted left by `offsetX[i]`. Drawn as preallocated repeated sprites (no
+ * `TilingSprite` — WebGL1 NPOT restrictions), integer-snapped. Since R3-06 a band may be on the
+ * `Foreground` layer (the sparse foreground in front of the ship) and scroll vertically with its
+ * own factor (plan_resolution.md §R3-06).
  */
 export interface ParallaxView {
   /** Bands, packed in `[0, count)` (fixed for the view's lifetime). */
   readonly count: number;
-  /** {@link LayerId} per band (`BgFar` or `BgMid`). */
+  /** {@link LayerId} per band (`BgFar`, `BgMid` or the R3-06 `Foreground`). */
   readonly layer: ArrayLike<number>;
   /** Sprite id of the repeated sprite. */
   readonly spriteId: ArrayLike<number>;
@@ -287,6 +300,28 @@ export interface ParallaxView {
   readonly y: ArrayLike<number>;
   /** Horizontal repeat distance in pixels (fixed for the view's lifetime). */
   readonly spacing: ArrayLike<number>;
+  /**
+   * Animated frame per band right now (R3-06): `0` for a static band, else the index cycling
+   * `0 … frames-1` every `frameTicks` ticks — a frame of the band's own sprite. A core-built
+   * view always carries it; absent (an older fixture view) means frame 0 everywhere.
+   */
+  readonly frameIndex?: ArrayLike<number>;
+}
+
+/**
+ * The stage's still decoration items (R3-06 — plan_resolution.md §R3-06, `core/stage`): two
+ * sprite batches refilled by camera culling at the end of every tick — `back` drawn under the
+ * terrain on {@link LayerId.DecorBack}, `front` drawn above it (below the sprites) on
+ * {@link LayerId.DecorFront}. Slots `[0, count)` are the items inside the camera window; either
+ * batch is `null` when no drawable item uses its layer. Presentation only — the simulation never
+ * reads decor, and the batches are also members of {@link WorldView.batches} (drawn in layer
+ * containers, never colliding, never scored).
+ */
+export interface DecorView {
+  /** The `back` items visible right now, or `null`. */
+  readonly back: SpriteBatchView | null;
+  /** The `front` items visible right now, or `null`. */
+  readonly front: SpriteBatchView | null;
 }
 
 /**
@@ -626,6 +661,12 @@ export interface WorldView {
   readonly camera: CameraView;
   /** Parallax background, or `null` for a plain background. */
   readonly parallax: ParallaxView | null;
+  /**
+   * The stage's decor batches (R3-06), or `null` / absent for a stage without decor. Its two
+   * batches are members of {@link WorldView.batches} as well; the view is for hosts that iterate
+   * decor separately (the glow work of R3-06.L4 reads it).
+   */
+  readonly decor?: DecorView | null;
   /** Tile terrain, or `null` for open space. */
   readonly terrain: TerrainView | null;
   /**

@@ -124,18 +124,22 @@ export const WORLD_LAYER_COUNT: number = LayerId.Hud;
  * bullet appearing rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,274-tile
  * terrain grid, the HUD and the UI alone — and their vertex buffers are not re-uploaded either.
  *
- * These are the layers whose bindings toggle `visible` while the game runs. `BG_FAR` and `BG_MID`
+ * These are the layers whose bindings toggle `visible` while the game runs — the two decor layers
+ * of R3-06 among them, since culled decor toggles its batch slots' `visible`. `BG_FAR` and `BG_MID`
  * are left out on purpose: the parallax bands are shown once when they are bound and only their
  * containers move afterwards, and the Mode-7 mesh appears and disappears with a camera range, so
- * a group there would only buy a batch boundary. `DEBUG` is left out because it is empty in a
- * release build.
+ * a group there would only buy a batch boundary; the R3-06 `FOREGROUND` is a parallax band too and
+ * is left out like the two backgrounds. `DEBUG` is left out because it is empty in a release
+ * build.
  *
  * **Cost.** Each group is a batch boundary, so draw calls rise by roughly the number of groups
  * that hold something (`shmup_feat.md` §22's budget line and the two e2e specs' `DRAW_CALL_BUDGET`
  * were raised for it, deliberately).
  */
 export const RENDER_GROUP_LAYERS: readonly number[] = [
+  LayerId.DecorBack,
   LayerId.Terrain,
+  LayerId.DecorFront,
   LayerId.GroundEnemies,
   LayerId.AirEnemies,
   LayerId.PlayerShots,

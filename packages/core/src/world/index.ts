@@ -417,6 +417,7 @@ import {
   GIMMICK_SPRITES,
   StageEventCode,
   createBonusEntrances,
+  createDecorView,
   createParallaxView,
   createStageCamera,
   createStageEffectsView,
@@ -424,8 +425,10 @@ import {
   createStageRunner,
   createStageTerrain,
   createTerrainView,
+  updateDecorView,
   updateParallaxView,
   type BonusEntrances,
+  type StageDecorView,
   type StageGimmicks,
   type StageHooks,
   type StageParallaxView,
@@ -570,6 +573,11 @@ export interface World {
   readonly terrain: TerrainMap | null;
   /** The stage's parallax bands (also `view.parallax`), or `null`. */
   readonly parallax: StageParallaxView | null;
+  /**
+   * The stage's decor (R3-06, also `view.decor`): the compiled items and the two batches
+   * {@link updateDecorView} refills by camera culling, or `null` for a stage without decor.
+   */
+  readonly decor: StageDecorView | null;
   /**
    * The stage gimmicks (M2-07, `core/stage` `StageGimmicks`): the destructible terrain of
    * {@link World.terrain}, the moving blocks, the pull fields and chains of enemy scripts.
@@ -1824,11 +1832,14 @@ export function createWorld(
   const hitboxBatch = createHitboxBatch(MAX_PLAYERS);
   const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
   const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
+  const decor = stageSpec === null ? null : createDecorView(stageSpec, content);
   const batches: SpriteBatchView[] = [];
   // Mutable until the bullet system exists (its laser view is filled in below).
   const view = {
     camera,
     parallax,
+    // The decor batches (R3-06), also pushed onto `batches` below.
+    decor,
     // Filled in below, once the destructible terrain (its change log) exists.
     terrain: null as TerrainView | null,
     batches,
@@ -1860,6 +1871,7 @@ export function createWorld(
     stage: null,
     terrain,
     parallax,
+    decor,
     // Replaced right below: the enemy and bullet systems read the World they belong to.
     enemies: null as unknown as EnemySystem,
     bullets: null as unknown as BulletSystem,
@@ -1943,6 +1955,12 @@ export function createWorld(
   if (blocks !== null) batches.push(blocks.batch);
   // The black holes (M3-02) are drawn on FX, over the particles and under the enemy bullets.
   if (world.blackholes.enabled) batches.push(world.blackholes.batch);
+  // The decor batches (R3-06): each sits on its own layer, so the list order cannot mix them;
+  // a stage without decor adds no batch at all.
+  if (decor !== null) {
+    if (decor.back !== null) batches.push(decor.back);
+    if (decor.front !== null) batches.push(decor.front);
+  }
   view.lasers = world.bullets.laserView;
   view.bendingLasers = world.bullets.bending;
   view.warning = world.bosses.warning;
@@ -2071,8 +2089,9 @@ function syncHitboxes(world: World): void {
 
 /**
  * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
- * the items and shields, the player ships) and scrolls the parallax bands with the camera. Runs
- * at the end of every tick (phase 9) and once at creation. Never allocates.
+ * the items and shields, the player ships), scrolls the parallax bands with the camera and refills
+ * the decor batches (R3-06). Runs at the end of every tick (phase 9) and once at creation. Never
+ * allocates.
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
@@ -2086,7 +2105,9 @@ function syncHitboxes(world: World): void {
  */
 export function syncWorldView(world: World): void {
   const parallax = world.parallax;
-  if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
+  if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y, world.tick);
+  const decor = world.decor;
+  if (decor !== null) updateDecorView(decor, world.camera.x);
   world.gimmicks.sync();
   world.enemies.sync();
   world.bosses.sync();

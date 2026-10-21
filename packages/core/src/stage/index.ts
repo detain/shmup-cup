@@ -104,7 +104,8 @@
  * {@link StageCameraTarget} (M2-09: {@link StageRunner.follow} — a raid's camera path);
  * camera {@link StageCamera}, {@link createStageCamera}; terrain {@link createStageTerrain},
  * {@link createTerrainView}, {@link stageMapWidth}; parallax {@link createParallaxView},
- * {@link updateParallaxView}, {@link StageParallaxView}; presentation effects
+ * {@link updateParallaxView}, {@link StageParallaxView}; decor (R3-06)
+ * {@link createDecorView}, {@link updateDecorView}, {@link StageDecorView}; presentation effects
  * {@link createStageEffectsView} (M2-08); M2-07 (from `./systems.ts`)
  * {@link StageGimmicks}, {@link StageGimmicksHost}, {@link createStageGimmicks},
  * {@link MovingBlockSystem}, {@link MAX_PULL_FIELDS}, {@link MAX_CHAINS}, {@link MAX_CHAIN_LINKS},
@@ -149,10 +150,14 @@ import { defineModule } from '../module-info.js';
 import {
   LayerId,
   RasterKind,
+  createSpriteBatch,
+  pushSprite,
   type ColorCycleView,
+  type DecorView,
   type Mode7View,
   type ParallaxView,
   type RasterEffectView,
+  type SpriteBatch,
   type StageEffectsView,
   type TerrainChanges,
   type TerrainView,
@@ -1493,7 +1498,7 @@ export function createTerrainView(
 export interface StageParallaxView extends ParallaxView {
   /** Bands. */
   readonly count: number;
-  /** {@link LayerId} per band (`BgFar` / `BgMid`). */
+  /** {@link LayerId} per band (`BgFar` / `BgMid` / `Foreground`). */
   readonly layer: Uint8Array;
   /** Sprite id per band. */
   readonly spriteId: Uint16Array;
@@ -1505,8 +1510,19 @@ export interface StageParallaxView extends ParallaxView {
   readonly spacing: Uint16Array;
   /** Scroll factor per band. */
   readonly factor: Float64Array;
+  /**
+   * Vertical scroll factor per band (R3-06): the content's `yFactor`, or the band's horizontal
+   * {@link StageParallaxView.factor} where the file omits it — so a plain band scrolls as before.
+   */
+  readonly yFactor: Float64Array;
   /** Band row at camera y 0. */
   readonly baseY: Float64Array;
+  /** Animated frame count per band (R3-06): `0` / `1` = static (no frame cycling). */
+  readonly frames: Uint8Array;
+  /** Ticks per animated frame per band (R3-06; meaningless when `frames < 2`). */
+  readonly frameTicks: Uint16Array;
+  /** Current animated frame per band (R3-06), filled by {@link updateParallaxView}. */
+  readonly frameIndex: Uint8Array;
 }
 
 /**
@@ -1527,27 +1543,44 @@ export function createParallaxView(stage: StageSpec): StageParallaxView | null {
     y: new Float64Array(count),
     spacing: new Uint16Array(count),
     factor: new Float64Array(count),
+    yFactor: new Float64Array(count),
     baseY: new Float64Array(count),
+    frames: new Uint8Array(count),
+    frameTicks: new Uint16Array(count),
+    frameIndex: new Uint8Array(count),
   };
   for (let i = 0; i < count; i++) {
     const band = bands[i];
-    view.layer[i] = band.layer === 'far' ? LayerId.BgFar : LayerId.BgMid;
+    view.layer[i] = PARALLAX_LAYERS[band.layer];
     view.spriteId[i] = band.spriteId < 0 ? 0xffff : band.spriteId;
     view.spacing[i] = band.spacing;
     view.factor[i] = band.factor;
+    view.yFactor[i] = band.yFactor ?? band.factor;
     view.baseY[i] = band.y;
+    view.frames[i] = band.frames ?? 0;
+    view.frameTicks[i] = band.frameTicks ?? 8;
   }
   updateParallaxView(view, 0, 0);
   return view;
 }
 
+/** `LayerId` of each parallax band layer name (R3-06 adds the `fore` layer). */
+const PARALLAX_LAYERS: Readonly<Record<string, LayerId>> = Object.freeze({
+  far: LayerId.BgFar,
+  mid: LayerId.BgMid,
+  fore: LayerId.Foreground,
+});
+
 /**
  * Scrolls the parallax bands with the camera: `offsetX = (camera.x · factor) mod spacing`,
- * `y = baseY − camera.y · factor`. Never allocates.
+ * `y = baseY − camera.y · yFactor` (R3-06: `yFactor` is the content's own, defaulting to the
+ * horizontal factor, so a plain band moves exactly as before), and for an animated band
+ * `frameIndex = (tick / frameTicks) mod frames`. Never allocates.
  *
  * @param view - The view.
  * @param cameraX - Camera x.
  * @param cameraY - Camera y.
+ * @param tick - The sim tick — the animation clock (R3-06; default 0).
  *
  * @example
  * ```ts
@@ -1559,13 +1592,143 @@ export function updateParallaxView(
   view: StageParallaxView,
   cameraX: number,
   cameraY: number,
+  tick = 0,
 ): void {
   for (let i = 0; i < view.count; i++) {
     const factor = view.factor[i];
     const spacing = view.spacing[i];
     const scrolled = cameraX * factor;
     view.offsetX[i] = scrolled - Math.floor(scrolled / spacing) * spacing;
-    view.y[i] = view.baseY[i] - cameraY * factor;
+    view.y[i] = view.baseY[i] - cameraY * view.yFactor[i];
+    const frames = view.frames[i];
+    view.frameIndex[i] = frames > 1 ? Math.floor(tick / view.frameTicks[i]) % frames : 0;
+  }
+}
+
+/**
+ * The compiled decor of one stage (R3-06 — plan_resolution.md §R3-06, a writable
+ * {@link DecorView}): every drawable `stage.decor` entry packed into the typed arrays in file
+ * order, plus the two sprite batches {@link updateDecorView} refills from the camera window each
+ * tick. Items that cannot be drawn at all (a tile on a stage without a tilemap, an unknown tile
+ * or the tileset's empty entry, a sprite that never resolved) are dropped at compile, so the
+ * arrays hold only what the batches can show.
+ */
+export interface StageDecorView extends DecorView {
+  /** Compiled items (file order, both layers). */
+  readonly count: number;
+  /** {@link LayerId.DecorBack} / {@link LayerId.DecorFront} per item. */
+  readonly layer: Uint8Array;
+  /** Sprite id per item (a tile item carries its tileset's). */
+  readonly spriteId: Uint16Array;
+  /** Atlas frame per item (a tile item carries the tile's frame). */
+  readonly frame: Uint16Array;
+  /** World x of the item's left edge. */
+  readonly x: Float64Array;
+  /** World y of the item's top edge. */
+  readonly y: Float64Array;
+  /** The `back` batch (`LayerId.DecorBack`), or `null` when no back item draws. */
+  readonly back: SpriteBatch | null;
+  /** The `front` batch (`LayerId.DecorFront`), or `null` when no front item draws. */
+  readonly front: SpriteBatch | null;
+}
+
+/**
+ * Horizon margin in pixels on both sides of the camera within which decor stays in
+ * {@link StageDecorView}'s batches (R3-06 — items are wider than their left edge; the renderer
+ * culls the rest exactly like the terrain columns).
+ */
+const DECOR_CULL_MARGIN = 512;
+
+/**
+ * Compiles the stage's decor into {@link StageDecorView} (load time — the only allocation is
+ * here). A tile item draws its tileset's sprite at the tile's atlas frame (the stage's terrain
+ * tileset; a tile without a tilemap or with an unknown name is dropped); a sprite item draws its
+ * resolved sprite.
+ *
+ * @param stage - The stage.
+ * @param content - The content DB holding the tilesets.
+ * @returns The view, or `null` when the stage names no decor or no item is drawable.
+ *
+ * @example
+ * ```ts
+ * const decor = createDecorView(stage, db); // → world.decor, world.view.decor
+ * ```
+ */
+export function createDecorView(stage: StageSpec, content: ContentDb): StageDecorView | null {
+  const items = stage.decor;
+  if (items === undefined || items.length === 0) return null;
+  const tileset = stage.terrain === null ? undefined : content.tilesets[stage.terrain.tilesetId];
+  const count = items.length;
+  const layer = new Uint8Array(count);
+  const spriteId = new Uint16Array(count);
+  const frame = new Uint16Array(count);
+  const x = new Float64Array(count);
+  const y = new Float64Array(count);
+  let n = 0;
+  let backs = 0;
+  let fronts = 0;
+  for (let i = 0; i < count; i++) {
+    const item = items[i];
+    let sprite = item.spriteId;
+    let frameOf = item.frame;
+    if (item.tile !== undefined) {
+      if (tileset === undefined) continue;
+      const id = tileset.tables.byName.get(item.tile);
+      if (id === undefined) continue;
+      sprite = tileset.spriteId;
+      frameOf = tileset.tables.frame[id];
+      if (frameOf < 0) continue;
+    }
+    if (sprite < 0 || sprite > 0xffff) continue;
+    const back = item.layer === 'back';
+    layer[n] = back ? LayerId.DecorBack : LayerId.DecorFront;
+    spriteId[n] = sprite;
+    frame[n] = frameOf;
+    x[n] = item.x;
+    y[n] = item.y;
+    n++;
+    if (back) backs++;
+    else fronts++;
+  }
+  if (n === 0) return null;
+  return {
+    count: n,
+    layer,
+    spriteId,
+    frame,
+    x,
+    y,
+    back: backs > 0 ? createSpriteBatch(LayerId.DecorBack, backs) : null,
+    front: fronts > 0 ? createSpriteBatch(LayerId.DecorFront, fronts) : null,
+  };
+}
+
+/**
+ * Refills the decor batches from the camera window (R3-06): an item is in a batch while its
+ * `x` lies within {@link DECOR_CULL_MARGIN} of the playfield's two columns. Called at the end of
+ * every tick next to {@link updateParallaxView}. Never allocates.
+ *
+ * @param view - The compiled view.
+ * @param cameraX - The camera's world x.
+ *
+ * @example
+ * ```ts
+ * updateDecorView(decor, world.camera.x); // decor.back.count → items in view
+ * ```
+ */
+export function updateDecorView(view: StageDecorView, cameraX: number): void {
+  const back = view.back;
+  if (back !== null) back.count = 0;
+  const front = view.front;
+  if (front !== null) front.count = 0;
+  const left = cameraX - DECOR_CULL_MARGIN;
+  const right = cameraX + PLAYFIELD_W + DECOR_CULL_MARGIN;
+  for (let i = 0; i < view.count; i++) {
+    const ix = view.x[i];
+    if (ix < left || ix > right) continue;
+    const batch = view.layer[i] === LayerId.DecorFront ? front : back;
+    if (batch === null) continue;
+    pushSprite(batch, ix, view.y[i], view.spriteId[i], view.frame[i], 0);
   }
 }
 

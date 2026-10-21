@@ -8,7 +8,7 @@
  * hard way (structural assertions passed while the shader itself was wrong, until mutation testing
  * was applied), so this spec compares **pixels**:
  *
- * 1. a frozen frame is screenshotted, `disableRenderGroup()` is then called on all eleven grouped
+ * 1. a frozen frame is screenshotted, `disableRenderGroup()` is then called on all thirteen grouped
  *    layer containers at runtime, and the frame is screenshotted again — the two PNGs must be
  *    byte-identical, on seven scenes covering a filtered layer, the Mode-7 mesh, a boss, the
  *    calibration pattern, the title screen's HUD and UI menus and the hitbox markers;
@@ -32,7 +32,7 @@ import { freezeSim, stepTo } from './frame-advance.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Layers M3-02e makes render groups (`render-pixi`'s `RENDER_GROUP_LAYERS`). */
-const RENDER_GROUP_COUNT = 11;
+const RENDER_GROUP_COUNT = 13;
 
 /** What this spec reads and pokes on `window.__shmupDebug`. */
 interface DebugWindow {
@@ -215,7 +215,7 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // The `HUD` control needs the stage to draw under a bar. Since R2-02's port the zone A
     // content fills the whole 640×336 playfield — its terrain and bands reach under the 12-px
     // bottom bar — so moving the `HUD` under the world changes pixels (R2-03's re-measure).
-    for (const layer of [2, 6, 11]) {
+    for (const layer of [3, 8, 14]) {
       const restore = await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;
         const target = layers.layers[id];
@@ -256,7 +256,7 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // pass if the grouped layers drew nothing at all. Hiding one at a time must change the
     // picture, which says the screenshot really does carry each group's own output.
     const contributing: number[] = [];
-    for (const layer of [2, 3, 4, 5, 6, 8, 9, 10, 11]) {
+    for (const layer of [3, 5, 6, 7, 8, 10, 11, 13, 14]) {
       await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;
         layers.layers[id].visible = false;
@@ -273,7 +273,7 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // TERRAIN, the enemy layers, the player's shots, the player, the items, the FX, the enemy
     // bullets and the HUD: a busy zone-a frame does not carry every one of them at once, but it
     // must carry most, and certainly the terrain, the player and the HUD.
-    expect(contributing).toEqual(expect.arrayContaining([2, 6, 11]));
+    expect(contributing).toEqual(expect.arrayContaining([3, 8, 14]));
     expect(contributing.length).toBeGreaterThanOrEqual(5);
     // Putting them all back gives the original frame again.
     expect((await capture(page)).equals(full)).toBe(true);
@@ -334,7 +334,7 @@ test.describe('the REB figure the owner reads on the TV (M3-02e)', () => {
     // scene's own group.
     const debugLayer = await page.evaluate(
       () =>
-        (window as unknown as DebugWindow).__shmupDebug.renderer.layers.layers[13].isRenderGroup,
+        (window as unknown as DebugWindow).__shmupDebug.renderer.layers.layers[16].isRenderGroup,
     );
     expect(debugLayer).toBe(false);
 
@@ -376,7 +376,7 @@ test.describe('the REB figure the owner reads on the TV (M3-02e)', () => {
     await page.evaluate(() => {
       (
         window as unknown as DebugWindow
-      ).__shmupDebug.renderer.layers.layers[13].enableRenderGroup();
+      ).__shmupDebug.renderer.layers.layers[16].enableRenderGroup();
     });
     await settle(page);
     const confined = await measure(page);
