@@ -1,0 +1,101 @@
+{
+  "name": "ships/manta",
+  "description": "MANTA, the Direct-mode ship, v2 redraw (R4-01.A1a, art bible v2 § 5.3): the v1 ray-winged design at 24 × 15 with lit upper wings, the green canopy edged in bright mint with a glint at its upper left and one lit reflection below, deep seams aft and on the folded lower wing, and shaded under-wings. Frames: 0 level, 1 banking up, 2 banking down — frames 0, 1 and 3 of the final five (R4-01.A1b adds the steep climb and dive); its twin thrusters ride the orange rows. Anchor [12, 7] is the bible’s choice (§ 5.3: 7.5 rounds to 7 or 8).",
+  "palette": {
+    ".": null,
+    "o": "#10281e",
+    "h": "#c8e0d0",
+    "H": "#f0fff4",
+    "s": "#6a9a88",
+    "S": "#3a5a48",
+    "g": "#40d070",
+    "c": "#a8f8c0",
+    "e": "#f8b030"
+  },
+  "p2": {
+    "#10281e": "#1e2810",
+    "#c8e0d0": "#d0e0c8",
+    "#f0fff4": "#f4fff0",
+    "#6a9a88": "#889a6a",
+    "#3a5a48": "#485a3a",
+    "#40d070": "#70d040",
+    "#a8f8c0": "#c0f8a8",
+    "#f8b030": "#30b0f8"
+  },
+  "anchor": [
+    12,
+    7
+  ],
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "...oooooo...............",
+        "...oooooo...............",
+        "..ossHHhhooo............",
+        "ooessHHhhhhhooooo.......",
+        "ooesshhhhhhhooooo.......",
+        "..osssHHhhhcggcooooo....",
+        "ooesshhhhhhhhghhHHHHooo.",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "..ossshhhhhhhhhhhhhSShho",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "ooesshhhhhhhhhhhhShhooo.",
+        "..ossshhhhhoooooo.......",
+        "ooesshhhhooo............",
+        "ooessSShhooo............",
+        "..oooooo................"
+      ]
+    },
+    {
+      "rows": [
+        "...oooooo...............",
+        "...oooooo...............",
+        "..ossHHhhooo............",
+        "ooessHHhhhhhooooo.......",
+        "ooesshhhhhhhooooo.......",
+        "..osssHHhhhcggcooooo....",
+        "ooesshhhhhhhhghhHHHHooo.",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "..ossshhhhhhhhhhhhhSShho",
+        "ooesshhhhhhhhhhoooooo...",
+        "ooesshhhhhhhSShoooooo...",
+        "..ooossshoooooo.........",
+        "...oooooo...............",
+        "...oooooo...............",
+        "........................"
+      ]
+    },
+    {
+      "rows": [
+        "........................",
+        "........................",
+        "...oooooo...............",
+        "..ooosssSoooooo.........",
+        "..ooosssSoooooo.........",
+        "ooesshHHhhhhcggccooo....",
+        "ooesshhhhhhhhhghhHHHooo.",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "..ossshhhhhhhhhhhhhSShho",
+        "ooesshhhhhhhhhhhhhhhooo.",
+        "ooesshhhhhhhhhhhShhhooo.",
+        "..ossshhhhhoooooo.......",
+        "ooesshhhhooo............",
+        "ooessSShhooo............",
+        "..oooooo................"
+      ]
+    }
+  ],
+  "animations": {
+    "level": [
+      0
+    ],
+    "up": [
+      1
+    ],
+    "down": [
+      2
+    ]
+  }
+}

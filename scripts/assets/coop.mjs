@@ -91,7 +91,7 @@ function mapFrame(frame, table) {
  *   a key (`"#rrggbb"`) takes the value's RGB (also `"#rrggbb"`, case and the `#rgb` short
  *   forms parse); unlisted colours stay, every alpha stays.
  * @returns {SpriteDef} The mapped sprite: same anchor, frame count and sizes, same animations,
- *   `hitFlash: false`.
+ *   `hitFlash: false`, and — when the source is `native` — native too.
  * @throws {TypeError} When an entry of the map does not parse as a colour pair.
  *
  * @example
@@ -115,5 +115,8 @@ export function makeP2Sprite(sprite, map) {
     frames: sprite.frames.map((frame) => mapFrame(frame, table)),
     animations: { ...sprite.animations },
     origin: `p2:${sprite.name}`,
+    // The sibling of native art is native too (R4-01.A1a): its frames are mapped from pixels
+    // already at the v2 size, so the interim stage must not treat it as a scaled v1 frame.
+    ...(sprite.native === true ? { native: true } : {}),
   };
 }
