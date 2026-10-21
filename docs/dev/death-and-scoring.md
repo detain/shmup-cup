@@ -95,7 +95,7 @@ terrain death takes the shield with it (every penalty clears it).
 | 1 | `killPlayer(ship)`: `dying` (timer 0), `lives − 1` (never below 0), `invulnTicks` 0, level, not moving | `core/player` |
 | 2 | `Sfx PlayerDeath` (8), `Particles ExplosionLarge` (2) and `Particles Debris` (5, new) with param 1, `Rumble` (`id` = slot, param 1), `MusicDuck` (9, new: `id` = slot, param `DEATH_MUSIC_DUCK_TICKS` 120) — all at the ship, whole pixels | `core/events` |
 | 3 | `requestHitStop(world, DEATH_HIT_STOP_TICKS)` (8) → `HitStop` event | `core/fx` |
-| 4 | `requestShake(world, ShakeMagnitude.Medium, DEATH_SHAKE_TICKS)` (2 px, 20 ticks) → `Shake` event | `core/fx` |
+| 4 | `requestShake(world, ShakeMagnitude.Medium, DEATH_SHAKE_TICKS)` (3 px, 20 ticks) → `Shake` event | `core/fx` |
 | 5 | `bullets.cancelAll(CancelMode.Sparkle)`: every **cancelable** enemy bullet and every enemy laser goes, with `BulletCancel` sparkles at up to 64 of them; bullets without `BulletFlag.Cancelable` survive | `core/bullets` |
 | 6 | `applyDeathPenalty(config.deathPenalty, ship, loadout, meter)` | `core/powerups` |
 
@@ -292,7 +292,7 @@ makes them replayable and inspectable:
 | Request | Effect | Event |
 |---|---|---|
 | `requestHitStop(world, ticks)` | `hitStop = max(hitStop, ticks)` (capped at `MAX_HIT_STOP_TICKS` 60; ≤ 0 / `NaN` → nothing) | `HitStop`, `param` = ticks (pushed even when a longer one runs) |
-| `requestShake(world, magnitude, ticks)` | a decaying shake of `ShakeMagnitude` `Small` 1 / `Medium` 2 / `Large` 4 px over `ticks` (≤ `MAX_FX_TICKS` 600); ignored when the running shake is at least as strong **now** (`shakeAmount`) | `Shake`, `id` = duration, `param` = magnitude |
+| `requestShake(world, magnitude, ticks)` | a decaying shake of `ShakeMagnitude` `Small` 2 / `Medium` 3 / `Large` 6 px over `ticks` (≤ `MAX_FX_TICKS` 600); ignored when the running shake is at least as strong **now** (`shakeAmount`) | `Shake`, `id` = duration, `param` = magnitude |
 | `requestFlash(world, kind)` | a full-screen flash of `FLASH_KIND_TICKS[kind]` ticks, restarting a running one; unknown kinds → `false` | `Flash`, `id` = `FlashKind`, `param` = duration |
 
 `shakeAmount(fx)` = `ceil(magnitude · ticksLeft / duration)` — whole pixels, decaying to 0.

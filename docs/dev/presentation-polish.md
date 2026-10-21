@@ -52,7 +52,8 @@ content/stages/<id>.stage.json   raster: [{ layer, kind wave|haze|lines, top, bo
         ▼
 createWorld ── createStageEffectsView(stage) → view.effects  (frozen, read once when bound)
             ── createHitboxBatch(MAX_PLAYERS)  → view.hitboxes (refilled in phase 9)
-        │ (the sim never reads either; not hashed)
+            ── createDecorView(stage, db)      → view.decor    (refilled by camera culling, R3-06)
+        │ (the sim never reads any of the three; not hashed)
         ▼
 PixiRenderer.render(frame)
   camera ← world.camera, or drawn between the last two ticks by frame.alpha (interpolation)
@@ -84,7 +85,7 @@ x is inside `[from, to)`:
 |---|---|---|
 | `layer` | `far`, `mid` or `terrain` (`STAGE_RASTER_LAYERS`) | required |
 | `kind` | `wave`, `haze` or `lines` (`STAGE_RASTER_KINDS`; the index is `RasterKind`) | required |
-| `top`, `bottom` | Playfield rows `top … bottom − 1` (0 = the row under the top HUD bar) | `0 ≤ top < bottom ≤ 200` |
+| `top`, `bottom` | Playfield rows `top … bottom − 1` (0 = the row under the top HUD bar) | `0 ≤ top < bottom ≤ 336` (`PLAYFIELD_H`, frame-derived since R2-01) |
 | `amplitude` | Peak offset in pixels (`wave`, `haze`) | 0–32; required for them |
 | `wavelength` | Rows per sine period (`wave`, `haze`) | 2–1024, default 32; required for them |
 | `period` | Ticks per sine period over time (`wave`, `haze`); 0 = still | 0–36,000, default `DEFAULT_RASTER_PERIOD` 120 |
@@ -109,8 +110,8 @@ all its cycles together (the shader's uniform arrays).
 
 ## The render contract (`core/presentation`, `core/stage`, `core/world`)
 
-Two optional members joined `WorldView`, both read once when a renderer binds the view (so a
-renderer that ignores them keeps working):
+Two optional members joined `WorldView` at M2-08, both read once when a renderer binds the view
+(so a renderer that ignores them keeps working); a third joined at R3-06:
 
 - **`effects?: StageEffectsView | null`** — `{ raster: RasterEffectView[], cycles:
   ColorCycleView[] }` in file order. A `RasterEffectView` carries the layer as a `LayerId`
@@ -124,10 +125,20 @@ renderer that ignores them keeps working):
   `HitboxBatch` (`createHitboxBatch(MAX_PLAYERS)`, `World.hitboxBatch`) that `syncWorldView`
   refills at the end of every tick (phase 9): one entry per active ship that is not `dying` /
   `dead`, radius = the ship's `hurtRadius` × its shield's `hurtScale` (Reduce shrinks it — M2-04).
+- **`decor?: DecorView | null`** (R3-06) — the stage's still decoration as two sprite batches:
+  `back` under the terrain on `LayerId.DecorBack`, `front` above it (below the sprites) on
+  `LayerId.DecorFront`, refilled by camera culling at the end of every tick, plus the optional
+  additive `glowBack` / `glowFront` halves (R3-06.L4). Either half is `null` when no kept item
+  draws; the batches are also members of `WorldView.batches` (in layer order, after their owners),
+  so a renderer that reads only `batches` draws decor. The full story — the content, the glows and
+  the animated parallax bands — is in [Stage decor, painted bands and additive
+  glows](#stage-decor-painted-bands-and-additive-glows-r3-06) below.
 
-Both are presentation mirrors: `hashWorld` skips them (a test checks that changing them leaves the
-hash alone), and the flight scene and the scene flow's view pass them through when they build
-their own `WorldView` (`effects: view.effects ?? null`, `hitboxes: view.hitboxes ?? null`).
+All three are presentation mirrors: `hashWorld` skips them (a test checks that changing them leaves
+the hash alone), and the flight scene and the scene flow's view pass them through when they build
+their own `WorldView` (`effects: view.effects ?? null`, `hitboxes: view.hitboxes ?? null`) —
+decor needs no separate pass because its batches ride inside `view.batches` (a stage-less flight
+decorates nothing).
 
 ## Raster tables (`render-pixi` `effects/raster.ts`)
 
@@ -246,6 +257,70 @@ pushes near pixels away and its report lists them.
 Whole-sprite palette swaps stay pre-rendered variants (player 2's `@p2`, the colour-blind bullet
 sets).
 
+## Stage decor, painted bands and additive glows (R3-06)
+
+R3-06 gave the stage file three presentation-only tools — still **decor**, **animated and
+vertically-moving parallax bands**, and **additive glows** — with three new layers to carry them:
+`LayerId.DecorBack` (2, "Decor behind the terrain"), `LayerId.DecorFront` (4, "Decor in front of
+the terrain, behind the sprites") and `LayerId.Foreground` (12, "Foreground parallax band — in
+front of the ship, below the bullets"). None touches the simulation; the schema's own words for a
+decor entry: "Presentation only — the simulation never reads decor."
+
+**Decor (`decor`).** Up to `MAX_STAGE_DECOR` (256) entries `{ layer, sprite | tile, frame, x, y,
+glow? }` — "an atlas sprite or a tileset tile pinned to a fixed world position, drawn on the
+`back` layer behind the terrain or the `front` layer in front of it, culled by the camera like the
+terrain and drawn from the zone's atlas pages". The loader (`checkStageDecor`) wants exactly one
+of `sprite` / `tile` and an entry starting inside the stage. `core/stage` `createDecorView` /
+`updateDecorView` keep the visible window (camera x ± `DECOR_CULL_MARGIN` 512) refilled at the end
+of every tick, and the batches ride inside `WorldView.batches` — a renderer that draws only
+batches draws decor, and each batch lands in its own layer container, so the list order cannot
+mix them.
+
+**Bands that move and paint (`parallax`).** Each band gained optional `yFactor` (−4…4 — "0 = the
+band holds its playfield row while the camera pans, 1 = it moves with the playfield; omitted =
+0"), `frames` (1…64 — "the band cycles the sprite and its `@f1` … siblings; omitted = frame 0
+only") and `frameTicks` (1…3600, omitted = 8); the `layer` name gained `fore`. `checkStageDecor`
+caps the list at `MAX_PARALLAX_BANDS` (6) background bands plus at most one `fore`. The renderer
+reads the animated frame through `ParallaxView.frameIndex` — "A core-built view always carries it;
+absent (an older fixture view) means frame 0 everywhere" — so every static shipped band draws
+exactly as before the change; `createParallaxBinding` / `bindWorld` accept the `Foreground` layer
+as the band's home (R3-06.L3).
+
+**Additive glows (L4).** An enemy, a boss part or a decor entry may name a `glow`: "Atlas sprite
+name of the glow drawn additively over" its owner (R3-06.L4; default none, the key stays absent).
+It is a plain interned `s.str` with the sprite-table check, deliberately not an `s.ref` — an
+absent `s.ref` would write `<field>Id = -1` for every non-glowing ship of content and move the
+resolved shape and the content-DB fingerprints. On the contract, a `SpriteBatchView` gained
+`blend?: SpriteBatchBlend` (`'normal' | 'additive'`, absent = normal — every older batch keeps its
+shape) and the views gained the glow halves (`DecorView.glowBack` / `glowFront`, the enemies'
+`glowGroundBatch` / `glowAirBatch`, the bosses' `glowBackBatch` / `glowBatch`). The batch list:
+enemy and boss glows are "appended after every body so a glow draws over its owner" (on their
+owner's own layer, as the world docblock says), the decor pair sits right after its owners —
+`back`, `glowBack`, `front`, `glowFront`. Part glows follow the part's visibility, enemy glows
+only live-and-not-ghost owners; a glow draws frame 0, unflagged (no `@flash` swap, no palette
+cycle).
+
+**The blend is set once.** render-pixi maps `batch.blend === 'additive'` at `bindWorld` onto a
+sprite set whose line reads `if (additive) sprite.blendMode = 'add';` — at creation only, never
+per frame: changing a live sprite's blend mode rebuilds Pixi's render group (the same law as the
+Mega Crash flash quad).
+
+**Existence rule (per loaded DB).** The systems scan their specs once (`anyGlow` loops) and
+allocate the companions only when the *loaded content DB* names a glow somewhere: "a DB whose
+stages name none adds no batch, so the batch list and every fingerprint stay unchanged; once one
+stage names a glow the companions exist everywhere, empty until an owner glows". Since L6 the
+shipped `decor-range` content names glows, so every World carries the four enemy/boss companions
+— empty, hence zero draw calls, until an owner glows; the campaign stages name none, so no
+campaign frame draws one. L6 re-pinned the content-DB, presentation and shell fingerprints because
+its new sprite and stage ids shift sorted positions, not because a campaign pixel moved.
+
+**Content.** `content/stages/decor-range.stage.json` (DECOR RANGE, R3-06.L6) exercises all of it
+at once: 7 bands (6 back, one `fore`, all with `yFactor`, cycling `@f1` strips), 12 decor entries
+(sprite and tile forms, one with a glow), a glow-mote enemy and the DECOR WARDEN boss whose vent
+glows, with `test/e2e/decor.spec.ts` checking the browser. It is a v2-only dev range — carved out
+of the v1-baseline "covers every shipped stage" list by `POST_V1_STAGES` in
+`test/golden/v1-baseline.test.ts`, since the frozen v1 cut never had it.
+
 ## The Mega Crash flash
 
 `FlashLook` gained `additive`: the Mega Crash look is now white at **0.7, additive** — the SNES's
@@ -300,8 +375,8 @@ mode. Sizes that are not positive count as 1.
 `HitboxView` slot a white core `2·floor(radius) + 1` px square (1 px below radius 1) inside a
 1-px rim tinted `HITBOX_RIM_TINT` (`0xff3050`), both quads of the atlas's white pixel — no new
 sprite; tints set once at creation. The renderer binds it on the `HITBOX` layer and shows the layer
-only while `showHitbox` is on (the markers are synced only then). The KESTREL's hurt radius 1.5
-draws a 3×3 core in a 5×5 rim, centred on the ship.
+only while `showHitbox` is on (the markers are synced only then). The KESTREL's hurt radius 2.25
+(the port's ×1.5 of 1.5) draws a 5×5 core in a 7×7 rim, centred on the ship.
 
 ## Render interpolation
 
@@ -362,15 +437,17 @@ Electron's own window / refresh settings are M2-17's.
   a 32-px swell profile, so cycling the ramp rolls the swell) and `bg/checker-floor`
   (`FLOOR_TILE_W` 64 × `FLOOR_TILE_H` 48 in strips `FLOOR_BANDS` 2, 2, 3, 3, 4, 5, 6, 7, 8, 8
   whose checker squares `FLOOR_SQUARES` widen towards the bottom, a horizon line on top). Both
-  repeat seamlessly along x and use integer maths only.
-- **`content/stages/raster-range.stage.json`** (RASTER RANGE, 3,600 px at 1 px/tick, checkpoints
-  at 0 and 1,800, no terrain): far stars; on `mid` the sea band at rows 112–152 with a `wave`
-  (amplitude 3, wavelength 20, period 96) and the four-colour cycle (8 ticks a step), the checker
-  floor at rows 152–200 (parallax `factor` 0) with a `lines` effect (factors 0.25 → 1.5 over the
-  generator's ten strips, wrap 64); a heat `haze` (amplitude 2, wavelength 8, period 40) over the
-  stars at rows 40–112 between camera x 1,200 and 2,400; drifter formations and carriers from the
-  test-range roster. `?stage=raster-range` plays it; the stage-runtime integration test plays it
-  like every shipped stage.
+  repeat seamlessly along x and use integer maths only. Both are **served** ×1.5 on the v2 atlas
+  (`bg/sea-swell` 192×60, `bg/checker-floor` 96×72 — the pipeline's nearest-neighbour art scale,
+  3/2 since R2-01's flip), and the dev stage below carries the ported numbers.
+- **`content/stages/raster-range.stage.json`** (RASTER RANGE, 5,400 px at 1.5 px/tick, checkpoints
+  at 0 and 2,700, no terrain): far stars; on `mid` the sea band at rows 204–264 with a `wave`
+  (amplitude 4.5, wavelength 30, period 96) and the four-colour cycle (8 ticks a step), the checker
+  floor at rows 264–336 (parallax `factor` 0) with a `lines` effect (factors 0.25 → 1.5 over the ten
+  ported strips 3, 3, 5, 4, 6, 8, 9, 10, 12, 12, wrap 96); a heat `haze` (amplitude 3, wavelength
+  12, period 40) over the stars at rows 60–204 between camera x 1,800 and 3,600; drifter formations
+  and carriers from the test-range roster. `?stage=raster-range` plays it; the stage-runtime
+  integration test plays it like every shipped stage.
 
 ## Determinism, hashing and golden replays
 
@@ -422,7 +499,7 @@ const bytes = new Uint8Array(table.rows * 4);
 clearRasterTable(table);
 addRasterEffect(table, wave, 30, { x: 0, y: 0 }); // tick 30, camera at 0
 encodeRasterTable(table, bytes); // → true (changed)
-decodeRasterRow(bytes, PLAYFIELD_Y + 112); // → [offset, wrap] of the sea's first row
+decodeRasterRow(bytes, PLAYFIELD_Y + 204); // → [offset, wrap] of the sea's first row
 
 colorCycleStep(25, 8, 4); // → 3: the ramp's position at tick 25
 computeViewport('fit', 1280, 720, FRAME_W, FRAME_H); // → scale 2, 1280×720 at (0, 0)
@@ -460,7 +537,9 @@ const refresh = createRefreshMonitor();
 | `packages/shell/test/dispatch/dispatch-options-display*.test.ts`, `boot/boot*.test.ts`, `flight/flight-effects.test.ts`, `scene-view/scene-view-effects.test.ts` | `connectOptionEvents`' display target and `applyDisplayOptions`; saved options applied at boot, `ShellOptions.effects` winning, interpolation modes; the dev scenes and the scene view passing `effects` / `hitboxes` through |
 | `test/integration/raster-range-runtime.test.ts` | The stage's art matches its effects, the ramp only in the sea and nothing near it on the cycled layer, a headless session driving the layer effects over the whole stage within bounds |
 | `test/integration/palette-cycle-scan.test.ts` | R3-03.V3, the bible §4.4 scan: rule 1 per stage over the sprites and tiles of its cycled layers, rule 2 project-wide margin from all eight reserved ramps (each ramp's own cycle art excepted, the bible exemptions pinned and rot-checked), rule 3 a synthetic fixture that passes clean and names the one planted near-miss — fails CI, never warns (W5-12) |
-| `test/scripts/assets/procedural.test.ts` | `raster-bands`: sizes, seamless repeat, the sea only in `SEA_RAMP`, the floor's strips |
+| `packages/core/test/data/data-stage-decor.test.ts`, `packages/core/test/stage/stage-decor*.test.ts`, `enemies/enemies-glow.test.ts`, `bosses/bosses-glow.test.ts` | R3-06: the `decor` list and the band's new members (caps, the one-`fore` rule, `frameTicks` only on an animated band, exactly one of `sprite` / `tile`), the culling refill and the glow presence / refill rules (the guards in `stage-decor-alloc.test.ts`) |
+| `packages/render-pixi/test/layers/layers-decor*.test.ts`, `test/e2e/decor.spec.ts` | The decor binding (batches added at bind, blend set once, additive sprites), and in a real browser the `fore` band, the frame cycle against the live `frameIndex`, the glow batch's on/off window and the boss glow; screenshots attached |
+| `test/scripts/assets/procedural-raster-bands.test.ts` | `raster-bands`: sizes, seamless repeat, the sea only in `SEA_RAMP`, the floor's strips (file split out of the old `procedural.test.ts` by R4-P.P2 — one file per generator) |
 | `test/golden/` | `raster-range-god`, also played back with `raster` / `cycles` stripped |
 | `test/e2e/raster.spec.ts` | The shader compiles and links in a real WebGL1 context; `?stage=raster-range` draws the wave, cycle and floor (differing from the same frame with the effects off) within 12 draw calls, the haze only in its range, `stretch` filling what `integer` letterboxes, hitbox markers only while on; screenshots attached |
 | `test/e2e/display-options.spec.ts` | Web keyboard and the Tizen build's remote keys: SCALE / SHAKE / FLASHES / HITBOX apply live, are saved on Back and applied at the next boot; without a save the frame is letterboxed and no marker shows |
@@ -509,4 +588,12 @@ const refresh = createRefreshMonitor();
 - **M3-02** (done) — the CRT / scanline pass over the upscaled picture (`createCrtPass`, capped at
   1080 rows) and the Mode-7 floor (`createMode7Floor`, a stage's `mode7` section) as two further
   filters, plus the aspect modes' window and side panels (`computeAspectViewport`) —
-  [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md).
+  [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md). R2-04.P3 later retuned the CRT's
+  scan strengths for the 640×360 frame's ×3 pitch (v1 was ×5 at 1080p): the band is now 3 output
+  rows with 1 dark instead of 5 rows with 2, so both strengths went ×6/5 — `CRT_LIGHT_SCAN` 0.24,
+  `CRT_FULL_SCAN` 0.408 — which keeps v1's mean darkening (0.92 light, 0.864 full); the mask and
+  the vignette are pitch-independent and stayed.
+- **R3-06** (done) — the still stage decor (`DecorBack` / `DecorFront`), the animated and
+  vertically-scrolling parallax bands with their `fore` layer, and the additive glow batches —
+  [Stage decor, painted bands and additive
+  glows](#stage-decor-painted-bands-and-additive-glows-r3-06).

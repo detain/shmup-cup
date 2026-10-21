@@ -39,7 +39,7 @@ combinators), **D30** (hit flash = white sibling sprite).
 ```
 
 The simulation never knows about any of it. It says *what happened* (an enemy exploded at
-`(x, y)`, a shake of magnitude 2 for 20 ticks was requested) and goes on; the presentation
+`(x, y)`, a shake of magnitude 3 for 20 ticks was requested) and goes on; the presentation
 decides what that looks like, from data. Particles have their own RNG, are not part of
 `hashWorld`, and a replay never depends on `content/fx/`.
 
@@ -112,19 +112,23 @@ as a dev dependency so the content test can call the owner.
 |---|---|---|---|
 | `explosion.small` | `fx/explosion-small` | one fireball, 18 ticks | `ExplosionSmall` (+ `spark`) |
 | `explosion.medium` | `fx/explosion-medium` | one fireball, 24 ticks | `ExplosionMedium` (+ `debris`) |
-| `explosion.large` | `fx/explosion-large` | three fireballs within 8 px, staggered by up to 10 ticks | `ExplosionLarge` (+ `debris`), `BossBlast` |
-| `boss.chain` | `fx/explosion-medium` | two scattered fireballs (12 px, 6-tick stagger) | `BossChain`, `BossBlast` |
-| `debris` | `fx/debris` | six grey chunks, gravity 0.06, **normal** blending | `Debris`, `ExplosionMedium`, `ExplosionLarge`, `BossBlast` |
+| `explosion.large` | `fx/explosion-large` | three fireballs within 12 px, staggered by up to 10 ticks | `ExplosionLarge` (+ `debris`), `BossBlast` |
+| `boss.chain` | `fx/explosion-medium` | two scattered fireballs (18 px, 6-tick stagger) | `BossChain`, `BossBlast` |
+| `debris` | `fx/debris` | six grey chunks, gravity 0.09, **normal** blending | `Debris`, `ExplosionMedium`, `ExplosionLarge`, `BossBlast` |
 | `spark` | `fx/spark` | three quick sparks, drag 0.1 | `ExplosionSmall`; sfx `EnemyHit` |
 | `clink` | `fx/spark` | four sparks thrown back left (cone 180° ± 60°) | sfx `Clink` |
 | `bullet.cancel` | `fx/sparkle` | one pale-gold twinkle, 12–16 ticks | `BulletCancel` |
 | `pickup` | `fx/ring` | one growing cyan ring, 12 ticks | sfx `MeterAdvance`, `CapsulePickup` |
-| `muzzle` | `fx/spark` frames 0–1 | two tiny sparks forward (cone ± 30°), 3–5 ticks | sfx `PlayerShot` (`dx` 9) |
+| `muzzle` | `fx/spark` frames 0–1 | two tiny sparks forward (cone ± 30°), 3–5 ticks | sfx `PlayerShot` (`dx` 13.5) |
 | `shield.break` | `fx/spark` | eight sparks in every direction | `ShieldBreak` |
+| `graze` | `fx/sparkle` | one small twinkle, 8–12 ticks | `Graze` (M3-02) |
+| `black.hole` | `fx/ring` | four rings flying out, drag 0.08, 14–20 ticks | `BlackHole` (with `spark`; M3-02) |
 
-`fx/sparkle` (5×5, 4 frames: a plus turning into an ×, then a dot — pale gold so it never reads
-as a bullet) and `fx/ring` (9×9, radius 1…4, cyan fading to blue) are new procedural sprites in
-`scripts/assets/procedural/particles.mjs` ([asset-pipeline.md](asset-pipeline.md)).
+`fx/sparkle` (source 5×5, 4 frames: a plus turning into an ×, then a dot — pale gold so it never
+reads as a bullet) and `fx/ring` (source 9×9, radius 1…4, cyan fading to blue) are procedural
+sprites in `scripts/assets/procedural/particles.mjs`, generated at the v1 source size and served
+×1.5 by the port — `fx/sparkle` 8×8, `fx/ring` 14×14 on the v2 atlas
+([asset-pipeline.md](asset-pipeline.md)).
 
 ## The particle pool (`createParticleSystem`)
 
@@ -167,9 +171,12 @@ simulated ticks with `step(ticks)`; the renderer reads `shakeX`, `shakeY`, `flas
 
 - **Shake.** `shake(magnitude, ticks)` mirrors the sim's `requestShake` exactly: magnitudes
   floored and capped at 64, durations at 600; ignored when either rounds to 0 or the running shake
-  is at least as strong *now*. The amplitude is `ceil(magnitude · ticksLeft / duration)`; like the
-  sim, a request is not counted down on its own tick (the first `step` only clears its "fresh"
-  mark), so at one tick per frame `shakeAmount` equals the sim's `shakeAmount(world.fx)` on every
+  is at least as strong *now*. The three named sim magnitudes are `Small` 2 / `Medium` 3 /
+  `Large` 6 px — R2-04.F1's ×1.5 port of v1's 1 / 2 / 4 px with halves rounded up (decision
+  R2-N7; the owner's feel on the M7 set it). The amplitude is
+  `ceil(magnitude · ticksLeft / duration)`; like the sim, a request is not counted down on its own
+  tick (the first `step` only clears its "fresh" mark), so at one tick per frame `shakeAmount`
+  equals the sim's `shakeAmount(world.fx)` on every
   frame (a test checks it through the whole test boss fight). The offset is the amplitude times a
   fixed 8-step pattern (`SHAKE_PATTERN_X` = `[1, −1, 1, 0, −1, 1, −1, 0]`, `SHAKE_PATTERN_Y` =
   `[0, 1, −1, 1, 0, −1, 1, −1]`), so the same shake always looks the same. `settings.screenShake
@@ -206,8 +213,10 @@ simulated ticks with `step(ticks)`; the renderer reads `shakeX`, `shakeY`, `flas
 
 `SCORE_POPUP_SLOTS` (16) numbers in the pixel font. `show(points, x, y, color)` takes a free slot
 or replaces the **oldest** popup; points are floored, below 1 (or NaN) nothing shows. A popup
-lives `SCORE_POPUP_TICKS` (40) simulated ticks: drawn centred on its x, risen one pixel every 4
-ticks, kept inside the playfield (x within 12 px of the edges, y between the HUD bars), and
+lives `SCORE_POPUP_TICKS` (40) simulated ticks: drawn centred on its x, risen three pixels every
+8 ticks since R2-04.P1 (v1's one pixel every 4, ported ×1.5 in whole pixels — `(age · 3) >> 3`, so
+no fractional argument reaches a Pixi setter; ticks do not scale, the lifetime and blink window
+stay), kept inside the playfield (x within 12 px of the edges, y between the HUD bars), and
 blinking (hidden every other 2 ticks) during its last 10. At most 8 digits are drawn — as many as
 `MAX_SCORE` has.
 
@@ -225,7 +234,7 @@ presentation-only: nothing in the sim reads it, and it is not hashed.
 
 | Where | What |
 |---|---|
-| `FX` layer (9, world group) | the particles' normal set, their additive set, then the popups — above ships, shots and items, **below `ENEMY_BULLETS`** (10), so a bullet is never hidden by an explosion (`shmup_feat.md` §18; a renderer test checks the order) |
+| `FX` layer (11, world group) | the particles' normal set, their additive set, then the popups — above ships, shots and items, **below `FOREGROUND`** (12, R3-06's foreground band layer) **and `ENEMY_BULLETS`** (13), so a bullet is never hidden by an explosion (`shmup_feat.md` §18; a renderer test checks the order) |
 | world group, above every world layer | the **playfield dim** (new, black), then the **flash** quad and — M2-08 — the **additive flash** quad (blend mode `add`, for additive looks; a frame shows one of the two), all 32 px larger than the frame on each side so the shake never uncovers an edge |
 | `UI` layer, first child | the menu dim (`frame.screen.dim`), under the UI list — unchanged |
 | `HUD`, `UI`, `DEBUG` | never shaken |
@@ -279,7 +288,7 @@ sprite table `FX_GALLERY_SPRITES`, camera fixed at 0, 0) it cycles through **sta
 playfield's centre three times per station (every 20 ticks) — then `FX_GALLERY_EXTRAS`: shake
 small / medium / large (40 ticks each), the Mega Crash, WARNING and boss-blast flashes, the dim
 (0.5 for 30 ticks) and a row of white and gold popups. The UI list names the station
-(`3/19  EXPLOSION.LARGE` with the shipped 11 presets — 19 stations, a 19-second cycle); the top
+(`3/21  EXPLOSION.LARGE` with the shipped 13 presets — 21 stations, a 21-second cycle); the top
 bar says `FX GALLERY`, the bottom one `?SCENE=FX-GALLERY`.
 
 It drives the renderer's `particles`, `effects` and `popups` directly; the game's World keeps
@@ -357,7 +366,7 @@ objects.
 | A flash did not show | The limiter dropped it (`effects.flashesSuppressed` counts them): at most 3 starts per 60 ticks, 1 with reduced flashing |
 | The shake is weaker than requested | A stronger shake was still running (a weaker request is ignored, as in the sim) — or `settings.screenShake` is off |
 | The HUD shakes | It must not: only the world group is offset. Check a custom layer was not added to `layers.world` |
-| Bullets hidden by explosions | A layer changed order: particles belong on `FX` (9), below `ENEMY_BULLETS` (10) |
+| Bullets hidden by explosions | A layer changed order: particles belong on `FX` (11), below `ENEMY_BULLETS` (13) |
 | No popup for capsules | Intended — the popup would cover the ship; the ring shows the pickup |
 | Fewer muzzle flashes or clink sparks than shots | The weapon system pushes each of its sounds at most once per `SFX_RATE_TICKS` (4) ticks, at whichever shooter fired — the visual follows the sound |
 | An allocation guard creeps up after touching this code | A tint written every frame, a fractional argument to a non-inlined call, a getter returning a fraction, or a new closure / literal in `emit`, `step` or `sync` — see the table above |
