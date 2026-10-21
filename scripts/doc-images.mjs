@@ -359,9 +359,12 @@ function tileBand(target, tile, y, height, offset) {
  *   (1920×432 at the 640-wide frame; 1152×432 at v1's 384).
  */
 function buildLogoBanner(art) {
-  // The layout is measured on the interim (×3/2) art (R2-03.I1): the logo is 248×41, the
-  // taglines 9-wide glyphs, the KESTREL 24×14, its thruster 9×5, the orb 12×12, the shot
-  // 12×5, and the planet rim one 192×72 tile tall (its height drives the band below).
+  // The layout is measured on the interim (×3/2) art (R2-03.I1): the taglines are 9-wide glyphs,
+  // the KESTREL 24×14, its thruster 9×5, the orb 12×12, the shot 12×5, and the planet rim one
+  // 192×72 tile tall (its height drives the band below). The E1 logo is 330×54 — nine rows taller
+  // than the 248×41 interim sheet this band sat under at y 18 — so R4-05.E6 hangs it from the
+  // band's top row: the bottom row and the nine-row gap are what the taglines are measured on,
+  // and the top falls out of the loaded height (at the interim art's 41 rows it is y 18 again).
   const width = FRAME_W;
   const height = 144;
   const canvas = createImage(width, height);
@@ -376,7 +379,9 @@ function buildLogoBanner(art) {
   if (rim !== undefined) tileBand(canvas, rim, height - rim.height, rim.height, 18);
   const logo = art.frames.get('ui/logo')?.[0];
   if (logo !== undefined) {
-    draw(canvas, logo, Math.floor((width - logo.width) / 2), 18);
+    // Bottom row 59 is where the interim logo sat (y 18 + its 41 rows); it hangs from there so
+    // the taller final logo reaches up, not down into the shade band / taglines below (R4-05.E6).
+    draw(canvas, logo, Math.floor((width - logo.width) / 2), 59 - logo.height);
   }
   shadeBand(canvas, 68, 52, 0.6);
   drawText(canvas, art, 'THE IRON TIDE HAS RISEN', width / 2, 78, TITLE_INK, true);
