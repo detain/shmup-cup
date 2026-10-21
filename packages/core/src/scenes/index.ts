@@ -7091,48 +7091,62 @@ const ABYSS_BUBBLES: readonly number[] = Object.freeze([
 const ABYSS_BUBBLE_X: readonly number[] = uiOffsets(ABYSS_BUBBLES.filter((_, i) => i % 3 === 0));
 
 /**
- * The ending scenes' composition, laid out from the frame's top-left (R4-05 redraws them): where
- * the pieces sit, at the art's scale.
+ * The ending scenes' composition, laid out on the v2 frame (R4-05.E4): the citadel's ground and
+ * the deep's water span the whole 640×360, and the pieces hang centre-left, centre-right or off
+ * the ground line — not at a v1 corner scaled by 3/2.
  */
 const ENDING_SCENE_LAYOUT = Object.freeze({
   /** Player 2's ship behind player 1's: left (22) and down (14). */
   p2Dx: uiPx(22),
   p2Dy: uiPx(14),
-  /** The citadel: the sun (292, 118), the horizon band (104, 16 tall), the fortress (100, 68). */
-  sunX: uiPx(292),
+  /**
+   * The citadel: the sun (464, 177), the ground (from 156 to the frame's bottom edge), the
+   * fortress (200, 102 — its 108-px art stands on the ground line).
+   */
+  sunX: FRAME_CX + uiPx(96),
   sunY: uiPx(118),
-  horizonY: uiPx(104),
-  horizonH: uiPx(16),
-  citadelX: uiPx(100),
-  citadelY: uiPx(68),
-  /** The citadel scene's ship: where it waits (150) and its row (64). */
-  shipX: uiPx(150),
+  groundY: uiPx(104),
+  groundH: FRAME_H - uiPx(104),
+  citadelX: FRAME_CX - uiPx(80),
+  citadelY: uiPx(104) - uiPx(36),
+  /** The citadel scene's ship: where it waits just off the fortress's right flank (290, 96). */
+  shipX: FRAME_CX - uiPx(20),
   shipY: uiPx(64),
-  /** The deep: the water (16 down, 104 tall), the sun (300), the surface's row (20) and tiles. */
-  waterY: uiPx(16),
-  waterH: uiPx(104),
-  deepSunX: uiPx(300),
+  /**
+   * The deep: the water (from 36 to the frame's bottom edge), the sun (500), the surface's
+   * row (30) and tiles.
+   */
+  waterY: uiPx(24),
+  waterH: FRAME_H - uiPx(24),
+  deepSunX: FRAME_CX + uiPx(120),
   surfaceY: uiPx(20),
   surfaceStep: uiPx(64),
   surfaceDx: uiPx(32),
-  /** The flagship (250, 74), sunk out of sight below 112, sailed off past `FRAME_W + 76`. */
-  arkX: uiPx(250),
+  /**
+   * The flagship (395, 111), sunk out past the frame's bottom edge, sailed off past
+   * `FRAME_W + 114`.
+   */
+  arkX: FRAME_CX + uiPx(50),
   arkY: uiPx(74),
-  arkBottom: uiPx(112),
+  arkBottom: FRAME_H + uiPx(28),
   arkExit: FRAME_W + uiPx(76),
-  /** The bubbles' lowest row (116). */
-  bubbleY: uiPx(116),
-  /** The deep's ship: where it starts (110, 110). */
+  /**
+   * The bubbles: their lowest row (354) and their rise's reach (130 steps of 2.5 px, so they
+   * break at the surface's light).
+   */
+  bubbleY: FRAME_H - uiPx(4),
+  bubbleRise: 130,
+  /** The deep's ship: where it starts (165, 165), rising into the surface's light. */
   deepShipX: uiPx(110),
   deepShipY: uiPx(110),
 });
 
 /**
- * The ending scenes' lowest row: the citadel's horizon band and the deep's water both end there
- * (120; 180 at 640×360). What a scene draws below it — the sun before it rises, the citadel and
- * the ARK sinking — is hidden by the epilogue's panel.
+ * The ending scenes' panel line: 24 px under the citadel's ground line, where the ground band's
+ * nominal depth reached (180) — the epilogue's panel anchors below it (v1's band bottom; R4-05.E4
+ * keeps the panel's row while the bands themselves now span to the frame's bottom edge).
  */
-const ENDING_SCENE_BOTTOM = ENDING_SCENE_LAYOUT.horizonY + ENDING_SCENE_LAYOUT.horizonH;
+const ENDING_SCENE_BOTTOM = ENDING_SCENE_LAYOUT.groundY + uiPx(16);
 
 /** The epilogue panel's margin under the scene's lowest row and above the bottom edge (4). */
 const ENDING_TEXT_MARGIN = uiPx(4);
@@ -7436,7 +7450,7 @@ export class EndingScene extends SceneBase {
       const rise = t < 120 ? 0 : t > 420 ? 30 : Math.floor((t - 120) / 10);
       list.sprite(sprites.endingSun, 0, L.sunX, L.sunY - ((rise * ART_HALVES) >> 1));
     }
-    list.rect(0, L.horizonY, FRAME_W, L.horizonH, 0x0c1018);
+    list.rect(0, L.groundY, FRAME_W, L.groundH, 0x0c1018);
     const fallen = t >= ENDING_SCENE_TICKS;
     if (!fallen && sprites.endingCitadel >= 0) {
       const sink = t < 360 ? 0 : Math.floor((t - 360) / 8);
@@ -7487,7 +7501,9 @@ export class EndingScene extends SceneBase {
         const ax = L.arkX + (((t >> 2) * ART_HALVES) >> 1);
         if (ax < L.arkExit) list.sprite(sprites.endingArk, 0, ax, L.arkY);
       } else {
-        const ay = L.arkY + ((Math.floor(t / 8) * ART_HALVES) >> 1);
+        // The taller v2 water: the wreck sinks at 0.75 px a tick, out past the frame's bottom
+        // edge about where the citadel falls at the scene's end.
+        const ay = L.arkY + ((Math.floor(t / 2) * ART_HALVES) >> 1);
         if (ay < L.arkBottom) list.sprite(sprites.endingArk, 0, L.arkX, ay);
       }
     }
@@ -7495,8 +7511,10 @@ export class EndingScene extends SceneBase {
       const count = ABYSS_BUBBLES.length / 3;
       for (let k = 0; k < count; k++) {
         const rise =
-          (Math.floor((t * ABYSS_BUBBLES[k * 3 + 1]) / 8) + ABYSS_BUBBLES[k * 3 + 2]) % 92;
-        const y = L.bubbleY - ((rise * ART_HALVES) >> 1);
+          (Math.floor((t * ABYSS_BUBBLES[k * 3 + 1]) / 8) + ABYSS_BUBBLES[k * 3 + 2]) %
+          L.bubbleRise;
+        // 2.5 px a step — the v2 water is twice as deep, so the streams run up it faster.
+        const y = L.bubbleY - ((rise * 5) >> 1);
         list.sprite(sprites.endingBubble, 0, ABYSS_BUBBLE_X[k], y);
       }
     }
@@ -7726,36 +7744,43 @@ export const STORY_HOLD_TICKS = 90;
 export const STORY_STRING_SLOTS = 10;
 
 /**
- * The story's sprite scenes' composition, laid out from the frame's top-left (R4-05 redraws them):
- * where the pieces sit, at the art's scale.
+ * The story's sprite scenes' composition, laid out on the v2 frame (R4-05.E4 — the same pieces as
+ * the endings, so the same anchors: centre-left, centre-right, off the horizon line).
  */
 const STORY_SCENE_LAYOUT = Object.freeze({
-  /** The dawn: the star's lowest row (104), the sea (100, 24 tall), the surface's row (98). */
+  /**
+   * The dawn: the star's lowest row (156), the sea (from 150 to the frame's bottom edge),
+   * the surface's row (147).
+   */
   sunY: uiPx(104),
   seaY: uiPx(100),
-  seaH: uiPx(24),
+  seaH: FRAME_H - uiPx(100),
   surfaceY: uiPx(98),
-  /** The sea surface's tiles: their pitch (64) and offset (32). */
+  /** The sea surface's tiles: their pitch (96) and offset (48). */
   surfaceStep: uiPx(64),
   surfaceDx: uiPx(32),
-  /** The invasion: the fortress (270, 70) and the flagship (330, 100) where they stop. */
-  citadelX: uiPx(270),
+  /** The invasion: the fortress (455, 105) and the flagship (530, 150) where they stop. */
+  citadelX: FRAME_CX + uiPx(90),
   citadelY: uiPx(70),
-  arkX: uiPx(330),
+  arkX: FRAME_CX + uiPx(140),
   arkY: uiPx(100),
-  /** The launch: the ships start 16 px left of the edge, on rows 56 and 32 px apart. */
+  /** The launch: the ships start 24 px left of the edge, on rows 84 and 48 px apart. */
   shipStartX: uiPx(16),
   shipY: uiPx(56),
   shipStep: uiPx(32),
-  /** A ship's trail: 40 px behind it, 24 long. */
+  /** A ship's trail: 60 px behind it, 36 long. */
   trailDx: uiPx(40),
   trailW: uiPx(24),
-  /** The logo's row (72). */
+  /** The logo's row (108). */
   logoY: uiPx(72),
 });
 
-/** The story's sprite scenes' lowest row: the dawn's sea ends there (124; 186 at 640×360). */
-const STORY_SCENE_BOTTOM = STORY_SCENE_LAYOUT.seaY + STORY_SCENE_LAYOUT.seaH;
+/**
+ * The story's sprite scenes' panel line: 24 px under the dawn's sea line, where the sea band's
+ * nominal depth reached (186) — the crawl's panel anchors below it (R4-05.E4 keeps the row while
+ * the sea now spans to the frame's bottom edge).
+ */
+const STORY_SCENE_BOTTOM = STORY_SCENE_LAYOUT.seaY + uiPx(24);
 
 /**
  * Height of the story crawl's window: it holds seven rows at a time — six

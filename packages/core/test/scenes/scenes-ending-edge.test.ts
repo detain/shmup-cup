@@ -536,19 +536,21 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(s.flow.run.endingFlags & RunFlag.NoDeath).toBe(RunFlag.NoDeath);
     const sp = s.sprites;
     const ship = s.game.world.ship.spriteId;
-    // The scene's pieces sit at the art's scale (the v1 positions in the comments).
-    const sun = uiPx(292);
+    // The v2 scene composes on the frame (R4-05.E4): the fortress left of centre, its 108-px art
+    // standing on the ground line, the dawn sun centre-right.
+    const sun = FRAME_CX + uiPx(96);
     const sunY = uiPx(118);
-    const citadel = uiPx(100);
-    const citadelY = uiPx(68);
+    const citadel = FRAME_CX - uiPx(80);
+    const citadelY = uiPx(104) - uiPx(36);
     s.endingAt(100);
-    expect(s.spriteAt(sp.endingSun)).toEqual([[sun, sunY]]); // 292, 118
-    expect(s.spriteAt(sp.endingCitadel)).toEqual([[citadel, citadelY]]); // 100, 68
+    expect(s.spriteAt(sp.endingSun)).toEqual([[sun, sunY]]); // 464, 177
+    expect(s.spriteAt(sp.endingCitadel)).toEqual([[citadel, citadelY]]); // 200, 102
     expect(s.spriteAt(ship)).toHaveLength(1);
-    // The ship accelerates away from x 150 and is gone past `FRAME_W + 36` (t 315 at 384×216).
+    // The ship accelerates away from x 290 and is gone past `FRAME_W + 36` (t 332 at 640×360).
     const exit = FRAME_W + uiPx(36);
+    const shipX = FRAME_CX - uiPx(20);
     let gone = 60;
-    while (uiPx(150) + scenePx(Math.floor(((gone - 60) * (gone - 60)) / 240)) < exit) gone++;
+    while (shipX + scenePx(Math.floor(((gone - 60) * (gone - 60)) / 240)) < exit) gone++;
     gone += gone & 1; // the scene redraws on even ticks
     expect(gone).toBeLessThan(400);
     s.endingAt(gone - 2);
@@ -581,20 +583,20 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.toEnding(true);
     const sp = s.sprites;
     const ship = s.game.world.ship.spriteId;
-    // A flawless run: the dawn above the surface; the surface tiled across the frame (seven
-    // 64-px tiles at 384×216).
-    expect(s.spriteAt(sp.endingSun)).toEqual([[uiPx(300), 0]]);
+    // A flawless run: the dawn above the surface; the surface tiled across the frame (eight
+    // 96-px tiles at 640×360).
+    expect(s.spriteAt(sp.endingSun)).toEqual([[FRAME_CX + uiPx(120), 0]]); // 500
     expect(s.spriteAt(sp.endingSurface).length).toBe(Math.ceil(FRAME_W / uiPx(64)) + 1);
-    // The ship starts at (110, 110), the ARK at (250, 74) — at the art's scale.
+    // The ship starts at (165, 165), the ARK at (395, 111) — the v2 frame composition.
     const shipX = uiPx(110);
     const shipY = uiPx(110);
-    const ark = uiPx(250);
+    const ark = FRAME_CX + uiPx(50);
     const arkY = uiPx(74);
     s.endingAt(240);
     expect(s.spriteAt(ship)).toEqual([[shipX, shipY - scenePx(40)]]); // half way up
-    expect(s.spriteAt(sp.endingArk)).toEqual([[ark, arkY + scenePx(30)]]);
-    s.endingAt(304);
-    expect(s.spriteAt(sp.endingArk)).toEqual([]); // under
+    expect(s.spriteAt(sp.endingArk)).toEqual([[ark, arkY + scenePx(120)]]); // 0.75 px a tick
+    s.endingAt(388);
+    expect(s.spriteAt(sp.endingArk)).toEqual([]); // sunk past the frame's bottom edge
     s.endingAt(480);
     expect(s.spriteAt(ship)).toEqual([[shipX, shipY - scenePx(80)]]); // at the light
     s.endingAt(490);
@@ -613,7 +615,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     const escape = new Session(content(file));
     escape.toEnding(true, RunFlag.BossEscaped);
     expect(escape.flow.run.ending?.id).toBe('l-escape');
-    // It sails off right, 1 px every 4 ticks, and is gone past `FRAME_W + 76` (t 840 at 384×216).
+    // It sails off right, 1 px every 4 ticks, and is gone past `FRAME_W + 76` (t 957 at 640×360).
     let sailed = 0;
     while (ark + scenePx(sailed >> 2) < FRAME_W + uiPx(76)) sailed++;
     escape.endingAt(sailed - 4);
