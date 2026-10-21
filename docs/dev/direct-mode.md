@@ -279,7 +279,8 @@ slots 0–3 only.
 Pixel maps `ships/manta` (3 frames, a green canopy) and `enemies/cube`; the generator
 `scripts/assets/procedural/direct.mjs` draws the shots (`shots/direct-missile`, `disc`, `beam`,
 `wave`, `sub-bomb`, `sub-laser`, `sub-laser-wide` — 8 octant frames each, nothing rotated at run
-time —, `sub-disc`), the six items and `shields/arm`. The atlas stays 512×512. The new engine
+time —, `sub-disc`); since R4-P.P1 `direct-items.mjs` draws the six items and `arm.mjs` the
+`shields/arm`. The atlas stays 512×512. The new engine
 sprites (`DIRECT_ITEM_SPRITES` via `ITEM_SPRITES`, `ARM_SPRITE` via `SHIELD_SPRITES`) are part of
 `ENGINE_SPRITES`, so `pnpm content:check` checks them against the atlas.
 

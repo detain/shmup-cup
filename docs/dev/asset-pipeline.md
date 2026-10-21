@@ -126,10 +126,10 @@ atlas. That is where core's `GLYPH_W` / `GLYPH_H` / `LINE_H` come from — the f
 1 or 2 px wide by position and look uneven; it is temporary until R4-03's redraw.
 
 **The `artScale: 1` builds** (decision W4-6): the TV bench's density atlas is built with
-`buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above), the store
-icons (`scripts/store-assets.mjs`) and the doc images (`scripts/doc-images.mjs`) build at scale 1
-until R2-03 switches the doc images to the default; the store icons keep the v1 art until R4-05
-(W4-6, RR-3). Scale 1 means *the v1 art at either frame* — the
+`buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above) and the store
+icons (`scripts/store-assets.mjs`) build at scale 1 — the store icons keep the v1 art until R4-05
+(W4-6, RR-3); the doc images built at scale 1 too until R2-03 switched them to the default scale
+(`doc-images.mjs` now calls `collectSprites()` plain — `356e7b2`). Scale 1 means *the v1 art at either frame* — the
 bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
 
 **The atlas with interim art** — what `pnpm assets` writes today: 438 sprites and **1,459** frames
@@ -142,15 +142,17 @@ R3-03.V1's native bullets; the interim ×1.5 upscale had written 139,944 B), far
 in R3-04.M2b; `test/scripts/assets/atlas-budget.ts`), and a 204,896 B `main.json`.
 The sprite *names* do not change, so the interim art packs into the same zone groups (R1-05).
 
-**Hand-offs to R3.** The `artScale: 1` builds pass real-art PNG overrides and `native` sources
-through at their v2 size — so once R3 art ships they no longer hold pure v1 art and
-`interim-pipeline.test.ts`'s scale-1 digest pin moves; R3 must decide whether `artScale: 1` skips
-overrides and native sources (the pin holds) or is re-pinned with the reason. Related:
-`applyPngOverrides` keeps the remaining base frames when an override has fewer, which at 3/2 puts
-upscaled v1 frames beside v2 ones — R3 decides whether a partial override is allowed. And
-`*.font.json` has no `native` key yet: when R4-03 lands the real 9×12 font file, either give font
-sources one that the interim stage honours or drop the font scale, or a 3/2 build turns the 9×12
-font into 14×18 (both the font pin and the scale-1 digest pin would move).
+**Hand-offs to R3 — resolved by R4-P.P3 (decision RR-1).** The open question whether the
+`artScale: 1` builds pass v2 art through is answered: they pass **none** of it — see
+[v2 sources beside v1](#v2-sources-beside-v1-r4-pp3) below. At scale 1 a real-art PNG override of
+a name that has a code source is dropped, `*.v2.sprite.json` maps and `native: true` fonts are
+never read, and a generator of v2-only art returns nothing — so `interim-pipeline.test.ts`'s
+scale-1 digest pin (`fa4198…47f54`) holds **by construction** and committing v2 art can never move
+it, the TV bench's density atlas, the CJK figures or the store icons with it. `applyPngOverrides`
+still keeps the remaining base frames when an override has fewer — the partial override a real-art
+step ships on purpose. And `*.font.json` **has** its `native` key now (`font.mjs`): R4-03's
+redrawn font arrives as the v2 font beside the 6×8 file, unscaled at the art scale, so no 3/2
+build turns its 9×12 into 14×18 and the font pin and the scale-1 digest pin never move.
 
 ## Sources
 
@@ -187,10 +189,55 @@ One file per sprite under `assets/source/sprites/`. The **sprite name is the pat
 Unknown fields are errors. The files are hand-laid (one row per line) and excluded from
 Prettier (`.prettierignore`), because Prettier would fold short row arrays onto one line.
 
+### v2 sources beside v1 (R4-P.P3)
+
+Decision RR-1 (amended by RR-1a / RR-1b): the v2 art **arrives beside** v1's in the same source
+tree — nothing is renamed or moved, and the scale-1 (v1) build never sees a pixel of it. The
+mechanism shipped with R4-P.P3; it carries no committed pixel maps or fonts yet — the first real
+v2 sources arrive through R4-01.A2, R4-03 and R4-05.E2.
+
+- A `<path>.v2.sprite.json` (`SPRITE_SOURCE_V2_SUFFIX`, `sprite-source.mjs`) is the v2 pixel map
+  of the sprite `<path>` names. Its `native` is **implied** — a v2 map reads as `native: true`
+  even if it declares `false` — and it is collected in a list of its own; two v2 maps shortening
+  to one name is a source issue. At an art scale ≠ 1 it replaces the v1 source of its name,
+  unscaled; at scale 1 it is ignored (`pipeline.mjs`, the RR-1 block in `collectSprites`).
+- A v2-only **new name** (no v1 source behind it) simply joins the non-1 build and is absent from
+  the scale-1 atlas — there is no v1 stand-in (RR-1a). `pipeline-v2-sources.test.ts` proves it on
+  its `items/gem-v2` fixture, with the page groups compared **as sets**: a v2-only name may add a
+  page, never a group. A generator reaches the same rule by returning v2-only sprites only at
+  `(options.artScale ?? 1) !== 1` — a call without options draws v1 (`decor.mjs` is the first,
+  the eight R3-06.L6 sprites below; `pipeline.test.ts`'s 256² spill case is its second proof:
+  decor emits nothing in the scale-1 source set). Frame counts beyond v1's live in the v2 art
+  only (RR-1b — the beams' 12 frames at 3/2, v1's 8 unchanged).
+- A font file with `"native": true` is the v2 font of its `name` (`font.mjs`): the flag rides only
+  on v2 files, and a native font is built only at an art scale ≠ 1 — there it stands at its own
+  cell, unscaled, and the interim-scaled v1 font of that name is not drawn; at scale 1 only the
+  v1 file exists for its name.
+- At scale 1 a PNG override of a name that has a **code source** — a pixel map, a procedural
+  sprite, or either's v2 sibling — is **skipped** (`collectSprites`' override filter); a v1-only
+  name, like the M3-03 CJK figures, still applies at every scale. Committing v2 art can therefore
+  never move the scale-1 atlas: the digest pin, the TV bench, the CJK figures and the store icons
+  stay byte for byte until a step re-pins them on purpose — until a v2.0.x clean-up after the
+  release deletes the v1 sources (deferred from R6-03).
+- `scripts/frame.mjs` (the scripts' pinned frame mirror) joined the pipeline's `CODE_HASH`: the
+  hash is `hashTree(PIPELINE_DIR)` plus the `pngjs` / `zlib` versions plus the frame file's bytes
+  hashed explicitly, so a frame flip alone invalidates a cached build.
+- `scripts/assets/v2kit.mjs` (R4-P.P4) is the shared drawing kit the v2 generator paths and the
+  future ingest recipes use: `outlineColour` / `outline` / `topLeftLight` / `bottomRightShade`,
+  and `offRamp` — a deterministic ±6-per-channel search in L1-ring order (a ±3 box first) away
+  from the eight reserved ramps, minimum distance `RAMP_MIN_DISTANCE` 3, and every shipped ramp
+  clears inside ±3 — with the frame sizes re-exported from `scripts/frame.mjs`. It lives
+  **outside** `procedural/`, so the registry never counts it, and nothing ships through it yet
+  (`test/scripts/assets/v2kit.test.ts`).
+
 ### Procedural generators (`scripts/assets/procedural/`)
 
 Each module exports `generate(options?: GeneratorOptions): SpriteDef[]` and is registered in
-`procedural/index.mjs` (`PROCEDURAL_GENERATORS`). Since R2-01 `GeneratorOptions` is
+`procedural/index.mjs` (`PROCEDURAL_GENERATORS`, the entries sorted by id — **34** since R4-P.P1
+split the four shared modules below into `direct-items` / `arm` / `blackhole` / `logo` and
+pre-registered the stubs `thrusters` / `title` / `ui-kit` / `decor`, so no later R4 or R3-06
+step edits the registry (wave-07 rule 6); the stubs generate nothing until the step that fills
+them — R3-06.L6 already filled `decor`). Since R2-01 `GeneratorOptions` is
 `{ tileSize?, artScale? }`: the pipeline passes both to every generator — `terrain` draws its
 tilesets at `tileSize` and `lasers` / `palettes` draw the beams at the build's `artScale` — for
 the `native` sprites the interim stage never upscales (the "Never upscaled" list, above).
@@ -201,10 +248,10 @@ the `native` sprites the interim stage never upscales (the "Never upscaled" list
 | `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width. M2-02: `lasers/bend-{pink,red,purple}` — the bending lasers' segment, one 7×7 round blob (`BEND_SIZE`; rim outside radius 2.6, body, a bright core inside 1.3) drawn at every node; at the v2 build scale the blob is drawn native at **11×11** (`BEND_SIZE_V2`, R3-03.V1 — `BEND_SIZE` at scale 1). Both drawn by `laserSprites(colours, suffix?, generator?)` |
 | `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up. At the v2 build scale it passes the scale through, so the variants carry the native v2 shapes frame for frame (R3-03.V1). And since R3-03.V5 a bullet / beam / bend whose frames come from a real-art PNG override gets its variants **recoloured from that art** instead of redrawn (decision W5-13, [below](#real-art-png-overrides)) |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
-| `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14) |
+| `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14); M3-02's `fx/black-hole` left for `blackhole` in R4-P.P1 (below) |
 | `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`|dx| + |dy| ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips; M2-04: `items/capsule-blue` (12×8 × 2, `blink`) — the same pill in blue with a white core (`capsule(bright, tint)`, `CAPSULE_COLORS`); M2-10: `items/capsule-bonus` (12×8 × 2, `blink`) — the pill in gold, the 1,000-point bonus capsule — and `items/1up` (12×8 × 2, `blink`) — the pill in green with a white `+` (`oneUp(bright)`), the bonus stages' extra life |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`); M2-04: `shields/pod` (8×8 × 4 wear states, same names — a faceted orange-gold gem that dims to red and loses facets, seeded holes) and `shields/reduce` (20×14 × 2: `full`, `worn` — a dotted green ring round the shrunken ship, every 2nd / 4th ring pixel lit) |
-| `direct` | M2-05 (`shmup_feat.md` §6B / §7B / §9): the MANTA's shots — `shots/direct-missile` (12×6 × 2: the weak and the wide missile), `shots/disc` (20×20 × 4, radius 3.5 → 9.5), `shots/beam` (26×8 × 4: blue lasers, a longer yellow one, the round piercing laser), `shots/wave` (16×34 × 4 crescent waves), `shots/sub-bomb` (6×6), `shots/sub-laser` (9×9) and `shots/sub-laser-wide` (11×11) with **8 octant frames** each (frame `k` = `k × 45°` clockwise from right — the engine picks the heading's octant, nothing is rotated at run time), `shots/sub-disc` (12×12 × 2); the colour items `items/direct-{red,green,blue,orange,yellow}` (10×10 × 2 glossy orbs, `blink`) and `items/direct-octagon`; the Arm `shields/arm` (26×18 × 9: per tier — green, silver, gold — fresh / worn / critical; animations `arm`, `superArm`, `hyperArm`) — only exactly rounded maths |
+| `direct` | M2-05 (`shmup_feat.md` §6B / §7B / §9): the MANTA's shots — `shots/direct-missile` (12×6 × 2: the weak and the wide missile), `shots/disc` (20×20 × 4, radius 3.5 → 9.5), `shots/beam` (26×8 × 4: blue lasers, a longer yellow one, the round piercing laser), `shots/wave` (16×34 × 4 crescent waves), `shots/sub-bomb` (6×6), `shots/sub-laser` (9×9) and `shots/sub-laser-wide` (11×11) with **8 octant frames** each (frame `k` = `k × 45°` clockwise from right — the engine picks the heading's octant, nothing is rotated at run time), `shots/sub-disc` (12×12 × 2) — only exactly rounded maths; R4-P.P1 split the six colour items into `direct-items` and the Arm into `arm` (the rows below) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `raster-bands` | M2-08 (`shmup_feat.md` §18): backdrops made for the raster effects and palette cycling — `bg/sea-swell` (`SEA_TILE_W` 128 × `SEA_TILE_H` 40, opaque, anchored top-left) painted **only** in the four colours of `SEA_RAMP` (`#183c78`, `#24569c`, `#3474bc`, `#5096d8`, dark → light — the exact ramp a stage's palette cycle names): 3-px rows whose ramp index steps with the row and bumps with a 32-px swell profile, so cycling the ramp rolls the swell and a `wave` effect wobbles it; `bg/checker-floor` (`FLOOR_TILE_W` 64 × `FLOOR_TILE_H` 48) — a checker floor in ten strips `FLOOR_BANDS` (2, 2, 3, 3, 4, 5, 6, 7, 8, 8 rows) whose squares `FLOOR_SQUARES` widen towards the bottom (4 → 32 px; each divides 32, so the tile repeats every 64 px), `FLOOR_COLORS` plus a horizon line — made for a `lines` effect with the same strips as its `bands`. Integer maths only ([presentation-polish.md](presentation-polish.md#content-and-assets)) |
@@ -221,7 +268,13 @@ the `native` sprites the interim stage never upscales (the "Never upscaled" list
 | `ending` | M2-14 (`shmup_feat.md` §17): `ENDING_SPRITES` (6) — the ending scenes' UI sprites, anchored at their centres (`core/ui` `UI_SPRITES`, so part of `ENGINE_SPRITES`): `ui/ending-citadel` (128×72: stepped towers and walls with amber windows), `ui/ending-ark` (112×36: the ARK's silhouette with a tail fluke), `ui/ending-blast` (24×24 × 4: flash → ring → smoke), `ui/ending-bubble` (6×6), `ui/ending-sun` (64×32: the upper half of a pale-gold sun with rays), `ui/ending-surface` (64×8: the sea's surface from below; its period divides its width, so it tiles) |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 — the 7 slot labels in meter order, then since M2-03 the Types B–D weapon names `SPREAD 2-WAY TORPEDO TAIL VERTICAL FREE WAY RIPPLE CYCLONE TWIN`: 16 frames in the order of `@shmup/core` `METER_LABEL_FRAMES`, which a test keeps equal to `METER_LABELS`; original 3×5 micro glyphs, M2-03 added `C F V W Y 2 - space`) |
 | `weapons` | M2-03 (`shmup_feat.md` §7A): `shots/blast` (32×32 × 4, centred — the Spread Bomb's blast: a hot disc opening into a ring, cooling white-yellow → orange → red; an engine sprite), `shots/ripple` (24×44 × 6, centred — the Ripple's upright ring at half heights 4 → 20 with half the width; the engine picks the frame from the ring's size), `shots/cyclone` (8×9 × 4, anchored at the left end of the middle row — one Cyclone Laser segment, two violet strands twisting round a white core, one wave period per segment so it tiles; the engine steps the frames along the beam). Triangle waves and square roots only |
-| `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name), `ui/logo` (M1-16: the 165×27 title logo `SHMUP CUP` — original 5×7 block letters ×3 (`LOGO_TEXT`, `LOGO_SCALE`), a yellow → orange → red gradient with a highlight row, a dark outline and a 2-px drop shadow; anchored at its centre) |
+| `ui` | `ui/pixel` (1×1 white, for rectangles) and `ui/missing` (8×8 magenta checker the renderer shows for an unknown name); `ui/logo` (M1-16) left for `logo` in R4-P.P1 (below) |
+| `direct-items` | R4-P.P1 (out of `direct`): the six colour items — `items/direct-{red,green,blue,orange,yellow}` (10×10 × 2 glossy orbs, `blink`) and `items/direct-octagon` |
+| `arm` | R4-P.P1 (out of `direct`): the Arm `shields/arm` (26×18 × 9: per tier — green, silver, gold — fresh / worn / critical; animations `arm`, `superArm`, `hyperArm`) |
+| `blackhole` | R4-P.P1 (out of `particles`): M3-02's `fx/black-hole` (32×32 × 4 — three of the vortex swirling, then the lightning discharge; `core/blackhole`'s `BLACK_HOLE_SPRITE`), whose spiral is built from a **pseudo-angle** (`+ - * /` only, no `Math.atan2`) so the pixels are identical on every engine |
+| `logo` | R4-P.P1 (out of `ui`): `ui/logo` (165×27) — the title logo `SHMUP CUP`, original 5×7 block letters ×3 (`LOGO_TEXT`, `LOGO_SCALE` — they moved with the module), a yellow → orange → red gradient with a highlight row, a dark outline and a 2-px drop shadow, anchored at its centre |
+| `decor` | R3-06.L6 (stub pre-registered by R4-P.P1): the eight decor and glow sprites of v2 — the two-frame `decor/cloud-band` (256×64) and `decor/ridge-band` (256×96), the one-frame `decor/circuit-band` far strip and `decor/frond-band` fore band, the 24×96 `decor/pillar` prop, and the additive `fx/glow-ember` (24×12), `fx/glow-vent` (32×16) and `fx/glow-lantern` (32×14) glows — all `native` at their final v2 sizes. Band strips are 256 px wide (double v1's 128-px star tile — a deliberate tiling width, so the wrap maths stays whole at every internal column) and tile at the `spacing: 256` the stage names; every solid colour is pushed at least three channels off the eight reserved ramps by `offRamp` (`v2kit.mjs`). The generator yields nothing at art scale 1 (RR-1a) |
+| `thrusters`, `title`, `ui-kit` | Pre-registered stubs (R4-P.P1): each generates nothing until the R4 step that draws the ship's thruster frames, the title screens' art or the UI kit frames fills it |
 
 Rules that keep generated pixels identical on every machine:
 
@@ -314,8 +367,11 @@ cell, advance and line height from the file, and render-pixi's text module lays 
 `GLYPH_W` / `GLYPH_H` / `LINE_H`, which `frame-constants.test.ts` pins to this file **× `ART_SCALE`**.
 As built, R2-01 did not change this file at all: the interim stage scales it (`scaleFont`, above),
 so the shipped file stays the 6×8 original and the constants are its values × 3/2 — 9 / 12 / 15.
-R4-03 replaces the file with the redrawn font (and must then either give `*.font.json` a `native`
-key the interim stage honours or drop the font scale, or a 3/2 build would turn 9×12 into 14×18).
+R4-03's redraw will arrive **beside** this file, not through it (R4-P.P3, decision RR-1, above):
+`*.font.json` now has its `native` key and the interim stage honours it — a `native: true` font
+file is the v2 font of its name, read only at an art scale ≠ 1 and built at its own cell, the v1
+file scaled as here at every scale that has no v2 sibling — so no 3/2 build ever turns a real 9×12
+into 14×18.
 
 #### Katakana and the CJK budget (M3-03)
 
@@ -732,9 +788,11 @@ designs only, native resolution, no pure black next to small bright bullets.
    `makeSprite(name, frames, '<id>', { anchor, hitFlash, animations })`.
 2. Seed from the sprite name (`createAssetRng(seedOf(name))`); use only exactly rounded
    maths (see above).
-3. Register it in `procedural/index.mjs` (`PROCEDURAL_GENERATORS`), add a test to
-   `test/scripts/assets/procedural.test.ts` for its documented shapes (a zone generator gets its
-   own file, like M2-11's `procedural-zones.test.ts`).
+3. Register it in `procedural/index.mjs` (`PROCEDURAL_GENERATORS`, the entries sorted by id —
+   insert at the right place) and add its suite `test/scripts/assets/procedural-<id>.test.ts`
+   for the documented shapes (the per-generator files since R4-P.P2 — the shared shape helpers
+   live in `procedural-helpers.ts` and the registry's invariants in `procedural-registry.test.ts`;
+   a zone generator keeps its own zone file as M2-11 … M2-14's do).
 4. Round shapes: `fillEllipse` and `drawLine` in `common.mjs` (M2-11) cover bodies, bubbles, legs
    and spikes without any trigonometry.
 5. List `<id>.mjs` in the credits (`PLACEHOLDER ART GENERATORS` in
@@ -813,8 +871,9 @@ node scripts/assets/tileset-masks.mjs --check # R3-03.V4: tileset art and its ma
 | `test/scripts/assets/standin.test.ts`, `test/integration/standin-budget.test.ts` | R3-04.M1: the stand-in generator — palette cap and ramp margins, far / band / tile sizes and colour windows, determinism across processes and seeds; part 2 the enemy / boss describes and the RR-7 band gate (300–600 K scaled per 2048×1024 group page); the budget test runs `standinAtlas()` in memory and sums GPU and PNG bytes through `estimateStageMemory` ([below](#stand-in-zone-art-standinmjs-r3-04m1)) |
 | `test/integration/palette-cycle-scan.test.ts` | R3-03.V3: the art bible §4.4 scan of the shipped atlas (decision W5-12 — fail, not warn): per-stage cycled-layer exact-or-≥3/255, the project-wide margin from all eight reserved ramps with the bible's exemptions pinned inside the test (an exemption that stops tripping fails), and a synthetic fixture proving the measure — [presentation-polish.md](presentation-polish.md#palette-cycling-render-pixi-palette) |
 | `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |
-| `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles, M2-08: the sea only in `SEA_RAMP`, the floor's strips …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
-| `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs |
+| `test/scripts/assets/procedural-<id>.test.ts` (per-generator suites since R4-P.P2 — `procedural.test.ts` split into 22 files, `procedural-common.test.ts` and `procedural-registry.test.ts` (the registry itself) among them, plus the shared `procedural-helpers.ts`; the zone suites keep their per-zone names), `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles, M2-08: the sea only in `SEA_RAMP`, the floor's strips …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
+| `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs; R3-06.L6's page-size rule: **the 256² spill fixture runs the scale-1 source set; the 256-px decor bands are validated by the live default-scale build** — a band exactly one frame wide tiles the playfield seam-free **by design**, so it cannot fit the 254-px frame cap of a 256² page, and the bands are checked at 256 px wide in the default build's manifest instead |
+| `test/scripts/assets/pipeline-v2-sources.test.ts`, `v2kit.test.ts` | R4-P.P3 / R4-P.P4: the beside-v1 sources on fixtures — a `*.v2.sprite.json` and a `native: true` font replace the v1 source of their name only at art scale ≠ 1 (unscaled, `native` implied), the v2-only `items/gem-v2` name joins the non-1 build and is absent at scale 1 (RR-1a; the page groups compared as sets — a v2-only name may add a page, never a group), and a scale-1 PNG override of a code-sourced name is skipped while a v1-only name (the CJK figures' rule) still applies; the `name` / path agreement of a v2 file is an issue; v2kit.test.ts (15 cases) covers the kit — outline / light / shade shapes, `offRamp` ≥ `RAMP_MIN_DISTANCE` 3 from all eight reserved ramps deterministically, the re-exported frame sizes equal to `scripts/frame.mjs` |
 | `test/scripts/generate-assets.test.ts`, `generate-assets-edge.test.ts` | The CLI: flags, the cache skip, `--force`, exit codes 1 and 2, issue listing without a stack trace |
 | `test/integration/assets-plugin.test.ts`, `assets-plugin-edge.test.ts` | The plugin: both virtual modules (`virtual:shmup-assets`'s URL, folder and digest — the digest equal to the shell's `manifestDigest` —, the inline module's manifest and page URLs), a real IIFE build emitting `assets/atlas/main.json` byte-identical to the pipeline's and every page, the dev middleware and watcher (source edits regenerate, pipeline edits restart or warn), wiring in the apps and `turbo.json` |
 | `test/integration/content.test.ts` | Every sprite name of the shipped content exists in the atlas; a typo is reported |
@@ -923,7 +982,8 @@ M3-02 (done) added the `dimension` generator (`scripts/assets/procedural/dimensi
 `bg/dimension-floor` — a 32×32 tile that must wrap seamlessly on both axes, because the Mode-7
 shader samples it with `fract` —, `bg/dimension-sky`, `enemies/dim-pylon` and the boss parts
 `bosses/bloom-maw`, `bosses/talon-claw`, `bosses/strider-leg`) and `fx/black-hole` (32×32, four
-frames — three of the swirl, then the discharge) in the `particles` generator, whose spiral is built
+frames — three of the swirl, then the discharge) in the `blackhole` generator (`blackhole.mjs`,
+split out of `particles.mjs` by R4-P.P1), whose spiral is built
 from a **pseudo-angle** (`+ - * /` only, no `Math.atan2`) so the pixels are identical on every
 engine. Both are listed in `main.campaign.json`'s credits, as the content test requires
 ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).

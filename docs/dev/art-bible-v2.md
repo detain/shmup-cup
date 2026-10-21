@@ -824,6 +824,11 @@ on every machine.
 - [ ] Nothing that looks like an enemy bullet unless it is one.
 - [ ] Backdrop layers inside the value budget (4.1).
 - [ ] Made by the source section 6 names; AI-assisted art carries its `.art.json`.
+- [ ] While the v1 sources live (until the v2.0.x clean-up after the release, RR-1), it arrives
+      **beside** them: a `<name>.v2.sprite.json` pixel map, a generator's v2 branch on
+      `options.artScale`, or a `native: true` font — read only by builds at an art scale ≠ 1, so
+      the scale-1 atlas and its digest pin never move
+      ([asset-pipeline.md](asset-pipeline.md#v2-sources-beside-v1-r4-pp3)).
 - [ ] Keeps the name of what it replaces; `pnpm assets` and `pnpm content:check` clean.
 
 ---

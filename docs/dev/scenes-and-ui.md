@@ -642,7 +642,8 @@ tick.
 `ENGINE_SPRITES` as `extraSprites` by default) and `pnpm content:check` verifies them against the
 atlas. `resolveUiSprites(content)` looks their ids up once (`-1` when missing).
 
-`ui/logo` is a new procedural sprite (`scripts/assets/procedural/ui.mjs`): `SHMUP CUP` in
+`ui/logo` is a new procedural sprite (`scripts/assets/procedural/logo.mjs` since R4-P.P1,
+split out of `ui.mjs`): `SHMUP CUP` in
 original 5×7 block letters drawn ×3 (`LOGO_SCALE`), a vertical yellow → orange → red gradient with
 a one-pixel highlight on each letter row, a dark outline and a 2-px drop shadow — 165×27, anchored
 at its centre. With it the atlas page grew to 512×512.
