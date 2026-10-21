@@ -20,7 +20,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { getPixel } from '../../scripts/assets/image.mjs';
+import { getPixel, type Image } from '../../scripts/assets/image.mjs';
 import { generate as generateDecor } from '../../scripts/assets/procedural/decor.mjs';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
@@ -36,14 +36,10 @@ const DECOR: Map<string, ReturnType<typeof generateDecor>[number]> = new Map(
 );
 
 /** One frame of a generated decor sprite, by name and frame index. */
-function decorFrame(
-  name: string,
-  frame = 0,
-): { width: number; height: number; data: Uint8ClampedArray } {
+function decorFrame(name: string, frame = 0): Image {
   const sprite = DECOR.get(name);
   if (!sprite) throw new Error(`decor generator did not emit ${name}`);
-  return (sprite as { frames: Array<{ width: number; height: number; data: Uint8ClampedArray }> })
-    .frames[frame];
+  return sprite.frames[frame];
 }
 
 /** The debug surface of the flight scene (the test build exposes the live World). */
@@ -149,9 +145,9 @@ test.describe('decor-range (R3-06.L6)', () => {
     const errors: string[] = [];
     await bootFrozen(page, errors);
     await stepTo(page, 900);
-    expect((await readWorld(page)).glowBackCount).toBe(1);
+    expect((await readWorld(page))!.glowBackCount).toBe(1);
     await stepTo(page, 2600); // camX ≈ 3810: the window passed the lantern (x 1180 + 512 behind)
-    const gone = await readWorld(page);
+    const gone = (await readWorld(page))!;
     expect(gone.glowBackCount).toBe(0);
     expect(errors).toEqual([]);
   });
@@ -201,7 +197,7 @@ test.describe('decor-range (R3-06.L6)', () => {
     const errors: string[] = [];
     await bootFrozen(page, errors);
     await stepTo(page, 2000); // camX ≈ 2955: the WARNING (event x 4600) has not fired
-    expect((await readWorld(page)).bossState).toBe(0); // the free slot idles before the section
+    expect((await readWorld(page))!.bossState).toBe(0); // the free slot idles before the section
     // The frozen sim only advances through stepTo, so drive it in 50-tick windows until the
     // boss slot fights (state 3): the WARNING fires at camX ≈ 4600 (tick ≈ 3130) and the 120-tick
     // intro ends ≈ 3250 — and the camera locks for the section, so the end at x 5400 never comes
@@ -209,7 +205,7 @@ test.describe('decor-range (R3-06.L6)', () => {
     let fought = false;
     for (let tick = 2050; tick <= 4450 && !fought; tick += 50) {
       await stepTo(page, tick);
-      fought = (await readWorld(page)).bossState === 3;
+      fought = (await readWorld(page))!.bossState === 3;
     }
     if (!fought) {
       expect(errors).toEqual([]); // surface the console if the fight never engaged
