@@ -53,10 +53,10 @@
  * **Public API.** {@link OptionGroup}, {@link createOptionGroup}, {@link OptionFormation},
  * {@link OptionMode}, {@link OPTION_MODE_NAMES}, {@link MAX_OPTIONS}, {@link OPTION_SPACING},
  * {@link OPTION_TRAIL_CAPACITY}, {@link OPTION_SPRITE}, {@link OPTION_ANIM_TICKS},
- * {@link OPTION_FRAMES},
- * {@link OPTION_RADIUS}, {@link SNAKE_LINK}, {@link FORMATION_RETRACTED}, {@link FORMATION_SPREAD},
- * {@link ROTATE_RADIUS}, {@link ROTATE_RADIUS_EXTENDED}, {@link ROTATE_SPEED},
- * {@link OPTION_HOLD_TICKS}, {@link OPTION_SPREAD_TICKS}, {@link STOLEN_OPTION_SPRITE}.
+ * {@link OPTION_FRAMES}, {@link OPTION_RADIUS}, {@link SNAKE_LINK}, {@link FORMATION_RETRACTED},
+ * {@link FORMATION_SPREAD}, {@link ROTATE_RADIUS}, {@link ROTATE_RADIUS_EXTENDED},
+ * {@link ROTATE_SPEED}, {@link OPTION_HOLD_TICKS}, {@link OPTION_SPREAD_TICKS},
+ * {@link STOLEN_OPTION_SPRITE}.
  *
  * **Planned API.** Option recovery after death (M3).
  *
