@@ -74,10 +74,11 @@ deferral, worked at R2-03.I2; all are built, as R2-02's, R3-03's, R3-04's and R2
 wave (decision R5-D1 is §11's own note). **W5-20** is the owner's graphics-options directive of 2026-10-20,
 worked into the plan as R6-04 by that directive's own order. **R2-N5 … R2-N8** complete the R2 re-plan's
 register: N6 was built in R2-02's kit flip, N5, N7 and N8 were built at R2-04 (N7's owner's feel stays open
-until the M7 play session). **RR-1**, **RR-1a**, **RR-1b**, **RR-5** and **RR-6** are the R3 / R4 re-plan's
-art-pipeline, sequencing and layer decisions: RR-1 / RR-1a / RR-1b were built by `R4-P.P3` (2026-10-20),
-RR-5's prep ran in wave 7 as `R4-P` (§10's prep note), and RR-6 was built by `R3-06.L2` (2026-10-20) — all
-as records of those steps' As built.
+until the M7 play session). **RR-1** … **RR-6** are the R3 / R4 re-plan's art-pipeline, font, provenance,
+store, sequencing and layer decisions: RR-1 / RR-1a / RR-1b were built by `R4-P.P3` (2026-10-20),
+RR-2 and RR-4 were built by the R4 round itself (the font by `R4-03.C1 … C4b`, every art commit drawn under the
+provenance rule — §10's As built entries), RR-3's one move was paid at `R4-05.E5`, RR-5's prep ran in wave 7 as
+`R4-P` (§10's prep note), and RR-6 was built by `R3-06.L2` (2026-10-20) — all as records of those steps' As built.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -147,7 +148,9 @@ as records of those steps' As built.
 | **RR-8** | W5-17 kept: one stand-in zone plus `common` replace the TV bench's synthetic `rgba-2048` / `png8-2048` decode pages; `tools/input-probe/results/analyze-bench.mjs` reads the new ids | R3-04 |
 | **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick spread medians 1.5–2.7 points and synced-p95 spread medians 8–9 % (p90 23–26 %). The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
 | **R2-N4** | R2-03 re-measures the content-bound e2e **before** the re-bless, in parallel; `R2-03.G1` is last and one commit | R2-03 |
-| **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once — at R2-03 `pnpm store:assets` only `--check`s (R2-03.I2, that step's As built) | R2-03, R4-05 |
+| **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once — at R2-03 `pnpm store:assets` only `--check`s (R2-03.I2, that step's As built) — built by `R4-05.E5` (`d23fec0`): the icons moved to the v2 art once, as the decision says; `store-assets.mjs` now collects the default (non-1) scale — the final ships (`R4-01.A1a/A1b`), the v2 font (`R4-03.C2`), the v2 logo (`R4-05.E1`) — the four committed icons are the v2 render, `--check` green, and no later step regenerates them until `R6-03.D3` | R2-03, R4-05 |
+| **RR-2** | The v2 font cell is **9×12, line 15, advance 9** — today's `GLYPH_W` / `GLYPH_H` / `LINE_H` — so no layout moves at all; built by `R4-03.C1` (`3c8eca8`) as the native sibling `assets/source/fonts/pixel9x12.font.json` (name `pixel`, `native: true`, 195 glyphs — RR-1's font rule: the scale-1 build keeps v1's `pixel6x8`), hand-redrawn by `C2 … C4b`, pinned to core's metrics by `font-v2.test.ts` and the config tests — confirmed by the owner 2026-10-19 | R2-01, R4-03 |
+| **RR-4** | Agent-made v2 art draws from the bible text, v1's designs and the palette tables; Qwen-Image, SD3.5 and Wan winners enter only once committed and content-reviewed; never a FLUX winner while FLUX is on hold — adopted (until the FLUX decision); held through all of R4: every shipped R4 commit is a hand-drawn `*.v2.sprite.json` pixel map or a procedural generator (the logo drew from the bible row plus v1's logo, not the key art), no AI winner shipped as art | R4, R5 |
 | **R5-D2** | The v2 zone contract (built as `R5-P.P6`'s `test/integration/zones/zone-<letter>.contract.ts` v2 branches): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | R5, R5-P.P6 |
 | **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % of a pool (built early by RUN-7, as `R5-P.P8` inside R2-03) | R5, R2-03 |
 | **R5-D9** | `R5-P.P1` runs inside R2-03 (RUN-7) — built in wave 6 (`6ba1187`), its hash shift paid by the step's single re-bless | R2-03, R5 |
@@ -2345,6 +2348,59 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
   - **Hitboxes unchanged** (content values already ×1.5).
 - **Acceptance:** `pnpm docs:images` plates show the new art; the ship select and weapon preview e2e pass;
   provenance complete.
+- **As built** (2026-10-20/21; wave 8 `w08-L1` / `L4` / `L5` / `L7`, closeout `w09-L1`; step review `R4-01.RV`
+  APPROVE, zero findings including nits):
+  - **Ships** (`A1a` `e90e17e`): KESTREL and MANTA native v2 pixel maps plus the KESTREL thruster
+    (`ships/{kestrel,manta,kestrel-thruster}.v2.sprite.json`); the `@p2` siblings inherit a native source's
+    flag — a `makeP2Sprite` deviation in `scripts/assets/coop.mjs`, needed because the `@p2` of native art
+    failed the interim-pipeline anchor and upscale cases (precedent: `recoLourBulletOverrides`).
+  - **Five bank frames** (`A1b` `4248f5b`): `bankFrames` 1 → 2 in `content/player/{kestrel,manta}.player.json`
+    (core needs `1 + 2 × bankFrames` frames) and the shell showcase maps the five. **The wave's one sanctioned
+    golden re-bless: the bank field is hashed** — `hashWorld` mixes `p.bank` (`packages/core/src/debug/index.ts:496`)
+    — so 31 recordings (29 goldens and the zone-f and zone-g demos) moved in that one commit, the reason
+    stated in its body; the same commit re-pinned all three fingerprint tables (the new ship art is drawn
+    through the shell's scenes too).
+  - **Thrusters behind every ship** (`A2` `f0942b1`): `ships/manta-thruster` is a v2-only name (RR-1a); the
+    thruster fields join the player schema, the example and the content README; `syncThrusters` pre-passes the
+    world sync so every flame draws before every hull — the per-player interleave was abandoned when V8 stopped
+    inlining `syncWorldView` (~20 B/tick boxing, caught by `scenes-weapon-select-alloc`) — the ship batch
+    capacity doubles, and the burn cycles `(tick >> 2) & 3` with MANTA's flame green (`#30c870 / #a8f8c0 /
+    #f0fff4`). **No bless — the thrusters are presentation-only and never hashed**; the new names did move all
+    three fingerprints' name rows (names only; the hashes stayed, and the later steps kept them pinned).
+  - **Options pulse** (`A3` `7b07886`): `OPTION_FRAMES` 2 → 4, exported from `core/options`; the carried-Option
+    syncs derive `floor(tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES − 1)` at sync time — **not hashed**, goldens
+    unmoved; the orb and the stolen Option become native 12×12×4 hand maps on the v1 palettes byte-for-byte
+    (calm → glow → flare → contract; frames 0 and 2 are the exact ×1.5 upscales of v1); the TV bench draws
+    frame 0 only (RR-1b); 10 presentation segments re-pinned, content-DB and shell unmoved.
+  - **Force Field** (`A4` `92b4b73`): 45×36 × 8 frames = 4 wear states × 2 shimmer (a private
+    `FORCE_FIELD_SHIMMER_FRAMES` 2 — no new export); the shimmer is a seeded 10 % ring-band recolour that never
+    adds or drops a pixel, equal ink per pair, wear-monotone; the v1 field byte-identical (pixel-compare
+    proven); 6 segments re-pinned (the four of `B2`'s landing plus the game and co-op shield walks).
+  - **Shields and shots** (`A5` `1a55480`, `A6` `4a9602f`, `A7` `7de90ee`): native pod 12×12×4, Reduce 30×21×2,
+    Arm 39×27×9; the eleven shot pixel maps under `shots/` redrawn with anchors `⌈1.5 × v1⌉` (the four
+    anchorless maps take the centre-of-odd default `[3,3]` / `[4,4]`); the generated shots native in
+    `weapons.mjs` / `direct.mjs` — blast 48², ripple 36×66 (the v1 ring exactly ×1.5, half heights 6 → 30 in
+    the same frame order, which core's size pick indexes by), cyclone at the 12-px `LASER_SEGMENT_LENGTH`
+    period — v1 frame counts and colour tables kept. Pure redraws: **no fingerprints moved**; the interim
+    upscaled-pool floor 600 → 560 followed the a7e50d2 precedent (count 591).
+  - **Black hole** (`A8` `b760dbb`): native bible 48×48 × 8 frames — `BLACK_HOLE_FRAMES` 4 → 8, the sync pick
+    derived from the constant so the 96-tick pull keeps its 5-tick frames; the disc opaque `#1c0f30` (the v1
+    alpha `c8` dropped per the bible rule), black core r < 10 (R2-04.P4's minimum), arms `b060f0 / 6040d0 /
+    3060b0`, rim `#d8b0ff`, wind `3 · turn − d · 0.04 + f / 7` — v1's shape ÷1.5 keeps the visual pitch; frame
+    7 discharges. v1 stays 32²×4 byte-identical; **no fingerprints** (the vortex frame is sync-time). P4 had
+    recommended keeping 4 frames; this step's block overrode that to 8 and applied P4's other two
+    recommendations.
+  - **The Mega Crash flash was not touched in this round** — no `R4-01` commit carries it (R2-04.P2's measured
+    values hold); the fly-in and previews needed nothing, they draw the same names.
+  - **`A9` and `B4` (`w09-L1`): zero commits, VERIFIED-NO-OP.** Wave 8's E2E commits `77353fb` (browser-spec
+    cures) and `75dc7c0` (plate redraw) had already consumed the block's work before wave 9 opened; the fresh
+    re-derivation confirmed every acceptance line at the tip — assets byte-identical (449 sprites, 1,549
+    frames), `docs:images` 145 images 0 written, the ship-select and weapon-preview e2e green with no
+    assertion change, `art-origins --check` 0 / 0, the scale-1 digest pin green.
+- **Manual (owner) still pending:** the ships' look and anchors on a dev build (KESTREL `[12,6]`, MANTA
+  `[12,7]` — the bible allowed `[12,8]`), the five-frame bank's roll, the thruster burn's rhythm and MANTA's
+  green, the Option cycle, the Force Field shimmer's density, the pods / Reduce / Arm and the eleven shots' v2
+  weight, the black hole's vortex, the black hole's pull.
 
 ### R4-02 — Enemy bullets, lasers, items
 
@@ -2357,6 +2413,35 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
     re-pointed.
 - **Acceptance:** readability check — a bench screenshot with 512 bullets over each zone's stand-in backdrop
   keeps every bullet distinguishable (owner sign-off), plus `content:check` green.
+- **As built** (2026-10-20/21; wave 8 `w08-L7`, closeout `w09-L1`; step review `R4-02.RV` APPROVE, zero
+  blockers and zero should-fixes, two minors both carried as doc rows):
+  - **Bullets and lasers: zero pixel changes.** The v2 bullets and bending-laser nodes have carried the
+    bible's sizes, bright core and dark rim since `R3-03.V1` (the beams were native from the flip); the
+    round's audit confirmed it, so the 1- or 8-frame rule stayed and every colour-blind set kept its
+    frame-for-frame variants (the e2e colour assertions needed no re-pointing). `content:check` green
+    throughout.
+  - **The readability sheets** (`B1` `d875eac`): `scripts/bullet-readability.mjs` derives the acceptance's
+    screenshots deterministically — nine stand-in zones × 4 palettes = 36 sheets at 640×360, 512 v2 bullets
+    each scattered from `seedOf`, `--out` settable. It changed no pixels and moved no fingerprint (B1's own
+    honesty, reviewed sound).
+  - **Every item kind glints at 4 frames** (`B2` `ba09e57`): all ten `ITEM_KINDS` go `frames: 4` (the point
+    item was `B3`'s, and stayed out); native pills 18×12×4 in `items.mjs` (dim → dim+spark → lit+spark → lit)
+    and the six Direct-mode items 15×15×4 in `direct-items.mjs`; atlas frames 1,509 → 1,529; 4 presentation
+    world segments re-pinned. `powerups/index.ts` touched only the table — the two docblocks the change ages
+    (`ITEM_BLINK_TICKS`' "two-frame blink", `ItemKindSpec.frames`' "a blink when 2") stay for a code lane,
+    which has no src sanction to edit here (`R4-02.RV` F-A).
+  - **The cancel point's spark stages** (`B3` `e1ed688`): native 7×7 × 4 frames on v1's three colours only
+    (`#ffc830` body, `#6a4818 → #6a4808` rim, white spark; binary alpha) — a travelling-rim spark, plain →
+    cardinal → whole-rim → rim-minus-tips; the frame pick `(age >> 3) & 1 → & 3`. **The field is hashed** (the
+    `cancelPoints` pool rides a batch into `hashWorld`), so exactly two goldens re-blessed in the commit —
+    `twin-range-god` and `zone-h-arcade`, one state-hash line each (their late windows credit cancel points;
+    no demos moved; two-pass deterministic). No fingerprints (the walks never hover-credit). The upscaled-pool
+    floor's ledger: 563 → 539 (`B2`'s pills) → 537 (the native point), the > 500 floor of `fc3f78e` holding.
+  - **The `B4` gate with the empty `A9` set** (`w09-L1`): honoured as fetched-verified — nothing `A9` changed
+    meant nothing beyond the sheets to re-derive; the 36 sheets re-derived to
+    `/home/sites/shmup-cup-run/R4-02.B4-readability/` for the sign-off.
+- **Manual (owner) still pending:** the readability sign-off on the 36 sheets (owner: the `B4` row of the step
+  block) — the v1-era numbers' legibility call on `w08-L7-readability/` or the fresh `R4-02.B4-readability/`.
 
 ### R4-03 — Font, HUD and the UI kit
 
@@ -2369,6 +2454,63 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
     and credits at the new metrics.
   - Line caps re-derived (credits and story lines: 60 × 6 px → ~70 × 9 px).
 - **Acceptance:** every scene's e2e and every UI-string scan pass in all three languages; nothing truncates.
+- **As built** (2026-10-20/21; wave 8 `w08-L3` / `L6`; step review `R4-03.RV` REQUEST-CHANGES with one minor
+  and two nits, all comment-class and cured in-wave; owner eyeball rows pending):
+  - **RR-2's decision taken:** the cell is **9×12** — the values R2-01 already carried, so no layout moves.
+    The scope's 8×12 alternative died with that decision.
+  - **The font file** (`C1` `3c8eca8`): `assets/source/fonts/pixel9x12.font.json` — name `pixel`, cell 9×12,
+    line 15, advance 9, 195 glyphs, `native: true` (RR-1's font rule: the scale-1 build keeps drawing v1's
+    `pixel6x8`, which is never edited); the pipeline takes the native file at every art scale ≠ 1, and core's
+    `GLYPH_W` / `GLYPH_H` / `LINE_H` (9 / 12 / 15) now have their source pinned in `config/index.ts:803-820`'s
+    docblock. The atlas manifest never moves; the PNG moves from `C2` on, by design.
+  - **The hand-redraws** (`C2` `2954930`, `C3` `2fe757c`, `C4a` `450349b`, `C4b` `68a6fa8`): the 95 ASCII
+    glyphs first (body rows 2–9, baseline row 9, descenders into row 10, the columns relaid on ×(1,1,2,2,2,2)
+    of the v1 skeleton), then the eight Spanish capitals and `¡ ¿`, the arrows, `● ★ ✕`; then the 84 katakana
+    under the kana law — v1 rows 0–6 → v2 rows 3–9, row-7 tails to row 10 (shared with the Latin descenders),
+    voiced bodies verbatim copies of their base rows, dakuten two dots in rows 0–2, handakuten the 3×3 ring;
+    the small kana and `ー ・ 、 。` fill the rest; `ヅ`-absent / `ヵ ッ`-parity with v1's charset. The new
+    `test/scripts/assets/font-v2.test.ts` pins the laws (spacing column 8 empty in all 195, every bitmap
+    distinct, RR-2's metrics). No fingerprint or golden moved at any font step — text commands hash their
+    strings, never the cells (rule 4).
+  - **The interim-floor incident, honestly told:** `C1` landing the native font dropped the
+    interim-pipeline upscaled-pool count by 195 and went red against 700 (measured 668–683); `R4-04.D2`'s
+    `a7e50d2` lowered the floor to 600 and `fc3f78e` to its current form, re-measured per drop (`B2`, `B3`).
+  - **The HUD for 12-px bars** (`C5` `96c4e61`): the boss bar derives `BOSS_HP_BAR_WIDTH = FRAME_W >> 2`
+    (160) — the `world-scale.test.ts` pin moved 96 → the derivation (disclosed), and the e2e's
+    `frame-pixels.ts` derives the same formula; the Direct groups sit on an even pitch
+    (`HUD_DIRECT_PITCH`) with a 4-glyph label reservation (`HUD_DIRECT_PIPS_DX` — sized from the widest
+    shipped run label, Japanese ショット, a tested guarantee, replacing the old SHOT/TIER dx pair); the
+    family x anchors right (`FRAME_W − uiPx(10) − 4 · GLYPH_W`); the stock row centres on `HUD_STOCK_DY`
+    (the flight scene's `LIVES_Y` derives the same 350); native `hud/meter-slot` 60×12 with light top/left
+    shade bottom/right and a disabled fill `#202638` (its STORM palette-cycle exemption line deleted —
+    the slot is no longer storm-blue), `hud/meter-labels` 54×8 carrying a hand-drawn 4×5 micro script (the
+    bible allowed a new font; drawn without waiting on `C1`), and `hud/life` 12×8 with its `@p2` sibling —
+    `pipeline.mjs` grows the same `@p2`-native propagation as `coop.mjs`'s (recoLour precedent). 10 of 12
+    presentation walks re-pinned; no goldens. The landing cure `d65fcbf` followed the round's middle: the two
+    test-tree reds of `B2` (a frames pin, a tsc throw), the pool-ledger floor truth and the Ü glyph law. The
+    `RTC5` cure `326ff03` corrected six stale `buildHud` docblock
+    rows to 134 / 210 / 286 / 350 with the boss bar at 132 / 160.
+  - **The UI kit for the 9×12 font** (`C6` `dcf6380`): `drawPanel` gains the bible §2 two-tone rim — the
+    outer magenta `0xb838a8` border plus cyan `0x38c8e8` side rails (`UI_COLORS.rimInner`) — and the slider
+    bar grows to `SLIDER_BAR_H = uiPx(5)` centred on the glyph line; the nested double-rim alternative was
+    dropped for the draw-list budget (`UI_COMMANDS` 384 — five commands overflowed a 63/8 panel, disclosed);
+    explicit-border callers keep the one-colour ring; the cursor, toggles, `NameEntry`, `Confirm` and
+    `RebindPanel` needed no geometry move; the 18/6-tick auto-repeat and 4-tick confirm are ticks and
+    untouched; `ui-kit.mjs` stays the stub (the kit draws through commands, not sprites). The fingerprints:
+    presentation re-pinned as the step's sanctioned move, content-DB and shell unmoved.
+  - **The line caps re-derive** (with `C5` / `C7`): the credits' and map labels' caps come out of
+    `GLYPH_W` / `LINE_H` through the panel insets (`campaign.ts` holds 47 / 67 at the v2 metrics), and the
+    scope's "~70 × 9" question resolves to the tested derivation, not a literal. Every scene e2e and the
+    UI-string scans pass in en / es / ja (the `L6` suite; the ja strings' `UI_GLYPHS` equality holds by rule).
+  - **The R6-04 seam:** the review's fourth finding (the Electron boot's save read used the wrapped key, not
+    the raw bridge key) belongs to the GRAPHICS page's boot knobs, not this lane — it was cured as `634e913`
+    in wave 9's R6-04 chain.
+- **Manual (owner) still pending:** the ASCII and symbol legibility at ×2 / ×3 on the M7 and a 720p desktop
+  (the "100% & R&D ~3" row, 0-vs-O, 8-vs-B, % vs &); the Spanish accent line (¿LISTOS? ¡VAMOS!); a
+  Japanese-reader check of the kana (dakuten dots vs the handakuten ring, small kana — the test strings
+  ガソリン パン マッチ テスト データ ズッキーニ, ステージ 3); the 12×8 life miniature, the meter-slot bevel, the
+  4×5 micro script, the disabled-fill restyle; the magenta-and-cyan rim over the real menus and the slider
+  bar on the 12-px Options row.
 
 ### R4-04 — FX and particles
 
@@ -2378,6 +2520,30 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
   - **`content/fx` presets** retuned (speeds, radii, gravity already ×1.5; frame timing re-checked).
   - **Particle pool:** capacity (256) reviewed against the bench.
 - **Acceptance:** the fx gallery (`?scene=fx-gallery`) shows every preset; allocation guards green.
+- **As built** (2026-10-20; wave 8 `w08-L8`; step review `R4-04.RV` APPROVE, a true zero — no findings of any
+  severity; D3 and D4 land as measured verdicts, not commits):
+  - **Explosions** (`D1` `693e6ac`): native v2 sheets — small 24×24 × 12, medium 48×48 × 12–14, large 72×72 ×
+    16 — opening on the bible's white flash cross at frame 0; the three explosion presets and `boss.chain`
+    gain `"blend": "normal"` in `content/fx/particles.fx.json`
+    (the bible's rule for the detailed bursts). The content-DB fingerprint moves its one `fx` row (the JSON
+    changed — re-pinned `529cc6d6dc216563 → 110c6250dedf116b`); presentation and shell fingerprints unmoved;
+    no goldens.
+  - **Small effects** (`D2` `6805952`): native spark 7×7 × 4, sparkle 7×7 × 4, debris 9×9 × 4, ring 13×13 × 6
+    — each frame keeping v1's four-colour budget, the ring's growth shown through the `fx_ring` shader as in
+    v1. The upscaled-pool floor moved with the drop, as `R4-03`'s As built tells.
+  - **The presets needed no retune** (D3, **no commit**): the frame timings read well at the ported scale —
+    the R2-04.P2 measurement stands and the scope's "already ×1.5" held literally; nothing in `content/fx`
+    moved beyond `D1`'s blend flip.
+  - **The pool review** (D3's verdict, **no commit**): the four-way bot's peaks over every zone and the boss
+    rush came in at ≤ 100 of 256 — under the 80 % line — so **the pool of 256 holds**, recorded against
+    decision R5-D5; the counting fixture that measured it was deleted before the commit (verified: no R4-04
+    commit touches a capacity file).
+  - **The fx gallery** (D4, **no commit**): it already lists every preset — one station each, including the
+    new explosion and chain frames, the allocation guards green, the shell fingerprint walk fake proving it;
+    the acceptance held as of today.
+- **Manual (owner) still pending:** the FX feel on `?scene=fx-gallery` at 640×360 (M7 or desktop) — the flash
+  cross, the strip pacing, the spark and sparkle arm thickness at 7×7, the debris look, the ring's brightness
+  during the additive bursts.
 
 ### R4-05 — Title, front end, endings, store and doc images
 
@@ -2389,6 +2555,63 @@ arrives as v2 sources beside the v1 maps, never by moving the scale-1 build.
     screenshots.
   - **Optional trailer:** a cut from the Wan 2.2 clips plus real gameplay capture.
 - **Acceptance:** `pnpm store:assets --check` and `pnpm docs:images --check` are green with the new art.
+- **As built** (2026-10-20/21; wave 8 `w08-L2`, closeout `w09-L2` / `E6`; step review `R4-05.RV` APPROVE,
+  zero critical and zero should-fix, two doc-prose nits — one code lane, one docs lane; owner rows pending):
+  - **The logo** (`E1` `ffa083a`): native 330×54 — 53 text cells × 7 rows at advance 6 plus a 6-px margin,
+    inside the bible's ~320×64 and the step's ≤ 400×80 — three flat bands (lemon `#f8f070`, orange
+    `#f8a030`, red `#e04828`, the census colours the boot and scenes specs look for), a 2-px navy ring, a
+    hard +4/+4 shadow, exactly v1's five colours: drawn from the bible row and v1's logo, **no key-art
+    winner** (RR-4), shipped as the v2 sibling beside the v1 map byte-for-byte (the scale-1 pin green). The
+    title's own layout needed no move and no fingerprint did.
+  - **The title backdrop** (`E2` `73dcb6d`): full-frame v2 night from the `R4-P.P1` stub's `title.mjs` —
+    navy gradient, hashed stars (`hash2` on the sprite's own seed, dim and bright pairs), the planet limb
+    radius `FRAME_W × 3/4` sunk 90 px below the foot, its rim lit; inside the bible's §4.1 colour budget
+    (66 colours). Deviation, forced by the packer's page-limit cases (sources build at 512²): the two ships
+    draw as **native half-frames** placed at `(0,0)` and `(FRAME_CX,0)` — the common page grows 1024² →
+    2048×1024 with it, 448 → 449 sprites. `ui/title-backdrop` is a v2-only name (RR-1a). Declined with
+    reasons in the lane report: the title rows under panels (the C6 ruling "IT STAYS"), and the nested
+    double rim (the single stands). The presentation fingerprint re-pinned on its hashes plus the content-DB
+    row for the interned new name; the shell's did not move.
+  - **The WARNING band and the zone cards** (`E3` `e7d379d`): band height 72 = `FRAME_H / 5`, top row 132
+    (`FRAME_CY − uiPx(8) − 36`), text row 162, black ground rect alpha 144 across rows 132…204, the hazard
+    fields 0…72 and 568…640 (`WARNING_FIELD_W`), alert `0xf85858` on the 45° deep-red cells (`0x881818`,
+    stripe pitch 18 = h/4) — all derived from the frame constants; the zone-name and zone-clear cards share
+    one `drawZoneCard` panel at `(0, 72, FRAME_W, 48)` under the C6 kit rim. 11 of 12 presentation walks
+    re-pinned, the twelfth unmoved.
+  - **The five endings full-frame** (`E4` `9873156`): the ending generator's v2 native path (RR-1) — citadel
+    192×108, ark 168×54, blast 36²×4, bubble 9², sun 96×48, surface 96×12 (bible sizes at ⌈1.5 ×⌉), one new
+    colour (`#141820`, the foundation shade); the ENDING and STORY layouts recompose centre-anchored at the
+    frame constants (`ENDING_SCENE_BOTTOM` 180 stays, proven = ground + `uiPx(16)`; citadel `FRAME_CX −
+    uiPx(80)`, sun `+ uiPx(96)`, ark `+ uiPx(50)`, fortress `+ uiPx(90)`, flagship `+ uiPx(140)`); the ark
+    sinks 0.75 px/tick and the bubbles rise 2.5 px/step so both still finish on scene; the 360-tick timers
+    and their allow-list entries are ticks and untouched; 8 walks re-pinned, no goldens.
+  - **One panel rule** (`C7` `bb153bc`): the epilogue and story-crawl panels hug the scene panel line at
+    `ENDING_TEXT_MARGIN` (`uiPx(4)` = 6) and span `TEXT_PANEL_INSET`; `ENDING_TEXT_PANEL` lost its hand-set
+    height; the crawl starts at `STORY_SCENE_BOTTOM + uiPx(4)` (y 210 → 192); the five goal-screens
+    (`map`, name entry, rebind, input test, credits) were metric already after `C6`; the campaign's 47/67
+    line caps verified as derivations, unedited; the test mirror `scene-layout.ts` moved with the layouts
+    (disclosed). The in-wave cure `b35cba4` followed the landing: the flight scene's mirror samples moved to
+    the `E3` band's rows, and the epilogue-panel docblock now tells the `C7` truth.
+  - **Store icons** (`E5` `d23fec0`; **closes RR-3** — the icons moved to the v2 art once, as the decision
+    says): `store-assets.mjs` collects the default art — the final ships (`A1a` / `A1b`), the v2 font
+    (`C2`), the logo (`E1`) — the backdrop's stars step with the sheet height, the ship block sizes itself
+    from the drawn heights and rides the bottom edge (the 330×54 v2 logo left no room at 80×80 — the manta
+    drew off-canvas until this), and the caption rows and margins derive (64×24 → 96×36 at `WORLD_SCALE`);
+    all four icons re-drawn, `pnpm store:assets --check` exit 0, neither store test file needed an edit, both
+    TV bundles green in budget (1,429.2 / 1,428.1 KB). No later step regenerates the icons before
+    `R6-03.D3`.
+  - **Docs images** (`E6` `45739d8` — the last R4 push): the final-art pass — the logo plate redrawn with it
+    (the banner 1920×432; `doc-images.mjs` derives the row from the loaded height, the `E1` logo being nine
+    rows taller than the 248×41 interim sheet, which reproduces the old y), all 18 screens re-shot on the
+    shipped v2 look; `docs:images` 145 images, 1 written, then `--check` green; the enemy, boss and shot
+    plates rode `75dc7c0` (the W08.E2E pass) and the shot plates `4a9602f`. No fingerprints, no goldens.
+  - **The trailer** was optional and was **not made**: no wave-8 or wave-9 commit packages clips; it stays
+    the owner's cut if ever wanted (R6-03's store work).
+- **Manual (owner) still pending:** the title's star density and limb height; the endings' towers, merlons,
+  spine and rays taste at full frame; the logo, banner and all 18 screen plates in `docs/images/` for
+  legibility (the `E6` eyeball row); the decision whether a GRAPHICS-page plate joins the next
+  `docs:screens` set (the review's owner row); the owner's key-art pick, if any, stays outside the shipped
+  atlas (RR-4).
 
 ---
 
@@ -2462,7 +2685,7 @@ B, D and F.
   indices fall back to the raw value (shadow `referenceHash` byte-identical), and the new allocation guard
   `debug-hash-keys-alloc.test.ts` proves the key paths stay under 128 B/call. The presentation and shell
   fingerprints did not move; the content-DB fingerprint re-pinned its four new key rows per table.
-- **P8 — boss-part capacity 16 → 24** (`273e081`, decision R5-D5): `MAX_BOSS_PARTS` 24 (data/index.ts:956)
+- **P8 — boss-part capacity 16 → 24** (`273e081`, decision R5-D5): `MAX_BOSS_PARTS` 24 (data/index.ts:985)
   carries `BOSS_PART_SLOTS` 96, `MAX_HIT_TARGETS` 160 and the hashed part-cooldown stride with it;
   `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 stand until a design peaks above 80 % — the stress bench
   re-measured 0.101 ms/tick median, inside every gate.
@@ -2493,6 +2716,55 @@ B, D and F.
   task; the trigger-probe aliveness check could pin `triggersFired`'s bit-count rather than `> 0`; and
   `BendingLaserTable.spriteId` stays unmixed in the hash (reviewed benign) unless laser identity ever needs
   coverage.
+
+**R5 prep as built — wave 9** (the per-zone test layout, the scoped bless, the fingerprint write mode, the
+LAND helper; the `RT-P3` / `RT-P4` / `RT-LAND` findings cured in-wave, the test-only splits landing with
+their census and gates-absence checks green):
+
+- **P4 — patterns one file per zone** (`a216f14`): `content/patterns/zones.patterns.json` is deleted into
+  `zone-{b,c,e,f,g,i}.patterns.json`, the merged bank byte-identical (path-order sort; md5-proved, Prettier
+  a no-op on the JSON), `shippedPatterns()` in `packages/core/test/helpers/shipped.ts` reads the six plus
+  the common library for the 20 behaviours' call sites, and the `debug-hash-keys` tests name the zone-b
+  file directly; the review's reword cure `f4b9d36` retired a docblock that still named the dead file.
+- **P5a1 / P5a2 — behaviours one file per zone** (`09cf628`, `50b9bb5`): the two large behaviour suites
+  became per-zone files — zones B/C/D/E then F/G/H/I — through `test/behaviors/helpers/zone-behaviors.ts`
+  (the `zoneKit` / edge / roster factories) and the shared `shipped.ts`; the world-only helpers moved with
+  their zone. Test count unchanged (307 titles, 859 tests — every case survived the move by census).
+- **P3 — `golden:update --only`** (`c284b78`; cure `0b166c4`): `scripts/golden-update.mjs` exports
+  `parseOnly` — it throws on a valueless or empty `--only` and comma-splits and trims ids — and the entry-
+  gated main passes `SHMUP_GOLDEN_UPDATE` + `SHMUP_GOLDEN_ONLY` into the Vitest child; `golden.ts` gained
+  `goldenStageSelected`, the zone-A monolith split into nine `test/golden/golden-zone-<letter>.test.ts`
+  files, the demos suite gates its writes the same way, and the four pair recovery files became eight
+  per-zone ones (the `i.outcome.ticks < …` and `h < …` assertions updated to their blessed recordings'
+  real numbers, disclosed). In update mode an id outside the scenario lists fails loud (the cure); proofs:
+  `--only zone-b` re-records byte-for-byte, and a tampered zone-c golden makes `--only zone-b` exit 1.
+  This is decision R5-D1's scoped bless.
+- **P5e — zone runtime and Direct tests per zone** (`ea2e58b`): nine pair files became eight
+  `zone-<letter>-runtime.test.ts` and six `zone-<letter>-direct.test.ts` (edge cases joined, zero describe
+  renames); the shared assertions moved verbatim into `zones/helpers.ts` (`steps` / `stepUntil` /
+  `expectInOpenSpace` / `expectCameraAt` / `crash` — the DB-fed fixtures stay per-file to dodge the
+  `stageOf` collision); concrete cases 62 → 65 under the census's +10 allowance (the sanctioned copies
+  from the pair splits), and the gates-absence check passed — no skip leaked in.
+- **P10 — the fingerprint write mode** (`95bc61d`): `packages/core/test/helpers/pin-writer.ts` —
+  `rewritePinned(file, name, table)` parses the test file with the TypeScript compiler (as the frame-
+  literal scan does), replaces the named `PINNED` entry in the tests' own Prettier-clean form, writes only
+  on change, and refuses under `CI`; the presentation and content-DB suites take an `UPDATE` branch that
+  rewrites the entry and skips only the equality assert (everything else still runs), the shell's walk
+  gained the same branch before `PRINT`; the content-DB print moved after the load-issues check
+  (disclosed hardening). Zero hash literals changed on landing; the tamper proof restored all three pins
+  byte-for-byte. This is decision R5-D4's "re-pinned only by a LAND".
+- **The LAND helper** (`0a3c6ad`; cures `dd8daeb` — the readability gate on the message file, the
+  whitespace trim of `--only` to match `parseOnly`, the trap armed before the dry worktree):
+  `docs/v2-run/helpers/land-zone.sh` is the one zone-landing flow decision R5-D1's assembly names —
+  fetch, squash, rebase, `pnpm install && pnpm assets`, the atlas-groups derivation, `golden:update
+  --only <zone>`, the three fingerprint update runs, `docs:images`, the full targeted gate set plus the
+  release audit and the three fingerprints as-pinned, the replay-scope proof, then one commit with exactly
+  the derived paths staged and the pushed sha reported — under `flock` on `/tmp/shmup-cup-land.lock`
+  (`LAND_LOCK` / `LAND_LOCK_WAIT` override; it refuses under `CI` and wants `RUN_DIR`), logging to
+  `$RUN_DIR/land-<zone>-<date>.log`, with `--dry-run` running steps 1–8 in a throwaway detached worktree.
+  The hostile dry-runs proved the trap: a zone-a tamper makes the scoped `--only zone-b` bless desync and
+  exit 1, and the step-8 abort restored the tree byte-clean (`porcelain -uall` — the plain form misses
+  nested untracked, a cure). The `conventions.md` LAND paragraph is the wave's DOCS-E lane.
 
 ### R5-01 — Zone A remaster: AZURE VERGE
 
@@ -2854,11 +3126,11 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R3-04 | Atlas pages and memory with detailed art | done (owner parts pending) — 2026-10-20 (lazy residency built and made the prospective default; the stand-in generator, budget gate, `DIST_BUDGET` 16 MiB and the derived PNG caps; the TV bench decodes the stand-in pages and the render bench gained the "v2 zone stand-in" scenario; zone loads estimate ≈ 450–720 ms on the M7 vs the 2 s target; `R3-04.RV` approved at zero. Owner parts: the M7 runs of the stand-in decode pages and the context-loss round-trip, webOS hardware; open carry: the typed stale-atlas error F7 — see the step's As built) |
 | R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 |
 | R3-06 | Stage art features for detailed levels | done — 2026-10-21 (decor list `back` / `front` (256 items, typed-array `StageDecorView`, camera cull ± 512 px), painted 256-px seam bands with `yFactor` / `frames` / `frameTicks` and the `Foreground` band below `EnemyBullets` — `LayerId` 14 → 17, decision RR-6, 13 render groups, fingerprints re-pinned for the re-layering (82 world rows presentation, 4 shell) with no drawn value changed, additive glows on enemies / boss parts / decor behind the per-DB `anyGlow` rule (an `s.str` name interned at load, unknown names fail `content:check`), the Tiled importer maps decor layers / objects / image layers (`034ecb3`), decor-range flies every feature as the v2-only dev range (`POST_V1_STAGES`, 7 bands, 12 decor entries, the glowing DECOR WARDEN, 8 procedural sprites with `decor.mjs` empty at scale 1 — the `fa4198` pin untouched), the render bench's decor scenario measures 14 draw calls of the 20 budget untouched (`b5afd39`); zero goldens moved by the step; `R3-06.RV` at zero after its two test-only fixes `2f2365d`) |
-| R4-01 | Player crafts, Options, shields, player shots | not started |
-| R4-02 | Enemy bullets, lasers, items | not started |
-| R4-03 | Font, HUD and the UI kit | not started |
-| R4-04 | FX and particles | not started |
-| R4-05 | Title, front end, endings, store and doc images | not started |
+| R4-01 | Player crafts, Options, shields, player shots | done (owner parts pending: the M7 ships / Options / Force Field / black-hole looks) — 2026-10-21 (ships native `e90e17e`; five bank frames `4248f5b` with **the wave's one golden re-bless** — `p.bank` is hashed, 31 recordings, reason in the body; thrusters `f0942b1` presentation-only no bless; Options 4 frames `7b07886`, Force Field 45×36×8 `92b4b73`, pod / Reduce / Arm `1a55480`, shots `4a9602f` + `7de90ee`, black hole 48²×8 `b760dbb` — sync-time frames, no sim move; `A9` / `B4` VERIFIED-NO-OP at the closeout; `R4-01.RV` APPROVE zero findings) |
+| R4-02 | Enemy bullets, lasers, items | done (owner parts pending: the `B4` readability sign-off on the 36 sheets) — 2026-10-21 (bullets and lasers unchanged — the `R3-03.V1` art already bible-complete, audit `d875eac` proves it; every item kind 4 glint frames `ba09e57`; the cancel point 4 spark stages `e1ed688` with its sanctioned two-golden re-bless (the field is hashed); `R4-02.RV` APPROVE, both minors doc rows) |
+| R4-03 | Font, HUD and the UI kit | done (owner parts pending: the font legibility rows — ASCII / Spanish / katakana reader — and the HUD / kit looks) — 2026-10-21 (RR-2's 9×12 `pixel9x12` native font `3c8eca8`, all 195 glyphs hand-redrawn `2954930` `2fe757c` `450349b` `68a6fa8`, zero fingerprints moved; the HUD for 12-px bars `96c4e61` (boss bar `FRAME_W >> 2`, Direct pitch, micro script, `hud/life`); the kit's two-tone rim + slider `dcf6380`; cures `d65fcbf` `326ff03`) |
+| R4-04 | FX and particles | done (owner parts pending: the fx-gallery feel) — 2026-10-21 (explosions 24² / 48² / 72² with the white flash cross and `"blend": "normal"` `693e6ac`, content-DB `fx` row re-pinned; spark / sparkle / debris / ring native `6805952`; presets measured no-change; **Decision (R5-D5): the pool of 256 holds** — bot peaks ≤ 100/256, D3 / D4 no-commit verdicts; `R4-04.RV` APPROVE true zero) |
+| R4-05 | Title, front end, endings, store and doc images | done (owner parts pending: the title / endings / logo / screens eyeball rows, the GRAPHICS-plate decision, the optional trailer stays owner's) — 2026-10-21 (logo 330×54 `ffa083a`, title backdrop full-frame `73dcb6d` (native half-ship deviation), WARNING band + zone cards frame-derived `e7d379d`, five endings full-frame `9873156`, one-panel rule `bb153bc`, store icons on v2 art `d23fec0` (**RR-3 closed** — the icons moved once), docs plates + 18 screens re-shot `45739d8`, cure `b35cba4`; `R4-05.RV` APPROVE zero-code nits) |
 | R5-01 | Zone A remaster: AZURE VERGE | not started |
 | R5-02 | Zone B remaster: BRINE NEBULA | not started |
 | R5-03 | Zone C remaster: DUNE EXPANSE | not started |

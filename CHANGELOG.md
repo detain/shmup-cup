@@ -207,6 +207,80 @@ exists yet.
   `topLeftLight`, `bottomRightShade`, `outlineColour`, `offRamp` — outside the registry on purpose; nothing
   ships through it yet.
 
+### The v2 art round (R4)
+
+These change what the game shows: every redone sprite is a v2 source **beside** the v1 map (RR-1), so the
+scale-1 build still draws v1 art and its digest pin `fa4198…` never moved through the round. The step reviews
+approved (`R4-01.RV` at zero findings including nits, `R4-04.RV` a true zero; `R4-03.RV`'s three comment-class
+findings were cured in-wave at `326ff03`); the plan's §10
+As-built rows carry the detail, and the owner's eyeball rows are the §17's pending lists.
+
+- **The player's craft** (`R4-01`, wave 8): KESTREL and MANTA and the thrusters are native v2 pixel maps, the
+  ships rolling five bank frames and a burn flame behind every hull (`e90e17e`, `4248f5b`, `f0942b1` —
+  the bank field is hashed, so `4248f5b` is the wave's one sanctioned golden re-bless, 31 recordings with the
+  reason in its body); Options pulse on four frames and the Force Field shimmers on eight (`7b07886`,
+  `92b4b73`); the pods, the Reduce steps and the Arm tiers are native, and the shot set follows — the eleven
+  pixel maps redrawn and the generated blast, ripple, cyclone and Direct families native (`1a55480`,
+  `4a9602f`, `7de90ee`); the black hole pulls at the bible's 48×48 in eight frames (`b760dbb`).
+- **Bullets, lasers, items** (`R4-02`): the bullets and beams needed no pixel change — the `R3-03.V1` art is
+  bible-complete, and the readability audit `d875eac` proves it with 36 deterministic sheets (nine zones ×
+  four colour-blind palettes) awaiting the owner's sign-off; every item kind glints on four frames
+  (`ba09e57`) and the cancel point sparkles through four travelling-rim stages — its field is hashed, so two
+  late-crediting goldens re-blessed with it (`e1ed688`).
+- **Font, HUD and the UI kit** (`R4-03`):the 9×12 font is real now — `pixel9x12.font.json`, 195 glyphs
+  hand-drawn under the kana and descender laws, at exactly the metrics R2-01 pinned (RR-2), v1's 6×8 file
+  kept for scale 1 (`3c8eca8`, `2954930`, `2fe757c`, `450349b`, `68a6fa8`); the HUD is redesigned for the
+  12-px bars — the boss bar at `FRAME_W >> 2`, the Direct groups on a tested pitch, a hand-drawn micro
+  script on the meter labels (`96c4e61`); panels wear the bible's two-tone magenta-and-cyan rim and the
+  slider grew into the row (`dcf6380`). No font step moved a fingerprint: text commands hash strings, not
+  cells.
+- **FX and particles** (`R4-04`): the explosions are native at 24 / 48 / 72 px with a white flash cross on
+  frame 0 and `"blend": "normal"` (`693e6ac` — the content-DB fingerprint's one `fx` row re-pinned), the
+  sparks, sparkles, debris and rings native (`6805952`); the 256-particle pool **holds** — the bot's
+  measured peaks are ≤ 100 — recorded as decision R5-D5 (`6805952`'s lane, no capacity file moved).
+- **Title, endings, store, docs** (`R4-05`): the logo is redrawn at 330×54 from the bible row and v1's own
+  art — no key-art winner (RR-4, `ffa083a`); the title draws a full-frame v2 night with the planet limb and
+  the two ships as native half-frames, the common atlas page grown to 2048×1024 (`73dcb6d`); the WARNING
+  band, the zone cards and the five endings recompose from the frame constants at full size (`e7d379d`,
+  `9873156`), the epilogue and story-crawl panels follow the one-panel rule (`bb153bc`); the store icons
+  moved to the v2 art **once**, closing RR-3 (`d23fec0`); the docs plates re-derived and all 18 screenshots
+  re-shot on the final art (`45739d8`, `75dc7c0`).
+- **The round's fingerprints moved by decision, never silently**: the presentation suite re-pinned at
+  `7b07886` (10 segments), `ba09e57` (4 world segments), `92b4b73` (6), `e7d379d` (11 of 12 walks),
+  `73dcb6d` (hash rows only), `96c4e61` (10 of 12), `dcf6380`, `9873156` and `bb153bc` (8 walks each); the
+  content-DB fingerprint at `D1`'s `fx` row and `E2`'s interned `ui/title-backdrop` name; `f0942b1` moved
+  the thruster's name rows in all three pins and no hash; the goldens only at the two hashed fields above
+  (31 recordings at `4248f5b`, 2 at `e1ed688`); the shell pin moved only at `4248f5b` / `f0942b1` and the
+  `b35cba4` flight-mirror cure.
+
+### The R5 prep closes (R5-P, wave 9)
+
+Nothing here changes what the game shows: these are the zone lanes' tools, all reviews cured in-wave.
+
+- **Tests one file per zone** (`P4` `a216f14`, `P5a1/P5a2` `09cf628` `50b9bb5`, `P5e` `ea2e58b`): the
+  patterns bank split into per-zone files byte-identically merged, the behaviour suites and the zone
+  runtime / Direct tests became per-zone files — the test census held (859 tests), so a zone lane's red
+  names its zone.
+- **Scoped bless** (`P3` `c284b78`, cure `0b166c4`): `pnpm golden:update --only <ids>` re-blesses only the
+  named zones' recordings and fails loud on an unknown id; the goldens and recovery suites are nine and
+  eight per-zone files.
+- **Fingerprint write mode** (`P10` `95bc61d`): `SHMUP_FINGERPRINT_UPDATE=1` rewrites the pinned tables in
+  place through `pin-writer.ts` (refused under CI); the tamper proof restored all three pins byte-for-byte.
+- **The LAND helper** (`0a3c6ad`, cures `dd8daeb`): `docs/v2-run/helpers/land-zone.sh <zone>` runs the whole
+  landing — derive the atlas groups, bless `--only`, update the three fingerprints, `docs:images`, the
+  release audit and the scope proof, one commit of exactly the derived paths, push — under `flock`, with a
+  `--dry-run` in a throwaway detached worktree; the hostile runs proved the cross-zone scope trap.
+
+### The GRAPHICS options page (R6-04, decision W5-20)
+
+- **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and
+  EXTRAS — `OUTPUT` caps the canvas backbuffer (AUTO takes 1280×720 on the TVs and native on desktop / web,
+  the sweep's numbers behind it) and `RENDERER` chooses AUTO / WebGL 2 / WebGL 1, WebGL 2 only above a
+  Chromium-71 floor with a live probe as safety net, so both TVs stay on WebGL 1; `CRT` and `ASPECT` moved
+  from DISPLAY and still apply live, the new rows apply at restart. `SAVE_VERSION` is **4** (a v3 save
+  migrates with both choices `auto`). No simulated state moved: the goldens and demos are untouched, and the
+  presentation and content-DB fingerprints re-pinned once, at `6ee8174`, with the reason.
+
 ### Engine and tooling
 
 Nothing here changes what the game shows or does: the golden replays, the attract demos and the
