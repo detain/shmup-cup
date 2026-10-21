@@ -142,6 +142,7 @@ while [ "$#" -gt 0 ]; do
 		;;
 	esac
 done
+ONLY=${ONLY// /}
 if { [ -n "$ONLY" ] && [ "$ALL" = 1 ]; } || { [ -z "$ONLY" ] && [ "$ALL" = 0 ]; }; then
 	usage
 	echo "land-zone.sh: exactly one of --only <stageId,…> / --all is required" >&2
@@ -153,7 +154,7 @@ case "$ZONE" in [a-i]) ;; *)
 	exit 2
 	;;
 esac
-if [ -z "$MESSAGE" ] || [ ! -f "$MESSAGE" ]; then
+if [ -z "$MESSAGE" ] || [ ! -f "$MESSAGE" ] || [ ! -r "$MESSAGE" ]; then
 	usage
 	echo "land-zone.sh: --message needs a readable file" >&2
 	exit 2
@@ -226,8 +227,8 @@ RUN=$MAIN
 DRY_DIR=""
 if [ "$DRY" = 1 ]; then
 	DRY_DIR=$RUN_DIR/wt/land-zone-dry-$ZONE-$$
-	git -C "$MAIN" worktree add --detach "$DRY_DIR" HEAD || exit 1
 	trap 'if [ -n "${DRY_DIR:-}" ] && [ -e "$DRY_DIR" ]; then git -C "$MAIN" worktree remove --force "$DRY_DIR" 2>/dev/null || rm -rf "$DRY_DIR"; git -C "$MAIN" worktree prune 2>/dev/null || true; fi' EXIT
+	git -C "$MAIN" worktree add --detach "$DRY_DIR" HEAD || exit 1
 	RUN=$DRY_DIR
 	echo "dry run: working in the throwaway copy $DRY_DIR"
 fi
