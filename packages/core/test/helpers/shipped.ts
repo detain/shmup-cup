@@ -31,7 +31,7 @@ function readShipped(path: string): ContentFile {
 }
 
 /**
- * Every shipped patterns file (R5-P.P4: `zones.patterns.json` split into one file per zone).
+ * Every shipped patterns file (R5-P.P4: the shared zone-pattern file split into one per zone).
  *
  * @returns The files below `patterns/` that are not `example.*`, sorted by path like the
  *   content plugin loads them, so the compiled bank keeps the game's action order.
