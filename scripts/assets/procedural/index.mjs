@@ -8,8 +8,8 @@
  *
  * **Public API.** {@link PROCEDURAL_GENERATORS}, {@link generateProceduralSprites}. To add a
  * generator: write `procedural/<id>.mjs` exporting `generate()`, register it here, and test
- * its shapes in `test/scripts/assets/procedural.test.ts` (a zone generator gets its own file —
- * `procedural-zones.test.ts` for `brine` / `dune` of M2-11, `procedural-zones-de.test.ts` for
+ * its shapes in `test/scripts/assets/procedural-<id>.test.ts` (the per-generator suites since
+ * R4-P.P2; a zone generator shares its file — `procedural-zones.test.ts` for `brine` / `dune` of M2-11, `procedural-zones-de.test.ts` for
  * `magma` / `tempest` of M2-12, `procedural-zones-fg.test.ts` for `vault` / `prism` of M2-13,
  * `procedural-zones-hi.test.ts` for `citadel` / `abyss` and the ending scenes' `ending` of M2-14).
  *
