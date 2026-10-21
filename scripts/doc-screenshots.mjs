@@ -31,7 +31,25 @@ import { extname, join, normalize } from 'node:path';
 // not in this Node process — hence the browser globals above.
 import { chromium } from '@playwright/test';
 import { decodePng } from './assets/png.mjs';
-import { CAPTURE_SCALE, FRAME_CY, FRAME_H, FRAME_W } from './frame.mjs';
+import { CAPTURE_SCALE, FRAME_CY, FRAME_H, FRAME_W, GLYPH_H, GLYPH_W } from './frame.mjs';
+
+/**
+ * The cell width of the font file (`assets/source/fonts/pixel6x8.font.json`, the v1 font) —
+ * the e2e specs' `UI_ART_SCALE` readback (`test/e2e/frame-pixels.ts`): the core's `ART_SCALE` is
+ * `GLYPH_W` over this, so the mirror flips with the font and cannot drift.
+ */
+const FONT_FILE_CELL_W = 6;
+
+/**
+ * A UI length at the art's scale, exactly as `core/ui` `uiPx` computes it:
+ * `⌈v · GLYPH_W / FONT_FILE_CELL_W⌉`.
+ *
+ * @param {number} v - The v1 length in pixels.
+ * @returns {number} It at the art's scale.
+ */
+function uiPx(v) {
+  return Math.ceil((v * GLYPH_W) / FONT_FILE_CELL_W);
+}
 
 /** Repository root (this file lives in `scripts/`). */
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
@@ -93,12 +111,18 @@ const ZONE_TICKS = {
 };
 
 /**
- * The rows round the title's blinking `PRESS OK`, which core's title scene draws at
- * `FRAME_CY + 28` (`core/scenes` `TitleScene.drawUi`): `[FRAME_CY + 22, FRAME_CY + 42)`, rows
- * 130 … 149 at 384×216 — six rows either side of its 8-row glyph cell (the 12-row cell of R2-01's
- * font still fits inside).
+ * The rows round the title's blinking `PRESS OK`, which core's title scene draws with its top at
+ * `FRAME_CY + uiPx(28)` (`core/scenes` `TITLE_LAYOUT.promptY`, a text `y` being the first line's
+ * top edge — `core/presentation` `DrawList.text`): the band is the `GLYPH_H`-row cell with the
+ * v1 layout's six rows of padding either side, at the art's scale — rows 213 … 242 at 640×360
+ * (the pre-uiPx band `[FRAME_CY + 22, FRAME_CY + 42)` was v1 geometry and stopped covering the
+ * prompt when R2-01's `uiPx` moved it).
  */
-const TITLE_BLINK_ROWS = /** @type {[number, number]} */ ([FRAME_CY + 22, FRAME_CY + 42]);
+const promptTop = FRAME_CY + uiPx(28);
+const TITLE_BLINK_ROWS = /** @type {[number, number]} */ ([
+  promptTop - uiPx(6),
+  promptTop + GLYPH_H + uiPx(6),
+]);
 
 /** The ship flies to the middle of the playfield before every action shot. */
 const FLY_OUT = [{ key: 'ArrowRight', from: 60, to: 130 }];
