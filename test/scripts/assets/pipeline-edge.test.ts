@@ -169,7 +169,9 @@ describe('scripts/assets/pipeline — collectSprites (edge)', () => {
   });
 
   it('names source files repo-relative for sources inside the repository', () => {
-    const kestrel = collected.sprites.find((s) => s.name === 'ships/kestrel');
+    // R4-P.P3 (RR-1): the v1 identity — read the scale-1 build, so a `kestrel.v2.sprite.json`
+    // replacing the map at the art scale cannot move this origin.
+    const kestrel = collectSprites({ artScale: 1 }).sprites.find((s) => s.name === 'ships/kestrel');
     expect(kestrel?.origin).toBe('assets/source/sprites/ships/kestrel.sprite.json');
     expect(DEFAULT_SOURCE_DIR).toBe(join(REPO_ROOT, 'assets', 'source'));
     expect(DEFAULT_OUT_DIR).toBe(join(REPO_ROOT, 'assets', 'generated'));
