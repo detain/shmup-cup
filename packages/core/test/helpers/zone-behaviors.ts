@@ -10,14 +10,16 @@
  * - `part` has three bodies: the non-edge files name the boss `boss` (exported as {@link part}),
  *   the shipped-roster edge files name it `b` so it does not shadow their `boss` builder (it
  *   rides the BC/DE/FG kits as their `part` member, defined once), and the HI-edge one throws
- *   where the others assert (R5-P.P5a2 gives it its kit).
+ *   where the others assert (it rides the HI kit as its `part` member).
  * - The helpers that resolve an id against the built `DB` come as one kit per old-file shape:
  *   {@link zoneKit} (the four non-edge files), {@link zoneKitEdgeBc} (B/C edge),
- *   {@link zoneKitEdgeDe} (D/E edge); R5-P.P5a2 adds `zoneKitEdgeFg` and `zoneKitEdgeHi`. Where a
- *   body repeats between kits, the module defines it once and each kit returns it.
+ *   {@link zoneKitEdgeDe} (D/E edge), {@link zoneKitEdgeFg} (F/G edge) and {@link zoneKitEdgeHi}
+ *   (H/I edge). Where a body repeats between kits, the module defines it once and each kit
+ *   returns it.
  * - The roster builders read the file's `ROSTER` while the file *builds* its `DB`, so they come
- *   as one factory per file kind: {@link rosterKitBc} (the B/C edge pair) and {@link rosterKitDe}
- *   (the D/E edge pair); R5-P.P5a2 adds `rosterKitFg` and the HI-edge `enemy`.
+ *   as one factory per file kind: {@link rosterKitBc} (the B/C edge pair), {@link rosterKitDe}
+ *   (the D/E edge pair) and {@link rosterKitFg} (the F/G edge pair); the H/I edge files'
+ *   hand-written entries are built by {@link enemy}.
  *
  * The helper lives under `packages/core/test/helpers/` and imports core **by relative path**
  * (the way `v1-port.ts` does): a core test must not load a second `@shmup/core` instance through
@@ -26,7 +28,7 @@
  * @module
  */
 import { expect } from 'vitest';
-import { BossState } from '../../src/bosses/index.js';
+import { BossState, type BossPart } from '../../src/bosses/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
 import type { ContentDb } from '../../src/data/index.js';
@@ -35,17 +37,28 @@ import { createInputSnapshot } from '../../src/input/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
- * A roster entry as JSON (only the fields the variants touch are typed; the FG kind's wider
- * entry — a `child` and its `Phase` list — joins with R5-P.P5a2).
+ * A boss phase as JSON (the FG kind's entry names its phases by it).
+ */
+export interface Phase {
+  script: string;
+  params?: Record<string, number>;
+  until?: unknown;
+}
+
+/**
+ * A roster entry as JSON (only the fields the variants touch are typed; one widened type serves
+ * the BC, DE and FG edge files — FG's adds the optional `child` and names its phases by
+ * {@link Phase}).
  */
 export interface Entry {
   id: string;
   params?: Record<string, number>;
+  child?: string;
   boss?: {
     code: string;
     displayName: string;
     parts: Record<string, unknown>[];
-    phases: { script: string; params?: Record<string, number>; until?: unknown }[];
+    phases: Phase[];
   };
   [key: string]: unknown;
 }
@@ -523,3 +536,331 @@ export function rosterKitDe(roster: Entry[]): {
   }
   return { copy, enemy: makeEnemy(copy), boss };
 }
+
+/**
+ * The F/G edge kit: `world` (seed 13, one line, no stage), the shared `indexOf`, `spawn` and
+ * `fighting`, the ghost-keeping edge `live` (identical to the DE kit's body) and the edge `part`.
+ *
+ * @param db - The file's DB.
+ * @returns The kit.
+ */
+export function zoneKitEdgeFg(db: ContentDb): {
+  world: () => World;
+  indexOf: (id: string) => number;
+  spawn: (w: World, id: string, x: number, y: number) => Enemy;
+  fighting: (id: string) => World;
+  live: (w: World, id: string) => Enemy[];
+  part: (w: World, name: string) => number;
+} {
+  /**
+   * A free-flight world, the ship holding fire and invulnerable.
+   *
+   * @returns The world.
+   */
+  function world(): World {
+    const w = createWorld(resolveGameConfig({ seed: 13, autofire: false, remoteMode: false }), db);
+    w.debugFlags.godMode = true;
+    return w;
+  }
+  const indexOf = makeIndexOf(db);
+  return {
+    world,
+    indexOf,
+    spawn: makeSpawn(indexOf),
+    fighting: makeFighting(world, indexOf),
+    live: makeLiveKeepsEdge(indexOf),
+    part: partEdge,
+  };
+}
+
+/**
+ * A part index of the fighting boss by name — the HI-edge body (it *throws* where the others
+ * assert). Rides the HI kit under the name the old files called it.
+ *
+ * @param w - The world.
+ * @param name - Part name.
+ * @returns Its index.
+ */
+function partThrows(w: World, name: string): number {
+  const boss = w.bosses.boss;
+  const i = boss.parts.findIndex((p, k) => k < boss.partCount && p.name === name);
+  if (i < 0) throw new Error('no part ' + name);
+  return i;
+}
+
+/**
+ * The H/I edge kit: `freeFlight` (steps 60 fly-in ticks), the camera-relative `spawn`, the
+ * `fighting` that steps **one tick more** once the boss is fighting (its first phase's script has
+ * started), the ghost-keeping `live` (the non-edge kit's body) and the throwing `part`. The old
+ * file had no `world` and no `indexOf`.
+ *
+ * @param db - The file's DB.
+ * @returns The kit.
+ */
+export function zoneKitEdgeHi(db: ContentDb): {
+  freeFlight: () => World;
+  spawn: (w: World, id: string, x: number, y: number) => Enemy;
+  fighting: (id: string) => World;
+  live: (w: World, id: string) => Enemy[];
+  part: (w: World, name: string) => number;
+} {
+  /**
+   * A free-flight world (static camera), the ship invulnerable and holding its fire.
+   *
+   * @returns The world.
+   */
+  function freeFlight(): World {
+    const w = createWorld(resolveGameConfig({ seed: 7, autofire: false, remoteMode: false }), db);
+    w.debugFlags.godMode = true;
+    run(w, 60); // the fly-in
+    return w;
+  }
+  /**
+   * Spawns an enemy of the roster at a screen position.
+   *
+   * @param w - The world.
+   * @param id - Enemy id.
+   * @param x - Screen x.
+   * @param y - Screen y.
+   * @returns The enemy.
+   */
+  function spawn(w: World, id: string, x: number, y: number): Enemy {
+    const e = w.enemies.spawn(db.enemyIndex.get(id) ?? -1, w.camera.x + x, w.camera.y + y);
+    if (e === null) throw new Error('no slot for ' + id);
+    return e;
+  }
+  /**
+   * A free-flight world whose boss fights (slot 0).
+   *
+   * @param id - Boss id.
+   * @returns The world.
+   */
+  function fighting(id: string): World {
+    const w = freeFlight();
+    expect(w.bosses.startBoss(db.enemyIndex.get(id) ?? -1)).toBe(true);
+    for (let i = 0; i < 400 && w.bosses.boss.state !== BossState.Fight; i++) run(w, 1);
+    expect(w.bosses.boss.state).toBe(BossState.Fight);
+    run(w, 1); // its first phase's script has started
+    return w;
+  }
+  return { freeFlight, spawn, fighting, live: makeLiveDirect(db), part: partThrows };
+}
+
+/**
+ * The F/G edge roster builders: the shared `copy`, this file kind's wider `enemy` (other fields
+ * through `extra`) and its `boss` (phases of its own, each on the shipped phase 0's script when
+ * it names none).
+ *
+ * @param roster - The file's `ROSTER`.
+ * @returns The kit: `copy`, `enemy`, `boss`.
+ */
+export function rosterKitFg(roster: Entry[]): {
+  copy: (base: string, id: string) => Entry;
+  enemy: (
+    base: string,
+    id: string,
+    params: Record<string, number>,
+    extra?: Partial<Entry>,
+  ) => Entry;
+  boss: (base: string, id: string, ...phases: Partial<Phase>[]) => Entry;
+} {
+  const copy = makeCopy(roster);
+  /**
+   * A variant of a shipped enemy with other tunables.
+   *
+   * @param base - The shipped id.
+   * @param id - The variant's id.
+   * @param params - Its tunables (replacing the shipped ones).
+   * @param extra - Other fields to set.
+   * @returns The entry.
+   */
+  function enemy(
+    base: string,
+    id: string,
+    params: Record<string, number>,
+    extra: Partial<Entry> = {},
+  ): Entry {
+    const out = copy(base, id);
+    out.params = params;
+    Object.assign(out, extra);
+    return out;
+  }
+  /**
+   * A variant of a shipped boss with phases of its own.
+   *
+   * @param base - The shipped boss id.
+   * @param id - The variant's id.
+   * @param phases - The phases (the shipped phase 0's script when a phase has none).
+   * @returns The entry.
+   */
+  function boss(base: string, id: string, ...phases: Partial<Phase>[]): Entry {
+    const out = copy(base, id);
+    const data = out.boss;
+    if (data === undefined) throw new Error(base + ' is no boss');
+    data.code = 'V-' + id.length.toString();
+    data.displayName = id.toUpperCase();
+    const script = data.phases[0].script;
+    data.phases = phases.map((p) => ({ script, ...p }));
+    return out;
+  }
+  return { copy, enemy, boss };
+}
+
+/**
+ * A test enemy entry — the H/I edge files' hand-written roster builder (the file kind has no
+ * `copy`, no `boss` and no `Entry` typing; both new files import this one).
+ *
+ * @param id - Enemy id.
+ * @param script - Behaviour.
+ * @param params - Its tunables.
+ * @param over - More fields.
+ * @returns The entry.
+ */
+export function enemy(
+  id: string,
+  script: string,
+  params: Record<string, number>,
+  over: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    id,
+    hp: 3,
+    score: 300,
+    hurtbox: { hw: 5, hh: 5 },
+    script,
+    params,
+    sprite: 'enemies/drifter',
+    drop: null,
+    settleTicks: 0,
+    ...over,
+  };
+}
+
+/**
+ * The live lasers attached to a source slot (the HI files' body).
+ *
+ * @param w - The world.
+ * @param slot - Source slot (an enemy's, or a boss part's).
+ * @returns Laser pool indices.
+ */
+export function lasersOf(w: World, slot: number): number[] {
+  const lasers = w.bullets.lasers;
+  const out: number[] = [];
+  for (let i = 0; i < lasers.count; i++) if (lasers.fields.src[i] === slot) out.push(i);
+  return out;
+}
+
+/**
+ * Steps one tick from an empty bullet pool and returns the bullets it fired.
+ *
+ * @param w - The world.
+ * @returns `[x, y, heading, kind]` per bullet.
+ */
+export function fired(w: World): Array<[number, number, number, number]> {
+  w.bullets.pool.clear();
+  run(w, 1);
+  const f = w.bullets.pool.fields;
+  const out: Array<[number, number, number, number]> = [];
+  for (let i = 0; i < w.bullets.count; i++) out.push([f.x[i], f.y[i], f.angle[i], f.kind[i]]);
+  return out;
+}
+
+/**
+ * A part's own turn as a signed number of binary units in `[-512, 512)`.
+ *
+ * @param p - The part.
+ * @returns The turn.
+ */
+export function turn(p: BossPart): number {
+  const a = Math.round(p.angle) % ANGLE_UNITS;
+  return a >= ANGLE_UNITS / 2 ? a - ANGLE_UNITS : a;
+}
+
+/**
+ * The arm segments of a boss (circle-hit parts attached to another part), by side: the top arms
+ * (their root hangs above its parent) and the bottom arms.
+ *
+ * @param w - The world.
+ * @returns The two lists of parts.
+ */
+export function arms(w: World): { top: BossPart[]; bottom: BossPart[] } {
+  const b = w.bosses.boss;
+  const parts = b.parts.slice(0, b.partCount);
+  const top: BossPart[] = [];
+  const bottom: BossPart[] = [];
+  for (const p of parts) {
+    if (p.radius <= 0 || p.parent < 0) continue;
+    let root = p;
+    while (root.parent >= 0 && parts[root.parent].radius > 0) root = parts[root.parent];
+    (root.restY < 0 ? top : bottom).push(p);
+  }
+  return { top, bottom };
+}
+
+/**
+ * The curl of an arm segment towards its side (`turn` × −1 above, × 1 below).
+ *
+ * @param w - The world.
+ * @param p - The segment.
+ * @returns Binary units.
+ */
+export function curlOf(w: World, p: BossPart): number {
+  return arms(w).top.includes(p) ? -turn(p) : turn(p);
+}
+
+/**
+ * Records the curl of a boss's first standing arm segment every tick, checking on every tick that
+ * every standing segment of both arms has the same curl — the top arm's turn mirrored below.
+ *
+ * @param w - The world (fighting).
+ * @param ticks - Ticks.
+ * @returns The curls, one per tick.
+ */
+export function curls(w: World, ticks: number): number[] {
+  const { top, bottom } = arms(w);
+  const out: number[] = [];
+  for (let t = 0; t < ticks; t++) {
+    run(w, 1);
+    const standing = [...top, ...bottom].filter((p) => !p.destroyed);
+    const c = curlOf(w, standing[0]);
+    for (const p of top) if (!p.destroyed) expect(turn(p) + c, p.name).toBe(0);
+    for (const p of bottom) if (!p.destroyed) expect(turn(p) - c, p.name).toBe(0);
+    out.push(c === 0 ? 0 : c); // no −0
+  }
+  return out;
+}
+
+/**
+ * Collapses a series into runs of equal values, e.g. `[0, 0, 1]` → `['0×2', '1×1']`.
+ *
+ * @param values - The series.
+ * @returns The runs.
+ */
+export function runs(values: readonly number[]): string[] {
+  const out: string[] = [];
+  let n = 0;
+  for (let i = 0; i < values.length; i++) {
+    n++;
+    if (i === values.length - 1 || values[i + 1] !== values[i]) {
+      out.push(String(values[i]) + '×' + String(n));
+      n = 0;
+    }
+  }
+  return out;
+}
+
+/**
+ * The biggest change between two neighbours of a series.
+ *
+ * @param values - The series.
+ * @returns The largest absolute step.
+ */
+export function biggestStep(values: readonly number[]): number {
+  let most = 0;
+  for (let i = 1; i < values.length; i++)
+    most = Math.max(most, Math.abs(values[i] - values[i - 1]));
+  return most;
+}
+
+/** Tunables of a quiet `boss.facet` phase: held still, no needles (nothing else by default). */
+export const FACET_QUIET = { trackSpeed: 0, fireTicks: 100_000 } as const;

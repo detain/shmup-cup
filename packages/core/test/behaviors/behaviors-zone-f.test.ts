@@ -1,14 +1,11 @@
 /**
- * The behaviours of plan M2-13 on the shipped zone F and G rosters
- * (`content/enemies/zone-f.enemies.json`, `zone-g.enemies.json`), in free flight (a static camera)
- * with the ship holding its fire: `cell.chase` (a chasing cell: in along its row, then after the
- * nearest ship with a capped turn, then straight on; the halves of a dividing cell flying out
- * first), `boss.squid` (MANTLE REGENT: its tentacles curling in front of the eye and uncurling in
- * a cycle, the armour clinking while they guard, a broken tentacle ending the first phase) and
- * `boss.facet` (FACET MONARCH: the core behind its crystals, the arms waving like claws, needles
- * from the tips, rings and one lane at a time from the core in the last phase).
+ * The behaviours of plan M2-13 on the shipped zone F roster (`content/enemies/zone-f.enemies.json`),
+ * in free flight (a static camera) with the ship holding its fire: `cell.chase` (a chasing cell: in
+ * along its row, then after the nearest ship with a capped turn, then straight on; the halves of a
+ * dividing cell flying out first) and `boss.squid` (MANTLE REGENT: its tentacles curling in front of
+ * the eye and uncurling in a cycle, the armour clinking while they guard, a broken tentacle ending
+ * the first phase).
  */
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   BEHAVIOR_IDS,
@@ -16,39 +13,21 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
 } from '../../src/behaviors/index.js';
-import { BossHit, BossState, type BossPart } from '../../src/bosses/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
-import { EnemyState, type Enemy } from '../../src/enemies/index.js';
-import { createInputSnapshot } from '../../src/input/index.js';
+import { BossHit, type BossPart } from '../../src/bosses/index.js';
+import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
-import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
-import { v1rel, v1speed } from '../helpers/v1-port.js';
-import { shippedPatterns } from '../helpers/shipped.js';
+import { ENGINE_SPRITES } from '../../src/world/index.js';
+import { shipped, shippedPatterns } from '../helpers/shipped.js';
+import { part, run, zoneKit } from '../helpers/zone-behaviors.js';
+import { v1speed } from '../helpers/v1-port.js';
 
-/**
- * A shipped content file.
- *
- * @param path - Path below `content/`.
- * @returns The file.
- */
-function shipped(path: string): ContentFile {
-  return {
-    path,
-    data: JSON.parse(
-      readFileSync(new URL('../../../../content/' + path, import.meta.url), 'utf8'),
-    ) as unknown,
-  };
-}
-
-/** The KESTREL, Type A, the zone F and G rosters and the patterns they run. */
+/** The KESTREL, Type A, the zone F roster and the patterns it runs. */
 const DB: ContentDb = (() => {
   const { db, issues } = loadContent(
     [
       shipped('player/kestrel.player.json'),
       shipped('weapons/type-a.weapons.json'),
       shipped('enemies/zone-f.enemies.json'),
-      shipped('enemies/zone-g.enemies.json'),
       ...shippedPatterns(),
     ],
     { extraSprites: ENGINE_SPRITES },
@@ -57,70 +36,7 @@ const DB: ContentDb = (() => {
   return db;
 })();
 
-/**
- * A free-flight world (static camera), the ship holding fire and invulnerable.
- *
- * @returns The world.
- */
-function freeFlight(): World {
-  const w = createWorld(resolveGameConfig({ seed: 7, autofire: false, remoteMode: false }), DB);
-  w.debugFlags.godMode = true;
-  return w;
-}
-
-/**
- * Steps a world.
- *
- * @param w - The world.
- * @param ticks - Ticks.
- */
-function run(w: World, ticks: number): void {
-  const input = createInputSnapshot();
-  for (let i = 0; i < ticks; i++) {
-    stepWorld(w, input);
-    w.events.clear();
-  }
-}
-
-/**
- * The live enemies of an id.
- *
- * @param w - The world.
- * @param id - Enemy id.
- * @returns Them, in slot order.
- */
-function live(w: World, id: string): Enemy[] {
-  const index = DB.enemyIndex.get(id);
-  return w.enemies.enemies.filter((e) => e.state === EnemyState.Live && e.specIndex === index);
-}
-
-/**
- * A world with a boss started and fighting.
- *
- * @param id - The boss's enemy id.
- * @returns The world.
- */
-function fighting(id: string): World {
-  const w = freeFlight();
-  expect(w.bosses.startBoss(DB.enemyIndex.get(id) ?? -1)).toBe(true);
-  for (let i = 0; i < 400 && w.bosses.boss.state !== BossState.Fight; i++) run(w, 1);
-  expect(w.bosses.boss.state).toBe(BossState.Fight);
-  return w;
-}
-
-/**
- * A boss part's index by name.
- *
- * @param w - The world.
- * @param name - Part name.
- * @returns Its index.
- */
-function part(w: World, name: string): number {
-  const boss = w.bosses.boss;
-  const index = boss.parts.findIndex((p, i) => i < boss.partCount && p.name === name);
-  expect(index, name).toBeGreaterThanOrEqual(0);
-  return index;
-}
+const { freeFlight, fighting, live } = zoneKit(DB);
 
 /**
  * Whether a shot flying right-to-left along row `y` (world) meets a standing, armoured circle part
@@ -143,7 +59,9 @@ function guarded(parts: readonly BossPart[], x: number, y: number): boolean {
   );
 }
 
-describe('core/behaviors — zones F and G (M2-13)', () => {
+describe('core/behaviors — zone F (M2-13)', () => {
+  // The case tests both zones F and G (and their registration); it rides the earlier zone's
+  // file, which is why it names the monarch next to the cell and the regent.
   it('registers the chasing cell and the two zone bosses', () => {
     expect(BEHAVIOR_IDS).toContain('cell.chase');
     expect(BOSS_BEHAVIOR_IDS).toEqual(expect.arrayContaining(['boss.squid', 'boss.facet']));
@@ -266,58 +184,5 @@ describe('core/behaviors — zones F and G (M2-13)', () => {
     run(w, 1);
     const moved = Math.hypot(tip.x - boss.x - before.x, tip.y - boss.y - before.y);
     expect(moved).toBeLessThan(4);
-  });
-
-  it('boss.facet: the core clinks behind its crystals; the arms wave like claws; needles from the tips', () => {
-    const w = fighting('facet-monarch');
-    const boss = w.bosses.boss;
-    const parts = boss.parts;
-    const core = part(w, 'core');
-    expect(w.bosses.damagePart(core, 1, 0)).toBe(BossHit.Clink);
-    const tip = parts[part(w, 'arm-top-tip')];
-    const body = parts[part(w, 'body')];
-    let low = Number.POSITIVE_INFINITY;
-    let high = Number.NEGATIVE_INFINITY;
-    for (let t = 0; t < 200; t++) {
-      run(w, 1);
-      low = Math.min(low, tip.y - body.y);
-      high = Math.max(high, tip.y - body.y);
-    }
-    // The top arm hangs 28 px above the body’s centre and sweeps ±56 units of curl per segment:
-    // its tip swings from well above the arm's root row to near the core's row.
-    expect(high).toBeGreaterThan(-v1rel(12));
-    expect(low).toBeLessThan(-v1rel(44));
-    expect(w.bullets.count).toBeGreaterThan(0);
-    // Both crystals broken: the core takes damage and the second phase starts.
-    w.bosses.damagePart(part(w, 'crystal-top'), 999, 0);
-    w.bosses.damagePart(part(w, 'crystal-bottom'), 999, 0);
-    run(w, 2);
-    expect(boss.phase).toBe(1);
-    expect(w.bosses.damagePart(core, 1, 0)).toBe(BossHit.Damaged);
-  });
-
-  it('boss.facet: its last phase fires one lane at a time from the core, and rings', () => {
-    const w = fighting('facet-monarch');
-    const boss = w.bosses.boss;
-    w.bosses.damagePart(part(w, 'crystal-top'), 999, 0);
-    w.bosses.damagePart(part(w, 'crystal-bottom'), 999, 0);
-    run(w, 2);
-    w.bosses.damagePart(part(w, 'core'), 40, 0);
-    run(w, 2);
-    expect(boss.phase).toBe(2);
-    let most = 0;
-    let lanes = 0;
-    let rings = false;
-    for (let t = 0; t < 700; t++) {
-      const bullets = w.bullets.count;
-      const before = w.bullets.lasers.count;
-      run(w, 1);
-      most = Math.max(most, w.bullets.lasers.count);
-      if (w.bullets.lasers.count > before) lanes++;
-      if (w.bullets.count >= bullets + 10) rings = true;
-    }
-    expect(lanes).toBeGreaterThanOrEqual(2);
-    expect(most).toBe(1);
-    expect(rings).toBe(true);
   });
 });
