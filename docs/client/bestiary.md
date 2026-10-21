@@ -38,15 +38,15 @@ nearest.
 
 | | Enemy | What it does |
 |---|---|---|
-| ![](../images/enemies/drifter.png) | **SKEET**<br>1 HP · 100 pts | A hollow scouting pod that rides a slow sine wave across the screen at 1.1 px a tick. They come in loose strings; the chained version swims a wider, faster wave, each pod half a beat behind the one in front. Harmless on its own — deadly as scenery you stop watching. |
-| ![](../images/enemies/vane.png) | **VANE**<br>1 HP · 100 pts | A bladed flier that enters in a fan, loops once and leaves. It never shoots. It does not have to: a fan of six crossing the playfield at 1.6 px a tick turns the middle of the screen into a place you cannot be. |
-| ![](../images/enemies/carrier-red.png) | **TENDER**<br>3 HP · 200 pts | The Tide's supply drone, crawling forward at 0.7 px a tick with a stolen power capsule in its belly. Kill it and the capsule is yours; let it leave and that capsule is gone. The whole power meter runs on these, and a zone only has so many. |
-| ![](../images/enemies/darter.png) | **LANCER**<br>1 HP · 150 pts | A one-use ramming spike. It drifts in from the right, stops, points itself at you for 24 ticks — the wind-up is the tell — then throws itself along that line at 2 px a tick and never turns again. Move after it commits. |
+| ![](../images/enemies/drifter.png) | **SKEET**<br>1 HP · 100 pts | A hollow scouting pod that rides a slow sine wave across the screen at 1.65 px a tick. They come in loose strings; the chained version swims a wider, faster wave, each pod half a beat behind the one in front. Harmless on its own — deadly as scenery you stop watching. |
+| ![](../images/enemies/vane.png) | **VANE**<br>1 HP · 100 pts | A bladed flier that enters in a fan, loops once and leaves. It never shoots. It does not have to: a fan of six crossing the playfield at 2.4 px a tick turns the middle of the screen into a place you cannot be. |
+| ![](../images/enemies/carrier-red.png) | **TENDER**<br>3 HP · 200 pts | The Tide's supply drone, crawling forward at 1.05 px a tick with a stolen power capsule in its belly. Kill it and the capsule is yours; let it leave and that capsule is gone. The whole power meter runs on these, and a zone only has so many. |
+| ![](../images/enemies/darter.png) | **LANCER**<br>1 HP · 150 pts | A one-use ramming spike. It drifts in from the right, stops, points itself at you for 24 ticks — the wind-up is the tell — then throws itself along that line at 3 px a tick and never turns again. Move after it commits. |
 | ![](../images/enemies/turret.png) | **PICKET**<br>3 HP · 300 pts | A gun emplacement bolted to the floor or hanging from the ceiling, firing an aimed shot every 110 ticks. Picket lines are placed so the terrain does half their work: the safe lane is usually the one that looks too tight. |
-| ![](../images/enemies/hopper.png) | **STRIDER**<br>2 HP · 200 pts | A walker that grips the ground and follows every slope at 0.6 px a tick, shooting as it goes. It cannot be outrun — the ground brings it to you. |
+| ![](../images/enemies/hopper.png) | **STRIDER**<br>2 HP · 200 pts | A walker that grips the ground and follows every slope at 0.9 px a tick, shooting as it goes. It cannot be outrun — the ground brings it to you. |
 | ![](../images/enemies/hatch.png) | **BURROW**<br>8 HP · 500 pts | A buried hatch that opens every 90 ticks and lets out a mite, up to four at a time. Eight hit points is a lot for this early in the game, and it keeps producing until it is gone: kill the hatch, not the swarm. |
-| ![](../images/enemies/darter.png) | **BURROW MITE**<br>1 HP · 50 pts | What comes out of a BURROW. It climbs away from the hatch, turns, and dives at you at 1.75 px a tick after a short wind-up. One shot kills it. There are always more. |
-| ![](../images/enemies/gyre.png) | **GYRE**<br>4 HP · 400 pts | A rotating ring-gun that circles the playfield at 1.4 px a tick and lets go of a full ring of bullets every 150 ticks. Rings are slow (1 px a tick) and generous — you fly through the gaps, you do not outrun them. |
+| ![](../images/enemies/darter.png) | **BURROW MITE**<br>1 HP · 50 pts | What comes out of a BURROW. It climbs away from the hatch, turns, and dives at you at 2.625 px a tick after a short wind-up. One shot kills it. There are always more. |
+| ![](../images/enemies/gyre.png) | **GYRE**<br>4 HP · 400 pts | A rotating ring-gun that circles the playfield at 2.1 px a tick and lets go of a full ring of bullets every 150 ticks. Rings are slow (1.5 px a tick) and generous — you fly through the gaps, you do not outrun them. |
 
 ### HALCYON BULWARK · HB-01
 
@@ -73,10 +73,10 @@ something else.
 
 | | Enemy | What it does |
 |---|---|---|
-| ![](../images/enemies/froth.png) | **FROTH**<br>3 HP · 200 pts | A gas sac that bobs forward on a long, lazy wave. Kill it and it becomes two beads flying apart at 1.1 px a tick — killing it at the wrong moment is how you get hit. |
+| ![](../images/enemies/froth.png) | **FROTH**<br>3 HP · 200 pts | A gas sac that bobs forward on a long, lazy wave. Kill it and it becomes two beads flying apart at 1.65 px a tick — killing it at the wrong moment is how you get hit. |
 | ![](../images/enemies/froth-bead.png) | **FROTH BEAD**<br>1 HP · 50 pts | What FROTH leaves behind. Smaller, quicker, and it does not split again. |
 | ![](../images/enemies/brood-bubble.png) | **BROOD BUBBLE**<br>4 HP · 300 pts | A bubble with something alive in it. It drifts slower than the froth and scatters its single passenger on a delay, so the split lands after you have already moved on. |
-| ![](../images/enemies/gill-dart.png) | **GILL DART**<br>1 HP · 150 pts | The nebula's rammer: a finned dart that lines up for 18 ticks and then runs its line at 1.75 px a tick. |
+| ![](../images/enemies/gill-dart.png) | **GILL DART**<br>1 HP · 150 pts | The nebula's rammer: a finned dart that lines up for 18 ticks and then runs its line at 2.625 px a tick. |
 | ![](../images/enemies/reef-jelly.png) | **REEF JELLY**<br>4 HP · 400 pts | A drifting bell that swims a wide sine and fires scripted bullet patterns between 30-tick rests. It is the zone's first real bullet source — learn its rhythm and the rest of the nebula is easy. |
 | ![](../images/enemies/urchin.png) | **URCHIN**<br>3 HP · 300 pts | A spined turret rooted to the reef floor or ceiling, aiming at you every 140 ticks. |
 | ![](../images/enemies/maw-rocket.png) | **MAW ROCKET**<br>1 HP · 100 pts | A homing torpedo, fired in pairs by the zone's boss. It drifts for 20 ticks, then turns after you for a full second before it gives up and flies straight. Shoot them, or make them chase you into a wall. |
@@ -110,7 +110,7 @@ A desert route the Tide colonised from below. Half of this zone is the floor.
 
 | | Enemy | What it does |
 |---|---|---|
-| ![](../images/enemies/dune-worm.png) | **DUNE WORM**<br>2 HP · 100 pts | It is not on screen until you are close. Fly within range and it erupts from the sand, arcs up at 3.3 px a tick and falls back under gravity. The dunes are full of them, and nothing warns you. |
+| ![](../images/enemies/dune-worm.png) | **DUNE WORM**<br>2 HP · 100 pts | It is not on screen until you are close. Fly within range and it erupts from the sand, arcs up at 4.95 px a tick and falls back under gravity. The dunes are full of them, and nothing warns you. |
 | ![](../images/enemies/husk-crawler.png) | **HUSK CRAWLER**<br>3 HP · 250 pts | A shelled walker that crawls the dunes for 80 ticks, plants itself for 50, fires a spread, and starts walking again. Hit it while it is stopped. |
 | ![](../images/enemies/sand-skimmer.png) | **SAND SKIMMER**<br>1 HP · 100 pts | A paper-thin glider that comes in on a baked curve — fast, fragile, and always in a formation whose shape is the actual attack. |
 | ![](../images/enemies/dust-devil.png) | **DUST DEVIL**<br>6 HP · 500 pts | A standing column of sand that walks slowly against the scroll and fires patterned bursts with 70-tick pauses. It soaks up fire; do not fight it in the open unless you have to. |
@@ -141,7 +141,7 @@ floor. The terrain here can kill you on its own, and often does it first.
 | | Enemy | What it does |
 |---|---|---|
 | ![](../images/enemies/ember-wisp.png) | **EMBER WISP**<br>1 HP · 100 pts | Burning gas in a loose chain, riding a wave across the caldera. Popcorn — but popcorn in front of a wall. |
-| ![](../images/enemies/cinder-bat.png) | **CINDER BAT**<br>1 HP · 150 pts | A looping flier that comes off the peaks in fans at 1.5 px a tick. |
+| ![](../images/enemies/cinder-bat.png) | **CINDER BAT**<br>1 HP · 150 pts | A looping flier that comes off the peaks in fans at 2.25 px a tick. |
 | ![](../images/enemies/magma-cone.png) | **MAGMA CONE**<br>12 HP · 800 pts | A live volcano. Every 100 ticks it throws three bombs on spreading arcs that fall back through the whole playfield. Twelve hit points; the eruption keeps coming until the last one lands. |
 | ![](../images/enemies/magma-bomb.png) | **MAGMA BOMB**<br>1 HP · 30 pts | A thrown blob of lava. Shootable, barely worth points, and there are always three in the air. |
 | ![](../images/enemies/cinder-rock.png) | **CINDER ROCK**<br>2 HP · 100 pts | A boulder in the cave roof that lets go when you come within 60 px and falls fast. In the maze this is the trap: the gap you are aiming for is the one with the rock over it. |
@@ -169,7 +169,7 @@ The first zone that attacks the half of the screen you have been ignoring.
 | | Enemy | What it does |
 |---|---|---|
 | ![](../images/enemies/hail-drifter.png) | **HAIL DRIFTER**<br>1 HP · 100 pts | Frozen shot in a tight chain, on a short, quick wave. |
-| ![](../images/enemies/gale-kite.png) | **GALE KITE**<br>1 HP · 150 pts | A wind-borne flier that loops through the ridge line in fans at 1.6 px a tick. |
+| ![](../images/enemies/gale-kite.png) | **GALE KITE**<br>1 HP · 150 pts | A wind-borne flier that loops through the ridge line in fans at 2.4 px a tick. |
 | ![](../images/enemies/squall-jumper.png) | **SQUALL JUMPER**<br>2 HP · 200 pts | It enters from the **left**, behind you. It overtakes you, holds on the right for 20 ticks, fires, and leaves the way it came. Everything you have learned about facing right is wrong for two seconds. |
 | ![](../images/enemies/crag-turret.png) | **CRAG TURRET**<br>3 HP · 300 pts | A ridge gun, aiming every 130 ticks — the busiest turret of the middle zones. |
 | ![](../images/enemies/thunderhead.png) | **THUNDERHEAD**<br>5 HP · 500 pts | A storm cell that drifts against the scroll and fires patterned bursts with 40-tick rests. It is slow, it is wide, and it is in the way. |

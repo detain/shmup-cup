@@ -81,7 +81,7 @@ pnpm clean               # scripts/clean.mjs: dist/ coverage/ .turbo/ everywhere
 
 ## Deep docs
 
-The docs below were written for v1 and quote its numbers: 384×216, 8-px tiles, 8-px HUD bars, the 6×8 font, D19 / D20. Their rules still hold; where a number differs, `plan_resolution.md` wins on `master`. R2-03 updates them.
+The docs below were written for v1 and quote its numbers: 384×216, 8-px tiles, 8-px HUD bars, the 6×8 font, D19 / D20. Their rules still hold; where a number differs, `plan_resolution.md` wins on `master`. R2-03 updated them in wave 6; what remains of that work is the player-facing `docs/client/` pages' refresh cadence, which follows each step that changes what the player sees.
 
 @./docs/dev/conventions.md
 @./docs/dev/repo-layout.md

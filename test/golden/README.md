@@ -78,6 +78,7 @@ continues).
 | `zone-a-extra` | 4-way playtest bot, god mode, full loadout | an Extra Edit arsenal (M3-01): Hawk Wind and the Spread Gun, HALCYON BULWARK shot down |
 | `zone-a-recovery` | a weaving pilot that never dodges, full loadout | option recovery (M3-01): each death drops the Options it loses as items, `gameOver` |
 | `zone-a-invincible` | a weaving pilot that never dodges, full loadout | the invincibility assist (M3-01): every hit ignored, the header's `assists` flag (2) instead of god mode, the boss shot down |
+| `zone-a-extras` | the 4-way bot pressing SPECIAL every 90 ticks, god mode, full loadout | the M3-02 mechanic extras all on with the MANTA over the whole of AZURE VERGE: black-hole vortices thrown and discharged, bullets grazed, the death-bomb window armed, the authentic slowdown counting the load — no deaths, HALCYON BULWARK shot down, `stageClear` |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.
