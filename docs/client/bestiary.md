@@ -144,7 +144,7 @@ floor. The terrain here can kill you on its own, and often does it first.
 | ![](../images/enemies/cinder-bat.png) | **CINDER BAT**<br>1 HP · 150 pts | A looping flier that comes off the peaks in fans at 2.25 px a tick. |
 | ![](../images/enemies/magma-cone.png) | **MAGMA CONE**<br>12 HP · 800 pts | A live volcano. Every 100 ticks it throws three bombs on spreading arcs that fall back through the whole playfield. Twelve hit points; the eruption keeps coming until the last one lands. |
 | ![](../images/enemies/magma-bomb.png) | **MAGMA BOMB**<br>1 HP · 30 pts | A thrown blob of lava. Shootable, barely worth points, and there are always three in the air. |
-| ![](../images/enemies/cinder-rock.png) | **CINDER ROCK**<br>2 HP · 100 pts | A boulder in the cave roof that lets go when you come within 60 px and falls fast. In the maze this is the trap: the gap you are aiming for is the one with the rock over it. |
+| ![](../images/enemies/cinder-rock.png) | **CINDER ROCK**<br>2 HP · 100 pts | A boulder in the cave roof that lets go when you come within 90 px and falls fast. In the maze this is the trap: the gap you are aiming for is the one with the rock over it. |
 | ![](../images/enemies/slag-crawler.png) | **SLAG CRAWLER**<br>3 HP · 250 pts | A walker of fused rock, slow even for a walker, that stops to fire a spread every 90 ticks of walking. |
 | ![](../images/enemies/basalt-turret.png) | **BASALT TURRET**<br>4 HP · 300 pts | The cave's gun: four hit points, an aimed shot every 150 ticks, and a habit of being placed exactly where the corridor narrows. |
 
@@ -198,8 +198,8 @@ The Tide's nursery. The walls are tissue: you can shoot through them, and they h
 | ![](../images/enemies/lymph-mote.png) | **LYMPH MOTE**<br>1 HP · 100 pts | Single cells drifting down the vein in chains. |
 | ![](../images/enemies/chaser-cell.png) | **CHASER CELL**<br>2 HP · 200 pts | It enters, finds you, and follows — turning to track you for over two seconds before it gives up and scatters. Two of them from opposite sides is a real problem. |
 | ![](../images/enemies/mitosis-cell.png) | **MITOSIS CELL**<br>6 HP · 600 pts | Six hit points, and when it dies it becomes two more, thrown wide apart. Kill it where you have room. |
-| ![](../images/enemies/vault-claw.png) | **VAULT CLAW**<br>5 HP · 400 pts | An eight-link tentacle rooted to the wall. It extends 72 px looking for you, and if your ship is inside its grab radius it **takes hold and pulls** — into the wall, usually. Shoot the root, not the arm. |
-| ![](../images/enemies/polyp-turret.png) | **POLYP TURRET**<br>4 HP · 300 pts | A growth in the tissue that aims every 170 ticks. |
+| ![](../images/enemies/vault-claw.png) | **VAULT CLAW**<br>5 HP · 400 pts | An eight-link tentacle rooted to the wall. It extends 108 px looking for you, and if your ship is inside its grab radius it **takes hold and pulls** — into the wall, usually. Shoot the root, not the arm. |
+| ![](../images/enemies/polyp-turret.png) | **POLYP TURRET**<br>4 HP · 300 pts | A growth in the tissue that aims every 190 ticks. |
 | ![](../images/enemies/spore-sac.png) | **SPORE SAC**<br>4 HP · 500 pts | It flies to a fixed post high or low in the room, anchors there for 320 ticks laying down patterns, and lifts away. Two of them, one high one low, is the zone's signature crossfire. |
 
 ### MANTLE REGENT · MR-06
@@ -252,7 +252,7 @@ One of the two ways a run ends. The Citadel is a factory, and every part of it i
 | ![](../images/enemies/bolt-drone.png) | **BOLT DRONE**<br>1 HP · 100 pts | Mass-produced chaff that comes down the piston hall in chains. |
 | ![](../images/enemies/hatch-bay.png) | **HATCH BAY**<br>6 HP · 500 pts | A production bay in the floor or ceiling that puts out a mite every 100 ticks, three at a time. Six hit points; it will outlast your patience. |
 | ![](../images/enemies/hatch-mite.png) | **HATCH MITE**<br>1 HP · 60 pts | What the bays make. They peel away from the hatch, turn, and dive. |
-| ![](../images/enemies/laser-emitter.png) | **LASER EMITTER**<br>6 HP · 600 pts | The Citadel's lane weapon: a 60-tick telegraph line across the room, then a 6-px beam for 36 ticks, over and over every 200 ticks. The line is the whole warning you get, and it is enough. |
+| ![](../images/enemies/laser-emitter.png) | **LASER EMITTER**<br>6 HP · 600 pts | The Citadel's lane weapon: a 60-tick telegraph line across the room, then a 9-px beam for 36 ticks, over and over every 200 ticks. The line is the whole warning you get, and it is enough. |
 | ![](../images/enemies/sentinel-walker.png) | **SENTINEL WALKER**<br>4 HP · 400 pts | A heavy walker patrolling the fortress floor, stopping every 100 ticks to fire a spread. |
 | ![](../images/enemies/rail-turret.png) | **RAIL TURRET**<br>4 HP · 300 pts | A hardened rail gun set into the walls, aiming every 180 ticks. |
 | ![](../images/enemies/bolt-drone.png) | **SOVEREIGN DRONE**<br>2 HP · 150 pts | The Sovereign's personal escort: a bolt drone rebuilt to chase, tracking you for two seconds before it scatters. |
@@ -290,7 +290,7 @@ serve.
 | | Enemy | What it does |
 |---|---|---|
 | ![](../images/enemies/lumen-mote.png) | **LUMEN MOTE**<br>1 HP · 100 pts | Cold light in a chain, drifting up out of the trench. |
-| ![](../images/enemies/depth-mine.png) | **DEPTH MINE**<br>3 HP · 300 pts | It hangs still until you come within 60 px, then arms — 40 ticks of fuse, then an eight-way ring in every direction at once. Shoot it early or leave it alone entirely. |
+| ![](../images/enemies/depth-mine.png) | **DEPTH MINE**<br>3 HP · 300 pts | It hangs still until you come within 90 px, then arms — 40 ticks of fuse, then an eight-way ring in every direction at once. Shoot it early or leave it alone entirely. |
 | ![](../images/enemies/trench-eel.png) | **TRENCH EEL**<br>2 HP · 150 pts | Buried in the trench wall until you are near, then it bursts out in an arc and falls back. The abyss's answer to the dune worm. |
 | ![](../images/enemies/gulper.png) | **GULPER**<br>6 HP · 600 pts | A deep-water mouth that takes a post at the top or bottom of the trench, holds for 340 ticks firing patterns, and swims away. |
 | ![](../images/enemies/abyss-turret.png) | **ABYSS TURRET**<br>4 HP · 300 pts | The depth mines' gun cover, aiming every 180 ticks from floor and ceiling. |

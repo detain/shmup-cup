@@ -411,6 +411,37 @@ pnpm exec vitest run --project integration test/playtest/zone-b.test.ts test/pla
 # [playtest] zone-b four-way (remote) (god mode): stageClear after 237.4 s, boss 36.1 s, 0 death(s), …
 ```
 
+## R2-04: the openings at the new scale
+
+R2-04.Z1 measured every section opening of both zones the way R2-04.Z1/Z3 did the other six zones —
+median ticks from an enemy row's first-visible tick to its first vertical turn per checkpoint-to-
+checkpoint section, the frozen v1 baseline vs the live ported world, plus the non-god 4-way bot —
+and both patches came out empty: no section opens noticeably easier, nothing to retune (the finding
+and the mechanism in [zone-a-and-playtest.md](zone-a-and-playtest.md#r2-04-the-openings-at-the-new-scale)).
+
+**Zone B (BRINE NEBULA)** — non-god: stageClear, 1 death (contact, section 1 — the RT-Z13 re-run
+banded it by the v2 checkpoints, `cameraX` 6681 inside the 3,000..6,900 section; the original
+pass had grouped it with the v1 bounds).
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..3000 | 8.0 (20) | 8.0 (20) | 0.0 | 0 | 0 | none |
+| 1 | 3000..6900 | 8.0 (7) | 8.0 (10) | 0.0 | 1 | 1 | none (death section: RT-Z13 S1 fix) |
+| 2 | 6900..10200 | 23.0 (11) | 23.0 (11) | 0.0 | 0 | 0 | none |
+| 3 | 10200..14700 | 8.0 (18) | 8.0 (19) | 0.0 | 0 | 0 | none |
+
+**Zone C (DUNE EXPANSE)** — non-god: gameOver, 3 deaths (2 bullet, 1 contact, sections 1–2).
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..3300 | 32.0 (16) | 32.0 (16) | 0.0 | 0 | 0 | none |
+| 1 | 3300..6600 | 10.0 (2) | 10.0 (2) | 0.0 | 0 | 0 | none |
+| 2 | 6600..9900 | 32.0 (7) | 32.0 (7) | 0.0 | 3 | 3 | none |
+| 3 | 9900..14400 | 32.0 (9) | 32.0 (9) | 0.0 | 0 | 0 | none |
+
+*Medians are ticks `turnTick − visibleTick` over flying event rows, n = rows with both samples;
+deaths and hits are the non-god bot (seed 1), x-ranges in v2 world px. Every median equals v1.*
+
 ## The content checks (`test/integration/content-zone-b.test.ts`, `content-zone-c.test.ts`)
 
 The block "zones B–G hold to the plan and the 4-way design rules" (part of `pnpm test` and

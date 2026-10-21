@@ -145,6 +145,27 @@ carried players becoming the zone's entry state; the zone card reads `LOOP n  ZO
 (`loopZoneCard`). The run is recorded (hi-score, replay) when it finally ends. **LOOP 2** as a
 start is locked until an ending unlocked it (`SaveData.unlocks.loop2`).
 
+## R2-04: boss rush and loops at the new scale
+
+**The finding, as R2-04.Z4 recorded it (RT-Z4 F1, verbatim):** "R2-04.Z4 measured all four bonus
+stages (tick-preserved openings; non-god seed-1 full-loadout runs clear 0 deaths / 0 hits at both
+scales), the boss rush (9 encounters; warn→fight 330 t for eight and 360 t for IRON SOVEREIGN — its
+content `introTicks` 180 — IDENTICAL v1↔v2; all eight inter-encounter gaps 335 t; the rush entries'
+150-t delays are the owner knob), and all nine loop-2 remixes (52 remix events); the ×1.5 port moved
+no opening; no retune proposed."
+
+The rush openings are tick-only numbers — `WARNING_TICKS` 180 plus each boss's own `introTicks` —
+so the port could not move them, and measurement confirms it: every encounter opens identically
+v1↔v2, in the same order (A→I), at both scales. The rush's non-god run (seed 1, full loadout) ends
+`stageClear` at **19322 t = 322.0 s, 0 deaths, 0 hits** (`DEFAULT_MAX_TICKS` 36000 never
+approached). The rush entries' `delay` values — [360, 150×8] — are a tick value, never scaled: the
+owner knob if the breathing room should change. The nine loop-2 `remix` arrays measured the same
+way (52 remix events, each identified 6-of-6 or 4-of-4 by its merged-timeline index; the arrays are
+[6,6,6,6,6,4,6,6,6] — zone F the 4 — at both the base and the blessed tip): no section opens
+noticeably easier, so the `MAX_STAGE_REMIX` 64 cap and the remix data rules went untouched. The
+bonus stages' own table is in
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#r2-04-the-bonus-stages-at-the-new-scale).
+
 ## Extra Edit weapons (`content/weapons/types-extra.weapons.json`)
 
 Seven weapons marked `"extra": true` (`WeaponSpec.extra`), with original names and Gradius III-style
@@ -524,6 +545,7 @@ is the replay JSON — paste it on another browser's page to import it). The unl
   replay library's keys.
 - **R2-01** (done, v2) — the replay formats went to **2**: v1's recordings are refused with a
   `ReplayVersionError`, the library keeps a v1 slot delete-only with a `V1 REPLAY` row, a paste of
-  one is refused in the page notice, and the attract loop skips the nine still-v1 demos (W4-9) —
-  all until R2-03 re-blesses and re-records them
+  one is refused in the page notice, and the attract loop skipped the nine still-v1 demos (W4-9)
+  until R2-03's bless re-recorded every shipped golden and demo at 640 × 360 (wave 6; the R2-04
+  patch set re-blessed them — `a285e0e`)
   ([debug-and-replays.md](debug-and-replays.md#replays-corereplay)).

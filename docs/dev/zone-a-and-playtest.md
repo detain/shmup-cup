@@ -440,6 +440,74 @@ rules.violations; // → []
 replayStage('zone-a', run.inputs, { godMode: true }).hash === run.hash; // → true
 ```
 
+## R2-04: the openings at the new scale
+
+**The finding, as R2-04.Z1/Z3 recorded it:** "R2-04.Z1/Z3 measured all 23 sections of zones A–C
+and G–I (RT-Z13 N1 fix — the tables carry 3 + 4×5 = 23 rows); the ×1.5 port preserved every
+section's opening time within a 1-tick firstSeen edge rounding (zone-A skeet volleys d 14→15
+easier, zone-G/I rounding rows harder — RT-Z13 B1); no spawn-x or density retune was needed; the
+wider field adds area, not lead time."
+
+The measurement (the same model R2-04.Z2 used on D, E and F): per section, camera checkpoint to
+checkpoint, the median ticks from an enemy row's first-visible tick to its first vertical turn —
+v1 from the frozen `test/fixtures/v1-baseline/zone-<x>.baseline.json` rows (flying specs, event
+rows, `turnTick ≥ 0`), v2 from `recordBaseline(scenario)` in memory on the live ported world —
+plus a non-god `runStage(zone, fourWayBot(), { godMode: false })` death and hit count (hits on the
+rising edge of `world.players[0].hits`). Both zone patches came out **empty** — six zones, no
+section opens noticeably easier; "no spawn-x, no density change" is the honest proposal. The other
+tables: zones B and C in [zones-b-and-c.md](zones-b-and-c.md#r2-04-the-openings-at-the-new-scale),
+D and E in [zones-d-and-e.md](zones-d-and-e.md#r2-04-the-openings-at-the-new-scale), F (the one
+retune) and G in [zones-f-and-g.md](zones-f-and-g.md#r2-04-the-openings-at-the-new-scale), H and I
+in [zones-h-and-i.md](zones-h-and-i.md#r2-04-the-openings-at-the-new-scale).
+
+**Zone A (AZURE VERGE)** — non-god: gameOver, 3 deaths (all bullet, section 2).
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..5250 | 21.0 (61) | 26.5 (68) | +5.5 | 0 | 0 | none — artifact, see below |
+| 1 | 5250..9000 | 15.0 (11) | 15.0 (9) | 0.0 | 0 | 0 | none |
+| 2 | 9000..13500 | 40.0 (19) | 40.0 (15) | 0.0 | 3 | 3 | none |
+
+Section 0's +5.5 is **not** a sim change: every `skeet-chain` and `vane` row carries the same
+`turnTick − visibleTick` in both runs (dumped row-by-row: 21/15/10/4/−1/−7/47/42 per formation
+member, identical); v2's recording simply observes 7 more rows long enough to sample their turn
+(the god-mode bot's kill stream diverges at seed 1 after the port — the documented
+bot-dependent/R2-02.T2b class). It is not a bucket-boundary effect either: re-bucketing by event
+world-x gives the same 26.5. No spawn-x change fixes a kill-timing observation — proposing one
+would slow the actual game on the strength of noise. RT-Z13 independently re-confirmed the
+mechanism row by row (8 gained turn-samples, 1 lost = net +7, all bot-kill-window).
+
+The one genuine delta class (RT-Z13 B1): the reviewer's paired re-read of all 81 zone-A flying
+rows found 10 whose turn−visible delta itself differs — the `skeet` volleys of event e4 in
+section 0 (×6, event x=840) and event e24 in section 1 (×4, event x=3640):
+
+```
+DELTA 4:0 skeet: v1 1149/1159/1173 (d=14) v2 1149/1158/1173 (d=15)   [sec 0, event x=840]
+DELTA 4:1 skeet: v1 1165/1175/1189 (d=14) v2 1165/1174/1189 (d=15)
+DELTA 4:2 skeet: v1 1181/1191/1205 (d=14) v2 1181/1190/1205 (d=15)
+DELTA 4:3 skeet: v1 1197/1207/1221 (d=14) v2 1197/1206/1221 (d=15)
+DELTA 4:4 skeet: v1 1213/1223/1237 (d=14) v2 1213/1222/1237 (d=15)
+DELTA 4:5 skeet: v1 1229/1239/1253 (d=14) v2 1229/1238/1253 (d=15)
+DELTA 24:1 skeet: v1 4767/4777/4791 (d=14) v2 4767/4776/4791 (d=15)  [sec 1, event x=3640]
+DELTA 24:2 skeet: v1 4785/4795/4809 (d=14) v2 4785/4794/4809 (d=15)
+DELTA 24:3 skeet: v1 4803/4813/4827 (d=14) v2 4803/4812/4827 (d=15)
+DELTA 24:4 skeet: v1 4821/4831/4845 (d=14) v2 4821/4830/4845 (d=15)
+```
+
+`spawnTick` and `turnTick` are identical on every one of the 10; `visibleTick` is 1 tick EARLIER
+in v2 — the deterministic 1.5×-hurtbox firstSeen rounding, the same physics class zone-G
+`prism-lens` and zone-I `depth-mine` show on their side — and it moves the metric +1 tick
+**easier** (more sight before the turn). The remaining 9 non-identical rows are the sec-2 gyre/vane
+triples shifted +1 tick with EQUAL delta (camera timing, not delta-relevant). A 1-tick edge
+rounding is not noticeably easier, moving an event x to chase it would be tuning to noise — the
+patches stay empty and no proposal follows.
+
+Why the openings did not widen (the physical story): the port already re-anchors every `R`-entry
+spawn to the new right edge (`PLAYFIELD_W + 24` = 664, the trap's value — never re-multiplied) and
+×1.5s both the traversal speeds and the player's shot speed, so an enemy crosses the extra
++11 %/+12 % of field in proportionally the same time and its first-turn tick relative to its
+first-visible tick is tick-identical. The plan's worry is real in area but neutral in time.
+
 ## Running zone A
 
 ```sh

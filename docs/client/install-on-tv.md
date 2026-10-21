@@ -79,7 +79,7 @@ pnpm --filter @shmup/tizen tizen:run
 - After every new `build`, run `tizen:package` again before installing.
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
 - **Which game you build** depends on the branch. The default branch, `master`, is v2 in development
-  (version 2.0.0-alpha.0, which still plays like the released game until v2's steps change it); the
+  (version 2.0.0-alpha.1, which still plays like the released game until v2's steps change it); the
   released game, version 1.0.0 and its fixes, is on the `v1.x` branch — `git switch v1.x` before
   `pnpm install` to build that one. Going from a `master` build back to a `v1.x` build on the same
   monitor needs the app removed first ([Removing an app](#removing-an-app)).

@@ -78,7 +78,8 @@ The inside of a living vault: a far wall of cells that **pulses** through its pa
 **breathes** with a slow `wave`, fleshy folds scrolling in front of it, dark olive flesh with a
 pale-green rim. Four checkpoints, the camera keys `1.2 → 1.05 → 1.125 → 1.95 → 1.125` px/tick
 (v1's `0.8 → 0.7 → 0.75 → 1.3 → 0.75` through ×1.5). Times
-are the bare scroll from the start (the bot's whole run with the boss is 220.5 s, measured at R2-03):
+are the bare scroll from the start (the bot's whole run with the boss is 220.8 s, measured at R2-04
+after the opening retune):
 
 | Camera x | Time | Section |
 |---|---|---|
@@ -137,7 +138,7 @@ then 170 ranked ticks + 40 of rest) from the right edge of the playfield
 | `chaser-cell` | `cell.chase` | 2 / 200 | Drifts in along its row for 46 ticks at 1.575, chases the nearest ship for 130 ticks turning ≤ 5 units a tick, then swims straight on ([below](#cellchase)); also MANTLE REGENT's `minion` and the mitosis cell's `child` |
 | `mitosis-cell` | `bubble.split` | 6 / 600 | A big cell on a sine drift (`speed` 0.9); shot, it **divides** into two `chaser-cell`s thrown out 256 units apart at 1.65, which fly out for their own `scatterTicks` (24) before they chase |
 | `vault-claw`, `vault-claw-ceiling` | `tentacle.grab` (floor / ceiling) | 5 / 400 | The grabbing tentacles ([above](#the-tentacle-garden)) |
-| `polyp-turret`, `polyp-turret-ceiling` | `turret.floor` | 4 / 300 | Fleshy polyps, an aimed shot every 170 ticks at 1.8 |
+| `polyp-turret`, `polyp-turret-ceiling` | `turret.floor` | 4 / 300 | Fleshy polyps, an aimed shot every 190 ticks at 1.8 (170 until the R2-04 opening retune) |
 | `spore-sac`, `spore-sac-low` | `pattern.loop` + `vault.spores` | 4 / 500 | Hovering pods on a `waypoint` mover ([above](#the-tentacle-garden)) |
 | `mantle-regent` | boss (`boss.squid`) | — | MR-06, [below](#mantle-regent-mr-06) |
 
@@ -443,8 +444,9 @@ Deaths without god mode are reported, never asserted, but a zone should be survi
 directions. The bot's runs changed the content in four places:
 
 - **Turrets passing over or under the ship** fire straight along its column, which a lane-only
-  dodger cannot leave in time: fewer turrets, slower fire (170 ticks for the polyps, 180 for the
-  facet turrets, both at 1.2 — the ported content fires them at 1.2 · 3/2 = 1.8), and the
+  dodger cannot leave in time: fewer turrets, slower fire (190 ticks for the polyps — 170 from
+  this finding until the R2-04 opening retune — and 180 for the facet turrets, both at 1.2 — the
+  ported content fires them at 1.2 · 3/2 = 1.8), and the
   labyrinth's first wall moved past the gallery (v1 x 3,392 — the ported wall stands at x 5,088).
 - **Lenses and spore sacs** drifting across the ship's column fired point-blank fans: they now
   hover near the right edge on a `waypoint` mover, then drift off up or down.
@@ -458,14 +460,97 @@ Also found while authoring: FACET MONARCH's armour hurtbox covered its core
 ([above](#the-crystal-labyrinth)). Zone G's map preview now reads `A RUSH OF CUBES THAT BUILD
 WALLS.` (`content/campaign/main.campaign.json`) — its cubes charge, they do not fall.
 
+## R2-04: the openings at the new scale
+
+The port made zone F **measurably harder** — the wave-5 Z-FG known item, quantified. R2-04.Z2
+measured every section opening (camera checkpoint to checkpoint) as the median ticks from an enemy
+row's first-visible tick to its first vertical turn — v1 from the frozen
+`test/fixtures/v1-baseline/*.baseline.json`, v2 from `recordBaseline(scenario)` in memory on the
+live ported world — plus the non-god 4-way bot's deaths and hits. Zones D and E came out preserved
+(their tables in [zones-d-and-e.md](zones-d-and-e.md#r2-04-the-openings-at-the-new-scale)); zone F
+got the retune below.
+
+| zone | sec | v1 med (n) | v2 med (n) | run v1→v2 | non-god | change |
+|---|---|---|---|---|---|---|
+| **F** | 0 | 7 (28) | 10 (31) | 12659→13228 t, both stageClear (+4.5% SLOWER) | **gameOver, 3 deaths: bullet@t3581@x4147, bullet@t6045@x6733, contact@t8391@x9363** | **HARDER — the patch** |
+| F | 1 | 7 | 7 | | | the two turret streams overlap at scale (ev16 move) |
+| F | 2 | 15.5 (15) | 10 (17) | | | thinner post-patch |
+| F | 3 | 10 | 8.5 | | | thinner post-patch |
+
+*Medians are ticks `turnTick − visibleTick` over flying event rows, n = the visible flying rows;
+the run and the non-god columns are the un-retuned ported content (the patch's base).*
+
+**The retune.** Six events in `content/stages/zone-f.stage.json` and one beat in
+`content/enemies/zone-f.enemies.json` (each verified against the files today):
+
+| Event | Change | Why (R2-04.Z2) |
+|---|---|---|
+| ev13 (`lymph-mote`, x 2760) | count 6→5, interval 14→16 | column thinned |
+| ev16 (`polyp-turret-ceiling`) | x 3476→3660 | de-overlap the two section-1 turret streams |
+| ev19 (`lymph-mote`) | x 4020→4080, interval 14→16 | lymph column off the first non-god death x |
+| ev21 (`lymph-mote`, x 4650) | interval 16→18 | measured member spacing 16→18 ticks, count 5→5 |
+| ev26 (`lymph-mote`, x 6360) | count 6→5, interval 14→18 | column thinned |
+| ev39 (`lymph-mote`) | x 9270→9060, count 6→5 | section-tail volley off the contact-death x (stays sorted: ev38 sits at 8996) |
+| `polyp-turret`, `polyp-turret-ceiling` | first `fireTicks` 170→190 | the spawn-to-first-shot beat the wider field now lengthens |
+
+Tenders, capsule sources, `bonus` / `drop` fields and the `remix` array are untouched, and no new
+enemy species is named (the atlas grouping stands). **Post-patch the non-god bot clears**:
+`stageClear` 228.6 s, 1 death (contact @t2663@x3161, before the first checkpoint at 3,300), 1 hit;
+the god-mode run measures 220.8 s (MANTLE REGENT 24.4 s). The wave-5 known item (god-mode
+`broken` / `lunges` = 0, non-god stuck `playing`) is **resolved** — the zone F contracts pass with
+`broken > 0` and `lunges > 0` both at the base and with the patch.
+
+**The hardness evidence chain.** Wave 6 recorded the golden `zone-f-arcade` flipping from v1
+`stageClear` to `gameOver [3577, 4467]` with the checkpoint-rollback branch going dead; R2-04.Z2's
+table above shows the same shape in the non-god Normal run; after the retune the wave-7 re-bless
+(`a285e0e`) recorded `zone-f-arcade` still `gameOver` — lives 0, two deaths — landing ≈ 330 ticks
+later (3900 and 4891, camera x ≈ 4100 and 5300), the thinning's intended effect.
+
+**What the v2-port comparison discloses.** The retimed spawns break the port-band pairing on exactly
+these seven lines (the reviewer's list, verbatim), carried since the bless as `PORT_EXEMPTIONS` rows
+in `test/golden/v2-port.ts` — a mechanism that drops each line whole-exact with its reason and
+**fails when a listed line stops appearing**, so the table cannot rot:
+
+```
++ event 16 (spawn): no v2 twin within the port bands            — R2-04 Z2: zone F section-1 ceiling
+  polyp de-overlapped, x 3476→3660 (+184 px; +120 px past the anchor-mapped 3540)
++ event 19 (formation): no v2 twin within the port bands         — R2-04 Z2: lymph column off the
+  first non-god death x, 4020→4080 (+60 px)
++ event 39 (formation): no v2 twin within the port bands         — R2-04 Z2: section-tail volley off
+  the contact-death x, 9270→9060 (−210 px)
++ enemies: v2 row missing for event 13/5 lymph-mote              — R2-04 Z2: column thinned 6→5
++ enemies event 16/-1 polyp-turret-ceiling: y0 102 vs mapped 79.50 (Δ22.50 > ±12)
+  — pairing-cascade artifact of the event-16 move (live v1 y0 68×1.5 = 102; the ceiling-anchor
+    band only gets evaluated after x-twin pairing broke). Disappears with the event-16 exemption.
++ enemies: v2 row missing for event 26/5 lymph-mote              — R2-04 Z2: column thinned 6→5
++ enemies: v2 row missing for event 39/5 lymph-mote              — R2-04 Z2: column thinned 6→5
+```
+
+Zone G's openings the port left alone: R2-04.Z3 measured all four sections against the frozen v1
+baseline — non-god `stageClear`, 2 deaths (bullet, section 1) — and found every median equal within
+the 1-tick firstSeen edge rounding (no retune):
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..3300 | 10.0 (20) | 10.0 (20) | 0.0 | 0 | 0 | none |
+| 1 | 3300..6900 | 17.0 (7) | 15.0 (8) | −2.0 | 2 | 2 | none (harder, not easier) |
+| 2 | 6900..10200 | −8.0 (47) | −8.0 (44) | 0.0 | 0 | 0 | none |
+| 3 | 10200..14700 | 7.0 (28) | 7.0 (27) | 0.0 | 0 | 0 | none |
+
+(`prism-cube`'s negative median is the class the metric cannot read — it turns before the World
+first sees it; equal in both runs. `prism-lens` turns one tick sooner relative to visibility in v2:
+91→92, i.e. sighted one tick earlier by hurtbox-edge rounding at the 12-px tile — marginally
+harder.)
+
 ## Playtests and the recovery rule
 
 - **`zone-f.test.ts`, `zone-g.test.ts`** — the 4-way bot with **god mode**: `stageClear` in 3–6
   minutes, the boss's three phases, never diagonal, the ship at x ≈ 96 (`BOT_X`), the 4-way rules on
   every tick; in F the shots break tissue and the claws lunge, in G the rush stacks cubes into the
   terrain. **Without god mode** the run is recorded, replays to the same deaths and hash, and its
-  deaths are **reported**. Measured on the ported world (R2-03): F 220.5 s (MANTLE REGENT 24.1 s),
-  G 240.4 s (FACET MONARCH 41.2 s); without god mode F now loses all its lives (game over at
+  deaths are **reported**. Measured on the ported world (R2-03; F re-measured after its R2-04
+  retune): F 220.8 s (MANTLE REGENT 24.4 s), G 240.4 s (FACET MONARCH 41.2 s); without god mode F
+  now clears with one death (228.6 s — before the retune it lost all its lives, game over at
   141.4 s), G clears with two deaths.
 - **`zone-fg-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 1,350 px —
   `RECOVERY_WINDOW` 900 · 3/2 — of every
@@ -475,7 +560,7 @@ WALLS.` (`content/campaign/main.campaign.json`) — its cubes charge, they do no
 
 ```sh
 pnpm exec vitest run --project integration test/playtest/zone-f.test.ts test/playtest/zone-g.test.ts --reporter=verbose
-# [playtest] zone-f four-way (remote) (god mode): stageClear after 220.5 s, boss 24.1 s, 0 death(s), …
+# [playtest] zone-f four-way (remote) (god mode): stageClear after 220.8 s, boss 24.4 s, 0 death(s), …
 ```
 
 ## The content checks (`test/integration/content-zone-f.test.ts`, `content-zone-g.test.ts`)
@@ -584,7 +669,7 @@ while (world.camera.x < 3450) {
 world.bonus.armed[0]; // → 1: the gallery's window is armed — no ground enemy of an earlier event is up
 
 const run = runStage('zone-f', fourWayBot(), { godMode: true });
-console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageClear after 220.5 s, boss 24.1 s, …
+console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageClear after 220.8 s, boss 24.4 s, …
 ```
 
 ## Tests

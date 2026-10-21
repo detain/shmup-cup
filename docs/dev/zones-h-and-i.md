@@ -632,6 +632,43 @@ pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/pla
 # [playtest] zone-h four-way (remote) (god mode): stageClear after 270.1 s, boss 60.0 s, 0 death(s), … — 4 parade captain(s), …
 ```
 
+## R2-04: the openings at the new scale
+
+R2-04.Z3 measured every section opening of the two final zones the same way it measured zones A–C
+and G — median ticks from an enemy row's first-visible tick to its first vertical turn per
+checkpoint-to-checkpoint section, the frozen v1 baseline vs the live ported world, plus the non-god
+4-way bot — and the patch came out empty: both zones' openings are preserved (the finding and the
+mechanism in [zone-a-and-playtest.md](zone-a-and-playtest.md#r2-04-the-openings-at-the-new-scale)).
+
+**Zone H (IRON CITADEL)** — non-god: stageClear, 0 deaths, 0 hits. The parade echoes are untouched
+(no part changes; nothing changed at all).
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..3300 | 8.5 (28) | 8.0 (28) | −0.5 | 0 | 0 | none |
+| 1 | 3300..6600 | 8.0 (12) | 7.5 (14) | −0.5 | 0 | 0 | none |
+| 2 | 6600..10200 | 8.0 (15) | 8.0 (15) | 0.0 | 0 | 0 | none |
+| 3 | 10200..14400 | 4.0 (32) | 3.5 (32) | −0.5 | 0 | 0 | none |
+
+(bolt-drone turns half a tick sooner — v2 strictly not easier.)
+
+**Zone I (ABYSSAL THRONE)** — non-god: gameOver, 3 deaths (bullet, sections 1–2). The escape's
+timing follows the zone; nothing in the zone moved, so `zone-i-escape` would not move either.
+
+| sec | v2 x-range | v1 med (n) | v2 med (n) | Δ | deaths | hits | change |
+|---|---|---|---|---|---|---|---|
+| 0 | 0..3300 | 8.0 (26) | 8.0 (27) | 0.0 | 0 | 0 | none |
+| 1 | 3300..6600 | 10.0 (12) | 8.0 (13) | −2.0 | 1 | 1 | none (harder) |
+| 2 | 6600..10200 | 12.0 (28) | 12.0 (28) | 0.0 | 2 | 2 | none |
+| 3 | 10200..14400 | 5.0 (31) | 5.0 (31) | 0.0 | 0 | 0 | none |
+
+(`depth-mine` is the one uniform micro-delta: seen one tick earlier in v2 (visible 602 vs 603 at
+turn 616) on all 16 rows — firstSeen rounding of the 1.5×-hurtbox against the 12-px playfield,
+1 tick, harder-side not easier-side.)
+
+*Medians are ticks `turnTick − visibleTick` over flying event rows, n = rows with both samples;
+deaths and hits are the non-god bot (seed 1), x-ranges in v2 world px.*
+
 ## The content checks (`test/integration/content-zone-h.test.ts`, `content-zone-i.test.ts`)
 
 The block "zones H and I, the finales, hold to the plan and the 4-way rules" (part of `pnpm test`

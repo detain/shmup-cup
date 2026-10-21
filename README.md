@@ -254,7 +254,7 @@ the [World and its tick](docs/dev/sim-world.md), [stages](docs/dev/stage-runtime
 
 ## Status
 
-Version **2.0.0-alpha.0** on `master`: **v2, the 640×360 remaster** — this page describes it: the
+Version **2.0.0-alpha.1** on `master`: **v2, the 640×360 remaster** — this page describes it: the
 picture draws at 640×360 and every world distance is 1½× v1's, while the more detailed art and the
 longer zones arrive step by step ([`plan_resolution.md`](plan_resolution.md)). **v1**, the
 original 384×216 game, is released as

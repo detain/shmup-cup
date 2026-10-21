@@ -747,7 +747,7 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **M2-18** (done) — the icon set (electron-builder's icons, the Tizen icon), store-listing
   placeholders, Tizen certification self-checks (Back / exit, visibility, resume), the 30-minute soak
   with the heap stable, and version `1.0.0-rc.1` — released as 1.0.0 on 2026-10-16; `master` carries
-  `2.0.0-alpha.0` since ([release-hardening.md](release-hardening.md#the-version)).
+  `2.0.0-alpha.1` since ([release-hardening.md](release-hardening.md#the-version)).
 - **§8.5 on device** — the `use.game.mode` A/B latency test (keep the better variant), the heap
   baseline against DevTools (correct `HEAP_BASELINE_BYTES` if it is off), the device line and the
   save export, and whether live reload keeps the widget's APIs.

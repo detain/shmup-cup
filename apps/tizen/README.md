@@ -14,7 +14,7 @@ pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to t
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
-The package version is **2.0.0-alpha.0** on `master` (v2 in development; the released v1, 1.0.0, is
+The package version is **2.0.0-alpha.1** on `master` (v2 in development; the released v1, 1.0.0, is
 maintained on the `v1.x` branch as `1.0.1-dev`); the widget version in `public/config.xml` is
 **2.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget takes the numeric core of
 the package's version, kept in step by a test (`test/config-xml/config-xml-consistency.test.ts`).

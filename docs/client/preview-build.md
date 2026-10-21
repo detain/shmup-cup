@@ -167,7 +167,7 @@ the animated **sprite showcase** and the **calibration screen**, plus the **effe
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
 This build is version **1.0.0**, released on 2026-10-16 (tag `v1.0.0`) and kept on the `v1.x`
-branch, which takes fixes only. Builds of the `master` branch since then are **2.0.0-alpha.0** (the
+branch, which takes fixes only. Builds of the `master` branch since then are **2.0.0-alpha.1** (the
 monitor shows **2.0.0**): the start of v2, the 640 × 360 remaster with more detailed art and longer
 zones. Its first steps have already landed there — those builds draw at 640 × 360 with every world
 distance at 1½× v1's, part of the art is already redrawn at the new density, and a replay recorded
@@ -961,7 +961,7 @@ ship may move in four directions only; the game is designed to be fully playable
 **Released: version 1.0.0 (2026-10-16), and v2 begins.** Nothing changed in the game: 1.0.0 is the
 build this page describes, tagged `v1.0.0` and kept on the `v1.x` branch, whose builds since then
 are **1.0.1-dev** (the monitor shows **1.0.1**) and take fixes only. Builds of `master` are
-**2.0.0-alpha.0** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster — its first steps have
+**2.0.0-alpha.1** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster — its first steps have
 landed, so those builds draw at 640 × 360 with every world distance at 1½× v1's (the rules, the
 zones and the sound are unchanged until the later steps land; replays recorded on 1.0.0 builds
 are refused). A monitor with a 2.0.0 build installed may refuse a

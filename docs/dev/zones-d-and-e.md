@@ -416,6 +416,33 @@ directions. The bot's runs changed the content in four places:
 - **SQUALL STEED's bob** went from 40 px to 14–18 px (21–27 px on the ported world) ([above](#squall-steed-ss-05)).
 - **CINDER BASTION's core** got 80 hit points (60 fell in 10 s once the bot had an Option).
 
+## R2-04: the openings at the new scale
+
+R2-04.Z2 measured every section opening (camera checkpoint to checkpoint) as the median ticks from
+an enemy row's first-visible tick to its first vertical turn — v1 from the frozen
+`test/fixtures/v1-baseline/*.baseline.json`, v2 from `recordBaseline(scenario)` in memory on the
+live ported world — plus the non-god 4-way bot's deaths and hits. **Both zones need no change**:
+all median drift is the bot's kill-observation composition or ≤ 2.5-tick harder-side noise — the
+class R2-04.Z1 documented across the other zones
+([zone-a-and-playtest.md](zone-a-and-playtest.md#r2-04-the-openings-at-the-new-scale)). Zone F,
+measured by the same lane, is the one ported opening that went harder and got a retune
+([zones-f-and-g.md](zones-f-and-g.md#r2-04-the-openings-at-the-new-scale)).
+
+| zone | sec | v1 med (n) | v2 med (n) | run v1→v2 | non-god | change |
+|---|---|---|---|---|---|---|
+| D | 0 | 8 (31) | 8 (31) | 14434→14217 t, both stageClear | stageClear, 0 deaths, 0 hits | none |
+| D | 1 | 8 (35) | 12 (35) | | | bot kill-timing (cinder-bat 144-tick swoops turning in-section t2→t10) |
+| D | 2 | 6 (23) | 6 (22) | | | none |
+| D | 3 | 17 (41) | 8 (38) | | | bot kill-timing (same class) |
+| E | 0 | 12 (32) | 10 (33) | 14180→13712 t (−3.3%) | stageClear, 1 death (contact @t7233@x8132), 1 hit | ≤2t drift |
+| E | 1 | 3 (17) | 5.5 (19) | | | hail-drifter ≤2.5t, in-line |
+| E | 2 | 26.5 | 27 | | | stable (thunderhead/gale-kite rows equal) |
+| E | 3 | 29 | 29 | | | stable; n drop = earlier bot kills |
+
+*Medians are ticks `turnTick − visibleTick` over flying event rows, n = the visible flying rows.
+The D rows' medians differ only in which kill stream the bot observes; the E drift is harder-side
+and in-line. No spawn-x or density change was proposed, and the wave applied none.*
+
 ## Playtests and the recovery rule
 
 - **`zone-d.test.ts`, `zone-e.test.ts`** — the 4-way bot with **god mode**: `stageClear` in 3–6

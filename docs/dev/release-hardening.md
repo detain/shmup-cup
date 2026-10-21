@@ -191,7 +191,7 @@ calls M3's section `[Unreleased]`. v1 is maintained on the `v1.x` branch (`1.0.1
 the TVs); `master` is v2, the 640 × 360 remaster, since plan step R0-01
 ([release lines](build-test-deploy.md#release-lines)):
 
-- every `package.json` says **`2.0.0-alpha.0`** (`tooling-config.test.ts` — "the release version
+- every `package.json` says **`2.0.0-alpha.1`** (`tooling-config.test.ts` — "the release version
   (M2-18, R0-01)");
 - `config.xml`, `appinfo.json` and the store listing (`scripts/store-assets.mjs`) say **`2.0.0`**,
   the numeric core (`config-xml-consistency.test.ts`, `appinfo.test.ts`,

@@ -376,6 +376,25 @@ four facet turrets (floor and ceiling), into `glimmer-cache.stage.json` (GLIMMER
 carriers, a 1UP, a cube rush, two `cube` block walls; zone G's resident music) —
 [zones-f-and-g.md](zones-f-and-g.md#the-prism-gallery-and-glimmer-cache).
 
+### R2-04: the bonus stages at the new scale
+
+R2-04.Z4 measured all four bonus stages section-opening-wise (the same model as the zones' —
+median ticks from first-visible to first vertical turn, the frozen v1 baseline vs the live ported
+world, plus a non-god 4-way bot run). Nothing moved; the patch was empty (the finding row in
+[extra-modes-and-replays.md](extra-modes-and-replays.md#r2-04-boss-rush-and-loops-at-the-new-scale)):
+
+| scenario | run v1→v2 | sec medians v1→v2 | non-god | verdict |
+|---|---|---|---|---|
+| brine-grotto | 1815→1815 t, both clear | 23 (n5)→23 (n5) | stageClear 30.3 s, 0 deaths, 0 hits | preserved |
+| glimmer-cache | 1815→1815 t | −8 (n8)→−8 (n10) (prism-cube turns before first-sight, equal both) | stageClear 30.3 s, 0, 0 | preserved |
+| bonus-vault | 1615→1615 t | −1 (n0)→−1 (n0) (carriers are pickups, not threats) | stageClear 26.9 s, 0, 0 | preserved |
+| bonus-range | 3255→3289 t (+1%) | both sections n0/−1 (flying rows 2 total) | stageClear 54.8 s, 0, 0 | preserved |
+
+*Medians and n's on RT-Z4's turning-flying-rows basis (its S1 re-disclosure — the original pass
+printed its n's on three different filters that do not reconcile; every median, tick, status,
+seconds, death and hit figure reproduces). All four clear non-god at both scales, 0 deaths,
+0 hits.*
+
 ## The ending screen (`EndingScene`, id `ending`)
 
 After the final zone's tally. M2-10 built the **result card**: `ENDING`, the ending's name
