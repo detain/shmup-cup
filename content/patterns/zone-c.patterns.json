@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "dune.whirl",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 10,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 52
+              },
+              "speed": 1.65,
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            },
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 512
+              },
+              "speed": {
+                "type": "sequence",
+                "value": 0
+              },
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            },
+            {
+              "op": "wait",
+              "ticks": 7
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 110,
+          "ranked": true
+        }
+      ]
+    }
+  ]
+}

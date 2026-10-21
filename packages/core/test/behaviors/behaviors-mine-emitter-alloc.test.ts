@@ -15,6 +15,7 @@ import { EnemyState } from '../../src/enemies/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
+import { shippedPatterns } from '../helpers/shipped.js';
 
 /**
  * A shipped content file.
@@ -46,7 +47,7 @@ function db(): ContentDb {
       shipped('player/kestrel.player.json'),
       shipped('enemies/zone-h.enemies.json'),
       zoneI,
-      shipped('patterns/zones.patterns.json'),
+      ...shippedPatterns(),
       {
         path: 'enemies/v.enemies.json',
         data: {

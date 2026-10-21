@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "vault.spores",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 3,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "aim",
+                "value": "($i - 1) * 56"
+              },
+              "speed": 1.125,
+              "bullet": {
+                "kind": "round-purple"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 170,
+          "ranked": true
+        }
+      ]
+    }
+  ]
+}

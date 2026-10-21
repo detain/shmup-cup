@@ -18,6 +18,7 @@ import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
 import { v1screenX } from '../helpers/v1-port.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
+import { shippedPatterns } from '../helpers/shipped.js';
 
 /**
  * A shipped content file.
@@ -49,7 +50,7 @@ function db(): ContentDb {
       shipped('player/kestrel.player.json'),
       zoneB,
       shipped('enemies/zone-c.enemies.json'),
-      shipped('patterns/zones.patterns.json'),
+      ...shippedPatterns(),
       {
         path: 'enemies/v.enemies.json',
         data: {

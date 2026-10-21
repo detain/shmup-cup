@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "tempest.bolt",
+      "body": [
+        {
+          "op": "fire",
+          "direction": {
+            "type": "aim"
+          },
+          "speed": 1.275,
+          "bullet": {
+            "kind": "needle-pink"
+          }
+        },
+        {
+          "op": "repeat",
+          "times": 3,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 0
+              },
+              "speed": {
+                "type": "sequence",
+                "value": 0.375
+              },
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 150,
+          "ranked": true
+        }
+      ]
+    }
+  ]
+}

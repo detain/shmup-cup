@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "brine.jelly-ring",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 6,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "aim",
+                "value": "$i * 1024 / 6"
+              },
+              "speed": 1.275,
+              "bullet": {
+                "kind": "round-purple"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 170,
+          "ranked": true
+        }
+      ]
+    }
+  ]
+}

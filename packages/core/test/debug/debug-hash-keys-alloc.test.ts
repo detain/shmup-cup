@@ -56,7 +56,7 @@ function zoneB(): ContentDb {
       'stages/zone-b.stage.json',
       'stages/brine-grotto.stage.json',
       'patterns/common.patterns.json',
-      'patterns/zones.patterns.json',
+      'patterns/zone-b.patterns.json',
     ].map(shipped),
     { extraSprites: ENGINE_SPRITES },
   );

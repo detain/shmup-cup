@@ -73,7 +73,7 @@ const ZONE_A_FILES: ContentFile[] = [
   'stages/zone-a.stage.json',
 ].map(shipped);
 
-/** Zone B and what it needs (its jellies' patterns come from `zones.patterns.json`). */
+/** Zone B and what it needs (its jellies' patterns come from `zone-b.patterns.json`). */
 const ZONE_B_FILES: ContentFile[] = [
   'player/kestrel.player.json',
   'weapons/type-a.weapons.json',
@@ -84,7 +84,7 @@ const ZONE_B_FILES: ContentFile[] = [
   'stages/zone-b.stage.json',
   'stages/brine-grotto.stage.json',
   'patterns/common.patterns.json',
-  'patterns/zones.patterns.json',
+  'patterns/zone-b.patterns.json',
 ].map(shipped);
 
 /** A dummy sprite name sorting before every shipped and engine name. */

@@ -23,6 +23,7 @@ import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { v1rel, v1speed, v1screenX, v1screenY } from '../helpers/v1-port.js';
+import { shippedPatterns } from '../helpers/shipped.js';
 
 /**
  * A shipped content file.
@@ -47,7 +48,7 @@ const DB: ContentDb = (() => {
       shipped('weapons/type-a.weapons.json'),
       shipped('enemies/zone-b.enemies.json'),
       shipped('enemies/zone-c.enemies.json'),
-      shipped('patterns/zones.patterns.json'),
+      ...shippedPatterns(),
     ],
     { extraSprites: ENGINE_SPRITES },
   );

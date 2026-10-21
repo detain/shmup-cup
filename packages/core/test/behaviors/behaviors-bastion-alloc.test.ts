@@ -14,6 +14,7 @@ import { loadContent, type ContentDb, type ContentFile } from '../../src/data/in
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
+import { shippedPatterns } from '../helpers/shipped.js';
 
 /**
  * A shipped content file.
@@ -41,7 +42,7 @@ function db(): ContentDb {
       shipped('player/kestrel.player.json'),
       shipped('weapons/type-a.weapons.json'),
       shipped('enemies/zone-d.enemies.json'),
-      shipped('patterns/zones.patterns.json'),
+      ...shippedPatterns(),
     ],
     { extraSprites: ENGINE_SPRITES },
   );
