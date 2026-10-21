@@ -455,7 +455,7 @@ both behaviours on purpose so that nobody "fixes" them into an exact model. Sinc
 the pool caps each pooled axis at the smallest registered screen (a renderer's own backbuffer) the
 request fits inside — so `potBytes`' bare power of two is an **upper bound** on what a pass really
 pools, never an under-booking, and the estimator needs no screen term; the render benches model the
-cap exactly (`test/bench/render-harness/gates.ts` `pooledAxisSize`, pinned digit-for-digit against
+cap exactly (`test/bench/render-harness/bench-gates.ts` `pooledAxisSize`, pinned digit-for-digit against
 measured records since the 8.22 upgrade).
 
 **Atlas residency between zones.** At boot (load time, once):
