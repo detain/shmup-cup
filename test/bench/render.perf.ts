@@ -13,7 +13,10 @@
  * point-item pool all but full (a bomber's screen clear turns bullets into points, re-run on every
  * tick that freed a slot; the measured floor is 489 of 512, the rest reaching the score during the
  * tick), the particle pool full, CRT `off` / `light` / `full`, a stage with
- * layer effects (`raster-range`) and one with the Mode-7 floor (`dimension`). Each scenario
+ * layer effects (`raster-range`), one with the Mode-7 floor (`dimension`) and one with the R3-06
+ * decor stack (`decor-range`: seven parallax bands — two animated, one foreground — the back and
+ * front decor groups and the additive glow batches, measured on the frame the lantern pillar is
+ * on screen). Each scenario
  * asserts the *minimum* live count over the measured frames, so the stated load is the load every
  * timed frame carried. The **internal frame size is a parameter** (review §7.5): the scenarios
  * run at the shipped frame (`FRAME_W` × `FRAME_H` from `@shmup/core` — 640×360 since R2-01,
@@ -208,6 +211,26 @@ const SCENARIOS: readonly Scenario[] = [
     check: (result) => {
       expect(result.mode7, 'the Mode-7 floor must be drawn').toBe(true);
       expect(result.renderTargetBytes, 'M3-02d: the floor pools no render target').toBe(0);
+    },
+  },
+  {
+    id: 'decor range (decor-range)',
+    what:
+      'R3-06.L7 — the decor stack on the busy frame: seven parallax bands (two cycling two ' +
+      'frames, one foreground), the back and front decor groups and the additive glow batches',
+    options: load({ stage: 'decor-range' }),
+    check: (result) => {
+      // The decor path is sprites and groups only — no filter ever attaches, so the pooled
+      // render-target model (review F3) expects nothing here.
+      expect(result.renderTargetBytes, 'the decor path draws through no filter').toBe(0);
+      // The measured last frame flies the lantern's window: the scripted clock puts camX at
+      // ≈ (tick − 30) × 1.5, so the end of the measured run sits past x 640 and short of
+      // x 1692 — the batch margin [camX − 512, camX + 1152] then holds the x 1180 glow pillar
+      // and the x 1500 mote on screen while the earlier decor streamed through the batches.
+      expect(result.cameraX, 'the measured frame flies the decor window').toBeGreaterThan(640);
+      expect(result.cameraX, 'the measured frame stops before the decor empties').toBeLessThan(
+        1692,
+      );
     },
   },
   {
@@ -420,6 +443,27 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
       scenario.check?.(result);
     }, 300_000);
   }
+
+  it('the decor range stacks batches over the baseline frame (R3-06.L7)', () => {
+    const off = results.get('worst-case, CRT off');
+    const decor = results.get('decor range (decor-range)');
+    expect(
+      [off, decor].every((r) => r !== undefined),
+      'the baseline and the decor scenarios must have run',
+    ).toBe(true);
+    if (off === undefined || decor === undefined) return;
+    // The number the budget law measures FIRST (R3-06.L7): both frames carry the same injected
+    // worst-case load through the same page, so what separates them is the decor stack itself —
+    // the seven band containers (ungrouped, riding the root batcher), the two decor groups and
+    // the additive glow batches, every one of them a batch the baseline frame does not draw.
+    console.info(
+      `[bench] decor vs baseline: ${decor.drawCalls} vs ${off.drawCalls} draw calls, p95 ` +
+        `${(decor.renderP95Ms / off.renderP95Ms).toFixed(2)}x of the baseline`,
+    );
+    expect(decor.drawCalls, 'decor, bands and glows must stack real batches').toBeGreaterThan(
+      off.drawCalls,
+    );
+  });
 
   it('CRT `full` costs what CRT `off` costs (M3-02d, review F2)', () => {
     const off = results.get('worst-case, CRT off');
