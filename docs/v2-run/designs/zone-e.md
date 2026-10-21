@@ -18,9 +18,9 @@ commit):
 the `kite-overtake-high` / `-low` x-extents 0…483…−330 still fit the longer stage),
 [`content/tilesets/terrain-ridge.tileset.json`](../../../content/tilesets/terrain-ridge.tileset.json),
 the zone E action in
-[`content/patterns/zones.patterns.json`](../../../content/patterns/zones.patterns.json)
-(today's file — `content/patterns/zone-e.patterns.json` does not exist at this tip; R5-P.P4
-splits it, after which it is that file), the v2 pass of
+[`content/patterns/zone-e.patterns.json`](../../../content/patterns/zone-e.patterns.json)
+(R5-P.P4 split it out of `zones.patterns.json` at `a216f14`, after this design's baseline;
+the E action moved **verbatim** — verified at tip), the v2 pass of
 [`scripts/assets/procedural/tempest.mjs`](../../../scripts/assets/procedural/tempest.mjs),
 new/updated sprites under `assets/source/sprites/`, both E goldens and the E demo (§15).
 Music is **not** touched: the stage keeps the stage-scoped `stage:Stage` / `boss:Boss`
@@ -281,7 +281,7 @@ under the new steps — the scan fails a non-tripping exemption), and the new
 single name already bound to `bg/storm-clouds`, and a second flat-ramp sprite would trip
 at distance 0); from then on all new E art (clouds and strobe band flat-painted in the
 ramp; everything
-else ≥ 3/255 Chebyshev from it and from the eight other reserved ramps) must keep the
+else ≥ 3/255 Chebyshev from it and from the seven other reserved ramps) must keep the
 scan green — the scan fails, never warns (W5-12). Today's pinned exemption
 `bosses/steed-head` (exact ramp colours) **retires with its §8 redraw**; the lane deletes
 that row and proves the new head clears every ramp by ≥ 3.
@@ -426,16 +426,21 @@ manifest entries are the requests (R5-D6/D7).
 
 The zone lane lands E with the scoped golden update — helper
 `docs/v2-run/helpers/land-zone.sh` arrives with R5-P.LAND (not in the tree at `02bf3aa`).
-`scripts/golden-update.mjs` itself takes **no arguments** — it re-records **every**
-scenario, so a `--only zone-e` form would be silently discarded and re-bless the whole
-golden set (the opposite of the zero-golden rule); until R5-P.LAND adds a scoped form to
-the script, the only legal manual scope is the scenario-name filter:
+`scripts/golden-update.mjs` has taken a scoped form since R5-P.P3 (`c284b78`, landed while
+this cure was in flight): `node scripts/golden-update.mjs --only zone-e` (or
+`pnpm golden:update -- --only zone-e` — pnpm 12 passes the leading `--` through) hands the
+comma list to `SHMUP_GOLDEN_ONLY`, so the run re-records **only** E's two goldens and E's
+demo while still **verifying** every other golden and demo in the same pass — the proof a
+LAND needs that only its zone moved, and the form `land-zone.sh` will wrap. The raw scope,
+legal but weaker (the `-t` filter skips the other files' verify cases entirely), is the
+scenario-name filter:
 
 ```sh
 SHMUP_GOLDEN_UPDATE=1 pnpm exec vitest run --project integration test/golden -t zone-e
 ```
 
-(the filter reaches the zone-e cases, incl. `demos.test.ts`'s zone-e demo). Re-bless
+(`golden.test.ts` runs one `it.each` case per scenario named by its file — `zone-e-god`
+and `zone-e-bot` — and `demos.test.ts`'s zone-e demo case carries the id `zone-e`). Re-bless
 **why**: layout (length, x positions, checkpoints, camera), the two new families, the
 storm-eye mid-boss and the steed rebuild all change the simulation — every hash is
 expected to move, and the commit message says so. Artifacts re-recorded:
@@ -455,7 +460,8 @@ playtest (`test/playtest/zone-e.test.ts`, rules watch on every tick) and the E r
 check; the new-types / calm / checkpoints / capsule-window / directItems / rear-≥-12 /
 steep-floors gates in `test/integration/content-zone-e.test.ts`; the boss-rush playtest
 still clears with the rebuilt steed placed; `test/e2e/zones-de.spec.ts` (flight rows +
-boss plating) and `test/integration/zones-de-direct.test.ts` pass; the two goldens + demo
+boss plating) and `test/integration/zone-e-direct.test.ts` (P5e's split of the pair file;
+zone D's run lives in `zone-d-direct.test.ts`) pass; the two goldens + demo
 replay clean; the `zone-e` v2 branch of the contract flips with the lane
 (`remastered: true`). `pnpm lint && pnpm typecheck` unscoped is the closeout's, not the
 lane's.
@@ -468,10 +474,11 @@ lane's.
   families) and every other zone's boss family: untouched — E never references them. The
   `steed-*` family belongs to E alone: redrawn, never renamed or deleted; `boss-rush`
   places the *enemy id* `squall-steed`, so its parts' sprite names must survive.
-- `tempest.bolt`'s pattern speeds (aimed 1.275, streak to 2.4) stay ≤ 3.0 through the P4
-  split; the split must move E's action **verbatim** (retune only on a measured need).
+- `tempest.bolt`'s pattern speeds (aimed 1.275, streak to 2.4) stay ≤ 3.0; R5-P.P4 already
+  moved E's action **verbatim** into `content/patterns/zone-e.patterns.json` (verified at
+  tip) — the lane retunes it only on a measured need.
 - `REPLAY_FORMAT` / `SAVE_VERSION` pins, the interim scale-1 atlas digest `fa4198…` (§13),
-  the other eight reserved ramp colours (§4.4 — STORM_RAMP itself moves under P7, nothing
+  the other seven reserved ramp colours (§4.4 — STORM_RAMP itself moves under P7, nothing
   else does), the `zone-e` / `boss-e` music tracks, the `kite-overtake-high` / `-low`
   path ids, and today's ported camera speeds 1.2 / 1.05 / 1.2 / 2.1 / 1.125 (the design
   **adds** keys and an arena step at 0.9 / 1.35; the gale's 2.1 and the calm's 1.125 are
