@@ -277,8 +277,24 @@ describe('core/bullets cancel into points (M2-02)', () => {
     const batch = w.bullets.pointBatch;
     expect(batch.count).toBe(3);
     expect(batch.capacity).toBe(MAX_POINT_ITEMS);
-    expect(batch.frame[0]).toBe(1); // age 9 → (9 >> 3) & 1
+    expect(batch.frame[0]).toBe(1); // age 9 → (9 >> 3) & 3
     expect(batch.flags[0] & 4).toBe(4); // Hidden: EMPTY_CONTENT_DB has no sprites
+  });
+
+  it('twinkles over the four atlas frames, wrapping at age 32 (R4-02.B3)', () => {
+    const w = withBullets(1);
+    cancelAllBullets(w, CancelMode.Points, 0);
+    const batch = w.bullets.pointBatch;
+    expect(w.bullets.points.count).toBe(1);
+    const seen: number[] = [];
+    for (let chunk = 0; chunk < 4; chunk++) {
+      run(w, 8);
+      expect(batch.count, `age ${(chunk + 1) * 8}`).toBe(1); // still flying, not credited yet
+      seen.push(batch.frame[0]);
+    }
+    // (age >> 3) & 3 walks 1, 2, 3 for ages 8, 16 and 24 and wraps to 0 at age 32 — the
+    // four-frame cycle the v2 atlas (R4-02.B3) draws.
+    expect(seen).toEqual([1, 2, 3, 0]);
   });
 
   it('only sparkles in Sparkle mode, without a player, or at 0 points per bullet', () => {

@@ -5,9 +5,11 @@
  * The blue capsule `items/capsule-blue` (12×8, 2 frames, plan M2-04): the same pill in blue
  * with a white core — the rare pickup that clears the screen's enemies.
  *
- * The point item `items/point` (5×5, 2 frames, plan M2-02): a small gold diamond with a dark
+ * The point item `items/point` (5×5, 2 frames at v1, plan M2-02): a small gold diamond with a dark
  * rim that cancelled bullets turn into; frame 1 is its twinkle (a white centre and tips).
- * Its v2 art is `R4-02.B3`'s; this generator draws it at 5×5, 2 frames at every scale.
+ * From `R4-02.B3` the v2 path draws it native at the art bible §5's **7×7** over four twinkle
+ * frames — the white spark travels the rim outward and back: the body, the cardinal tips, the
+ * whole rim, the rim without the tips — v1's three colours only; at art scale 1 the v1 diamond.
  *
  * The bonus stages' items (plan M2-10): `items/capsule-bonus` (12×8, 2 frames) — the pill in gold,
  * worth 1,000 points — and `items/1up` (12×8, 2 frames) — the pill in green with a white `+`, an
@@ -151,14 +153,49 @@ function point(twinkle) {
   return image;
 }
 
+/**
+ * Draws one v2 point item frame: the v1 diamond ×1.5 — a 7×7 gold diamond
+ * (|dx| + |dy| ≤ 3), rim on its outline, the white centre on every frame. The four
+ * frames are the twinkle cycle `core/bullets` indexes with `(age >> 3) & 3`: the
+ * spark travels the rim — 0 the plain body, 1 the cardinal tips lit (v1's twinkle),
+ * 2 the whole rim lit, 3 the rim lit without the tips as it fades.
+ *
+ * @param {number} stage - The glint cycle stage (`V2_STAGES`, 0–3).
+ * @returns {Image} 7×7 frame.
+ */
+function pointV2(stage) {
+  const image = createImage(7, 7);
+  const rim = color('#6a4808');
+  const body = color('#ffc830');
+  const white = color('#ffffff');
+  for (let y = 0; y < 7; y++) {
+    for (let x = 0; x < 7; x++) {
+      const d = Math.abs(x - 3) + Math.abs(y - 3);
+      if (d > 3) continue;
+      if (d === 0) {
+        setPixel(image, x, y, white);
+        continue;
+      }
+      if (d === 3) {
+        const card = x === 3 || y === 3;
+        const lit = stage === 2 || (stage === 1 && card) || (stage === 3 && !card);
+        setPixel(image, x, y, lit ? white : rim);
+        continue;
+      }
+      setPixel(image, x, y, body);
+    }
+  }
+  return image;
+}
+
 /** The v2 glint cycle's stages: 0 dim, 1 dim + spark, 2 lit + spark, 3 lit plain. */
 const V2_STAGES = [0, 1, 2, 3];
 
 /**
  * Generates the item sprites.
  *
- * @param {GeneratorOptions} [options] - `artScale`, the art scale the four pills are drawn at
- *   (default 1; the point item is `R4-02.B3`'s v2 art and stays at its v1 size here).
+ * @param {GeneratorOptions} [options] - `artScale`, the art scale the pills and the point item
+ *   are drawn at (default 1; from `R4-02.B3` the point's v2 art is native 7×7 over four frames).
  * @returns {SpriteDef[]} `items/capsule`, `items/point`, `items/capsule-blue`,
  *   `items/capsule-bonus` and `items/1up`.
  * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
@@ -187,9 +224,15 @@ export function generate(options = {}) {
         native: v2,
       },
     ),
-    makeSprite('items/point', [point(false), point(true)], 'items', {
-      animations: { twinkle: [0, 1] },
-    }),
+    makeSprite(
+      'items/point',
+      v2 ? V2_STAGES.map((stage) => pointV2(stage)) : [point(false), point(true)],
+      'items',
+      {
+        animations: v2 ? { twinkle: [0, 1, 2, 3] } : { twinkle: [0, 1] },
+        native: v2,
+      },
+    ),
     makeSprite(
       'items/capsule-blue',
       pill((b, n, s) => capsule(b, 'blue', n, s)),

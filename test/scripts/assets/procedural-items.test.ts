@@ -1,13 +1,15 @@
 /**
  * The item capsules (`scripts/assets/procedural/items.mjs`). Split out of
  * `procedural.test.ts` by plan R4-P.P2. R4-02.B2 adds the native v2 path of the four pills
- * (the art bible §5's 18×12, four glint frames — the point item is `R4-02.B3`'s).
+ * (the art bible §5's 18×12, four glint frames); R4-02.B3 the point item's (7×7, four twinkle
+ * frames — the `(age >> 3) & 3` cycle `core/bullets` indexes).
  * @module
  */
 import { describe, expect, it } from 'vitest';
 import { ITEM_KINDS, ItemKind } from '@shmup/core';
 import { getPixel, imagesEqual } from '../../../scripts/assets/image.mjs';
 import * as items from '../../../scripts/assets/procedural/items.mjs';
+import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { color } from '../../../scripts/assets/procedural/common.mjs';
 import { opaque, eachOpaque, onEdge, hue, key } from './procedural-helpers.js';
 
@@ -209,15 +211,45 @@ describe('scripts/assets/procedural/items', () => {
       }
     });
 
-    it('leaves the point item to R4-02.B3: v1 size and frames even on the v2 path', () => {
+    it('draws the point item native at 7×7 over the four-frame twinkle (bible §5, R4-02.B3)', () => {
       expect(point2.name).toBe('items/point');
-      expect(point2.native).toBeUndefined();
-      expect(point2.frames.map((f) => [f.width, f.height])).toEqual(Array(2).fill([5, 5]));
-      expect(point2.animations).toEqual({ twinkle: [0, 1] });
-      const [, point1] = items.generate();
-      point2.frames.forEach((frame, f) => {
-        expect(imagesEqual(frame, point1.frames[f])).toBe(true);
-      });
+      expect(point2.native).toBe(true);
+      expect(point2.frames.map((f) => [f.width, f.height])).toEqual(Array(4).fill([7, 7]));
+      expect(point2.animations).toEqual({ twinkle: [0, 1, 2, 3] });
+      const RIM = color('#6a4808');
+      const GOLD = color('#ffc830');
+      for (let stage = 0; stage < 4; stage++) {
+        const frame = point2.frames[stage];
+        for (let y = 0; y < 7; y++) {
+          for (let x = 0; x < 7; x++) {
+            const d = Math.abs(x - 3) + Math.abs(y - 3);
+            // v1's diamond ×1.5: |dx| + |dy| ≤ 3 is exactly the opaque set.
+            expect(opaque(frame, x, y), `f${stage} ${x},${y}`).toBe(d <= 3);
+            if (d === 3) {
+              // the spark travels the rim: tips (stage 1, v1's twinkle), the whole rim
+              // (stage 2), the rim without the tips (stage 3); stage 0 is the plain body.
+              const card = x === 3 || y === 3;
+              const lit = stage === 2 || (stage === 1 && card) || (stage === 3 && !card);
+              expect(getPixel(frame, x, y), `f${stage} rim ${x},${y}`).toEqual(lit ? WHITE : RIM);
+            } else if (d !== 0 && d < 3)
+              // the body
+              expect(getPixel(frame, x, y), `f${stage} body`).toEqual(GOLD);
+            else if (d === 0)
+              // the white centre, on every frame like v1's
+              expect(getPixel(frame, x, y), `f${stage} centre`).toEqual(WHITE);
+          }
+        }
+        // v1's three colours only, binary alpha (the scan stays honest).
+        const allowed = new Set([key(RIM), key(GOLD), key(WHITE)]);
+        eachOpaque(frame, (_x, _y, rgba) => expect(allowed, key(rgba)).toContain(key(rgba)));
+      }
+    });
+
+    it('gives the shipped atlas the frames core indexes for the point item (wave rule 3)', () => {
+      // core/bullets picks `(age >> 3) & 3` — the atlas at the default art scale must hold all
+      // four frames the pool can name.
+      const built = buildAtlas();
+      expect(built.manifest.sprites['items/point'].frames.length).toBeGreaterThanOrEqual(4);
     });
 
     it('leaves art scale 1 byte-identical to the unmarked call, native unmarked', () => {

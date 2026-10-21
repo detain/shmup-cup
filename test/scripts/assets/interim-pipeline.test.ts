@@ -197,7 +197,9 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // R4-01.A1a's three v2 ship maps (-16, e90e17e) and R4-03.C5's HUD life-bar map (-28,
     // 96c4e61); A6 set 560 from a pre-rebase count while its landed tree compared 563 — a margin
     // of three. R4-03.C2/C3/C4a moved no frame of this pool (their font left it at C1: still 563
-    // at 450349b). The floor measures what is still compared, not the natives.
+    // at 450349b); R4-02.B2's ten native pills took it to 539 and R4-02.B3's native point −2
+    // more (measured 537 on that tree, ba09e57). The floor measures what is still compared, not
+    // the natives.
     expect(scaled).toBeGreaterThan(500);
     expect(wrongPixels).toEqual([]);
   });

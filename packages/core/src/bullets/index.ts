@@ -331,7 +331,7 @@ export const BULLET_KINDS: readonly BulletKindSpec[] = Object.freeze(
 /** Sprite of the bending lasers' segments (a round blob drawn at every node). */
 export const BENDING_LASER_SPRITE = 'lasers/bend-pink';
 
-/** Sprite of the point items cancelled bullets turn into (2 twinkle frames). */
+/** Sprite of the point items cancelled bullets turn into (4 twinkle frames, R4-02.B3's v2 art). */
 export const POINT_ITEM_SPRITE = 'items/point';
 
 /**
@@ -2016,7 +2016,7 @@ class BulletSystemImpl implements BulletSystem {
       let y = pf.y[i] + dy;
       const age = pf.age[i] + 1;
       pf.age[i] = age;
-      pf.frame[i] = (age >> 3) & 1;
+      pf.frame[i] = (age >> 3) & 3;
       if (age <= POINT_ITEM_HOVER_TICKS) {
         pf.vx[i] *= 0.85;
         pf.vy[i] *= 0.85;
