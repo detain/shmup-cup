@@ -23,7 +23,7 @@ const CONTENT_ROOT = new URL('../../../../content/', import.meta.url);
  * @param path - Path below `content/`.
  * @returns The file.
  */
-function readShipped(path: string): ContentFile {
+export function shipped(path: string): ContentFile {
   return {
     path,
     data: JSON.parse(readFileSync(new URL(path, CONTENT_ROOT), 'utf8')) as unknown,
@@ -41,5 +41,5 @@ export function shippedPatterns(): ContentFile[] {
     .filter((name) => name.endsWith('.patterns.json') && name.indexOf('example.') !== 0)
     .map((name) => 'patterns/' + name)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(readShipped);
+    .map(shipped);
 }
