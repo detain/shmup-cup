@@ -34,10 +34,10 @@ the parade stays *as today* — the echo re-rig is R5-08.S4c (wave 12) and is de
 | new enemy types by sprite | 5 (bolt-drone, hatch-bay, laser-emitter, sentinel-walker, rail-turret) | 6–8 | **under** — needs ≥ +1, this plan ships +2 |
 | capsule sources before WARNING | 29 | 18–48 | inside |
 | checkpoints' recovery windows | first window after 10200 has 2 sources | ≥ 3 per 1,350 px | the case only checks the **first** window after each checkpoint — today passes, this plan makes all six windows exactly 3 (§4) |
-| directItems | 26 (flat string array; red 7, green 6, blue 6, octagon 1, yellow 1, orange 1) | ≥ 30 | **under** |
-| block events with `dy` | 11 (piston hall, 5 floor + 6 ceiling …) | ≥ 8 with ≥ 3 low + ≥ 3 high | pinned by the hatches case — kept |
+| directItems | 26 (flat string array; red 8, green 8, blue 7, octagon 1, yellow 1, orange 1 — D-RV m-2 fixed the tally; it sums to 26) | ≥ 30 | **under** |
+| block events with `dy` | 11 (piston hall, 6 floor + 5 ceiling … — D-RV m-2: shipped is 6F+5C) | ≥ 8 with ≥ 3 low + ≥ 3 high | pinned by the hatches case — kept |
 | parade echo boss events | 4 at 6780 / 7620 / 8460 / 9300, gap 840 | ≥ 4 before WARNING | entries frozen until S4c |
-| sovereign | 12 parts, 4 phases | ≤ 24 parts (P8 `MAX_BOSS_PARTS`), ≥ 4 phases | §7 rebuilds to 19 parts |
+| sovereign | 12 parts, 4 phases | ≤ 24 parts (P8 `MAX_BOSS_PARTS`), ≥ 4 phases | §7 rebuilds to 20 parts |
 | raster / cycles / parallax | 1 haze row; 1 `cycles` entry (v1's 4-colour ramp, ticks 10, far); 4 bands | — | §8; cycles is P7's until it lands |
 | tileset | terrain-citadel, 20 tiles @ 12 px | — | §9 |
 | remix | array of 6 tender spawn rows | — | §10 |
@@ -76,10 +76,10 @@ the top — same convention as today):
 | from | to | floor | ceiling |
 |---|---|---|---|
 | 150 | 3,240 | base 33, amp 9, per 480, seed 121 | base 63, amp 9, per 540, seed 122 | *(today's outer walls verbatim)* |
-| 3,300 | 5,400 | base 60, amp 0 | base 60, amp 0 | gate: twin flat masses, 120 px corridor walls |
+| 3,300 | 5,400 | base 60, amp 0, per 96, seed 133 | base 60, amp 0, per 96, seed 134 | gate: twin flat masses, 120 px corridor walls (`HeightfieldProfile` requires base/amp/period/seed — amp-0 rows pin them too, D-RV M-5) |
 | 5,400 | 7,620 | base 33, amp 9, per 480, seed 131 | base 63, amp 9, per 540, seed 132 | keep: wall texture like the outer rows (new seeds) |
 | — | — | none | none | hangar 7,650–10,950 open void (as today's parade) |
-| 10,980 | 13,860 | base 36, amp 0 | base 72, amp 0 | hall: today's flat piston hall, extended to 2,880 px |
+| 10,980 | 13,860 | base 36, amp 0, per 96, seed 123 | base 72, amp 0, per 96, seed 124 | hall: today's flat piston hall, extended to 2,880 px (today's amp-0 seeds 123/124 kept, D-RV M-5) |
 | 13,890 | 16,140 | base 30, amp 9, per 300, seed 125 | none | core run: today's row, re-placed (floor-only) |
 | 16,200 | 18,420 | base 36, amp 9, per 360, seed 127 | base 72, amp 6, per 420, seed 128 | yard: gentle rumble both faces |
 
@@ -99,13 +99,15 @@ Spawn shapes exactly as today: ground emitters/turrets/walkers/hatches `{x, type
 (no `y` — the system snaps them to rock); flying `{x, type, enemy, y}`; formations
 `{x, type, enemy, count, interval, y, bonus}`; blocks §3; bosses `{x, type, enemy}`.
 `F` marks a formation, `⌀` a formation with `"drop": null` (flavour swarm, no capsule —
-these are the only six, keeping the source count at 44 ≤ 48).
+these are the only five — 2,200 / 6,980 / 8,580 / 12,900 / 15,000 — keeping the source
+count at 42 ≤ 48; D-RV m-2/C-1 recomputed).
 
 **Outer wall 0–3,300** (ground on today's rock; all x are v2):
 
 | x | enemy | kind | y / params |
 |---|---|---|---|
 | 120 | tender | spawn | y 192 |
+| 560 | tender | spawn | y 168 |
 | 626 | rail-turret | ground floor | — |
 | 840 | bolt-drone | F 5/15 | y 120, bonus 350 |
 | 896 | rail-turret-ceiling | ground ceiling | — |
@@ -224,9 +226,11 @@ both `carrier.straight`, matching the ships case (`calm scripts === ['carrier.st
 **Boss / end:** `{x: 19500, type: 'warning', enemy: 'iron-sovereign'}` and
 `{x: 20250, type: 'end'}`.
 
-Totals: 86 spawn/formation events (ground placements audited on-rock in §4's scratch run),
-16 blocks, 4 bosses, warning, end. The pinned "hatches" case counts: hatch.spawner floor 4
-/ ceiling 4 (≥ 3 both, case at `content-zone-h.test.ts`), emitter.laser floor 4 / ceiling 5
+Totals: 81 spawn/formation events — 27 tenders + 20 formations (15 with drops, five ⌀) +
+34 ground spawns, after the D-RV C-1 tender at 560 was restored (ground placements audited
+on-rock in §4's scratch run); 16 blocks, 4 bosses, warning, end. The pinned "hatches"
+case counts: hatch.spawner floor 4 / ceiling 4 (≥ 3 both, case at
+`content-zone-h.test.ts`), emitter.laser floor 4 / ceiling 5
 (≥ 4 both), block events with dy 16 with 8 above and 8 below `PLAYFIELD_H/2` (≥ 8 / ≥ 3 /
 ≥ 3), parade ≥ 4 captains with `timeLimit > 0` before WARNING — all green with the frozen
 echo entries (§6b), which is what lets the contract flip at S5b.
@@ -235,11 +239,12 @@ echo entries (§6b), which is what lets the contract flip at S5b.
 
 `MAX_TERRAIN_BLOCKS` is 16 **concurrent** slots (`MovingBlockSystem` fills the lowest free
 slot and drops the event otherwise), so the stage budgets exactly 16 block events in two
-families. World-left of a block is `event.x + 664` (`DEFAULT_SPAWN_SCREEN_X`).
+families. World-left of a block is `event.x + 664` (`DEFAULT_BLOCK_SCREEN_X` — the block default in
+`data/index.ts`; `DEFAULT_SPAWN_SCREEN_X` is the enemies' same-valued twin, D-RV M-1).
 
 **Gate slabs — 6 events (3 floor + 3 ceiling), the plan's new moving floors:**
 
-| event x | face | y | w | h | tile | dy | period | phase |
+| event x | face | y | w | h | tile | dy | period | phase (binary angle 0..1023) |
 |---|---|---|---|---|---|---|---|---|
 | 2,820 | floor | 204 | 36 | 72 | solid | −60 | 240 | 0 |
 | 2,820 | ceiling | 60 | 36 | 72 | solid | +60 | 240 | 512 |
@@ -249,36 +254,55 @@ families. World-left of a block is `event.x + 664` (`DEFAULT_SPAWN_SCREEN_X`).
 | 4,140 | ceiling | 60 | 36 | 72 | solid | +60 | 240 | 672 |
 
 `y` is the world y of the block's **top edge** at rest (schema: `data/index.ts` block
-events; runtime: `y = baseY + dy·sine`, `stage/systems.ts`). A floor slab rides
-144…260+72 → its travel band is 144–336 (at peak it breaches the base-60 floor mass —
-the slab is a gate piston rising out of the wall); a ceiling slab travels 0–192; the
-open band between opposing slabs at mid-phase is ≥ 84 px, and with the 3 phase offsets
-(0/80/160 ticks apart out of 240) the three pairs never pinch the corridor together —
-at any tick at most one pair is near its peak. Everything stays inside the frame:
-`y ≥ 0` and `y + h + |dy| ≤ 336` for both faces (R1-03's trap note: v1's top pistons
-"reach above the top edge" — post-port they must not, and with base y 60/204 they do
-not here).
+events). Runtime (`stage/systems.ts:310`): `angle = floor(phase + age·1024/period) &
+ANGLE_MASK`, `y = baseY + dy·sin(angle)` — `phase` is a **binary angle 0..1023** (the
+table header now states the unit), not a tick count: 512 is exactly half the 240-tick
+period, so each ceiling slab is antiphase to its floor partner and the pair travels
+**together**. The slot between a ceiling slab's bottom and its floor slab's top is a
+**constant 72 px** — it never varies (there is no "mid-phase" state and the old
+"≥ 84 px" reading was a unit misread) — and it sweeps `[72..144] ↔ [192..264]` across
+the cycle: at the top of travel the slot stands [72..144] with the floor slab's top edge
+at 144 breaching the base-60 floor mass (the slab is a gate piston rising out of the
+wall); at the bottom it rests [192..264], sunk toward the mass. The three floor phases
+0/80/160 are angles — **0 / 18.75 / 37.5 ticks** apart in the 240-tick period — so all
+three pairs are near their peak together for ~38 ticks. Nothing ever pinches because the
+corridor never closes: 72 px ≥ the 24 px lane law at every tick, and the D-RV harness
+bot passed the gate with **0 rule violations**. Both gate faces keep `y ≥ 0` and
+`y + h + |dy| ≤ 336` (R1-03's trap note: v1's top pistons "reach above the top edge" —
+post-port they must not, and with base y 60/204 they do not here; the hall pistons'
+world-y 348 trough is a mass breach, not a frame one — see the Traps note).
 
 **Piston hall — 10 events, today's piston shape kept verbatim**, re-placed from 10,956
-every 240 px for ten columns (world 11,620…13,852, inside the hall mass 10,980–13,860):
+every 240 px for ten columns (world 11,620…13,816 — the last column's right edge is
+13,116 + 664 + 36 = 13,816, inside the hall mass 10,980–13,860; D-RV m-2 fixed 13,852,
+whose +36 poked past the mass end):
 alternating floor `y 243, h 72, w 36, dy −33` and ceiling `y 57, dy +33`, period 200,
 phase cycling {0, 256, 512, 768} exactly as the shipped file (a floor/ceiling pair share
-a 256 offset so they cross mid-hall). Travel bands 210–315 and 24–129 — in frame, as
-today.
+a 256 offset so they cross mid-hall). Travel bands, true max extents (D-RV m-1 — the old
+"210–315 and 24–129" mixed min-top with rest-bottom): floor [210, 348], ceiling
+[24, 162] — `y` is WORLD_Y, and at the extremes each piston sinks into its base-36 /
+base-72 mass exactly as the shipped file does: a schema-legal mass breach, not a frame
+breach (the ≤ 336 in-frame law is the gate slabs' — see the Traps note).
 
 This makes 16 events total; the hatches case's "≥ 8 block events with dy ≠ 0, ≥ 3 above /
 ≥ 3 below mid" is satisfied 16 / 8 / 8, and the gate slabs keep their face split 3/3.
 
 **What P12 (wave 10) owes the bot here:** today's bot dodges blocks through
 `terrainAt`; the plan_comparison P12 item adds a *moving-floor gimmick* condition. The
-gate raises the ask quantitatively: a slab's peak vertical speed is
-`60·2π/240 ≈ 1.57 px/tick` — faster than a hall piston (`33·2π/200 ≈ 1.04`). The P12
-model must (a) treat a slab's current swept row band as occupied (it already does via
-terrainAt — the block *is* terrain), and (b) retreat/climb when the free band ahead
-narrows below ~2 ship hurtboxes across the next 120 ticks (≈ 0.5 s at gate speed). The
-lane test is the S6 bot clearing the gate section without a god-mode-only passage; if
-P12 lands weaker, the fallback is deepening phases to 0/120/240 (pairs peak farther
-apart) — disclosed, not silent.
+gate raises the ask quantitatively on the REAL geometry (D-RV M-1): the 72 px slot never
+narrows, so the hazard is **motion** — a slab's peak vertical speed is
+`60·2π/240 ≈ 1.57 px/tick`, faster than a hall piston (`33·2π/200 ≈ 1.04`), and at
+peak the slab breaches the floor mass up to top edge y 144, where the resting corridor
+looks wide. The P12 model must (a) treat a slab's current swept row band as occupied (it
+already does via terrainAt — the block *is* terrain), and (b) track the constant 72 px
+slot's swept position across the next ~120 ticks (≈ 0.5 s at gate speed) and climb/dive
+to stay clear of the wall-breach motion — the ship cannot park in a row the slot will
+sweep through. The lane test is the S6 bot clearing the gate section without a
+god-mode-only passage; the D-RV harness bot already crosses it with 0 rule violations,
+so the ask is the pacing model, not a new legality. If P12 lands weaker, the disclosed
+fallback is re-spacing the floor phases to a TRUE 80/160-tick separation — angles
+0/341/683, ceilings at +512 (the pairs peak far apart; the slot stays a constant 72 px)
+— disclosed, not silent.
 
 ## 4. Checkpoints and recovery
 
@@ -299,8 +323,10 @@ the shipped `capsuleSources` + `RECOVERY_WINDOW` (900 × 1.5 = 1,350):
 
 (exactly three per window at the case's own bound — the machine check in the deleted
 scratch run asserted all six; later windows carry ≥ 2, which is how today's file passes
-and this plan keeps). Total sources before WARNING: **44** ∈ [18, 48].
-Ground placements (35) were all machine-audited against the heightfields through
+and this plan keeps). Total sources before WARNING: **42** ∈ [18, 48] (27 tenders + 15 non-⌀
+formations; D-RV C-1/m-2 re-derived — the line read 44, the as-written table holds 41).
+Ground placements (34 — 19 floor + 15 ceiling, D-RV m-2) were all machine-audited
+against the heightfields through
 `terrainAt` at `map x + 664` — every one stands on rock (§2b rows; the scratch file is
 deleted, the audit is re-runnable from this table).
 
@@ -308,8 +334,9 @@ deleted, the audit is re-runnable from this table).
 
 - Blue capsules: **0** new (cap ≤ 2; today's file drops none in H — kept).
 - `directItems`: today's 26-row flat array kept **in order** plus six appends
-  `[red, green, blue, red, orange, green]` → **32** ≥ 30, tally red 8 / green 7 / blue 7 /
-  octagon 1 / yellow 1 / orange 2. (Gate + yard are the new demand; the ships case only
+  `[red, green, blue, red, orange, green]` → **32** ≥ 30, tally red 10 / green 10 /
+  blue 8 / octagon 1 / yellow 1 / orange 2 (sums to 32 — D-RV m-2 fixed the old
+  26-summing line). (Gate + yard are the new demand; the ships case only
   floors the count.)
 - Calm band [18,450, 19,500): exactly the two tenders 18,810 / 19,230 — the ships case
   pins the calm script-list equality to two `carrier.straight`; **do not** add any other
@@ -323,14 +350,15 @@ inside 6–8):
 
 | entry | script | hp / score | hurtbox | params (units per `BEHAVIOR_PARAM_UNITS`) | sprite |
 |---|---|---|---|---|---|
-| `gate-sentry` | `turret.floor` | 8 / 400 | 9×9 | `fireTicks` 150, `bulletSpeed` **1.95** | `enemies/gate-sentry` |
-| `gate-sentry-ceiling` | `turret.floor` | 8 / 400 | 9×9 | same params | `enemies/gate-sentry` (mirror via ceiling anchor) |
+| `gate-sentry` | `turret.floor` | 8 / 400 | 8×8 | `fireTicks` 150, `bulletSpeed` **1.95** | `enemies/gate-sentry` |
+| `gate-sentry-ceiling` | `turret.floor` | 8 / 400 | 8×8 | same params | `enemies/gate-sentry` (mirror via ceiling anchor) |
 | `iron-banner` | `drifter.sine` | 2 / 150 | 6×6 | `speed` 1.8, `amp` 30, `period` 90, `memberPhase` 24; **drop capsule** | `enemies/iron-banner` |
 
 4-way audit: the gate-sentry's aimed fire is `bulletSpeed` 1.95 ≤ `MAX_AIMED_BULLET_SPEED`
 (2.0 × 1.5 = 3.0) ✓ and it is a floor/ceiling anchor shot (fixed headings, same as
 rail-turret today); iron-banner carries no script fire at all; lane gaps are the §3
-corridor's ≥ 84 px ≥ 24 ✓. No new behaviour items; no `params` outside the unit table
+corridor's constant 72 px slot ≥ 24 ✓ (D-RV M-1 unit fix). No new behaviour items; no
+`params` outside the unit table
 (`turret.floor`: aimTicks fireTicks bulletSpeed; `drifter.sine`: speed amp period phase
 memberPhase). Sizes follow the art bible §5.6 small/medium classes (gate-sentry ~20 px
 2f+@flash, iron-banner ~16 px 2f+@flash — a banner standard with a sigil, original art).
@@ -355,42 +383,57 @@ this), one phase, lower HP, `timeLimit`/`introTicks`/score/role kept. H's S5b/S6
 pass with the OLD echoes first — that is the ordering that keeps the wave-11 lane
 independent of the four boss-tree redesigns.
 
-## 7. IRON SOVEREIGN rebuild (S4b) — 12 → 19 parts, P8 landed at `273e081`
+## 7. IRON SOVEREIGN rebuild (S4b) — 12 → 20 parts, P8 landed at `273e081`
 
 Identity frozen: `x` 514, `y` 168 (ported entry values — **never re-derive**),
 `introTicks` 180, score 60,000, script `boss.sovereign`, `minion` sovereign-drone,
 music cue FinalBoss → `boss-h`, four phases with the today's-param set from the shipped
 file (they pass the review bands: max aimed 1.95, phases ≥ 4, last phase `spiral` 3).
-P8 landed `MAX_BOSS_PARTS` 24; 19 ≤ 24.
+P8 landed `MAX_BOSS_PARTS` 24; 20 ≤ 24 (D-RV M-3 — the added set is eight rows, so 12 + 8 = 20).
 
 Keep today's 12 parts and their fields exactly (hull, bulk, core 150 hp `afterParts`
 requires [plate-1, plate-2], emitter-top/bottom hp 30 GUNS, hub, pod-a…pod-d radius 9
-never-vulnerable). Add **seven cosmetic/dark-armor parts, all `neverVulnerable`, zero new
-sprite names** (the atlas already carries what they reuse):
+never-vulnerable). Add **eight cosmetic/dark-armor parts — crown, prow, skirt-a, skirt-b,
+vent-a, vent-b, pod-e, pod-f — every row writing `vulnerable: never` explicitly (the
+shipped `bulk` row's precedent, D-RV m-4), so all eight are never-vulnerable and none
+adds destroyable HP; zero new sprite names** (the atlas already carries what they
+reuse):
 
 | new part | parent | x / y | sprite | hurtbox |
 |---|---|---|---|---|
-| crown | hull | 0 / −66 | `bosses/sovereign-hatch` (21×18, exists) | none |
-| prow | hull | −42 / 0 | `bosses/sovereign-hatch` | none |
-| skirt-a | hull | −6 / +70 | `bosses/sovereign-plate` | none |
-| skirt-b | hull | −6 / −70 | `bosses/sovereign-plate` | none |
-| vent-a | hull | 40 / +48 | `bosses/sovereign-emitter` | none |
-| vent-b | hull | 40 / −48 | `bosses/sovereign-emitter` | none |
-| pod-e / pod-f | hub | ±36 (same ring as pod-a…d) | `bosses/sovereign-pod` | circle r 9, never |
+| crown | hull | 0 / −66 | `bosses/sovereign-hatch` (21×18, exists) | `none`; `vulnerable: never` |
+| prow | hull | −42 / 0 | `bosses/sovereign-hatch` | `none`; `vulnerable: never` |
+| skirt-a | hull | −6 / +70 | `bosses/sovereign-plate` | `none`; `vulnerable: never` |
+| skirt-b | hull | −6 / −70 | `bosses/sovereign-plate` | `none`; `vulnerable: never` |
+| vent-a | hull | 40 / +48 | `bosses/sovereign-emitter` | `none`; `vulnerable: never` |
+| vent-b | hull | 40 / −48 | `bosses/sovereign-emitter` | `none`; `vulnerable: never` |
+| pod-e / pod-f | hub | explicit ring pairs pinned on the binary-angle ladder 0/64/128/192/256/320 at r 36 (D-RV M-3): **pod-e = angle 192 → x +14 / y +33, pod-f = angle 320 → x −14 / y +33** — all six ring positions pod-a…pod-f stay distinct (the old literal ±36-on-the-same-ring wording landed pod-f on pod-c and pod-e on pod-a) | `bosses/sovereign-pod` | circle r 9, `vulnerable: never` |
 
 (The crown is the citadel's crest on the hull's top; the prow gives the hull a beak
 before the core line opens; the skirts read as the gate-plate motif; the vents mirror
 the emitters so the gun silhouette keeps its balance — 20 px of art, not a re-skin.)
 
 Checks, all by script at tip:
-- **Reachable core:** no added part sits on the core row; the hub pods stay at ±36 with
-  r 9 leaving ≥ 27 px clear above/below the core line (today's hub angle 128 places pods
-  off the row — the zone-H bug history: a pod over the core line cost the bot 252 s;
-  §8's phase table keeps hub angle and pod ring frozen).
-- **Assembled height** = 2 × (70 + 21) = **182 ≤ 202** (`Math.round(0.6 × PLAYFIELD_H)` —
-  the new lane case measures the part bounds exactly like zone G's facet case).
-- **Destroyable HP unchanged: 150 + 2×24 + 2×30 = 258** → the R2-03 god fight's 60.0 s
-  stays ~60–64 s and the bot-run band [240, 360] s keeps its margin (§11).
+- **Reachable core:** no added part sits on the core row; the hub's six pods stay on the
+  36-px ring with r 9, all six positions distinct, leaving ≥ 27 px clear above/below the
+  core line (today's hub angle 128 — the binary-angle precedent — places pods off the
+  row — the zone-H bug history: a pod over the core line cost the bot 252 s; §8's phase
+  table keeps hub angle and the pod ring frozen).
+- **Assembled height** = 2 × (70 + 28/2) = **168 ≤ 202** on the interim-**FRAME** basis —
+  zone G's facet convention and the number the new lane case actually measures: the
+  skirts anchor at ±70 and draw the 28-px `sovereign-plate` frame (half 14). The old
+  2 × (70 + 21) = 182 mixed bases (skirt offset + the plates' HURTBOX half 21); on the
+  hurtbox basis the height is 2 × 70 = **140**. Every basis clears
+  `Math.round(0.6 × PLAYFIELD_H)` = 202 (the case measures part bounds like zone G's
+  facet case).
+- **Destroyable HP unchanged — loaded 260, not 258** (D-RV m-3): the arithmetic
+  150 + 2×24 + 2×30 = 258 covers the three HP'd families, but the loader defaults
+  `vulnerable: 'always'`, `hp: 1` and the shipped hull and hub carry no fields — so
+  today's boss already **loads 260**, and with all eight added rows explicit
+  `vulnerable: never` (m-4) the rebuild loads 260 too; as-tabled without the flags it
+  would load 266. → the R2-03 god fight's 60.0 s stays ~60–64 s and the bot-run band
+  [240, 360] s keeps its margin (§11; the D-RV harness measured the full-stage god run
+  at 343.4 s, deaths 0 — mid-band).
 - The pinned hatches-case shape list still passes: core `afterParts` + plates left of
   core, hub parent core with no hurtbox and ≥ 4 never-vulnerable radius > 0 pods (now 6),
   ≥ 2 guns (emitters), phase 0 `until.partsDestroyed`, some `spin ≠ 0` (ph2/3/4), some
@@ -451,11 +494,13 @@ are authored, not ported.)
 
 ## 10. Loops and directItems
 
-- `remix`: today's 6 spawn rows are replaced by the §2b **8** tender rows at
-  600 / 2,240 / 3,540 / 5,760 / 8,040 / 10,980 / 13,800 / 16,560 (loop-2 tender top-up;
-  the remix rows are plain `{x, type:'spawn', enemy:'tender', y}` entries — the shipped
-  array shape). ≤ 64 rows held (8); the six `⌀` formations ride the loop too — a loop
-  replay sees the same source economy.
+- `remix`: today's 6 spawn rows are replaced by **8** tender rows with every field
+  pinned — D-RV m-5 names the ys (cycling today's remix spread 171/186/141/111/246/216):
+  600 (y 171) / 2,240 (y 186) / 3,540 (y 141) / 5,760 (y 111) / 8,040 (y 246) /
+  10,980 (y 216) / 13,800 (y 171) / 16,560 (y 141) (loop-2 tender top-up; the remix
+  rows are plain `{x, type:'spawn', enemy:'tender', y}` entries — the shipped array
+  shape), every row flying rock-free at its x (m-5 legality). ≤ 64 rows held (8); the five
+  `⌀` formations ride the loop too — a loop replay sees the same source economy.
 - `directItems` 32 (§5).
 - No new bonus stage of H; the H-loop remix is the only loop content (the remix's
   `loop 2` difficulty comes from rank growth, as today).
@@ -466,7 +511,7 @@ are authored, not ported.)
 |---|---|---|
 | enemies | `MAX_ENEMIES` 64 | parade overlap: ≤ 2 echoes + escort ≤ 8 + mites bursts → low-20s — same order as today |
 | enemy bullets | 512 | core-run 5-way 1.95 + emitters ≈ today |
-| boss parts | 24 | 19 (§7) |
+| boss parts | 24 | 20 (§7) |
 | particles | 256 | unchanged (fx content, not touched) |
 | terrain blocks | 16 | 16 **total events**; ≤ 6 concurrent in a section — the slot math holds because sections don't overlap (the removal-on-left rule reclaims slots between families) |
 | bot run | 240–360 s | ≈ 335–350 s expected (scroll 272.6 s + ~60–64 s boss) — **the tight upper bound**; trim lever = shorten k5's high-speed tail if S6 measures over |
@@ -511,6 +556,11 @@ demo `content/demos/zone-h.replay.json` (40 s from stage start — still "the MA
 the outer walls": the outer-wall section is byte-kept, so the demo's **description stays
 true** while its recording re-blesses). Fingerprints: the presentation + content-DB +
 shell re-pins ride the land helper's own passes (same fail-loud markup as zones A–G).
+LAND note (D-RV M-4): **e2e re-pin zones-hi** — `test/e2e/zones-hi.spec.ts` pins
+`jumpTo(13500)` against its "WARNING (x 13,650)" comment (and a second `jumpTo(13350)`)
+plus hangar/echo pixel checks; §2's reshape moves all of those x pins (WARNING lands at
+19,500). The SOVEREIGN_HULL right-half count likely survives — the hull part sprites are
+unchanged.
 `test/golden/v2-port.ts` `PORT_EXEMPTIONS` holds **no** zone-H rows (checked at the tip —
 only zone-f), so H retires nothing there. Self-expiring gates: none of H's checks lean on
 `CONTENT_PORT_PENDING` after the port; S4c/S6 delete the R2 gates only as wave 12's
@@ -551,7 +601,7 @@ shared closeout (unchanged from the brief).
 | scroll→WARNING | 16,353 t = 272.6 s | [225, 315] s | `scrollTicksToWarning` (`zones/helpers.ts`) in the contract |
 | checkpoints | 6 | ≥ 5 | ships case |
 | new sprites | 7 | [6, 8] | new-types case (by-sprite counter over a–g) |
-| capsules before boss | 44 | [18, 48] | recovery case + `zone-hi-recovery.test.ts` |
+| capsules before boss | 42 | [18, 48] | recovery case + `test/playtest/zone-h-recovery.test.ts` |
 | first window per ck | 3 each | ≥ 3 | recovery case (loop at `RECOVERY_WINDOW` 1,350) |
 | blue capsules | 0 | ≤ 2 | content:check |
 | calm scripts | 2× carrier.straight | exact equality | ships case |
@@ -559,7 +609,7 @@ shared closeout (unchanged from the brief).
 | block events dy≠0 | 16 (8 low / 8 high) | ≥ 8 / ≥ 3 / ≥ 3 | hatches case |
 | hatch/emitter groundings | f 4 / c 4, f 4 / c 5 | ≥ 3 / ≥ 4 both | hatches case (snap-to-rock scan) |
 | parade | gap 840 ≥ 472.5, speed 0.9 < 1.125, first < half | hatches case | hatches case |
-| sovereign | 19 ≤ 24 parts, height 182 ≤ 202, hp 258 | hatches + new height case | part bounds (zone G's facet pattern) |
+| sovereign | 20 ≤ 24 parts, height 168 ≤ 202 (frame basis; hurtbox basis 140), loaded hp 260 | hatches + new height case | part bounds (zone G's facet pattern) |
 | aimed / lane | ≤ 3.0 / ≥ 24 | rules.ts constants | boss-fight + playtest |
 | bot run | ≈ 335–350 s | [240, 360] s | S6 playtest |
 
@@ -569,16 +619,19 @@ at S4c), `content/paths/zone-h.paths.json` **new** (S5b: the banner drifts + a s
 loop — paths are optional content, keep them ≤ 3 entries), `content/tilesets/terrain-
 citadel.tileset.json` (sprite pointer + 4 tiles), `scripts/assets/procedural/citadel.mjs`
 (new frames), `assets/source/atlas-groups.json` (re-derived), tests:
-`test/playtest/zone-h.test.ts`, `test/playtest/zone-hi-recovery.test.ts`,
-`test/playtest/golden-zone-h.test.ts`, `test/e2e/zone-h.spec.ts` (S6 — literal
-piston-count / scroll assertions re-pin to this table),
+`test/playtest/zone-h.test.ts`, `test/playtest/zone-h-recovery.test.ts` (D-RV M-4:
+the real paths — `zone-hi-recovery` never existed, and the golden test lives in
+`test/golden/`), `test/golden/golden-zone-h.test.ts`, `test/e2e/zones-hi.spec.ts`
+(S6/S7 — there is no `zone-h.spec.ts`; H's browser coverage is the shared zones-hi
+spec, and §2's reshape re-pins its `jumpTo`/x and hangar/echo pixel checks, §14's
+LAND note),
 `test/integration/zones/zone-h.contract.ts` (flip at S5b if green),
 `content/demos/zone-h.replay.json` + `test/golden/zone-h-*.replay.json` (S7 re-bless).
 
 ## 18. Docs needs this design feeds (collected at closeout, not by the lane)
 
 - `docs/dev/zones-h-and-i.md`: retitle H's sections to the new five (gate/keep/hangar/
-  hall/yard), the 16-block table, sovereign 19 parts, the ramp row after P7.
+  hall/yard), the 16-block table, sovereign 20 parts, the ramp row after P7.
 - `docs/client/bestiary.md`: gate-sentry, iron-banner entries; sovereign crest/prow note.
 - `content/stages/README.md` + `example` — no format change (block events exist today).
 - wave-11.md/wave-12.md zone-H blocks + `plan_resolution.md` §17 row (R5-P.D-H → lane →
@@ -593,8 +646,13 @@ piston-count / scroll assertions re-pin to this table),
   re-derived from the 336-px field (§3, §8); nothing edge-anchored was multiplied.
 - **Ported numbers kept:** sovereign x/y 514/168, the echo entries, the piston shape,
   the outer-wall heightfields, `⌀` formation discipline.
-- **In-frame pistons:** every block satisfies `y ≥ 0` and `y + h + |dy| ≤ 336` (§3) —
-  R1-03's citadel note honoured.
+- **In-frame pistons:** the six **gate slabs** satisfy `y ≥ 0` and `y + h + |dy| ≤ 336`
+  (§3 — 204 + 72 + 60 = 336 exactly; 60 − 60 = 0) — R1-03's citadel note honoured for
+  them. D-RV m-1 scopes the old "every block" claim: the ten kept-verbatim hall pistons
+  reach world-y 348 at their troughs (floor `243 + 72 + 33 = 348 > 336`), as the shipped
+  file already does — schema-legal, since `y` is WORLD_Y: the slab breaches the base-36
+  floor mass (the wall), not the frame — the same mass breach §3 celebrates for the
+  gate pistons' peak.
 - **`rowsTall` 28 = one playfield**; map width = length + 640; spawn xs are event-x
   (camera), ground snap at `+664` — audited §4.
 - Original names throughout (IRON CITADEL / gate-sentry / iron-banner / sovereign tree);
