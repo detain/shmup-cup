@@ -48,16 +48,17 @@ capsule-rich opening, one new formation section, a mid-boss".
 Eight sections, 21,000 px. The ship's spawn x just past the right edge is 664
 (`DEFAULT_SPAWN_SCREEN_X` = `PLAYFIELD_W + 16 × WORLD_SCALE`); `BOT_X` is 96
 (`ENTER_END_X`, ported). Seconds are `Δx / speed / 60` at the section key's settled speed
-(ramps add ≈ 2 s total across the stage — the measured whole below includes them).
+(ramps add 15.7 ticks ≈ 0.26 s total across the stage — the measured whole below
+includes them).
 
 | # | x from – x to | name | what happens | camera (speed, ramp, y) | s |
 |---|---|---|---|---|---|
-| 1 | 0 – 2,700 | Azure shallows | tutorial popcorn (`skeet`), the `skiff` debuts, `tender` ×3, `skeet-chain`, first `vane` arc; rolling floor 450–3,150 | 1.05, 60, none | 42.9 |
+| 1 | 0 – 2,700 | Azure shallows | tutorial popcorn (`skeet`), the `skiff` debuts, `tender` ×3, `skeet-chain`, first `vane` arc; rolling floor 300–2,100 (ported, do not rescale) | 1.05, 60, none | 42.9 |
 | 2 | 2,700 – 6,300 | Vane gallery | **the new formation section**: pathed `vane`/`gale` fans (≥ 3 pathed formations), `lancer`/`gnat` rammers, `skiff` singles; tenders 2,940 / 3,420 / 3,900 / 4,620 / 5,550 | 1.2, 60, none | 50.0 |
 | 3 | 6,300 – 9,600 | The corridor | floor **and** ceiling (5,160–9,600 corridor terrain — ported, do not rescale); `picket` floor + ceiling turrets (6,600 / 7,140 / 9,150 floor-side `picket`, 6,900 / 9,300 `picket-ceiling`), `strider` walkers, `burrow` hatch (8,400), the new `warden` floor gun at 7,800 | 0.9, 90, none | 61.1 |
 | 4 | 9,600 – 12,000 | The marshal | mid-boss `azure-marshal` **boss event at x 10,350** (< length/2 = 10,500) with a `gyre` and `skeet` escort; tenders 9,780 / 10,020 / 10,590 / 11,610 | 1.35, 90, none | 29.6 |
-| 5 | 12,000 – 15,600 | Blue lick | high speed: `gyre` orbiters on the `gyre-orbit-*` paths, `vane` swoops, `skiff`/`lancer`/`gnat` runs; low floor 12,750–14,775 | 2.25, 120, none | 26.7 |
-| 6 | 15,600 – 18,300 | Azure spires | **the set piece** (§3): three full-height spires with staggered 27-px openings, `matron` hatches + `warden` + `strider` on the two pedestals; tenders 15,960 / 16,350 / 16,710 / 17,460 | 1.5, 90, none | 30.0 |
+| 5 | 12,000 – 15,600 | Blue lick | high speed: `gyre` orbiters on the `gyre-orbit-down` path, `vane` swoops, `skiff`/`lancer`/`gnat` runs; low floor 12,750–14,775 | 2.25, 120, none | 26.7 |
+| 6 | 15,600 – 18,300 | Azure spires | **the set piece** (§3): three full-height spires with staggered 36-px openings, `matron` hatches + `warden` + `strider` on the two pedestals; tenders 15,960 / 16,350 / 16,710 / 17,460 | 1.5, 90, none | 30.0 |
 | 7 | 18,300 – 19,950 | The calm | after 18,900 nothing but capsule carriers — exactly `tender` 19,140 and 19,620 (§5); one last tender at 18,540; no terrain from 18,600 | 1.05, 90, none | 26.2 |
 | 8 | 19,950 – 21,000 | HALCYON BULWARK | WARNING at **19,950** → the rebuilt HB-01 (§8) in fully open space; `end` at 21,000 | locked | — |
 
@@ -69,7 +70,7 @@ Camera key list (exact): `0/1.05/60 · 2700/1.2/60 · 6300/0.9/90 · 9600/1.35/9
 runner give **16,003 ticks = 266.7 s** scroll to WARNING — inside R5-D2's [225, 315].
 The expected bot run: 266.7 + boss intro (150 ticks) ≈ 2.5 + the HB-01 fight (§8, budget
 45–70 s) + the post-kill end scroll 1,050 px @ 1.05 = 16.7 s → **≈ 331–356 s**, inside
-[240, 360]. Trim lever if the measured run tops 360 s: core hp 60 → 54 (§12 peak note).
+[240, 360]. Trim lever if the measured run tops 360 s: core hp 60 → 54 (§8 fight-budget note).
 
 ## 2b. Event plan (complete)
 
@@ -101,15 +102,17 @@ switch follows `stage.music` at the WARNING as today (no `music` event); no `spe
 Three explicit `rle` tile columns (the tilemap keeps the heightfield `generator` and gains
 the `rle` rows — both are existing schema features):
 
-| spire | x span (tile-aligned) | opening (playfield y, 27 px = 3 tile rows) |
+| spire | x span (tile-aligned) | opening (playfield y, 36 px = 3 row-aligned tile rows) |
 |---|---|---|
-| spire-1 | 16,128 – 16,164 (3 tiles × 36 px) | y 12 – 39 (top) |
-| spire-2 | 16,848 – 16,884 | y 154 – 181 (middle) |
-| spire-3 | 17,568 – 17,604 | y 296 – 323 (bottom) |
+| spire-1 | 16,128 – 16,164 (3 tiles × 36 px) | y 0 – 36 (top, rows 0–2) |
+| spire-2 | 16,848 – 16,884 | y 156 – 192 (middle, rows 13–15) |
+| spire-3 | 17,568 – 17,604 | y 300 – 336 (bottom, rows 25–27) |
 
 Each column is full height (0–336) minus its opening — only possible now that the playfield
 is 336 px tall. The ship threads top → middle → bottom across 1,476 px (≈ 16.4 s at the
-section's 1.5 px/tick); the vertical reach needs ≤ 9 px/tick against a 2.25 px/tick cruise.
+section's 1.5 px/tick — section 6 cruises at 1.5); the worst-case vertical reach is
+≈ 0.31 px/tick (142 px between the top/middle hole centres across 684 scroll px ≈ 456
+ticks at 1.5 px/tick) against the ship's 2.25–6.0 px/tick range.
 Two floor pedestals between the spires carry the ground enemies: heightfield floor
 16,440–16,680 (base 36, amp 6, per 240, seed 41) and 17,160–17,400 (base 36, amp 6, per 240,
 seed 42). The lane authors the 28 `rle` rows; every spire tile is `solid` from
@@ -117,7 +120,7 @@ seed 42). The lane authors the 28 `rle` rows; every spire tile is `solid` from
 
 **What the 4-way bot needs from `R5-P.P12`: nothing.** The threading is vertical movement
 the bot already has (it dodges vertically in today's corridor and the v1 zone-A fast run),
-the openings are 27 px ≥ the 24 px lane rule, and a god-mode run passes terrain through.
+the openings are 36 px ≥ the 24 px lane rule, and a god-mode run passes terrain through.
 P12's own list names zone A's feature nowhere — do not add a zone-A case to it.
 
 ## 4. Checkpoints (7) and their capsule windows
@@ -155,8 +158,8 @@ half holds with all 47, since the boss event *is* the WARNING):
 - total = 27 + 20 = **47** ≤ 48 ✓ — one under the cap.
 
 Formations written with an absent `drop` default to `capsule` (loader semantics above);
-the chain `2100`, the gnat flight `5850` and the skiff run `13800` carry explicit
-`"drop": null` so they are not counted.
+the chain `2100`, the gnat flight `5850`, the vane swoop `8550`, the skeet flight `11850`
+and the skiff run `13800` carry explicit `"drop": null` so they are not counted.
 
 **The calm before the WARNING** [18,900 → 19,950): exactly two spawn events, `tender`
 19,140 (y 156) and `tender` 19,620 (y 231), `carrier.straight`, and nothing else — the
@@ -198,7 +201,7 @@ field as
 shipped at tip (they are already ported — never re-scale). `picket` / `picket-ceiling`
 need no change: bonus-range keeps placing the same turret it plays today.
 File: `content/enemies/zone-a.enemies.json` — append the five §6 ids (and §7's
-`azure-marshal`, a sixth new entry); edit nothing existing.
+`azure-marshal`, a sixth new entry); edit no carried enemy entry (§8 rebuilds the boss).
 New formations use the existing paths file (§11 note: `zone-a.paths.json` unchanged —
 the gale flies `vane-loop-*`/`vane-arc-*`, the matron needs none).
 
@@ -238,8 +241,8 @@ Part tree (12 parts ≤ `MAX_BOSS_PARTS` 24):
 | `hull` | — | 42 / 0 | never | 54×36 | `vulnerable: never` | `bosses/bulwark-hull` (frozen name) 2f | — |
 | `wing-top` | hull | 0 / −60 | never | 78×16 | never | `bosses/bulwark-wing-top` 2f | — |
 | `wing-bottom` | hull | 0 / +60 | never | 78×16 | never | `bosses/bulwark-wing-bottom` 2f | — |
-| `emitter-top` | wing-top | −6 / −13.5 | 8 | 12×6 | **gun** | `bosses/bulwark-emitter` 2f (anim may only rise to 4f when S3 ships 4 frames — atlas frames ≥ anim) | 500 |
-| `emitter-bottom` | wing-bottom | −6 / +13.5 | 8 | 12×6 | gun | same | 500 |
+| `emitter-top` | wing-top | −6 / −13.5 | never | 12×6 | **gun**, `vulnerable: never` | `bosses/bulwark-emitter` 2f (anim may only rise to 4f when S3 ships 4 frames — atlas frames ≥ anim) | — |
+| `emitter-bottom` | wing-bottom | −6 / +13.5 | never | 12×6 | gun, `vulnerable: never` | same | — |
 | `core` | hull | −36 / 0 | **60** | 12×12 | `vulnerable: afterParts`, `requires` = all six plates → a **reachable core** | `bosses/core` 2f | 6,000 |
 | `plate-1`…`plate-6` | hull | −16.5, −25.5, −34.5, −43.5, −52.5, −61.5 / 0 | 10 each | 5×14 | destroyable | `bosses/bulwark-plate` 2f | 500 each |
 
@@ -257,7 +260,11 @@ Part tree (12 parts ≤ `MAX_BOSS_PARTS` 24):
   the tighter later margins raise the pressure as the plates die. `bulletSpeed` default
   2.25 ≤ 3.0 ✓.
 - Total destroyable hp 6×10 + 60 = 120 (vs today's 88) → the fight budgets 45–70 s
-  (§2 timing).
+  (§2 timing). The emitters are **not** destroyable: both guns keep the shipped part's
+  `vulnerable: never`, so 120 is the whole tree's destroyable hp — and both laser lanes
+  stand for the whole fight, which is what the fight test's `maxSeparate === 2` pin and
+  §15's boss-rush claim rest on (`boss.bulwark` cycles its lasers over standing guns
+  only, so a killable emitter could drop a live run to one lane and take the pin red).
 - No `bulwark-*` name is renamed or deleted (zone H's echo copies them); the six plates
   reuse `bosses/bulwark-plate` — the two new plates need **no new sprite**.
 
@@ -346,7 +353,7 @@ every entry `drop: null` (no free capsules on loop), sorted by x, no branch, ≤
 | 8,700 | formation | vane | count 5, interval 10, y 261, path `vane-arc-down`, bonus 600 |
 | 10,800 | formation | gyre | count 2, path `gyre-orbit-up` |
 | 11,700 | formation | gnat | count 4, interval 28, y 276 |
-| 14,850 | spawn | matron | (fast-run floor edge) |
+| 14,700 | spawn | matron | (§5's low floor 12,750–14,775; a ground-anchored spawner needs its floor under it) |
 | 16,980 | formation | vane | count 5, interval 10, y 105, path `vane-arc-up`, bonus 1,000 |
 | 18,450 | formation | skeet | count 5, interval 18, y 273 |
 
@@ -383,10 +390,11 @@ report (the pool question then goes back to R5-P, per R5-D5).
 Caps (`test/scripts/assets/atlas-budget.ts`): a campaign zone's **own** pages ≤ 600,000 B
 PNG, `common` ≤ 300,000 B, atlas total ≤ 5,700,000 B. Measured today: zone-a own page
 **2,925 B** (interim placeholder art), common page 138,918 B, the stand-in projection puts
-a full bible-density zone row at 338,822–446,323 B of own pages. Zone A's S2 adds ~16 new
-sprite entries (enemies incl. flash siblings, captain shell, 2 backdrop bands, 3 decor, the
-26-tile `tiles/terrain-azure`) plus the six rebuilt-frozen boss names that only *grow* at
-S3 — the estimate lands the zone-A page group ≈ 200,000–400,000 B ≤ 600,000 ✓ with margin.
+a full bible-density zone row at 338,822–446,323 B of own pages. Zone A's S2 adds 18 new
+sprite entries (the §14 table's 18 distinct names — enemies incl. flash siblings, captain
+shell, 2 backdrop bands, 3 decor, the 26-tile `tiles/terrain-azure`) plus the six rebuilt-
+frozen boss names that only *grow* at S3 — the estimate lands the zone-A page group
+≈ 200,000–400,000 B ≤ 600,000 ✓ with margin.
 Before the LAND the new unnamed sprites pack into `common` (S2's Budget trap covers the
 overrun path — if `standin-budget.test.ts`/`atlas-budget` cross, S2 moves onto `r5/zone-a`).
 The lane's acceptance includes the budget tests green on master after LAND.
@@ -435,8 +443,8 @@ first) plus the attract **demo `zone-a`**. Why each:
 - **the attract demo `content/demos/zone-a.replay.json`**: it plays zone-a.
 - The **boss rush** (`content/stages/boss-rush.stage.json`) also places `halcyon-bulwark`
   — it has no golden; its playtest (`test/playtest/boss-rush.test.ts`) must stay green.
-  The fight script, phases and lanes are unchanged, so it passes by construction; S6 proves
-  it.
+  The fight script and phase cadences are unchanged; the rebuilt taller tree keeps the
+  lane gap — the rush playtest must still pass, S6 proves it.
 - On the `r5/zone-a` branch the derived checks are expected red and the LAND regenerates:
   the 3 fingerprints, `atlas-groups.test.ts`, the zone goldens and demo (§ wave-10 rules).
   `scripts/golden-update.mjs --only` is invoked only through the helper.
@@ -457,7 +465,7 @@ first) plus the attract **demo `zone-a`**. Why each:
 ## 17. Acceptance numbers (what the future lane asserts)
 
 With `zone-a.contract.ts` `remastered: true`, the live branch (`v2`) governs; the ships
-case and the five-sections/corridor/terrain cases of `test/integration/content-zone-a.test.ts`
+case and the five-sections/terrain cases of `test/integration/content-zone-a.test.ts`
 are rewritten to pin these exact values:
 
 | | value |
@@ -469,14 +477,14 @@ are rewritten to pin these exact values:
 | calm band | sources in [18,900, 19,950) `toHaveLength(2)`, scripts `['carrier.straight','carrier.straight']` |
 | scroll to WARNING | measured 16,003 ticks = 266.7 s ∈ contract [225, 315] (the runner asserts the bound, not the literal) |
 | bot run | god-mode stageClear ∈ [240, 360] s (design estimate 331–356 s; §2 trim lever) |
-| behaviour types | 8 ∈ [6, 8]; distinct zone sprites 19, every one with its @flash sibling |
+| behaviour types | 8 ∈ [6, 8]; distinct zone sprites 21, every one with its @flash sibling |
 | roster | 18 ids: the carried 12 (11 enemies + `halcyon-bulwark`) + `skiff gale gnat warden matron azure-marshal` |
 | capsules | 47 sources pre-WARNING ∈ [18, 48]; per §4 windows ≥ 3; blue-capsule drops 0 |
 | directItems | 34 (§11 tally) ≥ 30 |
 | remix | 11 entries, sorted, all `drop: null` |
 | mid-boss | `boss` event 10,350 (< length/2), role captain, 3 parts, 1 phase `captain.launcher` |
 | HB-01 | 12 parts ≤ 24, 3 phases exactly [0,1,2], guns exactly [emitter-top, emitter-bottom], plates hp [10×6], core 60 `afterParts` requires all six, height 159 ≤ 202, per-phase margins 84/96/108, `trackSpeed` 0.525/0.675/0.825 < 1 |
-| terrain | ceiling columns only in [6,200, 9,800) and > (9,600−6,300)/4; floors at 900, 1,500, 7,500, 8,400, 13,200; **no ceiling or floor from 18,600 to length + 640** |
+| terrain | ceiling columns only in [5,100, 9,800) ∪ [16,128, 17,604) — the corridor carry-over and the spire bodies (a full-height spire column is solid at row 0, so it counts as ceiling under the test's `terrainAt(map, x, 0)` predicate; spire-1's top-row opening excepted) — and > (9,600−5,160)/4; floors at 900, 1,500, 7,500, 8,400, 13,200; **no ceiling or floor from 18,600 to length + 640** |
 | atlas / budget | §13 green post-LAND |
 | names | original throughout (`AM-01 AZURE MARSHAL`, `HB-01 HALCYON BULWARK`) |
 
@@ -485,7 +493,7 @@ are rewritten to pin these exact values:
 (+5 ids, +1 captain, rebuild the boss entry), `content/tilesets/terrain-azure.tileset.json`
 (new), `scripts/assets/procedural/azure.mjs` + the `index.mjs` registry lines + the
 campaign credits line (all S2), `test/integration/content-zone-a.test.ts` (the ships,
-five-sections, corridor, calm, terrain and HB two-lane cases → §17), the ships-test
+five-sections, terrain and HB two-lane assertions → §17), the ships-test
 `zones/zone-a.contract.ts` flip, `test/playtest/zone-a*.test.ts` (window loops follow the
 new checkpoints), plus the §15 regens. `content/paths/zone-a.paths.json` and
 `content/strings/` do not change.
