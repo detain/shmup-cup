@@ -227,11 +227,12 @@ describe('test/e2e/frame-pixels.ts: the boss HP bar of advanced-bosses.spec.ts',
     expect(BOSS_BAR_X + BOSS_BAR_W).toBeLessThanOrEqual(core.FRAME_W);
   });
 
-  // The values the spec read before R1-02 (the bar moves with the frame and the font at R2-01).
+  // The values the mirror derives at the 384×216 state with the 6-px font: since R4-03.C5 the
+  // bar is a quarter of the frame, so the trio re-anchors with it (before C5: 148 / 176, 64).
   it.runIf((core.FRAME_W as number) === 384 && (core.GLYPH_W as number) === 6)(
-    'is x 148 / 176, 64 wide at 384×216',
+    'is x 132 / 160, 96 wide at 384×216',
     () => {
-      expect([BOSS_LABEL_X, BOSS_BAR_X, BOSS_BAR_W, BOSS_FILL_Y]).toEqual([148, 176, 64, 3]);
+      expect([BOSS_LABEL_X, BOSS_BAR_X, BOSS_BAR_W, BOSS_FILL_Y]).toEqual([132, 160, 96, 3]);
     },
   );
 });

@@ -109,9 +109,10 @@ const FONT_FILE_CELL_W = 6;
 
 /**
  * The art's scale (`core/config` `ART_SCALE`: 1 until R2-01, 3/2 after), which the specs cannot
- * import: the font's cell (`GLYPH_W`, mirrored by `scripts/frame.mjs`) over the font file's — the
- * relation core pins (`GLYPH_W` = the font file's cell × `ART_SCALE`: the interim 9×12 font is the
- * 6×8 file at ×1.5). `test/scripts/frame.test.ts` pins it to `ART_SCALE`.
+ * import: read back as `GLYPH_W` (mirrored by `scripts/frame.mjs`) over the v1 file's cell — the
+ * relation core pins (`GLYPH_W` = the v1 file's cell × `ART_SCALE`). Since R4-03.C1 the shipped
+ * 9×12 font is native; its cell is still 3/2 of the v1 file's 6, which the mirror keeps reading.
+ * `test/scripts/frame.test.ts` pins it to `ART_SCALE`.
  */
 export const UI_ART_SCALE: number = GLYPH_W / FONT_FILE_CELL_W;
 
@@ -156,11 +157,11 @@ export const BOSS_LABEL_W: number = 4 * GLYPH_W;
 
 /**
  * The `BOSS` label's x: the label, the gap and the bar centred 2 px right of the frame's centre
- * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 254 at 640×360, 148 at 384×216).
+ * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 222 at 640×360, 132 at 384×216).
  */
 export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + uiPx(2);
 
-/** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 296 at 640×360, 176 at 384×216). */
+/** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 264 at 640×360, 160 at 384×216). */
 export const BOSS_BAR_X: number = BOSS_LABEL_X + BOSS_BAR_DX;
 
 /**
