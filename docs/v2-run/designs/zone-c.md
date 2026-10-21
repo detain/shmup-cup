@@ -162,7 +162,7 @@ scripts are `KNOWN_SCRIPT_IDS`; aimed fire ≤ 3.0 px/tick
 laser lanes ≥ 24 px apart (`MIN_LANE_GAP`). **Box convention (D-C.RV1 N2):** every hurtbox
 or hitbox size in §6–§8 is the **full w×h as drawn**; rosters author the integer `hw`/`hh`
 **halves** directly (both are `s.int` — `packages/core/src/data/index.ts:2392`), so an odd
-extent here (9×9, 15×12, 15×14, 9×13) lands on the lane's integer-half rounding, re-checked
+extent here (9×9, 15×12, 15×14, 9×13, 45×36) lands on the lane's integer-half rounding, re-checked
 against each shipped roster file's style.
 
 | id | script | params (unit) | sprite (size, frames) | where |
@@ -218,9 +218,11 @@ Phases — all keep script `boss.widow` (the content test asserts exactly this i
 | P3 | death | minX 437, maxX 538 | stepTicks 76, fireTicks 60, bulletSpeed 2.55, launchTicks 130, count 2, ways 5, spread 40, laserTicks 125 |
 
 `until.hpBelow` reads the boss's **core** hp (`packages/core/src/bosses/index.ts:3436-3437`
-— D-C.RV1 S6): the body part is hp-less decor, so P2 ends on the head. 28 is kept as
-**today's core threshold** (against the old 56); against the head's new 64 it makes P2 run
-slightly longer than today's share — the exact half of 64 would be 32, and the lane may
+— D-C.RV1 S6): the body part is hp-less decor, so P2 ends on the head. Today's shipped
+threshold is **24** against the old 56 (43 % of the core); **28 keeps that share on the
+head's new 64** (24 × 64 / 56 = 27.4 ≈ 28) — P2 runs at today's proportion, not its
+literal number (D-C.RV1 S6's "28 is exactly today's core threshold" was the review's
+misread; the shipped file says 24). The exact half of 64 would be 32, and the lane may
 settle there only on a measured need. vs today (1.875 / 1.95 / 2.025): **+20 / +23 / +26 %**
 heat per phase (N10 — not "a uniform ~+20 %"), still ≤ 3.0. **Silk rule: one
 line at a time** (`maxSeparate ≤ 1`, the lanes=1 fight the boss test already runs in god
@@ -267,10 +269,10 @@ it with [`test/integration/palette-cycle-scan.test.ts`](../../../test/integratio
 (fails, not warns). The art generator in `scripts/assets/procedural/dune.mjs` paints the
 band flat so the stand-in passes the scan from day one.
 
-## 10. terrain-dune — re-authored at 12 px, 28 tiles (bible §5.9: 20–40)
+## 10. terrain-dune — re-authored at 12 px, 30 tiles (bible §5.9: 20–40)
 
 Same sprite name `tiles/terrain-dune`, same collision modes; the set grows from today's
-20 to **28** to satisfy the fill-variant/corner/decrack minimums: solid × 3 fills, floor
+20 to **30** to satisfy the fill-variant/corner/decrack minimums: solid × 3 fills, floor
 surface × 3, ceiling surface × 2, wall-left, wall-right, outer **and inner** corners × 4
 (two each — D-C.RV1 S13: §5.9 names both, the old list only said outer), ceiling
 corners × 2 (outer + inner), 45° slopes × 3 + mirrored × 3 (the column-height masks of today's slopes
@@ -295,7 +297,7 @@ column-height mask, not the other way round. The heightfield generator segments 
 **D-C.RV1 blocker B1 cured:** the old table put camera-at-0 floors at `420 − base` — with
 base 45 the surface sat at y 375, entirely below the visible playfield (y 0…336), so ground
 enemies stood off-screen and the `stands the ground enemies on rock` content case
-(`test/integration/zones/content-zone-c.test.ts:205-233`, scanning the column under the
+(`test/integration/content-zone-c.test.ts:205-233`, scanning the column under the
 spawn) was deterministically red. The map grew 336 → 420 px, so every camera-at-0 section's
 base **gains the 84 px of new sand below it**: `base → base + 84`, equivalently the
 port-rule surfaces — v1 base 42 → surface 294 px → **126 px** at v2's `1.5·v1 + 36` —
@@ -354,7 +356,7 @@ the cap's basis is the zone's own pages**, whose interim band is **338,822–446
 (the worst own-pages zone is d at 446,323 B); the 430,743–538,244 B (Σ 4,228,727) row
 this section first quoted is the *residency* figure — it double-counts the common pages
 and is not the cap's basis. Zone C grows by 2 enemy sprites, 5 boss sprites, 3 backdrop
-layers and a tileset that goes 20 → 28 tiles, with the widow's body at 108×84 the largest
+layers and a tileset that goes 20 → 30 tiles, with the widow's body at 108×84 the largest
 single piece; **C's projected own-pages row ≈ 470–560 KB**, inside the 600,000 B cap with
 headroom over d's 446,323 B, the
 far sky's 640×420 opaque the biggest lever if the lane must trim (PNG-8 + the lossless
@@ -395,7 +397,7 @@ widow's three off-class sizes: §8 (S13)):
 v1's 3-frame twirl kept; §5.6's Medium 4–6 applies at the real-art round) ·
 `enemies/sand-geyser`
 30×15 · `enemies/sand-clod` 9×9 · `enemies/widow-drone` 18×14 · `bg/dune-suns` 640×120 ·
-`bg/dune-ridge` 640×240 · `tiles/terrain-dune` 12 px 28-tile row (§10).
+`bg/dune-ridge` 640×240 · `tiles/terrain-dune` 12 px 30-tile row (§10).
 
 Drawn by: the **stand-in** pass is zone C's S2 = **R5-03.S2 (wave 10)** through
 `scripts/assets/procedural/dune.mjs` (seeded `seedOf`, byte-identical runs); the **real
@@ -466,7 +468,7 @@ directItems gates in `content-zone-c.test.ts`; the two goldens + demo replay cle
   C's action verbatim (retune only on a measured need).
 - `REPLAY_FORMAT` / `SAVE_VERSION` pins, the interim atlas digest `fa4198…` (§13), the
   eight (§4.4) other reserved ramp colours, the `zone-c` / `boss-c` music tracks, and the
-  `SKIM-dip` / `SKIM-rise` path ids.
+  `skim-dip` / `skim-rise` path ids.
 - Nothing under `art-prompts/` ships from this lane, and this design adds no core,
   renderer, or content-schema change — its only mechanic dependency is P12's bot
   look-ahead (§3), gated so no kept golden or zone-B byte-contract moves.
