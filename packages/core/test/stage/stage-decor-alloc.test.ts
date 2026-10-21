@@ -24,6 +24,8 @@ const DB = (() => {
       frame: i % 4,
       x: i * 2000,
       y: 60,
+      // R3-06.L4: every third item glows — the guard below streams the additive halves too.
+      ...(i % 3 === 0 ? { glow: 'bg/stars-near' } : {}),
     });
   }
   const { db, issues } = loadContent(
@@ -76,6 +78,7 @@ describe('core/stage decor allocation (R3-06)', () => {
     // ramps take their share) and both batches streamed the whole way.
     expect(world.camera.x).toBeGreaterThan(40_000);
     expect(world.decor?.back?.count ?? 0).toBeGreaterThanOrEqual(0);
+    expect(world.decor?.glowBack).not.toBeNull(); // the streamed glows stay inside the budget
     expect(world.status).toBe('playing');
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });

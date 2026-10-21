@@ -268,6 +268,7 @@ export {
   type RenderFrame,
   type ScreenView,
   type SpriteBatch,
+  type SpriteBatchBlend,
   type SpriteBatchView,
   type StageEffectsView,
   type TerrainChanges,

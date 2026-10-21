@@ -1146,6 +1146,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
             tables,
             capacity: batch.capacity,
             layer: batch.layer,
+            additive: batch.blend === 'additive',
           });
           layers.layers[batch.layer].addChild(binding.container);
           bindings.push(binding);

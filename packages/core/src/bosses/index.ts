@@ -513,6 +513,8 @@ export class BossPart {
   open = false;
   /** Sprite id (-1 = not drawn). */
   spriteId = -1;
+  /** Glow sprite id of the part spec's `glow` (R3-06.L4; -1 = none). */
+  glowId = -1;
   /** Animation frames. */
   animFrames = 1;
   /** Ticks per animation frame. */
@@ -1197,6 +1199,13 @@ export interface BossSystem {
   readonly batch: SpriteBatch;
   /** The resting bosses' parts (`LayerId.GroundEnemies` — behind the air; M2-09). */
   readonly backBatch: SpriteBatch;
+  /**
+   * The resting bosses' parts' glows (`LayerId.GroundEnemies`, additive, R3-06.L4); `null`
+   * when no boss part in the content names a glow — shipped content draws none.
+   */
+  readonly glowBackBatch: SpriteBatch | null;
+  /** The drawn parts' glows, not resting (`LayerId.AirEnemies`, additive, R3-06.L4). */
+  readonly glowBatch: SpriteBatch | null;
   /** The WARNING (the World's `view.warning`). */
   readonly warning: WarningState;
   /** The HP bar's model (M2-09; refreshed in phase 9). */
@@ -1887,6 +1896,10 @@ class BossSystemImpl implements BossSystem {
   readonly batch: SpriteBatch;
   /** See {@link BossSystem.backBatch}. */
   readonly backBatch: SpriteBatch;
+  /** See {@link BossSystem.glowBackBatch}. */
+  readonly glowBackBatch: SpriteBatch | null;
+  /** See {@link BossSystem.glowBatch}. */
+  readonly glowBatch: SpriteBatch | null;
   /** See {@link BossSystem.warning}. */
   readonly warning: WarningState;
   /** See {@link BossSystem.hpBar}. */
@@ -1957,6 +1970,23 @@ class BossSystemImpl implements BossSystem {
     this.boss = slots[0];
     this.batch = createSpriteBatch(LayerId.AirEnemies, BOSS_PART_SLOTS);
     this.backBatch = createSpriteBatch(LayerId.GroundEnemies, BOSS_PART_SLOTS);
+    // R3-06.L4: glow batches exist only when some boss part names a glow (the enemy system's
+    // all-or-nothing rule; a stage without glows keeps the World's batch list unchanged).
+    let anyGlow = false;
+    const enemySpecs = host.content.enemies;
+    for (let i = 0; i < enemySpecs.length && !anyGlow; i++) {
+      const bossSpec = enemySpecs[i].boss;
+      if (bossSpec === null) continue;
+      for (let p = 0; p < bossSpec.parts.length && !anyGlow; p++) {
+        if (bossSpec.parts[p].glow !== undefined) anyGlow = true;
+      }
+    }
+    this.glowBatch = anyGlow
+      ? createSpriteBatch(LayerId.AirEnemies, BOSS_PART_SLOTS, 'additive')
+      : null;
+    this.glowBackBatch = anyGlow
+      ? createSpriteBatch(LayerId.GroundEnemies, BOSS_PART_SLOTS, 'additive')
+      : null;
     this.warning = new WarningState();
     this.hpBar = new BossHpBar();
     this.raidCamera = new RaidCamera();
@@ -2208,6 +2238,7 @@ class BossSystemImpl implements BossSystem {
         part.active = false;
         part.destroyed = true;
         part.spriteId = -1;
+        part.glowId = -1;
         continue;
       }
       const radius = source.radius ?? 0;
@@ -2235,6 +2266,8 @@ class BossSystemImpl implements BossSystem {
       part.destroyed = false;
       part.open = source.open;
       part.spriteId = source.spriteId;
+      part.glowId =
+        source.glow === undefined ? -1 : (host.content.sprites.index.get(source.glow) ?? -1);
       part.animFrames = source.anim.frames;
       part.animTicks = source.anim.ticks;
       part.score = source.score;
@@ -3488,6 +3521,8 @@ class BossSystemImpl implements BossSystem {
     this.warning.active = false;
     this.batch.count = 0;
     this.backBatch.count = 0;
+    if (this.glowBatch !== null) this.glowBatch.count = 0;
+    if (this.glowBackBatch !== null) this.glowBackBatch.count = 0;
     const bar = this.hpBar;
     bar.visible = false;
     bar.hp = 0;
@@ -3508,6 +3543,10 @@ class BossSystemImpl implements BossSystem {
     const back = this.backBatch;
     front.count = 0;
     back.count = 0;
+    const glowFront = this.glowBatch;
+    const glowBack = this.glowBackBatch;
+    if (glowFront !== null) glowFront.count = 0;
+    if (glowBack !== null) glowBack.count = 0;
     const slots = this.slots;
     for (let s = 0; s < slots.length; s++) {
       const boss = slots[s];
@@ -3521,7 +3560,8 @@ class BossSystemImpl implements BossSystem {
       ) {
         continue;
       }
-      this.draw(boss, boss.resting ? back : front);
+      const resting = boss.resting;
+      this.draw(boss, resting ? back : front, resting ? glowBack : glowFront);
     }
     this.syncHpBar();
   }
@@ -3531,8 +3571,10 @@ class BossSystemImpl implements BossSystem {
    *
    * @param boss - The boss.
    * @param batch - The batch.
+   * @param glow - The batch's additive glow companion (R3-06.L4), or `null` when the content
+   *   uses no glow — the parts travel with their owner, so one walk fills both.
    */
-  private draw(boss: Boss, batch: SpriteBatch): void {
+  private draw(boss: Boss, batch: SpriteBatch, glow: SpriteBatch | null): void {
     const blink = boss.state === BossState.Dying && (boss.stateTicks & 4) !== 0;
     const parts = boss.parts;
     for (let i = 0; i < boss.partCount; i++) {
@@ -3547,6 +3589,18 @@ class BossSystemImpl implements BossSystem {
       batch.frame[slot] = part.frame;
       batch.flags[slot] = part.flashTicks > 0 || blink ? SpriteFlag.Flash : 0;
       batch.count = slot + 1;
+      if (glow !== null && part.glowId >= 0) {
+        // `pushSprite` inlined (the same boxing reason as the owner's push).
+        const g = glow.count;
+        if (g < glow.capacity) {
+          glow.x[g] = part.x;
+          glow.y[g] = part.y;
+          glow.spriteId[g] = part.glowId;
+          glow.frame[g] = 0;
+          glow.flags[g] = 0;
+          glow.count = g + 1;
+        }
+      }
     }
   }
 

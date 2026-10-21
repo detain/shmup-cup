@@ -42,7 +42,8 @@
  * {@link Mode7View} (M3-02),
  * {@link HitboxView}, {@link HitboxBatch}, {@link createHitboxBatch} (M2-08),
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
- * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
+ * {@link SpriteFlag}, {@link SpriteBatchBlend} (R3-06.L4). Layers: {@link LayerId},
+ * {@link LAYER_COUNT}, {@link LAYER_NAMES}.
  * Command lists: {@link DrawList}, {@link createDrawList}, {@link DrawOp}, {@link TextAlign},
  * {@link DEFAULT_DRAW_LIST_CAPACITY}, {@link DEFAULT_DRAW_LIST_STRINGS}. Text:
  * {@link TextMetrics}.
@@ -158,6 +159,14 @@ export const SpriteFlag = {
 export type SpriteFlag = (typeof SpriteFlag)[keyof typeof SpriteFlag];
 
 /**
+ * How a batch composites onto the frame (R3-06.L4): `'normal'` (the only blend today's
+ * batches use, spelled by the field being **absent**) or `'additive'` — the glow batches,
+ * which the renderer draws from its own sprite set with `add` blending set once at creation
+ * (changing a Pixi blend mode per sprite rebuilds state, so a blend never switches mid-frame).
+ */
+export type SpriteBatchBlend = 'normal' | 'additive';
+
+/**
  * Read-only view of a batch of sprites drawn on one layer — the unit the renderer binds
  * (plan §3.4).
  *
@@ -185,6 +194,12 @@ export interface SpriteBatchView {
   readonly frame: ArrayLike<number>;
   /** {@link SpriteFlag} bits. */
   readonly flags: ArrayLike<number>;
+  /**
+   * Compositing blend (R3-06.L4): absent means `'normal'`. Only {@link createSpriteBatch}
+   * producers pass one; a host maps `'additive'` to a sprite set whose blend mode was set
+   * once at creation.
+   */
+  readonly blend?: SpriteBatchBlend;
 }
 
 /** A writable sprite batch with canonical typed arrays (see {@link createSpriteBatch}). */
@@ -208,6 +223,9 @@ export interface SpriteBatch extends SpriteBatchView {
  *
  * @param layer - Layer the batch is drawn on.
  * @param capacity - Slots to preallocate (positive integer).
+ * @param blend - Compositing blend (R3-06.L4, default `'normal'`): `'additive'` marks the
+ *   batch for the host's add-blended sprite set; `'normal'` leaves the field absent, so the
+ *   resolved shape of every existing batch is unchanged.
  * @returns An empty batch (`count` 0).
  * @throws {RangeError} When `capacity` is not a positive integer or `layer` is not a
  *   {@link LayerId}.
@@ -219,14 +237,18 @@ export interface SpriteBatch extends SpriteBatchView {
  * pushSprite(enemies, e.x, e.y, e.spriteId, e.animFrame, 0);
  * ```
  */
-export function createSpriteBatch(layer: LayerId, capacity: number): SpriteBatch {
+export function createSpriteBatch(
+  layer: LayerId,
+  capacity: number,
+  blend?: SpriteBatchBlend,
+): SpriteBatch {
   if (!Number.isInteger(capacity) || capacity <= 0) {
     throw new RangeError('sprite batch capacity must be a positive integer');
   }
   if (!Number.isInteger(layer) || layer < 0 || layer >= LAYER_COUNT) {
     throw new RangeError(`sprite batch layer must be a LayerId (0…${LAYER_COUNT - 1})`);
   }
-  return {
+  const batch: SpriteBatch = {
     layer,
     capacity,
     count: 0,
@@ -236,6 +258,11 @@ export function createSpriteBatch(layer: LayerId, capacity: number): SpriteBatch
     frame: new Uint16Array(capacity),
     flags: new Uint8Array(capacity),
   };
+  if (blend === 'additive') {
+    // Absent is the norm; only a glow batch carries the field (cold, at creation).
+    (batch as { blend?: SpriteBatchBlend }).blend = 'additive';
+  }
+  return batch;
 }
 
 /**
@@ -315,13 +342,20 @@ export interface ParallaxView {
  * {@link LayerId.DecorFront}. Slots `[0, count)` are the items inside the camera window; either
  * batch is `null` when no drawable item uses its layer. Presentation only — the simulation never
  * reads decor, and the batches are also members of {@link WorldView.batches} (drawn in layer
- * containers, never colliding, never scored).
+ * containers, never colliding, never scored). The glow halves (R3-06.L4) are optional fields of
+ * the same layers, `'additive'` batches carrying the entries' glows — a core-built view sets
+ * them only when some kept item has a glow, and a host that ignores the fields still draws the
+ * owners (the glows ride {@link WorldView.batches}, so nothing is missed).
  */
 export interface DecorView {
   /** The `back` items visible right now, or `null`. */
   readonly back: SpriteBatchView | null;
   /** The `front` items visible right now, or `null`. */
   readonly front: SpriteBatchView | null;
+  /** The `back` items' glows visible right now (R3-06.L4; absent = none to draw). */
+  readonly glowBack?: SpriteBatchView | null;
+  /** The `front` items' glows visible right now (R3-06.L4; absent = none to draw). */
+  readonly glowFront?: SpriteBatchView | null;
 }
 
 /**

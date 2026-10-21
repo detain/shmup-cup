@@ -204,6 +204,12 @@ export interface SpriteLayerBindingOptions {
   readonly layer: number;
   /** Screen row added to every y (default `PLAYFIELD_Y` = 8, below the top HUD bar). */
   readonly offsetY?: number;
+  /**
+   * Draw the set additively (R3-06.L4 — the glow batches): every sprite gets `blendMode = 'add'`
+   * **once at creation**, never per frame (Pixi rebuilds blend state on the setter). A normal
+   * batch keeps its default blend and the existing shape.
+   */
+  readonly additive?: boolean;
 }
 
 /** A preallocated set of sprites mirroring one `SpriteBatchView`. */
@@ -258,7 +264,7 @@ export interface SpriteLayerBinding {
 /**
  * Creates the sprite binding for one batch view.
  *
- * @param options - Atlas, tables, capacity, layer and y offset.
+ * @param options - Atlas, tables, capacity, layer, y offset and the additive flag (R3-06.L4).
  * @returns The binding (all sprites created now, hidden).
  * @throws {RangeError} When `capacity` is not a positive integer.
  *
@@ -275,11 +281,13 @@ export function createSpriteLayerBinding(options: SpriteLayerBindingOptions): Sp
     throw new RangeError('sprite binding capacity must be a positive integer');
   }
   const offsetY = options.offsetY ?? PLAYFIELD_Y;
+  const additive = options.additive === true;
   const container = new Container({ label: `batch-${layer}` });
   const sprites: Sprite[] = [];
   for (let i = 0; i < capacity; i++) {
     const sprite = new Sprite();
     sprite.visible = false;
+    if (additive) sprite.blendMode = 'add';
     sprites.push(sprite);
     container.addChild(sprite);
   }

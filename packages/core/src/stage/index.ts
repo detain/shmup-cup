@@ -1609,9 +1609,9 @@ export function updateParallaxView(
  * The compiled decor of one stage (R3-06 — plan_resolution.md §R3-06, a writable
  * {@link DecorView}): every drawable `stage.decor` entry packed into the typed arrays in file
  * order, plus the two sprite batches {@link updateDecorView} refills from the camera window each
- * tick. Items that cannot be drawn at all (a tile on a stage without a tilemap, an unknown tile
- * or the tileset's empty entry, a sprite that never resolved) are dropped at compile, so the
- * arrays hold only what the batches can show.
+ * tick and their additive glow companions (R3-06.L4). Items that cannot be drawn at all (a tile
+ * on a stage without a tilemap, an unknown tile or the tileset's empty entry, a sprite that
+ * never resolved) are dropped at compile, so the arrays hold only what the batches can show.
  */
 export interface StageDecorView extends DecorView {
   /** Compiled items (file order, both layers). */
@@ -1622,6 +1622,8 @@ export interface StageDecorView extends DecorView {
   readonly spriteId: Uint16Array;
   /** Atlas frame per item (a tile item carries the tile's frame). */
   readonly frame: Uint16Array;
+  /** Glow sprite id per item (R3-06.L4; -1 = none). */
+  readonly glow: Int32Array;
   /** World x of the item's left edge. */
   readonly x: Float64Array;
   /** World y of the item's top edge. */
@@ -1630,6 +1632,10 @@ export interface StageDecorView extends DecorView {
   readonly back: SpriteBatch | null;
   /** The `front` batch (`LayerId.DecorFront`), or `null` when no front item draws. */
   readonly front: SpriteBatch | null;
+  /** The `back` items' glows (additive, `LayerId.DecorBack`, R3-06.L4); `null` when none glow. */
+  readonly glowBack: SpriteBatch | null;
+  /** The `front` items' glows (additive, `LayerId.DecorFront`, R3-06.L4); `null` = none. */
+  readonly glowFront: SpriteBatch | null;
 }
 
 /**
@@ -1662,11 +1668,14 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
   const layer = new Uint8Array(count);
   const spriteId = new Uint16Array(count);
   const frame = new Uint16Array(count);
+  const glow = new Int32Array(count);
   const x = new Float64Array(count);
   const y = new Float64Array(count);
   let n = 0;
   let backs = 0;
   let fronts = 0;
+  let glowBacks = 0;
+  let glowFronts = 0;
   for (let i = 0; i < count; i++) {
     const item = items[i];
     let sprite = item.spriteId;
@@ -1684,6 +1693,14 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
     layer[n] = back ? LayerId.DecorBack : LayerId.DecorFront;
     spriteId[n] = sprite;
     frame[n] = frameOf;
+    // The glow name resolves through the sprite table (R3-06.L4); an unknown name (no such
+    // sprite in the atlas) simply draws nothing extra — content:check is what rejects it.
+    const glowId = item.glow === undefined ? -1 : (content.sprites.index.get(item.glow) ?? -1);
+    glow[n] = glowId;
+    if (glowId >= 0) {
+      if (back) glowBacks++;
+      else glowFronts++;
+    }
     x[n] = item.x;
     y[n] = item.y;
     n++;
@@ -1696,17 +1713,21 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
     layer,
     spriteId,
     frame,
+    glow,
     x,
     y,
     back: backs > 0 ? createSpriteBatch(LayerId.DecorBack, backs) : null,
     front: fronts > 0 ? createSpriteBatch(LayerId.DecorFront, fronts) : null,
+    glowBack: glowBacks > 0 ? createSpriteBatch(LayerId.DecorBack, backs, 'additive') : null,
+    glowFront: glowFronts > 0 ? createSpriteBatch(LayerId.DecorFront, fronts, 'additive') : null,
   };
 }
 
 /**
  * Refills the decor batches from the camera window (R3-06): an item is in a batch while its
  * `x` lies within {@link DECOR_CULL_MARGIN} of the playfield's two columns. Called at the end of
- * every tick next to {@link updateParallaxView}. Never allocates.
+ * every tick next to {@link updateParallaxView}; the glow batches (R3-06.L4) carry the visible
+ * items that name a glow, additive over their owner. Never allocates.
  *
  * @param view - The compiled view.
  * @param cameraX - The camera's world x.
@@ -1721,14 +1742,23 @@ export function updateDecorView(view: StageDecorView, cameraX: number): void {
   if (back !== null) back.count = 0;
   const front = view.front;
   if (front !== null) front.count = 0;
+  const glowBack = view.glowBack;
+  if (glowBack !== null) glowBack.count = 0;
+  const glowFront = view.glowFront;
+  if (glowFront !== null) glowFront.count = 0;
   const left = cameraX - DECOR_CULL_MARGIN;
   const right = cameraX + PLAYFIELD_W + DECOR_CULL_MARGIN;
   for (let i = 0; i < view.count; i++) {
     const ix = view.x[i];
     if (ix < left || ix > right) continue;
-    const batch = view.layer[i] === LayerId.DecorFront ? front : back;
+    const isFront = view.layer[i] === LayerId.DecorFront;
+    const batch = isFront ? front : back;
     if (batch === null) continue;
     pushSprite(batch, ix, view.y[i], view.spriteId[i], view.frame[i], 0);
+    if (view.glow[i] < 0) continue;
+    const glowBatch = isFront ? glowFront : glowBack;
+    if (glowBatch === null) continue;
+    pushSprite(glowBatch, ix, view.y[i], view.glow[i], 0, 0);
   }
 }
 

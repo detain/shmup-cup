@@ -1951,6 +1951,17 @@ export function createWorld(
     // with `block` events — the moving blocks (over the terrain grid, which is bound first).
     world.gimmicks.chainBatch,
   );
+  // The glow batches (R3-06.L4): additive, on the owner's own layer, appended after every body
+  // so a glow draws over its owner. All are `null` on content without glows — shipped stages add
+  // no batch, so the batch list and every fingerprint stay unchanged.
+  const enemyGlowGround = world.enemies.glowGroundBatch;
+  if (enemyGlowGround !== null) batches.push(enemyGlowGround);
+  const enemyGlowAir = world.enemies.glowAirBatch;
+  if (enemyGlowAir !== null) batches.push(enemyGlowAir);
+  const bossGlowBack = world.bosses.glowBackBatch;
+  if (bossGlowBack !== null) batches.push(bossGlowBack);
+  const bossGlowAir = world.bosses.glowBatch;
+  if (bossGlowAir !== null) batches.push(bossGlowAir);
   const blocks = world.gimmicks.blocks;
   if (blocks !== null) batches.push(blocks.batch);
   // The black holes (M3-02) are drawn on FX, over the particles and under the enemy bullets.
@@ -1959,7 +1970,9 @@ export function createWorld(
   // a stage without decor adds no batch at all.
   if (decor !== null) {
     if (decor.back !== null) batches.push(decor.back);
+    if (decor.glowBack !== null) batches.push(decor.glowBack);
     if (decor.front !== null) batches.push(decor.front);
+    if (decor.glowFront !== null) batches.push(decor.glowFront);
   }
   view.lasers = world.bullets.laserView;
   view.bendingLasers = world.bullets.bending;

@@ -199,6 +199,7 @@ import {
   type StageFormationEvent,
   type StageSpawnEvent,
   type StageSpec,
+  type StringTable,
 } from '../data/index.js';
 import type { DebugFlags } from '../debug/index.js';
 import { FX_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
@@ -441,6 +442,8 @@ export class Enemy implements MoverBody, ScriptHolder {
   firstSeenTick = -1;
   /** Sprite id (`ContentDb.sprites` index; -1 = not drawn). */
   spriteId = -1;
+  /** Glow sprite id of the spec's `glow` (R3-06.L4; -1 = none). */
+  glowId = -1;
   /** Current animation frame. */
   animFrame = 0;
   /** `ContentDb.paths` index given by the spawn event (-1 = none). */
@@ -1062,6 +1065,13 @@ export interface EnemySystem {
    * nothing when the content's sprites lack `options/stolen`.
    */
   readonly carriedBatch: SpriteBatch;
+  /**
+   * The ground enemies' glows (`LayerId.GroundEnemies`, additive, R3-06.L4); `null` when no
+   * enemy spec names a glow — shipped content draws none, so the batch list is unchanged.
+   */
+  readonly glowGroundBatch: SpriteBatch | null;
+  /** The flying enemies' glows (`LayerId.AirEnemies`, additive, R3-06.L4); `null` as above. */
+  readonly glowAirBatch: SpriteBatch | null;
   /** The mover context (camera, terrain, paths). */
   readonly movers: MoverContext;
   /**
@@ -1445,6 +1455,8 @@ interface SpecTable {
   readonly hh: Float64Array;
   /** Sprite id (-1 = none). */
   readonly sprite: Int32Array;
+  /** Glow sprite id from the spec's `glow` name (R3-06.L4; -1 = none). */
+  readonly glow: Int32Array;
   /** Animation frames. */
   readonly animFrames: Int32Array;
   /** Ticks per animation frame. */
@@ -1490,9 +1502,14 @@ interface SpecTable {
  *
  * @param specs - `ContentDb.enemies`.
  * @param behaviors - Behaviour lookup.
+ * @param sprites - The sprite name table (resolves the `glow` names, R3-06.L4).
  * @returns The table.
  */
-function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLookup): SpecTable {
+function compileSpecs(
+  specs: readonly EnemySpec[],
+  behaviors: EnemyBehaviorLookup,
+  sprites: StringTable,
+): SpecTable {
   const n = specs.length;
   const behavior: Array<EnemyBehavior | null> = [];
   const params: Array<Readonly<Record<string, number>>> = [];
@@ -1502,6 +1519,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     hw: new Float64Array(n),
     hh: new Float64Array(n),
     sprite: new Int32Array(n),
+    glow: new Int32Array(n),
     animFrames: new Int32Array(n),
     animTicks: new Int32Array(n),
     anchor: new Uint8Array(n),
@@ -1541,6 +1559,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     table.hw[i] = spec.hurtbox.hw;
     table.hh[i] = spec.hurtbox.hh;
     table.sprite[i] = spec.spriteId;
+    table.glow[i] = spec.glow === undefined ? -1 : (sprites.index.get(spec.glow) ?? -1);
     table.animFrames[i] = spec.anim.frames;
     table.animTicks[i] = spec.anim.ticks;
     table.anchor[i] =
@@ -2021,6 +2040,10 @@ class EnemySystemImpl implements EnemySystem {
   readonly airBatch: SpriteBatch;
   /** See {@link EnemySystem.carriedBatch}. */
   readonly carriedBatch: SpriteBatch;
+  /** See {@link EnemySystem.glowGroundBatch}. */
+  readonly glowGroundBatch: SpriteBatch | null;
+  /** See {@link EnemySystem.glowAirBatch}. */
+  readonly glowAirBatch: SpriteBatch | null;
   /** The carried Options' sprite id (-1 = not drawn). */
   private readonly carriedSprite: number;
   /** See {@link EnemySystem.movers}. */
@@ -2082,7 +2105,7 @@ class EnemySystemImpl implements EnemySystem {
   constructor(host: EnemyHost, behaviors: EnemyBehaviorLookup, stage: StageSpec | null) {
     this.host = host;
     this.specList = host.content.enemies;
-    this.specs = compileSpecs(host.content.enemies, behaviors);
+    this.specs = compileSpecs(host.content.enemies, behaviors, host.content.sprites);
     this.spawnEvents = compileSpawnEvents(stage);
     const config = host.config;
     this.loopRevenge = config !== undefined && config.loop >= 2;
@@ -2097,6 +2120,21 @@ class EnemySystemImpl implements EnemySystem {
     this.airBatch = createSpriteBatch(LayerId.AirEnemies, MAX_ENEMIES);
     this.carriedBatch = createSpriteBatch(LayerId.AirEnemies, CARRIED_BATCH_CAPACITY);
     this.carriedSprite = host.content.sprites.index.get(STOLEN_OPTION_SPRITE) ?? -1;
+    // R3-06.L4: glows exist only when the content names them — no spec with a `glow`, no
+    // batches, and the World's batch list stays exactly as it was (the fingerprints' check).
+    let anyGlow = false;
+    for (let i = 0; i < this.specs.glow.length; i++) {
+      if (this.specs.glow[i] >= 0) {
+        anyGlow = true;
+        break;
+      }
+    }
+    this.glowGroundBatch = anyGlow
+      ? createSpriteBatch(LayerId.GroundEnemies, MAX_ENEMIES, 'additive')
+      : null;
+    this.glowAirBatch = anyGlow
+      ? createSpriteBatch(LayerId.AirEnemies, MAX_ENEMIES, 'additive')
+      : null;
     this.movers = createMoverContext(host.camera, host.terrain, host.content.paths);
     const enemies: Enemy[] = [];
     const apis: EnemyScriptApi[] = [];
@@ -2238,6 +2276,7 @@ class EnemySystemImpl implements EnemySystem {
     enemy.child = child;
     enemy.firstSeenTick = -1;
     enemy.spriteId = specs.sprite[enemyIndex];
+    enemy.glowId = specs.glow[enemyIndex];
     enemy.animFrame = 0;
     enemy.pathId = pathId;
     // A flying enemy rides the camera from where it is now: spawns in phases 3 and 4 happen after
@@ -3118,6 +3157,8 @@ class EnemySystemImpl implements EnemySystem {
     this.groundBatch.count = 0;
     this.airBatch.count = 0;
     this.carriedBatch.count = 0;
+    if (this.glowGroundBatch !== null) this.glowGroundBatch.count = 0;
+    if (this.glowAirBatch !== null) this.glowAirBatch.count = 0;
   }
 
   /** See {@link EnemySystem.sync}. */
@@ -3148,6 +3189,42 @@ class EnemySystemImpl implements EnemySystem {
       batch.count = slot + 1;
     }
     this.syncCarried();
+    this.syncGlows();
+  }
+
+  /**
+   * Refills the glow batches (R3-06.L4): the live enemies whose spec names a `glow`, additive
+   * over the owner at its anchor. Runs in {@link EnemySystem.sync}, never in the tick loop
+   * (the per-tick enemy pass keeps its V8 inlining budget); allocation-free, and a no-op when
+   * the content uses no glow (both batches `null`).
+   *
+   * @remarks
+   * Glows use frame 0 and no flags: a glow is a soft light sprite, not the body's animation —
+   * the flash of the hurt body already brightens it, and mirroring hurt state into the additive
+   * pass would double the brightness change.
+   */
+  private syncGlows(): void {
+    const ground = this.glowGroundBatch;
+    const air = this.glowAirBatch;
+    if (ground === null || air === null) return;
+    ground.count = 0;
+    air.count = 0;
+    const enemies = this.enemies;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || e.glowId < 0) continue;
+      if ((e.flags & EnemyFlag.Ghost) !== 0) continue;
+      // `pushSprite` inlined (its fractional x / y arguments would be boxed if not inlined).
+      const batch = e.anchor === BodyAnchor.Air ? air : ground;
+      const slot = batch.count;
+      if (slot >= batch.capacity) continue;
+      batch.x[slot] = e.x;
+      batch.y[slot] = e.y;
+      batch.spriteId[slot] = e.glowId;
+      batch.frame[slot] = 0;
+      batch.flags[slot] = 0;
+      batch.count = slot + 1;
+    }
   }
 
   /**

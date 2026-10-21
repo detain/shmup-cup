@@ -916,6 +916,11 @@ export interface EnemySpec {
   readonly sprite: string;
   /** Resolved {@link ContentDb.sprites} index of {@link EnemySpec.sprite}. */
   readonly spriteId: number;
+  /**
+   * Atlas sprite name of the glow drawn additively over the enemy (R3-06.L4; default: none —
+   * the key stays absent). Presentation-only: the simulation never reads it.
+   */
+  readonly glow?: string;
   /** Sprite animation (default: frame 0, still). */
   readonly anim: EnemyAnimSpec;
   /** Behaviour tunables by name (default none; each behaviour documents its names). */
@@ -1123,6 +1128,11 @@ export interface BossPartSpec {
   readonly sprite?: string;
   /** Resolved {@link ContentDb.sprites} index of {@link BossPartSpec.sprite} (-1 = none). */
   readonly spriteId: number;
+  /**
+   * Atlas sprite name of the glow drawn additively over the part (R3-06.L4; default: none —
+   * the key stays absent). Presentation-only: the simulation never reads it.
+   */
+  readonly glow?: string;
   /** Sprite animation (default: frame 0). */
   readonly anim: EnemyAnimSpec;
   /** Points for destroying it (default 0). */
@@ -1351,6 +1361,11 @@ export interface StageDecorEntry {
   readonly x: number;
   /** Playfield row of the item's top edge. */
   readonly y: number;
+  /**
+   * Atlas sprite name of the glow drawn additively over the item (R3-06.L4; default: none —
+   * the key stays absent), the terrain glows when the item sits on terrain.
+   */
+  readonly glow?: string;
 }
 
 /** The layers a stage's raster effect may distort (M2-08): the backgrounds and the terrain. */
@@ -2576,6 +2591,7 @@ const BOSS_PART_SCHEMA = s.object(
     anim: ANIM_SCHEMA,
     score: s.int({ min: 0, max: 1000000, unit: 'score' }),
     explosion: s.enumOf(ENEMY_EXPLOSIONS),
+    glow: s.str({ maxLength: 64 }),
   },
   {
     optional: [
@@ -2597,6 +2613,7 @@ const BOSS_PART_SCHEMA = s.object(
       'anim',
       'score',
       'explosion',
+      'glow',
     ],
   },
 );
@@ -2725,6 +2742,7 @@ const ENEMY_SCHEMA = s.object(
     hurtbox: BOX_SCHEMA,
     script: s.ref('script'),
     sprite: s.ref('sprite'),
+    glow: s.str({ maxLength: 64 }),
     anim: ANIM_SCHEMA,
     params: PARAMS_SCHEMA,
     mover: s.nullable(MOVER_SCHEMA),
@@ -2775,6 +2793,7 @@ const ENEMY_SCHEMA = s.object(
       'pattern',
       'rank',
       'revenge',
+      'glow',
     ],
   },
 );
@@ -3216,8 +3235,9 @@ const STAGE_FILE_SCHEMA = s.object(
           frame: s.int({ min: 0, max: 1023, unit: 'index' }),
           x: EVENT_X,
           y: SPAWN_Y,
+          glow: s.str({ maxLength: 64 }),
         },
-        { optional: ['sprite', 'tile'] },
+        { optional: ['sprite', 'tile', 'glow'] },
       ),
       { max: MAX_STAGE_DECOR },
     ),
@@ -4037,6 +4057,24 @@ export function loadContent(
   }
   // Player 2's palette swap of every ship (M2-06).
   for (const ship of db.ships) spriteNames.add(ship.sprite + P2_SPRITE_SUFFIX);
+  // The glow sprites (R3-06.L4) are plain names on enemies, boss parts and decor entries —
+  // the systems resolve them through `sprites.index` at load, never per tick; a name missing
+  // from the atlas is a `pnpm content:check` error exactly like a referenced sprite.
+  for (const enemy of db.enemies) {
+    if (enemy.glow !== undefined) spriteNames.add(enemy.glow);
+    if (enemy.boss !== null) {
+      for (const part of enemy.boss.parts) {
+        if (part.glow !== undefined) spriteNames.add(part.glow);
+      }
+    }
+  }
+  for (const stage of db.stages) {
+    const decor = stage.decor;
+    if (decor === undefined) continue;
+    for (const item of decor) {
+      if (item.glow !== undefined) spriteNames.add(item.glow);
+    }
+  }
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
   const patterns = compilePatternBank(db.patternFiles, issues);
