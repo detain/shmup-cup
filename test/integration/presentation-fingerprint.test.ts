@@ -1778,7 +1778,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'runA.escapeClear': '895af83f d0563aed a981c135 11568378',
     'runA.ending.story': 'e4420e24 4c23c6e8 5003ac52 304d08e5',
     'runA.ending.card': '4ebd2fe9 a1a5e151 bfc125ec c57fb005',
-    'runA.credits': '83ca64e9 cb29e5ec 4087ac74 54c731a5',
+    'runA.credits': '0d948359 cb29e5ec 4087ac74 54c731a5',
     'runA.nameEntry': '12791a60 16eb6249 a9a0eb3e 9f7d7385',
   },
   runB: {
@@ -1800,7 +1800,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'runB.escapeClear': '76c259d6 0a82924d cee74098 11568378',
     'runB.ending.story': 'ab7888ec 76a7d22c 6e4899dd 5b18fda5',
     'runB.ending.card': '13930faf a1a5e151 6aeb0964 c57fb005',
-    'runB.credits': 'a5ae888b cb29e5ec 5b15faa5 54c731a5',
+    'runB.credits': '9357e73b cb29e5ec 5b15faa5 54c731a5',
     'runB.nameEntry': 'd68d168c 16eb6249 9d58c8aa 9f7d7385',
   },
   extraModes: {

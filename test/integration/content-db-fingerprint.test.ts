@@ -262,7 +262,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.difficulty': '1f340af9648e812c',
     'core.scoring': 'b2430506b3320967',
     'core.patterns': '1c871854112380c2',
-    'core.campaign': 'a53c3c6eda524bb4',
+    'core.campaign': '6364d9f0cb5e984f',
     'core.demos': 'f09429db1c64adba',
     'core.demoIndex': 'b37bbd0e0ad0fca7',
     'core.uiStrings': '0a1b29654dc921e4',

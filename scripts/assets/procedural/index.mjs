@@ -17,6 +17,7 @@
  */
 import * as abyss from './abyss.mjs';
 import * as arm from './arm.mjs';
+import * as azure from './azure.mjs';
 import * as backdrops from './backdrops.mjs';
 import * as blackhole from './blackhole.mjs';
 import * as bosses from './bosses.mjs';
@@ -70,6 +71,7 @@ import * as weapons from './weapons.mjs';
 export const PROCEDURAL_GENERATORS = [
   { id: 'abyss', generate: abyss.generate },
   { id: 'arm', generate: arm.generate },
+  { id: 'azure', generate: azure.generate },
   { id: 'backdrops', generate: backdrops.generate },
   { id: 'blackhole', generate: blackhole.generate },
   { id: 'bosses', generate: bosses.generate },

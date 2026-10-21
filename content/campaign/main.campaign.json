@@ -249,7 +249,7 @@
       "title": "PLACEHOLDER ART GENERATORS",
       "lines": [
         "scripts/assets/procedural/",
-        "abyss.mjs  backdrops.mjs  bosses.mjs",
+        "abyss.mjs  azure.mjs  backdrops.mjs  bosses.mjs",
         "brine.mjs  bullets.mjs  citadel.mjs",
         "dimension.mjs  direct.mjs  dune.mjs",
         "ending.mjs  explosions.mjs  hud.mjs",

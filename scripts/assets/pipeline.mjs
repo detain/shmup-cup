@@ -475,6 +475,9 @@ export function collectSprites(options = {}) {
   for (const sprite of [...byName.values()]) {
     if (sprite.hitFlash) {
       const flash = makeFlashSprite(sprite);
+      // the sibling of a native base is itself native (R4-03.C5's rule for the `@p2` siblings,
+      // mirrored here): it is derived from the base at this build's scale, never upscaled.
+      if (sprite.native === true) flash.native = true;
       byName.set(flash.name, flash);
     }
   }
