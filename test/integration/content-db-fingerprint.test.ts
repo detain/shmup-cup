@@ -244,7 +244,7 @@ const PINNED: Record<string, Record<string, string>> = {
     sfx: '1e5b84de8ac2d037',
     music: '35f49c705273d5ef',
     'input-profiles': '3349be80a0dd2b8f',
-    fx: '529cc6d6dc216563',
+    fx: '110c6250dedf116b',
   },
   examples: {
     'core.sprites': 'fd4dc4411777e001',

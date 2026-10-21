@@ -7,9 +7,19 @@
  * Sprites: `fx/explosion-small` (16×16, 6 frames), `fx/explosion-medium` (32×32,
  * 7 frames), `fx/explosion-large` (48×48, 8 frames); animation `burst` plays every frame.
  *
+ * **The v2 path (R4-04.D1).** Called with an `artScale` other than 1, {@link generate} draws
+ * the art bible v2 §5.8's sequence **native** (RR-1: a generator branch, never a rescaled v1
+ * map): the three sizes at `⌈1.5·⌉` of their v1 sides — 24², 48² and 72² — with 12, 14 and 16
+ * frames, every frame `native: true`. Frame 0 carries the bible's white star flash (§2.2's
+ * sequence in text, drawn here as an eight-ray cross over the first fireball); the burn then
+ * grows and cools on the same hot → cold ramp, the extra frames spreading it over R2-04.P2's
+ * lifetimes (1.5–2 ticks a frame). At scale 1 the module draws the v1 sprites above, byte for
+ * byte — the scale-1 digest pin proves it.
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
+import { scaleLength } from '../interim.mjs';
 import { createAssetRng } from '../rng.mjs';
 import { color, makeSprite, seedOf } from './common.mjs';
 
@@ -26,12 +36,21 @@ const RAMP = [
   color('#4a3048'),
 ];
 
-/** The three sizes: name, frame side, frame count. */
+/** The three sizes at art scale 1 (v1): name, frame side, frame count. */
 const SIZES = /** @type {const} */ ([
   ['fx/explosion-small', 16, 6],
   ['fx/explosion-medium', 32, 7],
   ['fx/explosion-large', 48, 8],
 ]);
+
+/**
+ * The v2 frame counts, index-aligned with {@link SIZES} (art bible v2 §5.8): small 12,
+ * medium 14 (of 12–14), large 16 (of 14–16) — the top of each range, so the biggest blast
+ * burns the smoothest. The sides come from `⌈1.5·⌉` of the v1 sides (`scaleLength`).
+ *
+ * @type {readonly number[]}
+ */
+const V2_COUNTS = [12, 14, 16];
 
 /**
  * Draws one explosion frame.
@@ -70,17 +89,54 @@ function drawFrame(size, frame, count, rng) {
 }
 
 /**
+ * Stamps the v2 white star flash (art bible v2 §2.2's first stage, §5.8, R4-04.D1) onto the
+ * first frame, in place: a two-pixel-wide cross whose arms stop three pixels from the frame
+ * edge, short diagonal rays inside it, all in the ramp's white. The geometry runs on the
+ * doubled distance from the frame centre (even sizes centre between pixels), exact whole maths.
+ *
+ * @param {import('../image.mjs').Image} image - The first fireball frame (modified in place).
+ * @returns {void}
+ */
+function stampFlash(image) {
+  const size = image.width;
+  const c2 = size - 1; // the centre, doubled
+  const arm = 2 * (Math.floor(size / 2) - 3); // doubled reach of the cross arms
+  const diag = 2 * Math.floor(size / 6) + 1; // doubled reach of the diagonal rays
+  for (let y = 0; y < size; y++) {
+    const dy = Math.abs(2 * y - c2);
+    for (let x = 0; x < size; x++) {
+      const dx = Math.abs(2 * x - c2);
+      if ((dx <= 1 && dy <= arm) || (dy <= 1 && dx <= arm) || (dx === dy && dx <= diag)) {
+        setPixel(image, x, y, RAMP[0]);
+      }
+    }
+  }
+}
+
+/**
  * Generates the explosion sprites.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
+ *   at (default 1). Any scale other than 1 takes the v2 path: the three sizes native at
+ *   `⌈artScale·⌉` of their v1 sides with 12 / 14 / 16 frames and the frame-0 star flash
+ *   (art bible v2 §5.8); scale 1 draws the v1 sprites, byte for byte.
  * @returns {SpriteDef[]} Small, medium and large explosions.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
-  return SIZES.map(([name, size, count]) => {
+export function generate(options = {}) {
+  const artScale = options.artScale ?? 1;
+  const v2 = artScale !== 1;
+  return SIZES.map(([name, side, count], i) => {
+    const size = v2 ? scaleLength(side, artScale) : side;
+    const frames = v2 ? V2_COUNTS[i] : count;
     const rng = createAssetRng(seedOf(name));
-    const frames = [];
-    for (let f = 0; f < count; f++) frames.push(drawFrame(size, f, count, rng));
-    return makeSprite(name, frames, 'explosions', {
-      animations: { burst: frames.map((_, i) => i) },
+    const drawn = [];
+    for (let f = 0; f < frames; f++) drawn.push(drawFrame(size, f, frames, rng));
+    if (v2) stampFlash(drawn[0]);
+    return makeSprite(name, drawn, 'explosions', {
+      animations: { burst: drawn.map((_, k) => k) },
+      native: v2,
     });
   });
 }

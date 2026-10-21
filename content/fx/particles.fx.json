@@ -13,7 +13,8 @@
       "lifetime": {
         "min": 18,
         "max": 18
-      }
+      },
+      "blend": "normal"
     },
     {
       "id": "explosion.medium",
@@ -26,7 +27,8 @@
       "lifetime": {
         "min": 24,
         "max": 24
-      }
+      },
+      "blend": "normal"
     },
     {
       "id": "explosion.large",
@@ -44,7 +46,8 @@
         "min": 0,
         "max": 10
       },
-      "radius": 12
+      "radius": 12,
+      "blend": "normal"
     },
     {
       "id": "boss.chain",
@@ -62,7 +65,8 @@
         "min": 0,
         "max": 6
       },
-      "radius": 18
+      "radius": 18,
+      "blend": "normal"
     },
     {
       "id": "debris",
