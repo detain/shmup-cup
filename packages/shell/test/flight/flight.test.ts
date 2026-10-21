@@ -308,7 +308,7 @@ describe('shell/flight', () => {
     const bandY = FRAME_CY - uiPx(8) - (bandH >> 1);
     const stripe = bandH / 4;
     expect(Array.from(ui.op.subarray(0, ui.count))).toEqual(
-      Array.from({ length: 1 + 2 * 9 + 2 }, () => DrawOp.Rect).concat(DrawOp.Text),
+      Array.from({ length: 1 + 2 * 9 + 2 }, (): DrawOp => DrawOp.Rect).concat(DrawOp.Text),
     );
     const text = ui.count - 1;
     expect([ui.x[text], ui.y[text], ui.color[text]]).toEqual([
