@@ -155,3 +155,38 @@ describe('assets/source/fonts/pixel9x12.font.json — the accented Latin and the
     }
   });
 });
+
+describe('assets/source/fonts/pixel9x12.font.json — katakana (R4-03.C4)', () => {
+  /** The 46 base kana (no marks, no small forms) in the file's own order. */
+  const BASE_KANA = [
+    ...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン',
+  ];
+
+  it('carries all 46 base kana', () => {
+    for (const ch of BASE_KANA) {
+      const code = ch.codePointAt(0) ?? 0;
+      expect(
+        font?.glyphs.some((g) => g.code === code),
+        `U+${code.toString(16)}`,
+      ).toBe(true);
+    }
+  });
+
+  it('keeps the base kana out of the mark reserve and below-baseline row 11', () => {
+    for (const ch of BASE_KANA) {
+      const r = rows(ch.codePointAt(0) ?? 0);
+      for (const row of [...r.slice(0, 3), r[11]])
+        expect(row, `U+${ch.codePointAt(0)?.toString(16)} band`).toBe('.........');
+      expect(
+        r.slice(3, 11).some((row) => row.includes('#')),
+        ch,
+      ).toBe(true);
+      // a row-10 tail is a long diagonal or a leg — it must attach to ink above.
+      if (r[10].includes('#'))
+        expect(
+          r.slice(3, 10).some((row) => row.includes('#')),
+          ch,
+        ).toBe(true);
+    }
+  });
+});
