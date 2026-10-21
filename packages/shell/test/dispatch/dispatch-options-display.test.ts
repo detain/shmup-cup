@@ -118,6 +118,17 @@ describe('shell/dispatch display option events (M2-08)', () => {
     expect(calls.some((c) => c[0] === 'crt' || c[0] === 'aspect')).toBe(false);
   });
 
+  it('leaves the boot knobs to the next boot (R6-04): Output and Renderer are ignored', () => {
+    const dispatcher = createEventDispatcher();
+    const { target, calls } = display();
+    connectOptionEvents(dispatcher, silent, null, null, target);
+    const queue = createEventQueue(8);
+    queue.push(SimEventKind.UserOption, UserOptionKind.Output, 0, 0, 2);
+    queue.push(SimEventKind.UserOption, UserOptionKind.Renderer, 0, 0, 1);
+    expect(() => dispatcher.drain(queue)).not.toThrow();
+    expect(calls).toEqual([]);
+  });
+
   it('ignores display events without a display target', () => {
     for (const none of [null, undefined]) {
       const dispatcher = createEventDispatcher();
@@ -142,6 +153,8 @@ describe('shell/dispatch display option events (M2-08)', () => {
       bossHpBar: false,
       crtFilter: 'full',
       aspect: 'wide',
+      output: 'auto',
+      renderer: 'auto',
       language: 'en',
     });
     expect(calls).toEqual([

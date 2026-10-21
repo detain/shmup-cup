@@ -611,6 +611,9 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
  * `UserOptionKind.BossHpBar` (M2-09) — and any kind it does not know — is ignored: the boss HP
  * bar is drawn by the core's HUD, which the scene flow points at the **saved** option every
  * displayed frame (`Hud.showBossHp`), so nothing in the presentation needs the live event.
+ * `UserOptionKind.Output` and `UserOptionKind.Renderer` (R6-04) are ignored on purpose too: the
+ * GRAPHICS page stores them in the save and marks them APPLIES AT RESTART — only the next boot
+ * reads them (see {@link bootDisplayFromSaveText} in the `boot` module).
  *
  * @param dispatcher - The shell's event dispatcher.
  * @param audio - The audio back-end.
@@ -693,6 +696,12 @@ export function connectOptionEvents(
       }
       case UserOptionKind.InputSettings:
         if (onInputSettings !== null) onInputSettings();
+        break;
+      case UserOptionKind.Output:
+      case UserOptionKind.Renderer:
+        // R6-04: the two boot knobs. The page stores them in the save and the page's hint says
+        // APPLIES AT RESTART — the next boot reads them (`bootDisplayFromSaveText`); nothing here
+        // can re-create the renderer mid-session, so the events are deliberately ignored.
         break;
       default:
         break;

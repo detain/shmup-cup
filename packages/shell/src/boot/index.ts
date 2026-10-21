@@ -159,7 +159,11 @@
  * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
  * {@link ATLAS_PAGES_ATTRIBUTE}, {@link ATLAS_LOAD_MS_ATTRIBUTE}, {@link ATLAS_PAGE_MS_ATTRIBUTE},
  * {@link atlasTimingText}, {@link DEFAULT_STAGE_ID}, {@link defaultStageId}; M3-02c:
- * {@link webGLVersionFromSearch} (the `?gl=` dev switch). Debug tools: the `debug` module.
+ * {@link webGLVersionFromSearch} (the `?gl=` dev switch); R6-04: {@link BootDisplay},
+ * {@link bootDisplayFromSaveText} (the GRAPHICS page's two boot knobs, read before the renderer
+ * exists), {@link outputCapHeight}, {@link capDisplaySize}, {@link chromiumMajorFromUserAgent},
+ * {@link resolveBootGLVersion}, {@link BootGLInput}, {@link probeWebGL2},
+ * {@link WEBGL2_MIN_CHROMIUM}. Debug tools: the `debug` module.
  *
  * @module
  */
@@ -189,6 +193,7 @@ import {
   createSaveStore,
   defineModule,
   loadSave,
+  parseSave,
   type ContentFile,
   type Game,
   type GameConfig,
@@ -198,6 +203,8 @@ import {
   type InputOptions,
   type InputProfileChoice,
   type LoadedSave,
+  type OutputCap,
+  type RendererChoice,
   type SaveStore,
   type LoadContentResult,
   type DrawList,
@@ -518,6 +525,145 @@ export function webGLVersionFromSearch(search: string): 1 | 2 | null {
 }
 
 /**
+ * The two GRAPHICS-page knobs the renderer needs **before it exists** (plan R6-04, decision
+ * W5-20): the canvas backbuffer cap and the WebGL version request, read off the save by the host
+ * at boot. {@link bootDisplayFromSaveText} resolves the `auto` output for the platform already.
+ */
+export interface BootDisplay {
+  /** The backbuffer cap — one of `core/config` `OUTPUT_CAPS` (a TV's `auto` becomes `720`). */
+  readonly output: OutputCap;
+  /** The WebGL version request, exactly as the save holds it. */
+  readonly renderer: RendererChoice;
+}
+
+/** The cap's display rows for an {@link OutputCap} value: `auto` (or a desktop) is 0 = no cap. */
+const CAP_NONE = 0;
+
+/**
+ * The Chromium major below which WebGL 2 is never asked for (plan R6-04, decision W5-20). The
+ * floor sits **above** both TVs' engines (68 / 69): `auto` leaves a TV on WebGL 1 even where the
+ * M7 exposes a WebGL 2 context — the shipped, measured path.
+ */
+export const WEBGL2_MIN_CHROMIUM = 71;
+
+/**
+ * The display rows an {@link OUTPUT_CAPS} value caps the backbuffer at.
+ *
+ * @param output - One of `core/config` `OUTPUT_CAPS`.
+ * @returns 1080, 720 or 540 — `0` for `auto` (no cap: the window's native size).
+ *
+ * @example
+ * ```ts
+ * outputCapHeight('720'); // → 720
+ * outputCapHeight('auto'); // → 0
+ * ```
+ */
+export function outputCapHeight(output: OutputCap): number {
+  return output === 'auto' ? CAP_NONE : Number(output);
+}
+
+/**
+ * The window size scaled down to an output cap, keeping its aspect (plan R6-04 — the same
+ * mechanism as the TV render bench, `apps/tizen/src/bench/run.ts`): the canvas *element* keeps
+ * filling the window through CSS while its backbuffer becomes this size, and the compositor
+ * upscales. A window no taller than the cap is returned as it stands — the cap never upscales.
+ *
+ * @param width - The window's CSS width.
+ * @param height - The window's CSS height.
+ * @param capHeight - Display rows from {@link outputCapHeight} (`0` = no cap).
+ * @returns The backbuffer size to ask for (whole pixels).
+ */
+export function capDisplaySize(
+  width: number,
+  height: number,
+  capHeight: number,
+): { readonly width: number; readonly height: number } {
+  if (capHeight <= CAP_NONE || height <= capHeight) return { width, height };
+  const capped = Math.round((width * capHeight) / height);
+  return { width: capped < 1 ? 1 : capped, height: capHeight };
+}
+
+/**
+ * The Chromium major version of a user-agent string.
+ *
+ * @param userAgent - `navigator.userAgent` (anything).
+ * @returns The `Chrome/<major>` number, or `0` when the string names no Chromium (an engine the
+ *   floor cannot vouch for — {@link resolveBootGLVersion} then keeps WebGL 1).
+ */
+export function chromiumMajorFromUserAgent(userAgent: string): number {
+  const match = /Chrome\/(\d+)/.exec(userAgent);
+  return match === null ? 0 : parseInt(match[1], 10);
+}
+
+/** What {@link resolveBootGLVersion} weighs (plan R6-04). */
+export interface BootGLInput {
+  /** The dev pin (`?gl=` / the Tizen debug key) — wins over everything, `null` for none. */
+  readonly pin: 1 | 2 | null;
+  /** The save's RENDERER row. */
+  readonly choice: RendererChoice;
+  /** The engine's Chromium major ({@link chromiumMajorFromUserAgent}). */
+  readonly chromiumMajor: number;
+  /** Whether a WebGL 2 context exists on this machine (the `auto` safety net). */
+  readonly hasWebGL2: boolean;
+}
+
+/**
+ * Which WebGL version to ask the canvas for at boot (plan R6-04, decision W5-20): the dev pin
+ * wins; an explicit row pins its version; `auto` takes WebGL 2 only where the Chromium floor
+ * clears {@link WEBGL2_MIN_CHROMIUM} **and** the probe found a WebGL 2 context — so both TVs
+ * (68 / 69) stay on WebGL 1, the shipped default.
+ *
+ * @param input - The three signals (see {@link BootGLInput}).
+ * @returns The version to prefer.
+ *
+ * @example
+ * ```ts
+ * // A Tizen 5.5 set that still exposes WebGL 2: `auto` keeps it on 1 (floor 71 > 69).
+ * resolveBootGLVersion({ pin: null, choice: 'auto', chromiumMajor: 69, hasWebGL2: true }); // → 1
+ * ```
+ */
+export function resolveBootGLVersion(input: BootGLInput): 1 | 2 {
+  if (input.pin !== null) return input.pin;
+  if (input.choice === 'webgl2') return 2;
+  if (input.choice === 'webgl1') return 1;
+  return input.chromiumMajor >= WEBGL2_MIN_CHROMIUM && input.hasWebGL2 ? 2 : 1;
+}
+
+/**
+ * Asks the machine for a WebGL 2 context once ({@link resolveBootGLVersion}'s safety net — webOS 5
+ * has never run on hardware). The probe canvas is a one-off; it is not attached and Pixi's own
+ * context is created separately.
+ *
+ * @param win - The window to create the canvas in.
+ * @returns Whether a WebGL 2 context came back.
+ */
+export function probeWebGL2(win: Window): boolean {
+  try {
+    return win.document.createElement('canvas').getContext('webgl2') !== null;
+  } catch (_error) {
+    return false;
+  }
+}
+
+/**
+ * Reads the two boot knobs off the **raw save text** before a store exists (plan R6-04): hosts
+ * whose storage is synchronous read `localStorage['shmup-cup:save.v1']` and hand it over; a host
+ * without a synchronous read (the Electron bridge) passes `null`. `parseSave` never throws, so a
+ * corrupt or old document lands on the defaults (`auto` / `auto`), and the TV hosts' `auto`
+ * output resolves to the measured 720p cap here — the desktop keeps the native size.
+ *
+ * @param text - The raw save JSON (`localStorage.getItem` of the save key), or `null`.
+ * @param television - True on a TV host: `auto` output means the 720p cap.
+ * @returns The {@link BootDisplay} for {@link ShellOptions.bootDisplay}.
+ */
+export function bootDisplayFromSaveText(text: string | null, television: boolean): BootDisplay {
+  const display = text === null ? null : parseSave(text).data.options.display;
+  let output: OutputCap = display === null ? 'auto' : display.output;
+  if (television && output === 'auto') output = '720';
+  return { output, renderer: display === null ? 'auto' : display.renderer };
+}
+
+/**
  * The stage a game plays when the host names none: zone A, AZURE VERGE (plan M1-18). Since M2-10
  * it is also what makes a game a campaign run: it is the start zone's stage of
  * `content/campaign/main.campaign.json`, so the scene flow plays the zone map from it (a
@@ -697,8 +843,19 @@ export interface ShellOptions {
    * autoplay policy) or `'immediate'` (TV: no gesture needed).
    */
   readonly audioUnlock?: 'gesture' | 'immediate';
-  /** WebGL version to try first (default 1). */
-  readonly preferWebGLVersion?: 1 | 2;
+  /**
+   * WebGL version to try first — the **dev pin** (plan R6-04): `1` / `2` forces it, winning over
+   * the save's RENDERER row; `null` / omitted resolves the player's choice through
+   * {@link resolveBootGLVersion} (`bootDisplay` defaults to `auto` / `auto`: no pin, the floor).
+   */
+  readonly preferWebGLVersion?: 1 | 2 | null;
+  /**
+   * The GRAPHICS page's two boot knobs read from the save before the renderer exists (plan
+   * R6-04) — {@link bootDisplayFromSaveText} builds one from the raw storage text. Omitted:
+   * `auto` output (native on a desktop; TV hosts resolve it to the 720p cap themselves) and
+   * `auto` renderer.
+   */
+  readonly bootDisplay?: BootDisplay | null;
   /**
    * Validators for foreign content kinds (plan §3.5), merged over the shell's
    * `DEFAULT_CONTENT_OWNERS` — e.g. an input-profile registry's `load`, so the app keeps the
@@ -1333,15 +1490,29 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
 
   // 4. Renderer, platform, game.
+  // R6-04 (decision W5-20): the GRAPHICS page's two boot knobs, read by the host before the
+  // renderer exists. The output caps the backbuffer the compositor upscales; the renderer choice
+  // resolves under the dev pin, the Chromium 71 floor and the WebGL 2 probe.
+  const bootDisplay: BootDisplay = options.bootDisplay ?? { output: 'auto', renderer: 'auto' };
+  const outputCap = outputCapHeight(bootDisplay.output);
+  const bootSize = capDisplaySize(win.innerWidth, win.innerHeight, outputCap);
+  const glPin = options.preferWebGLVersion ?? null;
+  const bootGLVersion = resolveBootGLVersion({
+    pin: glPin,
+    choice: bootDisplay.renderer,
+    chromiumMajor: chromiumMajorFromUserAgent(win.navigator.userAgent),
+    // The probe is `auto`'s safety net — asked for only when `auto` is the answer's decider.
+    hasWebGL2: glPin === null && bootDisplay.renderer === 'auto' ? probeWebGL2(win) : false,
+  });
   try {
     renderer = await createPixiRenderer({
       canvas,
-      displayWidth: win.innerWidth,
-      displayHeight: win.innerHeight,
+      displayWidth: bootSize.width,
+      displayHeight: bootSize.height,
       // The internal frame, passed explicitly from core's constants (R1-02).
       width: FRAME_W,
       height: FRAME_H,
-      preferWebGLVersion: options.preferWebGLVersion ?? 1,
+      preferWebGLVersion: bootGLVersion,
       atlas,
       testPattern: scene === 'calibration',
       effects: options.effects,
@@ -1778,9 +1949,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     unlockAudio();
   }
 
-  /** Keeps the canvas and the integer viewport in sync with the window size. */
+  /** Keeps the canvas and the integer viewport in sync with the window size (at the R6-04 cap). */
   const onResize = (): void => {
-    readyRenderer.resize(win.innerWidth, win.innerHeight);
+    const size = capDisplaySize(win.innerWidth, win.innerHeight, outputCap);
+    readyRenderer.resize(size.width, size.height);
   };
   win.addEventListener('resize', onResize);
   /** The window lost focus: its key-ups will never arrive, so nothing stays held. */
