@@ -246,7 +246,7 @@ describe('render-pixi/effects score popups', () => {
     ]);
     popups.step(8);
     popups.sync({ x: 0, y: 0 });
-    expect(quads(popups.container)[0][1]).toBe(100 + PLAYFIELD_Y - 3 - 2);
+    expect(quads(popups.container)[0][1]).toBe(100 + PLAYFIELD_Y - 3 - 3);
     const shown: number[] = [];
     for (let age = 9; age < 42; age++) {
       popups.step(1);

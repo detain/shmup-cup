@@ -461,7 +461,7 @@ describe('render-pixi/effects score popups (edges)', () => {
     expect(brief).toEqual([1, 1, 0, 0]);
   });
 
-  it('rises one pixel every 4 ticks and stays between the playfield top and bottom', () => {
+  it('rises three pixels every 8 ticks and stays between the playfield top and bottom', () => {
     const popups = createScorePopups({ atlas, font });
     popups.show(1, 100, 100, SCORE_POPUP_COLOR);
     const ys: number[] = [];
@@ -471,7 +471,7 @@ describe('render-pixi/effects score popups (edges)', () => {
       popups.step(1);
     }
     const top = 100 + PLAYFIELD_Y - 3;
-    expect(ys).toEqual([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3].map((d) => top - d));
+    expect(ys).toEqual([0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4].map((d) => top - d));
     popups.clear();
     popups.show(1, 100, -500, SCORE_POPUP_COLOR);
     popups.show(1, 150, 5000, SCORE_POPUP_COLOR);

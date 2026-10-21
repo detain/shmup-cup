@@ -619,8 +619,9 @@ export interface ScorePopups {
    */
   step(ticks: number): void;
   /**
-   * Draws the live popups: centred on their x, risen one pixel every 4 ticks, kept inside the
-   * playfield, blinking in their last 10 ticks. Never allocates.
+   * Draws the live popups: centred on their x, risen three pixels every 8 ticks (the v1 one
+   * pixel every 4, ×1.5 in whole pixels), kept inside the playfield, blinking in their last 10
+   * ticks. Never allocates.
    *
    * @param camera - The world camera.
    */
@@ -733,7 +734,7 @@ export function createScorePopups(options: ScorePopupsOptions): ScorePopups {
         let sx = Math.round(px[i] - camX) | 0;
         if (sx < 12) sx = 12;
         else if (sx > PLAYFIELD_W - 12) sx = PLAYFIELD_W - 12;
-        let sy = (Math.round(py[i] - camY) + offsetY - half - (age >> 2)) | 0;
+        let sy = (Math.round(py[i] - camY) + offsetY - half - ((age * 3) >> 3)) | 0;
         if (sy < offsetY) sy = offsetY;
         else if (sy > bottom) sy = bottom;
         drawNumber(pool, font, points[i], sx, sy, 0, colors[i], TextAlign.Center, 255);
