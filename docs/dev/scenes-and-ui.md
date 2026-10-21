@@ -25,8 +25,10 @@ and moved **every UI label into a string table** (`SceneFlow.text`) — see
 [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md); this page keeps the
 flow's overview up to date. v2's **R1-01** (plan_resolution.md) laid every screen and the HUD out
 from the frame and font constants of `core/config` instead of literal 384×216 numbers, and **R2-01**
-flipped those constants — the game runs at 640×360 with the 12-px bars and the 9×12 interim font,
-the art-sized lengths following the art's scale through `core/ui` `uiPx`; see
+flipped those constants — the game runs at 640×360 with the 12-px bars and the 9×12 font (R4-03.C1's
+native `pixel9x12` file, which is what the default-scale atlas builds from — RR-2; v1's `pixel6x8`
+stays on disk for the scale-1 builds), the art-sized lengths following the art's scale through
+`core/ui` `uiPx`; see
 [Laying screens out from the frame (R1-01)](#laying-screens-out-from-the-frame-r1-01). The pixel
 numbers quoted outside that section are v1's (384×216, 6×8 font) unless the text says otherwise.
 
@@ -162,10 +164,11 @@ configs.
 | `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list; in a campaign run (M2-10) the zone title card (`ZONE B` / the name, `BONUS STAGE` in a bonus stage) for the first 150 World ticks. Owns the run's Worlds: `enter` starts a run (`beginRun`) or plays the zone the map / practice prepared (`run.pendingStart`); an opened bonus entrance swaps to the bonus stage's World after 40 ticks, a death there back to the zone after 60 (`swapWorld`) | Pause or Back of any player → pause menu (that tick the World does not step) — except, in a co-op game (M2-06), the START / OK of a player who may drop in: the World joins it ([coop.md](coop.md#joining-coreworld)) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
-| `OptionsScene` (M1-17; regrouped in M2-16) | yes / 0.5 / menu | Opaque 288×192 panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), the pages CONTROLS / DISPLAY / GAME, BACK (the profile and the M2-02 / M2-08 / M2-09 display rows moved to the pages) | Up / Down move; Left / Right change a slider, pushed live as a `UserOption` event; OK on a page opens it; BACK or Back store the volumes, flush the save and close | a page (`push`), title / pause menu (`pop`) |
+| `OptionsScene` (M1-17; regrouped in M2-16) | yes / 0.5 / menu | Opaque 432×288 panel (v1's 288×192), `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), the pages CONTROLS / DISPLAY / GAME / GRAPHICS (R6-04) / EXTRAS (M3-02), BACK (the profile and the M2-02 / M2-08 / M2-09 display rows moved to the pages) | Up / Down move; Left / Right change a slider, pushed live as a `UserOption` event; OK on a page opens it; BACK or Back store the volumes, flush the save and close | a page (`push`), title / pause menu (`pop`) |
 | `ControlsScene` (M2-16) | yes / 0.5 / menu | The same panel: `CONTROLS`, PROFILE (the input profile, a `Choice`), AUTOFIRE (`ALWAYS` / `TOGGLE` / `HOLD`; disabled on a remote-mode host), RATE (`7.5/S` … `30/S`), SOCD, DEBOUNCE, REBIND KEYS, REBIND PAD, INPUT TEST, BACK, `AUTOFIRE / RATE: FROM THE NEXT GAME` | Up / Down move; Left / Right (or OK) change a choice — PROFILE live (`InputProfile`), SOCD / DEBOUNCE stored at once (`InputSettings`); OK on REBIND KEYS / PAD / INPUT TEST opens it; BACK or Back store the page (autofire into the next games' configs) and close | rebind screen, input test (`push`), Options (`pop`) |
-| `DisplayScene` (M2-16) | yes / 0.5 / menu | `DISPLAY`: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP (the M2-02 / M2-08 / M2-09 rows), BACK | As before: every change live as a `UserOption` event; BACK or Back store them and close | Options (`pop`) |
+| `DisplayScene` (M2-16) | yes / 0.5 / menu | `DISPLAY`: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP (the M2-02 / M2-08 / M2-09 rows), LANGUAGE (M3-03), BACK (the M3-02 CRT / ASPECT rows moved to the GRAPHICS page in R6-04) | As before: every change live as a `UserOption` event; BACK or Back store them and close | Options (`pop`) |
 | `GameOptionsScene` (M2-16) | yes / 0.5 / menu | `GAME`: DIFFICULTY (disabled over the pause menu), LIVES (`PRESET` / 1–5), PENALTY, AUTO POWER, MAGNET, ONE BUTTON (AUTO POWER and PENALTY disabled while it is on), BACK, two notes | Up / Down move; Left / Right / OK change; BACK or Back store them, re-arm the next games' configs, choose the difficulty (not over a game) and close | Options (`pop`) |
+| `GraphicsScene` (R6-04) | yes / 0.5 / menu | `GRAPHICS`: OUTPUT (`AUTO` / `1920X1080` / `1280X720` / `960X540` — the canvas backbuffer cap, `OUTPUT_CAPS`), RENDERER (`AUTO` / `WEBGL 2` / `WEBGL 1` — `RENDERER_CHOICES`; `auto` takes WebGL2 only on Chromium ≥ 71 that exposes it — `WEBGL2_MIN_CHROMIUM`, above both TVs, which stay on WebGL1), CRT (M3-02), ASPECT (M3-02), BACK; the `APPLIES AT RESTART` hint row stands under the title while OUTPUT or RENDERER is focused | Up / Down move; Left / Right / OK change — all four push a `UserOption` (`Output` / `Renderer` / `CrtFilter` / `Aspect`), but only CRT and ASPECT act at once: the two boot knobs are deliberately ignored live (nothing mid-session can re-make the canvas or the GL context), the page stores them and the next boot reads them; BACK or Back store and close | Options (`pop`) |
 | `RebindScene` (M2-16) | yes / 0.5 / menu | `KEYBOARD CONTROLS` (`REMOTE` / `GAMEPAD`): the `core/ui` `RebindPanel` — MODE (GAME / MENU), a row per rebindable action with its keys, RESET, DONE, the message line; the capture prompt with its 5-s bar | OK on an action: capture the next key (Escape / Back / 5 s cancel), then the rows wait until nothing is held; RESET; DONE or Back flush the save and close | CONTROLS page (`pop`) |
 | `InputTestScene` (M2-16; M3-02b) | yes / 0.5 / **game** | `INPUT TEST`, the device, a direction cross and a box per game action lit while held (8 ticks after a press), `PAUSE X3 OR HOLD TO EXIT` with a bar (whichever exit is further along) | Every key does what it does in a game; `INPUT_TEST_EXIT_PRESSES` (3) Pause presses inside `INPUT_TEST_EXIT_WINDOW_TICKS` (90) leave — the remote's Back / Play-Pause arrive only on release and can never be held (M3-02b) — and so does holding Pause 60 ticks | CONTROLS page (`pop`) |
 | `StageClearScene` | yes / 0.25 / menu | Single-stage run: `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240. Campaign run (M2-10, `zoneMode`): the **zone result tally** — `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the zone's name, the score(s), `KILLS %`, `KILL BONUS`, `TIME BONUS` — for 300 ticks (entering it tallies, pays, notes the World's deaths / continues / flags and carries the players out) | OK skips a phase; entering it records a single-stage run (or a campaign run's final zone) in the save | M2-15: `finishGame()` — the name entry when a score entered its table, else the title (`reset`); campaign run: the zone map (a zone with exits), the ending (the final zone) or `finishGame()` (practice) — `reset` |
@@ -331,7 +334,7 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   the art's scale — since R2-01's `uiPx` pass **no panel size is a pixel literal** (R1-01 had left
   them literal for this flip to scale). `OPTIONS_PANEL` is `48 · GLYPH_W` wide (432) and
   `uiPx(26) + 11 · (LINE_H + uiPx(4)) + uiPx(12)` tall (288; shared by the CONTROLS / DISPLAY /
-  GAME / EXTRAS pages, the rebind screen and the input test), and so are the pause menu's, stage
+  GAME / GRAPHICS / EXTRAS pages, the rebind screen and the input test), and so are the pause menu's, stage
   clear's, the zone tally's, game over's, the continue countdown's, the difficulty and ship
   selects' (`SHIP_PANEL_W` = `34 · GLYPH_W + uiPx(4)`), the name entry's, the hi-score table's
   (`HI_SCORE_PANEL_W` = `40 · GLYPH_W + uiPx(8)`, height head + ten rows + `uiPx(6)`), practice's,
@@ -395,16 +398,23 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   `SCROLL_HALVES` (`scenes/index.ts`) is the one constant of their rate: 2 there restores the slow
   one-pixel-a-step crawl — the v1 rate in pixels — at the cost of about 1.5× the time (story
   1,566, credits 2,970 ticks at 640×360).
-- **Story and epilogue panels (re-anchored by the flip):** the story panel is **centred in the
-  room between the scenes' lowest row (`STORY_SCENE_BOTTOM` — the dawn's sea, 186) and the bottom
-  edge**: 210..336 at 640×360 (y 128 at v1); its window stays `uiPx(4)` inside it and keeps its
-  seven rows (`6 · STORY_ROW_HEIGHT + GLYPH_H` = 114 tall, window 216..330). The epilogue panel
-  **fills the room under the scene** with v1's 4-px margins: `y = ENDING_SCENE_BOTTOM + uiPx(4)`,
-  `h = FRAME_H − ENDING_SCENE_BOTTOM − 2 · uiPx(4)` — 186 / 168 at 640×360 (124 / 88 at 384×216),
-  `ENDING_SCENE_BOTTOM` = 180 (the horizon band's bottom). Its top stays where it is because the
-  scenes use it as a **mask**: the citadel's sun before it rises, the sinking citadel and ARK are
-  hidden below it. Both panels are `FRAME_W − 2 · TEXT_PANEL_INSET` wide. R4-05 redraws those
-  vignettes "full-frame".
+- **Story and epilogue panels — one rule since R4-03.C7 (re-anchored by the flip):** both hug the
+  sprite scene's panel line by `ENDING_TEXT_MARGIN` (`uiPx(4)`), span as wide as the result card
+  (`FRAME_W − 2 · TEXT_PANEL_INSET` = 520) and their **height fits the text they hold** — the
+  epilogue panel is drawn as tall as its rows (`lines · LINE_H + ENDING_TEXT_DY +
+  ENDING_TEXT_MARGIN`, the first row `ENDING_TEXT_DY` = `uiPx(5)` (8) under the top); the crawl
+  keeps its seven-row window inside a panel that tall plus 4 px around it (`STORY_PANEL_H` =
+  `6 · STORY_ROW_HEIGHT + GLYPH_H + uiPx(8)` = 126; panel y 192, window 198..312). The epilogue
+  sits at y 186 under `ENDING_SCENE_BOTTOM` (180 — the horizon band's bottom); the crawl under
+  `STORY_SCENE_BOTTOM` (186 — the dawn's sea), which R4-05.E4 keeps while the scene bands now
+  **span to the frame's bottom edge** under and behind them. Gone are the pre-C7 boxes — the
+  centred crawl at 210..336 and the epilogue's fill-the-room 186 / 168 (v1's 124 / 88 at 384×216)
+  that left 36–95 px of empty panel under a short text; the scene's ground and water bands now
+  run full-frame behind the panels, so what sinks disappears behind the opaque panel and the room
+  below a short panel reads as the scene itself (C7's point — and E4's, which moved the bands
+  under the panel line on purpose).
+  Both panels take the UI kit's single v2 rim (the nested outer-plus-inner double rim was declined
+  with R4-05.E2's ruling — the scene UI list's `UI_COMMANDS` budget stays 384).
 - **Line heights read the font:** menus `LINE_H + 4` / `+ 3` / `+ 1`, a replay row two lines
   (`2 · LINE_H`, its description `GLYPH_H + 1` under the label), the ship select's hints `LINE_H`
   apart, an epilogue without a scene centred on `FRAME_CY` with its lines `LINE_H` apart, a crawl row
@@ -422,7 +432,8 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   `MAX_ENDING_LINE_LENGTH` = `MAX_STORY_LINE_LENGTH` = ⌊(`FRAME_W` − 216) / `GLYPH_W`⌋ = **47** and
   `MAX_CREDITS_LINE_LENGTH` = ⌊(`FRAME_W` − 36) / `GLYPH_W`⌋ = **67** — they derive from the text
   panels, not from a fixed pixel inset (campaign.ts's docblock parentheticals, 40 / 60 with the
-  144- / 24-px insets, are v1's). R4-03 re-derives them for the final font.
+  144- / 24-px insets, are v1's). The numbers above are today's, counted at the 9-px cell; R4-03's
+  final 9×12 font has that same cell, so its native file did not move these caps.
 - **Whole numbers only:** every derived value is a whole number at today's frame (`uiPx` ceils;
   `>> 1` or `Math.floor` wherever a halving could go odd with the 9-px font; `ART_HALVES` is
   asserted whole at init); nothing became a getter, a closure or a per-call computation — the
@@ -442,8 +453,14 @@ is the shipped frame. The hi-score table, the Options pages, the ending card, EX
 game over centre exactly on (320, 180); the pause menu, the difficulty and ship selects and the
 name entry are centred horizontally and keep v1's small deliberate offsets; the WARNING band and
 the zone card are centred and full width; the HUD bars are 640×12 at y 0 and 348 and the co-op
-halves split at x 320. The art is v1's sprites and font nearest-neighbour ×1.5 (the interim look
-until R4-03's font and R4-05 / R5's redraws); the content is v2's world since R2-02's port
+halves split at x 320. The art: the v2 redraws shipped with R4-01 … R4-05 (the ships' and options'
+frames, the item glints, the native `pixel9x12` font and 12-px-bar HUD art, the fx, the title's
+logo and backdrop, the WARNING band and cards, the full-frame endings) live beside v1's sources as
+`*.v2.sprite.json` files, `native: true` sources and the generators' v2 paths — the default build
+(the interim 3/2 scale) takes them unscaled and upscales only what has no v2 source, while the
+scale-1 atlas — the digest pin's, the TV bench's, the CJK figures' — keeps v1's sources byte for
+byte until the post-release clean-up (decision RR-1,
+[asset-pipeline.md](asset-pipeline.md)); the content is v2's world since R2-02's port
 (`8dbe858`) — the goldens and the attract demos record the ported world since R2-03's re-bless
 (`d4ba9e8`; the 17-zone set's one retune move: `a285e0e`).
 
@@ -464,7 +481,7 @@ slots, so a menu can be ticked and redrawn every frame without allocating.
   (call it when a menu appears).
 - **`Slider`** (`createSlider(min, max, step, value)` — the volumes 0–10 of M1-17): Left / Right
   change it by `step`, clamped. **`Toggle`**: Left = off, Right = on, OK flips it.
-- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17, BULLETS, M2-02, SCALE and FLASHES, M2-08, and the M2-16 pages' rows):
+- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17, BULLETS, M2-02, SCALE and FLASHES, M2-08, the M2-16 pages' rows, and the GRAPHICS page's four of R6-04):
   one of several labels; Left / Right step through them and **wrap**, OK steps forward; a single
   label never changes. A class, so its `index` stays a small integer.
 - **`Confirm`** (`createConfirm(question)`): YES / NO, focused on **NO** whenever it opens, so a
@@ -510,9 +527,9 @@ cues play on the unpanned UI bus, unlike the positional `PowerUpDenied`). The fl
 
 | Builder | Draws | String slots |
 |---|---|---|
-| `drawPanel(list, x, y, w, h, fill?, border?, alpha = 232)` | a filled box and a 1-px border (5 rects) | — |
-| `drawMenu(list, menu, stringBase, layout)` | per item: the label (focused: `UI_COLORS.focus` and the `→` cursor at `cursorX`; disabled: dimmed), a slider's `SLIDER_BAR_W` (`8 · GLYPH_W + 2` = 50) px bar and value, a toggle's `ON` / `OFF`, a choice's current label at `valueX`; returns the y below the last row | `menuStringSlots(menu)` = items + 3 (`ON`, `OFF`, cursor) + one per choice item (its label, M1-17) |
-| `drawConfirm(list, confirm, stringBase, cx, cy)` | a 176×52 opaque panel centred at `(cx, cy)`, the question (up to two lines), YES / NO with the cursor | `CONFIRM_STRING_SLOTS` = 4 |
+| `drawPanel(list, x, y, w, h, fill?, border?, alpha = 232)` | a filled box (default `UI_COLORS.panel`, translucent) and a 1-px **two-tone neon rim** since R4-03.C6 — `border`'s horizontal lines over cyan `UI_COLORS.rimInner` side rails, one rect per edge (5 rects, so no UI-list budget moves); a caller that names its own border colour (an alert-tinted dialog, the game-over panel) keeps a one-colour ring (the zone card names `UI_COLORS.border` and so stays two-tone) | — |
+| `drawMenu(list, menu, stringBase, layout)` | per item: the label (focused: `UI_COLORS.focus` and the `→` cursor at `cursorX`; disabled: dimmed), a slider's `SLIDER_BAR_W` (`8 · GLYPH_W + uiPx(2)` = 75, 50 at v1) px bar — `SLIDER_BAR_H` = `uiPx(5)` (8) tall, centred on the glyph row by `SLIDER_BAR_DY` since R4-03.C6 — and value, a toggle's `ON` / `OFF`, a choice's current label at `valueX`; returns the y below the last row | `menuStringSlots(menu)` = items + 3 (`ON`, `OFF`, cursor) + one per choice item (its label, M1-17) |
+| `drawConfirm(list, confirm, stringBase, cx, cy)` | a `28 · GLYPH_W + uiPx(8)` × `2 · LINE_H + GLYPH_H + uiPx(24)` opaque panel (176×52 at v1; 264×60 today) centred at `(cx, cy)`, the question (up to two lines), YES / NO with the cursor | `CONFIRM_STRING_SLOTS` = 4 |
 
 Since M2-16 every builder (`drawMenu`, `drawConfirm`, `drawNameEntry`, `drawRebindPanel`, `buildHud`
 / `createHud(sprites, text)`) takes an optional **UI string table** for its words (`ON` / `OFF`,
@@ -547,14 +564,23 @@ HUD_SHIELD_PIP_W)` (344); the co-op `halfW` = `FRAME_W / 2` (192). Text extents 
 a label's number starts `2 · GLYPH_W + HUD_LABEL_GAP` after it (`HUD_SCORE_DX`, 16), the caravan
 clock's seconds follow `TIME` and `HUD_LABEL_GAP` the same way — "TIME 5", not "TIME5" (the fixed
 `HUD_CLOCK_DX` is gone since R2-01; `HUD_LABEL_GAP` = `uiPx(4)`) —, the Direct pips after their
-4- / 3-glyph labels and `uiPx(2)` (26 / 20) and the co-op pips after 2 glyphs (13). Each
-Direct-mode run (`SHOT` 58, `SUB` 130, `ARM` 196, `SPD` 252, the family 306) and each co-op run
-(the meter at 22 with `2 · GLYPH_W + 8` = 20-px slots, the shield pips at 164, `SH` 22 / `SB` 68 /
-`AR` 114 / `SP` 148) starts after the one before it, so a wider font cannot make them overlap.
+label's four-glyph reservation and `uiPx(2)` (`HUD_DIRECT_PIPS_DX` = `4 · GLYPH_W + uiPx(2)`, 42;
+26 with v1's three-glyph labels — R4-03.C5 widened it so the Japanese `ショット` never sits over its
+pips, and the layout walk keeps that bound in en, es and ja) and the co-op pips after 2 glyphs
+(`2 · GLYPH_W + uiPx(1)`; 13). The
+Direct-mode runs now march on an even pitch — `SHOT`, `SUB`, `ARM` and `SPD` `HUD_DIRECT_PITCH`
+(76) apart from the meter's x, so the widest `SPD` run ends 6 px before the family label, which is
+**right-anchored**: `HUD_FAMILY_X` = `FRAME_W − uiPx(10) − 4 · GLYPH_W` (589); v1's packed run
+(`SHOT` 58, `SUB` 130, `ARM` 196, `SPD` 252, the family 306) is history. The co-op compact runs
+still start one after the one before it (the meter at 22 with 20-px slots, the shield pips at 164,
+`SH` 22 / `SB` 68 / `AR` 114 / `SP` 148), so a wider font cannot make them overlap.
 **The HUD art's own sizes** — the 40-px meter-slot box, the life icons 10 px apart, the pip sizes
-and steps, the rows inside a bar — are `uiPx` lengths since R2-01: they follow the art's scale
-(×1.5 with the interim art and the 12-px bars), not the frame's, and one-pixel borders stay one
-pixel (R4-03 redraws the HUD art). `packages/core/test/ui/ui-hud-layout.test.ts` writes these
+and steps, the rows inside a bar — are `uiPx` lengths since R2-01: they follow the art's scale,
+not the frame's, and one-pixel borders stay one pixel. R4-03.C5 drew them **native** at the art
+bible's §5.11 sizes for the v2 art scale: `hud/meter-slot` 60 × 12 (the box fills the 12-px bar
+edge to edge, §3.4 outline and §3.5 lit bevel), `hud/meter-labels` 54 × 8 with a redrawn 4×5
+script, `hud/life` 12 × 8 with its `@p2` sibling — and the slot sprite shed its STORM palette
+exemption in the same step (at scale 1 the v1 pixels still pack, decision RR-1). `packages/core/test/ui/ui-hud-layout.test.ts` writes these
 relations in the constants (a 1-px move of any field fails — the relations held at 384×216 and
 pin today's 640×360) and checks every HUD mode inside the frame, its bar and its co-op half with
 no overlapping texts.
@@ -563,7 +589,10 @@ no overlapping texts.
 lifted navy of the VA panels); `1P`, `HI`, `2P` with 8-digit numbers 16 px after each label (the
 `number` op — no strings), `------` in grey while player 2 is not playing (in a co-op game a
 blinking `PRESS START` while it may join — M2-06); player 1's `lives − 1`
-stock icons (`hud/life`; more than 5 show one icon and the count); the seven meter slots
+stock icons (`hud/life`; more than 5 show one icon and the count — the `uiPx(8) × uiPx(5)`
+(12 × 8) icons sit at `HUD_STOCK_DY` = (`HUD_BAR_HEIGHT` − `HUD_STOCK_H`) / 2: centred in the 12-px
+bar since R4-03, where v1's art sat one pixel into it, and the shell's flight scene takes its stock
+row from the same centring); the seven meter slots
 (`hud/meter-slot`: frame 1 for the highlighted slot on the "on" half of its 8-tick flash
 (`HUD_METER_FLASH_TICKS`), frame 2 for a slot `world.powerups.equippable(0)` excludes, frame 0
 otherwise) with the slot's `hud/meter-labels` frame tinted white or grey; and, while the Force
@@ -575,16 +604,19 @@ weapons (`SPREAD`, `TAIL`, `RIPPLE` for Type B, `2-WAY`, `VERTICAL`, `CYCLONE` f
 their symbols. Without the UI
 sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
 the labels are left out. The worst case is 32 commands; the game scene's HUD list has
-`HUD_COMMAND_COUNT` (100 since M2-09; 96 in M2-06) commands and `HUD_STRING_COUNT` (23 since
-M2-09; 22 in M2-06) strings.
+`HUD_COMMAND_COUNT` (100 since M2-09; 96 in M2-06) commands and `HUD_STRING_COUNT` (24 since
+M3-01; 23 in M2-09, 22 in M2-06) strings.
 
-**The boss HP bar (M2-09).** `buildHud(world, list, sprites, bossHp)`: with `bossHp` (the
+**The boss HP bar (M2-09, re-anchored by R4-03.C5).** `buildHud(world, list, sprites, bossHp)`: with `bossHp` (the
 `bossHpBar` display option) and while `world.bosses.hpBar.visible` — a boss is flying in, fighting,
 escaping or dying before its blast — the middle of the top bar shows `BOSS` in red (string slot
-22) at x 148 (`bossX`: `BOSS`, the gap and the bar centred 2 px right of `FRAME_CX`) and a 4-px
-frame (`HUD_COLORS.bossFrame`) `BOSS_HP_BAR_WIDTH` (64 — as wide as the hi-score display it
-replaces) px wide at x 176 (`bossBarX`, four glyph cells and 4 px after the label)
-with a 2-px red fill (`bossFill`) of `bossHpBarFill(bar, 62)` pixels, **instead of** `HI` and the
+22) at `HUD_BOSS_X` (the label, the gap and the bar centred `uiPx(2)` right of `FRAME_CX`; 222
+today, 148 at v1) and a frame (`HUD_COLORS.bossFrame`) `BOSS_HP_BAR_WIDTH` wide — a quarter of
+the frame (`FRAME_W >> 2`, 160 today; 64 at v1, then as wide as the hi-score display it replaces,
+the wide frame earning a wide bar now) — `HUD_BOSS_BAR_DX` (`4 · GLYPH_W + HUD_LABEL_GAP`, 42)
+after the label, `HUD_PIP_H` (6; v1's 4) tall,
+with a 2-px inset red fill (`bossFill`) of `bossHpBarFill(bar, BOSS_HP_BAR_WIDTH − 2)` pixels (at
+most 158 today), **instead of** `HI` and the
 hi-score; when the bar goes, `HI` comes back. The fill is `⌈hp × width / maxHp⌉` (at least 1 px
 while any hit point is left, full only at full strength — it fills up during the intro).
 
@@ -616,9 +648,10 @@ pip per speed, the current level and those below lit; then the family's `label` 
 use 0–3 only ([direct-mode.md](direct-mode.md#the-hud-coreui)).
 
 **Co-op (M2-06).** While **both** ships are active the bottom bar splits into two halves of
-`HUD_LAYOUT.halfW` (`FRAME_W / 2`, 192 px)
+`HUD_LAYOUT.halfW` (`FRAME_W / 2` — 320 px today, v1's 192)
 (player 1 left, player 2 right — its stock icon `hud/life@p2`): each with the stock icon and count,
-the seven meter slots as 20-px boxes with two-letter labels (`METER_SHORT_LABELS`) and the shield
+the seven meter slots as 20-px boxes with two-letter labels (`METER_SHORT_LABELS`; the boxes are
+`HUD_COOP_SLOT_W` = `2 · GLYPH_W + uiPx(8)` — 30 px today) and the shield
 pips — or the compact Direct pips `SH` / `SB` / `AR` / `SP`; an out player's half shows
 `PRESS START` (it may continue) or `GAME OVER`. `hudPlayerState(world, slot)` decides what a player
 shows; the co-op strings (slots 9–21) are written only when drawn, so one-player lists with 4 string
@@ -637,7 +670,9 @@ tick.
 
 ## Sprites and the logo
 
-`UI_SPRITES` (`hud/life`, `hud/meter-slot`, `hud/meter-labels`, `ui/logo`) joined the core's
+`UI_SPRITES` — twelve names today: `hud/life`, player 2's `hud/life@p2` sibling (M2-06),
+`hud/meter-slot`, `hud/meter-labels`, `ui/logo`, the six ending pieces (M2-14) and
+`ui/title-backdrop` (R4-05.E2) — joined the core's
 `ENGINE_SPRITES`, so every host interns them with the content (`loadGameContent` passes
 `ENGINE_SPRITES` as `extraSprites` by default) and `pnpm content:check` verifies them against the
 atlas. `resolveUiSprites(content)` looks their ids up once (`-1` when missing).
@@ -646,12 +681,24 @@ atlas. `resolveUiSprites(content)` looks their ids up once (`-1` when missing).
 split out of `ui.mjs`): `SHMUP CUP` in
 original 5×7 block letters drawn ×3 (`LOGO_SCALE`), a vertical yellow → orange → red gradient with
 a one-pixel highlight on each letter row, a dark outline and a 2-px drop shadow — 165×27, anchored
-at its centre. With it the atlas page grew to 512×512.
+at its centre. With it the atlas page grew to 512×512. R4-05.E1 drew the v2 piece **native**: the
+same lettering at 53 × 7 cells ×6 with the bible's three flat colour bands (lemon `#f8f070` rows
+0–13, orange `#f8a030` 14–27, red `#e04828` 28–41), a navy ring `#1b2a4a` and a hard +4, +4 offset
+shadow `#0a0f26` — 330 × 54 at the art scale ≠ 1, the v1 gradient staying packed at scale 1
+(RR-1).
+
+`ui/title-backdrop` (R4-05.E2) is the title's night sky — a navy gradient, hashed stars and a
+planet limb — held as **two native half-frames** (the frame split at `FRAME_W >> 1` columns, each
+`FRAME_H` tall, corner-anchored and fully opaque — no frame outsizes the packer's page-limit
+cases) that `TitleScene.drawUi` places side by side; it is v2-only (absent at scale 1, RR-1a).
 
 Since M2-14 the list also holds the ending scenes' pieces, drawn by `scripts/assets/procedural/ending.mjs`
 and anchored at their centres: `ui/ending-citadel`, `ui/ending-ark`, `ui/ending-blast` (4 frames),
 `ui/ending-bubble`, `ui/ending-sun` and `ui/ending-surface` (`UiSprites.endingCitadel` …
-`endingSurface`). `EndingScene` draws them into the UI list with the run's ship sprite; a content
+`endingSurface`). R4-05.E4 gave the generator a v2 path: the same pieces **native** at
+192 × 108 / 168 × 54 / 36² × 4 / 9² / 96 × 48 / 96 × 12 (the v1 128 × 72 / 112 × 36 / 24² × 4 /
+6² / 64 × 32 / 64 × 8 stay at scale 1). `EndingScene` draws them into the UI list with the run's
+ship sprite; a content
 table without them draws the scene without those pieces
 ([zones-h-and-i.md](zones-h-and-i.md#the-ending-screen-endingscene-id-ending)).
 
@@ -787,7 +834,7 @@ rate, the game options) reach a World only through the config the flow resolves 
 | OK on the title does nothing the first time | Expected: the first OK only leaves `PRESS OK`; the menu then locks activation for 2 ticks (an OK in that window is buffered, not lost) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. The exit confirmation needs `platform.exit` (the TV) |
 | OK on an Options slider does nothing | Expected: sliders change with Left / Right; OK is silent on them (it opens a page and activates BACK) |
-| A spec walking OPTIONS lands on the wrong row | M2-16 regrouped the screen: MASTER / MUSIC / SFX, CONTROLS 3, DISPLAY 4, GAME 5, BACK 6 — the display rows are `DisplayItem`s on the DISPLAY page |
+| A spec walking OPTIONS lands on the wrong row | M2-16 regrouped the screen; M3-02 added EXTRAS and R6-04 the GRAPHICS page after GAME: MASTER / MUSIC / SFX, CONTROLS 3, DISPLAY 4, GAME 5, GRAPHICS 6, EXTRAS 7, BACK 8 — the display rows are `DisplayItem`s on the DISPLAY page, the CRT / ASPECT rows `GraphicsItem`s on GRAPHICS |
 | A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 512 string slots (384 before M2-16, 256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
 | The zone map loses nodes or its panel on a big campaign | The UI list has 384 commands; the map thins its edge dots to a 160-command budget (`MapScene.edgeDots`) — a new map element must fit what is left |
 | The renderer shows a World while no game runs | The weapon select's live preview (M2-03) or the attract loop's demo play (M2-15) — `SceneFlowView.world` is its view while that screen is visible |

@@ -21,6 +21,14 @@ labels — lives with that content, not here.
 | `es.strings.json` | Español | ASCII + `Á É Í Ó Ú Ñ Ü ¿ ¡` | |
 | `ja.strings.json` | ニホンゴ | **katakana only** | No kanji, no hiragana — the way 1980s arcade hardware wrote Japanese |
 
+R6-04's GRAPHICS page took the table to its current id set: twelve names (`optGraphics`,
+`graphicsTitle`, `optOutput`, `optRenderer`, the `output*` / `renderer*` choices and
+`graphicsHint`) landed in **all three** files the same commit, since `pnpm content:check`
+requires a shipped language to answer every id. es writes them in accented Latin
+(`GRÁFICOS`, `SE APLICA AL REINICIAR`), ja in katakana only (グラフィック,
+サイドウジカラ テキヨウ); the OUTPUT sizes keep ASCII digits everywhere and write the
+multiplication sign as `X` (`1920X1080` — the font has no `×`).
+
 > **These translations are placeholders, like the art and the music.** They were written by the
 > build agent, not by a native speaker, and nobody has reviewed them. Treat them the way you treat
 > `PLACEHOLDER_SHIP`: correct in shape, provisional in wording. A native-speaker pass is on the
@@ -31,7 +39,8 @@ labels — lives with that content, not here.
 >
 > **A native speaker reviewing a file needs four things:** every id must stay answered; the fixed
 > ids below must keep their English text; every character must be one the font draws (`UI_GLYPHS`);
-> and a value must fit the width its screen gives the English — 6 px a character. `pnpm content:check`
+> and a value must fit the width its screen gives the English — 9 px a character (the v2 font cell).
+> `pnpm content:check`
 > enforces the first three.
 
 The player picks the language in **OPTIONS → DISPLAY → LANGUAGE**; the choice is stored in the save
@@ -68,17 +77,23 @@ its upper-cased id.
   character by character. Listing one with its English text is fine; changing it is an issue;
 - a language may have one file only.
 
-Keep a translation within the width its screen gives the English text — the bitmap font is 6 px a
-character and a line is 384 px, so 64 characters fill the screen and a menu value has far less. The
-schema's own limit is 48 characters.
+Keep a translation within the width its screen gives the English text — the UI font's cell is 9 px
+a character (R4-03.C1's native `pixel9x12`, the file the default-scale atlas builds from — RR-2;
+v1's 6 px at the interim ×1.5 draws the same width)
+and a line is 640 px, so 71 characters fill the screen and a menu value has far less. The
+schema's own limit is 48 characters (`MAX_UI_TEXT_LENGTH` — 48 × 9 = 432 px, inside the frame).
 
 ## Adding a language
 
 1. Write `content/strings/<id>.strings.json` with **every** id (`pnpm content:check` requires full
    coverage for a shipped language — a gap would fall back to English mid-screen, which reads as a
    bug).
-2. If it needs glyphs the font lacks, add them to `assets/source/fonts/pixel6x8.font.json` **and**
-   to `UI_GLYPHS` in `packages/core/src/ui/strings.ts` in the same commit, then run `pnpm assets`.
+2. If it needs glyphs the font lacks, add them to **both** font sources —
+   `assets/source/fonts/pixel9x12.font.json` (R4-03.C1's native file, the one the default-scale
+   atlas builds from — RR-2) and `assets/source/fonts/pixel6x8.font.json` (v1's, which the scale-1
+   builds still read byte for byte) — **and**
+   to `UI_GLYPHS` in `packages/core/src/ui/strings.ts` in the same commit, then run `pnpm assets`
+   (`test/scripts/assets/font.test.ts` requires both files to hold exactly `UI_GLYPHS`).
    See [`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md) — "Katakana and the CJK
    budget" for what a real kanji set would cost.
 3. Name it in `UI_LANGUAGES` (`packages/core/src/ui/strings.ts`) so the menu shows it in its own

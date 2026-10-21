@@ -103,6 +103,22 @@ normal game.
 
 Rules worth knowing:
 
+- **The title's art (R4-05.E1/E2).** `TitleScene.drawUi` first draws the v2 backdrop —
+  `ui/title-backdrop`, the night sky, **below everything** — as two native half-frames placed side
+  by side ((0, 0) and (`FRAME_CX`, 0)), full-frame in effect; it is v2-only (absent at art scale 1,
+  RR-1a — a missing id draws nothing). Above it the v2 `ui/logo` — 330 × 54, the same 53 × 7 cell
+  lettering at ×6 with the bible's three flat colour bands (lemon / orange / red) and a navy ring
+  and hard offset shadow, drawn native (E1) — centred at `logoY` (`FRAME_CY − uiPx(44)`); without
+  the logo the game name goes there as text. `PRESS OK`, the menu rows, the secret-code line and the
+  hi-score line (`FRAME_H − uiPx(20)`) all take their rows from the frame constants as elsewhere.
+- **The pictures.** This page carries no embedded images; the plates live in `docs/images/` and
+  `docs/images/screens/ (`pnpm docs:images` / `pnpm docs:screens`). R4-05.E6 refreshed the front
+  end's share of them: `docs/images/logo.png` — the README banner, `FRAME_W` × 144 magnified ×3
+  (1920×432) — now hangs the E1 v2 logo (its 330 × 54 sheet sits nine rows taller than the interim
+  248 × 41, so E6 hangs it from the band's top row and measures the taglines on the bottom), and
+  the screen shots `title.png`, `warning.png` and the nine `zone-<letter>.png` cards are re-shot
+  at 640×360 on the v2 art. `docs/client/` embeds them.
+
 - **Any input means any press** — `flow.menuInput.pressed !== 0`, every player merged — and it
   always goes to the title (`toTitle()` resets the stack), **Back included**: on an attract screen
   Back never opens the exit confirmation. The title then starts on `PRESS OK`.
@@ -131,10 +147,10 @@ a `description` — `content/demos/<id>.replay.json`, loaded by `core/data` as t
   `document`) and `ContentDb.demoIndex`.
 - **Decoding.** `createSceneFlow` decodes every demo once (`decodeReplay` → `SceneFlow.demos`); a
   demo that does not decode or names a stage the content lacks is left out, and the loop plays the
-  others. **Since R2-01 the nine shipped demos are all v1 recordings** — `decodeReplay` now refuses
-  a format-1 document (or a 384×216 header) with a `ReplayVersionError`, so every one of them is
-  left out: the loop plays no demo and starts at the hi-score tables until R2-03 re-records them
-  at 640×360 (owner decision W4-9 — the demos stay stale by design, the skip is not a bug).
+  others. **The nine shipped demos are v2 recordings** — `R2-03.G1` (`d4ba9e8`) re-recorded them at
+  640×360 in replay format 2, so the loop plays them; `decodeReplay` still refuses a format-1
+  document (or a 384×216 header) with a `ReplayVersionError`, and such a file would be left out
+  (the interim skip of the flip — owner decision W4-9 — ended with the re-record).
 - **Recording.** `test/golden/demos.ts` records them: `DEMO_SCENARIOS` — the 4-way playtest bot
   (`test/playtest/four-way-bot.ts`) with god mode, `DEMO_TICKS` = **2,400** ticks (40 s) from the
   zone's start, seeds 101…109, zones B, E and H in the Direct-mode MANTA, the others in the
@@ -143,10 +159,9 @@ a `description` — `content/demos/<id>.replay.json`, loaded by `core/data` as t
 - **Locking.** `test/golden/demos.test.ts` (part of `pnpm test`) plays every committed file back
   through `createDemoPlayback` — the attract loop's own path — and through `playReplay`, requiring
   **every state hash** to match; it also checks that the content lists exactly the scenarios and
-  that the format sample is a valid demo. Since R2-01 the playback cases are **skipped by the
-  `GOLDENS_STALE` gate** (`test/golden/stale.ts`): the committed files are still v1 recordings and
-  the same `ReplayVersionError` that makes the attract loop skip them refuses them here, until R2-03
-  re-records them (W4-9). **`pnpm golden:update` re-records the demos with the
+  that the format sample is a valid demo. Since R2-03.G1 the playback cases all run: the committed
+  files are current 640×360 format-2 recordings, so the `GOLDENS_STALE` gate that skipped them
+  between R2-01 and the re-record is gone (the helper was deleted with them). **`pnpm golden:update` re-records the demos with the
   golden replays** (`scripts/golden-update.mjs` runs the whole `test/golden` folder with
   `SHMUP_GOLDEN_UPDATE=1`), so a simulation change re-blesses both in the same commit — with the
   reason in the commit message. Prettier skips the files (`.prettierignore`); never edit them by
@@ -187,7 +202,9 @@ allocation-free apart from its spawns' coroutines, D29).
 - `enter()` fades the music out, starts the next demo (a transition — the World is created here and
   dropped in `exit()`), builds the zone card's two strings from the campaign (`ZONE ` + label, the
   zone's name; `STAGE` / the stage's name outside a campaign), then clears its private queue — the
-  World's creation queued its stage theme.
+  World's creation queued its stage theme. The card itself is the game scene's zone card: both
+  draw through the shared `drawZoneCard` since R4-05.E3 — the frame-wide black band under the UI
+  kit's v2 neon rim, `4 · HUD_BAR_HEIGHT` (48) tall at row 72, the code centred over the name.
 - `tick()`: any press → title; else one recorded tick, then `events.drain(forward)`. The `forward`
   closure (bound once in the constructor) pushes every event to the session's queue **except** the
   kinds in `DEMO_SILENT_KINDS` — `Sfx`, `Music`, `MusicDuck`, `Rumble`, `UserOption`,
@@ -218,10 +235,13 @@ is three pages of original text (the Verge worlds, the Iron Tide, KESTREL and MA
 blank row). The rows rise `ART_SCALE` px every `STORY_SCROLL_TICKS` (4 — 15 steps a second, 22.5 px
 a second; each step counts `SCROLL_HALVES` half-pixels and lands whole, so the crawl takes as long
 as at v1's frame — where it was 1 px a step, 15 px a second), `STORY_ROW_HEIGHT` apart (17 —
-`LINE_H + uiPx(1)` since R2-01; v1's 11 was `LINE_H + 1`), through a panel at the bottom of the
-screen (rows between y 216 and 330, `STORY_PANEL` `FRAME_W − 2·uiPx(40)` = 520 wide at x 60 — v1's
-band y 132–206 had it `FRAME_W − 80` = 304 at x 40 — its rows stay top-anchored on purpose under the
-sprite scenes until R4-05 redraws them); only the
+`LINE_H + uiPx(1)` since R2-01; v1's 11 was `LINE_H + 1`), through the panel under the sprite
+scene's panel line (R4-03.C7's one text-panel rule, shared with the epilogue: `STORY_PANEL` hugs
+`STORY_SCENE_BOTTOM` — the sea band's nominal depth row 186, which R4-05.E4 keeps while the sea
+itself now spans to the frame's bottom edge — at `ENDING_TEXT_MARGIN`, spans as wide as the result
+card (`FRAME_W − 2·uiPx(40)` = 520 wide at x 60) and its height is the seven-row window plus 4 px
+around it; the rows live between y 198 and 312 where the crawl had floated centred at y 210
+before); only the
 rows inside it are drawn, through `STORY_STRING_SLOTS` (10) slots **taken by row number** — the
 credits' trick from M2-14, so any story length fits a fixed budget. A page's scene takes over
 when its first row has crawled **half-way up** the panel (`STORY_PAGE_LEAD`), so the picture
@@ -229,13 +249,15 @@ changes while that page's text is on screen. When the last row has left, the pan
 last scene holds `STORY_HOLD_TICKS` (90) before the title. `duration` = every row through the
 panel, then the hold.
 
-The scenes are arithmetic on the tick count over fixed tables — no new art:
+The scenes are arithmetic on the tick count over fixed tables — no new sprites beyond the ending's
+pieces, which R4-05.E4 redrew as v2 native art and recomposed on the frame
+(`STORY_SCENE_LAYOUT` — the same centre-anchor style as the endings):
 
 | Scene | Draws |
 |---|---|
-| `dawn` | `ui/ending-sun` rising 90 px (`ART_SCALE` × the 60-step rise table, `SCROLL_HALVES` half-px — v1's 60) over a dark sea band, `ui/ending-surface` tiles drifting |
-| `invasion` | `ui/ending-citadel` and `ui/ending-ark` closing in from the right, three `ui/ending-blast` explosions cycling through a fixed table of 8 positions |
-| `launch` | the content's first two ships racing off one after the other (accelerating, a speed line behind each), then the `ui/logo` |
+| `dawn` | `ui/ending-sun` rising 90 px (`ART_SCALE` × the 60-step rise table, `SCROLL_HALVES` half-px — v1's 60) from its lowest row 156 over the dark sea band, which now spans to the frame's bottom edge, `ui/ending-surface` tiles drifting |
+| `invasion` | `ui/ending-citadel` and `ui/ending-ark` closing in from the right to (455, 105) and (530, 150), three `ui/ending-blast` explosions cycling through a fixed table of 8 positions |
+| `launch` | the content's first two ships racing off one after the other from 24 px left of the frame edge (accelerating, a speed line behind each), then the `ui/logo` centred on row 108 |
 
 A missing sprite (id -1) is simply left out.
 

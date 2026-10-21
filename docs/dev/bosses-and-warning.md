@@ -283,7 +283,8 @@ In free flight (`stage: null`) there is no brake and the boss music is `MUSIC_CU
 `'WARNING!!\nGIANT HOSTILE "{name}"\nCLOSING IN - CODE {code}'` — the game's own paraphrase,
 never the arcade original's words (the integration test asserts the arcade phrases are absent).
 `formatWarningText(displayName, code)` fills it **once per boss at world creation**; three lines
-that fit the 384-px playfield. D10's em dash became `-` because the pixel font is ASCII-only.
+that fit the 640-px frame (the band spans it full width since R4-05.E3). D10's em dash became `-`
+because the pixel font is ASCII-only.
 
 **`WarningView`** (the render contract, `WorldView.warning` — `world.bosses.warning`, a live
 `WarningState`): `active`, `ticks` (since it started), `duration` (180) and `text` (the current or
@@ -293,8 +294,14 @@ a host puts it into a draw-list string slot on a change and never builds strings
 **The game scene** (`core/scenes` `GameScene.drawUi`, the scene flow — M1-16) and the
 `?scene=flight` dev scene (`@shmup/shell` `flight`, which drew it first in M1-13) draw it the same
 way in their UI list: a translucent black band
-(alpha 144) across the playfield at screen rows 76–123 with 1-px red (`0xf85858`) edges, the text
-centred at row 85, red and yellow (`0xf8d030`) alternating every 16 ticks. The list is rebuilt
+(alpha 144) across the frame's full width at screen rows 132–203 — height `WARNING_BAND_H`, a
+fifth of the frame since R4-05.E3 (72 at 640×360; v1's 48 at 384×216, `uiPx(48)` then, the band
+frame-anchored now), its ends carrying the art bible §5.11 hazard fields (each one band height
+wide: a `UI_COLORS.alert` ground with diagonal 45° deep-red (`0x881818`) cells of 18 px — a
+quarter of the band — eight per field) — with 1-px red (`0xf85858`) edge lines drawn over all at
+rows 132 and 203, the text
+centred at row 162 (`WARNING_TEXT_DY` — the band's centred text row, `(WARNING_BAND_H − GLYPH_H)
+/ 2`; v1 sat it 9 px under the top line), red and yellow (`0xf8d030`) alternating every 16 ticks. The list is rebuilt
 only when the WARNING starts, ends or changes colour (the game scene bumps its `uiRevision` then;
 the pause menu drawn over it freezes the colour with the World). Since M1-14 the renderer draws the `Dim`
 event as a playfield dim (50 %, fading in over 8 ticks and out over 16 after the 180-tick hold —

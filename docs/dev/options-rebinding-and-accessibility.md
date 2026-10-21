@@ -40,7 +40,7 @@ magnet).
 ## The picture at a glance
 
 ```text
- OPTIONS (OptionsScene — title / pause menu)          the save's options (core/save, format 3)
+ OPTIONS (OptionsScene — title / pause menu)          the save's options (core/save, format 4)
    MASTER / MUSIC / SFX ── live UserOption ──────────► audio.* (presentation)
    CONTROLS ─► ControlsScene                          input.profileId            (live, M1-17)
      PROFILE ── live InputProfile ─────────────────►   input.autofire / autofireInterval ─┐
@@ -61,8 +61,11 @@ magnet).
 
 ## The Options screen, regrouped
 
-`OptionsScene` keeps its panel (288×192 at y 12) and now has seven rows (`OptionsItem`): `Master 0`,
-`Music 1`, `Sfx 2`, **`Controls 3`, `Display 4`, `Game 5`**, `Back 6`. OK on a page row pushes that
+`OptionsScene` keeps its panel (288×192 at y 12 in v1 — `48 · GLYPH_W` wide and 288 tall centred
+today) and now has nine rows (`OptionsItem`): `Master 0`,
+`Music 1`, `Sfx 2`, **`Controls 3`, `Display 4`, `Game 5`, `Graphics 6`, `Extras 7`**, `Back 8`
+(`Graphics 6` — the GRAPHICS page — inserted by R6-04, pushing EXTRAS and BACK one row down; EXTRAS
+was M3-02's). OK on a page row pushes that
 page over it; the root itself stores only the volumes when it closes (BACK / Back →
 `setOptions`, `flush`). Each page is its own overlay scene on the same panel and **stores its own
 group** when it closes (BACK / Back → `setOptions`, `flush`, `MenuBack`, pop; the root re-locks
@@ -70,9 +73,11 @@ its menu for 2 ticks on `uncover`).
 
 | Page (scene id) | Rows (`…Item`) | Applies |
 |---|---|---|
-| CONTROLS (`controls`, `ControlsScene`) | `Profile 0`, `Autofire 1`, `Rate 2`, `Socd 3`, `Debounce 4`, `Keys 5` (REBIND KEYS), `Pad 6` (REBIND PAD), `InputTest 7`, `Back 8` | PROFILE live (`InputProfile` event, as in M1-17); SOCD / DEBOUNCE stored **at once** and pushed as `UserOptionKind.InputSettings`; AUTOFIRE / RATE stored on close and folded into the next games' configs |
-| DISPLAY (`display`, `DisplayScene`) | `Bullets 0`, `Scale 1`, `Shake 2`, `Flashes 3`, `Hitbox 4`, `BossHp 5`, `Back 6` | Unchanged M2-02 / M2-08 / M2-09 behaviour: live events, stored on close |
-| GAME (`gameOptions`, `GameOptionsScene`) | `Difficulty 0`, `Lives 1`, `Penalty 2`, `AutoPowerUp 3`, `Magnet 4`, `OneButton 5`, `Back 6` | Stored on close and folded into the next games' configs; DIFFICULTY also chooses the difficulty menu's preset |
+| CONTROLS (`controls`, `ControlsScene`) | `Profile 0`, `Autofire 1`, `Rate 2`, `Socd 3`, `Debounce 4`, `Keys 5` (REBIND KEYS), `Pad 6` (REBIND PAD), `InputTest 7`, `Rumble 8` (M3-01), `Back 9` | PROFILE live (`InputProfile` event, as in M1-17); SOCD / DEBOUNCE stored **at once** and pushed as `UserOptionKind.InputSettings`; AUTOFIRE / RATE stored on close and folded into the next games' configs |
+| DISPLAY (`display`, `DisplayScene`) | `Bullets 0`, `Scale 1`, `Shake 2`, `Flashes 3`, `Hitbox 4`, `BossHp 5`, `Language 6` (M3-03), `Back 7` | Unchanged M2-02 / M2-08 / M2-09 behaviour: live events, stored on close (the M3-02 `Crt` / `Aspect` rows lived here until R6-04 moved them to GRAPHICS) |
+| GAME (`gameOptions`, `GameOptionsScene`) | `Difficulty 0`, `Lives 1`, `Penalty 2`, `AutoPowerUp 3`, `Magnet 4`, `OneButton 5`, `OptionRecovery 6` / `Speed 7` / `Invincible 8` (M3-01's assists), `Back 9` | Stored on close and folded into the next games' configs; DIFFICULTY also chooses the difficulty menu's preset |
+| GRAPHICS (`graphics`, `GraphicsScene` — R6-04) | `Output 0` (`AUTO` / `1920X1080` / `1280X720` / `960X540`, `OUTPUT_CAPS`), `Renderer 1` (`AUTO` / `WEBGL 2` / `WEBGL 1`, `RENDERER_CHOICES`), `Crt 2`, `Aspect 3`, `Back 4` | All four push a `UserOption`, but only CRT / ASPECT act at once; OUTPUT / RENDERER are the **boot knobs** — stored, marked `APPLIES AT RESTART` (the page's hint row while either is focused; the shell ignores those two events, the next boot reads the save) |
+| EXTRAS (`extras`, `ExtrasScene` — M3-02) | `Slowdown 0`, `Graze 1`, `DeathBomb 2`, `BlackHole 3`, `Back 4` | Stored on close and folded into the next games' configs (all four are sim-affecting `GameConfig` options, like the GAME page's) |
 
 Every test and e2e spec that walked the old flat list was updated; navigate by the item constants,
 never by counting rows.
@@ -345,8 +350,11 @@ press), the counted presses expire with the window, and the string became
 
 This is M2-16's format; v2's **R2-01 later made `SAVE_VERSION` 3** — its step `migrateV2` moves the
 version-2 document's `hiScores` as they are under the read-only `legacyScores` and starts v2's tables
-empty (the story is in
-[saves-and-options.md](saves-and-options.md#migrations-save_migrations)). At M2-16 `SAVE_VERSION` was
+empty, and **R6-04 made it 4** — its step `migrateV3` keeps every field and gives the display group
+the GRAPHICS page's two boot knobs, `output` and `renderer`, at their `auto` defaults (owner
+decision W5-20; a newer document stays unreadable to older code, which falls back to defaults —
+W4-14). The stories are in
+[saves-and-options.md](saves-and-options.md#migrations-save_migrations). At M2-16 `SAVE_VERSION` was
 **2**; the storage key stays **`save.v1`** (the format family's key — the
 document's `version` drives the migrations). Version 2 adds the controls fields and the game options:
 
@@ -509,7 +517,7 @@ In a browser the save is `localStorage["shmup-cup:save.v1"]`; in a dev / test bu
 | A rebindable action | Append it to `REBINDABLE_ACTIONS[context]` (the rows follow), an `action<Name>` label, and — if a context cannot work without it — `REQUIRED_CONTEXT_ACTIONS` (the lock-out rule and `Refused` follow) |
 | A reserved key | `RESERVED_BINDING_TOKENS` (it cancels a capture only if `web-input`'s `CANCEL_CODE` / `CANCEL_KEY_CODE` say so) |
 | A rebindable device | A profile the app returns from `rebindable()` (key profile first, then gamepad) — `ControlsScene` enables REBIND KEYS / PAD by the devices' `kind` |
-| A save format change | Bump `SAVE_VERSION` (3), append a step to `SAVE_MIGRATIONS` (never edit `migrateV1`), a fixture `save-v2.json` and a migration test |
+| A save format change | Bump `SAVE_VERSION` (4 today), append a step to `SAVE_MIGRATIONS` (never edit a shipped one), a fixture for the old version and a migration test (the 3 → 4 step is `packages/core/test/save/save-format4.test.ts`) |
 
 ## Tests
 
