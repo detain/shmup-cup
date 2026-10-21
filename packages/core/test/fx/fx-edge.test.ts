@@ -108,13 +108,13 @@ describe('core/fx shake edges', () => {
 
   it('an equal magnitude is accepted once the running shake has decayed below it', () => {
     const h = host();
-    requestShake(h, ShakeMagnitude.Medium, 4); // amplitudes 2, 2, 1, 1, 0
+    requestShake(h, ShakeMagnitude.Medium, 4); // amplitudes 3, 3, 2, 1, 0
     fxTick(h, 1);
     fxTick(h, 2);
-    expect(shakeAmount(h.fx)).toBe(1);
+    expect(shakeAmount(h.fx)).toBe(2);
     h.tick = 3;
     expect(requestShake(h, ShakeMagnitude.Medium, 4)).toBe(true);
-    expect([h.fx.shakeTicks, shakeAmount(h.fx)]).toEqual([4, 2]);
+    expect([h.fx.shakeTicks, shakeAmount(h.fx)]).toEqual([4, 3]);
   });
 
   it('floors fractional magnitudes and caps them at 64 px', () => {
@@ -132,7 +132,7 @@ describe('core/fx shake edges', () => {
     h.tick = 7;
     requestShake(h, ShakeMagnitude.Small, 1);
     fxTick(h, 7);
-    expect(shakeAmount(h.fx)).toBe(1);
+    expect(shakeAmount(h.fx)).toBe(2);
     fxTick(h, 8);
     expect([shakeAmount(h.fx), h.fx.shakeMagnitude]).toEqual([0, 0]);
   });

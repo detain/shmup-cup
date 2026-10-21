@@ -74,15 +74,16 @@ export const MAX_FX_TICKS = 600;
 
 /**
  * The three shake magnitudes of shmup_feat.md §18 ("integer-pixel, decaying, 3 magnitudes,
- * subtle"), in pixels.
+ * subtle"), in pixels — the v2 world scale: ×1.5 of v1's 1 / 2 / 4 px, halves rounded up
+ * (decision R2-N7; R2-04.F1's patch, the owner's feel on the M7 decides).
  */
 export const ShakeMagnitude = {
   /** A nudge (big enemy explosions). */
-  Small: 1,
+  Small: 2,
   /** The player's death. */
-  Medium: 2,
+  Medium: 3,
   /** Boss kills and other rare, huge events. */
-  Large: 4,
+  Large: 6,
 } as const;
 
 /** A {@link ShakeMagnitude} value. */
@@ -268,7 +269,7 @@ export function requestFlash(host: FxHost, kind: number): boolean {
  * @example
  * ```ts
  * requestShake(world, ShakeMagnitude.Medium, 20);
- * shakeAmount(world.fx); // → 2, falling to 1 after 10 ticks and 0 after 20
+ * shakeAmount(world.fx); // → 3, falling to 2 after 10 ticks and 0 after 20
  * ```
  */
 export function shakeAmount(fx: Readonly<FxState>): number {

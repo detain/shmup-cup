@@ -267,8 +267,8 @@
       "x": 2760,
       "type": "formation",
       "enemy": "lymph-mote",
-      "count": 6,
-      "interval": 14,
+      "count": 5,
+      "interval": 16,
       "y": 156,
       "drop": null
     },
@@ -284,7 +284,7 @@
       "y": 186
     },
     {
-      "x": 3476,
+      "x": 3660,
       "type": "spawn",
       "enemy": "polyp-turret-ceiling"
     },
@@ -301,11 +301,11 @@
       "y": 156
     },
     {
-      "x": 4020,
+      "x": 4080,
       "type": "formation",
       "enemy": "lymph-mote",
       "count": 5,
-      "interval": 14,
+      "interval": 16,
       "y": 186,
       "bonus": 500
     },
@@ -320,7 +320,7 @@
       "type": "formation",
       "enemy": "lymph-mote",
       "count": 5,
-      "interval": 16,
+      "interval": 18,
       "y": 186,
       "drop": null
     },
@@ -351,8 +351,8 @@
       "x": 6360,
       "type": "formation",
       "enemy": "lymph-mote",
-      "count": 6,
-      "interval": 14,
+      "count": 5,
+      "interval": 18,
       "y": 141,
       "bonus": 500
     },
@@ -428,10 +428,10 @@
       "enemy": "vault-claw-ceiling"
     },
     {
-      "x": 9270,
+      "x": 9060,
       "type": "formation",
       "enemy": "lymph-mote",
-      "count": 6,
+      "count": 5,
       "interval": 14,
       "y": 216,
       "drop": null

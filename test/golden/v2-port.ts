@@ -219,6 +219,117 @@ const BOSS_CAPTURE_LAG = 2;
 export const MAX_ISSUES = 80;
 
 /**
+ * One disclosed departure from the README mapping, moved on purpose by the R2-04 content retune
+ * (wave 07, `R2-04.Z2` — the zone F thinning and re-timing). These are BAND-level lines: an event
+ * whose port sits outside every pairing band, a member row the patch removed, and the one pairing
+ * cascade those cause — not the "first-visible ±1 tick" spawn-lead class the bands already carry.
+ * {@link compareScenario} drops each line whole-exact for its scenario, and fails when a listed
+ * line stops appearing, so the table cannot rot against a revert or hide a new regression dressed
+ * as an old disclosure. At `K` = 1 the live world is the recorded one and the identity self-check
+ * of `v2-port.test.ts` has no departures to disclose, so the table stays dormant there.
+ */
+interface PortExemption {
+  /** The baseline scenario id the line belongs to (`zone-f`, `zone-f-loop2`). */
+  readonly scenario: string;
+  /** The exact issue line the retune moved (matched whole, never as a pattern). */
+  readonly line: string;
+  /** The disclosure: which Z2 hunk moved what, and why. */
+  readonly reason: string;
+}
+
+/**
+ * The seven R2-04.Z2 zone-F departures, disclosed verbatim by `w07-L4-report.md` §E at the patch
+ * commit and re-measured at this tip, then repeated for the loop-2 scenario — its merged timeline
+ * replays the same ported events with the remix entry shifting each index by one (the `zone-f`
+ * `remix` list starts at event index 17's base twin; the Z4 patch proposes no loop-2 change).
+ */
+const PORT_EXEMPTIONS: readonly PortExemption[] = Object.freeze([
+  {
+    scenario: 'zone-f',
+    line: 'event 16 (spawn): no v2 twin within the port bands',
+    reason:
+      'R2-04 Z2: zone F section-1 ceiling polyp de-overlapped, x 3476→3660 (+184 px; +120 px past the anchor-mapped 3540)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'event 19 (formation): no v2 twin within the port bands',
+    reason: 'R2-04 Z2: lymph column off the first non-god death x, 4020→4080 (+60 px)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'event 39 (formation): no v2 twin within the port bands',
+    reason: 'R2-04 Z2: section-tail volley off the contact-death x, 9270→9060 (−210 px)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'enemies: v2 row missing for event 13/5 lymph-mote',
+    reason: 'R2-04 Z2: column thinned 6→5 (ev13 x 2760, interval 14→16)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'enemies event 16/-1 polyp-turret-ceiling: y0 102 vs mapped 79.50 (Δ22.50 > ±12)',
+    reason:
+      'R2-04 Z2: pairing-cascade artifact of the event-16 move (live v1 y0 68×1.5 = 102; the ceiling-anchor band only gets evaluated after x-twin pairing broke)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'enemies: v2 row missing for event 26/5 lymph-mote',
+    reason: 'R2-04 Z2: column thinned 6→5 (ev26 x 6360, interval 14→18)',
+  },
+  {
+    scenario: 'zone-f',
+    line: 'enemies: v2 row missing for event 39/5 lymph-mote',
+    reason: 'R2-04 Z2: column thinned 6→5 (ev39 9270→9060)',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'event 17 (spawn): no v2 twin within the port bands',
+    reason:
+      'R2-04 Z2 (merged timeline, index +1 by the loop-2 remix): zone F section-1 ceiling polyp de-overlapped, x 3476→3660',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'event 20 (formation): no v2 twin within the port bands',
+    reason:
+      'R2-04 Z2 (merged timeline, index +1 by the loop-2 remix): lymph column off the first non-god death x, 4020→4080',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'event 41 (formation): no v2 twin within the port bands',
+    reason:
+      'R2-04 Z2 (merged timeline, index +1 by the loop-2 remix): section-tail volley off the contact-death x, 9270→9060',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'enemies: v2 row missing for event 14/5 lymph-mote',
+    reason: 'R2-04 Z2 (merged timeline): column thinned 6→5 (ev13 x 2760, interval 14→16)',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'enemies event 17/-1 polyp-turret-ceiling: y0 102 vs mapped 79.50 (Δ22.50 > ±12)',
+    reason: 'R2-04 Z2 (merged timeline): pairing-cascade artifact of the de-overlapped polyp move',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'enemies: v2 row missing for event 27/5 lymph-mote',
+    reason: 'R2-04 Z2 (merged timeline): column thinned 6→5 (ev26 x 6360, interval 14→18)',
+  },
+  {
+    scenario: 'zone-f-loop2',
+    line: 'enemies: v2 row missing for event 41/5 lymph-mote',
+    reason: 'R2-04 Z2 (merged timeline): column thinned 6→5 (ev39 9270→9060)',
+  },
+]);
+
+/** scenario id → the disclosed R2-04 lines of its comparison (built once). */
+const exemptionsByScenario = new Map<string, readonly PortExemption[]>();
+for (const e of PORT_EXEMPTIONS) {
+  const list = exemptionsByScenario.get(e.scenario);
+  if (list === undefined) exemptionsByScenario.set(e.scenario, [e]);
+  else (list as PortExemption[]).push(e);
+}
+
+/**
  * Enemy rows whose motion the ship steers (README caveat: compare those loosely). The dive of
  * `hunter.option` is the deliberate exception inside: its line-up **depth** is a content number
  * and keeps the strict landing check.
@@ -1100,6 +1211,23 @@ export function compareScenario(v1: StageBaseline, v2: StageBaseline): string[] 
     // dying/escape/end ticks are WHEN the bot killed (or its run cut) the boss: the never-flip
     // and any finite difference are the class — their capped drift is inside W.encounters, the
     // window that bounds the positions, the locks and the child counts above.
+  }
+
+  // --- R2-04 disclosed departures (wave 07): drop each listed line of this scenario whole-exact,
+  // and fail on one that stopped appearing — the table must neither mask a new regression dressed
+  // as an old disclosure nor rot against a revert. Dormant at K = 1 (see PortExemption). ---
+  if (K !== 1) {
+    const listed = exemptionsByScenario.get(v1.id);
+    if (listed !== undefined) {
+      for (const e of listed) {
+        const at = issues.indexOf(e.line);
+        if (at >= 0) issues.splice(at, 1);
+        else
+          add(
+            `disclosed R2-04 line did not appear: "${e.line}" (${e.reason}) — the retune moved or a look-alike regression arrived; retire or fix the exemption`,
+          );
+      }
+    }
   }
   return issues;
 }

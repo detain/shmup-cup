@@ -177,10 +177,10 @@ describe('render-pixi/effects shake (edges)', () => {
     const effects = createScreenEffects({ screenShake: false });
     effects.shake(ShakeMagnitude.Large, 16);
     effects.step(5);
-    expect([effects.shakeX, effects.shakeY, effects.shakeAmount]).toEqual([0, 0, 3]);
+    expect([effects.shakeX, effects.shakeY, effects.shakeAmount]).toEqual([0, 0, 5]);
     effects.settings.screenShake = true;
-    expect(effects.shakeX).toBe(3 * SHAKE_PATTERN_X[4]);
-    expect(effects.shakeY).toBe(3 * SHAKE_PATTERN_Y[4] + 0);
+    expect(effects.shakeX).toBe(5 * SHAKE_PATTERN_X[4]);
+    expect(effects.shakeY).toBe(5 * SHAKE_PATTERN_Y[4] + 0);
   });
 });
 

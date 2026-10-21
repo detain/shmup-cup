@@ -54,7 +54,7 @@ describe('core/fx', () => {
   });
 
   it('names three shake magnitudes and the Mega Crash flash (12 ticks)', () => {
-    expect([ShakeMagnitude.Small, ShakeMagnitude.Medium, ShakeMagnitude.Large]).toEqual([1, 2, 4]);
+    expect([ShakeMagnitude.Small, ShakeMagnitude.Medium, ShakeMagnitude.Large]).toEqual([2, 3, 6]);
     expect(FLASH_KIND_TICKS[FlashKind.MegaCrash]).toBe(12);
     expect(Object.isFrozen(FLASH_KIND_TICKS)).toBe(true);
   });
@@ -118,7 +118,9 @@ describe('core/fx shake and flash', () => {
     const h = host();
     h.tick = 10;
     expect(requestShake(h, ShakeMagnitude.Large, 4)).toBe(true);
-    expect(drain(h)).toEqual([{ kind: SimEventKind.Shake, id: 4, x: 0, y: 0, param: 4 }]);
+    expect(drain(h)).toEqual([
+      { kind: SimEventKind.Shake, id: 4, x: 0, y: 0, param: ShakeMagnitude.Large },
+    ]);
     const amounts = [shakeAmount(h.fx)];
     tickFx(h); // the request's tick: not counted
     amounts.push(shakeAmount(h.fx));
@@ -127,7 +129,7 @@ describe('core/fx shake and flash', () => {
       tickFx(h);
       amounts.push(shakeAmount(h.fx));
     }
-    expect(amounts).toEqual([4, 4, 3, 2, 1, 0, 0]);
+    expect(amounts).toEqual([6, 6, 5, 3, 2, 0, 0]);
     expect([h.fx.shakeTicks, h.fx.shakeMagnitude]).toEqual([0, 0]);
   });
 

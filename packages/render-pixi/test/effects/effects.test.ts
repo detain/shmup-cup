@@ -70,8 +70,8 @@ describe('render-pixi/effects screen shake', () => {
       drawn.push(effects.shakeAmount);
     }
     expect(drawn).toEqual(sim);
-    expect(drawn.slice(0, 3)).toEqual([2, 2, 2]);
-    expect(drawn.indexOf(1)).toBe(10);
+    expect(drawn.slice(0, 3)).toEqual([3, 3, 3]);
+    expect(drawn.indexOf(1)).toBe(14);
     expect(drawn.slice(20)).toEqual([0, 0, 0, 0]);
   });
 
@@ -86,7 +86,7 @@ describe('render-pixi/effects screen shake', () => {
     const expected: Array<[number, number]> = [];
     for (let k = 0; k < 8; k++) {
       const left = k === 0 ? 8 : 8 - k;
-      const amp = Math.ceil((4 * left) / 8);
+      const amp = Math.ceil((6 * left) / 8);
       const phase = k === 0 ? 0 : k;
       expected.push([amp * SHAKE_PATTERN_X[phase] + 0, amp * SHAKE_PATTERN_Y[phase] + 0]);
     }
@@ -99,7 +99,7 @@ describe('render-pixi/effects screen shake', () => {
     effects.settings.screenShake = false;
     effects.step(1);
     expect([effects.shakeX, effects.shakeY]).toEqual([0, 0]);
-    expect(effects.shakeAmount).toBe(4);
+    expect(effects.shakeAmount).toBe(6);
     effects.settings.screenShake = true;
     expect(Math.abs(effects.shakeX) + Math.abs(effects.shakeY)).toBeGreaterThan(0);
     expect(createScreenEffects({ screenShake: false }).settings.screenShake).toBe(false);

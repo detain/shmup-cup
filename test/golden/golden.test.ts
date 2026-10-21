@@ -546,7 +546,9 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
   it('covers zones F and G without god mode (M2-13 tests): Arcade rank, restarts, deaths in place, the skips', () => {
     // CELL VAULT at Arcade difficulty: on the ported world the 4-way bot dies to the rank-scaled
     // fire before the clear (v1's survived): game over with its two recorded deaths, after having
-    // shot tissue open on the way.
+    // shot tissue open on the way. R2-04 Z2 thinned F's openings and de-overlapped section 1, so
+    // the blessed run survives ~330 ticks longer to its first death — still two deaths, still
+    // game over, still no boss.
     const arcade = readGolden('zone-f-arcade');
     expect(arcade.replay.header.assisted).toBe(false);
     expect(arcade.replay.header.config.difficulty).toBe('arcade');
@@ -555,7 +557,7 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
       bossDefeated: false,
       lives: 0,
     });
-    expect(arcade.file.expected.deathTicks).toEqual([3577, 4467]);
+    expect(arcade.file.expected.deathTicks).toEqual([3900, 4891]);
     expect(playGolden(arcade.replay).world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(
       0,
     );

@@ -8,6 +8,7 @@ import {
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  ShakeMagnitude,
   createDrawList,
   type RenderFrame,
   type ScreenView,
@@ -118,7 +119,7 @@ describe('shell/fx-gallery', () => {
     const at = (name: string): number => gallery.stations.indexOf(name) * FX_GALLERY_STATION_TICKS;
     gallery.update(source(at('shake.large')));
     fx.effects.step(1);
-    expect(fx.effects.shakeAmount).toBe(4);
+    expect(fx.effects.shakeAmount).toBe(ShakeMagnitude.Large);
     gallery.update(source(at('flash.warning')));
     fx.effects.step(1);
     expect(fx.effects.flashColor).toBe(0xf85858);

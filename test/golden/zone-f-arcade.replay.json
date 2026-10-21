@@ -64,31 +64,32 @@
       "blackHole": false
     }
   },
-  "ticks": 4560,
+  "ticks": 4984,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQA0gOCgAgBAgoA3wLAgIACAUAJAL8DgYAEAQEHAJwBgYAEAQEHAAeBgAQBAQcAHoKACAECCwACwICAAgFACYKACAECAgC8AYGABAEBAgABgoAIAQIPAJ4BgYAEAQEFABKBgAQBAQYAxQGBgAQBAQUAQ4KACAECBQCSA4GABAEBBAABgoAIAQABgYAEAQEIANUBgYAEAQEFAN4DgoAIAQIMAGuCgAgBAgUAA4KACAECBgAGgoAIAQIFAAaCgAgBAgUAB4KACAECBgAmgYAEAQECAIQBgoAIAQIEAIMEwICAAgFACQCOAYKACAECBwAFgoAIAQIHAASCgAgBAgcABYKACAECBwAlgYAEAQECAFw=",
-    "ANAj"
+    "ACiCgAgBAgQA0gOCgAgBAgoA3wLAgIACAUAJAL8DgYAEAQEHAJwBgYAEAQEHAAeBgAQBAQcAHoKACAECCwACwICAAgFACYKACAECAgC8AYGABAEBAgABgoAIAQIPAJ4BgYAEAQEFABKBgAQBAQYAxQGBgAQBAQUAQ4KACAECBQCkA4GABAEBDADHAYGABAEBBQDABIKACAECBQClA4KACAECDACEAYKACAECBACDBMCAgAIBQAkAbYGABAEBBwDQAYGABAEBAwBc",
+    "APgm"
   ],
   "hashes": [
     2181155815,
     396132045,
     3240283179,
-    495992809,
-    3833913523,
-    1754187534,
-    3811287654
+    1747620268,
+    4089445531,
+    1834113970,
+    3225912791,
+    1969231386
   ],
-  "finalHash": 1247204563,
+  "finalHash": 2488162144,
   "description": "CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the 4-way bot from the start against the rank-scaled fire — the chasing cells, the tissue walls, the grabbing tentacles — to MANTLE REGENT shot down",
   "expected": {
     "status": "gameOver",
-    "ticks": 4560,
-    "score": 5260,
+    "ticks": 4984,
+    "score": 5930,
     "lives": 0,
     "deathTicks": [
-      3577,
-      4467
+      3900,
+      4891
     ],
     "bossDefeated": false
   }

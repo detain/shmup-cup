@@ -14,6 +14,7 @@ import { loadContent, type ContentDb, type ContentFile } from '../../src/data/in
 import { hashWorld } from '../../src/debug/index.js';
 import { DropKind, type Enemy } from '../../src/enemies/index.js';
 import { FX_CUES, SFX_CUES, SimEventKind, type SimEvent } from '../../src/events/index.js';
+import { ShakeMagnitude } from '../../src/fx/index.js';
 import {
   Action,
   commitPlayerInput,
@@ -232,7 +233,7 @@ describe('core/world death sequence (M1-12)', () => {
     expect(find(SimEventKind.Rumble, 0)).toMatchObject({ x, y, param: 1 });
     expect(find(SimEventKind.MusicDuck, 0)?.param).toBe(DEATH_MUSIC_DUCK_TICKS);
     expect(find(SimEventKind.HitStop, 0)?.param).toBe(DEATH_HIT_STOP_TICKS);
-    expect(find(SimEventKind.Shake, DEATH_SHAKE_TICKS)?.param).toBe(2);
+    expect(find(SimEventKind.Shake, DEATH_SHAKE_TICKS)?.param).toBe(ShakeMagnitude.Medium);
     expect(
       events.some((e) => e.kind === SimEventKind.Particles && e.id === FX_CUES.BulletCancel),
     ).toBe(true);
