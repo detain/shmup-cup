@@ -2,7 +2,7 @@
  * The bullet readability sheets (plan R4-02.B1, the plan §10 R4-02 acceptance): every campaign
  * zone's stand-in backdrop — the `R3-04.M1a` far layer and its first mid band
  * (`scripts/assets/standin.mjs` `standinZone`) — under a fixed stress load of **512 bullets**
- * (the enemy bullet pool's capacity, `core/bullets` `ENEMY_BULLETS`) drawn from the shipped v2
+ * (the enemy bullet pool's capacity, `core/bullets` `MAX_ENEMY_BULLETS`) drawn from the shipped v2
  * generators, one sheet per palette. The four sheets per zone are the standard set and the three
  * colour-blind sets (`@deuteranopia`, `@protanopia`, `@tritanopia`); the owner's legibility
  * sign-off reads these pictures (recorded by `R4-02.B4`).

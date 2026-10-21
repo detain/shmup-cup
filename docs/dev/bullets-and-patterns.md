@@ -483,6 +483,11 @@ its revenge bullets), `setShooterRank(speedK, fireK, spec)` narrows the current 
   tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical,
   so a frame stretches to any length; growing and fading beams switch frames instead of scaling
   across.
+- **The v2 bullet art** (R3-03.V1) is finished to the art bible §5.4 shapes at the native sizes —
+  round 11×11 ×1 frame, oval 13×13 ×8, needle 17×17 ×8, the bending laser's node 11×11, the beams
+  6×12 with frame `k` a band `k + 1` rows tall (pinned by `test/scripts/assets/bullets-v2.test.ts`)
+  — and `node scripts/bullet-readability.mjs` renders the per-zone × per-palette 512-bullet stress
+  sheets the owner signs off on (R4-02.B1).
 
 ## Determinism and hashing
 
