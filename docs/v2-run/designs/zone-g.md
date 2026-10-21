@@ -76,9 +76,9 @@ full-height crystal corridor.
 | 20,550 | the WARNING | FACET MONARCH (camera lock; all four guns fire from phase 1 at `fireTicks` 90 — the rebuilt fleet opens hotter than today's two guns at the same cadence, §8) | — | — |
 
 Timing check: bare scroll to WARNING ≈ **276 s** (the live camera model measures 275.6 s
-on these keys — the sum above, 272.7 + ramps ≈ 1.5, underestimated the ramp/hold cost by
-2.9 s — inside the contract's 225–315 s = 3.75–5.25 min with ≈ 10 s of high headroom and
-40 s of low).
+on these keys — the sum above, 272.7 + ramps ≈ 1.5, underestimated the ramp/hold cost —
+≈ 1.4 s against its 274, 2.9 s against the bare 272.7 — inside the contract's 225–315 s
+= 3.75–5.25 min with ≈ 40 s of high headroom and ≈ 50 s of low).
 Expected bot run ≈ 274 + boss ≈ 45 (§8) + intro/lock ≈ 12 + end-tail ≈ 12 ≈ **343 s**
 (god, no deaths) — inside 240–360 s with ≈ 17 s of room; today's 240.4 s baseline sits near
 the floor band, so the **lane must keep the run under 360 s** (S6 asserts it, §15).
@@ -91,7 +91,8 @@ system, used on this stage for the first time; `MAX_TERRAIN_BLOCKS` 16, never mo
 12 alive): four **shutters** (`y` **408** — hanging from the deep band's ceiling mass at
 map y ≤ 456; 10,080 / 11,200 / 12,400 / 13,600, 24×48 px of tile `crystal`, oscillating
 down with `dy` 96, `period` 240, phases 0 / 256 / 512 / 768, the zone-H piston idiom) and
-four **riders** (`y` **396**, the corridor band; 10,600 / 11,800 / 13,000 / 13,300 — the
+four **riders** (`y` **456**, top flush with the ceiling mass's under-side, riding the corridor's
+upper 48 px and leaving the 24-px lane under; 10,600 / 11,800 / 13,000 / 13,300 — the
 same block size travelling the corridor at `vx` −0.75 px/tick). The ship
 threads the gap each shutter leaves under it and times the riders; the scroll carries
 every block behind the ship eventually, so 4-way fire never has to stop to clear one.
@@ -511,7 +512,7 @@ new sprite.
 | 4-way caps | aimed ≤ 3.0 everywhere incl. `prism.fan` 1.725; laser lane gap ≥ 24, `maxSeparate ≤ 1` | ✓ |
 | zone case (rewrite) | hang cols map rows 15–26 ≥ 6 **and** rise cols 28–39 ≥ 6 (§10 bands; **band-bounded probes** replace the case's row-14 middle probe — `content-zone-g.test.ts:130` reads row 14 today; measured on the authored map: hang 348 / rise 231 cols); rush formations ≥ 3 each count ≥ 6 `drop: null`; cube tile `hp > 0`; monarch shape (2 arms ≥ 4 parts, gun tips, ≥ 2 crystals in front) **unchanged** except 20 parts | 28-row bands 0–14 / 14–27 |
 | bonus-window case (rewrite) | entrance x **4,800**, `until` **6,000**; ≥ 4 ground events in the window, **all** sprite `enemies/facet-turret`, grounds {ceiling, floor} (4,950/5,250/5,450/5,700); every turret event before the window scrolls off first (last ≤ 4,050 — W5-7 rule); cache keeps type `bonus`, drops {bonusCapsule, oneUp} | window 3,450–4,650, turret 2,681 |
-| moving-block case (new) | exactly 8 `block` events (§3 list, `y` 408 shutters / 396 riders), ≤ 12 live; blocks 24×48, tile `crystal` (one tile for all eight, §3), authored drift |v| ≤ 0.75 px/tick (the shutters' sine excursion peaks ≈ 2.5 px/tick — the bot's dodge reads position, not velocity), shutters `dy` 96 `period` 240, phases 0/256/512/768; the geyser columns `crystal-hot` hp 3 (the P12 punch proof); restart respawns behind-camera blocks at age 0 (checkpoint 11,700 mid-hall) | 0 |
+| moving-block case (new) | exactly 8 `block` events (§3 list, `y` 408 shutters / 456 riders), ≤ 12 live; blocks 24×48, tile `crystal` (one tile for all eight, §3), authored drift |v| ≤ 0.75 px/tick (the shutters' sine excursion peaks ≈ 2.5 px/tick — the bot's dodge reads position, not velocity), shutters `dy` 96 `period` 240, phases 0/256/512/768; the geyser columns `crystal-hot` hp 3 (the P12 punch proof); restart respawns behind-camera blocks at age 0 (checkpoint 11,700 mid-hall) | 0 |
 | dive case (rewrite) | **three** `yTo` ≥ 144 keys (168, 312, back to 168) each with a hold; `rowsTall` 56; camera y 168 at the gallery/heart/run, 312 through the deep band; y == 168 at clear | 0 pans, rows 28 |
 | boss case | 20 parts ≤ 24; ≥ 2 crystals in front; core `afterParts` reachable; exactly 4 `gun` parts — 2 tips + 2 emitters (the emitters' 16×16 rect hurtboxes make their 32 hp spendable); the case asserts the fire pool is the alive guns (no phase gating exists in the system); spin 0 everywhere (shipped parts carry none); assembled height ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`); 3 phases exactly; core hp 84 | 13 parts, core 72 |
 | branches | **none by design** (§4) — no branch-bound event anywhere | 0 |
