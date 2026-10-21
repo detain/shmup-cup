@@ -1153,6 +1153,95 @@ describe('web/boot saves and the Options screen (M1-17 edge)', () => {
   });
 });
 
+describe('web/boot the Electron bridge boot read (R6-04, the RT-R604 F1 cure)', () => {
+  /**
+   * The main process's key law, mirrored from `apps/electron/src/shared/ipc.ts` `isStorageKey`
+   * (the web app cannot import the desktop app): at most 64 characters of letters, digits, `.`,
+   * `_` and `-` starting with a letter or digit, not ending with `.`. A refused invoke rejects.
+   */
+  const IS_STORAGE_KEY = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+  /** The fake's shape: what `getElectronBridge` accepts. */
+  interface FakeBridge {
+    platform: 'electron';
+    quit(): void;
+    storage: {
+      get(key: string): Promise<string | null>;
+      set(key: string, value: string): Promise<void>;
+    };
+  }
+
+  /**
+   * Installs `window.shmupElectron` on the test window, storing saves by the RAW core key —
+   * `createBridgeStorage` forwards keys unprefixed, so a prefixed read fails `isStorageKey`
+   * (the colon) exactly like the real main process refuses it (F1).
+   *
+   * @param files - The user-data save files, by raw key.
+   * @returns The installed bridge (for calling its law directly in a non-vacuity check).
+   */
+  function installElectronBridge(files: Map<string, string>): FakeBridge {
+    const refuse = (key: string): Promise<never> =>
+      Promise.reject(new Error(`IpcRefusedError: invalid storage key "${key}"`));
+    const ok = (key: string): boolean =>
+      IS_STORAGE_KEY.test(key) && key.length <= 64 && !key.endsWith('.');
+    const bridge: FakeBridge = {
+      platform: 'electron',
+      quit() {},
+      storage: {
+        get: (key) => (ok(key) ? Promise.resolve(files.get(key) ?? null) : refuse(key)),
+        set: (key, value) => {
+          if (!ok(key)) return refuse(key);
+          files.set(key, value);
+          return Promise.resolve();
+        },
+      },
+    };
+    (win as unknown as { shmupElectron: FakeBridge }).shmupElectron = bridge;
+    return bridge;
+  }
+
+  it('reads the saved OUTPUT and RENDERER under the raw bridge key: capped size, pinned version', async () => {
+    // The F1 bug made this read call `get('shmup-cup:save.v1')` — refused, swallowed, auto/auto.
+    installElectronBridge(
+      new Map([
+        [
+          'save.v1',
+          JSON.stringify({
+            version: SAVE_VERSION,
+            options: { display: { output: '540', renderer: 'webgl2' } },
+          }),
+        ],
+      ]),
+    );
+    const { app } = await boot();
+    // OUTPUT 540 caps the 1280×720 fake window to 960×540 (bootShell's capDisplaySize);
+    // RENDERER webgl2 pins the version, as the row's law says.
+    expect(fakes.renderer.options).toMatchObject({
+      displayWidth: 960,
+      displayHeight: 540,
+      preferWebGLVersion: 2,
+    });
+    app.stop();
+  });
+
+  it('boots native with the floor answer when the bridge holds no save', async () => {
+    installElectronBridge(new Map());
+    const { app } = await boot();
+    expect(fakes.renderer.options).toMatchObject({
+      displayWidth: 1280,
+      displayHeight: 720,
+      preferWebGLVersion: 1, // the fake UA fails the Chromium 71 floor → auto stays on 1
+    });
+    app.stop();
+  });
+
+  it('refuses the prefixed key the way the main process does (non-vacuity for the cure)', async () => {
+    const bridge = installElectronBridge(new Map([['save.v1', 'a-text']]));
+    await expect(bridge.storage.get('shmup-cup:save.v1')).rejects.toThrow(/invalid storage key/);
+    await expect(bridge.storage.get('save.v1')).resolves.toBe('a-text');
+  });
+});
+
 describe('web/boot rebinding (M2-16)', () => {
   /** A version-2 save with the player's keyboard and pad rebinding, SOCD and debounce. */
   const REBOUND = JSON.stringify({

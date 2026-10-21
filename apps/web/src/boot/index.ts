@@ -599,14 +599,16 @@ export async function bootWebApp(
   };
   // R6-04 (decision W5-20): the GRAPHICS page's two boot knobs, read before the renderer exists —
   // the raw save text from `localStorage`, or (inside Electron, where saves are files) through
-  // the bridge. A failed or absent read stands for both defaults (`auto` output = the native
+  // the bridge. `createBridgeStorage` forwards the RAW core key (`save.v1`): the main process's
+  // `isStorageKey` refuses colons, so the prefix belongs to the `localStorage` adapters only.
+  // A failed or absent read stands for both defaults (`auto` output = the native
   // size, `auto` renderer = the shell's Chromium 71 floor with a WebGL 2 probe).
   let bootDisplayText: string | null;
   try {
     bootDisplayText =
       electron === null
         ? win.localStorage.getItem(STORAGE_PREFIX + SAVE_STORAGE_KEY)
-        : await electron.storage.get(STORAGE_PREFIX + SAVE_STORAGE_KEY);
+        : await electron.storage.get(SAVE_STORAGE_KEY);
   } catch (_error) {
     bootDisplayText = null;
   }
