@@ -4,7 +4,7 @@
   "id": "zone-g",
   "description": "PRISM LABYRINTH: the KESTREL in the crystal walls",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 107,
     "stageId": "zone-g",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 107,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAiwOBgAQBAQMAAYKACAECDQBkgYAEAQEJAOwBwICAAgFACQCXAYGABAEBBwAFgYAEAQEHAL4CgYAEAQEHALgEgoAIAQIXAEqCgAgBAgcA9AKCgAgBAgcAIw==",
+    "ACiCgAgBAgQAnAiBgAQBAQkABoGABAEBCgD/AYGABAEBCgCtBYKACAECKgCVAoKACAECBA==",
     "AOAS"
   ],
   "hashes": [
-    2917179701,
-    1278860934,
-    3366207042,
-    3021856747
+    539691493,
+    898211975,
+    3418897164,
+    2634164346
   ],
-  "finalHash": 3021856747
+  "finalHash": 2634164346
 }

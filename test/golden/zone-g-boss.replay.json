@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 95,
     "stageId": "zone-g",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 95,
@@ -64,23 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1900,
+  "ticks": 1769,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAiQWBgAQBAQYAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAoKACAEAAYKACAEAAYKACAEAAYKACAEAAYGABAEBAQABgYAEAQABgYAEAQACgoAIAQABgoAIAQABgoAIAQIDAFCCgAgBAgYAf4KACAECBQAygYAEAQEFAD6BgAQBAQwAEYKACAECBQAGgYAEAQEFADKBgAQBAQcAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAYGABAEAAoKACAEAAYGABAEAEIKACAEAAYKACAECBAAygoAIAQIMACWCgAgBAgUAcoKACAECEgAXgYAEAQELAAWCgAgBAgUAWIGABAEBDAAbgoAIAQIGAAGCgAgBAgUA8wE=",
-    "AOwO"
+    "ACiCgAgBAgIAnAqBgAQBAQUAJIKACAECBQAkgYAEAQEFAFKBgAQBAQYADYKACAECAQABgYAEAQEBAN0B",
+    "AOkN"
   ],
   "hashes": [
-    837402096,
-    1185306976,
-    1406931757
+    570094775,
+    2031469793
   ],
-  "finalHash": 2984465201,
+  "finalHash": 181898252,
   "description": "the stage skip to FACET MONARCH (M2-13 tests): the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down",
   "expected": {
     "status": "stageClear",
-    "ticks": 1900,
-    "score": 47290,
+    "ticks": 1769,
+    "score": 47380,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

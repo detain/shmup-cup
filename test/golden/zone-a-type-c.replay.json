@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 8,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 8,
@@ -64,20 +64,20 @@
       "blackHole": false
     }
   },
-  "ticks": 900,
+  "ticks": 949,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA2gY=",
-    "AIQH"
+    "ACiCgAgBAgIAigc=",
+    "ALUH"
   ],
   "hashes": [
-    2868171525
+    1168320630
   ],
-  "finalHash": 2963869356,
+  "finalHash": 1543872023,
   "description": "HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`",
   "expected": {
     "status": "stageClear",
-    "ticks": 900,
+    "ticks": 949,
     "score": 37180,
     "lives": 4,
     "deathTicks": [],

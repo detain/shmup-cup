@@ -4,7 +4,7 @@
   "id": "zone-f",
   "description": "CELL VAULT: the KESTREL among the chasing cells",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 106,
     "stageId": "zone-f",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 106,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA+AXAgIACAUAJAD+BgAQBAQcAXYGABAEBBwCKAsCAgAIBQAkAgwGCgAgBAg4AAYGABAEBCAAPgYAEAQABgYAEAQEEAAeBgAQBAAGBgAQBAQUA2wKCgAgBAgwACIKACAECBgANgoAIAQIFAIgCgYAEAQEFADvAgIACAUAJANUB",
+    "ACiCgAgBAgQA0gOCgAgBAgoA3wLAgIACAUAJAMQDgYAEAQEHAJoBgYAEAQEHAAiBgAQBAQcAHoKACAECCgACwICAAgFACYKACAECAwC4AYGABAEBDAAFgYAEAQEFABKBgAQBAQYARIKACAECJgAugoAIAQIFALoBgYAEAQEFAO4B",
     "AOAS"
   ],
   "hashes": [
-    605527765,
-    1471070710,
-    1470435528,
-    367138082
+    838497722,
+    2548936780,
+    2506175705,
+    4185523650
   ],
-  "finalHash": 367138082
+  "finalHash": 4185523650
 }

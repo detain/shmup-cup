@@ -11,7 +11,6 @@
  * file, then checks the new files the same way.
  */
 import { describe, expect, it } from 'vitest';
-import { GOLDENS_STALE, GOLDENS_STALE_REASON, itGoldensStale } from './stale.js';
 import {
   DEMO_BUILD_ID,
   MAX_DEMO_TICKS,
@@ -38,8 +37,8 @@ import { GOLDEN_UPDATE_ENV } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe('attract demos (content/demos, 4-way bot)', () => {
-  it.skipIf(GOLDENS_STALE).each(DEMO_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(
-    `%s plays back through the attract playback with every state hash [${GOLDENS_STALE_REASON}]`,
+  it.each(DEMO_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(
+    '%s plays back through the attract playback with every state hash',
     (_id, scenario) => {
       if (updating) {
         writeDemo(scenario, recordDemo(scenario));
@@ -93,7 +92,7 @@ describe('attract demos (content/demos, 4-way bot)', () => {
     expect(DEMO_TICKS).toBeLessThanOrEqual(MAX_DEMO_TICKS);
   });
 
-  itGoldensStale('the format sample is a demo of free flight that plays in sync', () => {
+  it('the format sample is a demo of free flight that plays in sync', () => {
     if (updating) writeDemo(EXAMPLE_DEMO, recordDemo(EXAMPLE_DEMO));
     const { file, replay } = readDemo(EXAMPLE_DEMO.id);
     expect(file.formatVersion).toBe(1);

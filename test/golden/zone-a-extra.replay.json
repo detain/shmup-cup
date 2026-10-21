@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 74,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 74,
@@ -68,20 +68,20 @@
       "blackHole": false
     }
   },
-  "ticks": 908,
+  "ticks": 945,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAoAOBgAQBAQEAhwKCgAgBAgEAtwE=",
-    "AIwH"
+    "ACiCgAgBAgIAnwOBgAQBAQIAqwKCgAgBAgIAtgE=",
+    "ALEH"
   ],
   "hashes": [
-    312898265
+    1145172034
   ],
-  "finalHash": 2888046003,
+  "finalHash": 1183513897,
   "description": "HALCYON BULWARK with an Extra Edit loadout (M3-01): the Hawk Wind rising over the middle and falling below it, god mode",
   "expected": {
     "status": "stageClear",
-    "ticks": 908,
+    "ticks": 945,
     "score": 37180,
     "lives": 4,
     "deathTicks": [],

@@ -7,10 +7,6 @@
  * tick counts (`test/e2e/frame-advance.ts`), so the timings are the game's, not the machine's. The
  * Tizen build from disk reaches the demo too, and the remote's OK returns to the title.
  *
- * From R2-01 until R2-03 the demos are v1 recordings the build refuses (`gates.ts`), so the loop
- * skips them: those tests skip, and two others run instead — the web loop without its demos, and
- * the Tizen remote's OK leaving the hi-scores. R2-03 deletes both with the gate.
- *
  * The remote's OK is pressed once the sim runs on its own again, with the shared `remoteTap`
  * (`ticks.ts`: 3 ticks held, 6 released).
  */
@@ -18,7 +14,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim } from './frame-advance.js';
-import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
 import { BOOT_TIMEOUT_MS, remoteTap } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -165,7 +160,6 @@ test.describe('attract loop (web build)', () => {
   test('title → demo → hi-scores → story → title on the game`s timings; any key: title', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, GOLDEN_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await page.goto('./');
@@ -213,80 +207,8 @@ test.describe('attract loop (web build)', () => {
   });
 });
 
-test.describe('attract loop with the v1 demos refused (web build, R2-01 until R2-03)', () => {
-  test('title → hi-scores → story → title: the loop skips the demos the build refuses (W4-9)', async ({
-    page,
-  }, testInfo) => {
-    // Only while the shipped demos are v1 recordings: once R2-03 re-records them, the loop plays
-    // them again and the test above covers it — R2-03 deletes this test with the gate.
-    test.skip(!R2_03_PENDING, 'the demos play again since R2-03: the loop test above covers it');
-    test.setTimeout(120_000);
-    const errors = watchErrors(page);
-    await page.goto('./');
-    const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
-      timeout: BOOT_TIMEOUT_MS,
-    });
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await freezeSim(page);
-    // The title waits; with no demo it can play, the loop goes straight on to the tables.
-    await runTicks(page, TITLE_ATTRACT_TICKS - 1 - (await titleIdle(page)));
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await runTicks(page, 1);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'hiScore');
-    await page
-      .locator('#game')
-      .screenshot({ path: testInfo.outputPath('attract-hi-scores.png') })
-      .then((png) => testInfo.attach('attract-hi-scores', { body: png, contentType: 'image/png' }));
-    const pages = await page.evaluate(
-      () => (window as unknown as DebugWindow).__shmupDebug.game.scenes.hiScores.pages.length,
-    );
-    await runTicks(page, HI_SCORE_PAGE_TICKS * pages);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'story');
-    const duration = await page.evaluate(
-      () => (window as unknown as DebugWindow).__shmupDebug.game.scenes.story.duration,
-    );
-    expect(duration).toBeGreaterThan(600);
-    await runTicks(page, duration >> 1);
-    await page
-      .locator('#game')
-      .screenshot({ path: testInfo.outputPath('attract-story.png') })
-      .then((png) => testInfo.attach('attract-story', { body: png, contentType: 'image/png' }));
-    await runTicks(page, duration - (duration >> 1));
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    expect(errors).toEqual([]);
-  });
-});
-
-test.describe('attract loop with the v1 demos refused (Tizen build from disk, R2-01 until R2-03)', () => {
-  test('the title hands over to the hi-scores; the remote`s OK returns', async ({ page }) => {
-    // The remote's way out of the attract loop while the Tizen demo test below is gated: once
-    // R2-03 re-records the demos, that test covers it again — R2-03 deletes this one with the gate.
-    test.skip(!R2_03_PENDING, 'the demos play again since R2-03: the Tizen test below covers it');
-    test.setTimeout(60_000);
-    const errors = watchErrors(page);
-    await page.goto(TIZEN_INDEX);
-    const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
-      timeout: BOOT_TIMEOUT_MS,
-    });
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await freezeSim(page);
-    await runTicks(page, TITLE_ATTRACT_TICKS - (await titleIdle(page)));
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'hiScore');
-    await runTicks(page, 120);
-    await page.evaluate(() => {
-      (window as unknown as DebugWindow).__shmupDebug.flags.frameAdvance = false;
-    });
-    await remoteTap(page, 13); // the remote's OK
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    expect(errors).toEqual([]);
-  });
-});
-
 test.describe('attract loop (Tizen build from disk)', () => {
   test('the title hands over to the demo; the remote`s OK returns', async ({ page }) => {
-    test.skip(R2_03_PENDING, GOLDEN_REASON);
     test.setTimeout(60_000);
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);

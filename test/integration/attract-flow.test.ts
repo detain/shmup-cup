@@ -5,7 +5,7 @@
  * checked, silent — to its end without a desync, then the hi-score tables, the campaign's story
  * crawl and the title again.
  */
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   HI_SCORE_PAGE_TICKS,
   SimEventKind,
@@ -16,10 +16,9 @@ import {
   type SceneFlow,
 } from '@shmup/core';
 import { DEMO_TICKS } from '../golden/demos.js';
-import { describeGoldensStale } from '../golden/stale.js';
 import { shippedContent } from '../playtest/harness.js';
 
-describeGoldensStale('integration: the attract loop on the shipped content (M2-15)', () => {
+describe('integration: the attract loop on the shipped content (M2-15)', () => {
   it('plays every bundled demo through the flow in sync, then the tables and the story', () => {
     const db = shippedContent();
     expect(db.demos).toHaveLength(9);

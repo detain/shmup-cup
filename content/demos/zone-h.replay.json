@@ -4,7 +4,7 @@
   "id": "zone-h",
   "description": "IRON CITADEL: the MANTA along the outer walls",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 108,
     "stageId": "zone-h",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 108,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA+QSBgAQBARwAN4GABAEBBgBagoAIAQI0AAGBgAQBARYAAYKACAECDAAGgYAEAQEcACKCgAgBAg0AAYGABAEBBQBcgoAIAQIGAC6CgAgBAgYAL4KACAECBgAugoAIAQIGAC6CgAgBAgYAJIGABAEBBgC4AYKACAECDQCQAYGABAEBFAA5gYAEAQEGAC+BgAQBAQYAc4GABAEBDgDMAoGABAEBBgAugoAIAQIGAAU=",
+    "ACiCgAgBAgMAzAOCgAgBAgYAoQGBgAQBAQYAK4GABAEBBwBIgYAEAQEGAEmBgAQBAQYASYGABAEBBgAigoAIAQIGAJEBgoAIAQIGALEBgoAIAQIGAM8BgoAIAQIHAEiCgAgBAgYA+QGBgAQBAQYAY4GABAEBBwABgYAEAQEGAIUD",
     "AOAS"
   ],
   "hashes": [
-    2820984628,
-    3938707807,
-    535305005,
-    1606544459
+    1999570991,
+    2537673953,
+    2603226151,
+    398308584
   ],
-  "finalHash": 1606544459
+  "finalHash": 398308584
 }

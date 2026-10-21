@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 75,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 75,
@@ -64,27 +64,27 @@
       "blackHole": false
     }
   },
-  "ticks": 1514,
+  "ticks": 1642,
   "hashInterval": 600,
   "inputs": [
-    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIh",
-    "AOoL"
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIB",
+    "AOoM"
   ],
   "hashes": [
-    1375729643,
-    3582579276
+    4280069061,
+    1947829453
   ],
-  "finalHash": 3185547355,
+  "finalHash": 752018788,
   "description": "a weaving pilot with the full loadout and option recovery (M3-01): each death drops the Options it loses, drifting to be caught again",
   "expected": {
     "status": "gameOver",
-    "ticks": 1514,
+    "ticks": 1642,
     "score": 2000,
     "lives": 0,
     "deathTicks": [
-      826,
-      1114,
-      1421
+      907,
+      1258,
+      1549
     ],
     "bossDefeated": false
   }

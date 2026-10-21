@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 73,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 73,
@@ -67,23 +67,23 @@
   "ticks": 3600,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAlAeBgAQBAR8A9gLAgIACAUAJAB+CgAgBAhcAD4KACAECDwCzBMCAgAIBQAkAowWBgAQBAQYAC4GABAEBBQCnA8CAgAIBQAkAogOBgAQBAQUACg==",
+    "ACiCgAgBAgQAtwOBgAQBARQAGIGABAEBCgCICYGABAEBKQALgoAIAQIUAA2CgAgBAgoA/QWCgAgBAhQAuASCgAgBAgoAtQM=",
     "AJAc"
   ],
   "hashes": [
-    1427670324,
-    3882919303,
-    2792420630,
-    1683842411,
-    523733114,
-    2739087009
+    688843932,
+    3659924600,
+    3858135613,
+    3877538982,
+    1673100315,
+    544515615
   ],
-  "finalHash": 2739087009,
+  "finalHash": 544515615,
   "description": "the CARAVAN clock on AZURE VERGE (M3-01): one minute with god mode, then time up — status stageClear with the World timeUp",
   "expected": {
     "status": "stageClear",
     "ticks": 3600,
-    "score": 7100,
+    "score": 1900,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

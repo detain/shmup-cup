@@ -4,7 +4,7 @@
   "id": "zone-c",
   "description": "DUNE EXPANSE: the KESTREL over the dunes",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 103,
     "stageId": "zone-c",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 103,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAywPAgIACAUAJAOIIgYAEAQEXAKECwICAAgFACQC7Aw==",
+    "ACiCgAgBAgQAjQTAgIACAUAJAKUFgYAEAQACwICAAgFACYGABAEBBQABgoAIAQDMBsCAgAIBQAkAjAI=",
     "AOAS"
   ],
   "hashes": [
-    2220742648,
-    2349798517,
-    2518926407,
-    1432580911
+    3854668216,
+    4213769912,
+    457424742,
+    2045317902
   ],
-  "finalHash": 1432580911
+  "finalHash": 2045317902
 }

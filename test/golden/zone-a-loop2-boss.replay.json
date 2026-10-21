@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 72,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 72,
@@ -64,22 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1949,
+  "ticks": 2251,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA8g4=",
-    "AJ0P"
+    "ACiCgAgBAgQAnhE=",
+    "AMsR"
   ],
   "hashes": [
-    976073768,
-    3174684332,
-    1332567321
+    1804238660,
+    3524915585,
+    2595956736
   ],
-  "finalHash": 1586297522,
+  "finalHash": 2458625660,
   "description": "HALCYON BULWARK on loop 2 without power-ups or god mode (M3-01): the loop-2 rank, bullet speed and revenge bullets against the 4-way bot",
   "expected": {
     "status": "stageClear",
-    "ticks": 1949,
+    "ticks": 2251,
     "score": 37120,
     "lives": 4,
     "deathTicks": [],

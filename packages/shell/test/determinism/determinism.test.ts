@@ -6,7 +6,6 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { itGoldensStale } from '../../../../test/golden/stale.js';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
   DETERMINISM_GLOBAL,
@@ -50,7 +49,7 @@ describe('shell/determinism', () => {
     expect(moduleInfo.status).toBe('implemented');
   });
 
-  itGoldensStale('reproduces every hash of a golden replay, the same list the file holds', () => {
+  it('reproduces every hash of a golden replay, the same list the file holds', () => {
     let clock = 0;
     const check = createDeterminismCheck(FILES, () => (clock += 5));
     expect(check.issues).toEqual([]);
@@ -67,7 +66,7 @@ describe('shell/determinism', () => {
     }
   });
 
-  itGoldensStale('reports the first recorded hash this engine does not reproduce', () => {
+  it('reports the first recorded hash this engine does not reproduce', () => {
     const doc = golden('zone-a-manta-boss');
     const tampered = { ...doc, hashes: doc.hashes.map((h, i) => (i === 0 ? (h ^ 1) >>> 0 : h)) };
     const run = createDeterminismCheck(FILES).play(tampered);

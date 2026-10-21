@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 9,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 9,
@@ -64,20 +64,20 @@
       "blackHole": false
     }
   },
-  "ticks": 763,
+  "ticks": 810,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA0QU=",
-    "APsF"
+    "ACiCgAgBAgIA/wU=",
+    "AKoG"
   ],
   "hashes": [
-    1757895530
+    2700674042
   ],
-  "finalHash": 2835101747,
+  "finalHash": 3543919937,
   "description": "HALCYON BULWARK with a full Type D loadout (M2-03): Twin Laser, Photon Torpedo, Free Way, FULL BARRIER on `!`",
   "expected": {
     "status": "stageClear",
-    "ticks": 763,
+    "ticks": 810,
     "score": 37060,
     "lives": 4,
     "deathTicks": [],

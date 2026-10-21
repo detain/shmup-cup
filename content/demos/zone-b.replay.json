@@ -4,7 +4,7 @@
   "id": "zone-b",
   "description": "BRINE NEBULA: the MANTA among the splitting bubbles",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 102,
     "stageId": "zone-b",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 102,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA/gSBgAQBARUAFIGABAEBBgAvgYAEAQEGAC6BgAQBAQYARIKACAECBgAugoAIAQIGAC+CgAgBAgYALoKACAECBwC6AoGABAEBBwCYAYKACAECBwC0BIGABAEBAQABgoAIAQIkAB2CgAgBAgYAL4KACAECBgBygYAEAQEGAB8=",
+    "ACiCgAgBAgMArASBgAQBAQMAAYKACAECAwAHgoAIAQIGAHuBgAQBAQYASYGABAEBBwBIgYAEAQEGAEmBgAQBAQYASYGABAEBBgBJgYAEAQEGAEmBgAQBAQYASYGABAEBBgADgoAIAQIxAEaCgAgBAgYASYKACAECBgBJgoAIAQIBAAGBgAQBAQEADoKACAECBgA2goAIAQIGAM0F",
     "AOAS"
   ],
   "hashes": [
-    1410253371,
-    2863421883,
-    1753562539,
-    300737666
+    226300497,
+    1443483269,
+    1028693354,
+    3480536062
   ],
-  "finalHash": 300737666
+  "finalHash": 3480536062
 }

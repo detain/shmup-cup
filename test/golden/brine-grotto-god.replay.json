@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 71,
     "stageId": "brine-grotto",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 71,
@@ -67,20 +67,20 @@
   "ticks": 1815,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA5gSCgAgBAgUAMYKACAECDADDAoGABAEBEgASgoAIAQABgYAEAQDRAYGABAEBDAAhgoAIAQIFANMD",
+    "ACiCgAgBAgIA5wSCgAgBAgYAkwKBgAQBAQYA3wKBgAQBAQgAAYKACAECAgD4Aw==",
     "AJcO"
   ],
   "hashes": [
-    3882535190,
-    3293660414,
-    178835552
+    3599974345,
+    1939175807,
+    4083787085
   ],
-  "finalHash": 3166305228,
+  "finalHash": 2312891118,
   "description": "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
   "expected": {
     "status": "stageClear",
     "ticks": 1815,
-    "score": 10350,
+    "score": 5650,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": false

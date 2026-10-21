@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 11,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 11,
@@ -64,21 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1058,
+  "ticks": 1328,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA+Ac=",
-    "AKII"
+    "ACiCgAgBAgIAhQo=",
+    "ALAK"
   ],
   "hashes": [
-    2687823463
+    1798620334,
+    1245578443
   ],
-  "finalHash": 628991469,
+  "finalHash": 2868204027,
   "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",
-    "ticks": 1058,
-    "score": 37130,
+    "ticks": 1328,
+    "score": 37180,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

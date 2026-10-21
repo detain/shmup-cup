@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 77,
     "stageId": "zone-d",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 77,
@@ -64,48 +64,45 @@
       "blackHole": false
     }
   },
-  "ticks": 14619,
+  "ticks": 14253,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA+AXAgIACAUAJAIsCwICAAgFACQDPA4KACAECDACIAoGABAEBDADgBIGABAEBGQA5gYAEAQABgoAIAQIHAMwGgoAIAQISAKUBgYAEAQEMABSCgAgBAgwA1gOBgAQBAQYAA4GABAEBBQADgoAIAQABgoAIAQABgYAEAQEBAASCgAgBAgUAB4KACAEAAYKACAEAAYGABAEBBwADgYAEAQEFAPgDgoAIAQAXgYAEAQCxEYKACAECGADTAcCAgAIBQAkAFYGABAEBEgCCBIKACAECDQABgYAEAQAIgoAIAQIMAIMBgYAEAQETANoCgoAIAQIMAPkDgYAEAQEFAIsBgoAIAQIFAAiCgAgBAgYAmQGCgAgBAgUA4AOBgAQBAAGBgAQBAQEAhgHAgIACAUAJgoAIAQIBAJIIgYAEAQEMAI8BgoAIAQIMAIoBgYAEAQEGAAOBgAQBAQUAC4GABAEBBgAKgoAIAQIEAAGBgAQBAQQAA4KACAECBgBtgoAIAQISAFWCgAgBAgUApAqBgAQBAQsAigaBgAQBAQYAzwGBgAQBAQUA0AGBgAQBAQYAyQGBgAQBAQUAqgGCgAgBAgUA3gI=",
-    "AJty"
+    "ACiCgAgBAgQAqwbAgIACAUAJALgBwICAAgFACQD1BsCAgAIBQAkACoKACAECBgDMAYGABAEBBgCFAYGABAEBEgCXCIKACAECBQANgoAIAQIGALgBgoAIAQISABSCgAgBAgUAA4KACAECBgDiB4KACAEAM4GABAEA8gGCgAgBAgUApgKBgAQBAQUAqAGBgAQBAQYA1AmBgAQBARgA5wGCgAgBAhIA4gGCgAgBAgUASIGABAEBEgC/AYGABAEBCwABgoAIAQIFAPgBgoAIAQIMAP0BgYAEAQEGAIQCgoAIAQIGAOsGgYAEAQEGAK4CgYAEAQEMAKoCwICAAgFACQD6CIKACAECCAABgYAEAQEBAJoBgYAEAQEGAIkBgoAIAQIGACiCgAgBAgwA2AKCgAgBAgUAkwGBgAQBARIA1w2CgAgBAgUAzAGBgAQBAQUAzAGCgAgBAgUAogI=",
+    "AK1v"
   ],
   "hashes": [
-    2357078034,
-    2910078606,
-    725185901,
-    1283654181,
-    1495280770,
-    3808386823,
-    976429338,
-    3275664083,
-    2502749969,
-    2832341997,
-    3349749400,
-    3386467163,
-    505885366,
-    4068965848,
-    2140427639,
-    3491045543,
-    2447521614,
-    2623180050,
-    1949313428,
-    2221344771,
-    267448843,
-    872646096,
-    3753566335,
-    3644108005
+    1001935958,
+    43098145,
+    4120256971,
+    1301135163,
+    229890345,
+    468775774,
+    3781563397,
+    4165841813,
+    3803224187,
+    590515951,
+    2259484757,
+    1406564362,
+    890370819,
+    2424893654,
+    1353151194,
+    2301248855,
+    3007679921,
+    4056355308,
+    4014491738,
+    3550099785,
+    4012184689,
+    2277926879,
+    1102367955
   ],
-  "finalHash": 1844698725,
+  "finalHash": 1006087127,
   "description": "MAGMA DEEP without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, down the dive and through the brick maze — a death and a respawn in place down in the caves — to CINDER BASTION",
   "expected": {
     "status": "stageClear",
-    "ticks": 14619,
-    "score": 52660,
-    "lives": 3,
-    "deathTicks": [
-      9565
-    ],
+    "ticks": 14253,
+    "score": 60070,
+    "lives": 4,
+    "deathTicks": [],
     "bossDefeated": true
   }
 }

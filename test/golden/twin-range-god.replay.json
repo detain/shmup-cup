@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 53,
     "stageId": "twin-range",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 53,
@@ -64,24 +64,25 @@
       "blackHole": false
     }
   },
-  "ticks": 2890,
+  "ticks": 3168,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAvwWBgAQBAQ8A6wmCgAgBAhsAygY=",
-    "AMoW"
+    "ACiCgAgBAgIAvgWBgAQBARAAiQuCgAgBAhsAiAaCgAgBAgEAtwE=",
+    "AOAY"
   ],
   "hashes": [
-    1515504349,
-    386591961,
-    684261237,
-    2965035407
+    145980665,
+    3653589746,
+    3959133993,
+    157984956,
+    1288426771
   ],
-  "finalHash": 2913615870,
+  "finalHash": 3559854398,
   "description": "TWIN RANGE with god mode and the full loadout (M2-09): the EMBER and FROST twins take turns, the survivor enrages, both shot down",
   "expected": {
     "status": "stageClear",
-    "ticks": 2890,
-    "score": 36710,
+    "ticks": 3168,
+    "score": 36690,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

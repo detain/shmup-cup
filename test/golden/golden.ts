@@ -81,9 +81,9 @@
  * every {@link BOMB_THROW_TICKS} ticks: the vortices' pull, the bullets they swallow and their
  * lightning, the grazes the run scores and the slowdown's load count are all in its hashes.
  *
- * v2's R2-01 (owner decision W4-1): from the flip until R2-03 re-blesses them, the committed files
- * are v1's (384×216, format version 1) and `core/replay` refuses them; the tests that play them
- * skip through `./stale.ts` (`goldenIsStale`, `GOLDENS_STALE`), re-exported here.
+ * v2's R2-03 re-blesses them (wave 06, G1): the committed files are recorded at this build's frame,
+ * replay format version 2, on the ported world — since then the tests that play them run
+ * unconditionally.
  *
  * @module
  */
@@ -111,14 +111,6 @@ import {
 } from '@shmup/core';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { DEFAULT_MAX_TICKS, shippedContent, type PlaytestBot } from '../playtest/harness.js';
-
-export {
-  GOLDENS_STALE,
-  GOLDENS_STALE_REASON,
-  describeGoldensStale,
-  goldenIsStale,
-  itGoldensStale,
-} from './stale.js';
 
 /** The build id golden replays are recorded with (their hashes, not a build, lock them). */
 export const GOLDEN_BUILD_ID = 'golden';

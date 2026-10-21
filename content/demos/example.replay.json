@@ -4,7 +4,7 @@
   "id": "example",
   "description": "the format sample: two seconds of free flight",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 1,
     "stageId": null,
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 1,
@@ -70,9 +70,9 @@
   "ticks": 120,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIATQ==",
+    "ACiCgAgBAgQASw==",
     "AHg="
   ],
   "hashes": [],
-  "finalHash": 2277785774
+  "finalHash": 3736869386
 }

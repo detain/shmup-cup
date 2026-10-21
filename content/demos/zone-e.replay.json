@@ -4,7 +4,7 @@
   "id": "zone-e",
   "description": "TEMPEST RIDGE: the MANTA in the heavy weather",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "demo",
     "seed": 105,
     "stageId": "zone-e",
@@ -13,8 +13,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 105,
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAkgmBgAQBAQYAO4KACAECBgBLgYAEAQEGAC6BgAQBAQYAL4GABAEBBwAtgYAEAQEGAC6BgAQBAQYAHIKACAECKgASgoAIAQIGALwCgYAEAQEjANQCgoAIAQIHABg=",
+    "ACiCgAgBAgMArgOBgAQBARUABYGABAEBBgAEgYAEAQEGACOBgAQBAQYAyAGCgAgBAiIAN4GABAEBBgBJgYAEAQEGAEmBgAQBAQYASYGABAEBBgBJgYAEAQEGAHSCgAgBAgYAVIGABAEBBgDNAYKACAECOACDAYKACAECBgAfgYAEAQEGALoE",
     "AOAS"
   ],
   "hashes": [
-    3790574262,
-    2526707177,
-    2432596970,
-    1509865642
+    1714089102,
+    2651078112,
+    2168982080,
+    420997558
   ],
-  "finalHash": 1509865642
+  "finalHash": 420997558
 }

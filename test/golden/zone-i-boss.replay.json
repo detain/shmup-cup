@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 95,
     "stageId": "zone-i",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 95,
@@ -64,28 +64,27 @@
       "blackHole": false
     }
   },
-  "ticks": 4860,
+  "ticks": 4511,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA0QSBgAQBAQYAIIGABAEBAwABgoAIAQIQABCCgAgBAAGCgAgBAAGCgAgBAAGCgAgBAAGCgAgBAAGCgAgBAAKBgAQBAAGBgAQBAAGBgAQBAAGBgAQBAAGBgAQBAQEACYKACAEAAYKACAEAAYKACAEAAYKACAECAgAfgoAIAQIGACmCgAgBAgUAPIGABAEBGAARgYAEAQEGABKBgAQBAQUACoKACAEAAYKACAECBQABgYAEAQEGAB2CgAgBAAGBgAQBACaBgAQBAQYAHYKACAECEwAjgoAIAQABgoAIAQIEAKMBgYAEAQEFAM8CgYAEAQEGACiCgAgBAgYAZIGABAEBBgDSAoKACAECBgCTAoGABAEBBgAUgYAEAQEFAAKCgAgBAgEAAYGABAEBAQAfgoAIAQABgoAIAQIEALMBgYAEAQEFAC+BgAQBAQYAP4KACAECBgCuAYKACAECBQAbgoAIAQIGAIUBgYAEAQEGADyBgAQBAQUAP4KACAECBQCnAoGABAEBBQAbgYAEAQEGAMgBgoAIAQIGAOkBgoAIAQIFALkBgoAIAQIGANUBgYAEAQEGANUC",
-    "APwl"
+    "ACiCgAgBAgIApASBgAQBAQUALoKACAECBQAvgYAEAQEMAA6CgAgBAgYAHoGABAEBAgABgoAIAQIIACKCgAgBAgYABYGABAEAAYKACAEAE4KACAECBQAxgYAEAQEFAAuBgAQBAQMAAYKACAECAwAUgYAEAQEMACKBgAQBAQwAE4KACAEAAYKACAECBQABgYAEAQAPgYAEAQEFAA6CgAgBAgkAAYGABAEBAwAHgoAIAQIGAAOBgAQBAQwAKIKACAECDAASgoAIAQIFAIwBgYAEAQEFAKIEgoAIAQIFAK4CgYAEAQEFABmBgAQBAQYAIoKACAEAAYKACAECBQC0AYKACAECBQD+AYKACAECBgDbAYGABAEBBgDpAYGABAEBBQDqAYKACAECBQDqAYGABAEBBQCSAoKACAECBQCYAYKACAECBgCjAYGABAEBAwABgYAEAQECAPEB",
+    "AJ8j"
   ],
   "hashes": [
-    1317055275,
-    3532555947,
-    417658156,
-    782105151,
-    2837559743,
-    3310654156,
-    2457317156,
-    3323822397
+    374617875,
+    368826472,
+    1891802523,
+    1124192092,
+    2574292745,
+    3472075131,
+    888227936
   ],
-  "finalHash": 111715855,
+  "finalHash": 2920641436,
   "description": "the stage skip to the ABYSS ARK (M2-14 tests): the full loadout under the Arcade penalty, the raid shot down in its two phases, then THE HOLLOW KING its final blast reveals through its three",
   "expected": {
     "status": "stageClear",
-    "ticks": 4860,
-    "score": 136190,
+    "ticks": 4511,
+    "score": 136640,
     "lives": 5,
     "deathTicks": [],
     "bossDefeated": true

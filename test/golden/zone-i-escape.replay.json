@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 52,
     "stageId": "zone-i",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 52,
@@ -71,23 +71,23 @@
     "AJYv"
   ],
   "hashes": [
-    3784778913,
-    1639241584,
-    1989481593,
-    298644980,
-    2055908981,
-    1890740838,
-    1699518752,
-    2957682359,
-    1774878496,
-    1729107072
+    1391829125,
+    3118838337,
+    1917522935,
+    1139067832,
+    521220063,
+    4056679479,
+    1130506710,
+    1915484656,
+    3390816591,
+    3229421271
   ],
-  "finalHash": 2005553288,
+  "finalHash": 817078343,
   "description": "the stage skip to the ABYSS ARK with a weaving pilot, god mode and no power-ups (M2-14 tests): the ARK outlasts it and sails off after its 90-s time limit — EndingFlag.BossEscaped, THE HOLLOW KING never revealed, stageClear",
   "expected": {
     "status": "stageClear",
     "ticks": 6038,
-    "score": 4200,
+    "score": 3200,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

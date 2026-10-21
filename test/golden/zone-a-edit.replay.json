@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 7,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 7,
@@ -68,20 +68,20 @@
       "blackHole": false
     }
   },
-  "ticks": 765,
+  "ticks": 810,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA0wU=",
-    "AP0F"
+    "ACiCgAgBAgIA/wU=",
+    "AKoG"
   ],
   "hashes": [
-    536775314
+    498420945
   ],
-  "finalHash": 1868191971,
+  "finalHash": 4010317943,
   "description": "HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`",
   "expected": {
     "status": "stageClear",
-    "ticks": 765,
+    "ticks": 810,
     "score": 37060,
     "lives": 4,
     "deathTicks": [],

@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 75,
     "stageId": "zone-d",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 75,
@@ -64,22 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1531,
+  "ticks": 1303,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAjQaBgAQBAQYAyAGBgAQBAQUAeIKACAECBQB4goAIAQIGAPIB",
-    "APsL"
+    "ACiCgAgBAgIAwwaBgAQBAQUAlAGCgAgBAgUAiQI=",
+    "AJcK"
   ],
   "hashes": [
-    3214544973,
-    3288142260
+    2127251949,
+    4080035488
   ],
-  "finalHash": 1872960839,
+  "finalHash": 3313480029,
   "description": "the stage skip into the caves of MAGMA DEEP (M2-12 tests): CINDER BASTION with the full loadout under the Arcade penalty, its core shot through the turning shield arms",
   "expected": {
     "status": "stageClear",
-    "ticks": 1531,
-    "score": 41160,
+    "ticks": 1303,
+    "score": 40140,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 61,
     "stageId": "bonus-range",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 61,
@@ -64,27 +64,27 @@
       "blackHole": false
     }
   },
-  "ticks": 4367,
+  "ticks": 4645,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAkwPAgIACAUAJAMYHgoAIAQIPACWBgAQBAQcAI4GABAEBBwBqgYAEAQEHAAaBgAQBAQcAJIGABAEBBwB/gYAEAQEHAAWBgAQBAQcABYGABAEBBwCvB4KACAECJgC9CoKACAEAuAE=",
-    "AI8i"
+    "ACiCgAgBAgQAwQPAgIACAUAJALcHgYAEAQEHAAWBgAQBAQcABYGABAEBBwAGgYAEAQEHAI8BgYAEAQEHAPwIgoAIAQIeANsMgoAIAQC4AQ==",
+    "AKUk"
   ],
   "hashes": [
-    2659388333,
-    2681509914,
-    3269786249,
-    2310628451,
-    1028724101,
-    2749492539,
-    3744406559
+    3703170669,
+    2906822215,
+    686762516,
+    36051850,
+    329300972,
+    482295600,
+    1333656047
   ],
-  "finalHash": 1417546368,
+  "finalHash": 174768555,
   "description": "BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens",
   "expected": {
     "status": "stageClear",
-    "ticks": 4367,
-    "score": 37620,
+    "ticks": 4645,
+    "score": 37680,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

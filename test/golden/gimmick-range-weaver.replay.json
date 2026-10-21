@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 35,
     "stageId": "gimmick-range",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 35,
@@ -71,17 +71,17 @@
     "ANoW"
   ],
   "hashes": [
-    2146495372,
-    2394338851,
-    275866356,
-    3848079302
+    3085887882,
+    950604987,
+    2177539766,
+    1179065864
   ],
-  "finalHash": 816968268,
+  "finalHash": 4210415425,
   "description": "GIMMICK RANGE with a weaving pilot and god mode (M2-07): it dives through the region trigger — the low branch",
   "expected": {
     "status": "stageClear",
     "ticks": 2906,
-    "score": 760,
+    "score": 1100,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

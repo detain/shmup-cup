@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 61,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 61,
@@ -64,21 +64,21 @@
       "blackHole": false
     }
   },
-  "ticks": 855,
+  "ticks": 873,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAbJCAQAEAlQGQgEABAJUBkIBAAQAHgYAEAQEBAIwBkIBAAQBFgoAIAQIBAE6QgEABAGg=",
-    "ANcG"
+    "ACiCgAgBAgMAapCAQAEAlQGQgEABAJUBkIBAAQAHgYAEAQECAIsBkIBAAQBXgoAIAQICADuQgEABAHo=",
+    "AOkG"
   ],
   "hashes": [
-    1100802046
+    1146923473
   ],
-  "finalHash": 1599282008,
+  "finalHash": 2942434078,
   "description": "HALCYON BULWARK with a fully powered MANTA, god mode and the toggle autofire mode (M2-16 tests): the 4-way bot taps SHOT every 150 ticks — the Direct-mode volleys off, then on again",
   "expected": {
     "status": "stageClear",
-    "ticks": 855,
-    "score": 37060,
+    "ticks": 873,
+    "score": 37120,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

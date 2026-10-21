@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 65,
     "stageId": "bonus-vault",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 65,
@@ -67,20 +67,20 @@
   "ticks": 1615,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEApwWCgAgBAgsAY4GABAEBCwDtAYKACAECDgABgYAEAQEOAIYBgoAIAQILALgBgYAEAQELAKEB",
+    "ACiCgAgBAgIA6AWCgAgBAhIAT4GABAEBEgCPAoKACAECDgABgYAEAQEOAEmCgAgBAgwAtwGBgAQBAQwAfw==",
     "AM8M"
   ],
   "hashes": [
-    4280425744,
-    1170044199
+    4203525588,
+    243524497
   ],
-  "finalHash": 1470318396,
+  "finalHash": 892461347,
   "description": "BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end",
   "expected": {
     "status": "stageClear",
     "ticks": 1615,
-    "score": 21210,
-    "lives": 5,
+    "score": 17220,
+    "lives": 4,
     "deathTicks": [],
     "bossDefeated": false
   }

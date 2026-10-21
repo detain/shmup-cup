@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 95,
     "stageId": "zone-h",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 95,
@@ -64,35 +64,35 @@
       "blackHole": false
     }
   },
-  "ticks": 9382,
+  "ticks": 9066,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAyAaCgAgBAhIAmwKBgAQBARIA1AGBgAQBAQYA1QGCgAgBAgYAiwWBgAQBAQYAhQGCgAgBAgYAjQGCgAgBAgsAyQOBgAQBAQsAowGBgAQBAQYAuQKCgAgBAgYAvQeCgAgBAgUAlwqCgAgBAgUAiQWBgAQBAQsAxQGBgAQBAQYAqAGCgAgBAgYAkwGBgAQBAQYAkwGCgAgBAgYAB4GABAEBDAANgoAIAQABgoAIAQIEAB6CgAgBAgYAkwGBgAQBAQYADoKACAEAAYGABAEBBgCoAYKACAECBQCGAYKACAECBgDLAYGABAEBBgAngoAIAQIBAAGBgAQBAQEAnwGCgAgBAgYAtAGBgAQBAQYApwGCgAgBAgYAYYKACAECBQClAYGABAEBDAAWgoAIAQIGAGqBgAQBAQYAzQGCgAgBAgYA4QE=",
-    "AKZJ"
+    "ACiCgAgBAgIA8QaCgAgBAhIA8QGBgAQBARIA8AGBgAQBAQUA1gGCgAgBAgUAjQWBgAQBAQUAwwKCgAgBAhgA9wKBgAQBARIAuQGBgAQBAQUADIGABAEBBgAjgoAIAQABgoAIAQIFAKMCgoAIAQIFAL4CgYAEAQEMAIkFgoAIAQIfAFyBgAQBAR8A5QSBgAQBAQsAgwSCgAgBAiUAmwSBgAQBAQwA4gGBgAQBAQUA9gGCgAgBAgUA4gGBgAQBAQUA4QGCgAgBAgUA4QGBgAQBAQUAyQGCgAgBAgUAoAGCgAgBAgEAAYGABAEBAQAngYAEAQEFALkBgoAIAQIFAIACgYAEAQEFALABgoAIAQIFAN4C",
+    "AOpG"
   ],
   "hashes": [
-    1621054960,
-    28537796,
-    471802716,
-    2236217169,
-    1248420518,
-    1869806454,
-    2756687723,
-    1155091550,
-    1218056887,
-    2387203158,
-    2717660861,
-    1932828777,
-    4135790992,
-    1884325462,
-    1581444122
+    3525709258,
+    3725140808,
+    630977778,
+    2823869097,
+    2555639728,
+    1543553784,
+    3881728815,
+    2304029779,
+    1795764952,
+    4159887021,
+    179909092,
+    1232089401,
+    368792228,
+    2746095452,
+    4277714859
   ],
-  "finalHash": 1343406548,
+  "finalHash": 2332754994,
   "description": "the stage skip into the parade hangar of IRON CITADEL (M2-14 tests): the full loadout under the Arcade penalty, the four echoes of earlier bosses shot down, the core run, then IRON SOVEREIGN through its four phases",
   "expected": {
     "status": "stageClear",
-    "ticks": 9382,
-    "score": 121540,
+    "ticks": 9066,
+    "score": 124280,
     "lives": 5,
     "deathTicks": [],
     "bossDefeated": true

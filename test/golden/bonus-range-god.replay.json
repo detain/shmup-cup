@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 62,
     "stageId": "bonus-range",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 62,
@@ -64,24 +64,24 @@
       "blackHole": false
     }
   },
-  "ticks": 3255,
+  "ticks": 3289,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAyBWBgAQBAQEAigKCgAgBAgEAtwE=",
-    "ALcZ"
+    "ACiCgAgBAgIAxxWBgAQBAQIAqwKCgAgBAgIAtgE=",
+    "ANkZ"
   ],
   "hashes": [
-    2693858702,
-    414330138,
-    2219485228,
-    1993548358,
-    3252275491
+    719086315,
+    614202760,
+    3450500328,
+    83358263,
+    1433431650
   ],
-  "finalHash": 1075145922,
+  "finalHash": 3570088978,
   "description": "BONUS RANGE with god mode and the full loadout (M2-10): the three ground turrets shot down, the ground entrance to the vault opens, the stage runs on to its boss",
   "expected": {
     "status": "stageClear",
-    "ticks": 3255,
+    "ticks": 3289,
     "score": 38580,
     "lives": 4,
     "deathTicks": [],

@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 62,
     "stageId": "zone-a",
@@ -10,8 +10,8 @@
     "assisted": true,
     "assists": 1,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 62,
@@ -64,21 +64,21 @@
       "blackHole": false
     }
   },
-  "ticks": 1058,
+  "ticks": 1066,
   "hashInterval": 600,
   "inputs": [
-    "sIDAAQEwJ7KACAEyATADAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAHsYAEATEBMCMALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwAEoKACAECAQAZsIDAAQEwLAAtsIDAAQEwLAAX",
-    "AKII"
+    "sIDAAQEwJ7KACAEyAjACAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAHsYAEATECMCIALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwAGoKACAECAgAQsIDAAQEwLAAtsIDAAQEwLAAf",
+    "AKoI"
   ],
   "hashes": [
-    1379277270
+    256845139
   ],
-  "finalHash": 3986240027,
+  "finalHash": 142787333,
   "description": "HALCYON BULWARK with the full loadout, god mode and the hold autofire mode at the fastest rate (M2-16 tests): SHOT and SUB held in bursts",
   "expected": {
     "status": "stageClear",
-    "ticks": 1058,
-    "score": 37120,
+    "ticks": 1066,
+    "score": 37180,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

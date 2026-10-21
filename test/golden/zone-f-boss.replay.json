@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 95,
     "stageId": "zone-f",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 95,
@@ -64,23 +64,23 @@
       "blackHole": false
     }
   },
-  "ticks": 2256,
+  "ticks": 2112,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAzwSBgAQBAQYAtgGCgAgBAgYAkAGBgAQBAQwAGYKACAEAAYKACAECBABfgYAEAQEFAD+CgAgBAgUAAYGABAEBDABTgYAEAQEFAGiCgAgBAgwAG4KACAEAAYGABAEAR4KACAEAAYGABAEBBwB2goAIAQIMALcBgoAIAQIGAAGCgAgBAgUAboGABAEBBQAJgYAEAQABgoAIAQABgYAEAQEGAJEC",
-    "ANAR"
+    "ACiCgAgBAgIA7QSBgAQBAQUAtwGCgAgBAgUAQ4KACAECBgCGAYKACAECBQA/gYAEAQEFAAKCgAgBAgsAEYGABAEAAYGABAEBBAAagoAIAQIFAKABgYAEAQEFACaBgAQBAQUAngGBgAQBAQYAOoGABAEBBQA1gYAEAQEGAGaCgAgBAgYAAYGABAEBDAAQgoAIAQABgYAEAQAQgoAIAQABgYAEAQEGAOoB",
+    "AMAQ"
   ],
   "hashes": [
-    874249864,
-    1667406728,
-    3026671732
+    2010795341,
+    915817248,
+    1001601897
   ],
-  "finalHash": 1754746501,
+  "finalHash": 1548984531,
   "description": "the stage skip to MANTLE REGENT (M2-13 tests): the full loadout under the Arcade penalty, the eye shot between the curls of its tentacles",
   "expected": {
     "status": "stageClear",
-    "ticks": 2256,
-    "score": 47160,
+    "ticks": 2112,
+    "score": 46970,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

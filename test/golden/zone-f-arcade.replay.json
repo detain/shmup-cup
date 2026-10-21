@@ -1,7 +1,7 @@
 {
   "kind": "replay",
   "header": {
-    "formatVersion": 1,
+    "formatVersion": 2,
     "buildId": "golden",
     "seed": 91,
     "stageId": "zone-f",
@@ -10,8 +10,8 @@
     "assisted": false,
     "assists": 0,
     "config": {
-      "internalWidth": 384,
-      "internalHeight": 216,
+      "internalWidth": 640,
+      "internalHeight": 360,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
       "seed": 91,
@@ -64,44 +64,32 @@
       "blackHole": false
     }
   },
-  "ticks": 13484,
+  "ticks": 4560,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA+AXAgIACAUAJAD+BgAQBAQcAXYGABAEBBwCKAsCAgAIBQAkAfoGABAEBDAAHgYAEAQEFAC2CgAgBAgUApwSCgAgBAgUAqwSCgAgBAgwA2AGCgAgBAgYASoGABAEBBgBqgoAIAQIGAJYDgYAEAQEGAIcBgoAIAQIGAAmCgAgBAgUAJYGABAEBDABXgYAEAQEMAEGCgAgBAgwAGIKACAECDAAEwICAAgFACQCsAoGABAEBEgBvgoAIAQISANIBgYAEAQEMALoCgoAIAQIGANcCgYAEAQEGAOcEgoAIAQIGAKIHgoAIAQILAO8CgYAEAQEFAPcIgoAIAQIFAM4KwICAAgFACQCpBYGABAEBBQDOAYKACAECBQCVCIGABAEBCwDBAYGABAEBBgDdAYKACAECBgDdAYGABAEBBgDCAYKACAECBgBigoAIAQIFAE+BgAQBAQUABIKACAECCwCoAYKACAECDAAWgYAEAQEFAIQBgYAEAQEGAA+BgAQBAQUAlQGCgAgBAgUAogI=",
-    "AKxp"
+    "ACiCgAgBAgQA0gOCgAgBAgoA3wLAgIACAUAJAL8DgYAEAQEHAJwBgYAEAQEHAAeBgAQBAQcAHoKACAECCwACwICAAgFACYKACAECAgC8AYGABAEBAgABgoAIAQIPAJ4BgYAEAQEFABKBgAQBAQYAxQGBgAQBAQUAQ4KACAECBQCSA4GABAEBBAABgoAIAQABgYAEAQEIANUBgYAEAQEFAN4DgoAIAQIMAGuCgAgBAgUAA4KACAECBgAGgoAIAQIFAAaCgAgBAgUAB4KACAECBgAmgYAEAQECAIQBgoAIAQIEAIMEwICAAgFACQCOAYKACAECBwAFgoAIAQIHAASCgAgBAgcABYKACAECBwAlgYAEAQECAFw=",
+    "ANAj"
   ],
   "hashes": [
-    2135683096,
-    3505249118,
-    3065332920,
-    4104542107,
-    903836866,
-    453848226,
-    3775343757,
-    2131480724,
-    418918410,
-    1612698738,
-    3380043195,
-    3077941387,
-    1841097514,
-    2525617280,
-    713702358,
-    2342035762,
-    2079802158,
-    1896264205,
-    492498088,
-    4172660480,
-    2557298911,
-    1235621095
+    2181155815,
+    396132045,
+    3240283179,
+    495992809,
+    3833913523,
+    1754187534,
+    3811287654
   ],
-  "finalHash": 2453243819,
+  "finalHash": 1247204563,
   "description": "CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the 4-way bot from the start against the rank-scaled fire — the chasing cells, the tissue walls, the grabbing tentacles — to MANTLE REGENT shot down",
   "expected": {
-    "status": "stageClear",
-    "ticks": 13484,
-    "score": 60450,
-    "lives": 3,
-    "deathTicks": [],
-    "bossDefeated": true
+    "status": "gameOver",
+    "ticks": 4560,
+    "score": 5260,
+    "lives": 0,
+    "deathTicks": [
+      3577,
+      4467
+    ],
+    "bossDefeated": false
   }
 }
