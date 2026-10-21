@@ -3145,7 +3145,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R6-01 | Balance and difficulty | not started |
 | R6-02 | Performance and memory on the TV with the final art | not started |
 | R6-03 | Docs, store refresh and the v2.0.0 release | not started |
-| R6-04 | Graphics options: output resolution, renderer, and the recommended defaults (added 2026-10-20, decision W5-20; the page rides wave 9, the final-default audit rides R6-02's W13–W15 chain) | not started |
+| R6-04 | Graphics options: output resolution, renderer, and the recommended defaults (added 2026-10-20, decision W5-20; the page rides wave 9, the final-default audit rides R6-02's W13–W15 chain) | page landed — 2026-10-21 (decision W5-20, wave 9: the GRAPHICS options page, save format 4 and the boot knobs — `9f7ea14`…`46b722c` with cures `634e913`/`7d60515`/`8006dd0`, `RT-R604B` at zero; §11 and the CHANGELOG carry the record; the audit line rides wave 15's R6-02 chain) |
 
 ---
 
