@@ -67,10 +67,12 @@ recommended defaults, adopted and told to the owner, none blocking. **W4-1 … W
 wave-4 decisions for R2-01 and **W5-6** the wave-5 confirmation its C5 loop closed on; all fifteen are
 built, as R2-01's As built records. **W5-1 … W5-19** are the orchestrator's wave-5 decisions for R2-02,
 R3-03 and R3-04 — the wave-5 scout's recommended defaults, the rows saying so confirmed by the owner on
-2026-10-19 — **R2-N1 … R2-N3** are R2-02's execution-shape decisions from the R2 re-plan, and **RR-7**,
-**RR-8** are the R3 re-plan's stand-in decisions; all are built, as R2-02's, R3-03's and R3-04's As built
-records. **W5-20** is the owner's graphics-options directive of 2026-10-20, worked into the plan as R6-04
-by that directive's own order.
+2026-10-19 — **R2-N1 … R2-N4** are execution-shape decisions from the R2 re-plan (N1 … N3 built by R2-02,
+N4 by R2-03), **RR-7** and **RR-8** are the R3 re-plan's stand-in decisions and **RR-3** its store-icons
+deferral, worked at R2-03.I2; all are built, as R2-02's, R3-03's, R3-04's and R2-03's As built records.
+**R5-D2**, **R5-D5** and **R5-D9** are R5 / R6 re-plan decisions built early by RUN-7's fold into R2-03's
+wave (decision R5-D1 is §11's own note). **W5-20** is the owner's graphics-options directive of 2026-10-20,
+worked into the plan as R6-04 by that directive's own order.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -139,6 +141,11 @@ by that directive's own order.
 | **RR-7** | R3-04's stand-in uses R1-05's assumption — PNG-8 at 0.3–0.6 MB per 2048×1024 page — its constants marked **uncalibrated**; the optional `R3-04.M1c` calibration on candidates is host-bound and has not run | R3-04 |
 | **RR-8** | W5-17 kept: one stand-in zone plus `common` replace the TV bench's synthetic `rgba-2048` / `png8-2048` decode pages; `tools/input-probe/results/analyze-bench.mjs` reads the new ids | R3-04 |
 | **W5-20** | 2026-10-20, owner directive: v2 gains a **GRAPHICS options page** — `OUTPUT` and `RENDERER` knobs with recommended, good defaults — planned as **R6-04**. The defaults' evidence is the M7 resolution sweep (`tools/input-probe/results/2026-10-19-m7-bench-resolutions/README.md`, §17's R0-03 row): the output size is the lever (640×360-worst two-tick 59.5 % at 1080p output → 11.3 % at 720p → 1.8 % at 540p; synced p95 flat ≈ 12–16 ms across outputs); WebGL 2's 21-better / 0-worse win is a 1080p-fill win only — mixed at 720p, within noise at 540p; native art from 1280×720n up is dead, ≤ 640×360n is fine; the noise floors are the sweep's two-tick spread medians 1.5–2.7 points and synced-p95 spread medians 8–9 % (p90 23–26 %). The defaults: `Auto` everywhere — OUTPUT 1280×720 on the TVs and native on desktop / web, RENDERER WebGL 2 only above the directive's Chromium ≥ 71 floor with the probe as safety net, so both TVs keep WebGL 1, today's shipped default | R6-04, R6-02, §13 |
+| **R2-N4** | R2-03 re-measures the content-bound e2e **before** the re-bless, in parallel; `R2-03.G1` is last and one commit | R2-03 |
+| **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once — at R2-03 `pnpm store:assets` only `--check`s (R2-03.I2, that step's As built) | R2-03, R4-05 |
+| **R5-D2** | The v2 zone contract (built as `R5-P.P6`'s `test/integration/zones/zone-<letter>.contract.ts` v2 branches): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | R5, R5-P.P6 |
+| **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % of a pool (built early by RUN-7, as `R5-P.P8` inside R2-03) | R5, R2-03 |
+| **R5-D9** | `R5-P.P1` runs inside R2-03 (RUN-7) — built in wave 6 (`6ba1187`), its hash shift paid by the step's single re-bless | R2-03, R5 |
 
 ---
 
@@ -1598,6 +1605,12 @@ moved.
       budget when the cold trigger-probe path runs at the ported scale, so R2-03's re-measure re-derives the
       budget honestly; delete the gate, its pin `port-alloc-churn.test.ts` and its single use in
       `packages/core/test/world/world-gimmicks-alloc.test.ts` with the rest (R2-02.prepB.FIX3).
+      **Paid by `R2-03.G1PRE` (`e1e5374`):** the red was the guard's own fixture — at the ported scale the
+      suction-pinned ship never crossed the bands still placed at v1's `y + 20`, so the window measured
+      first-visit tier churn (173,544 B against the unchanged 65,536 B budget) instead of a steady trigger
+      crossing; moving the bands to `SPAWN_Y + 35` (26 triggers fire through the run) makes the guard green
+      at ≈ 14,584 B with `packages/core/src` untouched, per the law that a fixture failure is fixed, never
+      gated. The trio is deleted as ordered.
     - **Re-measure every `PORT_REASON` and `CONTENT_REASON` test** on the ported content — the 23
       `PORT_REASON` specs passed at 640 on v1 content, so a failure after the port is the port's. Give the
       fingerprint's attract walk the shipped demos again (optional).
@@ -1623,6 +1636,74 @@ moved.
   the full definition-of-done suite runs once, at the end of the run (wave 15, decision RUN-1). R5's stable hash
   keys and capacity raise (`R5-P.P1`, `R5-P.P8`) land in this step's wave, so `R2-03.G1`'s single re-bless covers them
   (RUN-7). The store icons stay on the v1 art until R4-05 (RR-3).
+- **As built** (2026-10-20; wave 6, `b8b771f..9785da0` — the e2e re-measures `E1` `1a5c487`, `E2` `91cc585`,
+  `E3` `c3018db`, `E4` (nothing to remove), the gate-debt rewrite `FIXG` `bdd820a`, `G1PRE` `1096a59` +
+  `e1e5374`, `R5-P.P1` `6ba1187` and `R5-P.P8` `273e081` (their §11 note), the doc images `I1` `356e7b2`,
+  the one re-bless `G1` `d4ba9e8`, the screens `I3` `9785da0`; the step's targeted exit `V` all green at
+  `9785da0`; `R2-03.RV` approved at zero after its review):
+  - **The e2e re-measure came first, in parallel with the R5-P prep (decision R2-N4).** E1 took the five zone
+    specs, E2 the five runtime specs (`stage`, `mode7`, `raster`, `gimmicks`, `campaign-run`), E3 the boss,
+    raid, captain, twins, HUD-control and camera specs — every `PORT_REASON` / `CONTENT_REASON` skip removed
+    and each sampled value re-derived from the shipped content, the renderer or core's constants, never
+    hand-multiplied (the one exception the reviews allowed: v1-anchored numbers re-expressed through
+    `test/e2e/frame-pixels.ts` and the stage files' own values). E4 found **zero** gates to remove — wave 3's
+    `R2-02.E0` and `R3-04.M3d` added none. E2 also landed R1-04's deferred browser check: `stage.spec.ts:134`
+    proves the drawn terrain repeats with a vertical period of exactly `TILE_SIZE` (with a `TILE_SIZE / 2`
+    discriminator no 8-px tile can pass — horizontal seams are unmeasurable on this renderer, which paints
+    tile interiors as a position-hash texture; deviation approved in review).
+  - **The 44 gate-debt cases** (`FIXG` `bdd820a`): the three local `CONTENT_PORT_PENDING` twins in
+    `packages/core/test/data/` — `tilemap`, `tilemap-edge`, `units-pairs`, self-contained and missed by
+    U5's sweep — lost their wrappers and now run on the ported premise (583 green at both worker settings),
+    every fixture number derived from `TILE_SIZE` / the playfield / the shipped tileset itself.
+  - **The one re-bless** (`G1` `d4ba9e8`, 91 files): **62 goldens + 10 demos** (9 zone recordings and the
+    format sample) rewritten at 640×360, replay format 2, in a single `pnpm golden:update` — the only bless
+    of R2; the step script's sanctioned internal re-run (its determinism check, ruled in before the land)
+    proved zero diff. Its commit message gives the
+    three reasons the hashes had to move: the R2-02 port (`8dbe858`), `R5-P.P1`'s key-mixed hash (`6ba1187`)
+    and `R5-P.P8`'s wider hashed part tables (`273e081`). All four gate artifacts died with it —
+    `test/golden/stale.ts`, `test/e2e/gates.ts`, `test/integration/e2e-gates.test.ts`,
+    `replay-version-shipped.test.ts` — with the `GOLDEN_REASON` skips, the two W4-9 inverse tests, the three
+    `assertionsGated` sites and `scripts/golden-update.mjs`'s refusal; `1096a59` had renamed the render
+    bench's budget module to `bench-gates.ts` so the gate grep can mean only the e2e gates. The grep is empty
+    at the tip.
+  - **The 9 narrative re-measures the first bless exposed** (each to the recorded truth, every god-mode rule
+    still holding): zone A's Arcade run now dies short of the clear (deaths 5883 / 7327), the gimmick bot
+    fires the region trigger and takes the low branch (3 bricks), the captain range ends with slot 0
+    fighting and slot 1 dead (the circler, not the ram), zone D's dive floor is the mechanical 200 →
+    `v1rel(200)` = 300, zone H's parade window is `(6600, 6780)` (×1.5), the glimmer cache no longer nets a
+    1UP, zone F's Arcade run dies at 76 s, zone D's bot clears **deathless** (its dive now proven by
+    max-y assertions instead), and zone C's bot falls at 86 s before the WIDOW. **Seven coverage-drift rows
+    they leave behind are filed for the R5 re-records** (as code comments in `golden.test.ts` and the §11
+    R5-prep note) — no scenario was invented to paper over them. Test names were kept throughout; the
+    `golden` project is 272 passed / 74 skipped, and all 74 skips are the four by-design comparison-kit
+    arms retiring with the kit, not gates.
+  - **The pictures:** `I1` `356e7b2` moved `doc-images.mjs` off `artScale: 1` to the shipped 3/2 scale,
+    re-measured the logo banner on the new art and rounded the ported half-pixel part offsets the boss
+    portraits centre on (50 of the content's 238 are halves); 144 images check clean. `I3` `9785da0`
+    re-shot all 18 `docs/images/screens/` at the 1280×720 capture, determinism proven by a byte-identical
+    re-capture of `zone-a.png`; the title screen's blink-selection band was stale v1 geometry and now
+    derives through the `frame-pixels.ts` readback. The screens' aesthetics are an **owner eyeball item** —
+    geometry and content-presence are proven programmatically, taste is not.
+  - **R2-03.I2, folded by RR-3:** the store icons stayed on the v1 art — `pnpm store:assets --check` only,
+    green at the exit — and R4-05.E5 moves them to the v2 art once. The render bench's 640×360 default was
+    **already the frame**: since R1-02 (`e9e5af7`) `test/bench/render.perf.ts` `load()` takes `FRAME_W` /
+    `FRAME_H` (from `@shmup/core` directly, line 58 — strictly stronger than the `scripts/frame.mjs`
+    mirror), so there was nothing to build and the exit confirmed it; `R3-04.FXB`'s budgets were untouched
+    (the wave's only `test/bench` commit is the rename).
+  - **The CJK figures — the decision this step owed W4-6:** the documents keep quoting the **v1 atlas**
+    (`artScale: 1`). The M3-03 arithmetic is about how much art there is, and the interim ×1.5 upscale is
+    stand-in art on its way out in R4 — quoting it would pin six documents to pixels nobody will ship.
+    `test/integration/cjk-budget.test.ts` measures the figures at `artScale: 1` (its docblock says so) and
+    the **live PNG budgets are R3-04's** (`e0a526d`), which hold the shipped split atlas whatever its scale.
+  - **The exit** (`V`, read-only, at `9785da0`): `content:check` 99, the golden project 272/74-sk, the
+    shell determinism batch 17, both fingerprints green unedited, `docs:images --check` 144 images,
+    `store:assets --check` ok, both TV bundles inside budget (387.1 / 386.7 KB gzipped), and the full e2e —
+    every batch holding a spec this wave touched, run whole: **Chromium 229 passed / 0 skipped / 0 failed /
+    0 flaky, Firefox 73 / 0 / 0 / 0** (wave 5 left 129/101-sk and 2/71-sk — every gate skip became a real
+    pass). `R2-03.RV` approved at zero criticals; its gate-debt rows are carried to §17 and the R5-prep note.
+  - **Not touched, by design:** no behaviour change anywhere — the wave's only `packages/*/src` edits are
+    P1's hashed key columns and mixers and P8's capacity constant, each reviewed under §11; no `PINNED`
+    outside the content-DB's demo/key rows; no save or replay format bump (both already v2's); no `content/`.
 
 ### R2-04 — First retune at the new scale
 
@@ -2230,6 +2311,53 @@ R4-01 … R4-03 for every zone step, and the previous zone step (one zone at a t
 zones build in parallel on local branches and land one at a time; zone A lands first, and zone H's echoes wait for A,
 B, D and F.
 
+**R5 prep as built — wave 6** (RUN-7 folds `R5-P.P1` / `P8` into R2-03, decision R5-D9; `P2a` / `P2b` / `P6` /
+`P5c` / `P9` are test-only splits that rode the same wave; all reviews at zero):
+
+- **P1 — the state hash ignores content order** (`6ba1187`, reviewers RTP1 + RV-D both APPROVE at zero):
+  `loadContent` computes four FNV-1a key columns on `ContentDb` — `spriteKeys`, `enemyKeys`, `pathKeys`,
+  `patternKeys` (data/index.ts:2184–2195) — and `hashWorld` mixes those instead of every content-order
+  ordinal: pattern-runner `entry` (hashing `pc − entry` instead), enemy and boss `specIndex`, `pathId`, the
+  Path mover's `m0`, formations' enemy/path slots, and every registered pool's `sprite` field (matched by
+  the new `RegisteredPool.fieldNames`, world/index.ts:493). A zone's content change now moves only that
+  zone's goldens. Disclosed deviations, all reviewed sound: the FNV constants are copied locally into
+  `data/index.ts` (importing `debug` from `data` would cycle `data → debug → bosses → data`; a test pins the
+  copies equal), `EMPTY_CONTENT_DB.patternKeys` has length 1 (the empty bank's lone `End` offset), unmapped
+  indices fall back to the raw value (shadow `referenceHash` byte-identical), and the new allocation guard
+  `debug-hash-keys-alloc.test.ts` proves the key paths stay under 128 B/call. The presentation and shell
+  fingerprints did not move; the content-DB fingerprint re-pinned its four new key rows per table.
+- **P8 — boss-part capacity 16 → 24** (`273e081`, decision R5-D5): `MAX_BOSS_PARTS` 24 (data/index.ts:956)
+  carries `BOSS_PART_SLOTS` 96, `MAX_HIT_TARGETS` 160 and the hashed part-cooldown stride with it;
+  `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 stand until a design peaks above 80 % — the stress bench
+  re-measured 0.101 ms/tick median, inside every gate.
+- **P2a / P2b — the content tests split per zone** (`46f0c14`, `05a2a9d`, `e46cfdc`): `content.test.ts`'s
+  zone A–I cases became `test/integration/content-zone-a.test.ts` … `content-zone-i.test.ts` with shared
+  fixtures in `zones/helpers.ts`, the DSL speed scan reads every shipped `patterns/*.patterns.json`, and
+  `content:check` covers the new files (name census 99 = 99, diff empty). The per-zone files are the R5
+  zone lanes' own.
+- **P6 — the zone contracts** (`b6c00f4`): `zones/zone-<letter>.contract.ts` carries each zone's `v1`
+  bounds verbatim, its `v2` branch as decision R5-D2, and a per-zone `remastered` flip flag — wave 9+
+  flips a zone's flag as its port lands and the nine test files plus `release-audit.test.ts` move to the
+  ported bounds with that one token. As-built extras, reviewed: the v2 `directItems` upper bound is
+  unbounded (R5-D2 states only ≥ 30; each zone's R5 lane caps its own), and zone A's `checkpointsMin` 5
+  records R5-D2 but stays advisory until `R5-P.D-A` rewrites its layout; the bot-run 4.0–6.0 min bound
+  rides in every contract (`ZoneBounds.botRunSec`) for the wave-09 whole-run gates to consume.
+- **P5c / P9 — generator tests and the allow-list** (`27283f5`, `381f8f1`): the eight pair-of-zones
+  procedural test files became sixteen per-zone files (86 names identical before and after), and the four
+  allow-listed alpha-`200` literals hoisted into `SOFT_ALPHA` (common.mjs:92), dropping the repo
+  frame-literal allow-list from 33 entries to **30** — four generator rows became one (live count at the
+  tip governs any brief arithmetic; atlas bytes unchanged).
+- **Carried to R5 (the wave's honest debts, reviewed in `R2-03.RV`):** the seven golden coverage-drift
+  rows the re-bless exposed (Arcade clears of A and F, a no-god C clear, the cube-rush death in G, the
+  zone-F checkpoint/rollback instance, the cave death in D, the cache 1UP) await the zones' own re-records —
+  each is named in a `golden.test.ts` comment; `l.family` stays a raw file-order ordinal (ruled: not now —
+  weapon families change only in the R5 art waves; add a fifth `familyKeys` column when `content/weapons`
+  grows, and give `mixWeapons` the one-line comment meanwhile); `hashWorld` of a dense live world still
+  boxes its fractional fields (~300 B/call, pre-existing, no budget depends on it) — a candidate R5-P perf
+  task; the trigger-probe aliveness check could pin `triggersFired`'s bit-count rather than `> 0`; and
+  `BendingLaserTable.spriteId` stays unmixed in the hash (reviewed benign) unless laser identity ever needs
+  coverage.
+
 ### R5-01 — Zone A remaster: AZURE VERGE
 
 - **Scope:** the zone template for zone A; expansion focus per the table. Also the engine capacity check below.
@@ -2582,7 +2710,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | done (owner parts pending) — 2026-10-19 |
 | R2-02 | Port all content ×1.5 | done — 2026-10-20 (the port `8dbe858`: tool run 4,035 changes in 77 files, 0 unclassified, 0 errors plus the four hand fixes; `WORLD_SCALE` 3/2 / `WORLD_TOP_PAD` 36; the content-port gate gone U1 … U5, zero `CONTENT_PORT_PENDING`; 16 fingerprint segments re-pinned; `v2-port` landing checks zero-fail, the bot clears every zone — CELL VAULT green with the port — benchmarks improved, build +767 B gzip; `R2-02.RV` at zero on `b8b771f`; the goldens and demos stay v1 recordings by design until R2-03) |
-| R2-03 | Golden replays, demos, e2e, docs images | not started |
+| R2-03 | Golden replays, demos, e2e, docs images | done (owner eyeball pending: the 18 screens) — 2026-10-20 (e2e re-measured first in parallel, decision R2-N4 — E1 `1a5c487`, E2 `91cc585` (R1-04's 12-px browser check landed in `stage.spec.ts`), E3 `c3018db`, E4 found zero gates; the 44 gate-debt cases rewritten derived `bdd820a`, the churn debt paid at the fixture `e1e5374`, the bench budget module renamed `1096a59`; the one re-bless `d4ba9e8`: 62 goldens + 10 demos at 640×360 format 2 for three stated reasons (the port, P1's keys, P8's capacity), all four gates deleted, 9 narrative tests re-measured to recorded truth with 7 coverage rows filed for R5; doc images at the shipped scale `356e7b2`, 18 screens re-shot `9785da0`, store icons only `--check`ed (RR-3); the CJK figures stay on the v1 atlas, the live budgets R3-04's; exit battery green at `9785da0` — e2e 229/0-sk Chromium + 73/0 Firefox, zero gate skips left; `R2-03.RV` approved at zero) |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
 | R3-01 | Art bible v2 and the prompt library update | done (owner parts pending) — 2026-10-17 |
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |

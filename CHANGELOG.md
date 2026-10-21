@@ -29,8 +29,8 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
 
 These change what the game shows: since `72b18a1` `master` boots at the v2 frame. At the flip the content was
 still v1's world scale — plan step R2-02 ported it ×1.5 (the next section) — and the golden replays and the
-attract demos remain v1 recordings until R2-03 re-blesses them, while the interim art is v1's sprites ×1.5
-until the R4 round replaces it.
+attract demos remained v1 recordings until R2-03 re-blessed them (two sections down), while the interim art is
+v1's sprites ×1.5 until the R4 round replaces it.
 
 - **The frame is 640×360** (R2-01): `FRAME_W` / `FRAME_H` 640 / 360, 12-px HUD bars and 12-px tiles (the
   playfield 640×336), the font cell 9×12 — the interim font is v1's 6×8 pixel font upscaled ×1.5 at pipeline
@@ -40,7 +40,7 @@ until the R4 round replaces it.
 - **v1 replays are refused** (R2-01): the replay format is 2 (`REPLAY_FORMAT_VERSION` /
   `RUN_REPLAY_FORMAT_VERSION`) and the header carries the frame size, so a v1 recording raises
   `ReplayVersionError` and the replay browser shows **V1 REPLAY** — "recorded by v1: cannot play". The entry is
-  deleted by hand, never automatically; the attract loop skips the stale demos until R2-03 re-records them.
+  deleted by hand, never automatically; the attract loop skipped the stale demos until R2-03 re-recorded them.
 - **Saves are format 3** (R2-01): a v1 save loads, keeps its options, and its hi-score tables move under
   `legacyScores` — v2's tables start empty, `legacyScores` has no UI yet, and Steam achievements read both. A
   `v1.x` build reading a v3 save falls back to defaults.
@@ -48,7 +48,8 @@ until the R4 round replaces it.
   `max(1, round(scale × 384/640))`, so the window keeps its physical size at the new frame.
 - **Self-expiring gates** (R2-01): what cannot pass between the flip and the port skips with the reason in the
   test's name — `CONTENT_PORT_PENDING` (until R2-02), `GOLDENS_STALE` (until R2-03), and in the browser tests
-  `R2_03_PENDING` / `PORT_UNMEASURED` — and each throws at import once its window closes. The frame-literal
+  `R2_03_PENDING` / `PORT_UNMEASURED` — and each throws at import once its window closes (the whole family died
+  with R2-03's re-bless). The frame-literal
   scans now ban 640 / 360 / 336 / 348 next to v1's numbers, with the tick timers, the angle 640, the bench
   sizes and the particle degrees on their allow-lists.
 
@@ -68,7 +69,39 @@ radius in the shipped content is ×1.5 of v1's, top edges mapped with the +36 px
   landing failures; ground enemies come 64 px of camera travel earlier by decision O11); the bot clears every
   zone, the bonus stage and the boss rush — CELL VAULT's pre-port red went green with the port itself. The
   `CONTENT_PORT_PENDING` gate and its helper are gone (U1 … U5); the Tizen `app.js` grew 767 B gzipped. The
-  golden replays, the attract demos and the `PORT_UNMEASURED` e2e waits stay for R2-03 by design.
+  golden replays, the attract demos and the `PORT_UNMEASURED` e2e waits stayed for R2-03 by design, and R2-03
+  re-recorded them (the next section).
+
+### The v2 recordings (R2-03)
+
+These change what the tests and the pictures say about the game: the shipped recordings are v2's now — 640×360,
+replay format 2 — and nothing in the suite waits for the port any more.
+
+- **The goldens and demos re-blessed in one commit** (R2-03.G1, `d4ba9e8`): the 62 golden replays and the 10
+  attract-demo recordings (nine zone recordings and the format sample) were re-recorded at 640×360 in the one
+  `pnpm golden:update` of R2, for the three reasons the message states — R2-02's port, the state hash mixing
+  stable content keys instead of file order (R5-P.P1, `6ba1187`: `hashWorld` now folds FNV-1a keys of sprite,
+  enemy, path and pattern ids through the pools, so one zone's content change re-blesses only that zone), and
+  the wider boss-part tables (R5-P.P8, `273e081`: `MAX_BOSS_PARTS` 16 → 24, decision R5-D5). Nine coverage
+  stories the old recordings told changed with the ported world — the Arcade clears of zones A and F, the
+  no-god clear of zone C, the gimmick bot's branch, the captain slots, the cache's 1UP, the cave death, the
+  cube-rush death — and the tests now record what the new files actually show; the seven coverage rows lost
+  that way are filed for R5's re-records. The boss rush and both multi-part fights fit the raised capacity
+  with the stress bench green (0.101 ms/tick median).
+- **Every self-expiring gate is gone** (R2-03): `test/golden/stale.ts`, `test/e2e/gates.ts`, their pins and
+  the shipped-v1 refusal test were deleted with the re-bless, and `golden:update`'s port refusal went with
+  them. Before it, the browser specs were re-measured on the ported world in parallel (decision R2-N4):
+  the zone specs (`1a5c487`), the runtime specs (`91cc585` — with R1-04's deferred browser check, the drawn
+  terrain repeating at exactly `TILE_SIZE`), the boss and HUD specs (`c3018db`), and the 44 gate-debt cases
+  rewritten derived (`bdd820a`); the trigger-probe churn the port exposed proved to be the allocation
+  guard's own fixture and was fixed, budget untouched (`e1e5374`). The full e2e now runs **229 passed / 0
+  skipped** on Chromium and 73 / 0 on the Firefox determinism spec, where wave 5 left 129 / 101 and 2 / 71.
+- **The pictures draw v2** (R2-03.I1 / I3): the `docs/images/` plates, the boss portraits and the logo banner
+  are built from the shipped 3/2-scale art (`356e7b2` — 50 of the ported 238 part offsets are half-pixels, so
+  the portrait assembler rounds), and all 18 `docs/images/screens/` were re-shot at the 1280×720 capture
+  (`9785da0`, a re-capture byte-identical); their look waits on the owner's eye. The store icons stay on the
+  v1 art until R4-05 and were only `--check`ed (RR-3), and the docs' CJK figures keep quoting the v1 atlas —
+  `test/integration/cjk-budget.test.ts` measures it at `artScale: 1`; the live PNG budgets are R3-04's.
 
 ### Real-art systems and memory (R3-03, R3-04)
 
@@ -252,8 +285,17 @@ new presentation fingerprint are unchanged.
   in the full run at `bc8e05d`; each gate throws at import once its window closes. The e2e specs wait
   on game ticks, not rAF frames (`test/e2e/ticks.ts`, its delays pinned to core by
   `test/integration/e2e-ticks.test.ts`): the flip slowed CI's software raster ≈ ×1.6, and frame-paced
-  waits failed on slow runners. The 62 golden replays and the 9 attract demos stand as v1 recordings
-  until R2-03 re-blesses them; the v1 baseline fixtures are frozen as v1's record.
+  waits failed on slow runners. The 62 golden replays and the 9 attract demos stood as v1 recordings until
+  R2-03.G1 re-blessed them (`d4ba9e8`, the ten files at 640×360) and deleted every gate named above; the v1
+  baseline fixtures are frozen as v1's record.
+- **Per-zone content tests and contracts, stable hash keys** (R5-P.P2a / P2b / P6 / P1, landed in R2-03's
+  wave): each zone's content checks moved from `test/integration/content.test.ts` into
+  `test/integration/content-zone-<letter>.test.ts` and its bounds into `test/integration/zones/`
+  `zone-<letter>.contract.ts` — the v2 branch is decision R5-D2's contract, armed by one `remastered`
+  token when the zone's R5 port lands; `hashWorld` mixes stable FNV-1a content keys, so re-blessing is
+  local to the zone whose files changed; and `test/scripts/assets/procedural-zone-<letter>.test.ts` gives
+  each zone's generator tests their own files (the four alpha-200 literals hoisted to `SOFT_ALPHA` left the
+  repo frame-literal allow-list at 30 entries).
 
 ## [1.0.0] — 2026-10-16
 
