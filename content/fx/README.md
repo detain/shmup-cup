@@ -12,8 +12,8 @@ the atlas.
 
 | Preset | Sprite | What it is |
 |---|---|---|
-| `explosion.small` / `.medium` / `.large` | `fx/explosion-*` | An enemy's (or the ship's) explosion — bigger than the sprite it replaces; the large one is three staggered fireballs |
-| `boss.chain` | `fx/explosion-medium` | One step of a boss's death chain (two scattered fireballs) |
+| `explosion.small` / `.medium` / `.large` | `fx/explosion-*` | An enemy's (or the ship's) explosion — bigger than the sprite it replaces; the large one is three staggered fireballs (normal blending since the native v2 strips, R4-04.D1) |
+| `boss.chain` | `fx/explosion-medium` | One step of a boss's death chain (two scattered fireballs; normal blending) |
 | `debris` | `fx/debris` | Grey chunks thrown out and falling (normal blending) |
 | `spark` | `fx/spark` | Impact sparks of a damaging hit |
 | `clink` | `fx/spark` | Sparks bouncing back off armour (no damage) |
@@ -67,7 +67,9 @@ sprite does not have draws the magenta `ui/missing` frame.
 
 ## How particles behave
 
-- **Pool:** 256 particles; a burst in a full pool recycles the oldest ones.
+- **Pool:** 256 particles; a burst in a full pool recycles the oldest ones. The R4-04.D3 review
+  measured the v2 worst case at 100 live particles (zone-h) with nothing recycled — the capacity
+  stands ([fx-and-game-feel.md](../../docs/dev/fx-and-game-feel.md#the-particle-pool-createparticlesystem)).
 - **World space:** a burst starts at the event's world position and the camera is applied when
   it is drawn — an explosion stays where its enemy died while the stage scrolls.
 - **Ticks, not frames:** particles move once per simulated tick and freeze while the game is

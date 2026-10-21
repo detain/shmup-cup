@@ -69,11 +69,14 @@ procedural bullet art in the readability palette of §12:
 
 | Code | Kind | Sprite | Hit radius | Frames |
 |---|---|---|---|---|
-| 0–2 | `RoundPink`, `RoundRed`, `RoundPurple` | `bullets/round-{pink,red,purple}` (7×7) | 3 px | 1 |
-| 3–5 | `OvalPink`, `OvalRed`, `OvalPurple` | `bullets/oval-…` (9×9) | 3 px | 8 directional |
-| 6–8 | `NeedlePink`, `NeedleRed`, `NeedlePurple` | `bullets/needle-…` (11×11, fast bullets) | 2.25 px | 8 directional |
+| 0–2 | `RoundPink`, `RoundRed`, `RoundPurple` | `bullets/round-{pink,red,purple}` (11×11) | 3 px | 1 |
+| 3–5 | `OvalPink`, `OvalRed`, `OvalPurple` | `bullets/oval-…` (13×13) | 3 px | 8 directional |
+| 6–8 | `NeedlePink`, `NeedleRed`, `NeedlePurple` | `bullets/needle-…` (17×17, fast bullets) | 2.25 px | 8 directional |
 
-(Sprite sizes are the atlas' art sizes; v2's native bullet art is R3's round.)
+(Sprite sizes are the **native v2** art of R3-03.V1 — the art bible §5.4 shapes, marked `native`
+so the pipeline's interim stage never scales them again; the oval is the only frame the interim
+×3/2 upscale did not already hit. The v1 sources stay 7×7 / 9×9 / 11×11 in the scale-1 build until
+the post-release clean-up (RR-1); §Drawing bullets and lasers holds both sets.)
 
 **Everything world-scaled (R2-02).** Every bullet- and pattern-side **world** number is the v1 one
 through `WORLD_SCALE`: the per-kind hit radii above (`2 · K` = 3, needles `1.5 · K` = 2.25), the cull
@@ -322,13 +325,15 @@ with everything else. Bullets without `Cancelable` survive.
 **Cancel into points (M2-02).** `CancelMode.Points` — used for a **boss's death** (credited to its
 killer, `core/bosses`) and a **Mega Crash** (credited to the bomber, `core/powerups`); the
 player's death stays `Sparkle` — also turns every cancelled bullet (not the lasers) into a
-**point item** in the `cancelPoints` pool, drawn as `items/point` (a gold 5×5 diamond, two
-twinkle frames) on `LayerId.Items`:
+**point item** in the `cancelPoints` pool, drawn as `items/point` (a gold diamond — since
+R4-02.B3 the v2 art is native 7×7 over **four** twinkle frames, "the white spark travels the rim
+outward and back: the body, the cardinal tips, the whole rim, the rim without the tips"; the v1
+source stays a 5×5 two-frame diamond at scale 1) on `LayerId.Items`:
 
 1. it starts where the bullet was with **half its velocity** and drifts for
    `POINT_ITEM_HOVER_TICKS` (12) ticks, slowing (× 0.85 per tick), riding the camera;
 2. then it flies towards the credited player's score in the top HUD bar (`POINT_ITEM_TARGETS`:
-   `[40, −4]` / `[344, −4]` in playfield coordinates, above the playfield — since R1-01 anchored to the
+   `[40, −6]` / `[600, −6]` in playfield coordinates, above the playfield — since R1-01 anchored to the
    frame: 40 px in from the bar's left and right edges on its middle row, `[40, −HUD_BAR_HEIGHT / 2]`
    / `[PLAYFIELD_W − 40, −HUD_BAR_HEIGHT / 2]`, the 40 a literal margin), faster every tick
    (`POINT_ITEM_ACCEL` 0.35 px/tick², at most `POINT_ITEM_MAX_SPEED` 9);
@@ -336,6 +341,11 @@ twinkle frames) on `LayerId.Items`:
    `ContentDb.scoring.bulletCancel` points (`content/rules/scoring.rules.json`, 10; the value is
    read once at creation) through `core/scoring` `addScore` (which raises the hi-score; an extend it reaches is
    given by the scoring system's pass in phase 7 of the same tick), and is removed.
+
+The twinkle is `pf.frame[i] = (age >> 3) & 3` (`core/bullets`, four frames over a 32-tick cycle).
+The frame is a hashed pool field, so the R4-02.B3 landing re-blessed every recording that drew
+live points at a hashed boundary — at that rev exactly two goldens (`twin-range-god` at tick 3000,
+`zone-h-arcade` at tick 7800), no demo.
 
 A full item pool credits the bullet's points at once. Without a valid player (a boss killed by
 nobody, a bad index) or with 0 points per bullet, `Points` behaves as `Sparkle`. A second cancel
@@ -465,24 +475,31 @@ its revenge bullets), `setShooterRank(speedK, fireK, spec)` narrows the current 
   the warning line (the atlas's white pixel scaled to `length × 1`, tinted
   `LASER_WARNING_TINT` 0xff5aa0 once at creation) shown while the width is 0, and the beam —
   frame `round(width) − 1` of the beam sprite stretched along the laser (the last frame scaled
-  across for beams wider than 8 px). A rotation is written only when a slot's angle changed.
+  across for beams wider than the sprite's frames — 8 at v1, 12 on the native v2 art). A rotation
+  is written only when a slot's angle changed.
 - **Bending lasers** (M2-02) are the render contract's `BendingLaserView`
   (`WorldView.bendingLasers`); `bindWorld` creates a `BendingLaserBinding`
   (`createBendingLaserBinding`, render-pixi `layers`) on `ENEMY_BULLETS` after the laser binding:
   `capacity × nodes` (8 × 64) preallocated sprites, one per node — frame 0 of the segment sprite
-  `lasers/bend-pink` (a 7×7 round blob), anchored on the node at whole pixels, **never rotated or
+  `lasers/bend-pink` (the v1 7×7 round blob; the v2 art draws it native at the bible's 11×11),
+  anchored on the node at whole pixels, **never rotated or
   scaled** (a round blob needs no rotation, and Pixi's transform setters allocate), tail first so
   the head draws on top.
 - **Point items** are `bullets.pointBatch` — an ordinary sprite batch on `ITEMS` (under the
   bullets), in `world.view.batches` after the capsules.
 - **Palettes** (M2-02): every bullet, beam and bend sprite has colour-blind `@<palette>` variants;
   the renderer swaps its sprite tables when the player picks one
-  ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
+  ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)). The marks are
+  part of the same native art: the `ring` / `dot` marks grow with the core on the v2 path —
+  "one pixel at v1, a five-pixel plus at the v2 core size" (`bullets.mjs`), and every v2 bullet,
+  beam and bend sprite keeps its full `@<palette>` set (`pnpm content:check` guards it).
 - **The beam art** is procedural (`scripts/assets/procedural/lasers.mjs`):
   `lasers/beam-{pink,red,purple}`, 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px
   tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical,
   so a frame stretches to any length; growing and fading beams switch frames instead of scaling
-  across.
+  across. The v2 path draws the set **native at the art scale** — 12 frames of 6×12 px, the same
+  band rule (`lasers.mjs` takes the scale as a generator option because the renderer reads a beam
+  frame's number as its thickness; only the sprite's frame count and side grow).
 - **The v2 bullet art** (R3-03.V1) is finished to the art bible §5.4 shapes at the native sizes —
   round 11×11 ×1 frame, oval 13×13 ×8, needle 17×17 ×8, the bending laser's node 11×11, the beams
   6×12 with frame `k` a band `k + 1` rows tall (pinned by `test/scripts/assets/bullets-v2.test.ts`)

@@ -51,7 +51,7 @@ decides what that looks like, from data. Particles have their own RNG, are not p
 | Event (pushed by) | Handler | What you see |
 |---|---|---|
 | `Particles` (`id` = `FX_CUES`, `param` = intensity) — enemy deaths (M1-08), bullet cancel (M1-09), shield break (M1-11), the ship's death (M1-12), a boss's chain and blast (M1-13) | `particles.emitFxCue(id, x, y, param)` | The presets `content/fx/` binds to the cue: a fireball (+ sparks or debris), sparkles, the shield burst, the boss chain |
-| `Sfx` (`id` = `SFX_CUES`) — every sound | `particles.emitSfxCue(id, x, y)` | Only for the sounds a trigger binds: `EnemyHit` → sparks, `Clink` → sparks bouncing back, `MeterAdvance` / `CapsulePickup` → the pickup ring at the ship, `PlayerShot` → a muzzle flash 9 px ahead of the shooter. Every other cue spawns nothing |
+| `Sfx` (`id` = `SFX_CUES`) — every sound | `particles.emitSfxCue(id, x, y)` | Only for the sounds a trigger binds: `EnemyHit` → sparks, `Clink` → sparks bouncing back, `MeterAdvance` / `CapsulePickup` → the pickup ring at the ship, `PlayerShot` → a muzzle flash 13.5 px ahead of the shooter. Every other cue spawns nothing |
 | `Shake` (`param` = magnitude px, `id` = ticks) — the ship's death (medium, 20), a boss's final blast (large, 40) | `effects.shake(param, id)` | The world layers jitter by whole pixels, decaying to 0 |
 | `Flash` (`id` = `FlashKind`, `param` = ticks) — Mega Crash (12), each WARNING pulse (8), a boss's final blast (24) | `effects.flash(id, param)` | A full-screen flash over the playfield (under the HUD), in the kind's colour, fading linearly — unless the limiter drops it |
 | `Dim` (`id` = level in percent, `param` = ticks) — the boss WARNING (50 %, 180) | `effects.dim(id / 100, param)` | The playfield darkens (fade in 8 ticks, hold, fade out 16) |
@@ -124,10 +124,23 @@ as a dev dependency so the content test can call the owner.
 | `graze` | `fx/sparkle` | one small twinkle, 8–12 ticks | `Graze` (M3-02) |
 | `black.hole` | `fx/ring` | four rings flying out, drag 0.08, 14–20 ticks | `BlackHole` (with `spark`; M3-02) |
 
-`fx/sparkle` (source 5×5, 4 frames: a plus turning into an ×, then a dot — pale gold so it never
-reads as a bullet) and `fx/ring` (source 9×9, radius 1…4, cyan fading to blue) are procedural
-sprites in `scripts/assets/procedural/particles.mjs`, generated at the v1 source size and served
-×1.5 by the port — `fx/sparkle` 8×8, `fx/ring` 14×14 on the v2 atlas
+The fx sprites are procedural: `scripts/assets/procedural/particles.mjs` (spark, sparkle — a plus
+turning into an ×, then a dot, pale gold so it never reads as a bullet — debris, and ring — a thin
+cyan ring that grows and fades) and `explosions.mjs` (the three fireball strips). **Since R4-04
+they draw the v2 art native** (art bible v2 §5.8; RR-1 — a generator branch, and at `artScale: 1`
+each module still emits its v1 sprites byte for byte). `explosions.mjs` grows the strips to
+`⌈1.5·⌉` of the v1 sides — 24², 48² and 72² — with 12, 14 and 16 frames, "the top of each range,
+so the biggest blast burns the smoothest"; frame 0 of each burst carries the bible §2.2's white
+star flash (an eight-ray cross over the first fireball), the extra frames spreading the burn over
+R2-04.P2's lifetimes (1.5–2 ticks a frame). `particles.mjs`: spark 7×7 × 4 frames ("one more
+shrink step than v1"), sparkle 7×7 × 4, debris 9×9 × 4 (the same exact-90° tumble) and ring 13×13
+× 6 ("radii 1 … 6, the six steps sharing v1's four tints — no new colours"). The odd sides are
+"the bible's own (point-symmetric sprites stay odd), not `⌈1.5·⌉`". Every v2 frame set keeps v1's
+`animations` tags (`fade`, `tumble`, `twinkle`, `grow`) covering its frames, so **no preset needed
+an edit** — the counts were already inside the new strips (R2-04.P2's discipline, kept through
+R4-04.D2). And the fireball family no longer glows: `explosion.small/medium/large` and
+`boss.chain` draw `"blend": "normal"` since R4-04.D1, as `debris` has since R2-04.P2; everything
+still additive keeps the `add` default — the sparkles, rings, sparks and the muzzle flash
 ([asset-pipeline.md](asset-pipeline.md)).
 
 ## The particle pool (`createParticleSystem`)
@@ -162,6 +175,12 @@ sprites in `scripts/assets/procedural/particles.mjs`, generated at the v1 source
   and returning **16-bit** draws — see [the hot-path rules](#zero-allocation-and-the-hot-path-rules).
   The same seed and event sequence always draw the same particles; the sim's streams are never
   touched.
+- **Capacity kept (R4-04.D3).** The v2 demand was measured with the pool grown to 4096 (real
+  `connectFxEvents`, the four-way bot in god mode with the full loadout, seed 21) through all
+  fifteen shipped stages and the boss rush: the worst peak was **100 live particles at zone-h**
+  (tick 14262; `boss-rush` 99 next, no other stage above 68) with `recycled` **0** everywhere —
+  39 % of 256. Decision [R5-D5](../v2-run/decisions.md) keeps `PARTICLE_CAPACITY` 256 "unless a
+  design peaks above 80 %", so the shipped pool is unchanged.
 
 ## Screen effects (`createScreenEffects`)
 
@@ -351,7 +370,7 @@ objects.
 | `packages/shell/test/boot/`, `loader/` | `DEFAULT_CONTENT_OWNERS` has `fx` (bad presets reported with their paths); the shell keeps the content (`Shell.fx`) and hands it to `setFxContent`, `fxSeed` from the game's seed, free flight fed by the World's events, `?scene=fx-gallery` driving the particles directly |
 | `packages/core/test/scoring/scoring-events.test.ts`, `bosses/bosses-edge.test.ts` | `Score` events: once per kill, between-tick kills, whole points and pixels, none for bonuses / pickups / anonymous kills, not hashed; boss parts |
 | `test/integration/content.test.ts` | The shipped and example `fx` files validate through the owner; their sprites exist in the atlas |
-| `test/e2e/fx-gallery.spec.ts` | `?scene=fx-gallery` in the web build and the Tizen build from disk: the station label and warm, additively blended fireball pixels in the playfield's middle (the screenshot is attached to the report); no console errors or atlas warnings |
+| `test/e2e/fx-gallery.spec.ts` | `?scene=fx-gallery` in the web build and the Tizen build from disk: the station label and warm fireball pixels in the playfield's middle (the screenshot is attached to the report); no console errors or atlas warnings |
 
 ## Gotchas
 

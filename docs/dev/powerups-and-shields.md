@@ -172,11 +172,17 @@ Fields (`ITEM_SCHEMA`, hashed in sorted name order):
 | `flags` | u8 | `ItemFlag`: `Dead` 1 (collected / culled this tick, freed in phase 8), `Magnet` 2 (pulled this tick) |
 
 Kinds come from a built-in table, `ITEM_KINDS` (M2-05 appended the six Direct-mode colour items —
-`items/direct-*`, 300 points, drifting like freed Options for `DIRECT_ITEM_TICKS` 600 —
+`items/direct-*`, 300 points, drifting like freed Options for `DIRECT_ITEM_TICKS` 600 — native
+15×15 plates glinting over the same four frames since R4-02.B2 ("the spark — the orb's widened
+highlight, the octagon's mark catching its left edge", `direct-items.mjs`) —
 [direct-mode.md](direct-mode.md#the-items)): the
 capsule draws `items/capsule` (`CAPSULE_SPRITE`, an **engine sprite** — `ITEM_SPRITES` is part of
-`ENGINE_SPRITES`) with a two-frame blink every `ITEM_BLINK_TICKS` (8) ticks from the World tick
-(all capsules blink together), and is worth `CAPSULE_SCORE` (300). Since M2-04 the **blue
+`ENGINE_SPRITES`) with a blink every `ITEM_BLINK_TICKS` (8) ticks from the World tick, stepped
+through the sprite's frame count (`Math.floor(blink / ITEM_BLINK_TICKS) % frames`): two frames on
+the v1 pill, **four** on the native v2 18×12 pill of R4-02.B2 — "the spark appears on the dim
+body (frame 1), the pill lights with it (frame 2) and the flash alone fades (frame 3) before the
+cycle restarts" (`items.mjs`; `blink: [0, 1, 2, 3]`; all capsules blink together), and is worth
+`CAPSULE_SCORE` (300). Since M2-04 the **blue
 capsule** (`items/capsule-blue`, 300 points, from `drop: "blueCapsule"` enemies and formations —
 `DropKind.BlueCapsule`) behaves like a capsule but, collected, runs `clearScreen` (every enemy on
 screen dies — no bullet cancel, no meter advance) instead of `collect`; the **freed Option**
@@ -287,7 +293,13 @@ Rotate Shield in `tickShield`. The whole story is
 ship's centre. The frame is `shieldWearFrame(state, 4)` = `frames − ceil(hits · frames /
 maxHits)` clamped: the M1-03 sprite has **four** wear frames (the plan said three), so a 5-hit
 field shows fresh at 5 and 4 hits, then worn (3), damaged (2), critical (1). It blinks
-(`SpriteFlag.Hidden`) with the ship's invulnerability and during its own i-frames.
+(`SpriteFlag.Hidden`) with the ship's invulnerability and during its own i-frames. Since R4-01.A4
+the field's v2 art is **native 45×36** (the v1 radii exactly ×1.5) in **eight** frames — "the
+Force Field's wear frame shimmers between its pair every four ticks (R4-01.A4) — the art's
+frames are wear × 2 + shimmer": the drawn frame is `shieldWearFrame(state, 4) ×
+FORCE_FIELD_SHIMMER_FRAMES (2) + ((blink >> 2) & 1)` over the World tick. The Arm (M2-05) draws
+its tier's colour block of wear frames and the other kinds keep their plain wear frame; at
+`artScale: 1` the v1 30×24 four-frame field stands (RR-1).
 
 ## Mega Crash (the `!` slot)
 

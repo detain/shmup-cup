@@ -437,7 +437,9 @@ The bending laser, cancel point and palette suites are listed on their home page
   boss roster move to the zones' bosses (M2-11 … M2-14).
 - **M2-11** (done) — the first shipped enemies built on the DSL: zone B's `reef-jelly`
   (`brine.jelly-ring`) and zone C's `dust-devil` (`dune.whirl`), both `pattern.loop` runners from
-  `content/patterns/zones.patterns.json`; the zone bosses are still TS behaviours
+  their zones' own pattern files — `content/patterns/zone-b.patterns.json` /
+  `zone-c.patterns.json`, since R5-P.P4 split the shared `zones.patterns.json` into one file per
+  zone with a byte-identical compiled bank; the zone bosses are still TS behaviours
   ([zones-b-and-c.md](zones-b-and-c.md)).
 - **M2-12** (done) — zone E's `thunderhead` runs `tempest.bolt` (a streak of four aimed needles:
   one `fire` aimed at 0.85 px/tick, then three `sequence` fires — direction +0, speed +0.25 — so
