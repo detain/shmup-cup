@@ -48,9 +48,9 @@ content/stages/{captain,raid,twin,gauntlet}-range      enrage, inner, minion; pa
         │ partner / inner / minion / rush references checked in the reference pass)
         ▼
 createWorld ── createBossSystem(world, bossBehaviors, stageSpec)
-                 4 slots × 16 parts (part slot g = slot × 16 + i, hit id 64 + g), batch (AIR) +
+                 4 slots × 24 parts (part slot g = slot × 24 + i, hit id 64 + g), batch (AIR) +
                  backBatch (GROUND — the resting half of a pair), hpBar, raidCamera, rush tables
-            ── world.laserSources = 64 enemies + 64 parts; world.endingFlags = 0
+            ── world.laserSources = 64 enemies + 96 parts; world.endingFlags = 0
 
 phase 3  bosses.update()  per slot: WARNING · intro · fight clocks (turns, time limits) · dying ·
                           escape · raid camera target        then the boss rush's clock
@@ -69,14 +69,16 @@ UI: Hud.showBossHp ← save.options.display.bossHpBar (scene flow, every display
 ## Four boss slots
 
 `BossSystem.slots` holds **`MAX_BOSSES` 4** `Boss` slots (slot 0 is still `bosses.boss`), each
-with its 16 `BossPart`s. Four covers the worst case the plan names: a double boss (two slots), a
+with its `MAX_BOSS_PARTS` 24 `BossPart`s (16 until R5-P.P8). Four covers the worst case the plan
+names: a double boss (two slots), a
 captain beside it and an inner boss revealed while another slot still runs its death sequence.
 
-- **Part slots and ids.** A part's **part slot** is `BossPart.global = owner × 16 + index`
-  (`BOSS_PART_SLOTS` 64); its hit / grid / laser-source id `BossPart.slot` is
-  `BOSS_PART_ID_BASE` (64) + that. `MAX_HIT_TARGETS` grew 80 → **128**, the weapons' boss-part
-  cooldown tables to `PIERCE_TABLES` × 64 (`WeaponSystem.partCooldowns`), the World's
-  `laserSources` to the 64 enemies + 64 parts (`bosses.parts`, flat). `damagePart(index, …)` and
+- **Part slots and ids.** A part's **part slot** is
+  `BossPart.global = owner × MAX_BOSS_PARTS + index` (`MAX_BOSS_PARTS` 24, `BOSS_PART_SLOTS` 96 —
+  16 / 64 until R5-P.P8); its hit / grid / laser-source id `BossPart.slot` is
+  `BOSS_PART_ID_BASE` (64) + that. `MAX_HIT_TARGETS` grew 80 → 128 (M2-09) → **160**, the weapons'
+  boss-part cooldown tables to `PIERCE_TABLES` × 96 (`WeaponSystem.partCooldowns`), the World's
+  `laserSources` to the 64 enemies + 96 parts (`bosses.parts`, flat). `damagePart(index, …)` and
   `isArmoured(index)` take the **part slot** — for boss slot 0 that is still the part's own index,
   so M1 code and tests keep working. `WeaponHost.bosses` reads `bosses.parts` (it read
   `bosses.boss.parts`).
@@ -191,8 +193,9 @@ and `launch`) answers `false` for a raid part off screen; the snapshot keeps the
 the cold script path. The raid's turrets run `boss.raid`. `clear()` (a checkpoint restart) ends
 the follow, and `restartAt` forgets any target anyway.
 
-**IRON LEVIATHAN** (RL-01, `raid-range`) is five 96-px `bosses/raid-hull` sections (480 px — wider
-than the 384-px view), seven 12-hp turrets with 16 heading frames (four on top, three below) and
+**IRON LEVIATHAN** (RL-01, `raid-range`) is five 144-px `bosses/raid-hull` sections (720 px — wider
+than the 640-px view; the 96-px source packed at the interim art's 3/2, parts at x 0…576 since the
+R2-02 port), seven 12-hp turrets with 16 heading frames (four on top, three below) and
 a 60-hp `reactor` core that takes damage only once the two turrets nearest it are gone; four
 camera segments that fly over it, along it and back, looping; a 5,400-tick time limit; LEVIATHAN
 HEART inside.
@@ -278,10 +281,11 @@ the blast).
 **The view** (`core/ui`): `bossHpBarFill(bar, width)` → `⌈hp × width / maxHp⌉` whole pixels, at
 most `width`, 0 when hidden or empty — any hit point left shows at least 1 px, full only at full
 strength. `buildHud(world, list, sprites, bossHp)` draws, while `bossHp` and `hpBar.visible`,
-`BOSS` (red `0xf85858`, string slot 22) at x 148 and a 4-px frame `BOSS_HP_BAR_WIDTH` (64) wide at
-x 176 (since R1-01 derived from the frame and the font: `BOSS`, the gap and the bar centred 2 px
-right of `FRAME_CX`, the bar as wide as the hi-score display it replaces —
-[scenes-and-ui.md](scenes-and-ui.md#the-hud)) with a 2-px red fill of `bossHpBarFill(bar, 62)`
+`BOSS` (red `0xf85858`, string slot 22) at x 254 and a 4-px frame `BOSS_HP_BAR_WIDTH` (96) wide at
+x 296 (since R1-01 derived from the frame and the font — the port's scale moves the figures from
+148 / 64 / 176: `BOSS`, the gap and the bar centred `uiPx(2)` right of `FRAME_CX`, the bar as wide
+as the hi-score display it replaces —
+[scenes-and-ui.md](scenes-and-ui.md#the-hud)) with a 2-px red fill of `bossHpBarFill(bar, 94)`
 **in place of the hi-score** (`HI` and its number return when the bar goes). `HUD_STRING_COUNT` is 23, `HUD_COMMAND_COUNT` 100. `Hud` has
 `showBossHp` and rebuilds only when the fill's pixel count (or the option) changes.
 
@@ -348,8 +352,8 @@ standing part:
 |---|---|---|
 | `captain.ram` | `waves` 3, `waveTicks` 36, `ways` 5, `spread` 40, `bulletSpeed` 1.5, `ramTicks` 45, `ramX` 40, `returnTicks` 70, `restTicks` 50 | Wave shooter + ram: `waves` fans of red bullets `waveTicks` apart (rank-scaled), then a `moveTo` to view x `ramX` at the nearest player's row (clamped 24 px inside; a straight, telegraphed horizontal dash — dodge up or down), 10 ticks there, home in `returnTicks`, rest |
 | `captain.launcher` | `trackSpeed` 0.4, `margin` 40, `launchTicks` 100, `count` 2, `fireTicks` 70, `bulletSpeed` 1.25, `ways` 3, `spread` 48 | Splitting launcher: tracks the player's height; every `launchTicks` up to `count` guns in turn launch the boss's `minion` (`api.launch` — a regular enemy with its own script, BROOD LAUNCHER's is the `bubble.split` bubble); every `fireTicks` aimed pink 3-ways |
-| `captain.circler` | `cx` `PLAYFIELD_W / 2` (192), `cy` `PLAYFIELD_CY` (100) — the playfield's centre (R1-01), `rx` 140, `ry` 64, `speed` 3, `fireTicks` 60, `bulletSpeed` 1.25, `ring` 8 | Screen-crossing circler: `api.orbit` round view point (`cx`, `cy`) — start at `cx + rx`, `cy` (its home) for no jump; purple rings, each turned half a gap from the last |
-| `captain.crab` | `stepTicks` 70, `minX` 250, `maxX` 340, `minY` 40, `maxY` 160, `ringTicks` 90, `ring` 12, `bulletSpeed` 1.1, `turn` 16 | Ring-firing crab: sidesteps to a random whole-pixel point of its box (gameplay RNG, in 60 % of the step); red oval rings turned `turn` units further each time, so the gaps sweep round |
+| `captain.circler` | `cx` `PLAYFIELD_W / 2` (320), `cy` `PLAYFIELD_CY` (168) — the playfield's centre (R1-01), `rx` 210, `ry` 96, `speed` 3, `fireTicks` 60, `bulletSpeed` 1.875, `ring` 8 | Screen-crossing circler: `api.orbit` round view point (`cx`, `cy`) — start at `cx + rx`, `cy` (its home) for no jump; purple rings, each turned half a gap from the last |
+| `captain.crab` | `stepTicks` 70, `minX` 407, `maxX` 574, `minY` 60, `maxY` 276, `ringTicks` 90, `ring` 12, `bulletSpeed` 1.65, `turn` 16 | Ring-firing crab: sidesteps to a random whole-pixel point of its box (gameplay RNG, in 60 % of the step); red oval rings turned `turn` units further each time, so the gaps sweep round |
 | `boss.raid` | `fireTicks` 50, `bulletSpeed` 1.5, `ways` 1, `spread` 32, `aimStep` 0 | A raid's turrets: every volley each standing gun that may fire (on screen) turns to the nearest player (`aimPart`) and fires a pink `ways`-way along its new heading |
 
 **Script API additions** (`BossScriptApi`): `enraged`; `setPartAngle(i, angle)` (wrapped, NaN
@@ -400,18 +404,23 @@ mask, killer, blast flag, the pair (partner, resting, turning, turn clock, enrag
 (raiding, returning, segment, ticks, from x / y), rush entry, part count, and per part its offset,
 position, **angle, spin**, hit points, flags and flash; then the WARNING, **the raid camera
 target**, **the rush index and delay** and **`world.endingFlags`**. The part cooldown tables are
-hashed with 64 part slots each. The runner's follow target is not in its state: its owner (the raid
+hashed with every part slot — `BOSS_PART_SLOTS` 96 since R5-P.P8, 64 before. The runner's follow
+target is not in its state: its owner (the raid
 camera) is hashed. The turned placement reads the committed sine table, so it is identical on
 every engine.
 
-The goldens were **re-blessed once** (`8cdc9eb`): the hash layout changed (four slots, their new
-fields, the 64-slot part tables, the rush state, the ending flags) and the new content shifts the
-sorted sprite and script ids — every replay's inputs, tick count and outcome stayed identical
+The goldens were **re-blessed once** at this step (`8cdc9eb`): the hash layout changed (four
+slots, their new fields, the 64-slot part tables, the rush state, the ending flags) and the new
+content shifts the sorted sprite and script ids — every replay's inputs, tick count and outcome
+stayed identical
 (only `hashes` / `finalHash` changed). The test round added four replays — `captain-range-god`,
 `raid-range-god` (full loadout: the raid and the heart shot down), `raid-range-escape` (no
 power-ups: the escape and `EndingFlag.BossEscaped`) and `twin-range-god` (turns, enrage) — and
 `golden.test.ts` checks what each of them went through (which slots ran, escaped, enraged; the
-camera handed back). The older files are byte-identical since.
+camera handed back). The other files stayed byte-identical until **`R2-03.G1` (`d4ba9e8`)**, the
+v2 re-bless: every golden and attract demo was re-recorded on the ported 640×360 world at replay
+format 2 — the shipped corpus is current v2 recordings, and the boss hashes here mix the 96-slot
+part tables and `R5-P.P1`'s stable content keys.
 
 ## Zero allocation and the hot-path rules
 
@@ -484,7 +493,7 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
 
 | Symptom | Cause / fix |
 |---|---|
-| `damagePart(i)` hits the wrong boss | It takes the **part slot** (`owner × 16 + index`), not the part index — for slot 0 they are equal |
+| `damagePart(i)` hits the wrong boss | It takes the **part slot** (`owner × MAX_BOSS_PARTS + index` — × 24), not the part index — for slot 0 they are equal |
 | `boss.warning … is a captain` / `startWarning` returns `false` for a mid-boss | Captains fly in with a `boss` event only |
 | A second stage boss's `boss` event did nothing | The main encounter runs one stage boss at a time; make it a `partner`, an `inner` boss or a rush entry — or a captain |
 | A raid's spawns after the boss never came during the fight | Intended: the timeline waits where the follow began and resumes after the camera is back |

@@ -11,7 +11,7 @@
 ---
 
 Shmup Cup is a side-scrolling shooter in the spirit of the 16-bit arcade classics: a fixed
-384×216 playfield upscaled to whole pixels, a power meter you spend by hand, options that trail
+640×360 picture upscaled to whole pixels, a power meter you spend by hand, options that trail
 behind your ship, telegraphed lasers, and a `WARNING!!` before every boss. It was written for
 **Samsung TVs and Smart Monitors**, where the only controller is the remote — so the whole game is
 playable with four directions and one button — and it also runs on **LG webOS TVs**, in a
@@ -74,7 +74,7 @@ sequence through a collapsing corridor.
 |---|---|
 | **HALCYON BULWARK** — four plates in front of a core | **SANDGRAVE WIDOW** — break the fangs first |
 
-Bosses are trees of up to sixteen parts, each with its own hit points, hurtbox and weak-point
+Bosses are trees of up to twenty-four parts, each with its own hit points, hurtbox and weak-point
 rule — armour that clinks, cores that only open after their plates are gone, parts a boss holds
 open while it attacks — and up to eight phases that change how it fights as you take it apart.
 There are mid-bosses that arrive without a siren, a raid you fly *along* while the camera follows
@@ -193,7 +193,7 @@ Installing on a TV, step by step: **[install-on-tv.md](docs/client/install-on-tv
   songs, rendered deterministically at load. A real artist can replace any frame by name.
 - **Written for Chromium 68.** The TV engine floor is checked by lint, by an API scan over every
   shipped source tree, and by browser tests that boot the actual TV bundles.
-- **PixiJS v8 for pixels only.** WebGL1 first, one 384×216 render target, integer upscale, and a
+- **PixiJS v8 for pixels only.** WebGL1 first, one 640×360 render target, integer upscale, and a
   renderer that never creates a Pixi object during a frame.
 
 Deeper: **[architecture.md](docs/dev/architecture.md)** ·
@@ -254,9 +254,10 @@ the [World and its tick](docs/dev/sim-world.md), [stages](docs/dev/stage-runtime
 
 ## Status
 
-Version **2.0.0-alpha.0** on `master`: **v2, the 640×360 remaster, is in development** — more
-detailed art and longer zones, step by step in [`plan_resolution.md`](plan_resolution.md). **v1**,
-the 384×216 game this page describes, is released as
+Version **2.0.0-alpha.0** on `master`: **v2, the 640×360 remaster** — this page describes it: the
+picture draws at 640×360 and every world distance is 1½× v1's, while the more detailed art and the
+longer zones arrive step by step ([`plan_resolution.md`](plan_resolution.md)). **v1**, the
+original 384×216 game, is released as
 [`v1.0.0`](https://github.com/detain/shmup-cup/releases/tag/v1.0.0) and maintained on the
 [`v1.x`](https://github.com/detain/shmup-cup/tree/v1.x) branch (fixes only). Everything described on
 this page is implemented, tested and playable from the title screen to the credits.

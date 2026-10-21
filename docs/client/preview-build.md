@@ -169,7 +169,10 @@ that shows every explosion and screen effect in turn (see [below](#other-screens
 This build is version **1.0.0**, released on 2026-10-16 (tag `v1.0.0`) and kept on the `v1.x`
 branch, which takes fixes only. Builds of the `master` branch since then are **2.0.0-alpha.0** (the
 monitor shows **2.0.0**): the start of v2, the 640 × 360 remaster with more detailed art and longer
-zones, which plays exactly like 1.0.0 until its steps change it. Version 1.0.0 is the **release
+zones. Its first steps have already landed there — those builds draw at 640 × 360 with every world
+distance at 1½× v1's, part of the art is already redrawn at the new density, and a replay recorded
+on a 1.0.0 build will not play on them; the rules, the zones and the sound are still 1.0.0's until
+the later steps change them. Version 1.0.0 is the **release
 candidate** 1.0.0-rc.1, checked from end to end ([release-candidate.md](release-candidate.md)), plus
 the third milestone ([What changed lately](#what-changed-lately)); the candidate was built on
 version 0.1.0, the end of the first milestone, and the steps of the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
@@ -291,9 +294,9 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right — in a **2 PLAYERS** game a blinking yellow `PRESS START` instead, until player 2 joins ([Two players](#two-players)) |
 | **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — with another weapon type the second, third and fourth boxes carry that type's weapon names instead, e.g. `SPREAD` `TAIL` `RIPPLE` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones. With the **MANTA** the power meter makes way for rows of small square **pips** — `SHOT`, `SUB`, `ARM`, `SPD` and the weapon's name ([The MANTA](#the-manta-colour-items-weapons-and-the-arm)) |
 
-Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
+Every pixel should be a crisp little square. The game draws at 640×360 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
-exactly ×5 and the picture fills the screen edge to edge. On other sizes the largest
+exactly ×3 and the picture fills the screen edge to edge. On other sizes the largest
 whole-number scale that fits is used and a very dark border fills the rest — that border is
 intentional, it keeps the pixels sharp.
 
@@ -793,13 +796,14 @@ without colour: the pink family keeps a solid bright centre, the red one has a *
 like a ring) and the purple one a **single bright dot**. The laser beams follow the same colours.
 Only the look changes — the bullets fly, hit and score exactly the same, whatever you choose.
 
-**The picture size (SCALE).** The game draws a small 384 × 216 picture and enlarges it to your
-screen. On a 1920 × 1080 screen — the TV app's usual size — it fits exactly five times, so
-**INTEGER, FIT and STRETCH look the same there**. They differ on other sizes: in a browser window,
-on a 1280 × 720 picture (INTEGER leaves a black border of 64 pixels left and right and 36 top and
-bottom; FIT and STRETCH fill it) or on a screen that is not 16:9 (only STRETCH fills it, and the
-picture looks wider or taller). With FIT and STRETCH small details can look slightly uneven —
-that is expected; INTEGER is the sharpest.
+**The picture size (SCALE).** The game draws a small 640 × 360 picture and enlarges it to your
+screen. On a 1920 × 1080 screen — the TV app's usual size — it fits exactly three times, and on a
+1280 × 720 one exactly twice, so **INTEGER, FIT and STRETCH look the same there**. They differ on
+other sizes: in a browser window that is not a whole multiple of 640 × 360 (INTEGER draws the
+largest whole-number size that fits, centred with a black border all round; FIT and STRETCH fill
+the window) or on a screen that is not 16:9 (only STRETCH fills it, and the picture looks wider
+or taller). With FIT and STRETCH small details can look slightly uneven — that is expected;
+INTEGER is the sharpest.
 
 **The hitbox marker.** Your ship is only hit where its small weak spot is — bullets that merely
 brush a wing miss. HITBOX ON draws that spot: a white 3 × 3 square in a pink-red frame in the
@@ -957,8 +961,10 @@ ship may move in four directions only; the game is designed to be fully playable
 **Released: version 1.0.0 (2026-10-16), and v2 begins.** Nothing changed in the game: 1.0.0 is the
 build this page describes, tagged `v1.0.0` and kept on the `v1.x` branch, whose builds since then
 are **1.0.1-dev** (the monitor shows **1.0.1**) and take fixes only. Builds of `master` are
-**2.0.0-alpha.0** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster, which still plays
-exactly like 1.0.0 until its steps change it. A monitor with a 2.0.0 build installed may refuse a
+**2.0.0-alpha.0** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster — its first steps have
+landed, so those builds draw at 640 × 360 with every world distance at 1½× v1's (the rules, the
+zones and the sound are unchanged until the later steps land; replays recorded on 1.0.0 builds
+are refused). A monitor with a 2.0.0 build installed may refuse a
 1.0.N build of the same app — remove Shmup Cup first
 ([install-on-tv.md](install-on-tv.md#removing-an-app)).
 
@@ -4048,7 +4054,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | `?stage=gimmick-range` does nothing on the TV | Expected: the TV widget has no address bar; the Gimmick range is browser only for now |
 | The picture has black borders on the sides and top (PC) | Expected with **SCALE → INTEGER** (the start setting) when the window is not a whole multiple of the game's picture; choose FIT (thinner or no border) or STRETCH (no border) in OPTIONS |
 | The picture looks stretched, or some pixels look wider than others | **SCALE** is FIT or STRETCH — expected; OPTIONS → DISPLAY → SCALE → INTEGER gives the sharpest, evenly sized pixels |
-| SCALE changes nothing on the TV | Expected on a 1920 × 1080 picture: the game fits it exactly five times, so all three settings look the same |
+| SCALE changes nothing on the TV | Expected on a 1920 × 1080 picture: the game fits it exactly three times, so all three settings look the same |
 | A white square with a pink-red frame sits on my ship | **HITBOX** is ON — it shows the ship's weak spot. OPTIONS → DISPLAY → HITBOX → OFF hides it |
 | The picture no longer shakes when the ship is lost | **SHAKE** is OFF in OPTIONS |
 | The Mega Crash flash is weak or the boss's blast barely flashes | **FLASHES** is REDUCED in OPTIONS (at most one dim flash a second) — set NORMAL for the full flashes |
