@@ -189,5 +189,7 @@ describe('golden replays — the re-bless script', () => {
     expect(parseOnly([])).toEqual([]);
     expect(parseOnly(['--only', 'zone-b,zone-c'])).toEqual(['zone-b', 'zone-c']);
     expect(() => parseOnly(['--only'])).toThrow();
+    expect(() => parseOnly(['--only', ''])).toThrow();
+    expect(() => parseOnly(['--only', ','])).toThrow();
   });
 });

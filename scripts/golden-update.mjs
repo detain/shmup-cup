@@ -50,10 +50,14 @@ export function parseOnly(argv) {
   if (value === undefined || value.startsWith('--')) {
     throw new Error('--only needs a comma-separated list of stage ids');
   }
-  return value
+  const ids = value
     .split(',')
     .map((id) => id.trim())
     .filter((id) => id !== '');
+  if (ids.length === 0) {
+    throw new Error('--only needs a comma-separated list of stage ids');
+  }
+  return ids;
 }
 
 /**

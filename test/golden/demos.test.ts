@@ -33,10 +33,22 @@ import {
   recordDemo,
   writeDemo,
 } from './demos.js';
-import { GOLDEN_UPDATE_ENV, goldenStageSelected } from './golden.js';
+import { GOLDEN_ONLY_ENV, GOLDEN_UPDATE_ENV, goldenStageSelected } from './golden.js';
 
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
+
+// An --only list naming no known demo stage fails loud, never blesses nothing (R5-P.P3 review).
+if (updating) {
+  const only = (process.env[GOLDEN_ONLY_ENV] ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id !== '');
+  const known = new Set(DEMO_SCENARIOS.map((scenario) => scenario.stageId));
+  const unknown = only.filter((id) => !known.has(id));
+  if (unknown.length > 0)
+    throw new Error(`SHMUP_GOLDEN_ONLY names no demo stage: ${unknown.join(', ')}`);
+}
 
 describe('attract demos (content/demos, 4-way bot)', () => {
   it.each(DEMO_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(

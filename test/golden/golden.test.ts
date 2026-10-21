@@ -37,6 +37,7 @@ import { shippedContent } from '../playtest/harness.js';
 import { readContentFiles } from '../../vite.shared.js';
 import {
   GOLDEN_BUILD_ID,
+  GOLDEN_ONLY_ENV,
   GOLDEN_SCENARIOS,
   GOLDEN_UPDATE_ENV,
   goldenStageSelected,
@@ -48,6 +49,18 @@ import {
 
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
+
+// An --only list naming no known stage fails loud, never blesses nothing (R5-P.P3 review).
+if (updating) {
+  const only = (process.env[GOLDEN_ONLY_ENV] ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id !== '');
+  const known = new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.stageId));
+  const unknown = only.filter((id) => !known.has(id));
+  if (unknown.length > 0)
+    throw new Error(`SHMUP_GOLDEN_ONLY names no golden stage: ${unknown.join(', ')}`);
+}
 
 describe('golden replays (zone A and the dev stages, playtest bots)', () => {
   it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
