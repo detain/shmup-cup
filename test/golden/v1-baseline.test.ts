@@ -35,11 +35,26 @@ import {
   updating,
 } from './v1-baseline-suite.js';
 
+/**
+ * Stages shipped after the v1 cut (their id); the frozen v1 baseline never records them, so the
+ * coverage case subtracts them. R3-06.L6 added the first entry, the `decor-range` dev stage.
+ */
+const POST_V1_STAGES = ['decor-range'];
+
 describe('v1 baseline (test/fixtures/v1-baseline, R2-02 prep)', () => {
   it('covers every shipped stage, and every zone on loop 2 too', () => {
     const db = shippedContent();
     const stages = new Set(BASELINE_SCENARIOS.map((s) => s.stageId));
-    expect([...stages].sort()).toEqual(db.stages.map((stage) => stage.id).sort());
+    // R3-06.L6: `decor-range` is a v2-only dev range added after the v1 cut — the v1 baseline
+    // is frozen and never re-recorded, so the coverage compares against the stages v1 shipped.
+    const v1Stages = db.stages
+      .map((stage) => stage.id)
+      .filter((id) => !POST_V1_STAGES.includes(id))
+      .sort();
+    expect([...stages].sort()).toEqual(v1Stages);
+    for (const id of POST_V1_STAGES) {
+      expect(db.stages.map((stage) => stage.id)).toContain(id);
+    }
     const ids = BASELINE_SCENARIOS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
     const zones = db.campaign?.zones.map((zone) => zone.stage) ?? [];

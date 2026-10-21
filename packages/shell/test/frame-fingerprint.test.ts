@@ -338,9 +338,9 @@ function galleryWalk(): string {
  * and WARNING band laid out from the font's cell and the art's scale like the scene flow's (C5).
  */
 const PINNED: Readonly<Record<string, string>> = {
-  'flight.open-space': '6468fa55 ff7f3235 e0b9295d',
-  'flight.test-range': 'f439295d ff7f3235 01fa71d6',
-  'flight.warning': '9c8718f0 e3b808bd ae6bf593',
+  'flight.open-space': '78890175 ff7f3235 e9d3e6a1',
+  'flight.test-range': '3073f2fd ff7f3235 2bfb7d68',
+  'flight.warning': '36597e30 e3b808bd a1b20503',
   showcase: 'b9c2aea8 57ecce45 f99d41d8',
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };

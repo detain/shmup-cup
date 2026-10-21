@@ -1,0 +1,117 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "decor-range",
+  "name": "DECOR RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 5400,
+  "camera": [{ "x": 0, "speed": 1.5, "ramp": 60 }],
+  "checkpoints": [{ "x": 0 }, { "x": 2700 }],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "decor/circuit-band",
+      "factor": 0.25,
+      "y": 264,
+      "spacing": 256,
+      "yFactor": 0.25
+    },
+    {
+      "layer": "far",
+      "sprite": "decor/cloud-band",
+      "factor": 0.125,
+      "y": 0,
+      "spacing": 256,
+      "yFactor": 0.5,
+      "frames": 2,
+      "frameTicks": 240
+    },
+    {
+      "layer": "far",
+      "sprite": "decor/cloud-band",
+      "factor": 0.2,
+      "y": 120,
+      "spacing": 256,
+      "yFactor": 0.75,
+      "frames": 2,
+      "frameTicks": 320
+    },
+    {
+      "layer": "mid",
+      "sprite": "decor/ridge-band",
+      "factor": 0.5,
+      "y": 150,
+      "spacing": 256,
+      "yFactor": 1,
+      "frames": 2,
+      "frameTicks": 300
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.125,
+      "y": 40,
+      "spacing": 256,
+      "yFactor": 0.5
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 16,
+      "spacing": 256,
+      "yFactor": 0.5
+    },
+    {
+      "layer": "fore",
+      "sprite": "decor/frond-band",
+      "factor": 1.5,
+      "y": 12,
+      "spacing": 256,
+      "yFactor": 1
+    }
+  ],
+  "tilemap": {
+    "tileSize": 12,
+    "tileset": "terrain-a",
+    "rowsTall": 28,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        { "from": 0, "to": 5400, "floor": { "base": 36, "amp": 18, "period": 600, "seed": 7 } }
+      ]
+    }
+  },
+  "decor": [
+    { "layer": "back", "sprite": "decor/pillar", "frame": 0, "x": 420, "y": 180 },
+    {
+      "layer": "back",
+      "sprite": "decor/pillar",
+      "frame": 0,
+      "x": 1180,
+      "y": 180,
+      "glow": "fx/glow-lantern"
+    },
+    { "layer": "back", "tile": "brick", "frame": 0, "x": 900, "y": 20 },
+    { "layer": "back", "tile": "floor", "frame": 0, "x": 2400, "y": 40 },
+    { "layer": "back", "tile": "brick", "frame": 0, "x": 3480, "y": 28 },
+    { "layer": "back", "sprite": "decor/pillar", "frame": 0, "x": 4860, "y": 150 },
+    { "layer": "back", "tile": "floor", "frame": 0, "x": 5200, "y": 60 },
+    { "layer": "front", "sprite": "decor/pillar", "frame": 0, "x": 1800, "y": 160 },
+    { "layer": "front", "tile": "cube", "frame": 0, "x": 3000, "y": 240 },
+    { "layer": "front", "tile": "brick", "frame": 0, "x": 3600, "y": 220 },
+    { "layer": "front", "sprite": "decor/pillar", "frame": 0, "x": 4200, "y": 120 },
+    { "layer": "front", "tile": "cube", "frame": 0, "x": 4980, "y": 250 }
+  ],
+  "events": [
+    { "x": 120, "type": "spawn", "enemy": "glow-mote", "y": 60 },
+    { "x": 300, "type": "formation", "enemy": "glow-mote", "count": 4, "interval": 16, "y": 168 },
+    { "x": 900, "type": "spawn", "enemy": "glow-mote", "y": 240 },
+    { "x": 1500, "type": "formation", "enemy": "glow-mote", "count": 3, "interval": 20, "y": 96 },
+    { "x": 2400, "type": "spawn", "enemy": "glow-mote", "y": 200 },
+    { "x": 3300, "type": "formation", "enemy": "glow-mote", "count": 5, "interval": 14, "y": 144 },
+    { "x": 4200, "type": "spawn", "enemy": "glow-mote", "y": 60 },
+    { "x": 4600, "type": "warning", "enemy": "decor-boss" },
+    { "x": 5400, "type": "end" }
+  ]
+}
