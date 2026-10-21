@@ -8,7 +8,7 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 
 ## [Unreleased] — v2
 
-Version **2.0.0-alpha.0**: v2, the **640×360 remaster**, in development on `master`, step by step
+Version **2.0.0-alpha.1**: v2, the **640×360 remaster**, in development on `master`, step by step
 in [`plan_resolution.md`](plan_resolution.md). v1 is released as **1.0.0** (below) and maintained
 on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `master` by merging
 `v1.x` until plan step R2-01, by `git cherry-pick -x` after it
@@ -16,7 +16,8 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
 
 ### Project
 
-- **Version lines** (R0-01): every package manifest says `2.0.0-alpha.0`; the TV manifests, which
+- **Version lines** (R0-01; `2.0.0-alpha.1` since `R2-04.REL` `5aad58e`): every package manifest says the
+  current pre-release; the TV manifests, which
   take numbers only, say `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs
   as an update of the same apps. CI runs on every push to `master` and to `v1.x`.
 - **The maintenance line** (R0-01): `v1.x` carries `1.0.1-dev` (`1.0.1` on the TVs) and names the
@@ -103,6 +104,42 @@ replay format 2 — and nothing in the suite waits for the port any more.
   v1 art until R4-05 and were only `--check`ed (RR-3), and the docs' CJK figures keep quoting the v1 atlas —
   `test/integration/cjk-budget.test.ts` measures it at `artScale: 1`; the live PNG budgets are R3-04's.
 
+### The first retune (R2-04)
+
+These change what the game shows and what its recordings say: the wave's **one re-bless** is `a285e0e`
+("R2-04: shake 2/3/6 (F1); spawn lead and density per section (Z1-Z4 tables)" — quoted as its body reads it),
+and `5aad58e` grew the version line to `2.0.0-alpha.1`. The `v2.0.0-alpha.1` tag itself is the wave's closing
+action, not any commit here.
+
+- **Screen shake grows with the world** (R2-04.F1, in `a285e0e`): `ShakeMagnitude` 1 / 2 / 4 → **2 / 3 / 6** px
+  — ×1.5 of v1 with the half rounded up (decision R2-N7); the owner's M7 play session confirms or changes them.
+  Shake is folded into the state hash, so the 17 shaken goldens and the zone-f demo moved with the bless; the
+  presentation and shell fingerprints are **green unedited** — core's `renderFrame` never writes the shake
+  (RT-F1's render-side adjudication, held exactly).
+- **Popups and the CRT followed the scale; the rest measured exact:** the score popup now rises **3 px per 8
+  ticks** (`adcfe26`, integer maths), and the CRT strengths retuned for the ×3 pitch — `light` 0.2 → **0.24**,
+  `full` 0.34 → **0.408**, mask and vignette unchanged as pitch-independent (`d5236e1`; the 1080p tie on TV
+  panels is an owner eyeball row). The Mega Crash flash, the black-hole visuals and the particle numbers were
+  measured and **left alone** (P4, P2) — the R2-02 port is internally exact; R4-04 owns any real particle change.
+- **Zone F is the one section set that retuned** (R2-04.Z2, in `a285e0e`): the port made CELL VAULT
+  measurably harder (the non-god bot died 3×; the wave-5 "broken bot" story had already expired at the port),
+  so its four lymph-mote columns thinned (counts 6 → 5, intervals to 16 / 18 ticks), the section-1 ceiling
+  polyp moved x 3476 → 3660 to de-overlap the turret streams, and both polyps' `fireTicks` 170 → 190 — the bot
+  now clears with one early death. Z1 / Z3 measured zones A–C and G–I's 23 sections **tick-preserved** (only
+  10 zone-A `skeet` rows moved 1 tick on firstSeen rounding) and Z4 the bonus stages, the boss rush (identical
+  330 / 360-tick openings, 335-tick gaps) and all nine loop-2 remixes — empty patches by measurement. Zones D
+  and E measured sound and unedited.
+- **The one bless** (`a285e0e`, decision R2-N5): 17 goldens + the zone-f demo re-recorded in a single
+  `pnpm golden:update` — three passes md5-identical across all 72 recordings; the content-DB fingerprint
+  re-pinned 3 shipped rows (stages / enemies / demos). `test/golden/v2-port.ts` gained `PORT_EXEMPTIONS`:
+  zone F's 7 band-level port-comparison disclosures and their loop-2 twins, each dropped whole-exact with its
+  reason, failing if a listed line ever stops appearing. `golden.test.ts`'s zone-f `deathTicks` pin moved with
+  its own blessed recording — the wave-6 bless-lane precedent, disclosed in the body.
+- **The version line** (`5aad58e`, decision R2-N8): `2.0.0-alpha.1` in the ten manifests and the three test
+  pins; the TVs keep `2.0.0`; the lockfile byte-unchanged; both TV bundles green inside budget.
+- **Owner parts pending:** the M7 `build:dev` play of zones A, D and I (the shake confirmation, TPF / RENDER on
+  the overlay) — the notes go to the step's As built list when the session runs.
+
 ### Real-art systems and memory (R3-03, R3-04)
 
 - **Variants, palettes and tiles from real art** (R3-03): v2 bullets and bending-laser nodes are drawn natively
@@ -120,6 +157,55 @@ replay format 2 — and nothing in the suite waits for the port any more.
   replace the CJK figures, all derived in `check-bundle.mjs`; the TV bench's decode scenario loads the stand-in
   pages (RR-8) and the render bench gained a "v2 zone stand-in" scenario; a v2 zone load estimates ≈ 450–720 ms
   on the M7 against the 2 s target.
+
+### Stage art features for detailed levels (R3-06)
+
+These change what the engine can draw, not what the shipped game draws: `decor-range`, the v2-only dev range
+that uses every feature, is the single `POST_V1_STAGES` carve-out of the v1-baseline comparison, and no golden
+moved for any R3-06 commit. The `docs/dev/` feature rows are the wave's other docs lanes'.
+
+- **Decor layers** (`d3a3b0e`, `138bddb`, `b6c08ec`): a stage lists `decor[]` — `back` or `front`, a sprite or
+  a tile, with its `frame` and position — up to 256 items, non-colliding, culled by the camera ± 512 px; back
+  decor draws under the terrain, front decor above it and below the sprites.
+- **Painted backdrop bands** (`d3a3b0e`, `b6c08ec`): parallax bands are full-width 256-px painted images
+  (seam-perfect: three tile one playfield at the native scale), with integer scroll factors, a camera-follow
+  `yFactor`, and optional slow frame animation (`frames` / `frameTicks`) the renderer follows through the view;
+  at most six background bands plus one sparse `fore` band.
+- **Three new layers** (`138bddb`, decision RR-6): `LayerId` grows 14 → **17** — `DecorBack` after `BgMid`,
+  `DecorFront` after `Terrain`, `Foreground` after `Fx` and **below `EnemyBullets`**, so the foreground can
+  never hide bullets; the fingerprints re-pinned for the re-layering only (82 presentation + 4 shell world
+  hashes; no drawn value changed).
+- **Additive glows** (`1ea1f8f`): enemies, boss parts and decor entries take an optional `glow` sprite name,
+  interned at load (an unknown name fails `content:check`); the World carries companion additive batches only
+  when the loaded content names a glow (the per-DB rule) — enemy and boss glows come after every body batch,
+  decor glows right after their owners, and empty glow batches cost zero draw calls.
+- **The Tiled importer maps it all** (`034ecb3`): `decor-back` / `decor-front` tile layers, class-`decor`
+  objects, and image layers → bands with the new extras.
+- **decor-range and the bench** (`246d014` + `eb0184d`, `b5afd39`): the dev stage flies 7 animated bands, 12
+  decor entries, a glowing enemy and the DECOR WARDEN with a glowing vent, on 8 procedural sprites (`decor.mjs`
+  draws nothing at scale 1 — the v1 atlas digest pin untouched); the render bench's new decor scenario measures
+  the decorated frame at **14 draw calls inside the standing 20**, gate untouched. The step review's two
+  landing-seam test fixes landed at `2f2365d`.
+
+### The R4 prep (R4-P, decision RR-5)
+
+These change how art is made, not what the game shows: the shipped atlas is **byte-identical** across the whole
+prep at both art scales — the scale-1 digest pin `fa4198…` and the 3/2 atlas both held — and no v2 source
+exists yet.
+
+- **Generator and suite splits** (`a359b7e`, `7afc838`): `direct-items`, `arm`, `blackhole` and `logo` moved
+  out of the shared generators, the four planned v2 modules registered as empty stubs (registry 34), the
+  campaign credits followed (+3 lines, 14 ≤ 16), and the 1362-line procedural suite split into 22
+  per-generator files with a shared helper.
+- **v2 sources beside v1** (`e3feb5d`, `fe940c3`, decision RR-1): a `<path>.v2.sprite.json` is a sprite's v2
+  pixel map (native implied, used only at an art scale ≠ 1), a v2 font is a `"native": true` file of the same
+  name, generators branch on `options.artScale`, and at scale 1 a PNG override of a code-sourced name is
+  skipped — the scale-1 build (TV bench atlas, CJK figures) keeps drawing v1 art until the post-release
+  v2.0.x clean-up. A new name may exist only as v2 (RR-1a); frame counts the v1 sources lack are a v2-art
+  concern (RR-1b).
+- **`scripts/assets/v2kit.mjs`** (`aee8ec9`): the shared read-only v2 drawing kit — `outline`,
+  `topLeftLight`, `bottomRightShade`, `outlineColour`, `offRamp` — outside the registry on purpose; nothing
+  ships through it yet.
 
 ### Engine and tooling
 
