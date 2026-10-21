@@ -86,6 +86,7 @@
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
 import {
   DEFAULT_UI_TEXT,
+  SAVE_STORAGE_KEY,
   ReplayStoreResult,
   defineModule,
   type ContentFile,
@@ -116,6 +117,8 @@ import {
 import type { PixiRenderer } from '@shmup/render-pixi';
 import {
   BOOT_SCREEN_COLORS,
+  STORAGE_PREFIX,
+  bootDisplayFromSaveText,
   bootShell,
   defaultStageId,
   sceneFromSearch,
@@ -594,6 +597,19 @@ export async function bootWebApp(
     basePads = profile;
     input.setProfile(customizeInputProfile(profile, settings));
   };
+  // R6-04 (decision W5-20): the GRAPHICS page's two boot knobs, read before the renderer exists —
+  // the raw save text from `localStorage`, or (inside Electron, where saves are files) through
+  // the bridge. A failed or absent read stands for both defaults (`auto` output = the native
+  // size, `auto` renderer = the shell's Chromium 71 floor with a WebGL 2 probe).
+  let bootDisplayText: string | null = null;
+  try {
+    bootDisplayText =
+      electron === null
+        ? win.localStorage.getItem(STORAGE_PREFIX + SAVE_STORAGE_KEY)
+        : await electron.storage.get(STORAGE_PREFIX + SAVE_STORAGE_KEY);
+  } catch (_error) {
+    bootDisplayText = null;
+  }
   const shell = await bootShell({
     canvas,
     win,
@@ -641,7 +657,10 @@ export async function bootWebApp(
     // Electron's window allows audio without a gesture (`autoplayPolicy`); browsers do not.
     audioUnlock: electron === null ? 'gesture' : 'immediate',
     // M3-02c / review F8: `?gl=2` A/Bs the renderer against WebGL2; WebGL1 stays the default.
-    preferWebGLVersion: webGLVersionFromSearch(search) ?? 1,
+    // R6-04: `?gl=` stays the dev pin; without it the saved RENDERER row resolves (the web app
+    // is never a television, so `auto` output keeps the window's native size).
+    preferWebGLVersion: webGLVersionFromSearch(search) ?? null,
+    bootDisplay: bootDisplayFromSaveText(bootDisplayText, false),
     debugTools: resources.debugTools ?? null,
     // M3-01: the build the replays record, SHARE through the clipboard.
     buildId: resources.buildId ?? 'dev',

@@ -331,18 +331,35 @@ async function boot(withSecondProfile = false) {
 }
 
 describe('tizen/boot bootTizenApp wiring', () => {
-  it('creates a WebGL1-first renderer sized to the window, with the atlas', async () => {
+  it('creates a WebGL1-first renderer at the auto output cap, with the atlas', async () => {
     const { app, canvas } = await boot();
+    // R6-04: a television's `auto` output is the measured 720p cap — 1920×1080 of window
+    // becomes a 1280×720 backbuffer the compositor upscales; `auto` renderer stays on WebGL 1.
     expect(fakes.renderer.options).toMatchObject({
       canvas,
-      displayWidth: 1920,
-      displayHeight: 1080,
+      displayWidth: 1280,
+      displayHeight: 720,
       preferWebGLVersion: 1,
       testPattern: false,
       atlas: app.shell.atlas,
     });
     expect(app.shell.scene).toBe('game'); // the scene flow (title first)
     expect(app.game.scenes).not.toBeNull();
+  });
+
+  // R6-04: the GRAPHICS page's two boot knobs reach the renderer from the save alone — the
+  // explicit rows pin even on a release TV, where `auto` never clears the Chromium 71 floor.
+  it('boots at the saved OUTPUT cap and pins the saved RENDERER row', async () => {
+    win.stored.set(
+      'shmup-cup:save.v1',
+      '{"version":4,"options":{"display":{"output":"540","renderer":"webgl2"}}}',
+    );
+    await boot();
+    expect(fakes.renderer.options).toMatchObject({
+      displayWidth: 960,
+      displayHeight: 540,
+      preferWebGLVersion: 2,
+    });
   });
 
   // M3-02c / review F8: the TV has no query string, so a dev build reads the override from

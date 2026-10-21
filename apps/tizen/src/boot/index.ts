@@ -66,7 +66,13 @@
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { defineModule, type ContentFile, type Game, type Platform } from '@shmup/core';
+import {
+  SAVE_STORAGE_KEY,
+  defineModule,
+  type ContentFile,
+  type Game,
+  type Platform,
+} from '@shmup/core';
 import {
   DEFAULT_GAMEPAD_PROFILE_ID,
   DEFAULT_REMOTE_PROFILE_ID,
@@ -86,6 +92,8 @@ import {
 } from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
 import {
+  STORAGE_PREFIX,
+  bootDisplayFromSaveText,
   bootShell,
   debugToolsFactory,
   defaultStageId,
@@ -305,14 +313,34 @@ function searchOf(win: Window): string {
 
 /**
  * `localStorage` key of the dev-build WebGL override (plan M3-02c, the render review's **F8**):
- * set it to `'2'` from the remote Web Inspector and relaunch the app to run the next session on a
- * WebGL2 context. Any other value (or none) keeps the shipped WebGL1 default.
+ * set it to `'2'` (or `'1'`) from the remote Web Inspector and relaunch the app to pin the next
+ * session's WebGL version. Any other value (or none) leaves the choice to the GRAPHICS page's
+ * RENDERER row (R6-04 — whose `auto` keeps both TVs on WebGL 1).
  */
 export const WEBGL_VERSION_KEY = 'shmup-cup:gl';
 
 /**
- * The WebGL version a dev / test build asks Pixi for: `?gl=1` / `?gl=2` (the Tizen dev server),
- * else {@link WEBGL_VERSION_KEY} in `localStorage` (the TV, which has no query string), else 1.
+ * The raw save text before any store exists — the GRAPHICS page's two boot knobs are read from it
+ * (plan R6-04; `@shmup/shell` `bootDisplayFromSaveText`). `null` when storage is unreachable,
+ * which stands for both defaults.
+ *
+ * @param win - The window.
+ * @returns The save JSON or `null`.
+ */
+function saveTextOf(win: Window): string | null {
+  try {
+    return safeLocalStorage(win)?.getItem(STORAGE_PREFIX + SAVE_STORAGE_KEY) ?? null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+/**
+ * The WebGL version a dev / test build pins (plan M3-02c, the render review's **F8**): `?gl=1` /
+ * `?gl=2` (the Tizen dev server), else {@link WEBGL_VERSION_KEY} in `localStorage` (the TV, which
+ * has no query string). Since R6-04 the GRAPHICS page's RENDERER row carries the shipped choice:
+ * with no dev switch set this returns `null` — **no pin** — and the shell resolves the saved
+ * value (where `auto` keeps both TVs on WebGL 1, the Chromium 71 floor being what decides).
  *
  * @remarks
  * **WebGL1 stays the shipped default** — the M7 probe found both versions available
@@ -322,15 +350,16 @@ export const WEBGL_VERSION_KEY = 'shmup-cup:gl';
  * (`__SHMUP_DEV__`) calls it.
  *
  * @param win - The window.
- * @returns 1 or 2.
+ * @returns 1, 2, or `null` for no pin.
  */
-function devWebGLVersion(win: Window): 1 | 2 {
+function devWebGLVersion(win: Window): 1 | 2 | null {
   const fromSearch = webGLVersionFromSearch(searchOf(win));
   if (fromSearch !== null) return fromSearch;
   try {
-    return safeLocalStorage(win)?.getItem(WEBGL_VERSION_KEY) === '2' ? 2 : 1;
+    const value = safeLocalStorage(win)?.getItem(WEBGL_VERSION_KEY);
+    return value === '2' ? 2 : value === '1' ? 1 : null;
   } catch (_error) {
-    return 1;
+    return null;
   }
 }
 
@@ -508,9 +537,13 @@ export async function bootTizenApp(
     },
     scene,
     audioUnlock: 'immediate',
-    // M3-02c / review F8: WebGL1 is the shipped default; a dev build (the one that has the debug
-    // tools) can A/B WebGL2 on the TV.
-    preferWebGLVersion: (resources.debugTools ?? null) === null ? 1 : devWebGLVersion(win),
+    // M3-02c / review F8 + R6-04: WebGL1 stays the shipped default — the saved RENDERER row's
+    // `auto` resolves under the Chromium 71 floor, which the TV (69) never clears. A dev build
+    // (the one that has the debug tools) can still pin an A/B with `?gl=` / the localStorage key.
+    preferWebGLVersion: (resources.debugTools ?? null) === null ? null : devWebGLVersion(win),
+    // R6-04: the GRAPHICS page's OUTPUT cap and RENDERER choice, read off the save the TV's
+    // synchronous storage already holds; `auto` output on a TV stands for the measured 720p cap.
+    bootDisplay: bootDisplayFromSaveText(saveTextOf(win), true),
     debugTools: resources.debugTools ?? null,
     // The build the replays record (M3-01; the TV has no SHARE).
     buildId: resources.buildId ?? 'dev',

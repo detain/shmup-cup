@@ -1500,7 +1500,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const bootGLVersion = resolveBootGLVersion({
     pin: glPin,
     choice: bootDisplay.renderer,
-    chromiumMajor: chromiumMajorFromUserAgent(win.navigator.userAgent),
+    chromiumMajor: chromiumMajorFromUserAgent(win.navigator?.userAgent ?? ''),
     // The probe is `auto`'s safety net — asked for only when `auto` is the answer's decider.
     hasWebGL2: glPin === null && bootDisplay.renderer === 'auto' ? probeWebGL2(win) : false,
   });

@@ -35,7 +35,13 @@
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { defineModule, type ContentFile, type Game, type Platform } from '@shmup/core';
+import {
+  SAVE_STORAGE_KEY,
+  defineModule,
+  type ContentFile,
+  type Game,
+  type Platform,
+} from '@shmup/core';
 import {
   DEFAULT_GAMEPAD_PROFILE_ID,
   DEFAULT_WEBOS_PROFILE_ID,
@@ -55,6 +61,8 @@ import {
 } from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
 import {
+  STORAGE_PREFIX,
+  bootDisplayFromSaveText,
   bootShell,
   debugToolsFactory,
   defaultStageId,
@@ -160,6 +168,22 @@ export interface WebosApp {
 function safeLocalStorage(win: Window): StorageLike | null {
   try {
     return win.localStorage;
+  } catch (_error) {
+    return null;
+  }
+}
+
+/**
+ * The raw save text before any store exists — the GRAPHICS page's two boot knobs are read from it
+ * (plan R6-04; `@shmup/shell` `bootDisplayFromSaveText`). `null` when storage is unreachable,
+ * which stands for both defaults.
+ *
+ * @param win - The window.
+ * @returns The save JSON or `null`.
+ */
+function saveTextOf(win: Window): string | null {
+  try {
+    return safeLocalStorage(win)?.getItem(STORAGE_PREFIX + SAVE_STORAGE_KEY) ?? null;
   } catch (_error) {
     return null;
   }
@@ -355,9 +379,11 @@ export async function bootWebosApp(
     },
     scene,
     audioUnlock: 'immediate',
-    // WebGL1 is the shipped default on every TV target (decision: the oldest webOS engines are
-    // older than Tizen 5.5's Chromium 69, so WebGL2 cannot be assumed).
-    preferWebGLVersion: 1,
+    // R6-04: no static pin any more — the saved RENDERER row decides, and its `auto` resolves
+    // under the shell's Chromium 71 floor, which webOS 5 (Chromium 68) never clears: WebGL1
+    // stays the shipped default exactly as before. The OUTPUT cap and RENDERER are read off the
+    // save the TV's synchronous storage already holds (`auto` output on a TV = the 720p cap).
+    bootDisplay: bootDisplayFromSaveText(saveTextOf(win), true),
     debugTools: resources.debugTools ?? null,
     buildId: resources.buildId ?? 'dev',
     /**

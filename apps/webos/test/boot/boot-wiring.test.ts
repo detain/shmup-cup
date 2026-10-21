@@ -264,18 +264,34 @@ async function boot() {
 }
 
 describe('webos/boot bootWebosApp wiring (M3-03)', () => {
-  it('creates a WebGL1 renderer sized to the window, with the atlas and the scene flow', async () => {
+  it('creates a WebGL1 renderer at the auto output cap, with the atlas and the scene flow', async () => {
     const { app, canvas } = await boot();
+    // R6-04: a television's `auto` output is the 720p cap (the webOS 5 floor, Chromium 68, never
+    // clears the WebGL 2 floor either — `auto` renderer stays on 1).
     expect(fakes.renderer.options).toMatchObject({
       canvas,
-      displayWidth: 1920,
-      displayHeight: 1080,
+      displayWidth: 1280,
+      displayHeight: 720,
       preferWebGLVersion: 1,
       atlas: app.shell.atlas,
     });
     expect(app.shell.scene).toBe('game');
     expect(app.platform.id).toBe('webos');
     app.stop();
+  });
+
+  // R6-04: the two GRAPHICS boot knobs reach the renderer from the save alone.
+  it('boots at the saved OUTPUT cap and pins the saved RENDERER row', async () => {
+    win.stored.set(
+      'shmup-cup:save.v1',
+      '{"version":4,"options":{"display":{"output":"540","renderer":"webgl2"}}}',
+    );
+    await boot();
+    expect(fakes.renderer.options).toMatchObject({
+      displayWidth: 960,
+      displayHeight: 540,
+      preferWebGLVersion: 2,
+    });
   });
 
   it('applies webos-remote-safe, not the Tizen profile', async () => {
