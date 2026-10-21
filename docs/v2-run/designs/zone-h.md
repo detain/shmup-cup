@@ -415,8 +415,11 @@ the emitters so the gun silhouette keeps its balance — 20 px of art, not a re-
 
 Checks, all by script at tip:
 - **Reachable core:** no added part sits on the core row; the hub's six pods stay on the
-  36-px ring with r 9, all six positions distinct, leaving ≥ 27 px clear above/below the
-  core line (today's hub angle 128 — the binary-angle precedent — places pods off the
+  36-px ring with r 9, all six positions distinct, leaving ≥ 24 px clear locally above/
+  below the core line at the tabled offsets (27 above — pod-b at −36 — and 24 below —
+  pods e/f at +33, whose discs graze pod-d's by ≈ 4 px, cosmetic). The ring draws turned
+  by the hub's angle 128 (`bosses/index.ts` placement), so these offsets are ring-local,
+  not screen-rest positions; no lane case measures the ring's rows. (today's hub angle 128 — the binary-angle precedent — places pods off the
   row — the zone-H bug history: a pod over the core line cost the bot 252 s; §8's phase
   table keeps hub angle and the pod ring frozen).
 - **Assembled height** = 2 × (70 + 28/2) = **168 ≤ 202** on the interim-**FRAME** basis —
@@ -495,7 +498,7 @@ are authored, not ported.)
 ## 10. Loops and directItems
 
 - `remix`: today's 6 spawn rows are replaced by **8** tender rows with every field
-  pinned — D-RV m-5 names the ys (cycling today's remix spread 171/186/141/111/246/216):
+  pinned — D-RV m-5 names the ys (drawn from today's remix spread 171/186/141/111/246/216):
   600 (y 171) / 2,240 (y 186) / 3,540 (y 141) / 5,760 (y 111) / 8,040 (y 246) /
   10,980 (y 216) / 13,800 (y 171) / 16,560 (y 141) (loop-2 tender top-up; the remix
   rows are plain `{x, type:'spawn', enemy:'tender', y}` entries — the shipped array
@@ -560,7 +563,9 @@ LAND note (D-RV M-4): **e2e re-pin zones-hi** — `test/e2e/zones-hi.spec.ts` pi
 `jumpTo(13500)` against its "WARNING (x 13,650)" comment (and a second `jumpTo(13350)`)
 plus hangar/echo pixel checks; §2's reshape moves all of those x pins (WARNING lands at
 19,500). The SOVEREIGN_HULL right-half count likely survives — the hull part sprites are
-unchanged.
+unchanged. No `zone-h.spec.ts` exists at this tip; if R5-P.P5d has carved H's cases
+into `test/e2e/zone-h.spec.ts` by wave 11 (wave-12's S6 brief names it), the re-pin
+lands in whichever file holds H's cases at S6.
 `test/golden/v2-port.ts` `PORT_EXEMPTIONS` holds **no** zone-H rows (checked at the tip —
 only zone-f), so H retires nothing there. Self-expiring gates: none of H's checks lean on
 `CONTENT_PORT_PENDING` after the port; S4c/S6 delete the R2 gates only as wave 12's
@@ -622,9 +627,10 @@ citadel.tileset.json` (sprite pointer + 4 tiles), `scripts/assets/procedural/cit
 `test/playtest/zone-h.test.ts`, `test/playtest/zone-h-recovery.test.ts` (D-RV M-4:
 the real paths — `zone-hi-recovery` never existed, and the golden test lives in
 `test/golden/`), `test/golden/golden-zone-h.test.ts`, `test/e2e/zones-hi.spec.ts`
-(S6/S7 — there is no `zone-h.spec.ts`; H's browser coverage is the shared zones-hi
+(S6/S7 — no `zone-h.spec.ts` exists at this tip; H's browser coverage is the shared zones-hi
 spec, and §2's reshape re-pins its `jumpTo`/x and hangar/echo pixel checks, §14's
-LAND note),
+LAND note — if R5-P.P5d has carved H's cases into `test/e2e/zone-h.spec.ts` by wave 11
+(wave-12's S6 brief names it), the re-pin lands in whichever file holds H's cases at S6),
 `test/integration/zones/zone-h.contract.ts` (flip at S5b if green),
 `content/demos/zone-h.replay.json` + `test/golden/zone-h-*.replay.json` (S7 re-bless).
 
