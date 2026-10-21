@@ -15,6 +15,10 @@
  *   exactly one spawn lead, branches, the `type` class fallback, polylines (rounding, `-0`, a
  *   polyline that also has a class), spawn y rounding without `-0`, event order across layers;
  * - warnings: a timed pan at x 0 under a spawn at 0, a stopped camera (speed 0) never warning;
+ * - decor and bands (R3-06.L5): an empty decor layer needs no tileset and writes no `decor`
+ *   key, the shared tile decoding still refuses flipped gids on a decor layer, image layers
+ *   are bands whatever their visibility, and `frame` passes through unchecked (the schema
+ *   checks it);
  * - CLI: `--print` writes nothing, `--id` and the file-name fallback name the files, no paths file
  *   without polylines, warnings on stderr, a missing file exits 1.
  *
@@ -541,6 +545,88 @@ describe('tiled-import edges — warnings', () => {
   });
 });
 
+describe('tiled-import edges — decor and bands (R3-06.L5)', () => {
+  it('writes no `decor` key for empty decor layers and needs no tileset for them', () => {
+    // Empty tile layers named `decor-*` still hold 2 × 60 cells; the tileset has no `tiles`.
+    const empty = tiles('decor-back', 0);
+    const { stage } = convertTiledMap(map([empty], { tilesets: [{ firstgid: 1 }] }));
+    expect('decor' in stage).toBe(false);
+    expect(stage.parallax).toEqual([]);
+  });
+
+  it('refuses a flipped gid on a decor tile layer (the shared decode)', () => {
+    const layer = {
+      type: 'tilelayer',
+      name: 'decor-back',
+      data: [0x80000001, ...new Array<number>(119).fill(0)],
+    };
+    expect(() =>
+      convertTiledMap(
+        map([layer], { tilesets: [{ firstgid: 1, tiles: [{ id: 0, name: 'solid' }] }] }),
+      ),
+    ).toThrow('flipped');
+  });
+
+  it('turns a hidden image layer into a band too (visibility does not skip it)', () => {
+    const { stage } = convertTiledMap(
+      map([
+        {
+          type: 'imagelayer',
+          name: 'gone',
+          visible: false,
+          image: 'bg/x.png',
+          properties: [
+            { name: 'layer', value: 'far' },
+            { name: 'spacing', value: 64 },
+          ],
+        },
+      ]),
+    );
+    expect(stage.parallax).toEqual([
+      { layer: 'far', sprite: 'bg/x', factor: 0, y: 0, spacing: 64 },
+    ]);
+  });
+
+  it('passes a non-number `frame` through (the loader checks values, not the importer)', () => {
+    const { stage } = convertTiledMap(
+      map([
+        objects({
+          id: 1,
+          class: 'decor',
+          x: 0,
+          y: 0,
+          properties: [
+            { name: 'sprite', value: 'a' },
+            { name: 'frame', value: 'two' },
+          ],
+        }),
+      ]),
+    );
+    expect(stage.decor).toEqual([{ layer: 'back', sprite: 'a', frame: 'two', x: 0, y: 0 }]);
+  });
+
+  it('rounds the band y from the layer, and does not let the property and layer both land', () => {
+    const { stage } = convertTiledMap(
+      map([
+        {
+          type: 'imagelayer',
+          name: 'mid',
+          y: 12.6,
+          image: 'bg/stars-mid.png',
+          properties: [
+            { name: 'layer', value: 'mid' },
+            { name: 'spacing', value: 192 },
+            { name: 'y', value: 40 },
+          ],
+        },
+      ]),
+    );
+    expect(stage.parallax).toEqual([
+      { layer: 'mid', sprite: 'bg/stars-mid', factor: 0, y: 40, spacing: 192 },
+    ]);
+  });
+});
+
 describe('tiled-import edges — CLI', () => {
   /**
    * Runs the importer.
@@ -565,6 +651,15 @@ describe('tiled-import edges — CLI', () => {
     const stage = JSON.parse(text.slice(0, split + 1)) as { id: string };
     const paths = JSON.parse(text.slice(split + 2)) as { kind: string };
     expect([stage.id, paths.kind]).toEqual(['tiled-sample', 'paths']);
+  });
+
+  it('prints the decor fixture (R3-06.L5) as a single stage file with its decor and bands', () => {
+    const file = join(here, 'fixtures', 'tiled-decor.tmj');
+    const result = cli([file, '--print']);
+    expect(result.status, String(result.stderr)).toBe(0);
+    const stage = JSON.parse(String(result.stdout)) as { decor: unknown[]; parallax: unknown[] };
+    expect(stage.decor).toHaveLength(5);
+    expect(stage.parallax).toHaveLength(2);
   });
 
   it('names the files by --id, else the map id, else the file name; no paths file without polylines', () => {

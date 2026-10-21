@@ -9,6 +9,10 @@
  * lead and the view at 384×216 and at 640×360. The tests that read the committed fixture map
  * (`fixtures/tiled-sample.tmj`, redrawn by R2-02 at 12-px tiles for the 640 view) ran behind
  * R2-01's content-port gate, which expired on the shipped tilesets; R2-02's port removed it.
+ *
+ * R3-06.L5 added the decor and image-layer rules and their fixture (`fixtures/tiled-decor.tmj`,
+ * with the expected `fixtures/tiled-decor.stage.json`); since R3-06.L1's schema is on `master`
+ * the fixture also round-trips through `loadContent` with zero issues.
  */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -147,6 +151,233 @@ describe('scripts/content/tiled-import.mjs — the committed 12-px fixture (redr
       // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
       expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('scripts/content/tiled-import.mjs — decor and image layers (R3-06.L5)', () => {
+  /**
+   * A `2 × 60` tile layer whose flat indexes pick the gids (row-major, like the map data).
+   *
+   * @param name - Layer name.
+   * @param cells - Flat cell index → gid.
+   * @returns The layer.
+   */
+  function decorTiles(name: string, cells: Record<number, number>): Record<string, unknown> {
+    const data = new Array<number>(120).fill(0);
+    for (const [index, gid] of Object.entries(cells)) data[Number(index)] = gid;
+    return { type: 'tilelayer', name, data };
+  }
+
+  /** A tileset whose tiles 1 / 18 / 19 / 20 are the content names solid / brick / cube / tissue. */
+  const namedSet = [
+    {
+      firstgid: 1,
+      tiles: [
+        { id: 0, name: 'solid' },
+        { id: 17, name: 'brick' },
+        { id: 18, name: 'cube' },
+        { id: 19, name: 'tissue' },
+      ],
+    },
+  ];
+
+  it('converts the decor fixture map into exactly the expected stage JSON', () => {
+    const { stage, paths, warnings } = convertTiledMap(fixture('tiled-decor.tmj'));
+    expect(paths).toBeNull();
+    expect(warnings).toEqual([]);
+    expect(stage).toEqual(fixture('tiled-decor.stage.json'));
+  });
+
+  // R3-06.L1's schema (decor, fore, the band extras) is on master: the fixture must load
+  // through loadContent with zero issues — acceptance: "the new fixture round-trips".
+  it('produces decor and band content that loads without issues', () => {
+    const { stage } = convertTiledMap(fixture('tiled-decor.tmj'));
+    const { db, issues } = loadContent([
+      ...readContentFiles(),
+      { path: 'stages/tiled-decor.stage.json', data: stage },
+    ]);
+    expect(issues).toEqual([]);
+    expect(db.stageIndex.has('tiled-decor')).toBe(true);
+  });
+
+  it('maps decor tile layers by the tileset tile names, row-major, at world pixels', () => {
+    const { stage } = convertTiledMap(
+      map([decorTiles('decor-back', { 0: 1, 61: 18 }), decorTiles('decor-front', { 62: 19 })], {
+        tilesets: namedSet,
+      }),
+    );
+    expect(stage.decor).toEqual([
+      { layer: 'back', tile: 'solid', frame: 0, x: 0, y: 0 },
+      { layer: 'back', tile: 'brick', frame: 0, x: TILED_TILE_SIZE, y: TILED_TILE_SIZE },
+      { layer: 'front', tile: 'cube', frame: 0, x: 2 * TILED_TILE_SIZE, y: TILED_TILE_SIZE },
+    ]);
+  });
+
+  it("never takes a decor tile layer as terrain's fallback", () => {
+    const { stage } = convertTiledMap(
+      map([decorTiles('decor-back', { 0: 1 }), decorTiles('walls', { 3: 1 })], {
+        tilesets: namedSet,
+      }),
+    );
+    // The plain tile layer becomes the terrain (gid 1 at cell 3 = row 0, col 3), the decor
+    // layer stays decor and is never the fallback.
+    expect((stage.tilemap as { rle: string[] }).rle).toEqual(['3*0, 1', '']);
+    expect(stage.decor).toEqual([{ layer: 'back', tile: 'solid', frame: 0, x: 0, y: 0 }]);
+  });
+
+  it('maps decor objects (side defaults to back, frame defaults to 0), without -0', () => {
+    const { stage } = convertTiledMap(
+      map([
+        objects(
+          {
+            id: 1,
+            class: 'decor',
+            x: 100.4,
+            y: -0.4,
+            properties: [{ name: 'tile', value: 'tissue' }],
+          },
+          {
+            id: 2,
+            class: 'decor',
+            x: 80,
+            y: 10,
+            properties: [
+              { name: 'layer', value: 'front' },
+              { name: 'sprite', value: 'bg/stars-far' },
+              { name: 'frame', value: 2 },
+            ],
+          },
+        ),
+      ]),
+    );
+    expect(stage.decor).toEqual([
+      { layer: 'back', tile: 'tissue', frame: 0, x: 100, y: 0 },
+      { layer: 'front', sprite: 'bg/stars-far', frame: 2, x: 80, y: 10 },
+    ]);
+    const decor = stage.decor as { y: number }[];
+    expect(Object.is(decor[0].y, -0)).toBe(false);
+  });
+
+  it('maps image layers to bands: sprite from the path, factor and y defaults, extras copied', () => {
+    const { stage } = convertTiledMap(
+      map([
+        {
+          type: 'imagelayer',
+          name: 'far sky',
+          image: 'bg/stars-far.png',
+          y: 0,
+          properties: [
+            { name: 'layer', value: 'far' },
+            { name: 'factor', value: 0.25 },
+            { name: 'spacing', value: 192 },
+          ],
+        },
+        {
+          type: 'imagelayer',
+          name: 'floor haze',
+          image: 'anything.png',
+          y: -0.4,
+          properties: [
+            { name: 'layer', value: 'mid' },
+            { name: 'sprite', value: 'bg/stars-mid' },
+            { name: 'spacing', value: 128 },
+            { name: 'yFactor', value: 0 },
+            { name: 'frames', value: 2 },
+            { name: 'frameTicks', value: 30 },
+          ],
+        },
+      ]),
+    );
+    expect(stage.parallax).toEqual([
+      { layer: 'far', sprite: 'bg/stars-far', factor: 0.25, y: 0, spacing: 192 },
+      {
+        layer: 'mid',
+        sprite: 'bg/stars-mid',
+        factor: 0,
+        y: 0,
+        spacing: 128,
+        yFactor: 0,
+        frames: 2,
+        frameTicks: 30,
+      },
+    ]);
+  });
+
+  it('refuses bad decor and band layers', () => {
+    expect(() =>
+      convertTiledMap(map([objects({ id: 1, class: 'decor', x: 0, y: 0, properties: [] })])),
+    ).toThrow('a decor object needs a sprite or a tile property');
+    expect(() =>
+      convertTiledMap(
+        map([
+          objects({
+            id: 1,
+            class: 'decor',
+            x: 0,
+            y: 0,
+            properties: [
+              { name: 'sprite', value: 'a' },
+              { name: 'tile', value: 'b' },
+            ],
+          }),
+        ]),
+      ),
+    ).toThrow('a sprite or a tile, not both');
+    expect(() =>
+      convertTiledMap(
+        map([
+          objects({
+            id: 1,
+            class: 'decor',
+            x: 0,
+            y: 0,
+            properties: [
+              { name: 'layer', value: 'side' },
+              { name: 'sprite', value: 'a' },
+            ],
+          }),
+        ]),
+      ),
+    ).toThrow('decor layer "side" (back or front expected)');
+    // A decor cell whose tile the embedded tileset does not name.
+    expect(() =>
+      convertTiledMap(map([decorTiles('decor-back', { 0: 2 })], { tilesets: namedSet })),
+    ).toThrow('tile 2 at (0, 0) is unnamed');
+    // A source-referenced tileset cannot be read by the (file-free) converter.
+    expect(() =>
+      convertTiledMap(
+        map([decorTiles('decor-back', { 0: 1 })], { tilesets: [{ firstgid: 1, source: 'x.tsj' }] }),
+      ),
+    ).toThrow('embed the tileset in the map and name its decor tiles');
+    expect(() =>
+      convertTiledMap(map([{ type: 'imagelayer', name: 'i', image: 'bg/a.png' }])),
+    ).toThrow('image layer "i": the layer property must be far, mid or fore');
+    expect(() =>
+      convertTiledMap(
+        map([
+          {
+            type: 'imagelayer',
+            name: 'i',
+            image: 'bg/a.png',
+            properties: [{ name: 'layer', value: 'far' }],
+          },
+        ]),
+      ),
+    ).toThrow('image layer "i": needs a spacing property');
+    expect(() =>
+      convertTiledMap(
+        map([
+          {
+            type: 'imagelayer',
+            name: 'i',
+            properties: [
+              { name: 'layer', value: 'far' },
+              { name: 'spacing', value: 192 },
+            ],
+          },
+        ]),
+      ),
+    ).toThrow('image layer "i": no sprite');
   });
 });
 

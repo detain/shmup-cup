@@ -1,0 +1,121 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "tiled-decor",
+  "name": "TILED DECOR",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 800,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 300
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 192,
+      "yFactor": 0.5,
+      "frames": 3,
+      "frameTicks": 8
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/magma-peaks",
+      "factor": 1.5,
+      "y": 12,
+      "spacing": 240
+    }
+  ],
+  "tilemap": {
+    "tileSize": 12,
+    "tileset": "terrain-a",
+    "rowsTall": 28,
+    "rle": [
+      "30*0, 3",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "5*1, 5*2"
+    ]
+  },
+  "events": [
+    {
+      "x": 536,
+      "type": "spawn",
+      "enemy": "drifter",
+      "y": 120
+    }
+  ],
+  "decor": [
+    {
+      "layer": "back",
+      "tile": "brick",
+      "frame": 0,
+      "x": 24,
+      "y": 12
+    },
+    {
+      "layer": "back",
+      "tile": "floor",
+      "frame": 0,
+      "x": 60,
+      "y": 240
+    },
+    {
+      "layer": "front",
+      "tile": "cube",
+      "frame": 0,
+      "x": 84,
+      "y": 36
+    },
+    {
+      "layer": "front",
+      "sprite": "bg/checker-floor",
+      "frame": 2,
+      "x": 701,
+      "y": 88
+    },
+    {
+      "layer": "back",
+      "tile": "tissue",
+      "frame": 0,
+      "x": 320,
+      "y": 20
+    }
+  ]
+}

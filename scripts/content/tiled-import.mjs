@@ -56,8 +56,27 @@
  * Events are sorted by `x`; ties keep the order of layers and objects in the file (Tiled's
  * drawing order). Unknown classes are errors, so a typo does not silently drop an enemy.
  *
- * **Output.** `<stages>/<id>.stage.json` (`parallax: []` — add bands in the JSON) and, when the
- * map has polylines, `<paths>/<id>.paths.json`; formatted like the rest of `content/`; warnings
+ * **Decor (R3-06.L5).** A tile layer named `decor-back` or `decor-front` places non-colliding
+ * tiles on that side: every cell becomes a `decor` entry `{ layer, tile, frame, x, y }` at the
+ * cell's world pixel (a tile item draws the tile's own frame, so its `frame` is 0 — the field is
+ * required either way). The tile's content name is the **name of the tile in the map's tileset**,
+ * so the map must embed its tileset and name every tile its decor uses. Objects of class `decor`
+ * place one entry each at the object's world pixel: the `layer` property picks the side (`back`
+ * default), exactly one of `sprite` or `tile` names the art and `frame` gives a sprite frame
+ * (omitted = 0); they follow the map's layer order like events. These names are never terrain: a
+ * map without a `terrain` layer picks its first tile layer that is not one of them.
+ *
+ * **Image layers → bands (R3-06.L5).** Every image layer becomes one band of `stage.parallax`,
+ * in map order: the `layer` property (`far` / `mid` / `fore`) is required, `sprite` defaults to
+ * the image path without its extension, `y` to the layer's own y, `factor` scrolls at 0
+ * (a static backdrop) when unset, and `spacing` (the repeat distance) is required; `yFactor`,
+ * `frames` and `frameTicks` are copied when present. Visibility does not skip a band — delete
+ * the layer to drop it. As everywhere, the importer only translates: the stage schema checks
+ * the values.
+ *
+ * **Output.** `<stages>/<id>.stage.json` (its `parallax` holds the image-layer bands; a
+ * `decor` array is written when the map places decor) and, when the map has polylines,
+ * `<paths>/<id>.paths.json`; formatted like the rest of `content/`; warnings
  * go to stderr (the files are still written). Options:
  * `--stages DIR` (default `content/stages`), `--paths DIR` (default `content/paths`), `--id ID`
  * (overrides the map's `id`), `--print` (writes nothing, prints the JSON).
@@ -93,6 +112,12 @@ const FLIP_BITS = 0xe0000000;
 
 /** Classes that become timeline events at the object's x (the camera x). */
 const MARKER_EVENTS = new Set(['warning', 'boss', 'music', 'speed', 'flag', 'end']);
+
+/** The tile layers whose cells become `decor` entries, with the side each maps to (R3-06.L5). */
+const DECOR_SIDES = [
+  ['decor-back', 'back'],
+  ['decor-front', 'front'],
+];
 
 /** Fields a spawn takes from the object's properties (besides the enemy). */
 const SPAWN_FIELDS = ['path', 'branch'];
@@ -282,6 +307,133 @@ function round2(value) {
 }
 
 /**
+ * The decor side a tile layer maps to (R3-06.L5), or `null` for every other layer.
+ *
+ * @param {Record<string, any>} layer - A map layer.
+ * @returns {string | null} `'back'`, `'front'` or `null`.
+ */
+function decorSideOf(layer) {
+  if (layer.type !== 'tilelayer') return null;
+  const name = String(layer.name ?? '');
+  for (const [layerName, side] of DECOR_SIDES) {
+    if (name === layerName) return side;
+  }
+  return null;
+}
+
+/**
+ * The named tiles of the map's first tileset, keyed by content tile id (R3-06.L5): a decor
+ * cell's tile must be named in the **embedded** tileset (Tiled keeps a sparse `tiles` list of
+ * the tiles with extra data); a source-referenced tileset cannot be read, since the conversion
+ * never touches the file system.
+ *
+ * @param {Record<string, any> | null} tileset - The map's first tileset (or none).
+ * @param {string} layerName - The decor layer asking for names (for the error).
+ * @returns {Map<number, string>} Content tile id (`tiles[].id + 1`) → tile name.
+ * @throws {TiledImportError} When the tileset is not embedded with a `tiles` list.
+ */
+function decorTileNames(tileset, layerName) {
+  if (tileset === null || tileset.source !== undefined || !Array.isArray(tileset.tiles)) {
+    throw new TiledImportError(
+      `decor tile layer "${layerName}": embed the tileset in the map and name its decor tiles`,
+    );
+  }
+  /** @type {Map<number, string>} */
+  const names = new Map();
+  for (const tile of tileset.tiles) {
+    if (typeof tile.name === 'string' && tile.name !== '') {
+      names.set(Number(tile.id) + 1, tile.name);
+    }
+  }
+  return names;
+}
+
+/**
+ * One decor object's `decor` entry (R3-06.L5): the `layer` property picks the side (`back`
+ * by default), exactly one of `sprite` / `tile` names the art and `frame` gives the sprite frame
+ * (omitted = 0 — the schema requires the field even on a tile item, which draws its own frame).
+ *
+ * @param {Record<string, unknown>} p - The object's properties.
+ * @param {string} where - The object's label for errors.
+ * @param {number} x - Its rounded world x.
+ * @param {number} y - Its rounded world y.
+ * @returns {Record<string, unknown>} The entry.
+ * @throws {TiledImportError} For an unknown side, or neither or both of `sprite` and `tile`.
+ */
+function decorFromObject(p, where, x, y) {
+  const side = p.layer ?? 'back';
+  if (side !== 'back' && side !== 'front') {
+    throw new TiledImportError(
+      `${where}: decor layer "${String(p.layer)}" (back or front expected)`,
+    );
+  }
+  if (p.sprite !== undefined && p.tile !== undefined) {
+    throw new TiledImportError(`${where}: a decor object takes a sprite or a tile, not both`);
+  }
+  if (p.sprite === undefined && p.tile === undefined) {
+    throw new TiledImportError(`${where}: a decor object needs a sprite or a tile property`);
+  }
+  /** @type {Record<string, unknown>} */
+  const entry = { layer: side };
+  if (p.sprite !== undefined) entry.sprite = p.sprite;
+  else entry.tile = p.tile;
+  entry.frame = p.frame ?? 0;
+  entry.x = x === 0 ? 0 : x;
+  entry.y = y === 0 ? 0 : y;
+  return entry;
+}
+
+/**
+ * The sprite name an image path implies: the path without its extension (Tiled stores image
+ * layer paths relative to the map, so `bg/stars-far.png` names the sprite `bg/stars-far`).
+ *
+ * @param {unknown} image - The layer's `image`.
+ * @returns {string} The name (`''` when there is no path).
+ */
+function imageSpriteName(image) {
+  return typeof image === 'string' ? image.replace(/\.[a-zA-Z0-9]+$/, '') : '';
+}
+
+/**
+ * One image layer's parallax band (R3-06.L5): the `layer` property (`far` / `mid` / `fore`) is
+ * required, `sprite` defaults to the image path, `y` to the layer's y and `factor` to 0;
+ * `spacing` is required; `yFactor`, `frames` and `frameTicks` are copied when present.
+ *
+ * @param {Record<string, any>} layer - The image layer.
+ * @returns {Record<string, unknown>} The band entry.
+ * @throws {TiledImportError} Without (or with an unknown) `layer`, without a sprite, without
+ *   `spacing`.
+ */
+function bandFromImageLayer(layer) {
+  const name = String(layer.name ?? '');
+  const p = readTiledProperties(layer.properties);
+  const side = p.layer;
+  if (side !== 'far' && side !== 'mid' && side !== 'fore') {
+    throw new TiledImportError(
+      `image layer "${name}": the layer property must be far, mid or fore`,
+    );
+  }
+  const sprite = p.sprite ?? imageSpriteName(layer.image);
+  if (typeof sprite !== 'string' || sprite === '') {
+    throw new TiledImportError(`image layer "${name}": no sprite (property or image path)`);
+  }
+  if (p.spacing === undefined) {
+    throw new TiledImportError(`image layer "${name}": needs a spacing property`);
+  }
+  const ly = Math.round(Number(layer.y ?? 0));
+  /** @type {Record<string, unknown>} */
+  const band = {
+    layer: side,
+    sprite,
+    factor: p.factor ?? 0,
+    y: p.y ?? (ly === 0 ? 0 : ly),
+    spacing: p.spacing,
+  };
+  copyFields(band, p, ['yFactor', 'frames', 'frameTicks']);
+  return band;
+}
+
+/**
  * The camera y a stage's camera keys give when the camera reaches scroll x `x` — what a spawn
  * event at `x` adds to its `y` (`core/enemies` spawns at `camera.y + y`). Follows the runner
  * (`core/stage`): a key applies one tick after the camera reaches it, so only keys before `x`
@@ -401,10 +553,13 @@ export function convertTiledMap(map, options = {}) {
     throw new TiledImportError(`stage length ${length} (the map must be wider than one screen)`);
   }
   const layers = Array.isArray(map.layers) ? map.layers : [];
-  const tileLayers = layers.filter((/** @type {any} */ l) => l.type === 'tilelayer');
+  // The decor tile layers place decor, never terrain (R3-06.L5).
+  const tileLayers = layers.filter(
+    (/** @type {any} */ l) => l.type === 'tilelayer' && decorSideOf(l) === null,
+  );
   const terrain = tileLayers.find((/** @type {any} */ l) => l.name === 'terrain') ?? tileLayers[0];
-  const firstgid =
-    Array.isArray(map.tilesets) && map.tilesets.length > 0 ? map.tilesets[0].firstgid : 1;
+  const tileset0 = Array.isArray(map.tilesets) && map.tilesets.length > 0 ? map.tilesets[0] : null;
+  const firstgid = tileset0 === null ? 1 : tileset0.firstgid;
 
   /** @type {Record<string, unknown>[]} */
   const camera = [];
@@ -418,9 +573,46 @@ export function convertTiledMap(map, options = {}) {
   const events = [];
   /** @type {{ event: Record<string, unknown>, worldY: number, where: string }[]} */
   const spawns = [];
+  /** @type {Record<string, unknown>[]} */
+  const decor = [];
+  /** @type {Record<string, unknown>[]} */
+  const parallax = [];
 
   let order = 0;
   for (const layer of layers) {
+    const decorSide = decorSideOf(layer);
+    if (decorSide !== null) {
+      const layerName = String(layer.name ?? '');
+      const cells = decodeTileLayer(layer, width, height, firstgid);
+      /** @type {Map<number, string> | null} */
+      let names = null; // built on the first non-empty cell: an empty decor layer needs no tileset
+      for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+          const tileId = cells[r][c];
+          if (tileId === 0) continue;
+          if (names === null) names = decorTileNames(tileset0, layerName);
+          const tileName = names.get(tileId);
+          if (tileName === undefined) {
+            throw new TiledImportError(
+              `decor tile layer "${layerName}": tile ${String(tileId)} at (${String(c)}, ` +
+                `${String(r)}) is unnamed (name it in the embedded tileset)`,
+            );
+          }
+          decor.push({
+            layer: decorSide,
+            tile: tileName,
+            frame: 0,
+            x: c * TILED_TILE_SIZE,
+            y: r * TILED_TILE_SIZE,
+          });
+        }
+      }
+      continue;
+    }
+    if (layer.type === 'imagelayer') {
+      parallax.push(bandFromImageLayer(layer));
+      continue;
+    }
     if (layer.type !== 'objectgroup') continue;
     for (const object of Array.isArray(layer.objects) ? layer.objects : []) {
       const where = `object ${String(object.id)} "${String(object.name ?? '')}"`;
@@ -442,6 +634,10 @@ export function convertTiledMap(map, options = {}) {
         continue;
       }
       const cls = classOf(object);
+      if (cls === 'decor') {
+        decor.push(decorFromObject(p, where, ox, oy));
+        continue;
+      }
       /** @type {Record<string, unknown>} */
       let event;
       if (cls === 'spawn' || cls === 'formation') {
@@ -528,7 +724,7 @@ export function convertTiledMap(map, options = {}) {
     length,
     camera,
     checkpoints,
-    parallax: [],
+    parallax,
     tilemap:
       terrain === undefined
         ? null
@@ -541,6 +737,7 @@ export function convertTiledMap(map, options = {}) {
     events: events.map((e) => e.event),
   };
   if (branches.length > 0) stage.branches = branches;
+  if (decor.length > 0) stage.decor = decor;
   return {
     stage,
     paths: paths.length === 0 ? null : { formatVersion: 1, kind: 'paths', paths },
