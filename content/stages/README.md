@@ -291,8 +291,14 @@ orange 1UP).
     { "x": 5760, "speed": 1.5, "lock": true }        // scroll lock: stop exactly here until unlocked
   ],
   "checkpoints": [{ "x": 0 }, { "x": 3072 }],     // restart points, strictly sorted
-  "parallax": [                    // background bands, far → near
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 }
+  "parallax": [                    // bands, far → near; at most 6 background + 1 "fore" (R3-06)
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 },
+    { "layer": "fore", "sprite": "bg/ridge-fore", "factor": 1.5, "y": 240, "spacing": 256,
+      "yFactor": 0.125, "frames": 2, "frameTicks": 24 }   // optional (R3-06): vertical scroll and
+  ],                               // animation over the sprite's "@f1", "@f2", … siblings
+  "decor": [                       // optional (R3-06): non-colliding items, file order
+    { "layer": "back", "sprite": "bg/stars-near", "frame": 0, "x": 768, "y": 96 },
+    { "layer": "front", "tile": "moss", "frame": 0, "x": 3200, "y": 294 }
   ],
   "tilemap": {                     // or null for an open-space stage
     "tileSize": 12,
@@ -356,6 +362,26 @@ the stage a parallax band whose bottom edge reaches `horizon`, or the sky meets 
 showpiece: a neon grid floor under a violet sky, a camera that ramps to 5 px/tick, corridors of
 `dim-pylon` wall segments and the three P2 bosses of M3-02 (SHADOW STRIDER the invincible walker,
 IRON TALON the grabber, GRASPING BLOOM the suction boss).
+
+## Decor and the foreground band (R3-06)
+
+`decor` is a list of still, non-colliding decoration items placed at fixed world positions. Each
+entry names exactly one of `sprite` (an atlas sprite) or `tile` (a name of the stage's tileset)
+and gives the `layer` it draws on — `back` (behind the terrain) or `front` (in front of it, below
+the bullets) — with a `frame` (a sprite item's atlas frame; a tile item draws the tile's own
+frame) and the `x, y` of the item's top-left corner. The list is drawn in file order, culled by
+the camera like the terrain and taken from the zone's atlas pages. At most 256 items per stage. A
+stage that does not name `decor` keeps the resolved stage's shape exactly as before.
+
+Parallax bands gained two things (R3-06). The `fore` layer is the sparse foreground band, drawn
+in front of the player ship — at most one per stage, and it can never hide bullets: the draw
+order keeps enemy bullets above it. And any band may carry `yFactor` — how far it moves
+vertically with the camera's pan (omitted = 0: the band holds its playfield row) — and may
+animate: `frames` cycles the band's sprite and its `@f1`, `@f2`, … siblings, `frameTicks` ticks
+per frame (omitted = 8). At most six background bands (`far` / `mid`) per stage.
+
+All of it is presentation: the simulation never reads decor or the bands, so nothing here moves a
+replay hash.
 
 ## Camera
 
@@ -484,6 +510,10 @@ to 0), a `wave` / `haze` without `amplitude` and `wavelength`, a `lines` without
 `factorBottom`, `bands` that do not add up to the rows (or on a `wave` / `haze`), a cycle colour
 used twice on one layer — or within 1 per channel of another one there —, and more than 8 cycled
 colours on one layer.
+
+Since R3-06 also: a decor item naming both or neither of `sprite` and `tile`, a decor `x` past the
+stage's `length`, a `frameTicks` without `frames`, more than six background parallax bands, and
+more than one `fore` band.
 
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer

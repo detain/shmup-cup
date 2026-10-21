@@ -30,6 +30,15 @@
  * colours, fills the defaults and resolves the colours to numbers. The simulation never reads them
  * — the World hands them to the renderer through its view (`WorldView.effects`).
  *
+ * **Stage decor and foreground bands (R3-06).** A stage may list `decor`
+ * ({@link StageDecorEntry}): non-colliding atlas sprites or tileset tiles pinned to fixed world
+ * positions, drawn on the `back` layer behind the terrain or the `front` layer in front of it
+ * (never over the bullets). A parallax band may name the `fore` layer — the sparse foreground in
+ * front of the ship — and may carry `yFactor` (vertical scroll with the camera) and `frames` /
+ * `frameTicks` (slow animation over the sprite's `@f<n>` siblings). The loader checks the band
+ * counts and that every decor entry names exactly one of `sprite` / `tile`; an absent `decor`
+ * list stays absent. The simulation never reads any of it (plan_resolution.md §R3-06).
+ *
  * **Enemies and paths (M1-08).** An enemy names its behaviour coroutine (`script`, checked against
  * the engine's registry when `knownScripts` is given), its sprite and animation, hit points,
  * score, hurtbox, ground anchor, settle time, explosion size, drop, behaviour tunables
@@ -122,7 +131,8 @@
  *   ({@link PathPointSpec}, {@link PathTable}, {@link bakePath}, {@link PATH_SAMPLE_STEP},
  *   {@link MAX_PATH_LENGTH}), {@link StageSpec} and its parts ({@link StageMusic},
  *   {@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
- *   {@link StageParallaxLayerName}, {@link StageTilemapSpec}, {@link HeightfieldSpec},
+ *   {@link StageParallaxLayerName}, {@link StageDecorEntry}, {@link StageDecorLayerName} (R3-06),
+ *   {@link StageTilemapSpec}, {@link HeightfieldSpec},
  *   {@link HeightfieldSegment}, {@link HeightfieldProfile}, {@link StageTerrain},
  *   {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
  *   M2-08 {@link STAGE_RASTER_LAYERS} / {@link StageRasterLayerName}, {@link STAGE_RASTER_KINDS} /
@@ -1261,26 +1271,86 @@ export interface StageCheckpoint {
   readonly x: number;
 }
 
-/** Which background layer a parallax band is drawn on. */
-export type StageParallaxLayerName = 'far' | 'mid';
+/**
+ * Which layer a parallax band is drawn on: `far` / `mid` are the background bands behind the
+ * terrain; `fore` (R3-06 — plan_resolution.md §R3-06) is the sparse foreground band in front of
+ * the ship, and the draw order keeps the bullets above it.
+ */
+export type StageParallaxLayerName = 'far' | 'mid' | 'fore';
 
 /**
- * One parallax background band: a sprite repeated every `spacing` pixels along x at playfield row
- * `y`, scrolling at `factor` × the camera (shmup_feat.md §14, integer-snapped by the renderer).
+ * Background parallax bands per stage (R3-06; a stage may add at most one `fore` band on top, so
+ * the file schema caps the list at {@link MAX_PARALLAX_BANDS} + 1).
+ */
+const MAX_PARALLAX_BANDS = 6;
+
+/**
+ * One parallax band: a sprite repeated every `spacing` pixels along x at playfield row `y`,
+ * scrolling at `factor` × the camera (shmup_feat.md §14, integer-snapped by the renderer). R3-06
+ * adds the optional vertical offset with the camera (`yFactor`) and the optional slow animation
+ * (`frames` cycling the sprite's `@f<n>` siblings every `frameTicks` ticks).
  */
 export interface StageParallaxLayer {
-  /** `far` (`BG_FAR`) or `mid` (`BG_MID`). */
+  /** `far` / `mid` (`BG_FAR` / `BG_MID`) or the foreground band `fore` (R3-06). */
   readonly layer: StageParallaxLayerName;
-  /** Atlas sprite repeated along the band (frame 0). */
+  /** Atlas sprite repeated along the band (frame 0 of {@link StageParallaxLayer.frames}). */
   readonly sprite: string;
   /** Resolved {@link ContentDb.sprites} index of {@link StageParallaxLayer.sprite}. */
   readonly spriteId: number;
   /** Scroll factor relative to the camera (0 = static, 1 = playfield speed). */
   readonly factor: number;
+  /**
+   * Scroll factor relative to the camera's vertical offset (R3-06; 0 = the band holds its
+   * playfield row while the camera pans, 1 = it moves with the playfield; omitted = 0).
+   */
+  readonly yFactor?: number;
   /** Playfield row of the band's top edge (at camera y 0). */
   readonly y: number;
   /** Horizontal repeat distance in pixels (normally the sprite's width). */
   readonly spacing: number;
+  /**
+   * Animated frame count (R3-06): the band cycles the sprite and its `@f1` … siblings; omitted =
+   * frame 0 only.
+   */
+  readonly frames?: number;
+  /** Ticks each frame of {@link StageParallaxLayer.frames} holds (R3-06; omitted = 8). */
+  readonly frameTicks?: number;
+}
+
+/** Which side of the terrain a decor item is drawn on (R3-06 — {@link StageDecorEntry}). */
+export type StageDecorLayerName = 'back' | 'front';
+
+/** Decor items per stage file (R3-06 — {@link StageDecorEntry}). */
+const MAX_STAGE_DECOR = 256;
+
+/**
+ * One non-colliding decoration item (R3-06 — plan_resolution.md §R3-06, the stage JSON `decor`
+ * list): an atlas sprite or a tileset tile pinned to a fixed world position, drawn on the `back`
+ * layer behind the terrain or the `front` layer in front of it, culled by the camera like the
+ * terrain and drawn from the zone's atlas pages. Presentation only — the simulation never reads
+ * decor.
+ */
+export interface StageDecorEntry {
+  /** `back` (below the terrain) or `front` (above it, below the bullets). */
+  readonly layer: StageDecorLayerName;
+  /**
+   * The atlas sprite to draw — the file names exactly one of {@link StageDecorEntry.sprite} or
+   * {@link StageDecorEntry.tile}.
+   */
+  readonly sprite?: string;
+  /**
+   * Resolved {@link ContentDb.sprites} index of {@link StageDecorEntry.sprite}, or -1 when the
+   * item draws {@link StageDecorEntry.tile}.
+   */
+  readonly spriteId: number;
+  /** The tileset tile to draw (a name of the stage's tileset); the other half of the choice. */
+  readonly tile?: string;
+  /** Atlas frame for a sprite item (a tile item draws the tile's own frame; still required). */
+  readonly frame: number;
+  /** World x of the item's left edge (the loader checks it against the stage length). */
+  readonly x: number;
+  /** Playfield row of the item's top edge. */
+  readonly y: number;
 }
 
 /** The layers a stage's raster effect may distort (M2-08): the backgrounds and the terrain. */
@@ -1959,8 +2029,16 @@ export interface StageSpec {
   readonly camera: readonly StageCameraKey[];
   /** Restart points, sorted by `x`. */
   readonly checkpoints: readonly StageCheckpoint[];
-  /** Background bands, far to near. */
+  /**
+   * Parallax bands, far to near: at most {@link MAX_PARALLAX_BANDS} background bands and at most
+   * one `fore` band (R3-06).
+   */
   readonly parallax: readonly StageParallaxLayer[];
+  /**
+   * The still decoration items (R3-06 — {@link StageDecorEntry}), in file order; omitted in the
+   * file = none and the field stays absent on the resolved stage. Presentation only.
+   */
+  readonly decor?: readonly StageDecorEntry[];
   /** Raster effects (M2-08; omitted in the file = none). Presentation only. */
   readonly raster: readonly StageRasterEffect[];
   /** Palette cycles (M2-08; omitted in the file = none). Presentation only. */
@@ -3114,14 +3192,34 @@ const STAGE_FILE_SCHEMA = s.object(
     ),
     checkpoints: s.array(s.object({ x: EVENT_X })),
     parallax: s.array(
-      s.object({
-        layer: s.enumOf(['far', 'mid'] as const),
-        sprite: s.ref('sprite'),
-        factor: s.num({ min: 0, max: 4, unit: 'ratio' }),
-        y: s.num({ min: -512, max: 512, unit: 'band-y' }),
-        spacing: s.int({ min: 8, max: 1024, unit: 'world-px' }),
-      }),
-      { max: 8 },
+      s.object(
+        {
+          layer: s.enumOf(['far', 'mid', 'fore'] as const),
+          sprite: s.ref('sprite'),
+          factor: s.num({ min: 0, max: 4, unit: 'ratio' }),
+          yFactor: s.num({ min: -4, max: 4, unit: 'ratio' }),
+          y: s.num({ min: -512, max: 512, unit: 'band-y' }),
+          spacing: s.int({ min: 8, max: 1024, unit: 'world-px' }),
+          frames: s.int({ min: 1, max: 64, unit: 'count' }),
+          frameTicks: s.int({ min: 1, max: 3600, unit: 'ticks' }),
+        },
+        { optional: ['yFactor', 'frames', 'frameTicks'] },
+      ),
+      { max: MAX_PARALLAX_BANDS + 1 },
+    ),
+    decor: s.array(
+      s.object(
+        {
+          layer: s.enumOf(['back', 'front'] as const),
+          sprite: s.ref('sprite'),
+          tile: s.str({ maxLength: 64 }),
+          frame: s.int({ min: 0, max: 1023, unit: 'index' }),
+          x: EVENT_X,
+          y: SPAWN_Y,
+        },
+        { optional: ['sprite', 'tile'] },
+      ),
+      { max: MAX_STAGE_DECOR },
     ),
     tilemap: s.nullable(TILEMAP_SCHEMA),
     events: s.array(STAGE_EVENT_SCHEMA),
@@ -3148,7 +3246,17 @@ const STAGE_FILE_SCHEMA = s.object(
     remix: s.array(STAGE_EVENT_SCHEMA, { max: MAX_STAGE_REMIX }),
   },
   {
-    optional: ['directItems', 'branches', 'raster', 'cycles', 'mode7', 'type', 'rush', 'remix'],
+    optional: [
+      'directItems',
+      'branches',
+      'raster',
+      'cycles',
+      'mode7',
+      'type',
+      'rush',
+      'remix',
+      'decor',
+    ],
   },
 );
 
@@ -4951,7 +5059,10 @@ type MutableStage = Omit<
   | 'type'
   | 'rush'
   | 'remix'
+  | 'decor'
 > & {
+  /** See {@link StageSpec.decor} (R3-06; absent when the file has none — never defaulted). */
+  decor?: Array<Omit<StageDecorEntry, 'spriteId'> & { spriteId?: number }>;
   /** See {@link StageSpec.remix} (optional in the file — M3-01). */
   remix?: Array<
     StageEvent & {
@@ -5176,6 +5287,8 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     }
   }
   stage.terrain = null;
+  // Decor and the parallax band counts (R3-06).
+  if (!checkStageDecor(stage, file, issues)) ok = false;
   // The loops' remix (M3-01): spawns and formations only, sorted, inside the stage, no branch.
   if (!checkStageRemix(stage, file, issues)) ok = false;
   // Optional since M2-05: an empty plan means the engine's default one.
@@ -5184,6 +5297,56 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   if (!checkStageRush(stage, file, issues)) ok = false;
   // Presentation effects (M2-08).
   if (!checkStageEffects(stage, file, issues)) ok = false;
+  return ok;
+}
+
+/**
+ * Checks a stage's decor and parallax bands (R3-06 — plan_resolution.md §R3-06) beyond the
+ * schema: at most {@link MAX_PARALLAX_BANDS} background bands and at most one `fore` band, and
+ * `frameTicks` only on an animated band; every decor entry names exactly one of `sprite` /
+ * `tile` and starts inside the stage. An absent `decor` list stays absent — only a file that
+ * names decor grows the resolved stage's shape.
+ *
+ * @param stage - The parsed stage.
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the bands and the decor are usable.
+ */
+function checkStageDecor(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  const bands = stage.parallax;
+  let back = 0;
+  let fore = 0;
+  for (let i = 0; i < bands.length; i++) {
+    const band = bands[i];
+    if (band.layer === 'fore') fore += 1;
+    else back += 1;
+    if (band.frameTicks !== undefined && band.frames === undefined) {
+      ok = issue(issues, at(file, 'parallax[' + String(i) + '].frameTicks'), 'needs frames');
+    }
+  }
+  if (back > MAX_PARALLAX_BANDS) {
+    ok = issue(
+      issues,
+      at(file, 'parallax'),
+      'has ' + String(back) + ' background bands (at most ' + String(MAX_PARALLAX_BANDS) + ')',
+    );
+  }
+  if (fore > 1) {
+    ok = issue(issues, at(file, 'parallax'), 'has ' + String(fore) + ' fore bands (at most 1)');
+  }
+  const decor = stage.decor;
+  if (decor === undefined) return ok;
+  for (let i = 0; i < decor.length; i++) {
+    const entry = decor[i];
+    const path = 'decor[' + String(i) + ']';
+    const hasSprite = entry.sprite !== undefined;
+    const hasTile = entry.tile !== undefined;
+    if (hasSprite === hasTile) {
+      ok = issue(issues, at(file, path), 'needs exactly one of sprite or tile');
+    }
+    if (entry.x > stage.length) ok = issue(issues, at(file, path + '.x'), 'must be <= length');
+  }
   return ok;
 }
 

@@ -261,7 +261,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.enemyIndex': '7a74fd53a7352864',
     'core.paths': '980ad13f6a477408',
     'core.pathIndex': '1a4e800e937e9c65',
-    'core.stages': '3266d92a348ffb74',
+    'core.stages': 'df02d4417a9c629b',
     'core.stageIndex': '2bd1d4c7fc744d4f',
     'core.tilesets': '5eb80d326813d6aa',
     'core.tilesetIndex': '2bd1d4c7fc744d4f',

@@ -578,7 +578,7 @@ describe('core/data loadContent — per-kind schemas', () => {
     ).toEqual([
       { path: 's.json:length', message: 'must be an integer in 1..1000000' },
       { path: 's.json:camera[0].lock', message: 'must be a boolean' },
-      { path: 's.json:parallax[0].layer', message: 'must be one of: far, mid' },
+      { path: 's.json:parallax[0].layer', message: 'must be one of: far, mid, fore' },
       { path: 's.json:parallax[0].factor', message: 'must be a finite number in 0..4' },
       { path: 's.json:parallax[0].spacing', message: 'must be an integer in 8..1024' },
       { path: 's.json:tilemap.tileSize', message: 'must be an integer in 8..12' },

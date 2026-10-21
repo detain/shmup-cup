@@ -1,6 +1,6 @@
 /**
  * Edge cases of the M1 stage format (plan M1-07) in `loadContent`: every order / range problem
- * of one file reported in one load, the limits (empty camera path, 8 parallax bands, `rowsTall`
+ * of one file reported in one load, the limits (empty camera path, 7 parallax bands, `rowsTall`
  * 1 … 255, generator type and segment count, unknown music cues), values exactly at the stage
  * `length` (allowed), a minimal one-pixel stage, fractional event x, ties kept in file order,
  * and the flag numbering (sorted names, repeated names sharing a bit, `value` defaulting to set).
@@ -129,11 +129,29 @@ describe('core/data stage edge — order and range checks', () => {
 describe('core/data stage edge — schema limits', () => {
   const band = { layer: 'far', sprite: 'bg/stars-far', factor: 0.5, y: 0, spacing: 128 };
 
-  it('allows 8 parallax bands, not 9', () => {
-    expect(load({ parallax: new Array(8).fill(band) }).issues).toEqual([]);
-    expect(issuesOf(load({ parallax: new Array(9).fill(band) }))).toEqual([
-      'parallax must have at most 8 items',
+  it('allows 7 parallax bands (6 background + a fore band), not 8', () => {
+    expect(load({ parallax: new Array(6).fill(band) }).issues).toEqual([]);
+    expect(
+      load({ parallax: new Array(6).fill(band).concat({ ...band, layer: 'fore' }) }).issues,
+    ).toEqual([]);
+    expect(issuesOf(load({ parallax: new Array(8).fill(band) }))).toEqual([
+      'parallax must have at most 7 items',
     ]);
+    expect(issuesOf(load({ parallax: new Array(7).fill(band) }))).toEqual([
+      'parallax has 7 background bands (at most 6)',
+    ]);
+    expect(issuesOf(load({ parallax: new Array(3).fill({ ...band, layer: 'fore' }) }))).toEqual([
+      'parallax has 3 fore bands (at most 1)',
+    ]);
+  });
+
+  it('requires frames before frameTicks on a band', () => {
+    expect(issuesOf(load({ parallax: [{ ...band, frameTicks: 8 }] }))).toEqual([
+      'parallax[0].frameTicks needs frames',
+    ]);
+    expect(
+      load({ parallax: [{ ...band, yFactor: 0.5, frames: 2, frameTicks: 8 }] }).issues,
+    ).toEqual([]);
   });
 
   it('checks rowsTall, the generator type and the segment count', () => {

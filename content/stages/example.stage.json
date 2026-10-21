@@ -13,8 +13,22 @@
   ],
   "checkpoints": [{ "x": 0 }, { "x": 3072 }],
   "parallax": [
-    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 192 },
-    { "layer": "mid", "sprite": "bg/stars-near", "factor": 0.5, "y": 0, "spacing": 192 }
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 192,
+      "yFactor": 0.125,
+      "frames": 2,
+      "frameTicks": 24
+    },
+    { "layer": "mid", "sprite": "bg/stars-near", "factor": 0.5, "y": 0, "spacing": 192 },
+    { "layer": "fore", "sprite": "bg/stars-far", "factor": 1.5, "y": 240, "spacing": 256 }
+  ],
+  "decor": [
+    { "layer": "back", "sprite": "bg/stars-near", "frame": 0, "x": 768, "y": 96 },
+    { "layer": "front", "tile": "moss", "frame": 0, "x": 3200, "y": 294 }
   ],
   "tilemap": {
     "tileSize": 12,
