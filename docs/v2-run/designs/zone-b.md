@@ -91,8 +91,9 @@ Shaft geometry (all in the map's absolute coordinates; `H = 744`):
   — tilemap.ts:20-21 — and this design never overlaps: c + f ≈ 464 ≤ 744 everywhere); the
   420-px envelope ramps (tilemap law: profile reaches `base` only after `base` px from each
   segment end) are clear of every event in §5's shaft window — and with the 420-px envelope,
-  hold 120 and yTicks 300 the shaft's sink needs ~270 post-hold ticks to reach y 400, so a
-  shaft floor event before x 6,760 fires mid-pan 25–40 px above its rock — §5 places 6,900.
+  hold 120 and yTicks 300 the shaft's sink needs ~170 post-hold ticks (~290 from key apply)
+  to reach y 400, completing at x ≈ 6,716: a shaft floor event below x ≈ 6,680 fires mid-pan
+  30–75 px above its rock, 6,680…6,760 already stand — §5 places 6,900.
 - Inside it: `froth`/`brood-bubble` bubble spawns at playfield-window rows y 60…300 (spawn `y`
   is window-relative — the bubbles ride with the camera, which is what sells the dive), the
   shaft's own `brine-mine` fields, glow-vent decor on the floor (§9).
@@ -316,8 +317,8 @@ maw-jaw 45×15, maw-fin 60×36; new `maw-spine` 18×18 2f (§14).
 **`['#10323e', '#184658', '#225c6e', '#2e7486']`**, `ticks: 10`, on `bg/brine-sea` — and the
 grotto keeps the same four colours. This design *keeps today's ramp*, so per P7's law nothing
 changes for zone B: the ramp is recorded as frozen, no new colours are reserved, the existing
-near-neighbour exemptions still name `bg/brine-nebula` (far, not cycled) and `bg/brine-sea`
-(cycles BRINE) vs ABYSS. The four entries are mutually ≥ 2 apart in the blue/green channels
+near-neighbour exemptions still name `bg/brine-nebula` (far, not cycled — exempt under BRINE,
+with `bg/abyss-murk`) and `bg/brine-sea` (cycles BRINE — exempt under ABYSS). The four entries are mutually ≥ 2 apart in the blue/green channels
 (unchanged law, already true at today's values). `ticks: 10` never scaled (ticks don't scale).
 
 **New-art palette margin:** `palette-cycle-scan` rule 2 checks **every sprite** against every
