@@ -74,6 +74,7 @@ import {
   EndingFlag,
   ExtraItem,
   GameOptionsItem,
+  GraphicsItem,
   HudPlayerState,
   OptionsItem,
   PLAYER_DEAD_TICKS,
@@ -436,6 +437,7 @@ const SCENE_IDS = [
   'soundTest',
   'controls',
   'display',
+  'graphics',
   'gameOptions',
   'extras',
   'rebind',
@@ -928,12 +930,32 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.at('display');
     w.hold(0, 2);
     w.walk(flow.displayPage.menu);
-    for (const item of [DisplayItem.Bullets, DisplayItem.Scale, DisplayItem.Crt]) {
+    for (const item of [DisplayItem.Bullets, DisplayItem.Scale]) {
       w.focus(flow.displayPage.menu, item);
       w.press(Action.Right);
       w.press(Action.Left);
     }
     w.focus(flow.displayPage.menu, DisplayItem.Back);
+    w.press(Action.Confirm);
+    w.at('options');
+    // R6-04: the GRAPHICS page — OUTPUT, RENDERER, CRT and ASPECT (the last two moved here).
+    w.begin('options.graphics');
+    w.focus(flow.options.menu, OptionsItem.Graphics);
+    w.press(Action.Confirm);
+    w.at('graphics');
+    w.hold(0, 2);
+    w.walk(flow.graphicsPage.menu);
+    for (const item of [
+      GraphicsItem.Output,
+      GraphicsItem.Renderer,
+      GraphicsItem.Crt,
+      GraphicsItem.Aspect,
+    ]) {
+      w.focus(flow.graphicsPage.menu, item);
+      w.press(Action.Right);
+      w.press(Action.Left);
+    }
+    w.focus(flow.graphicsPage.menu, GraphicsItem.Back);
     w.press(Action.Confirm);
     w.at('options');
     w.begin('options.game');
@@ -1686,17 +1708,18 @@ const PINNED: Record<string, Record<string, string>> = {
     'title.prompt': 'a7e31185 9c557965 80a26cf5 2873a7c5',
     'title.exit': '7f933aa9 c94e24e5 2eab2015 87baae65',
     'title.menu': '491a04cd a5b509f9 82b34cc6 24482885',
-    options: 'a31c6c11 b3865371 a1aced5e bd7575c5',
-    'options.controls': '6dcc05cd 843dc42d 3a7064a1 99f2b285',
-    rebind: '3da02de5 23be0ddd 8c48c41a 43fd3c05',
-    inputTest: 'c896b341 fc5910b5 295199b5 414cb545',
-    'options.display': '18e42e05 63a638c1 d7fa924a de8888a5',
-    'options.game': '47062e89 38ff9691 7d424ab3 7bd29525',
-    'options.extras': 'e242d5bd 2ba64ffd 1da5dac9 754cb4a5',
-    soundTest: '6bb5730d ddb53aa9 643676be b02f3ee5',
-    practice: '4b06cf85 843dc42d 209efd81 88a2cb85',
-    extra: '3cf60525 0e2b37d5 e8387225 2d0859e5',
-    'replays.empty': '2a261141 0e2b37d5 ea5fc035 a31a93e5',
+    options: 'b37c4f69 843dc42d 059d18d9 cb1bc225',
+    'options.controls': '39413ca5 843dc42d d5e32d81 99f2b285',
+    rebind: '905c3a11 23be0ddd f7ced5e2 43fd3c05',
+    inputTest: 'e7b70f89 fc5910b5 88228dd5 414cb545',
+    'options.display': 'beb640cd b1382dc9 423730ea eb493265',
+    'options.graphics': '53f2ab25 7431bd9d 216feead a4aa6605',
+    'options.game': '332619b5 aa52f245 c3740400 952881c5',
+    'options.extras': '281f4a5d ddb53aa9 c005afe6 8a90b305',
+    soundTest: '6bb5730d ddb53aa9 608569b2 b02f3ee5',
+    practice: '4b06cf85 843dc42d 9ebd5109 88a2cb85',
+    extra: '3cf60525 0e2b37d5 84194cf5 2d0859e5',
+    'replays.empty': '2a261141 0e2b37d5 e873ed45 a31a93e5',
   },
   game: {
     difficulty: '63113bbd c94e24e5 c8498595 6d5b6685',
@@ -1706,7 +1729,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'game.card': '3d5f1aad c00882d5 90256c01 6cdc9245',
     'game.play': '0cfccb05 689be265 6a07ddfa b952d9c5',
     pause: '968d3f25 8e43757d 0f79feba 94897405',
-    'pause.options': '48debddd 2f9b7fa5 c533e6d2 83b688c5',
+    'pause.options': 'abb5d4b5 2f9b7fa5 c533e6d2 83b688c5',
     'pause.quit': '1fae8ed5 6d794ce5 2f3e6f12 fdb096c5',
     'pause.fullPower': 'fa0559d1 562b8059 63e25164 1b857fa5',
     'pause.retry': '59eaadb5 118305a5 50d3a8da 7c490885',
@@ -1788,11 +1811,11 @@ const PINNED: Record<string, Record<string, string>> = {
   },
   languages: {
     'es.title': '1cadb005 b4f60d95 fdb07ead 9e6aa4c5',
-    'es.options': '15502069 11e615e9 ca22b30e db81a6c5',
-    'es.game': '0dd03ce0 b21b18be a0ead5c8 445802e5',
+    'es.options': '72e11d65 c0e67b3d 62df1c99 1c1e6065',
+    'es.game': '0dd03ce0 b21b18be 04d33154 445802e5',
     'ja.title': 'eb366a98 b4f60d95 fdb07ead 9e6aa4c5',
-    'ja.options': 'ea9fd145 11e615e9 ca22b30e db81a6c5',
-    'ja.game': '7f5d0d10 b21b18be a0ead5c8 445802e5',
+    'ja.options': '24fdb35d c0e67b3d 62df1c99 1c1e6065',
+    'ja.game': '7f5d0d10 b21b18be 04d33154 445802e5',
   },
   bare: {
     bare: '4d3bfc25 4d3bfc25 05cdf888 0e5dbbc5',

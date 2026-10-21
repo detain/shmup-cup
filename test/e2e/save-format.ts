@@ -15,5 +15,5 @@
  * @module
  */
 
-/** The save format the build writes (`core/save` `SAVE_VERSION`: 3 since v2's R2-01). */
-export const SAVE_FORMAT = 3;
+/** The save format the build writes (`core/save` `SAVE_VERSION`: 4 since v2's R6-04, 3 since R2-01). */
+export const SAVE_FORMAT = 4;

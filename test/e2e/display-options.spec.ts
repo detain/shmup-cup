@@ -214,9 +214,11 @@ test.describe('display options through the Options screen (web build)', () => {
         reduceFlashing: true,
         showHitbox: true,
         bossHpBar: false,
-        // M3-02: the DISPLAY page's new rows, left at their defaults here.
+        // M3-02's rows plus the R6-04 boot knobs, all left at their defaults here.
         crtFilter: 'off',
         aspect: 'normal',
+        output: 'auto',
+        renderer: 'auto',
         language: 'en',
       });
 
