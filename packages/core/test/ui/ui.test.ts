@@ -344,7 +344,7 @@ describe('core/ui menu sounds', () => {
 const ROW = LINE_H + uiPx(2);
 
 describe('core/ui builders', () => {
-  it('drawPanel: a translucent fill and four border lines', () => {
+  it('drawPanel: a translucent fill, the magenta top and bottom, the cyan side rails', () => {
     const list = createDrawList();
     drawPanel(list, 10, 20, 100, 40);
     expect(list.count).toBe(5);
@@ -360,6 +360,9 @@ describe('core/ui builders', () => {
     expect([list.y[2], list.h[2]]).toEqual([59, 1]);
     expect([list.x[3], list.w[3], list.h[3]]).toEqual([10, 1, 38]);
     expect([list.x[4], list.w[4]]).toEqual([109, 1]);
+    // The v2 rim (R4-03.C6, bible §2): magenta outside top and bottom, cyan side rails.
+    expect([list.color[1], list.color[2]]).toEqual([UI_COLORS.border, UI_COLORS.border]);
+    expect([list.color[3], list.color[4]]).toEqual([UI_COLORS.rimInner, UI_COLORS.rimInner]);
   });
 
   it('drawMenu: labels in their slots, the cursor at the focus, disabled items dimmed', () => {

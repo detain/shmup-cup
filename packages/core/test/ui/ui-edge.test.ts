@@ -488,9 +488,10 @@ const CURSOR_DX = GLYPH_W + uiPx(4);
 /** drawMenu's default value column: a 13-glyph label and 2 px right of them (80). */
 const VALUE_DX = 13 * GLYPH_W + uiPx(2);
 
-/** A slider's bar: its width (50), its drop below the row's top (2), the gap to its value (6). */
+/** A slider's bar: its width (50), its height (5), its centred drop, the gap to its value (6). */
 const BAR_W = 8 * GLYPH_W + uiPx(2);
-const BAR_DY = uiPx(2);
+const BAR_H = uiPx(5);
+const BAR_DY = (GLYPH_H - BAR_H) >> 1;
 const VALUE_GAP = uiPx(6);
 
 /** drawConfirm's panel (176×52), the question's drop (7), the YES / NO row's rise (16). */

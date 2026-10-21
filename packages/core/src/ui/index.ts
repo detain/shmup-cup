@@ -1200,8 +1200,10 @@ export const UI_COLORS = Object.freeze({
   disabled: 0x5a6078,
   /** Panel fill. */
   panel: 0x10173a,
-  /** Panel border. */
-  border: 0x5a6a98,
+  /** Panel border — the v2 rim's outer magenta line (art bible §2; R4-03.C6, was the v1 slate). */
+  border: 0xb838a8,
+  /** Panel border — the v2 rim's inner cyan line, one pixel inside {@link UI_COLORS}.border. */
+  rimInner: 0x38c8e8,
   /** Titles on panels and screens. */
   title: 0x38c8e8,
   /** Warnings and "game over". */
@@ -1225,11 +1227,11 @@ const CURSOR = '→';
  */
 const SLIDER_BAR_W = 8 * GLYPH_W + uiPx(2);
 
-/** Top of a slider's bar below its row's top (2). */
-const SLIDER_BAR_DY = uiPx(2);
+/** Height of a slider's bar (5). */
+const SLIDER_BAR_H = uiPx(5);
 
-/** Height of a slider's bar (4). */
-const SLIDER_BAR_H = uiPx(4);
+/** Top of a slider's bar below its row's top: the bar centred on the glyph row (1). */
+const SLIDER_BAR_DY = (GLYPH_H - SLIDER_BAR_H) >> 1;
 
 /** From a slider bar's right end to its value (6). */
 const SLIDER_VALUE_GAP = uiPx(6);
@@ -1247,7 +1249,12 @@ const MENU_CURSOR_DX = GLYPH_W + uiPx(4);
 const MENU_VALUE_DX = 13 * GLYPH_W + uiPx(2);
 
 /**
- * Draws a framed box: a translucent fill and a 1-px border.
+ * Draws a framed box: a translucent fill and a neon rim (R4-03.C6, art bible §2 "Interface").
+ * With the default colours the rim's top and bottom lines are magenta
+ * ({@link UI_COLORS}.border) and its side rails cyan ({@link UI_COLORS}.rimInner) — the v2
+ * double-neon look kept at one rect per edge so the scene UI list's command budget (R4-05's
+ * raise lifts this to a full outer-plus-inner rim). Callers that pass an explicit border colour
+ * (the focused zone card, the tints) get the v1 single-colour ring. One-pixel lines stay one.
  *
  * @param list - Target draw list.
  * @param x - Left edge.
@@ -1255,7 +1262,8 @@ const MENU_VALUE_DX = 13 * GLYPH_W + uiPx(2);
  * @param w - Width.
  * @param h - Height.
  * @param fill - Fill colour (default {@link UI_COLORS}.panel).
- * @param border - Border colour (default {@link UI_COLORS}.border).
+ * @param border - Outer rim colour (default {@link UI_COLORS}.border; the default also turns the
+ *   side rails {@link UI_COLORS}.rimInner, an explicit colour rings all four edges itself).
  * @param alpha - Fill opacity 0…255 (default 232).
  */
 export function drawPanel(
@@ -1271,8 +1279,9 @@ export function drawPanel(
   list.rect(x, y, w, h, fill, alpha);
   list.rect(x, y, w, 1, border);
   list.rect(x, y + h - 1, w, 1, border);
-  list.rect(x, y + 1, 1, h - 2, border);
-  list.rect(x + w - 1, y + 1, 1, h - 2, border);
+  const side = border === UI_COLORS.border ? UI_COLORS.rimInner : border;
+  list.rect(x, y + 1, 1, h - 2, side);
+  list.rect(x + w - 1, y + 1, 1, h - 2, side);
 }
 
 /** Where and how {@link drawMenu} lays a menu out. */
