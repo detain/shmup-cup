@@ -8,12 +8,21 @@ are history only. The zone lane follows these numbers; deviations go in the lane
 
 Files owned by this zone (the LAND scope, `R5-07`): `content/stages/zone-g.stage.json`,
 `content/enemies/zone-g.enemies.json`, `content/tilesets/terrain-prism.tileset.json`,
-`content/stages/glimmer-cache.stage.json` (zone G owns its art, R5-07's scope row), and —
-only after `R5-P.P4` splits the shared file and only if a lane wants a zone-local action —
-a **new** `content/patterns/zone-g.patterns.json`. **At this tip P4 has not split it**: the
-lenses run `prism.fan` from `content/patterns/zones.patterns.json` (the file this design
-read), and this design needs **no** pattern change at all. There is no `zone-g.paths.json`
-(the gyres ride `content/paths/zone-a.paths.json`) and this design adds no path needs.
+`content/stages/glimmer-cache.stage.json` (zone G owns its art, R5-07's scope row), and
+`content/patterns/zone-g.patterns.json` — **`R5-P.P4` already split it at `a216f14`**: the
+lenses run `prism.fan` from that zone-G file (at 1.725), this design needs **no** pattern
+change, and the file ships byte-identical (a lane touches it only if it wants a zone-local
+action). The LAND also owns the gate and recording files §15's rewrites need:
+`test/integration/content-zone-g.test.ts` (the zone-case and bonus-window rewrites),
+`test/integration/zones/zone-g.contract.ts` (the `remastered` flip plus the re-anchored
+expectations §15 quotes), `test/golden/golden-zone-g.test.ts` (its death-window
+expectations ride the re-record), `test/golden/demos.ts` (the demo description rewrite,
+§15), `test/golden/v1-baseline.ts` and `test/golden/v1-baseline.test.ts` (the v2-port
+scenario retire, §15), and `assets/source/atlas-groups.json` (re-derived at LAND, never
+hand-edited). The §14 `tiles/terrain-prism-v2` sheet draws home in the S2 step —
+`scripts/assets/procedural/prism.mjs`' v2 branch or a `.v2.sprite.json`. There is no
+`zone-g.paths.json` (the gyres ride `content/paths/zone-a.paths.json`) and this design
+adds no path needs.
 
 ## 1. Zone G today (baseline, measured at tip)
 
@@ -22,7 +31,7 @@ read), and this design needs **no** pattern change at all. There is no `zone-g.p
 | length / WARNING x / end | 14,700 / 13,950 / 14,700 | 9,800 / 9,300 / 9,800 |
 | camera keys (speed) | 1.2 → 1.05 → 1.125 → 1.95 → 1.125 (no pans, no holds) | 0.8 → 0.7 → 0.75 → 1.3 → 0.75 |
 | map | `rowsTall` 28 (336 px — one playfield), tileset `terrain-prism` (20 tiles, 12 px) | 28 rows at 8 px |
-| checkpoints | 4: 0, 3,300, 6,900, 10,200 | same (v1 px) |
+| checkpoints | 4: 0, 3,300, 6,900, 10,200 | 0, 2,200, 4,600, 6,800 (v1 px) |
 | sections | prism field → gallery → crystal labyrinth (7 solid walls) → cube rush (4 seeded rushes onto 22 short pillars) → refraction run (1.95) → calm | the same at v1 scale |
 | capsule sources before WARNING | 22 (16 `tender` spawns + 6 dropping `glint-mote` formations) | — |
 | new types by sprite | 6 (glint-mote, prism-cube, facet-turret, halo-crystal, prism-lens, geode; `geode-shard` is a child, never counted) | 6 |
@@ -37,8 +46,9 @@ read), and this design needs **no** pattern change at all. There is no `zone-g.p
 | branches / triggers / block events | **none** — `block` events are unused on this stage today | none |
 
 The live contract (`test/integration/zones/zone-g.contract.ts`, `remastered` false today)
-will fail the v2 band on length (14,700 < 20,000) and checkpoints (4 < 5) when the lane
-flips the flag — which is exactly what this design fixes.
+will fail the v2 band on length (14,700 < 20,000), checkpoints (4 < 5), scroll to WARNING
+(≈ 190 s < 225 s) and directItems (26 < 30) when the lane flips the flag — which is
+exactly what this design fixes.
 
 ## 2. Sections (design; length 21,300 px)
 
@@ -56,17 +66,19 @@ full-height crystal corridor.
 |---|---|---|---|---|
 | 0–3,300 | the prism field | mote curtains, geodes, the first lens, floor + ceiling turrets, tenders | 1.2, y 0 | 45.8 |
 | 3,300 (hold) | **the gallery mouth** | the scroll stops; the camera pans 168 px down into the gallery | 1.2, hold 180, 0→168 | 3.0 |
-| 3,300–8,400 | **the crystal gallery** | 12 solid crystal walls — 6 hanging (world x 4,050…7,050) + 6 rising (4,350…7,350), alternating every 300 px; the hidden glimmer-cache entrance 4,800–6,000; **PRISM SENTINEL** mid-boss at 8,040 in the open pre-slide chamber | 1.2, y 168 | 70.8 |
+| 3,300–8,400 | **the crystal gallery** | 12 solid crystal walls — 6 hanging (world x 4,056…7,056) + 6 rising (4,356…7,356), alternating every 300 px; the hidden glimmer-cache entrance 4,800–6,000; **PRISM SENTINEL** mid-boss at 8,040 in the open pre-slide chamber | 1.2, y 168 | 70.8 |
 | 8,400 (hold) – 9,600 | **the slide** | stop, drop 144 px to the deep band; `crystal` pinch columns close either side (the optional punch, §3) | 1.35, hold 144, 168→312 | 17.2 |
 | 9,600–13,800 | the deep gallery + cube rush | the corridor crawls **under the ceiling mass**; 4 seeded `prism-cube` rushes stack on the stubs; refraction geysers; the moving-block hall, 10,080–13,600 (§3) | 1.35, y 312 | 51.9 |
 | 13,800 (hold) | **the heart lift** | stop, pan back up 144 px | 1.2, hold 180, 312→168 | 3.0 |
-| 13,800–16,800 | **the prism heart** | a ring of alternating crystal columns (14,250–16,650), three pincer waves, lenses | 1.2, y 168 | 41.7 |
+| 13,800–16,800 | **the prism heart** | a ring of alternating crystal columns (14,256–16,356, `14,256 + k·300`, k = 0…7), three pincer waves, lenses | 1.2, y 168 | 41.7 |
 | 16,800–19,200 | the refraction run | 1.95 px/tick past alternating geyser rows (`crystal-hot` bases the bot may punch — §3) | 1.95, y 168 | 20.5 |
 | 19,200–20,550 | the calm | exactly two carriers; the map opens to a clean void | 1.2, y 168 | 18.8 |
-| 20,550 | the WARNING | FACET MONARCH (camera lock) | — | — |
+| 20,550 | the WARNING | FACET MONARCH (camera lock; all four guns fire from phase 1 at `fireTicks` 90 — the rebuilt fleet opens hotter than today's two guns at the same cadence, §8) | — | — |
 
-Timing check: bare scroll to WARNING ≈ **274 s** (sum above 272.7 + ramps ≈ 1.5 — inside
-the contract's 225–315 s = 3.75–5.25 min with ≈ 10 s of high headroom and 40 s of low).
+Timing check: bare scroll to WARNING ≈ **276 s** (the live camera model measures 275.6 s
+on these keys — the sum above, 272.7 + ramps ≈ 1.5, underestimated the ramp/hold cost by
+2.9 s — inside the contract's 225–315 s = 3.75–5.25 min with ≈ 10 s of high headroom and
+40 s of low).
 Expected bot run ≈ 274 + boss ≈ 45 (§8) + intro/lock ≈ 12 + end-tail ≈ 12 ≈ **343 s**
 (god, no deaths) — inside 240–360 s with ≈ 17 s of room; today's 240.4 s baseline sits near
 the floor band, so the **lane must keep the run under 360 s** (S6 asserts it, §15).
@@ -76,10 +88,11 @@ the floor band, so the **lane must keep the run under 360 s** (S6 asserts it, §
 **The refraction hall of moving crystal blocks (R5-07's focus).** Between **10,080 and
 13,600** the deep gallery is crossed by eight `block` events (the M2-07 terrain-block
 system, used on this stage for the first time; `MAX_TERRAIN_BLOCKS` 16, never more than
-12 alive): four **shutters** (10,080 / 11,200 / 12,400 / 13,600 — 24×48 px of tile
-`crystal`, oscillating down from the ceiling mass with `dy` 96, `period` 240, phases 0 /
-256 / 512 / 768, the zone-H piston idiom) and four **riders** (10,600 / 11,800 / 13,000 /
-13,300 — the same block size travelling the corridor at `vx` −0.75 px/tick). The ship
+12 alive): four **shutters** (`y` **408** — hanging from the deep band's ceiling mass at
+map y ≤ 456; 10,080 / 11,200 / 12,400 / 13,600, 24×48 px of tile `crystal`, oscillating
+down with `dy` 96, `period` 240, phases 0 / 256 / 512 / 768, the zone-H piston idiom) and
+four **riders** (`y` **396**, the corridor band; 10,600 / 11,800 / 13,000 / 13,300 — the
+same block size travelling the corridor at `vx` −0.75 px/tick). The ship
 threads the gap each shutter leaves under it and times the riders; the scroll carries
 every block behind the ship eventually, so 4-way fire never has to stop to clear one.
 Blocks are tested inside `terrainAt` (`docs/dev/advanced-stages.md`), so the **existing**
@@ -91,8 +104,9 @@ floor rows 36–39, alternating every 240 px) that can wall off the ship's own l
 the slide's `crystal` pinch columns (hp 5, §10) do the same at the drop. Every one is
 **optional pressure** — the corridor between the alternating rows is always open — so a
 run that never punches needs no P12 feature at all, no branch exists, and every other
-zone's goldens stay byte-identical (P12 rule 2). The blocks despawn 128 px behind the
-view's left edge and a checkpoint restart respawns the behind-camera ones at age 0 (§15).
+zone's goldens stay byte-identical (P12 rule 2). The blocks despawn **192 px** behind
+the view's left edge (`BLOCK_DESPAWN_MARGIN` = 128 × WORLD_SCALE) and a checkpoint
+restart respawns the behind-camera ones at age 0 (§15).
 
 **Why the taller map earns its rows.** The 56-row map is the vertical story: the field
 flies under a low ceiling fringe (solid to map row 13 at y 0), the gallery threads the
@@ -107,8 +121,8 @@ Six, strictly increasing; every one restarts the ship inside its band's open cor
 the camera y the re-played keys produce (the dive precedent — zone D — owns that
 behaviour):
 
-`0 · 3,300 (gallery mouth) · 5,700 (gallery, between the rising wall 5,550 and the hanging
-wall 5,850 — the column there is open rows 15–39) · 8,400 (slide lip) · 11,700 (deep
+`0 · 3,300 (gallery mouth) · 5,700 (gallery, between the rising wall 5,556 and the hanging
+wall 5,856 — the column there is open rows 15–39) · 8,400 (slide lip) · 11,700 (deep
 corridor, mid-rush) · 16,800 (run start)`
 
 Flags, triggers, branches: **none** — the design's decision. G keeps a single line; the
@@ -128,7 +142,7 @@ Recovery check, ≥ 3 sources per 1,350-px window after each checkpoint:
 
 | checkpoint | sources in [cp, cp+1,350) | ≥ 3? |
 |---|---|---|
-| 0 | 210 f, 450 t, 1,020 t | ✓ |
+| 0 | 210 f, 450 t, 840 f, 1,020 t | ✓ |
 | 3,300 | 3,360 t, 3,900 t, 4,200 f | ✓ |
 | 5,700 | 6,300 t, 6,600 t, 7,000 f | ✓ |
 | 8,400 | 8,460 t, 9,000 t, 9,300 g | ✓ |
@@ -160,7 +174,7 @@ the default 664):
  1,800 s prism-glint y204 [cap]            |         entrance, until 6,000  | 11,400 s facet-turret (floor)
  2,040 s geode y252                        | 4,950 s facet-turret (ceiling) | 11,700 cp · f prism-cube×8 i20
  2,250 s tender y216                       | 5,250 s facet-turret (floor)   |         y96 [null]
- 2,681 s facet-turret (floor)              | 5,400 s prism-lens-low y240    | 11,800 B rider-2 ←
+ 2,320 s facet-turret (floor)              | 5,400 s prism-lens-low y240    | 11,800 B rider-2 ←
  2,820 s halo-crystal y261 ↯up             | 5,450 s facet-turret (floor)   | 12,000 s tender y84
  3,000 s prism-glint y168 [cap]            | 5,700 s facet-turret (ceiling) | 12,300 s facet-turret (ceiling)
  k1 3,300 · hold180 yTo 168                | 6,300 s tender y168            | 12,400 B shutter-3 ↓
@@ -168,7 +182,7 @@ the default 664):
    SLIDE (pan inside the hold, then 1.35): | 6,660 s halo-crystal y240 ↯dn  | 12,750 s prism-lens y156
  k2 8,400 · hold144 yTo 312                | 7,000 f glint-mote×7 i12 y201  | 12,900 s tender y72
   8,460 s tender y141                      |         [cap]                  | 13,000 B rider-3 ←
-  9,000 s tender y150                      | 7,050 hang wall·7,200 s geode  | 13,050 f prism-cube×6 y96 [null]
+  9,000 s tender y150                      | 7,056 hang wall·7,200 s geode  | 13,050 f prism-cube×6 y96 [null]
   9,300 s prism-glint y54 [cap]            | 7,500 s tender y150            | 13,300 B rider-4 ← (hall ends)
   9,600 f prism-cube×6 i22 y96 [null]      | 7,800 f glint-mote×6 y186      | 13,500 s prism-glint y54 [cap]
                                            |         [null]                 | 13,600 B shutter-4 ↓
@@ -211,16 +225,25 @@ inside the entrance window 4,800–6,000 are **only** `facet-turret` ground spaw
 5,250 · 5,450 · 5,700 — the case's four); the last field turret (4,050) must scroll off
 before the window arms — the W5-7 gallery rule: camera x 4,050 + 664 + width < 4,800 ✓.
 
-## 6. New enemy types (the 6–8 count: 6 old + 2 new = 8 ✓)
+## 6. New enemy types (the 6–8 count: 6 old + 1 new by sprite = 7 ∈ [6,8] ✓)
 
-Both run **existing** scripts (no BEHAVIOR item). Original names; units from
-`BEHAVIOR_PARAM_UNITS`; both are capsule sources via their enemy's `drop: capsule`
-(§5: 4 spawns of `prism-glint`; the shards are debris, see below).
+**Two new ids; `prism-shard` is child-only, `prisma` shares the cube sprite.** All three
+run **existing** scripts (no BEHAVIOR item). Original names; units from
+`BEHAVIOR_PARAM_UNITS`; the glint is a capsule source via the enemy's `drop: capsule`
+(§5: 4 spawns of `prism-glint`); the shard is debris and the pincer carries `drop: null`
+(see below).
 
 | id | script | hp / score | hurtbox | params (v2) | sprite | size class (§5.6) |
 |---|---|---|---|---|---|---|
 | `prism-shard` | `drifter.sine` | 1 / 75 | 8×8 | `speed` 1.5 · `amp` 12 · `period` 120 · `memberPhase` 24 | `enemies/prism-shard` (new) | small 14–18 px → **15×15, 3 frames** + `@flash` |
-| `prism-glint` | `drifter.sine` | 2 / 150 | 7×7 | `speed` 1.275 · `amp` 27 · `period` 200 · `memberPhase` 40 | `enemies/prism-glint` (new) | small 14–18 px → **18×12, 4 frames** + `@flash` |
+| `prism-glint` | `drifter.sine` | 2 / 150 | **8×8** (hw/hh 4) | `speed` 1.275 · `amp` 27 · `period` 200 · `memberPhase` 40 | `enemies/prism-glint` (new) | small 14–18 px → **18×14, 4 frames** + `@flash` |
+| `prisma` | `cube.pincer` | 1 / 100 | 10×10 (hw/hh 5) | `speed` 2.25 · `meetX` 296 · `gap` 12 · `leaveSpeed` 2.625 (mirror the shipped direct-carrier `cube`) | `enemies/prism-cube` (**reuse** — no new art, no S2 work) | — (the cube's existing class) |
+
+`prisma` is the new pincer cube the §2 heart row and §5 grid waves call: script
+`cube.pincer` is in `KNOWN_SCRIPT_IDS` ✓, its four tunables `speed` `meetX` `gap`
+`leaveSpeed` all have rows in `BEHAVIOR_PARAM_UNITS` ✓, and it carries `drop: null` (the
+`[null]` of those waves) — variant B authored exactly this row and loads clean. By sprite
+it reuses `prism-cube`, so the case's stage-event count is 7, not 8.
 
 `prism-shard` is the geode's new debris: the `geode` entry's `bubble.split` child changes
 from `geode-shard` to `prism-shard` (the `geode-shard` id and entry stay byte-identical
@@ -229,7 +252,8 @@ in the enemies file, unreferenced — `git grep` discipline per S4a); the shard 
 wanted for the new-type count: `drop: capsule` on the **enemy** (so its 4 spawns count),
 it never fires. Drift speeds are enemy motion, not bullets — no aimed speed involved. The
 aimed-speed case is untouched: **no new pattern file is needed** (the lenses keep
-`prism.fan` at 1.725 ≤ 3.0, §1's read of `zones.patterns.json`).
+`prism.fan` at 1.725 ≤ 3.0, shipped in `content/patterns/zone-g.patterns.json` since the
+`R5-P.P4` split at `a216f14`).
 
 ## 7. Mid-boss (new; the v1 zone had none)
 
@@ -276,13 +300,16 @@ sizes) ≈ **150 px** ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`) ✓.
 | 6–13 | `arm-top-1/-2/-3` + `arm-top-tip` / `arm-bottom-1/-2/-3` + `arm-bottom-tip` | roots body (−21, ∓42), −15 chains; tips radius 6, segments 7.5 | tips `gun` | armour `never`, tips gun | — | — | `facet-segment` / `facet-tip` (keep — the case: **exactly 2 arms, ≥ 4 parts each, gun tips, never-vulnerable**) |
 | 14 | `crown` | body | (−54, 0) | armour `never` | — | — | **new** `bosses/facet-crown` 30×15, 2 f |
 | 15–16 | `shoulder-l` / `-r` | body | (18, ∓48) | armour `never` | — | — | **new** `bosses/facet-plating` 24×36, 1 f (mirrored art) |
-| 17–18 | `emitter-l` / `-r` | shoulders | (0, ∓18) | vulnerable, `gun` | 16 each | 900 each | **new** `bosses/facet-emitter` 15×15, 4 f + `@flash` |
+| 17–18 | `emitter-l` / `-r` | shoulders | (0, ∓18) | vulnerable, `gun`; hurtbox **16×16** (rect, hw/hh 8 — full size 15×15 would need the half-extent 7.5, not expressible: hurtbox halves are integers, as §6's glint rejection proves). **rect**, explicitly not `radius`: a circle rooted under the never-hurt `shoulder` would grow a third/fourth `bossArms` root and break the zone case's `arms == 2` | 16 each | 900 each | **new** `bosses/facet-emitter` 15×15, 4 f + `@flash` |
 | 19–20 | `wing-l` / `-r` | body | (−33, ∓54) | armour `never` | — | — | **new** `bosses/facet-wing` 33×21, 1 f (mirrored art) |
 
 Core hp 84 (v1/interim 72: +17 %) plus the emitters' 32 hp → the bot's fight ≈ 45 s from
-today's 41.2 s, inside the §2 budget. Exactly 2 arm **tips** remain the case's guns; the
-two new emitter guns join the fire pool from phase 2 (the system fires every alive `gun`
-on the phase's `fireTicks` — content-only, no code). The core stays reachable by breaking
+today's 41.2 s, inside the §2 budget (the 16×16 rect hurtboxes above are what make those
+32 hp spendable at all). Exactly 2 arm **tips** remain the case's gun tips;
+all four guns fire from **phase 1** — the two new emitter guns simply add to the phase-1
+volley (the system fires every alive `gun` on the phase's `fireTicks`); phase 2's
+`fireTicks` 80 (vs 90) is what tightens the fight — content-only, no code. The core stays
+reachable by breaking
 the crystals first (`requires` unchanged — the S4b reachable-core case passes: the
 crystals are vulnerable from birth). Phases (all `boss.facet`; **no new tunable names**):
 
@@ -302,21 +329,24 @@ Parallax bands (≤ 6 + ≤ 1 `fore`, `R3-06`; `y` is a world/map row, bands rep
 
 | layer | sprite | factor | y (map px) | spacing | note |
 |---|---|---|---|---|---|
-| far | `bg/prism-facets` | 0.25 | −108 | 192 | keeps today's three rows (0/96/192); ×1.5-taller art arrives with S3 |
+| far | `bg/prism-facets` × **3 entries** | **0.25** (deepened for the crystal story) | y **0 / 96 / 192** (today's rows, kept) | 192 | the three entries at those y's load clean; total 7 bands ≤ `MAX_PARALLAX_BANDS` + the foreground slot ✓; ×1.5-taller art arrives with S3 |
 | far | **new** `bg/prism-deep` | 0.35 | 336 | 640 | the deep cavern behind the rock; 640×480 opaque far piece (the y 312 window × 0.35 pans ≈ 110 px; 480 covers it) |
 | mid | `bg/prism-spires` | 0.4 | 252 | 192 | keeps — with the pans it now reads only at the field/gallery bands |
 | mid | **new** `bg/prism-ridge` | 0.6 | 504 | 640 | crystal-ridge silhouette for the deep band; 640×168, green key |
 | fore | **new** `bg/prism-veil` | 1.15 | 96 | 640 | sparse drifting refraction veil in front of the ship, never hiding a bullet lane; ≤ 640×48 pieces, 2-frame shimmer, green key |
 
-Decor (`StageSpec.decor`, R3-06, ≤ 32 entries): `fx/glow-prism-vent` additive glows at
-the run's geyser feet and heads, the slide's pinch-column caps, and the heart ring's
-`facet-glow` tiles; decor never sits inside a collision tile.
+Decor (`StageSpec.decor`, R3-06, ≤ 256 entries (`MAX_STAGE_DECOR`)):
+`fx/glow-prism-vent` additive glows at the run's geyser feet and heads, the slide's
+pinch-column caps, and the heart ring's `facet-glow` tiles; decor never sits inside a
+collision tile.
 
 Raster rows (playfield rows: `top` 0…335, `bottom` 1…336, `RASTER_EFFECT_SCHEMA`):
 
-- `haze` rows top 252 / bottom 336, amp 1.5, wavelength 13.5, period 60 — `to` 3,450 (the
+- `haze` rows (`layer`: **mid** — today's haze ships `mid` in the stage file) top 252 /
+  bottom 336, amp 1.5, wavelength 13.5, period 60 — `to` 3,450 (the
   field shimmer, ends at the gallery mouth; today's single raster, re-anchored).
-- **new** `wave` rows top 132 / bottom 192, amp 2.25, wavelength 18, period 75 — `from`
+- **new** `wave` rows (`layer`: mid) top 132 / bottom 192, amp 2.25, wavelength 18, period
+  75 — `from`
   9,600 `to` 13,800 (the **refraction band across the deep corridor's ship lane** — the
   slow crawl reads as light bending through the ceiling mass).
 
@@ -332,7 +362,8 @@ channel; the facet cells, ridge, veil and glow art paint *exactly* these):
 speed; `PRISM_RAMP` grows from 4 to 6 entries — each facet cell still hashes to one colour
 and glints every 20 ticks; the v1 4-colour ramp is history). Everything else keeps the
 ≥ 3/255 margin (bible §4.4). The interim ramp stays shipped until P7 + the art drop;
-`glimmer-cache`'s faster cycle reuses the same ramp.
+`glimmer-cache`'s faster cycle reuses the same ramp (its cycle colour list moves with
+P7's ramp — presentation, not sim).
 
 ## 10. Terrain (the map redesign)
 
@@ -343,11 +374,12 @@ entries in order and **appends** 4 (S5a's rule; the tileset's `sprite` points at
 | new tile (1-based id) | type | hp | score | anchor | mask | use |
 |---|---|---|---|---|---|---|
 | `crystal` (21) | solid | 5 | 15 | floor | all 12 | the slide's pinch columns (the optional punch, §3) |
-| `crystal-hot` (22) | solid | 3 | 12 | floor | all 12 | the run's geyser bases + the hall blocks' tile |
+| `crystal-hot` (22) | solid | 3 | 12 | floor | all 12 | the run's geyser bases (the hall's eight blocks all ride `crystal`, §3) |
 | `facet-glow` (23) | empty | — | — | floor | all 0 | decor gas facets in the walls (RLE-placed) |
 | `shard-floor` (24) | solid | 8 | 20 | floor | all 12 | the heart ring's footing columns |
 
-24 tiles ∈ [20, 40] ✓; masks written in the tileset, art clipped to mask (W5-11; S2's
+24 tiles (20 + 4 appends; frames == tiles is the loader's rule — `content.test.ts`
+~923). Masks written in the tileset, art clipped to mask (W5-11; S2's
 stand-ins draw the same masks). The existing `cube` tile keeps `hp > 0` (the rush-stack
 case).
 
@@ -359,22 +391,29 @@ mass by ≥ 1 tile):
 |---|---|---|---|
 | 180 → 3,450 | base **360**, amp 12, per 300, seed 121 | base **156**, amp 12, per 270, seed 122 | field (y 0): floor solid from row 26 (screen 312), ceiling mass rows 0–12 |
 | 3,450 → 8,400 | base **192**, amp 12, per 360, seed 124 | base **180**, amp 12, per 360, seed 123 | gallery (y 168): floor solid rows 40–55 (top map 480 = screen 312), ceiling solid rows 0–14 (bottom map 180 = screen 12); the corridor is rows 15–39 — the turrets' screen rows 0/27 land in mass on both anchors |
-| 8,400 → 9,600 | ramp 192 → **144** (`crystal` RLE pinch columns) | base **420**, amp 9, per 240, seed 125 | the slide: the pinch closes while the camera drops to 312 |
+| 8,400 → 9,600 | base **192**, amp 12, per 330, seed 132 (stays 192 — the profile cannot ramp its base mid-segment; the pinch to world y 144 closes via `crystal` **RLE columns**: map col 12 = world 144, and step segments sink at their edges) | base **420**, amp 9, per 240, seed 125 | the slide: the pinch closes while the camera drops to 312 |
 | 9,600 → 13,800 | base **144**, amp 12, per 330, seed 127 | base **456**, amp 12, per 330, seed 126 | deep (y 312): ceiling mass rows 0–37 (screen ≤ 144), floor rows 44–55 (screen 216+), corridor rows 38–43; floor stubs rows 41–43 (the rush targets), ceiling stubs 38–39 — geysers rows 40–43 RLE |
-| 13,800 → 19,200 | base **192**, amp 12, per 390, seed 129 | base **180**, amp 12, per 390, seed 128 | heart + run (y 168): the gallery band returns; heart ring cols (14,250–16,650) and the run's alternating geyser rows — ceiling 15–18, floor 36–39 (`crystal-hot`) — are RLE over it |
+| 13,800 → 19,200 | base **192**, amp 12, per 390, seed 129 | base **180**, amp 12, per 390, seed 128 | heart + run (y 168): the gallery band returns; heart ring cols (14,256–16,356, `14,256 + k·300`, k = 0…7) and the run's alternating geyser rows — ceiling 15–18, floor 36–39 (`crystal-hot`) — are RLE over it |
 | 19,200 → 21,940 | base **96**, amp 9, per 420, seed 131 | base **96**, amp 9, per 420, seed 130 | calm: both masses leave the window (ceiling to map 96 = screen −72; floor top map 576 = screen 408) — a clean void |
 
 Every segment reaching the map's end ends at **21,940** (`length + 640`), the whole map 0 →
 21,940. RLE rows (56 row strings): the 12 gallery walls (24 px thick: hang rows 15–26 at
-4,050/4,650/5,250/5,850/6,450/7,050, rise rows 28–39 at 4,350/4,950/5,550/6,150/6,750/
-7,350), the 8 heart ring cols (alternating, `shard-floor` footings), the run's 10 geyser
+4,056/4,656/5,256/5,856/6,456/7,056, rise rows 28–39 at
+4,356/4,956/5,556/6,156/6,756/7,356 — every wall x snapped +6 to an integer column (all
+`% 12 = 0`; the 600 px pitch and 300 px hang/rise offset hold, and the one entry the old
+text carried inconsistently, 5,550, joins them as 5,556), the 8 heart ring cols
+(alternating, `14,256 + k·300` for k = 0…7, `shard-floor` footings), the run's 10 geyser
 rows alternating ceiling/floor every 240 px, the slide's pinch, the deep stubs/geysers and
-the vents. **Content-case geometry (the zone case rewrite, §15):** hang = rock at map rows
-15–26 (≥ 6 cols ✓ 6+4), rise = rock at map rows 28–39 (≥ 6 ✓ 6+4); free bands: hanging
-cols leave ≥ 156 px below (rows 27–39), rising cols ≥ 144 px above (rows 15–27) — past the
-ported ≥ 36 px floor (24·1.5), same as zone D's case. The middle-row test moves to the
-band boundary row 28 (the case reads `PLAYFIELD_H / TILE_SIZE` = 28 ✓ — the 56-row map
-splits exactly).
+the vents. Event/spawn x values (4,050 etc.) are pixel positions and stay legal — only the
+RLE geometry needs integer columns. **Content-case geometry (the zone case rewrite, §15):**
+hang = rock at map rows 15–26 (≥ 6 cols ✓ 6+4), rise = rock at map rows 28–39 (≥ 6 ✓ 6+4);
+free bands: hanging cols leave ≥ 156 px below (rows 27–39), rising cols ≥ 144 px above
+(rows 15–27) — past the ported ≥ 36 px floor (24·1.5), same as zone D's case. The
+middle-row test: the case currently reads row `PLAYFIELD_H / 2 / tile` = 14
+(`content-zone-g.test.ts:130`) — the rewrite must replace the middle-row probe with
+**band-bounded** probes (hang: rock at some row of 15–26 excluding the ceiling mass; rise:
+rock at some row of 28–39 excluding the floor mass) — measured on the authored map:
+hang 348 cols / rise 231 cols ✓.
 
 ## 11. Loops and Direct mode
 
@@ -383,15 +422,17 @@ splits exactly).
 
 ```
    360 f glint-mote×5 i14 y141 [null]     10,440 f prism-cube×8 i18 y96 [null]
-  1,200 s geode y216 [null]               12,150 f glint-mote×7 y60 [null]
-  2,700 f prism-cube×7 y186 [null]        14,400 f prisma×6 i22 y150 [null]
+  1,200 s geode y216 [null]               12,150 f glint-mote×7 i16 y60 [null]
+  2,700 f prism-cube×7 i20 y186 [null]    14,400 f prisma×6 i22 y150 [null]
   5,100 s prism-lens y150 [null]          16,200 s prism-lens y168 [null]
-  7,650 f glint-mote×6 y201 [null]        17,700 f glint-mote×8 y156 [null]
+  7,650 f glint-mote×6 i16 y201 [null]    17,700 f glint-mote×8 i14 y156 [null]
 ```
 
-**directItems** (the MANTA's plan; ≥ 30, today 26 → **36**; the plan is positional: entry
-*i* is handed to the *i*-th drop, cycling — `DIRECT_ITEMS`' six-item vocabulary, v1's
-opening mix, boss-prep tail):
+**directItems** (the MANTA's plan; ≥ 30, today 26 → **37**; the plan is positional: entry
+*i* is handed to the *i*-th drop, cycling — `DIRECT_ITEMS`' six-item vocabulary, the v1 mix
+re-ordered plus a 11-item boss-prep tail (26 + 11 = the 37 tokens listed below; the
+positional plan hands entry *i* to the *i*-th drop, so v1's drop order is deliberately
+reshuffled)):
 
 ```
 red green blue red green blue red octagon green blue red green blue yellow red green blue
@@ -399,14 +440,14 @@ red green blue orange red green blue red green | red green blue octagon red gree
 yellow red octagon
 ```
 
-`test/integration/zones-fg-direct.test.ts` plan-equality keeps passing (indexed by drop
+`test/integration/zone-g-direct.test.ts` plan-equality keeps passing (indexed by drop
 order); the lane re-runs it.
 
 ## 12. Peaks (R5-D5's 80 % lines)
 
 | pool | max | design peak | % |
 |---|---|---|---|
-| live enemies (`MAX_ENEMIES`) | 64 | ≈ 44 (deep rush 8 cubes + their 24 shards are children too: 8 stacks × up to 3 shards + a mote wave + a lens + a tender — sampled 10,200–13,440) | 69 % ≤ 80 % ✓ |
+| live enemies (`MAX_ENEMIES`) | 64 | ≈ 44 (two 8-cube rushes + a mote wave + a lens + a tender + the geodes' 3-shard splits — neither cube carries a child; sampled 10,200–13,440) | 69 % ≤ 80 % ✓ |
 | boss parts (`MAX_BOSS_PARTS`) | 24 | **20** (§8) | 83 % — **flag**: over the 80 % line, but the cap itself is the landed R5-P.P8 decision; the lane asserts exactly 20, **no capacity change requested** |
 | particles (`PARTICLE_CAPACITY`) | 256 | today 51 measured; ≈ 75–90 expected with crystal-debris from the geysers and block dust | ≤ 35 % ✓ |
 
@@ -417,14 +458,17 @@ The peak-enemy number is an arithmetic bound, **flagged for the lane to measure*
 ## 13. Atlas budget
 
 Today: the zone-g group (`assets/source/atlas-groups.json`) holds **15** sprites
-(`bg/prism-facets`, `bg/prism-spires`, the six `bosses/facet-*`, eight `enemies/...` —
+(`bg/prism-facets`, `bg/prism-spires`, the five `bosses/facet-*`, seven `enemies/...` —
 glint-mote, prism-cube, prism-lens, facet-turret, halo-crystal, geode, geode-shard — and
 `tiles/terrain-prism`) on page `main-7.png` 512×128, **4,402 B** against
 `ATLAS_ZONE_PNG_CAP` 600,000 B (R3-04; cap from `test/scripts/assets/atlas-budget.ts`;
 page bytes from the manifest built 2026-10-18 — the build the zone-D design cited at 3,013
 B for `main-4`). The design adds the **11** names of §14; `tender`, `bosses/core`,
-`bosses/orb` and all existing names reuse (the sentinel rides the common page, the facets
-stay on it too until R3 art). Stand-ins add ≈ 8 KB; even a full real-art zone stays under
+`bosses/orb` and the remaining existing names reuse (the sentinel rides the common page,
+the facets stay on it too until R3 art); `geode-shard` and `tiles/terrain-prism` leave the
+derived group once this design lands (the geode's child moves to `prism-shard`, the
+tileset's sprite becomes `terrain-prism-v2`) → 24 members after the re-derive
+(15 − 2 + 11). Stand-ins add ≈ 8 KB; even a full real-art zone stays under
 1/8 of the cap. `atlas-groups.json` is **re-derived** after the content change
 (`SHMUP_ATLAS_GROUPS_UPDATE=1`) — never hand-edited. Acceptance (S6): the zone's page ≤
 `ATLAS_ZONE_PNG_CAP`, reported by the standin-budget print.
@@ -434,7 +478,7 @@ stay on it too until R3 art). Stand-ins add ≈ 8 KB; even a full real-art zone 
 | name | size × frames | @flash | who draws |
 |---|---|---|---|
 | `enemies/prism-shard` | 15×15 × 3 | yes | S2 (`scripts/assets/procedural/prism.mjs`) |
-| `enemies/prism-glint` | 18×12 × 4 | yes | S2 (prism.mjs) |
+| `enemies/prism-glint` | 18×14 × 4 | yes | S2 (prism.mjs) |
 | `bosses/facet-crown` | 30×15 × 2 | yes | S2 |
 | `bosses/facet-plating` | 24×36 × 1 | yes | S2 (mirrored pair) |
 | `bosses/facet-emitter` | 15×15 × 4 | yes | S2 |
@@ -457,26 +501,27 @@ new sprite.
 | check | design value | baseline at tip |
 |---|---|---|
 | length | 20,000 ≤ 21,300 ≤ 22,000 (contract identity at `remastered: true`) | 14,700 |
-| scroll to WARNING | 225 ≤ ≈274 ≤ 315 s (`scrollTicksToWarning`) | ≈190 s |
+| scroll to WARNING | 225 ≤ ≈276 ≤ 315 s (`scrollTicksToWarning`) | ≈190 s |
 | bot run (god) | 240 ≤ ≈343 ≤ 360 s; `stageClear`; phases `[0,1,2]`; captain event fired | 240.4 s |
 | checkpoints | 6 (§4) | 4 |
-| new types by sprite | 8 (§6; the case counts stage-event sprites vs zones A–E) | 6 |
+| new types by sprite | 7 (§6; the case counts stage-event sprites vs zones A–E — `prism-shard` is child-only, `prisma` shares the cube sprite) | 6 |
 | capsules before WARNING | 33 plan sources ∈ [18,48]; §5 windows all ≥ 3; blue = 1 | 22 |
+| directItems | 37 ≥ 30 (contract identity; §11 list) | 26 |
 | calm | last key x 19,200 → warning 20,550: exactly `['carrier.straight','carrier.straight']`, nothing else in 19,200–20,550 | ✓ pair (13,080/13,440) |
 | 4-way caps | aimed ≤ 3.0 everywhere incl. `prism.fan` 1.725; laser lane gap ≥ 24, `maxSeparate ≤ 1` | ✓ |
-| zone case (rewrite) | hang cols map rows 15–26 ≥ 6 **and** rise cols 28–39 ≥ 6 (§10 bands, middle row 28); rush formations ≥ 3 each count ≥ 6 `drop: null`; cube tile `hp > 0`; monarch shape (2 arms ≥ 4 parts, gun tips, ≥ 2 crystals in front) **unchanged** except 20 parts | 28-row bands 0–14 / 14–27 |
+| zone case (rewrite) | hang cols map rows 15–26 ≥ 6 **and** rise cols 28–39 ≥ 6 (§10 bands; **band-bounded probes** replace the case's row-14 middle probe — `content-zone-g.test.ts:130` reads row 14 today; measured on the authored map: hang 348 / rise 231 cols); rush formations ≥ 3 each count ≥ 6 `drop: null`; cube tile `hp > 0`; monarch shape (2 arms ≥ 4 parts, gun tips, ≥ 2 crystals in front) **unchanged** except 20 parts | 28-row bands 0–14 / 14–27 |
 | bonus-window case (rewrite) | entrance x **4,800**, `until` **6,000**; ≥ 4 ground events in the window, **all** sprite `enemies/facet-turret`, grounds {ceiling, floor} (4,950/5,250/5,450/5,700); every turret event before the window scrolls off first (last ≤ 4,050 — W5-7 rule); cache keeps type `bonus`, drops {bonusCapsule, oneUp} | window 3,450–4,650, turret 2,681 |
-| moving-block case (new) | exactly 8 `block` events (§3 list), ≤ 12 live; blocks 24×48, tile `crystal`/`crystal-hot`, |v| ≤ 0.75 px/tick, shutters `dy` 96 `period` 240, phases 0/256/512/768; the geyser columns `crystal-hot` hp 3 (the P12 punch proof); restart respawns behind-camera blocks at age 0 (checkpoint 11,700 mid-hall) | 0 |
+| moving-block case (new) | exactly 8 `block` events (§3 list, `y` 408 shutters / 396 riders), ≤ 12 live; blocks 24×48, tile `crystal` (one tile for all eight, §3), authored drift |v| ≤ 0.75 px/tick (the shutters' sine excursion peaks ≈ 2.5 px/tick — the bot's dodge reads position, not velocity), shutters `dy` 96 `period` 240, phases 0/256/512/768; the geyser columns `crystal-hot` hp 3 (the P12 punch proof); restart respawns behind-camera blocks at age 0 (checkpoint 11,700 mid-hall) | 0 |
 | dive case (rewrite) | **three** `yTo` ≥ 144 keys (168, 312, back to 168) each with a hold; `rowsTall` 56; camera y 168 at the gallery/heart/run, 312 through the deep band; y == 168 at clear | 0 pans, rows 28 |
-| boss case | 20 parts ≤ 24; ≥ 2 crystals in front; core `afterParts` reachable; exactly 2 tip guns + 2 emitter guns from phase 2; spin ≠ 0 where shipped; assembled height ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`); 3 phases exactly; core hp 84 | 13 parts, core 72 |
+| boss case | 20 parts ≤ 24; ≥ 2 crystals in front; core `afterParts` reachable; exactly 4 `gun` parts — 2 tips + 2 emitters (the emitters' 16×16 rect hurtboxes make their 32 hp spendable); the case asserts the fire pool is the alive guns (no phase gating exists in the system); spin 0 everywhere (shipped parts carry none); assembled height ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`); 3 phases exactly; core hp 84 | 13 parts, core 72 |
 | branches | **none by design** (§4) — no branch-bound event anywhere | 0 |
 | golden `zone-g-god` | `stageClear`, `bossDefeated`, phases [0,1,2], shipX ≈ BOT_X, diagonals 0, remoteViolations 0 | re-bless (LAND) |
 | golden `zone-g-bot` | `stageClear`; `deathTicks` ⊆ slide/rush/run windows (report, ≤ 2); ticks/60 ∈ [180,360] | 2 deaths today |
 | golden `zone-g-boss` | skip enters at the **WARNING** (the sentinel carries none), boss down, camera y == 168 at clear | interim |
 | golden `glimmer-cache` | the bonus run clears; the cache's one sim change: the rush row 6 → 8 cubes | interim |
-| demo `zone-g` | 40 s through the moving-block hall (its description says so) | interim |
+| demo `zone-g` | 40 s through the moving-block hall (**and rewrite the description line in `test/golden/demos.ts` to say so** — the re-record alone leaves the v1 wording "the KESTREL in the crystal walls") | interim |
 | LAND scope | `--only zone-g,glimmer-cache`: `zone-g-god`, `zone-g-bot`, `zone-g-boss`, `glimmer-cache`, demo `zone-g` (+ outcome cases); `atlas-groups.json` re-derivation moves the 11 names; fingerprints re-pin by the LAND | — |
-| v2-port | `zone-g`, `zone-g-loop2` rows move with the stage; every other scenario unchanged | — |
+| v2-port | the `zone-g` and `zone-g-loop2` scenario entries are **retired from `BASELINE_GROUPS`** (`test/golden/v1-baseline.ts`) at the LAND, following the `decor-range` precedent (`POST_V1_STAGES` in `test/golden/v1-baseline.test.ts`), with the moved-digest disclosure in the commit body; the v1-baseline fixtures stay on disk; every other scenario unchanged | — |
 | echo plates | `facet-*` are not in the zone-H echo list — all boss plates regenerate with the art; docs images by the DOCS-IMAGES holder | — |
 
 ## 16. Frozen entries kept untouched
@@ -512,7 +557,7 @@ new sprite.
 | zone-tileset pins relaxed for the `-v2` sprite | `R5-P.P13` (wave 10) | S5a |
 | stage skip enters at the **last** warning | `R5-P.P14` (wave 10) | S5b/S6 (the sentinel never steals the skip) |
 | `MAX_BOSS_PARTS` 24 | `R5-P.P8` — **already landed at this tip** | §8 (20 ≤ 24) |
-| per-zone pattern files | `R5-P.P4` (wave 9; **not split at this tip** — §preamble) | §6: no new pattern file needed by this design |
+| per-zone pattern files | `R5-P.P4` (wave 9; **already split at this tip** — `a216f14`) | §6: no new pattern file needed by this design; the zone-G file ships byte-identical |
 | new sprite names never move other hashes | `R5-P.P1` (wave 6, R5-D5's stable keys) | §14 |
 | per-zone goldens + `--only` | `R5-P.P3` (wave 9) | §15 LAND rows |
 
