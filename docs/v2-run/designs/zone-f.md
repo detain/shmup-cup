@@ -8,8 +8,8 @@ deviations go in the lane's report (wave rule).
 
 Files owned by this zone (the LAND scope): `content/stages/zone-f.stage.json`,
 `content/enemies/zone-f.enemies.json`, `content/tilesets/terrain-vault.tileset.json`, and —
-per the patterns note below — **no** patterns file: zone F's action `vault.spores` lives in
-`content/patterns/zones.patterns.json` at this tip (`R5-P.P4` has not split it yet; this design
+per the patterns note below — **no** patterns file: zone F's action `vault.spores` already lives in
+the split `content/patterns/zone-f.patterns.json` at this tip (`R5-P.P4` has landed; this design
 creates no new pattern file, and the split, when it comes, moves the action, it does not change
 it). Zone F has no paths file (`git ls-files content/paths` holds no zone-f entry).
 
@@ -37,10 +37,12 @@ it). Zone F has no paths file (`git ls-files content/paths` holds no zone-f entr
 | branches / triggers | **none** | none |
 
 The live contract (`test/integration/zones/zone-f.contract.ts`, still on its v1 `remastered:
-false` branch at tip) fails today on length (14,400 < 20,000) and checkpoints (4 < 5) — exactly
-what this design fixes, together with the `remastered: true` flip that rides the stage's LAND
-commit (`R5-P.P6` law). The new-types window opens to [6, 8] with the flip; today's 6 sits at
-its floor and this design raises the count to exactly 8 — **the cap** (§6).
+false` branch at tip) does not gate length or checkpoints today (its v1 bands pass the shipped
+14,400 px / 4-checkpoint stage — the suite is green); the v2 branch's 20,000–22,000 px and
+≥ 5-checkpoint windows bind at the flip and the shipped stage would fail them (14,400 < 20,000;
+4 < 5) — exactly what this design fixes, together with the `remastered: true` flip that rides the
+stage's LAND commit (`R5-P.P6` law). The new-types window opens to [6, 8] with the flip; today's 6
+sits at its floor and this design raises the count to exactly 8 — **the cap** (§6).
 
 ## 2. Sections (design; length 21,000 px)
 
@@ -57,8 +59,8 @@ draw at all.
 | 0–3,600 | the membrane fields | mote curtains, chaser pairs, the first claw and turret, hatching cysts, a viral-dart first sighting, tenders | 1.2, y 0 (surface) | 50.0 |
 | 3,600–6,900 | the tissue passage | the 8 regenerating walls (cols 362–503, rows 5–25 verbatim — their gaps zigzag as today), dart streams between walls, chasers flushed out of the passages | 1.05, y 0 | 52.4 |
 | 6,900–10,500 | the tentacle garden | calcified pillars, ceiling claws and a ceiling cyst, spore-sacs, the **NUCLEUS WARDEN** mid-boss at 9,450, mitosis dividers | 1.05, y 0 | 57.2 |
-| 10,500–10,750 | **the descent** | the scroll stops at the throat lip; the camera pans down 96 px onto the sub-vault (hold 150, `yTicks` 150) | 1.0, hold, 0→96 | 2.5 |
-| 10,750–14,400 | **the chase** | the sub-vault corridor: three **gapless** regrowing walls (`tissue-live`, §10) at 11,040 / 11,700 / 12,360 must be punched through and crossed **before the hole closes**; chaser cells and viral darts pursue from behind, a divider bursts open inside the corridor, claws stand on the deep floor | 1.0, y 96 | 65.0 |
+| 10,500 (hold) | **the descent** | the scroll stops at the throat lip; the camera pans down 96 px onto the sub-vault (hold 150, `yTicks` 150) | 1.0, hold, 0→96 | 2.5 |
+| 10,500–14,400 | **the chase** | the sub-vault corridor: three **gapless** regrowing walls (`tissue-live`, §10) at 11,040 / 11,700 / 12,360 must be punched through and crossed **before the hole closes**; chaser cells and viral darts pursue from behind, a divider bursts open inside the corridor, claws stand on the deep floor | 1.0, y 96 | 65.0 |
 | 14,400–18,600 | the pulse run | 1.95 px/tick out over the rising floor — the escape at full speed; mote streams, dart volleys, a sac over the ridge | 1.95, y 96 | 35.9 |
 | 18,600–20,250 | the calm | the camera rises back to the surface (120 ticks); exactly two carriers, nothing else | 1.2, 96→0 | 22.9 |
 | 20,250 | the WARNING | MANTLE REGENT (camera lock) | — | — |
@@ -113,9 +115,11 @@ restart replays the keys and the descent re-derives y like every pan does):
 `0 · 3,600 · 6,900 · 10,500 (the throat lip) · 13,200 (past wall C) · 14,400 (the run-out) ·
 16,800 (the climb)`
 
-Ground beneath each: surface floor top ≈ 300 (camera 0) at 3,600/6,900; the throat floor
-≈ 372 (≈ screen 276 at 96) at 10,500; the deep floor ≈ 399–417 at 13,200; the run-out floor
-≈ 324–348 (screen 228–252 at 96) at 14,400 and 16,800 (before and at the pan home).
+Ground beneath each (real expansion, tile-row tops): surface floor top map 288 at 3,600 and 276
+at 6,900 (camera 0); the throat 360 → 372 across the lip (screen 276 at 96 at 10,600); the deep
+floor 408 at 13,200 (within its 399–417 band); the run-out 324 at 14,400, sinking to 420 at its
+last columns as the surface ramps in from 16,800 (408 at 16,812, back to 300 by 18,600 — the pan
+home at ≈ 18,720 precedes the calm pair).
 
 **There are no branches and no triggers in this design** — the chase is linear by intent (the
 pursuit is the drama, not a choice). Every recovery window (§5's table) is unconditional.
@@ -129,7 +133,7 @@ for clearing wall C.
 
 | checkpoint | sources in [cp, cp+1,350) | ≥ 3? |
 |---|---|---|
-| 0 | 210 f, 450 t, 1,050 t | ✓ |
+| 0 | 210 f, 450 t, 840 f, 1,050 t | ✓ |
 | 3,600 | 3,900 t, 4,200 f, 4,560 t, 4,800 f | ✓ |
 | 6,900 | 7,200 t, 7,500 f, 7,800 t, 8,100 f | ✓ |
 | 10,500 | 10,650 t, 10,800 f, 11,250 t, 11,700 f | ✓ |
@@ -212,7 +216,7 @@ leaves them implied; the pillar nodules and glow nodes are `decor`/RLE, not even
 
 Tally check: 23 tender spawns, 17 dropping formations + the blue = 18, 13 null-drop pressure
 formations, 5 claws (floor **and** ceiling ✓ the squid case), 5 turrets, 5 cysts, 3 solo
-chasers + 11 chaser formations, 4 sacs, 5 dividers (mitosis — child `chaser-cell` ✓ ≥ 3), 2
+chasers + 11 chaser formations, 3 sacs, 5 dividers (mitosis — child `chaser-cell` ✓ ≥ 3), 2
 solo darts. Every x is unique and sorted in its band.
 
 ## 6. New enemy types (the 6–8 count: 6 old + 2 new = 8 ✓ — at the cap)
@@ -228,8 +232,8 @@ item; the lane's S4a adds the entries on its own). Original names; units from
 
 | id | script | hp / score | hurtbox | params (v2) | sprite | size class (§5.6) |
 |---|---|---|---|---|---|---|
-| `tissue-cyst` (+ `tissue-cyst-ceiling` sibling id sharing the sprite, ground `ceiling`) | `hatch.spawner` | 9 / 450 | 15×12 | `interval` 130 · `max` 3 · child `chaser-cell` | `enemies/tissue-cyst` (new) | medium 20–30 px → **24×18, 4 frames** + `@flash` |
-| `viral-dart` | `rocket.homing` | 2 / 250 | 6×4 | `launchTicks` 30 · `launchSpeed` 1.5 · `speed` 1.95 · `turnRate` 4 · `homeTicks` 110 | `enemies/viral-dart` (new) | small 14–18 px → **18×12, 4 frames** + `@flash` |
+| `tissue-cyst` (+ `tissue-cyst-ceiling` sibling id sharing the sprite, ground `ceiling`) | `hatch.spawner` | 9 / 450 | 15×12 | `interval` 130 · `max` 3 · child `chaser-cell` | `enemies/tissue-cyst` (new) | **24 medium × 18 tall**, 4 frames + `@flash` (the §5.6 body class; height like the page's `polyp-turret` 21×17) |
+| `viral-dart` | `rocket.homing` | 2 / 250 | 6×4 | `launchTicks` 30 · `launchSpeed` 1.5 · `speed` 1.95 · `turnRate` 4 · `homeTicks` 110 | `enemies/viral-dart` (new) | **18 small × 12 tall**, 4 frames + `@flash` (the §5.6 body class; height like the page's `polyp-turret` 21×17) |
 
 `hatch.spawner` defaults (interval 60, max 8) drift to a slow, thin hatch: three chaser cells
 per cyst over a minute, never the eight the default allows. `rocket.homing` defaults
@@ -241,11 +245,13 @@ untouched and **no pattern file is created** (zone D's precedent).
 
 ## 7. Mid-boss (new — the block: "F needs a new mid-boss")
 
-**NUCLEUS WARDEN** (`nucleus-warden`, code `NW-05`, role `captain`) — event x **9,450**, the
+**NUCLEUS WARDEN** (`nucleus-warden`, code `NW-06`, role `captain`) — event x **9,450**, the
 garden, between the claw at 9,000 and the exit tenders (9,450 < 21,000/2 = 10,500 ✓). One
 phase, script `captain.circler`: it orbits an ellipse and turns rings — the nucleus guarding
 the throat. Sprites: existing `bosses/captain-shell` + `bosses/shield-plate` (both on the
-**common** page — no S2 work). Entry `x` 514, `y` 168 (view coords, like every captain).
+**common** page — no S2 work). Entry `x` 514, `y` 168 (view coords — inside the captains'
+514–544 band; the circler itself enters at 530 today, so the lane keeps §8's ported-entry rule
+for the boss and this row's for the warden).
 
 | part | role | hp | score | hurtbox | note |
 |---|---|---|---|---|---|
@@ -290,7 +296,7 @@ part's `y` is the root's ∓25.5 — segments offset x only; verified at tip), s
 The `bossArms` law (verified at tip): an arm starts at every `radius` > 0 part whose parent is
 not itself one. The roots start the two arms (parent `mantle` is a hurtbox rect); the new
 `seg-*-4` hang under circle parents, so they **extend the arms without adding arms** — still
-**exactly 2**, now 7 parts each (root, 4 segs, tip) ≥ 4 ✓; tips stay each arm's last `gun`
+**exactly 2**, now 6 parts each (root, 4 segs, tip) ≥ 4 ✓; tips stay each arm's last `gun`
 part; phase 1's `until.partsDestroyed` keeps `[root-top, root-bottom]` with `count: 1` ✓ (the
 case's equality still holds). `plate-*`/`blister-*` carry no `radius` at all, so they never
 arm-ify. Core reachability: the firing line to the eye (centre −15, hw 9) is its left half —
@@ -304,11 +310,12 @@ low: `bulletSpeed` ≤ 1.95, `ringSpeed` ≤ 1.575):
 | phase | until | params |
 |---|---|---|
 | 1 | eye < 72 **or** one root broken (`partsDestroyed` both roots, `count` 1) | `trackSpeed` 0.45 · `curl` 1 · `sweepTicks` 30 · `guardTicks` 70 · `openTicks` 120 · `fireTicks` 85 (from 90) · `ways` 3 · `spread` 40 · `bulletSpeed` 1.8 |
-| 2 | eye < 34 **and** both roots broken | `trackSpeed` 0.6 · `guardTicks` 60 · `openTicks` 110 · `fireTicks` 78 · `ways` 3 · `spread` 40 · `bulletSpeed` 1.875 · `gunTicks` 95 · `launchTicks` 190 · `count` 1 |
+| 2 | eye < 34 **and** both roots broken | `trackSpeed` 0.6 · `sweepTicks` 30 (kept from today) · `guardTicks` 60 · `openTicks` 110 · `fireTicks` 78 · `ways` 3 · `spread` 40 · `bulletSpeed` 1.875 · `gunTicks` 95 · `launchTicks` 190 · `count` 1 |
 | 3 | — | `trackSpeed` 0.75 · `curl` 2 · `sweepTicks` 15 · `guardTicks` 50 · `openTicks` 100 · `fireTicks` 70 · `ways` 5 · `spread` 36 · `bulletSpeed` 1.95 · `gunTicks` 75 · `ring` 10 · `ringSpeed` 1.575 · `launchTicks` 175 · `count` 1 |
 
-The blisters add 28 hp of optional snacks, the roots 12, the eye 18 — the fight grows ≈ 25 %
-(§2's timeline). `minion` stays `chaser-cell`.
+The blisters add 28 hp of optional snacks, the roots 12, the eye 18 — the fight grows +42 % in
+total part hp (138 → 196); the kill clock §2 prices grows with the eye, ≈ 42 s (35.2 × 108/90).
+`minion` stays `chaser-cell`.
 
 ## 9. Backdrops, decor, raster, cycles
 
@@ -322,7 +329,7 @@ Parallax bands (≤ 6 + ≤ 1 `fore`; `y` is a map row, bands repeat at their `s
 | mid | **new** `bg/vault-ribcage` | 0.55 | 144 | 640 | hanging rib/vessel fringe; 640×168, green key; reads on the surface and slides past the sub-vault's open top |
 | fore | **new** `bg/vault-haze` | 1.15 | 84 | 640 | sparse drifting cell-fluid veil in front of the ship; ≤ 640×48 pieces, green key, mostly transparent — never a bullet lane hidden behind it |
 
-Decor (`StageSpec.decor`, ≤ 32 entries): 8 additive glow accents `fx/glow-vault-node`
+Decor (`StageSpec.decor`, ≤ 256 entries — 8 used): 8 additive glow accents `fx/glow-vault-node`
 (24×16) — four on the garden pillars (7,080 / 7,800 / 8,520 / 9,240 at their tops), one at the
 throat lip 10,600, three in the deep hall (11,900 / 13,600 / 15,900); `nodule` empty tiles
 (§10's id 23) RLE-scattered in the passage and garden wall bands. Decor never sits inside a
@@ -340,9 +347,11 @@ Raster rows (`top` 0…335, `bottom` 1…336; ≤ 8 effects — three here):
 
 Palette cycles — **the ramp for R5-P.P7** (this design gives it once; the lane never changes a
 frozen ramp afterwards). New **VAULT v2 ramp**, 6 colours (every pair ≥ 2 apart in some
-channel — the adjacent deltas are 8–30 per channel; the green family is project-unique: the
-nearest other ramps, BRINE `#10323e` and STORM `#1c2230`, sit ≥ 12 away in each channel, and
-ABYSS/SEA/PRISM/CITADEL/MAGMA further still; `VAULT_RAMP`'s v1 four keep shipping as the v1
+channel — the loader law, met at ≥ 6; the adjacent deltas run 6–30; against every shipped ramp
+colour the Chebyshev (max-channel) distance is ≥ 12 — the nearest are PRISM `#0c1424` at
+exactly 12 and STORM `#1c2230` at 24, and the bible's 3/255 scan rule ("at least 3/255 in at
+least one channel") holds with a margin of 9 — `#4c7856` even ties PRISM `#203656` in blue and
+still passes at 44; `VAULT_RAMP`'s v1 four keep shipping as the v1
 byte path):
 
 ```
@@ -415,16 +424,17 @@ apart at 1.0 px/tick, the chase is ≈ 65 s of corridor with three committed sto
  7,500 f mote×7 i12 y141 [null]  17,500 f chaser×5 i12 y246 [null]
 ```
 
-**directItems** (the MANTA's plan; ≥ 30, today 26 → **34**; positional: entry *i* is handed to
+**directItems** (the MANTA's plan; ≥ 30, today 26 → **35**; positional: entry *i* is handed to
 the *i*-th drop, cycling). Order keeps v1's opening mix and ends with a chase/boss-prep tail:
 
 ```
-red green blue red green blue red octagon green blue red green blue yellow red green blue
+red green blue red green blue red green octagon blue red green blue red yellow green blue
 red green blue orange red green blue red green | red green blue octagon red green blue red
 yellow
 ```
 
-(34 names — 26 kept + 8 appended; the same six-item Direct vocabulary, `DIRECT_ITEMS`.)
+(35 names — 26 kept in shipped order, verified at tip + 9 appended; the same six-item
+Direct vocabulary, `DIRECT_ITEMS`.)
 `zones-de-direct`-style replay equality holds because the plan is only indexed by drop order.
 
 ## 12. Peaks (R5-D5's 80 % lines)
@@ -433,7 +443,7 @@ yellow
 |---|---|---|---|
 | live enemies (`MAX_ENEMIES`) | 64 | ≈ 42 (the garden volley overlap at 8,100–9,000, or wall B with a pursuing chaser formation, a cyst's hatchlings and a divider burst; arithmetic bound — **flagged for the lane to measure**, S6's `observe`) | 66 % ≤ 80 % ✓ |
 | boss parts (`MAX_BOSS_PARTS`) | 24 | **19** (§8) | 79 % ≤ 80 % ✓ |
-| particles (`PARTICLE_CAPACITY`) | 256 | today **49** measured; ≈ 70–90 expected with the chase-wall debris and the extra hatchlings | ≤ 35 % ✓ |
+| particles (`PARTICLE_CAPACITY`) | 256 | today **49** measured; ≈ 70–90 expected with the chase-wall debris and the extra hatchlings | ≤ 36 % ✓ (90/256) |
 
 No GLOBAL re-bless is requested by this design (§12 rule: only above 80 % earns one).
 
@@ -484,13 +494,13 @@ echo, and the new plate/blister names are additions the echo tree ignores.
 | tissue case (id 20 — unchanged) | ≥ 10 walls, every column a gap ≥ 72 px: the passage walls keep today's rows 5–25 verbatim → 16 columns ✓ | 16 columns ✓ |
 | chase case (new, S5b) | three gapless `tissue-live` columns at cols 920–922 / 975–977 / 1,030–1,032 rows 8–33; the tile carries `hp` 4 and `regen` 120; a hole of 24 px is provable at 1.0 px/tick | none |
 | pan case (new, S5b) | a `yTo` ≥ 60 with `hold` > 0 below half the stage (96 at 10,500); `rowsTall` 36; `world.camera.y == 96` through the chase (assert at 11,700 and 14,000); back to 0 before the WARNING | none — the map never moves in y |
-| boss case (squid) | **19** parts ≤ 24; **exactly 2 arms** of ≥ 4 (now 7 each) with root vulnerable-always hp > 0 and tip `gun`; one always-core; phase 1 `partsDestroyed` = both root names, `count` 1; **no new part carries `radius`**; the eye's core line (x < −6) stays clear of every old and new part; assembled height 84 ≤ 202 | 13 parts, 2 arms |
-| mid-boss case (new) | a boss event at 9,450 < length/2, role `captain`, code `NW-05`, no `warning`, no lock | none |
+| boss case (squid) | **19** parts ≤ 24; **exactly 2 arms** of ≥ 4 (now 6 each) with root vulnerable-always hp > 0 and tip `gun`; one always-core; phase 1 `partsDestroyed` = both root names, `count` 1; **no new part starts an arm** (`seg-*-4` hang under radius parents — the two chains grow to 6; `plate-*`/`blister-*` carry no `radius`); the eye's core line (x < −6) stays clear of every old and new part; assembled height 84 ≤ 202 | 13 parts, 2 arms |
+| mid-boss case (new) | a boss event at 9,450 < length/2, role `captain`, code `NW-06`, no `warning`, no lock | none |
 | skip law (`R5-P.P14`) | the boss-skip golden enters at the **WARNING** (20,250) — the warden never steals it; the golden reaches `stageClear` in ≈ 35–45 s | 2,112 t (35.2 s) |
 | goldens | re-bless under `--only zone-f`: `zone-f-god` (stageClear, bossDefeated, death-free), `zone-f-arcade`, `zone-f-deaths` (gameOver stays a gameOver — report the new tick count), `zone-f-boss`; the no-god bot clears with 1–2 chase/pulse deaths, reported | 4 files at today's geometry |
-| demo `zone-f` | 40 s of the new material — **the chase**: the descent and the wall-A punch (its description says so) | 2,400 t of today's corridor |
-| LAND scope | `node scripts/golden-update.mjs --only zone-f` + the demo (the `land-zone.sh` flow); `atlas-groups.json` re-derivation moves the new names onto the zone page; the presentation + content-DB fingerprints re-pin **by the LAND** (this file touches no PINNED table) | — |
-| v2-port | zone F's scenario rows move with the stage (the lane re-records them; disclosed in the commit body); the seven **PORT_EXEMPTIONS** R2-04 lines in `test/golden/v2-port.ts` stop appearing and are **retired** by the lane, and `docs/dev/zones-f-and-g.md`'s §R2-04 quotes move to history (fail-loud rule: a retired exemption is deleted, never re-pointed) | 7 lines live at tip |
+| demo `zone-f` | 40 s of the new material — **the chase**: the descent and the wall-A punch; the lane writes the matching description (2,400 t rides unchanged only if the corridor survives the LAND — it won't, so the re-record is expected) | 2,400 t today, "among the chasing cells" |
+| LAND scope | `node scripts/golden-update.mjs --only zone-f` + the demo (the `land-zone.sh` flow); `atlas-groups.json` re-derivation moves the new stage/enemy/boss/backdrop names onto the zone page (`fx/glow-vault-node` rides common with every other glow accent — the derivation carries no fx member); the presentation + content-DB fingerprints re-pin **by the LAND** (this file touches no PINNED table) | — |
+| v2-port | zone F's scenario rows move with the stage (the lane re-records them; disclosed in the commit body); the fourteen **PORT_EXEMPTIONS** R2-04 lines for zone F in `test/golden/v2-port.ts` (seven per scenario: `zone-f` and `zone-f-loop2`) stop appearing and are **retired** by the lane, and `docs/dev/zones-f-and-g.md`'s §R2-04 quotes move to history (fail-loud rule: a retired exemption is deleted, never re-pointed) | 14 lines live at tip (7 + 7) |
 | echo plates | `docs/images/bosses/echo-regent.png` **unchanged** (it is H's art); zone F's own plates regenerate with the tree; wave-12 S4c re-rig consumes the 19-part MR | — |
 
 ## 16. Frozen entries kept untouched
@@ -513,8 +523,8 @@ echo, and the new plate/blister names are additions the echo tree ignores.
 - The three `PINNED` fingerprint tables and every `*.replay.json`: untouched by this file
   (design only) and by the branch — derived files re-pin at LAND (wave rule: the designer
   commits exactly this one file).
-- `content/patterns/zones.patterns.json`: `vault.spores` is read there at this tip (P4 has not
-  split it yet) and this design **changes no pattern**.
+- `content/patterns/zone-f.patterns.json`: `vault.spores` is read there at this tip (the
+  R5-P.P4 split landed before this review) and this design **changes no pattern**.
 
 ## Mechanic dependencies (by id)
 
@@ -524,7 +534,7 @@ echo, and the new plate/blister names are additions the echo tree ignores.
 | frozen VAULT v2 ramp (the §9 colours) | `R5-P.P7` (wave 10) | S5a (`cycles` = P7's ramp), the palette scan |
 | zone-tileset pins relaxed for the `-v2` sprite | `R5-P.P13` (wave 10) | S5a |
 | stage skip enters at the **last** warning | `R5-P.P14` (wave 10) | S5b/S6 (the warden never steals the skip) |
-| per-zone pattern files | `R5-P.P4` | §6/§16: **no** new pattern file needed; the split must not change the action |
+| per-zone pattern files (LANDED — informational) | `R5-P.P4` | §6/§16: **no** pattern change; `zone-f.patterns.json` holds `vault.spores` at 1.125 |
 | new sprite names never move other hashes | `R5-P.P1` (R5-D5's stable keys) | §14 |
 | per-zone goldens + `--only` | `R5-P.P3` | §15 LAND rows |
 
