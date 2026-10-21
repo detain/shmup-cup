@@ -18,7 +18,7 @@ continues).
 | Scenario | Who plays | Covers |
 |---|---|---|
 | `zone-a-god` | 4-way playtest bot, god mode | the whole stage and HALCYON BULWARK to `stageClear` |
-| `zone-a-arcade` | 4-way playtest bot | Arcade difficulty (rank 6) without god mode, to `stageClear` |
+| `zone-a-arcade` | 4-way playtest bot | Arcade difficulty (rank 6) without god mode: two deaths, `gameOver` on the ported world (the v1 run cleared) |
 | `zone-a-deaths` | a weaving pilot that never dodges | deaths, Classic respawns, `gameOver` |
 | `zone-a-boss` | 4-way playtest bot | the stage skip to the boss, full loadout, Arcade penalty |
 | `zone-a-type-b` | 4-way playtest bot | the boss with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts |
@@ -34,11 +34,11 @@ continues).
 | `zone-a-manta-deaths` | a weaving pilot that never dodges | the MANTA under the Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, `gameOver` |
 | `zone-a-coop` | two 4-way playtest bots (player 2 from its START at tick 300) | a co-op game (M2-06): the drop-in join, two ships sharing the capsules, the co-op drop scaling, to `stageClear` |
 | `zone-a-coop-deaths` | the 4-way bot and a weaving player 2 (START at tick 120) | co-op deaths (M2-06): player 2 dies and continues with START while player 1 plays on |
-| `gimmick-range-god` | 4-way playtest bot, god mode | the M2-07 stage systems: a brick shot open, both moving blocks, the suction pod, the tentacle, the cube rush, the high branch |
+| `gimmick-range-god` | 4-way playtest bot, god mode | the M2-07 stage systems: a brick shot open, both moving blocks, the suction pod, the tentacle, the cube rush, the trigger fired: low branch, 3 bricks |
 | `gimmick-range-weaver` | a weaving pilot, god mode | the region trigger fired (the low branch), a dozen bricks broken |
 | `gimmick-range-deaths` | a weaving pilot that never dodges | the Arcade penalty on the gimmick range: checkpoint restarts rolling the terrain back, `gameOver` |
 | `raster-range-god` | 4-way playtest bot, god mode | the M2-08 raster-effect dev stage to `stageClear`; `golden.test.ts` also plays it back with the stage's `raster` / `cycles` stripped — every hash matches: they are presentation only |
-| `captain-range-god` | 4-way playtest bot, god mode | the M2-09 captains: four mid-bosses fly in on the scrolling camera, the ram shot down, the stage runs to its `end` |
+| `captain-range-god` | 4-way playtest bot, god mode | the M2-09 captains: four mid-bosses fly in on the scrolling camera, the circler shot down in slot 1, the stage runs to its `end` with slot 0's captain still fighting |
 | `raid-range-god` | 4-way playtest bot, god mode, full loadout | IRON LEVIATHAN (M2-09): the WARNING, the raid's boss-relative camera path, its death and the camera's return, LEVIATHAN HEART revealed by the blast and shot down |
 | `raid-range-escape` | 4-way playtest bot, god mode, no power-ups | the M2-09 boss timer: IRON LEVIATHAN escapes after its time limit — `EndingFlag.BossEscaped`, no heart, `stageClear` |
 | `twin-range-god` | 4-way playtest bot, god mode, full loadout | the M2-09 double boss: the EMBER and FROST twins take turns, the survivor enrages, both shot down |
@@ -48,21 +48,21 @@ continues).
 | `zone-b-god` | 4-way playtest bot, god mode | BRINE NEBULA (M2-11) start to `stageClear`: the bubbles, the reef tunnel, SPUME HERALD, the riptide, GALVANIC MAW shot down |
 | `zone-b-deaths` | a weaving pilot that never dodges | BRINE NEBULA under the Arcade penalty (M2-11 tests): deaths among the bubbles, checkpoint restarts, `gameOver` |
 | `zone-c-god` | 4-way playtest bot, god mode | DUNE EXPANSE (M2-11) start to `stageClear`: the sand worms, the ceiling walkers, the sandstorm run, SANDGRAVE WIDOW shot down |
-| `zone-c-bot` | 4-way playtest bot | DUNE EXPANSE without god mode (M2-11 tests): a death and a Classic respawn in place, SANDGRAVE WIDOW shot down, `stageClear` |
+| `zone-c-bot` | 4-way playtest bot | DUNE EXPANSE without god mode (M2-11 tests): three deaths, `gameOver` before SANDGRAVE WIDOW |
 | `zone-d-god` | 4-way playtest bot, god mode | MAGMA DEEP (M2-12) start to `stageClear`: the erupting caldera fields, the dive into the caves, the brick maze, the lava river, CINDER BASTION shot down |
-| `zone-d-bot` | 4-way playtest bot | MAGMA DEEP without god mode (M2-12 tests): a death down in the caves and a Classic respawn in place there, CINDER BASTION shot down, `stageClear` |
+| `zone-d-bot` | 4-way playtest bot | MAGMA DEEP without god mode (M2-12 tests): the caves' floor reached (camera y 300) and held to the deathless clear, CINDER BASTION shot down, `stageClear` |
 | `zone-d-boss` | 4-way playtest bot, full loadout | the stage skip into zone D's caves (M2-12 tests): CINDER BASTION under the Arcade penalty, its core shot through the turning shield arms |
 | `zone-e-god` | 4-way playtest bot, god mode | TEMPEST RIDGE (M2-12) start to `stageClear`: the storm front, the ridge pass, the thunderheads, the gale run, kites and jumpers from behind, SQUALL STEED shot down |
 | `zone-e-bot` | 4-way playtest bot | TEMPEST RIDGE without god mode (M2-12 tests): the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down, `stageClear` |
 | `brine-grotto-god` | 4-way playtest bot, god mode, full loadout | PEARL GROTTO, zone B's hidden bonus stage (M2-11): the bonus capsules and the 1UP collected, its `end` reached (no boss) |
 | `zone-f-god` | 4-way playtest bot, god mode | CELL VAULT (M2-13) start to `stageClear`: the chasing and dividing cells, the regenerating tissue walls, the grabbing tentacles, the pulse run, MANTLE REGENT shot down |
-| `zone-f-arcade` | 4-way playtest bot | CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the rank-scaled fire survived, tissue shot open, MANTLE REGENT shot down, `stageClear` |
-| `zone-f-deaths` | a weaving pilot that never dodges | CELL VAULT on Easy under the Arcade penalty (M2-13 tests): deaths in the membrane and at the first tissue walls, checkpoint restarts at the start and at 2,200 rolling the shot-open tissue back, `gameOver` |
+| `zone-f-arcade` | 4-way playtest bot | CELL VAULT at Arcade difficulty without god mode (M2-13 tests): two deaths to the rank-scaled fire, tissue shot open, `gameOver` |
+| `zone-f-deaths` | a weaving pilot that never dodges | CELL VAULT on Easy under the Arcade penalty (M2-13 tests): deaths in the membrane and at the first tissue walls, restarts back at the start only (the run never crosses the ported checkpoint 3,300), `gameOver` |
 | `zone-f-boss` | 4-way playtest bot, full loadout | the stage skip to MANTLE REGENT (M2-13 tests) under the Arcade penalty: its three phases, the eye shot between the curls of its tentacles |
 | `zone-g-god` | 4-way playtest bot, god mode | PRISM LABYRINTH (M2-13) start to `stageClear`: the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars, the refraction run, FACET MONARCH shot down |
-| `zone-g-bot` | 4-way playtest bot | PRISM LABYRINTH without god mode (M2-13 tests): a death in the cube rush and a Classic respawn in place, FACET MONARCH shot down, `stageClear` |
+| `zone-g-bot` | 4-way playtest bot | PRISM LABYRINTH without god mode (M2-13 tests): two deaths in the labyrinth before the cube rush, Classic respawns in place, FACET MONARCH shot down, `stageClear` |
 | `zone-g-boss` | 4-way playtest bot, full loadout | the stage skip to FACET MONARCH (M2-13 tests) under the Arcade penalty: its crystals broken, the core behind them shot down through its three phases |
-| `glimmer-cache-god` | 4-way playtest bot, god mode, full loadout | GLIMMER CACHE, zone G's hidden bonus stage (M2-13): the bonus capsules and the 1UP collected, the cube rush and its cube walls, its `end` reached (no boss) |
+| `glimmer-cache-god` | 4-way playtest bot, god mode, full loadout | GLIMMER CACHE, zone G's hidden bonus stage (M2-13): the bonus capsules collected, the cube rush and its cube walls, its `end` reached (no boss) |
 | `zone-h-god` | 4-way playtest bot, god mode | IRON CITADEL (M2-14) start to `stageClear`: the outer walls, the piston hall with its moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN shot down through its four phases |
 | `zone-h-boss` | 4-way playtest bot, full loadout | the stage skip into zone H's parade hangar (M2-14 tests) under the Arcade penalty: the four echoes shot down before their time limits, the core run, IRON SOVEREIGN's four phases |
 | `zone-h-arcade` | 4-way playtest bot | IRON CITADEL at Arcade difficulty without god mode (M2-14 tests): the rank-scaled fire survived through the piston hall and the parade, IRON SOVEREIGN shot down, `stageClear` |
@@ -86,6 +86,13 @@ continues).
   steps that change simulation behaviour re-bless in the same commit). Re-recording an unchanged
   simulation writes byte-identical files.
 - The files are generated: never edit them by hand (Prettier skips them).
+- **Stable content keys (R2-03.P1, `6ba1187`).** A state hash now mixes an FNV-1a key of the
+  content id instead of its ordinal in the content tables (`spriteKeys` / `enemyKeys` / `pathKeys`
+  / `patternKeys`, `docs/dev/debug-and-replays.md`), so a change to one zone's content re-blesses
+  only that zone's goldens — the other zones' hashes stand.
+- **R2-03.G1 (`d4ba9e8`)** re-blessed every golden and re-recorded the attract demos on the ported
+  640×360 world at replay format 2; the outcomes above are that era's (the v1-era rows that the
+  port changed — a clear that became a `gameOver`, a different branch — say so in their text).
 - **Attract demos (M2-15).** `demos.ts` records the attract loop's demos — the 4-way bot with god
   mode, 40 s of each zone from its start — into `content/demos/<id>.replay.json` (bundled content,
   kind `replay`); `demos.test.ts` plays each back through the attract playback

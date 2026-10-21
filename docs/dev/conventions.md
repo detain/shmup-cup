@@ -93,14 +93,13 @@ mirror** (owner decision O8): `apps/electron/src/main/window-state.ts` `FRAME_WI
 `SPAWN_LEAD` and `CAPTURE_SCALE` — for the root scripts, the apps' scripts, the browser specs and
 the Playwright config (pinned export by export by `test/scripts/frame.test.ts`). A mirror's test
 fails when core
-flips alone, so R2-01 changes them together. Since R2-01 the browser specs hold three mirrors of
+flips alone, so R2-01 changes them together. Since R2-01 the browser specs hold two mirrors of
 their own, each pinned to core by a Node test: `test/e2e/frame-pixels.ts` re-exports the font
 metrics and computes `UI_ART_SCALE` (core's `ART_SCALE`, read back as `GLYPH_W` over the font
 file's cell width) and its own `uiPx` exactly as `core/ui` does (both pinned by
 `test/scripts/frame.test.ts`); `test/e2e/save-format.ts` holds `SAVE_FORMAT` = 3, pinned to core's
-`SAVE_VERSION` by `test/integration/e2e-save-format.test.ts`; and `test/e2e/gates.ts` holds
-`REPLAY_FORMAT` = 2, a mirror of core's `REPLAY_FORMAT_VERSION` pinned by
-`test/integration/e2e-gates.test.ts` (see the gates below).
+`SAVE_VERSION` by `test/integration/e2e-save-format.test.ts`. (`test/e2e/gates.ts` once held a
+third — the `REPLAY_FORMAT` mirror — and was deleted by R2-03.G1 with the gates below.)
 
 | Rule | Enforced by |
 |---|---|
@@ -166,7 +165,7 @@ packages import the allocation guard). It parses every package's `src/` but core
 `src/` and — where it has one — `scripts/` (the bundle checks, the manifest validators, packaging
 and bench helpers), and the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are
 read from disk, so a new package or app is scanned without editing the test. Its own `ALLOWED` list
-(33 entries today) has the same shape, with `file` relative to the repository root, and holds HTTP
+(30 entries today) has the same shape, with `file` relative to the repository root, and holds HTTP
 statuses, alphas, colour channels, a key code, a brightness sum, degrees (the 360° turn), the TV
 bench's 384×216 and 640×360 baseline rows, v1's window-state width — and the four **mirror
 definitions**, whose entries say `value: FRAME_W` / `value: FRAME_H` rather than a number, so they
@@ -198,26 +197,23 @@ only, not render-pixi or the shell.
   test/integration/presentation-fingerprint.test.ts`, paste the printed tables over `PINNED`, and
   say in the commit message why the output changed. Never re-pin to quiet an unexplained change.
 
-**Self-expiring gates (R2-01 → R2-03).** Between the flip and R2-03's re-bless, some checks
-cannot pass. Each gate skips its cases — the reason rides in the test's name — while its condition
-holds, and its helper throws at import once the condition is gone, so the step that clears it
-deletes the file and every use of it. The port's gate — `CONTENT_PORT_PENDING`
-(`packages/core/test/helpers/port-pending.ts`), which held while a shipped tileset was not at
-`TILE_SIZE` — expired with R2-02's port, and `R2-02.U5` deleted the file. What stands until R2-03:
-`GOLDENS_STALE` (`test/golden/stale.ts`, re-exported by `golden.ts`) holds while a committed golden
-replay or attract demo records another replay format or another frame (`goldenIsStale`), and is
-never true under `SHMUP_GOLDEN_UPDATE=1`,
-so the re-bless run itself is spared; and the browser specs' twins, `R2_03_PENDING` (a committed
-recording is stale — `CONTENT_REASON` / `GOLDEN_REASON` name which rule) and `PORT_UNMEASURED`
-(the port happened but R2-03 has not re-recorded and re-measured yet — `PORT_REASON`), skip the
-specs whose numbers belong to the ported world (`test/e2e/gates.ts`). Its logic — and the
-`REPLAY_FORMAT` mirror above — is pinned in Node by `test/integration/e2e-gates.test.ts`
-(10 tests); the gate's own self-expiry is `checkGateExpiry`. `scripts/golden-update.mjs` reads the
-same tileset signal: its refusal — `golden:update refused: … shipped tileset(s) are not at
-TILE_SIZE …`, pinned by `test/golden/golden-edge.test.ts` — could fire only while the port was
-pending and cannot fire since it landed, so `pnpm golden:update` would really re-bless the v1
-recordings; it is R2-03's run, not anyone else's. A failure that comes from a test's own fixture
-is fixed, never gated: only a content-caused assertion skips.
+**Self-expiring gates (R2-01 → R2-03) — all gone now.** Between the flip, R2-02's port and
+R2-03's re-bless, some checks could not pass. Each gate skipped its cases — the reason rode in
+the test's name — while its condition held, and its helper threw at import once the condition was
+gone, so the step that cleared it deleted the file and every use of it. The port's gate,
+`CONTENT_PORT_PENDING` (`packages/core/test/helpers/port-pending.ts`, held while a shipped
+tileset was not at `TILE_SIZE`), expired with R2-02's port and `R2-02.U5` (`2ce6a12`) deleted
+the file — but three `packages/core/test/data` suites (tilemap, tilemap-edge, units-pairs) held
+self-contained local twins of the same signal that survived U5, permanently false-skipping 44
+cases, until `R2-03.FIXG` (`bdd820a`) deleted the twins and rewrote the cases on the ported
+premise. The last two gates — `GOLDENS_STALE` (`test/golden/stale.ts`, re-exported by
+`golden.ts`, held while a committed golden or demo recorded another replay format or another
+frame) and the browser specs' twins `R2_03_PENDING` / `PORT_UNMEASURED` (`test/e2e/gates.ts`,
+pinned in Node by `test/integration/e2e-gates.test.ts` along with the `REPLAY_FORMAT` mirror
+above) — expired when `R2-03.G1` (`d4ba9e8`) re-blessed the goldens and re-recorded the demos at
+640×360; that step deleted the helpers, the pinning test and the `scripts/golden-update.mjs`
+refusal of the shipped-tileset signal. The law stands: a failure that comes from a test's own
+fixture is fixed, never gated.
 
 ## Chromium 68 / 69 rules (the TV engine floor)
 
@@ -640,7 +636,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Rule | Enforced by |
 |---|---|
 | Every `content/` folder has a `README.md` (format sample) and an `example.*.json`; every JSON in it has the current `formatVersion` and a `kind` | `test/integration/workspace-layout.test.ts` |
-| Shipped content and the examples validate with zero issues; files are named `<folder>/<name>.<kind>.json`; README samples still match the schema | `pnpm content:check` (`test/integration/content.test.ts`) |
+| Shipped content and the examples validate with zero issues; files are named `<folder>/<name>.<kind>.json`; README samples still match the schema | `pnpm content:check` (`test/integration/content.test.ts` + the nine `content-zone-<letter>.test.ts` files, one per zone — what each zone's files must produce is pinned by `test/integration/zones/zone-<letter>.contract.ts` with a per-zone `remastered` flag the R5 zone lanes flip, meta-checked by `zones/contract.test.ts`) |
 | Content refers to other content, sprites, scripts and cues by string id declared with `s.ref(kind)`; systems read the resolved `<field>Id`, never the string | review; [content-data.md](content-data.md) |
 | A bare array or record of references is not allowed — wrap each id in an object | `s.array` / `s.record` throw a `TypeError` at construction |
 | Every number of every content kind declares a **unit** (`s.num({ …, unit })` / `s.int(…)`, `core/data/units` `NumberUnit`), every behaviour tunable has a row in `core/behaviors/units.ts` `BEHAVIOR_PARAM_UNITS`, and a hand-made schema is an `s.custom` with its `meta` — so `scripts/content/rescale.mjs` can port the content (R1-03) | `test/integration/content-units.test.ts`, `packages/core/test/data/content-file-units.test.ts`, `behavior-param-units.test.ts`; [content-data.md](content-data.md#units-and-the-rescale-tool-r1-03) |
@@ -654,7 +650,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Bullet patterns are data: expressions are parsed by the DSL's own compiler at load (no `eval` / `new Function`), every `patterns` action a shipped enemy names compiles, and zone speeds follow the 4-way rules like hand-written behaviours | `pnpm content:check`; [pattern-dsl.md](pattern-dsl.md) |
 | Every `script` id names a registered behaviour (`KNOWN_SCRIPT_IDS`), every enemy `params` name a tunable of its behaviour, every spawner a `child` | `pnpm content:check` and the shell's boot (`knownScripts`, `checkEnemyBehaviors`) |
 | Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
-| A shipped zone is playable with four directions (`shmup_feat.md` §4 rule 2, D17): no aimed bullet over 2.0 px/tick on Normal, no two simultaneous laser lanes leaving under 16 px of gap (lanes widened by the ship's hurt radius), ≥ 3 capsule sources within 900 px after every checkpoint (§10); the 4-way playtest bot clears it in god mode | `pnpm content:check` (zone A block of `content.test.ts`), `test/playtest/` — [zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules) |
+| A shipped zone is playable with four directions (`shmup_feat.md` §4 rule 2, D17): no aimed bullet over 2.0 px/tick on Normal, no two simultaneous laser lanes leaving under 16 px of gap (lanes widened by the ship's hurt radius), ≥ 3 capsule sources within 900 px after every checkpoint (§10 — the three numbers are v1 baselines; `test/playtest/rules.ts` holds each as × `WORLD_SCALE` since R2-02's port); the 4-way playtest bot clears it in god mode | `pnpm content:check` (`content-zone-a.test.ts` and its eight zone siblings, split out of the old zone A block of `content.test.ts`; the rules in `test/playtest/rules.ts`), `test/playtest/` — [zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules) |
 | Every label the canvas UI draws is a UI string id (`core/ui/strings.ts` `DEFAULT_UI_TEXT`, read through `SceneFlow.text` / the builders' `text` argument), never an upper-case literal in the scenes or the UI kit; `content/strings/en.strings.json` equals the built-in table; a `strings` file uses known ids and the bitmap font's glyphs only (M2-16) | `packages/core/test/ui/ui-strings.test.ts` (source scan), `pnpm content:check` (`test/integration/content.test.ts`), the loader — [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#the-string-table-coreuistringsts-content-kind-strings) |
 | Placeholder sounds and music are data, never audio binaries: synth parameter sets and chip songs in `content/audio/`, rendered at load by the deterministic `audio-web` synth (table sines, seeded noise). Every `SFX_CUES` cue is bound, every song loops sample-exactly, every cue a shipped stage names has a track | `pnpm content:check`; `packages/audio-web/test/synth/` (pinned hashes) — [audio.md](audio.md) |
 

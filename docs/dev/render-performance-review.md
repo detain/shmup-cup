@@ -39,6 +39,15 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 > headlessly) or *Needs-measurement* (mechanism certain, magnitude unknown). §4 lists exactly what has to be measured
 > on the monitors, and §6 says where the author was unsure. The work it proposes is plan steps
 > **M3-02c / M3-02d / M3-02e**; M3-02c builds the measurement harness that settles the open magnitudes.
+>
+> **Update (R2-03, wave 6).** The frame moved under this review: R2-01's flip (`72b18a1`) made the
+> internal frame **640×360** and R2-02's port (`8dbe858`) made the world ×1.5, so every 384×216 and
+> 8-px number above and below describes the *v1-era* geometry this review measured, not today's
+> game. The mechanisms and the fixes stand; only the sizes shift: the scene pass is a 640×360
+> `RenderTexture`, a filtered full-frame pass pools 1024×512 (next power of two per axis — Pixi
+> 8.21's screen-size cap never fires here, the renderer registers no screen), and the integer
+> upscale reads 720p ×2 / 1080p ×3 / 1440p ×4 / 4K ×6. The TV render bench (R0-02 / R0-03)
+> measures the old and the new frame side by side on the M7.
 
 ## 0. Project facts established from the repo (not taken on trust)
 

@@ -12,6 +12,9 @@ is checked for desyncs like a golden replay. The demo is silent; any input retur
 state hashes: `test/golden/demos.test.ts` (part of `pnpm test`) plays every file back and fails on
 the first hash that differs. A change that alters the simulation re-blesses them with the golden
 replays — `pnpm golden:update` — and says why in its commit message. Prettier skips them.
+All ten committed files are `R2-03.G1`'s recordings (`d4ba9e8`): the ported 640×360 world, replay
+header `formatVersion` 2 (since R2-01, `decodeReplay` refuses v1's format-1 recordings with a
+`ReplayVersionError`).
 
 ## Format (formatVersion 1)
 
@@ -24,7 +27,7 @@ A `core/replay` document (`encodeReplay`) with the content header, an `id` and a
   "id": "zone-a",                        // unique; the file name
   "description": "AZURE VERGE: …",       // optional (≤ 200 characters)
   "header": {
-    "formatVersion": 1,                  // the replay format (core/replay REPLAY_FORMAT_VERSION)
+    "formatVersion": 2,                  // the replay format (core/replay REPLAY_FORMAT_VERSION; v1 wrote 1)
     "buildId": "demo",                   // DEMO_BUILD_ID: hashes, not a build, lock a demo
     "seed": 101,
     "stageId": "zone-a",                 // a stage of the content (null = free flight)
