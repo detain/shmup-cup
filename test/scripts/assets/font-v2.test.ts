@@ -107,3 +107,51 @@ describe('assets/source/fonts/pixel9x12.font.json — the v2 cell and its laws (
     }
   });
 });
+
+describe('assets/source/fonts/pixel9x12.font.json — the accented Latin and the symbols (R4-03.C3)', () => {
+  /** The five acute vowels and the two tilde/diaeresis caps, by code point. */
+  const ACCENTED: Array<[number, number]> = [
+    [0xc1, 0x41], // Á over A
+    [0xc9, 0x45], // É over E
+    [0xcd, 0x49], // Í over I
+    [0xd3, 0x4f], // Ó over O
+    [0xda, 0x55], // Ú over U
+    [0xd1, 0x4e], // Ñ over N
+    [0xdc, 0x55], // Ü over U
+  ];
+
+  it('fills the accent reserve of every accented cap without touching its base body', () => {
+    for (const [acc, base] of ACCENTED) {
+      const r = rows(acc);
+      expect(
+        r.slice(0, 2).some((row) => row.includes('#'), `U+${acc.toString(16)}`),
+        'accent band',
+      ).toBe(true);
+      const below = r.slice(2).join('|');
+      const baseBelow = rows(base).slice(2).join('|');
+      if (acc !== 0xdc) expect(below, `U+${acc.toString(16)} body = base body`).toBe(baseBelow);
+    }
+  });
+
+  it('draws the inverted marks as the exact vertical mirrors of ! and ?', () => {
+    for (const [inv, upright] of [
+      [0xa1, 0x21],
+      [0xbf, 0x3f],
+    ]) {
+      const r = rows(inv);
+      for (const row of [...r.slice(0, 3), ...r.slice(10)])
+        expect(row, `U+${inv.toString(16)} band`).toBe('.........');
+      for (let i = 0; i < 7; i++)
+        expect(r[3 + i], `U+${inv.toString(16)} row ${i}`).toBe(rows(upright)[9 - i]);
+    }
+  });
+
+  it('keeps the arrows and marks inside the body band (rows 2–9)', () => {
+    for (const code of [0x2190, 0x2191, 0x2192, 0x2193, 0x25cf, 0x2715, 0x2605]) {
+      const r = rows(code);
+      for (const row of [...r.slice(0, 2), ...r.slice(10)])
+        expect(row, `U+${code.toString(16)} band`).toBe('.........');
+      expect(r.slice(2, 10).some((row) => row.includes('#'))).toBe(true);
+    }
+  });
+});
