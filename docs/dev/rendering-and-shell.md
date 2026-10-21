@@ -69,22 +69,28 @@ Strings enter only through a draw list's string slots, and only when the text ch
 |---|---|---|---|
 | 0 | `BgFar` | world | a stage's `far` parallax bands (M1-07); the free-flight and showcase far stars |
 | 1 | `BgMid` | world | a stage's `mid` parallax bands (M1-07); the free-flight mid / near stars |
-| 2 | `Terrain` | world | the stage's tile terrain (M1-07) |
-| 3 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
-| 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), the boss's parts (their own batch after every other World batch, so they draw over the air enemies — M1-13) |
-| 5 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
-| 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
-| 7 | `Hitbox` | world | the ships' hitbox markers (the Options screen's HITBOX, M2-08 — `WorldView.hitboxes`; the layer is hidden while the option is off) |
-| 8 | `Items` | world | capsules (M1-11) |
-| 9 | `Fx` | world | the particle pool (normal-blend sprites, then additive) and the score popups — the renderer's own, fed by events (M1-14, [fx-and-game-feel.md](fx-and-game-feel.md)) |
-| 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
-| 11 | `Hud` | screen | `RenderFrame.hud` |
-| 12 | `Ui` | screen | `RenderFrame.ui` |
-| 13 | `Debug` | screen | the debug overlay — panel, frame graph, hitbox / grid outlines (`render-pixi` `debug`, dev / test builds only — M1-19, [debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)) |
+| 2 | `DecorBack` | world | the stage's `back` decor items — under the terrain (R3-06, [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view)) |
+| 3 | `Terrain` | world | the stage's tile terrain (M1-07) |
+| 4 | `DecorFront` | world | the stage's `front` decor items — above the terrain, below the sprites (R3-06) |
+| 5 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
+| 6 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), the boss's parts (their own batch after every other World batch, so they draw over the air enemies — M1-13) |
+| 7 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
+| 8 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
+| 9 | `Hitbox` | world | the ships' hitbox markers (the Options screen's HITBOX, M2-08 — `WorldView.hitboxes`; the layer is hidden while the option is off) |
+| 10 | `Items` | world | capsules (M1-11) |
+| 11 | `Fx` | world | the particle pool (normal-blend sprites, then additive) and the score popups — the renderer's own, fed by events (M1-14, [fx-and-game-feel.md](fx-and-game-feel.md)) |
+| 12 | `Foreground` | world | the stage's one `fore` parallax band (R3-06) — sparse foreground in front of the ship; the draw order keeps enemy bullets above it |
+| 13 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
+| 14 | `Hud` | screen | `RenderFrame.hud` |
+| 15 | `Ui` | screen | `RenderFrame.ui` |
+| 16 | `Debug` | screen | the debug overlay — panel, frame graph, hitbox / grid outlines (`render-pixi` `debug`, dev / test builds only — M1-19, [debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)) |
 
-`LAYER_COUNT` is 14 and `LAYER_NAMES` holds the plan's spellings (`'ENEMY_BULLETS'`), used as
+`LAYER_COUNT` is 17 (`DecorBack` 2 and `DecorFront` 4 sit around the terrain, `Foreground` 12
+under the bullets, as the R3-06 draw order requires — golden replays hash only the simulation,
+so the insert moved none of them) and `LAYER_NAMES` holds the plan's spellings (`'ENEMY_BULLETS'`), used as
 Pixi container labels. The world group is offset by screen shake; `Hud`, `Ui` and `Debug`
-stay put. **Append, never renumber** — the code is the draw order and batches carry it.
+stay put. **Append new layers only where the spec says so** (`shmup_feat.md` §18 — the
+code is the draw order and batches carry it).
 
 ### Sprite batches (`SpriteBatchView`)
 
@@ -104,10 +110,17 @@ and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are draw
   its anchor point), `Hidden` 4 skips the slot this frame (blinking, invulnerability),
   `Flash` 8 draws the white `<sprite>@flash` sibling (D30 — a frame swap, so batching
   survives; a sprite without a sibling draws itself).
+- A batch may carry a `blend` (R3-06.L4): absent means `'normal'`, and only the glow companions
+  pass `'additive'`. `createSpriteBatch(layer, capacity, blend?)` stores the marker on the batch;
+  the renderer's `bindWorld` maps it to a sprite binding whose every sprite gets
+  `blendMode = 'add'` **once at creation** — Pixi rebuilds the batch's blend state on every
+  write to that setter, so the sync path never touches it (`sprites/index.ts`; `'add'` is as
+  old as WebGL1, so the TV floors are safe). A host that ignores `blend` still draws the
+  batch normally.
 
 ### The world view
 
-`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, bendingLasers?, warning?, effects?, hitboxes? }`. Everything is a live
+`WorldView = { camera: { x, y }, parallax, decor?, terrain, batches, lasers?, bendingLasers?, warning?, effects?, hitboxes? }`. Everything is a live
 reference into sim state; the renderer reads and never writes. **`batches` is read once, when
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
@@ -115,11 +128,24 @@ binding `i` from `batches[i]` every frame. To change the list, hand the renderer
 changes, not per frame). The same holds for the structure of `parallax` (band count, layers,
 spacings) and `terrain` (map size, tile size); their per-frame values are read every frame:
 
-- `ParallaxView` — `count` bands; per band `layer` (`BgFar` / `BgMid` only), `spriteId` (frame 0
-  is repeated), `spacing` (repeat distance), `offsetX` (`0 ≤ offsetX < spacing`, the band is
-  shifted left by it) and `y` (the band's playfield row after the vertical scroll). The stage
+- `ParallaxView` — `count` bands; per band `layer` (`BgFar`, `BgMid` or the R3-06
+  `Foreground`), `spriteId` (frame 0 is the band's repeated sprite), `spacing` (repeat
+  distance), `offsetX` (`0 ≤ offsetX < spacing`, the band is shifted left by it) and `y` (the
+  band's playfield row after the vertical scroll). Since R3-06 the view may also carry
+  `frameIndex` — the animated frame per band right now (`0` for a static band, else cycling
+  `0 … frames-1` every `frameTicks` ticks); a core-built view always carries it, and an absent
+  array (an older hand-made view) means frame 0 everywhere. The stage
   runtime fills it (`offsetX = (camera.x · factor) mod spacing`, `y = baseY − camera.y ·
-  factor`); the renderer rounds both.
+  yFactor`, `frameIndex = ⌊tick / frameTicks⌋ mod frames`); the renderer rounds both positions.
+- `DecorView` (optional `decor`, R3-06) — the stage's still decoration items: `back` and `front`
+  sprite batches refilled by camera culling at the end of every tick (`back` drawn under the
+  terrain on `DECOR_BACK`, `front` above it and below the sprites on `DECOR_FRONT`; either is
+  `null` when no drawable item uses its layer), and since R3-06.L4 the optional `glowBack` /
+  `glowFront` companions — `'additive'` batches on the same two layers carrying the entries'
+  glows (set only when some kept item has a glow). The batches are members of
+  `WorldView.batches` as well, so a host that draws the batches draws decor and glows without
+  reading `decor` at all; the view is for hosts that iterate decor separately. Presentation only
+  — the simulation never reads decor, never collides with it, never scores it.
 - `TerrainView` — `tileSize`, `cols`, `rows`, `tiles` (row-major tile ids, 0 = empty; a live
   array, read when a cell scrolls into view), `tilesetSpriteId` and `tileFrame` (tile id →
   frame of the tileset sprite, `-1` = not drawn). Cell `(col, row)` sits at world
@@ -155,6 +181,15 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
 - `HitboxView` (optional `hitboxes`, M2-08) — `capacity`, `count` and per slot world `x`, `y` and
   `radius` of every live ship's hurtbox; the World's `hitboxBatch`, refilled each tick. The
   renderer draws it on `HITBOX` only while `showHitbox` is on.
+
+The World's `batches` list has a fixed shape (`world/index.ts`, built once at `createWorld`):
+every owner's body batches first — ground enemies, air enemies (the boss's own batches among
+them), shots, Options, ships, bullets, shields, items, points, carried, chains — then the
+additive glow batches R3-06.L4 appended (`enemyGlow…`, `bossGlow…`, after **every** body, so a
+glow draws over its owner), then the moving blocks and black holes, then the stage's decor four
+(`back`, `glowBack`, `front`, `glowFront` — each on its own layer, so the list order cannot mix
+them). Content that names no glow adds no glow batch and a stage without decor adds no batch at
+all, so every pre-R3-06 list stays exactly as the fingerprints pinned it.
 
 How the stage builds these views: [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view).
 
@@ -294,9 +329,12 @@ the GPU at the transition instead of on their first draw mid-play.
   blocks are not grid cells — the World draws them as a sprite batch on `TERRAIN`
   ([advanced-stages.md](advanced-stages.md#rendering-the-change-log-shmuprender-pixi-layers)).
 - **`ParallaxBinding`** (`createParallaxBinding`, one per bound `ParallaxView`): per band one
-  container on its layer holding `ceil(width / spacing) + 1` sprites `spacing` pixels apart,
-  placed once; `sync(view)` only moves each container to `round(−offsetX)`, `PLAYFIELD_Y +
-  round(y)`. No `TilingSprite` — WebGL1 cannot repeat non-power-of-two textures.
+  container on its layer (`BG_FAR`, `BG_MID` or — since R3-06 — `FOREGROUND`) holding
+  `ceil(width / spacing) + 1` sprites `spacing` pixels apart, placed once; `sync(view)`
+  re-places each band — the container goes to `round(−offsetX)`, `PLAYFIELD_Y + round(y)`, and
+  the band's sprites are shown at frame `frameIndex[i]` of the band sprite (`0` when the view
+  carries no `frameIndex`, so a v1-style view keeps painting frame 0). No `TilingSprite` —
+  WebGL1 cannot repeat non-power-of-two textures.
 - **`LaserBinding`** (`createLaserBinding`, one per bound `LaserView`, on `ENEMY_BULLETS` after
   the batches, M1-09): two preallocated sprites per slot pivoting on the laser's origin and
   rotated to its angle — the white pixel stretched into a 1-px line tinted `LASER_WARNING_TINT`
@@ -322,16 +360,22 @@ single hidden bullet cost all of that over all ~6,400 display objects, on **esse
 frame** (the bench measured 655–659 of 660).
 
 So every layer that toggles sprites while the game runs is its own render group
-(`RENDER_GROUP_LAYERS`: `TERRAIN` … `UI`). Pixi does not descend into a child render group while
+(`RENDER_GROUP_LAYERS`: `DECOR_BACK` … `UI` — thirteen groups, the two R3-06 decor layers among
+them since culled decor toggles its batch slots' `visible`). Pixi does not descend into a child render group while
 collecting a parent's renderables — it emits one instruction for it — so a bullet appearing
 rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,595-tile terrain grid (55 × 29 at
 12-px tiles; v1: the 1,274-tile 49 × 26 grid), the HUD and
-the UI alone, buffers included. `BG_FAR`, `BG_MID` and `DEBUG` stay plain: the parallax bands are
-shown once when they are bound and only their containers move afterwards, the Mode-7 mesh follows
+the UI alone, buffers included. `BG_FAR`, `BG_MID`, `FOREGROUND` and `DEBUG` stay plain: the parallax bands are
+shown once when they are bound and only their containers move afterwards — the `fore` band of
+R3-06 is a parallax band too and is left out like the two backgrounds — the Mode-7 mesh follows
 a camera range, and `DEBUG` is empty in a release build.
 
 The cost is one batch boundary per group: a busy frame went from 4 to 9 draw calls in the bench
-and the e2e budget from 12 to 16 (`shmup_feat.md` §22 allows 20–50). `createPixiRenderer({
+and the e2e budget from 12 to 16 (`shmup_feat.md` §22 allows 20–50). The two decor groups raise
+the decor frames above that, not the plain ones: the bench's `decor range` scenario measures the
+busiest of them at 14 draw calls, inside the bench's standing `DRAW_CALL_BUDGET` of 20
+(`test/bench/render-harness/bench-gates.ts`) — R3-06.L7 measured first and did not raise the
+gate. `createPixiRenderer({
 renderGroups: false })` restores the single-group scene — nothing shipped uses it; it is there so
 `pnpm bench` can measure the rebuild against itself in one run (the review's measurement **M1**).
 `renderer.structureRebuilds` counts the frames the *scene's* group was rebuilt on (the overlay's
@@ -986,7 +1030,7 @@ and only one of them touches the browser:
 |---|---|
 | `main.ts` | The page: builds the renderer, the game and the atlas, runs the measured frames, posts the result on `window.__shmupRenderBench`. Browser plumbing only |
 | `load.ts` | The **scripted worst-case load** — the tick order, the pool top-ups, `WARMUP_TICKS`, the per-frame `LoadFloor`. No DOM, no Pixi |
-| `gates.ts` | The budgets (`DRAW_CALL_BUDGET`, `RENDER_P95_BUDGET_MS`, `HEAP_BUDGET`, `MIN_LIVE_LOAD`) and `renderBenchViolations(result)` |
+| `bench-gates.ts` | The budgets (`DRAW_CALL_BUDGET`, `RENDER_P95_BUDGET_MS`, `HEAP_BUDGET`, `MIN_LIVE_LOAD`) and `renderBenchViolations(result)` |
 | `protocol.ts` | `RenderBenchOptions` / `RenderBenchResult` / `RenderBenchApi` — the wire types the Node driver and the page agree on |
 
 The last three are DOM-free on purpose: `test/integration/render-bench.test.ts` drives them in Node,
@@ -1158,7 +1202,7 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   load, not the matrix.
 - **Headless:** `pnpm bench` builds the widget exactly as `bench:tv` does and opens each scenario
   with `?scenario=<id>` on the 1280×720 display, gating **counts only** — `tvBenchViolations` in
-  `render-harness/gates.ts`: the full load on every frame, draw calls within `DRAW_CALL_BUDGET`, no
+  `render-harness/bench-gates.ts`: the full load on every frame, draw calls within `DRAW_CALL_BUDGET`, no
   pooled render target without a filtered layer and exactly the frame's power-of-two target with
   one, the density's atlas pages, the heap. Its milliseconds are SwiftShader's and are only printed.
   Since R1-05 it also opens `?scenario=decode&reps=2` and checks that every page's stages are
@@ -1448,6 +1492,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (one column / row more than the playfield in tiles — 55 × 29 at 12-px tiles, 81 × 43 for the 8-px fixtures, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/layers/layers-decor.test.ts`, `layers/layers-decor-alloc.test.ts`, `sprites/sprites-glow.test.ts` | R3-06.L3 / L4, headless over the test atlas: `createParallaxBinding` accepts a band on `FOREGROUND` beside `BG_FAR` / `BG_MID` and drives its sprite frame from the view's `frameIndex` (out-of-range frames fall to the missing frame; a view without the field stays on frame 0), band rows follow the view's `y` (the `yFactor` fold is core's), `bindWorld` binds the two decor batches onto `DECOR_BACK` / `DECOR_FRONT` through the generic batch path while a band on any other layer still throws before anything binds, and an `additive` sprite binding sets `blendMode = 'add'` on every preallocated sprite **at creation** with a sync path that never touches blend state; allocation guards run the three-band parallax sync with a cycling `frameIndex` and a decor batch whose slots are rewritten each tick |
 | `packages/render-pixi/test/layers/layers-terrain-changes.test.ts`, `layers-terrain-changes-edge.test.ts` | M2-07: only the logged cells in view re-textured, a reset or an overflowing gap redraws the grid, a view without `changes` |
 | `packages/render-pixi/test/layers/layers-bending.test.ts` | The bending laser binding (M2-02): the newest `filled` nodes of each active slot, tail first, the head on top; a shrinking body's extra sprites, hidden and inactive slots hidden; clamping to its nodes; bad capacities and node counts; a moving body synced without allocating |
 | `packages/render-pixi/test/palette/palette-bullets.test.ts`, `renderer/renderer-wiring.test.ts` | M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable` (variants in place of their sprites, the rest kept); the renderer binding the bending laser view after the lasers and `setBulletPalette` swapping the sprite tables to a palette's variants and back |
@@ -1464,10 +1509,10 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/shell/test/debug/` | The debug tools (M1-19): F-keys, the TV unlock sequence, `window.__shmupDebug`, the frame hooks |
 | `packages/render-pixi/test/debug/debug-render-profile.test.ts`, `renderer/renderer-structure-rebuilds.test.ts`, `packages/shell/test/debug/debug-render-profile.test.ts` | M3-02c: the overlay's `REB` / `RT` line (placement, the blank `REB` when nothing counts, allocation-free rebuilds), `createRenderTargetMeter` (totals, `stop()` restoring the pool, an allocation-free read), the renderer counting only the frames whose scene structure changed (−1 without the option), and the shell refreshing both figures every frame and stopping the meter on `destroy` |
 | `test/bench/render.perf.ts` | M3-02c: the render benchmark itself — the scenarios really are under the load they claim, the draw-call / p95 / heap budgets, and a deliberately leaky fixture that must blow the heap gate. Since M3-02e every scenario is gated through `renderGroupViolations` and one runs the A/B arm with `renderGroups: false` |
-| `packages/render-pixi/test/layers/layers-render-groups.test.ts`, `layers/layers-render-groups-edge.test.ts` | M3-02e: `RENDER_GROUP_LAYERS` membership (`TERRAIN` … `UI`, the three deliberate omissions named), `createLayerStack({ renderGroups })` — only an explicit `false` ungroups — and the grouped stack compared container by container with the ungrouped one, so a group boundary provably changes nothing structural |
+| `packages/render-pixi/test/layers/layers-render-groups.test.ts`, `layers/layers-render-groups-edge.test.ts` | M3-02e: `RENDER_GROUP_LAYERS` membership (`DECOR_BACK` … `UI`, the four deliberate omissions named), `createLayerStack({ renderGroups })` — only an explicit `false` ungroups — and the grouped stack compared container by container with the ungrouped one, so a group boundary provably changes nothing structural |
 | `packages/render-pixi/test/renderer/renderer-render-groups.test.ts`, `renderer/renderer-render-groups-edge.test.ts`, `renderer/renderer-render-groups-alloc.test.ts` | M3-02e: the option reaching the layer stack, `groupRebuilds` counting every dirty group of a frame (never falling, never below `structureRebuilds`, −1 without `countStructureRebuilds`, kept after `destroy()`), the F9 overlay texture (the five pass-1 overlays on the atlas' `ui/pixel`, the side panels on `Texture.WHITE`, both fallbacks), and the counting walk measured as an allocation A/B against the same loop with counting off |
-| `test/integration/render-groups.test.ts` | M3-02e against the *shipped* game: four stages played through the real sim use only grouped batch layers, every `createSpriteBatch(LayerId.…)` in core names one, no app / shell / core code mentions `renderGroups`, and the two e2e `DRAW_CALL_BUDGET`s agree with each other and with `gates.ts` |
-| `test/e2e/render-groups.spec.ts` | M3-02e in a real browser: seven scenes screenshotted with the groups on and then with `disableRenderGroup()` called on all eleven layers — byte-identical PNGs — plus the sensitivity controls (moving or hiding a layer must change the picture) and the `REB` annotation with the overlay off (0 of 180 frames) and on |
+| `test/integration/render-groups.test.ts` | M3-02e against the *shipped* game: four stages played through the real sim use only grouped batch layers, every `createSpriteBatch(LayerId.…)` in core names one, no app / shell / core code mentions `renderGroups`, and the two e2e `DRAW_CALL_BUDGET`s agree with each other and with `bench-gates.ts` (which stays above them on purpose) |
+| `test/e2e/render-groups.spec.ts` | M3-02e in a real browser: seven scenes screenshotted with the groups on and then with `disableRenderGroup()` called on all thirteen grouped layers — byte-identical PNGs — plus the sensitivity controls (moving or hiding a layer must change the picture) and the `REB` annotation with the overlay off (0 of 180 frames) and on |
 | `test/e2e/atlas-residency.spec.ts` | R1-05 in a real browser (on the shipped lazy default since R3-04.M3e): the web build fetches `assets/atlas/main.json` once; an aborted manifest ends on `ATLAS MANIFEST FAILED TO LOAD`, a foreign one on `ATLAS DOES NOT MATCH ITS MANIFEST`; the Tizen build boots from `file://` (XHR, status 0); `?stage=zone-b` keeps exactly `common` + zone B and a stage change swaps in zone C; the attract demo brings its zone's pages; the weapon select's preview page leaves the GPU at the game start; after a lost and restored context the new one holds exactly what the canvas marks — checked on WebGL's own view (`texImage2D` / `deleteTexture` hooked), not only the attribute |
 | `test/e2e/atlas-context-loss.spec.ts` | R3-04.M3d through `WEBGL_lose_context`: after the restore the web build draws again (the title logo back in a screenshot), the sim still ticks, input still moves the scene flow, the residency's marks survive unchanged, and no console error or uncaught exception appears |
 | `test/e2e/` | The real browser path, both builds (above) |
@@ -1496,7 +1541,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | BULLETS changes nothing on screen | The renderer has no atlas / sprite names yet (the choice is kept and applied by `setSpriteNames`), the event did not reach it (only the scene flow connects `connectOptionEvents`), or the atlas lacks the `@<palette>` variants (run `pnpm assets`; `pnpm content:check` names them) |
 | A real-art bullet keeps its standard colours in a colour-blind palette — or shows the placeholder's | A PNG override replaces a sprite by name; its `@<palette>` variants are separate sprites — draw and override them too |
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
-| `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
+| `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR`, `BG_MID` or `FOREGROUND` (the throw names them) — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
 | The title shows instead of the game in a test or tool | Since M1-16 the shell's default scene is the scene flow — open `?scene=flight` for bare gameplay, or press OK three times (past `PRESS OK`, START, then a difficulty — M2-01); wait on `data-shmup-scene` |
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
@@ -1512,7 +1557,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A black picture on an older set, with the game plainly running (sound, `data-shmup-scene` moving) | Since M3-02d both full-screen effects are Pixi meshes, and `MeshGeometry` builds `Uint32Array` indices, so pass 2 needs WebGL1's **`OES_element_index_uint`**. Pixi requests it and every GPU of the M7's generation has it, but it is now on the path every frame takes. Check `gl.getExtension('OES_element_index_uint')` in the Web Inspector; if it really is `null`, `screenPass: 'filter'` (and the Mode-7 stage left alone) is the only path that avoids a mesh |
 | The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
 | The overlay's `REB` figure climbs while the panel is up | Expected, and it is the *panel*: its text quads sit on `DEBUG`, which is deliberately not a render group, so a printed number changing width dirties the scene's group. The rate depends on the machine's load (6 % of frames idle, 49 % loaded — `test/e2e/render-groups.spec.ts`), not on the renderer. Hide the panel (key **1**) and read `REB` from M3-02f's capture, which records it either way |
-| `REB` keeps pace with the frame count **with the panel hidden** | A real regression of review **F1**: something outside the `RENDER_GROUP_LAYERS` groups is toggling `visible` on a sprite — a new binding added to `BG_FAR`, `BG_MID` or `DEBUG`, or a container flipped every frame. Since M3-02e the bench gates this (`renderGroupViolations`, budget a tenth of the measured frames) |
+| `REB` keeps pace with the frame count **with the panel hidden** | A real regression of review **F1**: something outside the `RENDER_GROUP_LAYERS` groups is toggling `visible` on a sprite — a new binding added to `BG_FAR`, `BG_MID`, `FOREGROUND` or `DEBUG`, or a container flipped every frame. Since M3-02e the bench gates this (`renderGroupViolations`, budget a tenth of the measured frames) |
 | The overlay's `RT` figure jumps by ~16 MB when CRT goes on | It should not any more: M3-02d made the CRT the pass-2 blit's own shader, so it pools nothing (review **F2**). If it does, the build predates M3-02d — or it was created with `screenPass: 'filter'`, which restores the old 2048×2048 pooled target on purpose |
 | The render bench cannot find the Mode-7 floor or draws magenta checkers | The harness did not call `renderer.setSpriteNames(db.sprites.names)` — the World's sprite ids index into that table, and without it `Mode7Floor.bind` gets no tile |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
@@ -1651,3 +1696,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `test/e2e/atlas-context-loss.spec.ts`); and `ShellOptions.atlasPages` defaulting to `'lazy'`
   with the preview World's image-attach path (M3e)
   ([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
+- **R3-06** (done) — the decor round's contract: `LayerId` at 17 layers (`DECOR_BACK` /
+  `DECOR_FRONT` around the terrain, `FOREGROUND` under the bullets), the optional `blend` on
+  `SpriteBatchView` and the additive sprite binding `bindWorld` maps it to, the `DecorView`
+  (`WorldView.decor`) with its glow companions, `ParallaxView.frameIndex` and the band binding
+  that follows it, and the two decor render groups
+  ([stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view)).

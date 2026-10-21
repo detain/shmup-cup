@@ -223,6 +223,15 @@ Examples from today's schemas: `sprite → spriteId`, `behavior → behaviorId` 
 `sfx → sfxId`, presets' `main/missile/double/laser → mainId/missileId/doubleId/laserId`, stage
 events' `enemy → enemyId`, `path → pathId` and `cue → cueId`.
 
+**Glow names are plain names, not references (R3-06.L4).** An enemy, a boss part and a decor
+entry may each name a `glow` sprite — three schema sites, one shape (`glow: s.str({ maxLength:
+64 })`). It is deliberately *not* `s.ref('sprite')`: `resolveRef` stamps the numeric sibling for
+every site, so an optional absent here would grow `glowId: -1` into the resolved shape of every
+shipped file that uses no glow and move the content-DB digests for nothing. Instead the loader
+interns the glow names into the sprite table with the owners (the `db.sprites` interning pass,
+`core/data`), the systems resolve them through `sprites.index` at load, never per tick, and a
+name missing from the atlas is a `pnpm content:check` error exactly like a referenced sprite's.
+
 Beyond the reference checks, the enemies are checked against the behaviour registry by
 `checkEnemyBehaviors(db)` (`core/behaviors`): every `params` name must be a tunable of the
 enemy's behaviour, spawners (`hatch.spawner`) need a `child` and pattern runners (`pattern.loop`,
@@ -372,6 +381,14 @@ it, one on the bottom edge stays on it, one ending on the Mode-7 horizon sits on
 touching, a free band goes by the nearer edge; a raster row on — or within a tile of — a band edge follows
 it, the rest snap. It reports `seams` (bands that touched and no longer do) and `conflicts` (an anchor a
 band touched and could not keep — `BackdropConflict`). Alone, a `band-y` falls back to the `screen-y` snap.
+
+**Decor and the animated bands (R3-06).** None of R3-06's numbers needed a new unit. A decor
+entry's `x` is the event column's `world-x` and its `y` the spawn row's `world-y` (the same
+`EVENT_X` / `SPAWN_Y` constants, so decor ports exactly like the events beside it), its `frame`
+an `index`; a band's `yFactor` is `ratio` like its `factor` (keep), `frames` a `count` and
+`frameTicks` `ticks` (both keep), and `band-y` always covered the `fore` band's `y` — the unit's
+own doc names it. The backdrop reader still measures frame 0 of each band's art, which an
+animated strip does not change.
 
 **The walkers.** `listNumberFields(schema)` lists every numeric field of a schema as a pattern path
 (`events[]<type=spawn>.y`) with its unit and pair — the coverage tests read it. `walkNumbers(schema,

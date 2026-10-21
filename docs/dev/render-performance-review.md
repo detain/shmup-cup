@@ -6,7 +6,7 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 
 > **Update (M3-02e).** **F1 and F9 are fixed, and with them every finding this review raised.**
 > The layers that toggle sprites every frame are each their own Pixi render group
-> (`layers/index.ts` `RENDER_GROUP_LAYERS`: `TERRAIN` … `UI`), so hiding one bullet rebuilds that
+> (`layers/index.ts` `RENDER_GROUP_LAYERS`: `DECOR_BACK` … `UI` — thirteen groups since R3-06), so hiding one bullet rebuilds that
 > layer's instruction set instead of the whole ~6,400-object scene's, and the full-screen overlays
 > of pass 1 draw the atlas' own `ui/pixel` rather than Pixi's global `Texture.WHITE`. Measured by
 > the bench, over the same worst-case frame: **655–659 of 660 frames rebuilt the scene → 0 of
@@ -45,9 +45,23 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 > 8-px number above and below describes the *v1-era* geometry this review measured, not today's
 > game. The mechanisms and the fixes stand; only the sizes shift: the scene pass is a 640×360
 > `RenderTexture`, a filtered full-frame pass pools 1024×512 (next power of two per axis — Pixi
-> 8.21's screen-size cap never fires here, the renderer registers no screen), and the integer
+> 8.21+'s screen-size cap never fires here, the renderer registers no screen), and the integer
 > upscale reads 720p ×2 / 1080p ×3 / 1440p ×4 / 4K ×6. The TV render bench (R0-02 / R0-03)
 > measures the old and the new frame side by side on the M7.
+>
+> **Update (R3-06).** The decor round added two render groups: `RENDER_GROUP_LAYERS` is now
+> `DECOR_BACK` … `UI`, thirteen groups — culled decor toggles its batch slots' `visible`, so both
+> decor layers are grouped. `FOREGROUND` joins `BG_FAR` and `BG_MID` as a band layer left plain on
+> purpose: a band is shown once when it is bound and only its container moves afterwards. The bench
+> carries the number: its `decor range` scenario (seven parallax bands — three animating entries
+> on two cycling strips, one of them the fore band — plus the back/front decor groups and the
+> additive glow batches) measures **14 draw calls** on the frame its gate pins, inside the bench's
+> standing `DRAW_CALL_BUDGET` of 20 (`test/bench/render-harness/bench-gates.ts`) — L7 measured
+> first and raised nothing. The two e2e specs keep their 16; `test/e2e/decor.spec.ts` asserts no
+> budget at all, precisely because the new groups and glow batches are what `raster.spec.ts`'s
+> count predates. And the glows apply this review's F1 lesson to blend state: an `'additive'`
+> batch maps to a sprite binding whose `blendMode = 'add'` is set **once at creation**, never in
+> the sync path (Pixi rebuilds a batch's blend state on every write to that setter).
 
 ## 0. Project facts established from the repo (not taken on trust)
 

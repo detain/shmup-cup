@@ -377,12 +377,16 @@ pnpm format && pnpm content:check                    # house style, then validat
 | Tiled | Stage JSON |
 |---|---|
 | Map properties `id`, `name`, `tileset` (content id, default `terrain-a`), `musicStage` / `musicBoss`, `length` (default map width − `VIEW_WIDTH`, the playfield width — 384 today), `speed` (the key added at x 0 when none) | The header |
-| The tile layer `terrain` (else the first) — array or CSV data | `tilemap.rle`, one row per map row; gid → content tile id `gid − firstgid + 1` (the Tiled tileset lists its tiles in the content tileset's order); flipped / rotated tiles and compressed / base64 layers are errors |
+| The tile layer `terrain` (else the first — never one of the two decor layers, R3-06) — array or CSV data | `tilemap.rle`, one row per map row; gid → content tile id `gid − firstgid + 1` (the Tiled tileset lists its tiles in the content tileset's order); flipped / rotated tiles and compressed / base64 layers are errors |
 | Objects by class (`class`, or `type` before Tiled 1.9) with custom properties as fields | `spawn` / `formation` at `x = max(0, obj.x − SPAWN_LEAD)` (`PLAYFIELD_W + 16` — 400 today; `screenX` when nearer the start), `y` made **camera-relative**; `warning`, `boss`, `music`, `speed`, `flag`, `end` at `obj.x`; `camera` keys; `checkpoint`s; `trigger` rectangles (armed when the region enters the view, or at `armX`); `block` rectangles (appearing 16 px past the right edge); `branch` declarations |
 | Any object with a polyline | A `paths` entry (id = the object's name, points relative to the first, rounded to 1/100 px) |
+| A tile layer named `decor-back` or `decor-front` (R3-06) | One `decor` entry `{ layer, tile, frame, x, y }` per cell at the cell's world pixel — a tile item draws the tile's own frame, so its `frame` is 0 (the field is required either way); the tile's content name is the **name of the tile in the map's tileset**, so the map must embed its tileset and name every tile its decor uses. A map without a `terrain` layer picks its first tile layer that is not one of these decor names |
+| An object of class `decor` (R3-06) | One `decor` entry at the object's world pixel: the `layer` property picks the side (`back` default), exactly one of `sprite` or `tile` names the art, `frame` gives a sprite frame (omitted = 0); they follow the map's layer order like events |
+| An image layer (R3-06) | One band of `parallax`, in map order: the `layer` property (`far` / `mid` / `fore`) is required, `sprite` defaults to the image path without its extension, `y` to the layer's own y, `factor` scrolls at 0 (a static backdrop) when unset, `spacing` (the repeat distance) is required, and `yFactor`, `frames` and `frameTicks` are copied when present. Visibility does not skip a band — delete the layer to drop it |
 
 Unknown classes are errors (a typo never drops an enemy silently). Events are sorted by `x`, ties
-in file order. Because a spawn's `y` is relative to the camera but Tiled objects sit at world
+in file order, and the decor entries follow the map's layer order the same way; the `decor` array
+is written only when the map places decor. Because a spawn's `y` is relative to the camera but Tiled objects sit at world
 positions, the importer subtracts the camera y the imported keys give when the event fires —
 `cameraYAt(keys, x)` follows the runner (keys before `x`, plus the key at 0; a `yTo` pan starts
 where the previous one left the camera; `yOver` pans interpolated; timed `yTicks` pans counted as

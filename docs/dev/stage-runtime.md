@@ -40,6 +40,7 @@ content/tilesets/terrain-a.tileset.json┴─ loadContent()                     
 createWorld({ stage: 'test-range' }, db)                                      core/world
  ├─ createStageTerrain(stage, db)  → world.terrain   TerrainMap (private copy of the tiles)
  ├─ createParallaxView(stage)      → world.parallax  StageParallaxView (typed arrays)
+ ├─ createDecorView(stage, db)     → world.decor     StageDecorView (typed arrays + batches)
  ├─ createTerrainView(...)         → view.terrain    TerrainView (live tiles + frames)
  └─ createStageRunner(stage, worldHooks, camera) → world.stage; queue the stage theme
 
@@ -48,18 +49,22 @@ stepWorld, every tick
  │                 hooks.event: spawn / formation → world.enemies, music → SimEventKind.Music,
  │                 warning / boss → world.bosses (M1-13), end → status 'stageClear'
  ├─ 6 collision  terrainRectHit(terrain, ship's terrain box) → playerHit(Terrain)
- └─ 9 fx         updateParallaxView(parallax, camera.x, camera.y)
+ └─ 9 fx         syncWorldView(world): updateParallaxView(parallax, camera.x, camera.y,
+                    world.tick), updateDecorView(decor, camera.x) — camera culling, never
+                    allocates — then the systems' batch syncs
 
 renderer.render(frame)                                                        render-pixi/layers
- ├─ parallax.sync(view)           one container offset per band
- └─ terrain.sync(view, camera)    49 × 26 sprite ring, one column re-textured per tile crossed
+ ├─ parallax.sync(view)           one container offset per band, sprites at view.frameIndex
+ ├─ terrain.sync(view, camera)    55 × 29 sprite ring (12-px tiles), one column per edge crossed
+ └─ (decor and glows ride the ordinary batches loop — no separate sync)
 ```
 
 ## Stage data and loading
 
 A stage file (`content/stages/<id>.stage.json`, kind `stage`, format 1) holds `id`, `name`,
 `music: { stage, boss }` (`MUSIC_CUES` names; since M2-14 optionally `ending` and `credits` — a final zone's themes for the ending screen and the credits, prepared with its set), `length` (camera-x length in pixels), `camera`
-(keys), `checkpoints`, `parallax` (bands), `tilemap` (or `null` for open space), `events` and,
+(keys), `checkpoints`, `parallax` (bands), `decor` (since R3-06, the still presentation items —
+the runner never reads them either), `tilemap` (or `null` for open space), `events` and,
 since M2-05, the optional `directItems` (the Direct-mode item plan — the runner never reads it;
 `core/powerups` does, [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups))
 and, since M2-08, the optional presentation lists `raster` (per-scanline offsets of a background or
@@ -86,7 +91,10 @@ The annotated format is in [`content/stages/README.md`](../../content/stages/REA
 no `rush`; since M2-10 a `bonus` stage has no `warning` / `boss` / `bonus` event and at least one
 `end`). Since M2-10 also the `bonus` events (`checkBonusEvent`: a `gap` needs its `region`, a
 `digit` its `digit`, `place` one of 10 … 100,000, the defaulted `until` not before `x`, at most 8
-per stage; that the named stage is of type `bonus` is checked after the references resolve). Every problem of one file is reported in one load; a
+per stage; that the named stage is of type `bonus` is checked after the references resolve). Since
+R3-06 the decor list and the extended bands (`checkStageDecor`: a decor entry names exactly one
+of `sprite` / `tile` and its `x` is within `length`; `frameTicks` needs `frames`; at most six
+background bands and at most one `fore`; an absent `decor` stays absent). Every problem of one file is reported in one load; a
    stage with any of them is skipped.
 2. **Flag numbering.** The distinct flag names of a stage — of `flag` and (M2-07) `trigger`
    events and of `branches` — are sorted into `stage.flagNames`; each gets `flagId` = its index
@@ -418,13 +426,42 @@ moving floors and ceilings are rock for everything that asks.
 
 ## Parallax and the terrain view
 
-**Parallax.** `createParallaxView(stage)` turns `stage.parallax` (≤ 8 bands, far to near) into
-a `StageParallaxView` of typed arrays: per band the layer (`far` → `BgFar`, `mid` → `BgMid`),
-sprite id, `spacing` (horizontal repeat distance, normally the sprite width), scroll `factor`
-and `baseY` (playfield row at camera y 0). `updateParallaxView(view, camera.x, camera.y)` —
-called by the World in phase 9 — sets `offsetX = (camera.x · factor) mod spacing` and `y =
-baseY − camera.y · factor`. Bands repeat horizontally only: for two rows of 192-px star tiles (the
-art's v1 128 × `WORLD_SCALE`), list the band twice with `y` 0 and 192 (as `test-range` does).
+**Parallax.** `createParallaxView(stage)` turns `stage.parallax` (at most six background bands
+far to near, and since R3-06 one further `fore` band) into a `StageParallaxView` of typed
+arrays: per band the layer (`far` → `BgFar`, `mid` → `BgMid`, `fore` → `Foreground`), sprite id,
+`spacing` (horizontal repeat distance, normally the sprite width), scroll `factor`, `baseY`
+(playfield row at camera y 0), and — R3-06 — the vertical `yFactor` (omitted = the band's own
+`factor`, so a plain band scrolls vertically exactly as before; set `0` to hold its row) and the
+animation pair `frames` / `frameTicks` (`frames` cycles the band's sprite and its `@f1`, `@f2`, …
+siblings; `frameTicks` ticks per frame, omitted = 8). `updateParallaxView(view, camera.x,
+camera.y, world.tick)` — called by the World's `syncWorldView` at the end of every tick (phase
+9), never allocating — sets `offsetX = (camera.x · factor) mod spacing`, `y = baseY − camera.y ·
+yFactor` and `frameIndex = ⌊tick / frameTicks⌋ mod frames` (0 on a static band). Bands repeat
+horizontally only: for two rows of 192-px star tiles (the art's v1 128 × `WORLD_SCALE`), list
+the band twice with `y` 0 and 192 (as `test-range` does). The `fore` band sits on its own layer
+in front of the ship — the draw order keeps enemy bullets above it, so it can never hide them.
+
+**Decor (R3-06).** `createDecorView(stage, content)` turns `stage.decor` (at most 256 still
+items, `MAX_STAGE_DECOR`) into a `StageDecorView`: the kept entries compiled into typed arrays
+(side `layer`, `spriteId` — `-1` for a tileset item, `frame`, `glow` — `-1` for none, `x`, `y`)
+plus per side a `back` / `front` sprite batch and the optional `'additive'` glow companions
+`glowBack` / `glowFront` (R3-06.L4). Everything allocates at load time only: entries the content
+cannot draw are dropped there (a `tile` on a stage with no tilemap, a tile name the tileset lacks,
+an unresolved `sprite`), a batch exists only when its side has kept items (`null` otherwise), and
+the glow halves only when some kept item on that side glows. `updateDecorView(view, camera.x)` —
+in the same phase-9 `syncWorldView` — refills the batches by camera culling, the window
+`[camera.x − DECOR_CULL_MARGIN, camera.x + PLAYFIELD_W + DECOR_CULL_MARGIN]` with the margin 512
+px on both sides. `back` items draw on `DecorBack` under the terrain, `front` items on
+`DecorFront` above it and below the sprites; all four batches ride `WorldView.batches` (back,
+glowBack, front, glowFront in order, each on its own layer, so the list order cannot mix them)
+and a stage without decor adds no batch at all. Decor is presentation: the simulation never reads
+it, it never collides and it is never scored. The wave-11 content rule W5-11 goes with it: decor
+never sits inside a collision tile (the dev range `decor-range` obeys it). Owner glows follow the
+same shape on the other systems: the enemy system refills its two glow batches in a dedicated
+`syncGlows` pass inside its `sync()` — never in the per-tick loop, which keeps its V8 inlining
+budget — the boss refills its part glows inside the existing drawn-part pass, part glows follow
+part visibility and enemy glows the Live-and-not-Ghost rule of the bodies, and every glow draws
+frame 0 with no flags: a glow is soft light, not the body's animation.
 
 **Terrain view.** `createTerrainView(map, stage, db, changes?)` gives the renderer a
 `TerrainView` over the collision map's own `tiles` array (not a copy) plus the tileset's sprite id
@@ -433,9 +470,9 @@ since M2-07, when the view's `changes` log (`TerrainChanges` — the World passe
 `DestructibleTerrain`) lists it; a reset (the rollback) redraws the grid. Moving blocks are not
 part of the grid: the World draws them as a `LayerId.Terrain` sprite batch.
 
-**Drawing** is `@shmup/render-pixi` `layers`: a ring-buffered 49 × 26 tile-sprite grid (one
-column / row re-textured per tile edge crossed, the whole grid moved as one container) and
-repeated sprites per parallax band — see
+**Drawing** is `@shmup/render-pixi` `layers`: a ring-buffered tile-sprite grid (55 × 29 at 12-px
+tiles — v1 drew 49 × 26 at 8 px; one column / row re-textured per tile edge crossed, the whole
+grid moved as one container) and repeated sprites per parallax band — see
 [rendering-and-shell.md](rendering-and-shell.md#layers-bindings-and-quad-pools). Since M2-08 a
 stage's `raster` effects distort whole layers (bands or terrain) row by row in a filter, and a
 `lines` effect over a band with `"factor": 0` turns it into a pseudo-3D floor — the parallax view
@@ -464,6 +501,7 @@ pnpm dev
 # → http://localhost:5173/?stage=zone-g       PRISM LABYRINTH alone — its gallery opens glimmer-cache (M2-13)
 # → http://localhost:5173/?stage=zone-h       IRON CITADEL alone — its piston hall and the parade (M2-14)
 # → http://localhost:5173/?stage=bonus-range  the three bonus entrances into bonus-vault (M2-10)
+# → http://localhost:5173/?stage=decor-range  the R3-06 decor range: cycling bands, the fore band, decor and glows
 ```
 
 `apps/web` reads `?stage=<id>` with `stageFromSearch` and checks it against the raw content's
@@ -602,10 +640,12 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/core/test/stage/stage-brake.test.ts`, `stage-brake-edge.test.ts` | The brake (M1-13): its hashed slots, linear deceleration then the lock where it stopped, speeds of keys and `speed` events met while braking recorded and resumed, `brake(0)`, a restart forgets it; a fractional ramp, resuming at a running ramp's target, `unlock()` mid-brake, pans under the lock, a lock key met while braking, a brake from a standstill, a restart replaying a passed `speed` event |
 | `packages/core/test/stage/stage-jump.test.ts`, `stage-jump-edge.test.ts` | `jumpTo` (M1-18): state equal to `restartAt` at a checkpoint's x, re-derived speed / pan / flags between keys, the events at `x` re-fired, the checkpoint index at or before `x`, range errors; no / late checkpoints, a pending key at `x`, key vs speed-event order, lock keys, a re-opened `end`, a brake released, a jump from a hook, independence from the run's history |
 | `packages/core/test/stage/stage-edge.test.ts` | Ramps and pans interrupted mid-way, scroll stops, locks (first key, stage end, behind a speed event, several in a row, fractional keys at fractional speeds, behind non-lock keys crossed in one tick), `unlock()` before a lock, flags up to bit 31, randomised invariants on 60 generated stages, a randomised live-vs-restart equivalence on 60 stages, `findEventCursor` vs a linear scan, allocation with locks, pans and unlocking hooks |
+| `packages/core/test/stage/stage-decor.test.ts`, `stage-decor-glow.test.ts`, `stage-decor-alloc.test.ts` | R3-06: the compiled `StageDecorView` (sprite and tileset items, dropped undrawables, the two batch capacities), the camera culling of `updateDecorView` (window at both ends, the margin columns), the World wiring (batches joined to the view list, `view.decor`, no batch for a stage without decor), the glow half (compiled `glow` ids, per-layer glow batches created only where an item glows, the additive refill under the owners' window, none without a glow), and the R3-06 parallax runtime (the `fore` layer, `yFactor` defaulting to the horizontal factor, the slow `frames` / `frameTicks` cycling); the band and decor syncs allocation-guarded |
 | `packages/core/test/stage/stage-advanced*.test.ts`, `stage-systems-edge.test.ts` | M2-07: holds, diagonal pans, 16 px/tick sections, branches, triggers, restarts against live play; the World-side stage gimmicks ([advanced-stages.md](advanced-stages.md#tests)) |
 | `packages/core/test/collision/destructible*.test.ts` | M2-07: destructible tiles, regeneration, rollback, the change log; moving blocks in every query |
 | `packages/core/test/collision/terrain*.test.ts` | Every `terrain-a` tile shape pixel by pixel (`terrainAt`, `findFloor` from above, `findCeiling` from below), `boxHitsTerrain` edges, hazard priority, decoration, out-of-map and NaN input; every query against an independent pixel reference on random maps; the allocation guard |
 | `packages/core/test/data/tilemap*.test.ts`, `stage-edge.test.ts` | Tileset validation and tables; stage checks (sorting, first key, range, pans, flags, segments, unknown tileset) — all issues of one file in one load; RLE decoding and every error; the heightfield generator (deterministic, masks match tiles, slope rules, ramps, floor over ceiling, 120 random profiles where `findFloor` sees exactly the generated heights) |
+| `packages/core/test/data/data-stage-decor.test.ts` | R3-06 in `loadContent`: the `decor` list (sprite items resolving to a `spriteId`, tile items drawing with `-1`, the exclusive `sprite` / `tile` choice, the bounds, the cap, the field staying absent when the file names none) and the extended bands (the `fore` layer, `yFactor`, `frames` / `frameTicks`, the band counts the loader checks) |
 | `packages/core/test/world/world-stage*.test.ts` | `config.stage` (unknown ids throw), the runner driving the camera and the ship riding along (pans, locks), music events and the queued theme, `end` → `stageClear`, restarts clearing the pools, the view's parallax / terrain, terrain hits through `playerHit` (fly-in, god mode, hazard, decoration, ceilings, player 2), hit-stop freezing the timeline, determinism, zero allocation |
 | `packages/core/test/debug/` | `hashWorld` covers the stage state and the players' hit fields |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts`, `renderer/` | The terrain ring and parallax bands ([rendering-and-shell.md](rendering-and-shell.md#tests)) |
@@ -613,6 +653,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels (through the shared `terrain-checks.ts` since V4b/V4c); `test-range` expands with existing frames and a pinned grid fingerprint — pinned per scale (v1's on a `K = 1` tree, v2's today: 654 columns × 28 rows); **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint — since M2-12 measured in the rows the camera shows when the ship (view x ≈ 64) reaches the column (a stage runner alongside; zone D's caves are map rows 200–399); every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
 | `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
 | `test/e2e/gimmicks.spec.ts` | M2-07: `?stage=gimmick-range` draws the brick pillar; breaking it in the sim takes it off the next frame, the rollback draws it again |
+| `test/e2e/decor.spec.ts` | R3-06.L6 in Chromium: `?scene=flight&stage=decor-range` on the frozen sim — a decor item draws at its world place over the bands, the `fore` band draws over the playfield with the bullets it shares the screen with on top, the animated bands cycle their two frames on the tick, and the glow batches (decor's and the boss's vent) ride the live view with `blend === 'additive'` — states read through the view, not pixels, and the expected colours come out of the `decor.mjs` generator, so a recolour never re-pins the spec. No draw-call assert: `raster.spec.ts` counts 16 groups and predates the decor layers; the bench carries R3-06's numbers |
 
 ## Gotchas
 

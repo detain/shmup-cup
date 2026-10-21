@@ -298,7 +298,8 @@ orange 1UP).
   ],                               // animation over the sprite's "@f1", "@f2", … siblings
   "decor": [                       // optional (R3-06): non-colliding items, file order
     { "layer": "back", "sprite": "bg/stars-near", "frame": 0, "x": 768, "y": 96 },
-    { "layer": "front", "tile": "moss", "frame": 0, "x": 3200, "y": 294 }
+    { "layer": "front", "tile": "moss", "frame": 0, "x": 3200, "y": 294,
+      "glow": "fx/glow-lantern" }  // optional (R3-06.L4): additive glow sprite over the item
   ],
   "tilemap": {                     // or null for an open-space stage
     "tileSize": 12,
@@ -371,12 +372,18 @@ and gives the `layer` it draws on — `back` (behind the terrain) or `front` (in
 the bullets) — with a `frame` (a sprite item's atlas frame; a tile item draws the tile's own
 frame) and the `x, y` of the item's top-left corner. The list is drawn in file order, culled by
 the camera like the terrain and taken from the zone's atlas pages. At most 256 items per stage. A
-stage that does not name `decor` keeps the resolved stage's shape exactly as before.
+stage that does not name `decor` keeps the resolved stage's shape exactly as before. An entry may
+also name a `glow` — an atlas sprite drawn additively over the item (R3-06.L4; default: none, the
+key stays absent; where the item sits on terrain, the terrain glows). Enemies and boss parts
+carry the same `glow` field: the glow rides its owner's layer and draws over the body, with no
+flag and frame 0. The name is checked against the atlas exactly like a sprite reference — an
+unknown `glow` is a `pnpm content:check` error.
 
 Parallax bands gained two things (R3-06). The `fore` layer is the sparse foreground band, drawn
 in front of the player ship — at most one per stage, and it can never hide bullets: the draw
 order keeps enemy bullets above it. And any band may carry `yFactor` — how far it moves
-vertically with the camera's pan (omitted = 0: the band holds its playfield row) — and may
+vertically with the camera's pan (omitted = the band's own `factor`: it moves exactly as a plain
+band always did; set `0` to hold its playfield row) — and may
 animate: `frames` cycles the band's sprite and its `@f1`, `@f2`, … siblings, `frameTicks` ticks
 per frame (omitted = 8). At most six background bands (`far` / `mid`) per stage.
 
@@ -513,12 +520,15 @@ colours on one layer.
 
 Since R3-06 also: a decor item naming both or neither of `sprite` and `tile`, a decor `x` past the
 stage's `length`, a `frameTicks` without `frames`, more than six background parallax bands, and
-more than one `fore` band.
+more than one `fore` band — and, through `pnpm content:check`'s sprite scan, a `glow` name the
+atlas lacks.
 
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer
 entities become events at their scroll x (a spawn 664 px ahead of its object), camera keys,
-checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file. Objects sit
+checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file; since
+R3-06 the `decor-back` / `decor-front` tile layers and class-`decor` objects become `decor`
+entries and every image layer becomes one `parallax` band. Objects sit
 at world positions; since a spawn's `y` is camera-relative, the importer subtracts the camera y
 the imported keys give when the spawn fires (vertical and diagonal pans included; a spawn that may
 fire during a timed `yTicks` pan gets a warning). See the script's docblock for the rules.
