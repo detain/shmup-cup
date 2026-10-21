@@ -170,10 +170,15 @@ the plan's **next** item in Direct mode. With the default 0.5 every second drop 
 
 ## Player 2's palette swap
 
-- **Assets.** `scripts/assets/coop.mjs` adds a `<name>@p2` sibling for every `ships/*` sprite and
-  for `hud/life`: the source frames through a **per-sprite colour map** — the sprite's own `p2`
-  field in its `.sprite.json` (every colour the map names exchanges with its target; unlisted
-  colours and alpha stay), or, for a real-art PNG override, the sidecar's `meta.shmup.p2`
+- **Assets.** `scripts/assets/coop.mjs` adds a `<name>@p2` sibling for every `ships/*` sprite —
+  the hulls and, since R4-01.A2, their thruster flame strips too (`P2_VARIANT_PREFIXES`,
+  `coop.mjs:32`) — and for `hud/life`: the source frames through a **per-sprite colour map** — the
+  sprite's own `p2` field in its `.sprite.json` (every colour the map names exchanges with its
+  target; unlisted colours and alpha stay). Each scale carries its own map, so a v2 source extends
+  it for the palette the v1 art lacks — the KESTREL's v2 map adds the two hull tones its redraw
+  introduced (`#e0e8f0`, `#4a5878`), and both `ships/kestrel-thruster` and
+  `ships/manta-thruster` name their flame colours in `.v2.sprite.json` exactly as their hulls do;
+  or, for a real-art PNG override, the sidecar's `meta.shmup.p2`
   (`sprite-source.mjs`, R3-03.V2a `8416da5`). This map replaced the old red↔blue **channel swap**:
   the KESTREL's map turns its blue hull stripe red-orange, its cyan canopy gold and its orange
   engine glow blue — the atlas stayed byte-identical to the swap's — and the variant of a real-art
@@ -182,8 +187,11 @@ the plan's **next** item in Direct mode. With the default 0.5 every second drop 
   report skips them (reported for their source). The atlas stays 512×512.
 - **Data.** `loadContent` interns `<ship sprite>@p2` (`P2_SPRITE_SUFFIX`) for every ship and
   resolves it into `PlayerShipSpec.spriteP2Id` (-1 without it — the built-in `DEFAULT_PLAYER_SHIP`
-  too); `pnpm content:check` fails when the atlas lacks one, like any other sprite name.
-- **World.** `syncWorldView` draws slot 1 with `spriteP2Id` (falling back to `spriteId`).
+  too), and since R4-01.A2 interns `<thruster>@p2` the same way into `thrusterP2Id` (-1 without a
+  thruster or the variant, and player 2 then uses `thrusterId`, `data/index.ts:501–511`);
+  `pnpm content:check` fails when the atlas lacks one, like any other sprite name.
+- **World.** `syncWorldView` draws slot 1 with `spriteP2Id` (falling back to `spriteId`), and
+  `syncThrusters` (R4-01.A2, `world/index.ts:2134–2157`) burns slot 1's `thrusterP2Id` likewise.
 - **HUD.** `UI_SPRITES` gained `hud/life@p2` (`UiSprites.lifeP2`) for player 2's stock icon.
 
 ## The HUD (`core/ui`)

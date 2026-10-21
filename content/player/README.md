@@ -30,7 +30,7 @@ ship in file order; the chosen ship's `mode` becomes the session's power-up mode
       "margins": { "left": 12, "right": 12, "top": 9, "bottom": 9 }, // clamp to the camera view
       "enterTicks": 40,                // uncontrollable fly-in after a spawn
       "respawnInvulnTicks": 150,       // blinking invincibility after a respawn
-      "bankFrames": 1,                 // tilt frames on each side of the idle frame
+      "bankFrames": 2,                 // tilt frames on each side of the idle frame (v2 ships: 5 frames)
       "mode": "meter",                 // optional: "meter" (default, the power meter) or "direct" (colour items)
       "startSpeedLevel": 0             // optional: index into speeds the ship starts with (default 0)
     }
@@ -44,7 +44,9 @@ Units: pixels in the 640×360 internal resolution, time in ticks (60 per second)
 the ship moves at `speeds[0]` px/tick (diagonals × 0.7071 per axis, decision D4), stops
 `margins` pixels inside the 640×336 playfield, flies in over `enterTicks` ticks, and tilts
 through `bankFrames` frames each way (the sprite needs `1 + 2 × bankFrames` frames: level,
-then the up frames, then the down frames). The optional `thruster` names a second sprite the
+then the up frames, then the down frames — both shipped files use 2, the five-frame bank the
+v2 art draws: level, climb, steep climb, dive, steep dive, R4-01.A1b; the schema allows 0–8,
+`data/index.ts:2426`). The optional `thruster` names a second sprite the
 World draws behind the hull (R4-01.A2 — presentation only, never hashed): `core/world`
 `syncWorldView` pushes it at the ship's centre minus the hull's rear offset, cycling the
 sprite's four frames by `(tick >> 2) & 3`, and player 2 burns its `@p2` variant when the atlas

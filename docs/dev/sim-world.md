@@ -110,7 +110,7 @@ event queue (`WorldOptions.events`) — [scenes-and-ui.md](scenes-and-ui.md#worl
 | `debugFlags` | The session's debug switches (`WorldOptions.debugFlags` — `createGame` passes `game.debug`, a World alone gets `createDebugFlags()`): `godMode` (read by `playerHit` — the only one that changes a tick), `showHitboxes`, `showGrid`, `frameAdvance`, `slowMo`, `overlay` (M1-19 — [debug-and-replays.md](debug-and-replays.md)) |
 | `pools` | The `PoolRegistry` of every SoA pool the systems create |
 | `grid` | The broad-phase `SpatialGrid` over the camera view + `GRID_MARGIN` (64 px) on each side |
-| `playerBatch`, `view` | The players' mirror `SpriteBatch` (`LayerId.Player`) and the `WorldView` the renderer draws |
+| `playerBatch`, `view` | The players' mirror `SpriteBatch` (`LayerId.Player`, capacity `2 · MAX_PLAYERS` — since R4-01.A2 a ship takes two entries, its flame and its hull: the batch holds flame 0, flame 1, ship 0, ship 1) and the `WorldView` the renderer draws |
 
 ### The tick pipeline
 
@@ -191,6 +191,13 @@ already shows the ship) scrolls the parallax bands with the camera, refills the 
 hit flash) and the players' mirror batch with `syncWorldView`: a ship is drawn when its slot is active, it is neither
 `dying` nor `dead`, and the spec has a sprite (`spriteId >= 0`); while `invulnTicks > 0` it
 blinks (`SpriteFlag.Hidden` four ticks on, four off). The frame is the bank frame (below).
+Since R4-01.A2 the flames lead: before the hulls, `syncThrusters` (`world/index.ts:2134–2157`)
+pushes every alive ship's thruster — the spec's `thruster` sprite, `ships/kestrel-thruster` or
+`ships/manta-thruster` (`thrusterId` −1 when the content names none, and nothing burns) — 12 px
+behind the hull centre (`PLAYER_THRUSTER_REAR_OFFSET`, `:1789`), cycling the four-frame flame by
+`(tick >> 2) & 3` (`:2142`) with the same invulnerability blink as the hull, and player 2 burns
+the interned `@p2` flame (`thrusterP2Id`, falling back to `thrusterId`, `:2141`). Sync-time
+presentation — the flame is never hashed.
 
 **Presentation mirrors (M2-08).** `view.effects` is the stage's `StageEffectsView` (its raster
 effects and palette cycles — `core/stage` `createStageEffectsView`, built once, `null` in free

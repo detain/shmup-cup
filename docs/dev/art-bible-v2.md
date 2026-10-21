@@ -253,14 +253,15 @@ alpha in several places; in v2 only these may:
 `blend: preset.blend ?? 'add'`), and only `debris` says `"normal"` — so v1's explosions are drawn
 additively. In v2 these are **normal blend**, binary alpha except their translucent smoke:
 
-- **explosions** (`fx/explosion-*`) — R4-04 sets `"blend": "normal"` on `explosion.small`,
+- **explosions** (`fx/explosion-*`) — R4-04 set `"blend": "normal"` on `explosion.small`,
   `explosion.medium`, `explosion.large` and `boss.chain` in `content/fx/particles.fx.json` and
-  re-checks the fx gallery e2e (`test/e2e/fx-gallery.spec.ts`, written for additive fireballs). If
-  R4-04 lays an additive flash preset over a blast, that flash joins the additive list above;
+  re-checked the fx gallery e2e (`test/e2e/fx-gallery.spec.ts`, written for additive fireballs).
+  No additive flash preset was laid over a blast, so the additive list above is unchanged;
 - **debris** (`fx/debris`) — as today;
 - **the black hole** (`fx/black-hole`) — the black-hole system already draws it as a plain sprite
   batch on the FX layer (`core` `blackhole`, `createSpriteBatch(LayerId.Fx, …)`), and its dark core
-  needs normal blending. It is keyed on green like any sprite, not on black.
+  needs normal blending. It is keyed on green like any sprite, not on black. R4-01.A8 made it the
+  bible's native 48×48 over 8 frames (5.8).
 
 **Never translucent:**
 
@@ -484,58 +485,60 @@ Frame counts below are **v2 (v1)**. A v1 count is from today's atlas.
 
 | Category | v1 | v2 size | v2 frames (v1) | Made by (section 6) |
 |---|---|---|---|---|
-| Player ships | KESTREL 16×9, MANTA 16×10 | **24×14**, 24×15 | **5** bank (3) † | hand-pixelled |
-| Ship thruster | 6×3 | 9×5 | 4 (2) † | hand-pixelled |
-| Options | 8×8 | 12×12 | 4 (2) † | hand, or AI concept → heavy cleanup |
-| Shields | field 30×24, pod 8×8, Arm 26×18, Reduce 20×14 | 45×36, 12×12, 39×27, 30×21 | field 4 wear states × 1–2 (4) †; pod 4 (4); Arm 9 (9); Reduce 2 (2) | AI concept → heavy cleanup, or hand |
+| Player ships | KESTREL 16×9, MANTA 16×10 | **24×14**, 24×15 | **5** bank (3) | hand-pixelled |
+| Ship thruster | 6×3 | 9×5 | 4 (2) | hand-pixelled |
+| Options | 8×8 | 12×12 | 4 (2) | hand, or AI concept → heavy cleanup |
+| Shields | field 30×24, pod 8×8, Arm 26×18, Reduce 20×14 | 45×36, 12×12, 39×27, 30×21 | field 4 wear × 2 shimmer = 8 (4); pod 4 (4); Arm 9 (9); Reduce 2 (2) | AI concept → heavy cleanup, or hand |
 | Player shots (22) | 3–44 px | ×1.5 (5.3) | as v1, +1–2 for beams and discs | hand-pixelled |
 | Enemy bullets | round 7, oval 9, needle 11 | **11, 13, 17** | 1 / 8 / 8 headings (1 / 8 / 8) | procedural |
 | Lasers | beam 4×8, bend node 7×7 | beam 6×12, node 11×11 | beam **12** = one per band height (8); node 1 | procedural |
-| Items | capsules 12×8, Direct orbs 10×10, point 5×5 | 18×12, 15×15, 7×7 | **4** glint (2) † | hand-pixelled |
+| Items | capsules 12×8, Direct orbs 10×10, point 5×5 | 18×12, 15×15, 7×7 | **4** glint (2) | hand-pixelled |
 | Enemies | 6–40 px | 9–60 px, set pieces ≤ 96 (5.6) | **4–6** per animation (1–3) | by size (section 6) |
 | Boss parts | 10–30 px | 15–45 px (5.7) | cores and emitters 4 (2), turrets 16 headings | AI concept → cleanup |
 | Boss bodies | hulls 48–96 px | ≤ ≈ 200 tall, ≈ 420 wide; raids in sections | intact + 1–2 damage states | AI → ingest → cleanup |
 | Explosions | 16, 32, 48 | 24, 48, 72 | **12–16** (6–8) | AI concept → cleanup |
-| FX: particles, black hole | spark 5, debris 6, ring 9, black hole 32 | 7, 9, 13, 48 | 4–6 (3–4), black hole 8 (4) † | procedural / AI concept |
+| FX: particles, black hole | spark 5, debris 6, ring 9, black hole 32 | 7, 9, 13, 48 | 4–6 (3–4), black hole 8 (4) | procedural / AI concept |
 | Terrain tiles | 8×8, 20 per set | **12×12**, 20–40 per set | palette cycles only | hand, from AI swatches |
 | Backdrops | 128-px repeating bands | 640 px wide, 4–6 layers (5.10) | 1, optional 2–4 slow | AI → ingest → cleanup |
 | HUD | 8-px bars, icons ≤ 8 | 12-px bars, icons ≤ 12 | as v1 | hand-pixelled |
-| Font | 6×8, 195 glyphs | ≈ 9×12 (R4-03), 195 glyphs | — | hand-pixelled, never AI |
+| Font | 6×8, 195 glyphs | **9×12**, 195 glyphs | — | hand-pixelled, never AI |
 | UI kit | rectangles + font | rectangles + font; sprite parts ≤ 12×12 | — | hand / procedural |
-| Title logo | 165×27 | ≈ 320×64 (≤ 400×80) | 1 (+ optional shine) | AI lockup → hand redraw |
+| Title logo | 165×27 | **330×54** | 1 | procedural (the lettering in `logo.mjs`) |
 | Ending scenes | parts up to 128×72 | full frame 640×360 | 1 + animated parts | AI → ingest → cleanup |
 
-**† Counts today's game cannot show yet.** Most categories take their frame count from content or
-the atlas — enemies' and boss parts' `anim.frames`, the player shots, the particle presets, the
-laser beam's band frames — so new art needs at most a content edit (one that changes a hashed
-frame, such as an enemy's `animFrame` or a shot's, is re-blessed as plan §10 says). These do not:
-the step named changes the spot given (paths under `packages/core/src/` unless stated), and until
-it does, the art keeps the v1 count. "Re-bless" means the change alters hashed state, so the
-goldens are re-blessed with the reason; the others are presentation only.
+**† retired — every count is drawn.** The table kept the counts the game could not show while the
+art was designed: the code held the v1 number, so the step named had to change the spot given
+(paths under `packages/core/src/` unless stated) before the new art could show. Every row shipped
+in waves 8–9, so the table now records what holds the count **today**. Most other categories took
+their frame count from content or the atlas — enemies' and boss parts' `anim.frames`, the player
+shots, the particle presets, the laser beam's band frames — and needed at most a content edit.
 
-| Sprite | v2 (v1) | What holds the count today | Step | Goldens |
+| Sprite | v2 (v1) | What holds the count today | Shipped by | Goldens |
 |---|---|---|---|---|
-| `ships/kestrel`, `ships/manta` | 5 (3) | content, not code: `"bankFrames": 1` in `content/player/kestrel.player.json` and `manta.player.json` (2 gives five frames); the frame order is `playerBankFrame`'s (`player/index.ts:584`) | R4-01 | re-bless: the bank step is hashed (`debug/index.ts:412`) |
-| `ships/kestrel-thruster` | 4 (2) | not drawn in the game at all — only by the shell showcase (`(tick >> 2) & 1`, `packages/shell/src/showcase/index.ts:278`) and `pnpm docs:images`. Drawing it behind the ship is a new push before the ship's in `syncWorldView` (`world/index.ts:2088–2102`) | R4-01 | unchanged |
-| `options/orb`, `options/stolen` | 4 (2) | `Math.floor(tick / OPTION_ANIM_TICKS) & 1` for the Options (`weapons/index.ts:2881`) and an Option Hunter's carried Options (`enemies/index.ts:3161`); a freed Option is an item kind with `frames: 2` (`ITEM_KINDS`, `powerups/index.ts:589`) | R4-01 | unchanged |
-| `shields/force-field` | 4 wear × 1–2 shimmer (4) | `FORCE_FIELD_WEAR_FRAMES = 4` (`shields/index.ts:178`): `shieldWearFrame` (`:915`) maps the hits left to a frame, so every frame is a wear state. A shimmer needs a wear × shimmer mapping where `PowerUpSystem.sync` picks the frame (`powerups/index.ts:2161`), as `armWearFrame` does tier × wear (`shields/index.ts:738`) | R4-01 | unchanged |
-| `fx/black-hole` | 8 (4) | `BLACK_HOLE_FRAMES = 4` (`blackhole/index.ts:132`); `sync` (`:363–366`) cycles frames 0 … `BLACK_HOLE_FRAMES − 2` as the swirl and shows the last as the discharge, so an 8-frame strip would show the wrong frames | R4-01 (its scope has the black hole) | unchanged |
-| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up`, `direct-*` | 4 (2) | `frames: 2` for every kind in `ITEM_KINDS` (`powerups/index.ts:586–595`) | R4-02 | unchanged |
-| `items/point` | 4 (2) | `pf.frame[i] = (age >> 3) & 1` (`bullets/index.ts:2002`), a field of the hashed `cancelPoints` pool | R4-02 | re-bless |
+| `ships/kestrel-thruster`, `ships/manta-thruster` | 4 (2), 4 (—) | `syncThrusters` pushes every alive ship's flame before its hulls (`world/index.ts:2134–2157`), frame `(tick >> 2) & 3` (`:2142`); the batch is `LayerId.Player` at capacity `2 · MAX_PLAYERS` (`:1842`). The MANTA's flame is v2-only (RR-1a — no v1 map, no v1 draw) | R4-01.A2 (`f0942b1`) | unchanged (presentation only) |
+| `options/orb`, `options/stolen` | 4 (2) | `OPTION_FRAMES = 4` (`options/index.ts:98`): `Math.floor(tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1)` for the Options (`weapons/index.ts:3151`) and an Option Hunter's carried Options (`enemies/index.ts:3242`) | R4-01.A3 (`7b07886`) | unchanged |
+| `shields/force-field` | 8 (4) | `FORCE_FIELD_WEAR_FRAMES = 4` (`shields/index.ts:185`) × `FORCE_FIELD_SHIMMER_FRAMES = 2` (`powerups/index.ts:691`): `PowerUpSystem.sync` picks the paired frame `wear × 2 + shimmer` (`powerups/index.ts:2174`) | R4-01.A4 (`92b4b73`) | unchanged |
+| `fx/black-hole` | 8 (4) | `BLACK_HOLE_FRAMES = 8` (`blackhole/index.ts:132`); `sync` (`:360–367`) cycles swirl frames 0 … 6 while the pull holds and shows frame 7 as the discharge | R4-01.A8 (`b760dbb`) | unchanged |
+| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up`, `direct-*` | 4 (2) | `frames: 4` for every kind in `ITEM_KINDS` (`powerups/index.ts:588–595`) | R4-02.B2 (`ba09e57`) | unchanged |
+| `items/point` | 4 (2) | `pf.frame[i] = (age >> 3) & 3` (`bullets/index.ts:2019`), a field of the hashed `cancelPoints` pool | R4-02.B3 (`e1ed688`) | re-blessed at `e1ed688` |
 
 ### 5.3 Player: ships, Options, shields, shots
 
 | Sprite | v1 | v2 | Frames v2 (v1) | Notes |
 |---|---|---|---|---|
-| `ships/kestrel`, `ships/manta` | 16×9, 16×10 | **24×14**, 24×15 | 5 (3) †, in atlas order: 0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive | anchor = the hurt centre, per ship: KESTREL v1 `[8, 4]` ×1.5 → `[12, 6]`; MANTA v1 `[8, 5]` ×1.5 → `[12, 7.5]`, so `[12, 7]` or `[12, 8]` (R4-01 confirms both); `@flash`, `@p2` derived. Five frames need `"bankFrames": 2` (†; v1 has level / up / down) |
-| `ships/kestrel-thruster` | 6×3 | 9×5 | 4 (2) flicker loop † | to be drawn behind the ship — the game does not draw it yet (†). The MANTA's twin thrusters are in its frames or a strip of their own (R4-01) |
-| `options/orb`, `options/stolen` | 8×8 | 12×12 | 4 (2) † | round art, never rotated |
-| `shields/force-field` | 30×24 | 45×36 | 4 wear states (fresh cyan → worn → damaged → critical magenta) × 1–2 shimmer frames † — until R4-01 maps them, 4 frames, one per wear state | translucent inner glow (3.6) |
+| `ships/kestrel`, `ships/manta` | 16×9, 16×10 | **24×14**, 24×15 | 5 (3), in atlas order: 0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive | anchor = the hurt centre, per ship: KESTREL `[12, 6]`, MANTA `[12, 7]` (the v2 maps' `anchor`, confirmed by R4-01.A1b); `@flash`, `@p2` derived. All five frames are drawn since R4-01.A1b — `"bankFrames": 2` in both shipped files (v1 has level / up / down; the scale-1 build never banks past the three v1 frames, RR-1) |
+| `ships/kestrel-thruster` | 6×3 | 9×5 | 4 (2) flicker loop | drawn behind every alive ship since R4-01.A2 (`syncThrusters`, `world/index.ts:2134–2157`); the v2 map cycles all four frames, `(tick >> 2) & 3` |
+| `ships/manta-thruster` | — | 9×5 | 4 (—) | the MANTA's strip of its own (the question this row raised): the KESTREL flame's 9×5 four-frame flicker grammar in the MANTA's green-to-cyan engine ramp, anchored at the hull's right edge, v2-only (RR-1a — no v1 map, so at scale 1 the name resolves to `thrusterId` −1 and the ship burns nothing, `data/index.ts:507`); drawn by the same `syncThrusters`, its `@p2` sibling included |
+| `options/orb`, `options/stolen` | 8×8 | 12×12 | 4 (2) | round art, never rotated; the four-frame pulse is live since R4-01.A3 (`OPTION_FRAMES` 4) |
+| `shields/force-field` | 30×24 | 45×36 | 4 wear states (fresh cyan → worn → damaged → critical magenta) × 2 shimmer = 8 | translucent inner glow (3.6); the paired wear × shimmer frame is drawn since R4-01.A4 (the shimmer is a seeded ring sparkle that never changes the ink — the two shimmer frames carry identical colour counts) |
 | `shields/pod` | 8×8 | 12×12 | 4 wear states | faceted gold gem with a riveted band (the winner) |
 | `shields/arm` | 26×18 | 39×27 | 9 (3 tiers × 3) | Direct mode |
 | `shields/reduce` | 20×14 | 30×21 | 2 | translucent shimmer (3.6) |
 
-Player shots — all 22, ×1.5 by section 5.1, the frame counts of v1 (beams and discs may gain 1–2):
+Player shots — all 22, ×1.5 by section 5.1, the frame counts of v1 (beams and discs may gain 1–2).
+Delivered by R4-01.A6/A7: the eleven hand-made `shots/*.v2.sprite.json` maps and the eleven
+generated shots now draw at the native v2 sizes below, v1's frame counts kept (the `shots-v2`
+suite and the per-shot procedural tests pin every row):
 
 | Shot | v1 → v2 | Shot | v1 → v2 |
 |---|---|---|---|
@@ -574,11 +577,11 @@ length (`LASER_SEGMENT_LENGTH` 12) and one wave period per segment.
 
 | Sprite | v1 | v2 | Frames v2 (v1) |
 |---|---|---|---|
-| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up` | 12×8 | 18×12 | 4 glint (2) † |
+| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up` | 12×8 | 18×12 | 4 glint (2) |
 | `items/one-up` | 12×8 | 18×12 | 1 |
-| `items/direct-<colour>` (blue, green, octagon, orange, red, yellow) | 10×10 | 15×15 | 4 (2) † |
+| `items/direct-<colour>` (blue, green, octagon, orange, red, yellow) | 10×10 | 15×15 | 4 (2) |
 | `items/bonus` | 10×10 | 15×15 | 1–4 (1) |
-| `items/point` | 5×5 | 7×7 | 4 twinkle (2) † |
+| `items/point` | 5×5 | 7×7 | 4 twinkle (2) |
 
 ### 5.6 Enemies by size class
 
@@ -618,7 +621,7 @@ part of the boss is the one to shoot.
 | `fx/explosion-small` | 16×16 | 24×24 | 12 (6) | the winner's sequence (2.2), shortened; normal blend from R4-04 (3.6) |
 | `fx/explosion-medium` | 32×32 | 48×48 | 12–14 (7) | normal blend from R4-04 (3.6) |
 | `fx/explosion-large` | 48×48 | 72×72 | 14–16 (8) | boss chains overlap large and medium; normal blend from R4-04 (3.6) |
-| `fx/black-hole` | 32×32 | 48×48 | 8 (4) † | normal blend, binary alpha, green key — it has a dark core (3.6) |
+| `fx/black-hole` | 32×32 | 48×48 | 8 (4) | native 48×48 over 8 frames since R4-01.A8 (`BLACK_HOLE_FRAMES` 8, `blackhole/index.ts:132`) — swirl frames 0–6, frame 7 the discharge; normal blend, binary alpha, green key — it has a dark core (3.6) |
 | `fx/spark`, `fx/sparkle` | 5×5 | 7×7 | 4 (3–4) | additive, on black (3.6) |
 | `fx/debris` | 6×6 | 9×9 | 4–6 (4) | normal blend, as today |
 | `fx/ring` | 9×9 | 13×13 | 4–6 (4) | additive, on black (3.6) |
@@ -670,16 +673,18 @@ R4-04.
 | `hud/life` | 8×5 → **12×8** (+ `@p2`) |
 | `hud/meter-slot` | 40×8 → **60×12**, 3 frames (normal, highlighted, excluded) |
 | `hud/meter-labels` | 36×5 → **54×8**, 23 labels — or drawn with the new font if R4-03 prefers |
-| Font | cell 8×12 or 9×12 (R4-03), line height 15, advance = cell width. All 195 glyphs (ASCII, the Spanish capitals, 84 katakana) redrawn by hand. One colour per string (tinted) |
+| Font | native `pixel9x12` (R4-03 delivered): cell 9×12, line height 15, advance 9 — the config's `GLYPH_W` / `GLYPH_H` / `LINE_H` 9/12/15. All 195 glyphs (ASCII, the Spanish capitals, 84 katakana) redrawn by hand. One colour per string (tinted) |
 | UI kit | panels, cursors, sliders, toggles as draw-list rectangles and the font. Optional sprite parts (panel corners, cursor) ≤ 12×12. Panel geometry derived from the frame |
-| Title logo | ≈ 320×64 (≤ 400×80), redrawn by hand from the wordmark winner: banded lemon → orange → red letters, navy outline, hard offset shadow |
-| Title screen | logo over a 640×360 backdrop from the title key art |
-| Ending scenes | five full-frame **640×360** scenes plus animated parts — e.g. the blast 24×24 → 36×36, 4–8 frames |
-| Zone cards, attract cards | 640×360 or frame-derived bands |
-| WARNING banner | a frame-wide band, red hazard stripes; height from the frame |
+| Title logo | **330×54** (R4-05.E1, `scripts/assets/procedural/logo.mjs`): the same lettering at ×6 — 318 px of letters plus a 6-px pad — in three flat 14-px bands lemon → orange → red (the bottom `#e04828`), a 2-px navy outline and a hard 4-px down-right shadow; inside the ≤ 400×80 cap |
+| Title screen | the logo over the full-frame `ui/title-backdrop` (R4-05.E2, redrawn from the title key art): the 640×360 night sky ships as two native 320×360 half-frames that `TitleScene.drawUi` draws side by side at x = 0 and `FRAME_CX` (no atlas frame may outsize 510²; v2-only, RR-1a — at scale 1 the id is absent and draws nothing) |
+| Ending scenes | five full-frame **640×360** scenes — delivered by R4-05.E4 (`9873156`) — plus animated parts, e.g. the blast 24×24 → 36×36, 4–8 frames |
+| Zone cards, attract cards | a frame-derived band, not a 640×360 picture (R4-05.E3): `ZONE_CARD_H` = 4 × `HUD_BAR_HEIGHT` = 48 px, top `FRAME_CY − uiPx(40) − ZONE_CARD_H` = 72 (`scenes/index.ts:1766–1772`), the zone label and name as a two-row block centred in the band (`:1778`), over the launching stage |
+| WARNING banner | frame-wide band of red hazard stripes (R4-05.E3): `WARNING_BAND_H` = `FRAME_H` / 5 = 72 px (`scenes/index.ts:1741`), top `FRAME_CY − uiPx(8) − 36` = 132 (`:1747`), the text row 30 px under the band's top edge (`:1754`), stripe pitch 18 px with 72-px hazard fields at each end (`:1757`, `:1760`) |
 
 The store and documentation images (`pnpm store:assets`, `pnpm docs:images`) are made from the key
-art at their own sizes in R4-05; they are not in the game frame.
+art at their own sizes; R4-05 shipped both — the icons draw from the v2 art (E5, `d23fec0`) and
+every plate and screen was re-rendered on the final art (E6, `45739d8`, after the wave-8 plate
+pass `75dc7c0`) — none of it in the game frame.
 
 ---
 

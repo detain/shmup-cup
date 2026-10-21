@@ -357,7 +357,8 @@ ships, enemy bullets.
   a Cyclone's segments stepping its swirl frames along the beam and every 4 ticks (M2-03). A full
   batch drops sprites (drawing only).
 - `weapons.optionBatch` (`LayerId.Player`, 8 slots) holds the Options flying this tick as
-  `options/orb` with a two-frame pulse (`OPTION_ANIM_TICKS` 8). It sits before the ships' batch
+  `options/orb` with a four-frame pulse (`OPTION_FRAMES` 4 since R4-01.A3, frame
+  `Math.floor(tick / OPTION_ANIM_TICKS) & 3`; `OPTION_ANIM_TICKS` 8). It sits before the ships' batch
   in the list, and same-layer batches draw in list order, so the Options are drawn below the
   ships.
 - The shot sprites come from the content (`shots/*`); `options/orb` (`OPTION_SPRITE`) and, since

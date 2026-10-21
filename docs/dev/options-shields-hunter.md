@@ -152,8 +152,10 @@ same kind stands at full strength (`shieldFull`).
 
 **Events.** A pod that takes a point pushes `SFX ShieldHit`; a pod that breaks pushes `SFX
 ShieldBreak` + `FX ShieldBreak` like a field's break (`PowerUpSystem.resolve`, from the tick's hit
-/ break records). The shield batch holds one field sprite, or one sprite per **standing** pod in its
-own wear frame (`podWearFrame`), blinking during its i-frames.
+/ break records). The shield batch holds one field sprite — the field drawn over its 8 v2 frames
+since R4-01.A4 (4 wear states × 2 shimmer: `shieldWearFrame(...) × FORCE_FIELD_SHIMMER_FRAMES +
+shimmer` picked in `PowerUpSystem.sync`, `powerups/index.ts:2174`) — or one sprite per **standing**
+pod in its own wear frame (`podWearFrame`), blinking during its i-frames.
 
 ## The Option Hunter (`core/enemies`, `core/behaviors`)
 
@@ -228,7 +230,7 @@ the shipped content has it only in the `hunter-range` dev stage (a `blueCapsule`
 | `content/stages/hunter-range.stage.json` | Dev stage (`?stage=hunter-range`, add `&loadout=full`): capsule carriers, the three hunters, a `blueCapsule` formation, the blue carrier, a second wave after the checkpoint at 1,800 and two hunters at once |
 | `content/audio/main.sfx.json` | `OptionHunter` (a rising, trembling saw alarm) and `OptionStolen` (a falling crushed blip) — synth presets |
 | `assets/source/sprites/options/stolen.sprite.json`, `enemies/option-hunter.sprite.json`, `enemies/carrier-blue.sprite.json` | Pixel maps (grey Option, violet hunter, blue carrier) |
-| `scripts/assets/procedural/items.mjs`, `shields.mjs` | `items/capsule-blue` (the capsule pill in blue); `shields/pod` (8×8 gem, 4 wear frames) and `shields/reduce` (20×14 dotted ring, 2 frames) |
+| `scripts/assets/procedural/items.mjs`, `shields.mjs` | `items/capsule-blue` (the capsule pill in blue); `shields/pod` (8×8 gem, 4 wear frames) and `shields/reduce` (20×14 dotted ring, 2 frames) — since R4-01.A5 the v2 paths draw the bible's sizes native: pod 12×12 × 4 wear, Reduce 30×21 × 2 (and the Arm, 5.8 of the direct-mode doc); the Force Field's native 45×36 × 8 wear × shimmer art is R4-01.A4's |
 
 **Zone A is unchanged** — its 4-way design rules and playtest budgets were tuned without hunters;
 zones B–G (M2-11 … M2-13) place none either; later zones may. New engine sprites (`STOLEN_OPTION_SPRITE`,

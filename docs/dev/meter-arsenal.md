@@ -317,10 +317,12 @@ before).
 - Pixel maps `assets/source/sprites/shots/{bomb,two-way,torpedo,tail,vertical,free,twin}.sprite.json`
   (the 2-Way's two frames climb / dive, the torpedo's two frames flicker).
 - Generator `scripts/assets/procedural/weapons.mjs` (registered as `weapons`): `shots/blast`
-  (32×32, 4 frames: a hot disc opening into a ring, cooling white-yellow → red), `shots/ripple`
-  (24×44, 6 frames: the ring at half heights 4 → 20), `shots/cyclone` (8×9, 4 frames: two violet
-  strands twisting round a white core, one wave period per segment so it tiles) — only exactly
-  rounded maths.
+  (32×32, 4 frames: a hot disc opening into a ring, cooling white-yellow → red — v2 native 48×48,
+  `BLAST_SIZE_V2`), `shots/ripple` (24×44, 6 frames: the ring at half heights 4 → 20 — v2 native
+  36×66, half heights 6 → 30, exactly ×1.5 in the same frame order), `shots/cyclone` (8×9, 4
+  frames: two violet strands twisting round a white core, one wave period per segment so it tiles
+  — v2 native 12×14 on a 12-px wave period) — only exactly rounded maths. All three draw the v2
+  sizes natively since R4-01.A7 (the `procedural-weapons` suite pins each).
 - `procedural/hud.mjs`: 16 `hud/meter-labels` frames and the new micro glyphs `C F V W Y 2 - space`.
 
 ## Determinism, hashing and golden replays

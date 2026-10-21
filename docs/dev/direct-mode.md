@@ -118,7 +118,8 @@ eight blue, an octagon, a yellow and an orange.
 ## The items
 
 `ItemKind.DirectRed` … `DirectOctagon` (codes 3–8, `DIRECT_ITEM_KINDS` in `DIRECT_ITEMS` order —
-hashed, append only), sprites `items/direct-<colour>` (`DIRECT_ITEM_SPRITES`, 2 frames), each
+hashed, append only), sprites `items/direct-<colour>` (`DIRECT_ITEM_SPRITES`, 15×15 in v2, four
+glint frames since R4-02.B2 — `frames: 4` in `ITEM_KINDS`, `powerups/index.ts:588–595`), each
 worth `DIRECT_ITEM_SCORE` (300) points on pickup. They move like the freed Options of M2-04 (one
 `itemDrift` / `itemLife` table per kind drives both): the item rides with the view, drifts
 `DIRECT_ITEM_DRIFT` (−0.35 px/tick, ±0.3 vertically — pair `cursor & 1`, so consecutive drops go
@@ -203,7 +204,8 @@ after each hit. `ShieldState` gained `tier` and `charge` (hashed):
 to its tier's hits; any other shield standing is replaced, and a count survives only on a
 standing Arm. When the Arm breaks (`absorbShieldHit`) or is lost with a death (`clearShield`),
 `tier` and `charge` go to 0 — the next blue item starts at the green tier again. Drawn from
-`shields/arm` (9 frames: tier × fresh / worn / critical — `armWearFrame`, `ARM_WEAR_FRAMES` 3).
+`shields/arm` (9 frames: tier × fresh / worn / critical — `armWearFrame`, `ARM_WEAR_FRAMES` 3; the
+v2 art draws the bible's native 39×27 over those 9 frames since R4-01.A5, `procedural-arm` pins it).
 
 ## Speed toggle, death penalty and rank
 
@@ -276,11 +278,17 @@ slots 0–3 only.
 
 ## Assets
 
-Pixel maps `ships/manta` (3 frames, a green canopy) and `enemies/cube`; the generator
+Pixel maps `ships/manta` (3 frames, a green canopy — v2 redraws it at 5 bank frames with
+`"bankFrames": 2`, R4-01.A1b) and `enemies/cube`; the generator
 `scripts/assets/procedural/direct.mjs` draws the shots (`shots/direct-missile`, `disc`, `beam`,
-`wave`, `sub-bomb`, `sub-laser`, `sub-laser-wide` — 8 octant frames each, nothing rotated at run
-time —, `sub-disc`); since R4-P.P1 `direct-items.mjs` draws the six items and `arm.mjs` the
-`shields/arm`. The atlas stays 512×512. The new engine
+`wave`, `sub-bomb`, `sub-disc`, and the two sub-lasers `sub-laser` / `sub-laser-wide` on 8 octant
+heading frames — frame k is k × 45° clockwise, the engine picks the heading's octant, so nothing
+is rotated at run time); since R4-P.P1 `direct-items.mjs` draws the six items and `arm.mjs` the
+`shields/arm`. Since R4-01.A7 the shots draw their native v2 sizes with v1's frame counts —
+direct-missile 18×9, disc 30×30, beam 39×12, wave 24×51, sub-bomb 9×9, sub-laser 13×13,
+sub-laser-wide 17×17, sub-disc 18×18 (the `procedural-direct` v2 suite pins every one), the items
+are native 15×15 over the 4-frame glint (R4-02.B2) and the Arm native 39×27 (R4-01.A5).
+The atlas stays 512×512. The new engine
 sprites (`DIRECT_ITEM_SPRITES` via `ITEM_SPRITES`, `ARM_SPRITE` via `SHIELD_SPRITES`) are part of
 `ENGINE_SPRITES`, so `pnpm content:check` checks them against the atlas.
 
@@ -402,17 +410,19 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
 - **M2-09** (done) — mid-bosses (captains) exist; the yellow item's heavy damage to them is still
   planned (with the zones' captains, M2-11 … M2-14).
 - **M2-11** (done) — zones B and C have their own `directItems` plans (26 entries each), handed out
-  by zone A's `tender` carriers and completed formations; `zones-bc-direct.test.ts` flies both with
-  the MANTA ([zones-b-and-c.md](zones-b-and-c.md#direct-mode-item-plans)). The yellow item's damage
+  by zone A's `tender` carriers and completed formations; `zone-b-direct.test.ts` and
+  `zone-c-direct.test.ts` fly each with the MANTA (R5-P.P5e split the pair file;
+  [zones-b-and-c.md](zones-b-and-c.md#direct-mode-item-plans)). The yellow item's damage
   to mid-bosses is still planned.
 - **M2-12** (done) — zones D and E have their own `directItems` plans (26 entries each);
-  `zones-de-direct.test.ts` flies both with the MANTA — down MAGMA DEEP's dive, through its brick
-  maze and past TEMPEST RIDGE's rear attackers — and its weapons shoot CINDER BASTION and SQUALL
-  STEED down ([zones-d-and-e.md](zones-d-and-e.md#direct-mode-item-plans)).
+  `zone-d-direct.test.ts` and `zone-e-direct.test.ts` fly each with the MANTA (R5-P.P5e) — down MAGMA
+  DEEP's dive, through its brick maze and past TEMPEST RIDGE's rear attackers — their weapons shooting
+  CINDER BASTION and SQUALL STEED down respectively ([zones-d-and-e.md](zones-d-and-e.md#direct-mode-item-plans)).
 - **M2-13** (done) — zones F and G have their own `directItems` plans (26 entries each);
-  `zones-fg-direct.test.ts` flies both with the MANTA — through CELL VAULT's tissue walls and
-  tentacle garden and PRISM LABYRINTH's crystal walls and cube rush — and its weapons shoot MANTLE
-  REGENT and FACET MONARCH down ([zones-f-and-g.md](zones-f-and-g.md#direct-mode-item-plans)).
+  `zone-f-direct.test.ts` and `zone-g-direct.test.ts` fly each with the MANTA (R5-P.P5e) — through
+  CELL VAULT's tissue walls and tentacle garden and PRISM LABYRINTH's crystal walls and cube rush —
+  their weapons shooting MANTLE REGENT and FACET MONARCH down respectively
+  ([zones-f-and-g.md](zones-f-and-g.md#direct-mode-item-plans)).
 - **M2-14** (done) — the final zones' `directItems` plans (26 entries each) and carrier waves
   ([zones-h-and-i.md](zones-h-and-i.md#direct-mode-item-plans)).
 - **M2-18** (done) — the release route runs fly all 16 routes with the MANTA too, and the release
