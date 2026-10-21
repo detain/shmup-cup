@@ -70,6 +70,7 @@ const NONE: UiSprites = {
   endingBubble: -1,
   endingSun: -1,
   endingSurface: -1,
+  titleBackdrop: -1,
 };
 
 /**

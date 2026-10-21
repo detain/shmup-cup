@@ -2640,21 +2640,29 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * Draws the logo, the prompt or the menu, and — unless an Options page or the difficulty menu is
-   * open over the title ({@link hidesTitleHi}) — the session hi-score.
+   * Draws the v2 backdrop (below everything, R4-05.E2), the logo, the prompt or the menu, and —
+   * unless an Options page or the difficulty menu is open over the title ({@link hidesTitleHi}) —
+   * the session hi-score.
    *
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const logo = this.flow.sprites.logo;
+    const backdrop = this.flow.sprites.titleBackdrop;
     const t = this.flow.text;
     list.setString(base, t.gameTitle);
     list.setString(base + 1, t.pressOk);
     list.setString(base + 2, t.hi);
     // Centred on the frame (the logo above the centre row, the prompt and the menu below it); the
-    // session hi-score sits 20 px above the bottom edge.
+    // session hi-score sits 20 px above the bottom edge. The v2 backdrop covers the whole frame
+    // and is the first thing drawn; it is v2-only (absent at scale 1, RR-1a — a missing id draws
+    // nothing).
     const L = TITLE_LAYOUT;
+    if (backdrop >= 0) {
+      list.sprite(backdrop, 0, 0, 0);
+      list.sprite(backdrop, 1, FRAME_CX, 0);
+    }
     if (logo >= 0) list.sprite(logo, 0, FRAME_CX, L.logoY);
     else list.text(base, FRAME_CX, L.nameY, UI_COLORS.focus, TextAlign.Center);
     if (this.phase === TitlePhase.Prompt) {

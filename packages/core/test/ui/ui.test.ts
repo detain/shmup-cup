@@ -94,6 +94,7 @@ describe('core/ui', () => {
       'ui/ending-bubble',
       'ui/ending-sun',
       'ui/ending-surface',
+      'ui/title-backdrop',
     ]);
     expect(resolveUiSprites(EMPTY_CONTENT_DB)).toEqual({
       life: -1,
@@ -107,6 +108,7 @@ describe('core/ui', () => {
       endingBubble: -1,
       endingSun: -1,
       endingSurface: -1,
+      titleBackdrop: -1,
     });
     const { db } = loadContent([], { extraSprites: UI_SPRITES });
     const sprites = resolveUiSprites(db);

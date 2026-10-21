@@ -509,11 +509,18 @@ describe('core/scenes flow edge: title', () => {
     s.flow.setHiScore(4321);
     const ui = s.game.renderFrame().ui;
     const logo = resolveUiSprites(DB).logo;
+    const backdrop = resolveUiSprites(DB).titleBackdrop;
     const sprites = indicesOf(ui, DrawOp.Sprite);
-    // The logo 44 px above the centre row; `HI` 40 px left of the centre and 20 px above the
-    // bottom edge, its score after the two glyphs and 4 px (192, 64 and 168, 196 at 384×216).
+    // The v2 backdrop covers the frame from its top-left corner as two half-frames, below
+    // everything; the logo sits 44 px above the centre row; `HI` 40 px left of the centre and
+    // 20 px above the bottom edge, its score after the two glyphs and 4 px (192, 64 and 168, 196
+    // at 384×216).
     const logoY = FRAME_CY - uiPx(44);
-    expect(sprites.map((i) => [ui.ref[i], ui.x[i], ui.y[i]])).toEqual([[logo, FRAME_CX, logoY]]);
+    expect(sprites.map((i) => [ui.ref[i], ui.x[i], ui.y[i]])).toEqual([
+      [backdrop, 0, 0],
+      [backdrop, FRAME_CX, 0],
+      [logo, FRAME_CX, logoY],
+    ]);
     const numbers = indicesOf(ui, DrawOp.Number);
     const scoreX = FRAME_CX - uiPx(40) + 2 * GLYPH_W + uiPx(4);
     expect(numbers.map((i) => [ui.value[i], ui.x[i], ui.y[i], ui.frame[i]])).toEqual([

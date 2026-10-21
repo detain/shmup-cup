@@ -229,9 +229,9 @@ export function uiPx(v: number): number {
 /**
  * Atlas sprites the UI kit draws: the HUD's stock icon (and player 2's palette swap of it —
  * M2-06), meter slot box (frames normal / highlighted / disabled) and slot labels (one frame per
- * slot), the title logo and — M2-14 — the ending scenes' pieces (the citadel's and the ARK's
- * silhouettes, a blast, a bubble, the dawn sun, the sea's surface). Part of the core's
- * `ENGINE_SPRITES`, so every host interns them.
+ * slot), the title logo, its v2 backdrop (R4-05.E2) and — M2-14 — the ending scenes' pieces (the
+ * citadel's and the ARK's silhouettes, a blast, a bubble, the dawn sun, the sea's surface). Part
+ * of the core's `ENGINE_SPRITES`, so every host interns them.
  */
 export const UI_SPRITES: readonly string[] = Object.freeze([
   'hud/life',
@@ -245,6 +245,7 @@ export const UI_SPRITES: readonly string[] = Object.freeze([
   'ui/ending-bubble',
   'ui/ending-sun',
   'ui/ending-surface',
+  'ui/title-backdrop',
 ]);
 
 /** Sprite ids of {@link UI_SPRITES} in a content table (-1 = not interned: drawn without it). */
@@ -271,6 +272,8 @@ export interface UiSprites {
   readonly endingSun: number;
   /** `ui/ending-surface` — the sea's surface seen from below, 64 px wide, tiling (M2-14). */
   readonly endingSurface: number;
+  /** `ui/title-backdrop` — the title's full-frame backdrop (R4-05.E2; anchor: its top-left corner). */
+  readonly titleBackdrop: number;
 }
 
 /**
@@ -303,6 +306,7 @@ export function resolveUiSprites(content: ContentDb): UiSprites {
     endingBubble: id('ui/ending-bubble'),
     endingSun: id('ui/ending-sun'),
     endingSurface: id('ui/ending-surface'),
+    titleBackdrop: id('ui/title-backdrop'),
   });
 }
 
@@ -319,6 +323,7 @@ const NO_SPRITES: UiSprites = Object.freeze({
   endingBubble: -1,
   endingSun: -1,
   endingSurface: -1,
+  titleBackdrop: -1,
 });
 
 // ------------------------------------------------------------------------------ input

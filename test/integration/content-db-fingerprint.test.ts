@@ -215,7 +215,7 @@ describe('integration: the content-DB fingerprint (R1-03)', () => {
  * sprite keys move in both the shipped and the examples set. */
 const PINNED: Record<string, Record<string, string>> = {
   shipped: {
-    'core.sprites': '7f4fb60bb90433f4',
+    'core.sprites': 'f52bda8d7bab0e5a',
     'core.scripts': 'bd6454be7a35f079',
     'core.ships': '6ae42fff5c2249d2',
     'core.shipIndex': 'f64a98b92e84e3a6',
@@ -240,7 +240,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.demos': 'f09429db1c64adba',
     'core.demoIndex': 'b37bbd0e0ad0fca7',
     'core.uiStrings': 'a6b7a37bb5260ca5',
-    'core.spriteKeys': 'b4cf1458deb097b2',
+    'core.spriteKeys': '0989f9b44397f3f4',
     'core.enemyKeys': '5a56e83c1c08a427',
     'core.pathKeys': '61c248914d0f8cba',
     'core.patternKeys': '0667d64d81d0f3a5',
@@ -251,7 +251,7 @@ const PINNED: Record<string, Record<string, string>> = {
     fx: '110c6250dedf116b',
   },
   examples: {
-    'core.sprites': '177a893134e6a61e',
+    'core.sprites': '09c25f6a8a28881c',
     'core.scripts': '6d67dc1c2e597b85',
     'core.ships': '51315410e89bfe38',
     'core.shipIndex': '577ab8323709a683',
@@ -276,7 +276,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.demos': 'e7111349156c02ed',
     'core.demoIndex': '2bd1d4c7fc744d4f',
     'core.uiStrings': '17f4f9e9a78dae4a',
-    'core.spriteKeys': 'd38209c16fcefc04',
+    'core.spriteKeys': 'f5baf6184cf8b9fd',
     'core.enemyKeys': '46273e525e523166',
     'core.pathKeys': '0a26f9ecc3851d53',
     'core.patternKeys': '94bf9ed92f5f47d6',
