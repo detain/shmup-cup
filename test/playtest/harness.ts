@@ -80,6 +80,12 @@ export interface PlaytestFlags {
   readonly seed?: number;
   /** The debug stage skip (default `'none'`). */
   readonly stageSkip?: StageSkip;
+  /**
+   * The content DB to play on (R5-P.P12 — default {@link shippedContent}). The playtest bot's
+   * set-piece features are tested on small fixture stages built with `loadContent`; the shipped
+   * runs never pass this and keep playing `content/`.
+   */
+  readonly content?: ContentDb;
   /** Other session options (difficulty, death penalty, loadout …). */
   readonly config?: Partial<GameConfig>;
   /** Ticks after which the run gives up (default {@link DEFAULT_MAX_TICKS}). */
@@ -195,10 +201,15 @@ function createRunGame(stageId: string, flags: PlaytestFlags): Game {
       stage: stageId,
       stageSkip: flags.stageSkip ?? 'none',
     },
-    shippedContent(),
+    contentOf(flags),
   );
   game.world.debugFlags.godMode = flags.godMode === true;
   return game;
+}
+
+/** The content DB a flag set plays on ({@link shippedContent} unless one is given, R5-P.P12). */
+function contentOf(flags: PlaytestFlags): ContentDb {
+  return flags.content ?? shippedContent();
 }
 
 /**

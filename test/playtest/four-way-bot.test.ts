@@ -10,7 +10,11 @@
  *   lane by moving up or down only — also when the threat is already at the ship (regression: it
  *   froze inside an active beam) —, steps back to x ≈ 64 when its lane is safe, and presses
  *   PowerUp — for one tick at a time — only on Speed (below level 2), Missile (not yet fitted) and
- *   Option (fewer than four).
+ *   Option (fewer than four);
+ * - the R5-P.P12 set-piece features on fixture stages: the shaft window (zone B), the high-speed
+ *   look-ahead (zone C), the branch choice (zone D), brick shooting with the commit-through (zones
+ *   D and F) and the moving-floor sweep prediction (zone H) — each asserted to stay gated off
+ *   every shipped stage, so today's recordings are untouched.
  */
 import {
   Action,
@@ -19,31 +23,50 @@ import {
   ENTER_END_X,
   MeterSlot,
   PLAYFIELD_H,
+  PLAYFIELD_W,
+  TILE_SIZE,
   createInputSnapshot,
   createWorld,
   fireLaser,
+  loadContent,
   resolveGameConfig,
   spawnBullet,
   stepWorld,
+  type ContentDb,
+  type ContentFile,
+  type StageBlockEvent,
   type World,
 } from '@shmup/core';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { v1rel, v1x } from '../../packages/core/test/helpers/v1-port.js';
 import {
   BOT_MAX_SPEED_LEVEL,
   BOT_X,
+  HOLE_HEIGHT,
   LANES,
   LANE_HEIGHT,
+  LOOKAHEAD_SPEED_GATE,
   SLOTS,
   SLOT_TICKS,
   BULLET_HORIZON,
+  SLAB_SWING,
+  TERRAIN_AHEAD,
+  blockYAt,
+  branchSteerTriggers,
   createLaneScan,
+  digRowOpen,
   fourWayBot,
+  holeReadyAt,
   laneCentre,
   laneOf,
+  punchWallAhead,
   scanLanes,
+  shaftCorridorCentre,
+  stageHasShaft,
+  terrainLookAhead,
 } from './four-way-bot.js';
-import { DIRECTIONS, shippedContent } from './harness.js';
+import { DIRECTIONS, runStage, shippedContent } from './harness.js';
 
 /**
  * A World whose ship has finished its fly-in, parked at the bot's x in a lane's centre.
@@ -276,5 +299,569 @@ describe('playtest four-way bot: decide', () => {
       expect(now && last).toBe(false);
       last = now;
     }
+  });
+});
+
+/* ------------------------------------------------------------------------- *
+ * R5-P.P12 — the set-piece features (wave-11 designs §3), each on a fixture  *
+ * stage: the shaft window, the high-speed look-ahead, the branch choice,     *
+ * brick shooting, and the moving floors. Every gate is also asserted to      *
+ * stay shut on all the shipped content, so today's recordings are untouched. *
+ * ------------------------------------------------------------------------- */
+
+/** The shipped `terrain-a` tileset JSON (the fixtures build tilemaps over it). */
+const TERRAIN_A = JSON.parse(
+  readFileSync(new URL('../../content/tilesets/terrain-a.tileset.json', import.meta.url), 'utf8'),
+) as { tiles: { name: string }[] } & Record<string, unknown>;
+
+/** Tile id (1-based, the loader's numbering) of a `terrain-a` tile by name. */
+const tileId = (name: string): number => TERRAIN_A.tiles.findIndex((t) => t.name === name) + 1;
+
+const BRICK = tileId('brick');
+/** The shipped Type A (the punch fixtures arm the placeholder ship with the real gun). */
+const SHIPPED_TYPE_A = JSON.parse(
+  readFileSync(new URL('../../content/weapons/type-a.weapons.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>;
+
+/** The shipped Types B–D (the loadout preset `type-1` is Type A alone — still declared). */
+const SHIPPED_TYPES_BD = JSON.parse(
+  readFileSync(new URL('../../content/weapons/types-b-d.weapons.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>;
+// hp 4 — the punchable tile
+const TISSUE = tileId('tissue'); // hp 3, regrows — zone F's tile
+const FLOOR = tileId('floor');
+const CEIL = tileId('ceiling');
+const ROCK = tileId('solid');
+
+/**
+ * A minimal valid fixture stage file.
+ *
+ * @param body - Fields over the defaults.
+ * @returns The file.
+ */
+const stageFile = (body: Record<string, unknown>): ContentFile => ({
+  path: 'stages/fixture.stage.json',
+  data: {
+    formatVersion: 1,
+    kind: 'stage',
+    id: 'fixture',
+    name: 'FIXTURE',
+    music: { stage: 'Stage', boss: 'Boss' },
+    length: 1200,
+    camera: [{ x: 0, speed: 1 }],
+    checkpoints: [],
+    parallax: [],
+    tilemap: null,
+    events: [],
+    ...body,
+  },
+});
+
+/**
+ * A fixture content DB (stage + tileset; the bot plays it through the harness).
+ *
+ * @param stage - Stage fields.
+ * @returns The DB (asserted issue-free).
+ */
+function fixtureDb(body: Record<string, unknown>, withWeapons = false): ContentDb {
+  const { db, issues } = loadContent([
+    stageFile(body),
+    { path: 'tilesets/terrain-a.tileset.json', data: TERRAIN_A },
+    // The punch tests fire the shipped Type A: the fixture ship has to have a gun.
+    ...(withWeapons
+      ? [
+          { path: 'weapons/type-a.weapons.json', data: SHIPPED_TYPE_A },
+          { path: 'weapons/types-b-d.weapons.json', data: SHIPPED_TYPES_BD },
+        ]
+      : []),
+  ]);
+  expect(issues).toEqual([]);
+  return db;
+}
+
+/**
+ * A run-length row: `wall` copies of `id` at columns [c0, c1), empty elsewhere.
+ *
+ * @param cols - The map's column count.
+ * @param c0 - First wall column.
+ * @param c1 - Column after the last wall column.
+ * @param id - The wall tile (0 = open).
+ * @returns The rle row string.
+ */
+function rleRow(cols: number, c0: number, c1: number, id: number): string {
+  const runs: string[] = [];
+  if (c0 > 0) runs.push(`${String(c0)}*0`);
+  if (c1 > c0) runs.push(`${String(c1 - c0)}*${String(id)}`);
+  if (c1 < cols) runs.push(`${String(cols - Math.max(c1, c0))}*0`);
+  return runs.join(', ');
+}
+
+/**
+ * A fixture world: the ship is alive, parked at the bot's x in a lane (god mode for the
+ * read-only unit probes).
+ *
+ * @param db - The fixture content.
+ * @param lane - The ship's lane.
+ * @returns The World.
+ */
+function fixtureWorld(db: ContentDb, lane = 7): World {
+  const w = createWorld(resolveGameConfig({ seed: 1, stage: 'fixture' }), db);
+  w.debugFlags.godMode = true;
+  const input = createInputSnapshot();
+  for (let i = 0; i < 80 && w.players[0].state !== 'alive'; i++) stepWorld(w, input);
+  expect(w.players[0].state).toBe('alive');
+  w.players[0].x = w.camera.x + BOT_X;
+  w.players[0].y = w.camera.y + laneCentre(lane);
+  return w;
+}
+
+/**
+ * Steps a fixture world until the camera reaches `x` (input idle, god mode).
+ *
+ * @param w - The World.
+ * @param x - The camera x to reach.
+ */
+function scrollTo(w: World, x: number): void {
+  const input = createInputSnapshot();
+  let guard = 0;
+  while (w.camera.x < x && guard++ < 20_000) stepWorld(w, input);
+  expect(w.camera.x).toBeGreaterThanOrEqual(x);
+}
+
+describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
+  it('no shipped stage has a shaft, a branch-choice region, a moving floor or a high scroll key', () => {
+    const stages = shippedContent().stages;
+    expect(stages.length).toBeGreaterThan(10);
+    let deepestPan = 0;
+    let widestSwing = 0;
+    for (const stage of stages) {
+      expect(stageHasShaft(stage), stage.id).toBe(false);
+      expect(branchSteerTriggers(stage), stage.id).toEqual([]);
+      let y = 0;
+      for (const key of stage.camera) {
+        const to = key.yTo ?? y;
+        deepestPan = Math.max(deepestPan, Math.abs(to - y));
+        y = to;
+      }
+      for (const e of stage.events) {
+        if (e.type === 'block') widestSwing = Math.max(widestSwing, Math.abs(e.dy ?? 0));
+      }
+    }
+    // Today's extremes, pinned (docs/v2-run/designs §3): zone D's dive and gimmick-range's blocks.
+    expect(deepestPan).toBe(v1rel(200)); // 300 px — below one playfield (zone D)
+    expect(widestSwing).toBe(v1rel(32)); // 48 px — below the moving-floor gate (gimmick-range)
+    expect(widestSwing).toBeLessThan(SLAB_SWING);
+    expect(deepestPan).toBeLessThan(PLAYFIELD_H);
+  });
+
+  it('widens the terrain scan only above the gate speed, linearly (zone C)', () => {
+    expect(LOOKAHEAD_SPEED_GATE).toBe(v1rel(1.4));
+    expect(terrainLookAhead(0)).toBe(TERRAIN_AHEAD);
+    expect(terrainLookAhead(v1rel(1.4))).toBe(v1rel(56));
+    expect(terrainLookAhead(v1rel(1.7))).toBeCloseTo(111, 9); // C's 2.55 pass: 84 → 111 px
+    expect(terrainLookAhead(v1rel(1.2))).toBe(v1rel(56)); // today's fastest play key reads the same
+  });
+
+  it('reads a wall 85..111 px ahead only while the runner scrolls past the gate', () => {
+    // A 12-px brick plug at world x 564..575 over an open corridor: with a 1.2 px/tick key the
+    // scan keeps today's 84-px reach and does not see it; with a 2.55 px/tick key the widened
+    // reach (111 px) marks the ship's lane.
+    const cols = Math.ceil((1200 + PLAYFIELD_W) / TILE_SIZE);
+    const tilemap = {
+      tileSize: TILE_SIZE,
+      tileset: 'terrain-a',
+      rowsTall: PLAYFIELD_H / TILE_SIZE,
+      rle: Array.from({ length: PLAYFIELD_H / TILE_SIZE }, (_, row) =>
+        row < 24 ? rleRow(cols, 47, 49, BRICK) : rleRow(cols, 0, 0, 0),
+      ),
+    };
+    const slow = fixtureWorld(fixtureDb({ tilemap }), 7);
+    slow.stage?.jumpTo(360);
+    scrollTo(slow, 361);
+    slow.players[0].x = slow.camera.x + BOT_X;
+    let scan = createLaneScan();
+    scanLanes(slow, scan);
+    expect(scan.terrain[7]).toBe(0);
+    const fast = fixtureWorld(fixtureDb({ camera: [{ x: 0, speed: 2.55 }], tilemap }), 7);
+    fast.stage?.jumpTo(360);
+    scrollTo(fast, 361);
+    fast.players[0].x = fast.camera.x + BOT_X;
+    scan = createLaneScan();
+    scanLanes(fast, scan);
+    expect(scan.terrain[7]).toBeGreaterThan(0);
+  });
+});
+
+describe('playtest four-way bot: the shaft window (zone B)', () => {
+  /** Zone B's shaft geometry from the design §2: a 62-row map, a pan deeper than one playfield. */
+  const SHAFT_ROWS = 62;
+
+  /** A stage file whose camera pans 0 → 400 → 0 with the corridor descending and rising back. */
+  const shaftStage = (deepKey: boolean): Record<string, unknown> => ({
+    length: 3300,
+    camera: [
+      { x: 0, speed: 0.9 },
+      { x: 900, speed: 0.9, yTo: deepKey ? 400 : 300, yOver: 1200 },
+      { x: 2100, speed: 0.9, yTo: 0, yOver: 600 },
+    ],
+    tilemap: {
+      tileSize: TILE_SIZE,
+      tileset: 'terrain-a',
+      rowsTall: SHAFT_ROWS,
+      generator: {
+        type: 'heightfield',
+        segments: [
+          { from: 0, to: 900, floor: { base: 430, amp: 6, period: 240, seed: 7 } },
+          {
+            from: 900,
+            to: 2100,
+            ceiling: { base: 420, amp: 6, period: 240, seed: 11 },
+            floor: { base: 44, amp: 6, period: 240, seed: 7 },
+          },
+          { from: 2100, to: 4200, floor: { base: 430, amp: 6, period: 240, seed: 7 } },
+        ],
+      },
+    },
+    events: [{ x: 3240, type: 'end' }],
+  });
+
+  it('gates on a camera key deeper than one playfield', () => {
+    expect(stageHasShaft(fixtureDb(shaftStage(true)).stages[0])).toBe(true);
+    expect(stageHasShaft(fixtureDb(shaftStage(false)).stages[0])).toBe(false); // zone D's 300 px
+  });
+
+  it('samples the corridor centre between the ceiling bottom and the floor top ahead', () => {
+    // A uniform rle corridor: ceiling rock [0..204), floor rock [300..336) — centre 252.
+    const cols = Math.ceil((1200 + PLAYFIELD_W) / TILE_SIZE);
+    const rows = PLAYFIELD_H / TILE_SIZE;
+    const w = fixtureWorld(
+      fixtureDb({
+        tilemap: {
+          tileSize: TILE_SIZE,
+          tileset: 'terrain-a',
+          rowsTall: rows,
+          rle: Array.from({ length: rows }, (_, r) =>
+            r < 17
+              ? rleRow(cols, 0, cols, CEIL)
+              : r < 25
+                ? rleRow(cols, 0, 0, 0)
+                : rleRow(cols, 0, cols, FLOOR),
+          ),
+        },
+      }),
+      10,
+    );
+    const c = shaftCorridorCentre(w, TERRAIN_AHEAD);
+    expect(c).toBeCloseTo(252 - w.camera.y, 6);
+    // Open sky (no map): no corridor to track.
+    expect(shaftCorridorCentre(fixtureWorld(fixtureDb({}), 7), TERRAIN_AHEAD)).toBeNaN();
+  });
+
+  it('clears the shaft fixture — the ship tracks the window down and back up', () => {
+    const db = fixtureDb(shaftStage(true));
+    const run = runStage('fixture', fourWayBot(), { content: db });
+    expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
+    expect(run.status).toBe('stageClear');
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
+    expect(run.diagonalTicks).toBe(0);
+  });
+});
+
+describe('playtest four-way bot: brick shooting (zones D, F, G, I)', () => {
+  /**
+   * A one-playfield corridor with a full-height `id` plug at columns 44..46.
+   *
+   * @param id - The plug tile (0 = open).
+   * @param rowsFrom - First row the plug spans (full height by default).
+   * @param colsWall - How many columns the plug is (1 or 2).
+   * @returns The fixture DB.
+   */
+  const plugDb = (id: number, rowsFrom = 0, colsWall = 2, length = 1200): ContentDb => {
+    const cols = Math.ceil((length + PLAYFIELD_W) / TILE_SIZE);
+    const rows = PLAYFIELD_H / TILE_SIZE;
+    return fixtureDb(
+      {
+        length,
+        camera: [{ x: 0, speed: 1.2 }],
+        tilemap: {
+          tileSize: TILE_SIZE,
+          tileset: 'terrain-a',
+          rowsTall: rows,
+          rle: Array.from({ length: rows }, (_, r) =>
+            r >= rowsFrom ? rleRow(cols, 44, 44 + colsWall, id) : rleRow(cols, 0, 0, 0),
+          ),
+        },
+        events: [{ x: length - 60, type: 'end' }],
+      },
+      true,
+    );
+  };
+
+  /** The plug world with the ship parked opposite it, `gap` px before contact. */
+  function parkedAtPlug(db: ContentDb, gap: number): World {
+    const w = fixtureWorld(db, 7);
+    // The plug's near edge is world x 528; park the ship's bow `gap` px short of it.
+    w.stage?.jumpTo(528 - BOT_X - world_ship_hw() - gap);
+    scrollTo(w, w.camera.x);
+    w.players[0].x = w.camera.x + BOT_X;
+    w.players[0].y = w.camera.y + laneCentre(7);
+    return w;
+  }
+
+  /** The ship's terrain half-width (the scan's own margin source). */
+  function world_ship_hw(): number {
+    const probe = createWorld(resolveGameConfig({ seed: 1, stage: 'fixture' }), fixtureDb({}));
+    return probe.ship.terrainBox.hw;
+  }
+
+  it('finds a shot-openable wall (hp > 0) closed across the row, not plain rock', () => {
+    const brick = parkedAtPlug(plugDb(BRICK), 60);
+    const wall = punchWallAhead(brick, terrainLookAhead(1.2));
+    expect(wall).not.toBeNull();
+    expect(wall!.x).toBeGreaterThanOrEqual(528); // the wall's near edge (the scan's 4-px steps)
+    expect(wall!.x).toBeLessThan(540);
+    expect(wall!.x1).toBe(551); // columns 44..45: px [528..552)
+    // Plain rock (terrain-a's `solid`, no hp) is today's game — no punch.
+    const rock = parkedAtPlug(plugDb(ROCK), 60);
+    expect(punchWallAhead(rock, terrainLookAhead(1.2))).toBeNull();
+  });
+
+  it('does not punch when a gap lane is still reachable before the wall', () => {
+    // The plug leaves rows 0..7 open: from 12 ticks out the ship can still reach lane 0..2.
+    const open = parkedAtPlug(plugDb(BRICK, 8), 240);
+    expect(punchWallAhead(open, terrainLookAhead(1.2))).toBeNull();
+    // The same wall met point-blank has no reachable gap — punch.
+    const tight = parkedAtPlug(plugDb(BRICK, 8), 12);
+    expect(punchWallAhead(tight, terrainLookAhead(1.2))).not.toBeNull();
+  });
+
+  it('reads the box-sized hole across the wall span (the commit check)', () => {
+    const intact = parkedAtPlug(plugDb(BRICK), 60);
+    expect(holeReadyAt(intact, 528, 551)).toBe(false);
+    expect(digRowOpen(intact, 528, 551)).toBe(false);
+    expect(HOLE_HEIGHT).toBe(v1rel(16));
+    const drilled = parkedAtPlug(
+      fixtureDb(
+        (() => {
+          // Rows 13..15 (px 156..192 — the ship's row band) open across the plug's columns.
+          const cols = Math.ceil((1200 + PLAYFIELD_W) / TILE_SIZE);
+          const rows = PLAYFIELD_H / TILE_SIZE;
+          return {
+            length: 1200,
+            camera: [{ x: 0, speed: 1.2 }],
+            tilemap: {
+              tileSize: TILE_SIZE,
+              tileset: 'terrain-a',
+              rowsTall: rows,
+              rle: Array.from({ length: rows }, (_, r) =>
+                r >= 24
+                  ? rleRow(cols, 0, cols, FLOOR)
+                  : r >= 13
+                    ? rleRow(cols, 0, 0, 0)
+                    : rleRow(cols, 44, 46, BRICK),
+              ),
+            },
+            events: [],
+          };
+        })(),
+        true,
+      ),
+      60,
+    );
+    expect(holeReadyAt(drilled, 528, 551)).toBe(true);
+    expect(digRowOpen(drilled, 528, 551)).toBe(true);
+    expect(punchWallAhead(drilled, terrainLookAhead(1.2))).toBeNull();
+  });
+
+  it('drills through a brick plug and keeps flying (a run that can die)', () => {
+    const run = runStage('fixture', fourWayBot(), { content: plugDb(BRICK, 0, 1) });
+    expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
+    expect(run.status).toBe('stageClear');
+  });
+
+  it('commits through a regrowing tissue wall (zone F) — a run that can die', () => {
+    const run = runStage('fixture', fourWayBot(), { content: plugDb(TISSUE, 0, 1) });
+    expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
+    expect(run.status).toBe('stageClear');
+  });
+});
+
+describe('playtest four-way bot: the branch choice (zone D)', () => {
+  /** D's trigger geometry: a 120-px-tall branch channel whose flag two branches consume. */
+  const branchEvents = (until: number | undefined): Record<string, unknown>[] => {
+    const region = { x: 1200, y: 240, w: 360, h: 120 };
+    return [
+      {
+        x: 900,
+        type: 'trigger',
+        flag: 'took-low',
+        region,
+        ...(until === undefined ? {} : { until }),
+      },
+      { x: 1700, type: 'flag', flag: 'went-low', branch: 'low' },
+      { x: 1700, type: 'flag', flag: 'went-high', branch: 'high' },
+      { x: 2300, type: 'end' },
+    ];
+  };
+  const branchStage = (until?: number): Record<string, unknown> => ({
+    length: 2400,
+    camera: [{ x: 0, speed: 1.2 }],
+    branches: [
+      { id: 'low', flag: 'took-low' },
+      { id: 'high', flag: 'took-low', value: false },
+    ],
+    events: branchEvents(until),
+  });
+
+  it('gates on a branch-consumed trigger armed across the region whole span', () => {
+    const steers = branchSteerTriggers(fixtureDb(branchStage()).stages[0]);
+    expect(steers).toHaveLength(1);
+    expect(steers[0]).toMatchObject({ bit: 0, cx: 1380, cy: 300 });
+    // gimmick-range's shape: disarmed before the region's far edge — not a lane choice.
+    expect(branchSteerTriggers(fixtureDb(branchStage(1500)).stages[0])).toEqual([]);
+    // A trigger no branch consumes is decoration — not a choice.
+    expect(
+      branchSteerTriggers(
+        fixtureDb({ length: 2400, events: branchEvents(undefined).slice(0, 1) }).stages[0],
+      ),
+    ).toEqual([]);
+  });
+
+  it('walks the lanes towards the channel centre, one per tick, and rests on its row', () => {
+    const w = fixtureWorld(fixtureDb(branchStage()), 7);
+    w.stage?.jumpTo(950); // the trigger is armed before the ship reaches it
+    w.players[0].x = w.camera.x + BOT_X;
+    w.players[0].y = w.camera.y + laneCentre(7);
+    const bot = fourWayBot(0, { remote: false });
+    // Old behaviour on the same world: the ship sits at 168 and rests (no threats at all).
+    expect(bot.decide(w) & DIRECTIONS).toBe(Action.Down);
+    expect(bot.decide(w) & DIRECTIONS).toBe(Action.Down);
+    expect(bot.decide(w) & DIRECTIONS).toBe(Action.Down);
+    // On the channel's own row it waits for the x to bring the region (no vertical push).
+    const inside = fixtureWorld(fixtureDb(branchStage()), 12);
+    inside.stage?.jumpTo(950);
+    inside.players[0].x = inside.camera.x + BOT_X;
+    inside.players[0].y = inside.camera.y + laneCentre(12);
+    expect(fourWayBot(0, { remote: false }).decide(inside) & DIRECTIONS).toBe(0);
+  });
+
+  it('enters the region so the flag fires and the branch is taken (a run that can die)', () => {
+    const db = fixtureDb(branchStage());
+    // The loader collects flagNames in its own order — read the bits from the stage itself.
+    const names = db.stages[0].flagNames;
+    const took = 1 << names.indexOf('took-low');
+    const low = 1 << names.indexOf('went-low');
+    const high = 1 << names.indexOf('went-high');
+    let flags = 0;
+    const run = runStage('fixture', fourWayBot(), {
+      content: db,
+      observe: (world) => {
+        flags = world.stage?.flags ?? 0;
+      },
+    });
+    expect(run.status).toBe('stageClear');
+    // took-low set by the entry, went-low set by the branch-gated flag event; went-high never.
+    expect(flags & took).toBe(took);
+    expect(flags & low).toBe(low);
+    expect(flags & high).toBe(0);
+  });
+});
+
+describe('playtest four-way bot: the moving floors (zone H)', () => {
+  const SLAB_COLS = Math.ceil((2400 + PLAYFIELD_W) / TILE_SIZE);
+  const SLAB_ROWS = PLAYFIELD_H / TILE_SIZE;
+
+  /**
+   * A stage with a ceiling and a floor slab swinging `dy` px in phase (design H: the 72-px
+   * slot between them sweeps across the playfield).
+   *
+   * @param dy - The swing amplitude (gate at {@link SLAB_SWING}).
+   * @returns The fixture DB.
+   */
+  const slabDb = (dy: number): ContentDb =>
+    fixtureDb({
+      length: 2400,
+      camera: [{ x: 0, speed: 1.2 }],
+      tilemap: {
+        tileSize: TILE_SIZE,
+        tileset: 'terrain-a',
+        rowsTall: SLAB_ROWS,
+        rle: Array.from({ length: SLAB_ROWS }, (_, r) =>
+          r < 24 ? rleRow(SLAB_COLS, 0, 0, 0) : rleRow(SLAB_COLS, 0, SLAB_COLS, FLOOR),
+        ),
+      },
+      events: [
+        { x: 1000, type: 'block', y: 84, w: 60, h: 48, dy, period: 240, tile: 'ceiling' },
+        { x: 1020, type: 'block', y: 204, w: 60, h: 48, dy, period: 240, tile: 'solid' },
+        { x: 2280, type: 'end' },
+      ],
+    });
+
+  it('predicts the slab row band by where it crosses the ship, not where it stands', () => {
+    const w = fixtureWorld(slabDb(SLAB_SWING), 7);
+    scrollTo(w, 1506);
+    const map = w.terrain;
+    expect(map).not.toBeNull();
+    const blocks = map?.blocks;
+    const sys = w.gimmicks?.blocks;
+    expect(blocks).toBeTruthy();
+    expect(sys).toBeTruthy();
+    // The floor slab: the live slot whose event's y is 204.
+    const stageEvents = w.stage?.stage.events ?? [];
+    const slots = sys?.slotEvent ?? new Int32Array();
+    const ages = sys?.slotAge ?? new Float64Array();
+    let slot = -1;
+    let ev: StageBlockEvent | undefined;
+    for (let s = 0; s < slots.length; s++) {
+      const e = slots[s] >= 0 ? stageEvents[slots[s]] : undefined;
+      if (e?.type === 'block' && e.y === 204) {
+        slot = s;
+        ev = e;
+      }
+    }
+    expect(slot).toBeGreaterThanOrEqual(0);
+    expect(ev?.dy ?? 0).toBeGreaterThanOrEqual(SLAB_SWING);
+    // The current band blocks its own lanes (the position the old scan read); the lane the
+    // crossing-middle sweep reaches is clear today and marked by the prediction.
+    const yNow = blocks?.y0[slot] ?? 0;
+    expect(Math.floor(blockYAt(ev!, ages[slot]))).toBe(yNow);
+    const scan = createLaneScan();
+    scanLanes(w, scan);
+    expect(scan.terrain[laneOf(yNow + 1 - w.camera.y)]).toBeGreaterThan(0); // current band
+    const shipX = w.players[0].x;
+    const tIn = ((blocks?.x0[slot] ?? 0) - shipX - 5) / 1.2;
+    const tOut = ((blocks?.x1[slot] ?? 0) + 5 - shipX) / 1.2;
+    const yPred = blockYAt(ev!, ages[slot] + (tIn + tOut) / 2) - w.camera.y;
+    const predLane = laneOf(yPred + 6);
+    expect(scan.terrain[predLane]).toBeGreaterThan(0);
+    expect(predLane).toBeGreaterThan(laneOf(yNow - w.camera.y)); // the slab sweeps down into it
+    // The same fixture under the gate (48 px, today's gimmick-range extreme): no prediction.
+    const small = fixtureWorld(slabDb(48), 7);
+    scrollTo(small, 1506);
+    const scanSmall = createLaneScan();
+    scanLanes(small, scanSmall);
+    expect(scanSmall.terrain[predLane]).toBe(0);
+  });
+
+  it('rides the sweeping slot (a run that can die)', () => {
+    const run = runStage('fixture', fourWayBot(), { content: slabDb(SLAB_SWING) });
+    expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
+    expect(run.status).toBe('stageClear');
+  });
+
+  it('pins the predicted band to the block table formula', () => {
+    const e = {
+      x: 0,
+      type: 'block',
+      y: 204,
+      w: 60,
+      h: 48,
+      tileId: 0,
+      dy: 60,
+      period: 240,
+    } as const;
+    expect(blockYAt(e, 0)).toBe(204);
+    expect(blockYAt(e, 60)).toBe(264); // a quarter period is the table sine's peak, exactly
+    expect(blockYAt(e, 120)).toBe(204); // a half period is the zero again
   });
 });

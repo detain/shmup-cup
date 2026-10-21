@@ -27,14 +27,54 @@
  * it never takes Double, Laser, the Force Field or Mega Crash — the plan's "presses PowerUp when
  * the meter reaches Speed / Missile / Option".
  *
+ * **The set-piece features (R5-P.P12).** The wave-11 designs hand the bot five set pieces it must
+ * clear before their zones land, and each feature opens only on a condition the shipped content
+ * never meets, so every recording of today's content stays byte-identical:
+ *
+ * - the **shaft mode** (zone B): a stage whose camera keys pan deeper than one playfield
+ *   ({@link stageHasShaft}) retargets the lane model's middle pull from the fixed playfield centre
+ *   to the corridor centre sampled between the ceiling's bottom edge and the floor's top edge
+ *   ahead of the ship ({@link shaftCorridorCentre}) while the camera pans (|dy| > 0) — the ship
+ *   tracks the window down and back up instead of sitting on stale rows. Shipped max: 300 px
+ *   (zone D's dive), below one playfield, so the gate never opens today.
+ * - the **high-speed look-ahead** (zone C): terrain is read {@link terrainLookAhead} px ahead —
+ *   {@link TERRAIN_AHEAD} plus {@link LOOKAHEAD_SPEED_GAIN} per px/tick of runner speed over
+ *   {@link LOOKAHEAD_SPEED_GATE}. The shipped keys top out at exactly the gate (and the boss
+ *   scenarios run locked), so today's scans read the same distance as before.
+ * - the **branch choice** (zone D): a trigger region whose flag a declared branch consumes, and
+ *   which stays armed across the region's whole x-span, is steered into — the ship's centre walks
+ *   one lane per tick towards the region centre (still never into a walled or about-to-be-shot
+ *   lane) and the lane model resumes on entry ({@link branchSteerTriggers}). The shipped content's
+ *   one trigger (gimmick-range's `took-low`) disarms before its region's far edge, so nothing
+ *   today opens this.
+ * - the **brick shooting** (zones D, F, G, I): a solid tile wall closing across EVERY tile row the
+ *   ship's terrain box touches ({@link punchWallAhead}: each blocking tile with `hp > 0`) with no
+ *   lane clear across it the ship could still reach in time is met by holding the row and letting
+ *   the forced autofire drill it: the stream runs through the one cell row its own height sits on
+ *   (a lane centre lies on a 12-px cell edge, so the box clips the neighbour row too — the same
+ *   row the wall is found on), and the moment that row opens the ship slides into its cell centre;
+ *   the hold latches until the wall's span has passed behind the ship, so the bot commits straight
+ *   through and never retreats into a regrowing band (zone F's walls regrow behind: a wall that
+ *   closes again in front just re-opens the same hold). {@link holeReadyAt} is the design's own
+ *   hole predicate — a {@link HOLE_HEIGHT} band clear across the span — which the tests pin. No
+ *   shipped wall closes its band gaplessly with shot cells, so no run today meets it.
+ * - the **moving floors** (zone H): a live block swinging {@link SLAB_SWING} px or more is read at
+ *   where its band will be when it crosses the ship's column ({@link blockYAt} at the crossing's
+ *   middle tick, within {@link SLAB_HORIZON} ticks) — the lane the ship settles on is the slot
+ *   between the slabs at the time they pass, so it climbs and dives with the sweep instead of
+ *   parking in a row the slab will break through. Today's movers swing ±48 px at the most
+ *   (gimmick-range), below the gate.
+ *
  * The bot reads the World only (never writes it), so a run replays from its recorded input.
  *
  * @module
  */
 import {
   Action,
+  ANGLE_MASK,
   BossState,
   BulletFlag,
+  DEFAULT_BLOCK_PERIOD,
   ENTER_END_X,
   EnemyFlag,
   EnemyState,
@@ -44,7 +84,11 @@ import {
   PLAYFIELD_H,
   TerrainType,
   WORLD_SCALE,
+  sinB,
   terrainAt,
+  type StageBlockEvent,
+  type StageSpec,
+  type TerrainMap,
   type World,
 } from '@shmup/core';
 import type { PlaytestBot } from './harness.js';
@@ -66,8 +110,354 @@ export const LANES = Math.floor(PLAYFIELD_H / LANE_HEIGHT);
 /** Ticks ahead the bullet and contact scans look. */
 export const BULLET_HORIZON = 40;
 
-/** Pixels ahead of the ship the terrain scan looks. */
+/** Pixels ahead of the ship the terrain scan looks (at the scroll speeds of today's stages). */
 export const TERRAIN_AHEAD = 56 * WORLD_SCALE;
+
+/**
+ * Scroll speed over which the terrain look-ahead widens (R5-P.P12, zone C's rip tide;
+ * v1 1.4 px/tick). The shipped camera keys top out at exactly this value (zone C's 2.1 px/tick
+ * band — zone A's tail runs 2.25 only while its boss brake has already stopped the scan-relevant
+ * approach), and a scan is widened only for what a moving window can newly show, so every shipped
+ * recording reads the same ahead as before; the designed 2.55 px/tick passes are the first to use
+ * the arm.
+ */
+export const LOOKAHEAD_SPEED_GATE = 1.4 * WORLD_SCALE;
+
+/** Extra look-ahead pixels per px/tick of scroll speed over {@link LOOKAHEAD_SPEED_GATE} (v1 40). */
+export const LOOKAHEAD_SPEED_GAIN = 40 * WORLD_SCALE;
+
+/**
+ * Vertical swing at or above which a moving block is read ahead of its current position
+ * (R5-P.P12, zone H's gate slabs; v1 40 px). Today's movers swing less (gimmick-range's ±48,
+ * zone-h's ∓33), so no shipped run meets it and block predictions never open a recording.
+ */
+export const SLAB_SWING = 40 * WORLD_SCALE;
+
+/** Ticks of a moving floor's sweep the terrain scan predicts at most (≈ half a gate slab period). */
+export const SLAB_HORIZON = 120;
+
+/**
+ * Height of a shot-open hole the bot commits through (R5-P.P12, zones D and F; v1 16 px) — the
+ * band around the ship's own row that must read clear across the wall's span before the bot leaves
+ * the row it held while drilling.
+ */
+export const HOLE_HEIGHT = 16 * WORLD_SCALE;
+
+/** Ticks of slack the ship needs to reach a gap lane before a wall arrives, or it punches instead. */
+const PUNCH_LEAD_TICKS = 8;
+
+/**
+ * A destructible wall across the ship's row that must be shot open rather than dodged
+ * ({@link punchWallAhead}): its near and far edge columns in world pixels.
+ */
+export interface PunchWall {
+  /** First solid shot-able tile column ahead of the ship's bow. */
+  readonly x: number;
+  /** Last solid tile column of the wall's span at the ship's row. */
+  readonly x1: number;
+}
+
+/**
+ * The terrain look-ahead for a scroll speed (R5-P.P12, zone C): {@link TERRAIN_AHEAD} up to
+ * {@link LOOKAHEAD_SPEED_GATE} px/tick, wider by {@link LOOKAHEAD_SPEED_GAIN} px per unit over it.
+ *
+ * @param speed - The stage runner's scroll speed in px/tick (0 for no stage).
+ * @returns Pixels ahead the terrain scan reads.
+ */
+export function terrainLookAhead(speed: number): number {
+  return TERRAIN_AHEAD + Math.max(0, speed - LOOKAHEAD_SPEED_GATE) * LOOKAHEAD_SPEED_GAIN;
+}
+
+/**
+ * Whether the stage holds a vertical shaft: a camera key whose pan is deeper than one playfield
+ * (R5-P.P12, zone B — shipped max is zone D's 300 px, below the 336 playfield).
+ *
+ * @param stage - The stage spec.
+ * @returns `true` when some key moves the camera vertically past {@link PLAYFIELD_H}.
+ */
+export function stageHasShaft(stage: StageSpec): boolean {
+  let y = 0;
+  for (const key of stage.camera) {
+    const to = key.yTo ?? y;
+    if (Math.abs(to - y) > PLAYFIELD_H) return true;
+    y = to;
+  }
+  return false;
+}
+
+/**
+ * The centre playfield row of the corridor ahead of the ship (R5-P.P12, zone B): the ceiling's
+ * bottom edge (last row still rock below the map's top) and the floor's top edge (first rock row
+ * above the map's bottom) sampled every `columnStep` px across the next `ahead` px, taking the
+ * narrowest corridor the samples show. Only read while a shaft stage pans.
+ *
+ * @param world - The World.
+ * @param ahead - How far ahead of the ship to sample.
+ * @param player - The player slot whose ship centres the samples (default 0).
+ * @param columnStep - Distance between sampled columns (default one lane).
+ * @returns The corridor centre as a playfield row, or NaN when the stage has no terrain.
+ */
+export function shaftCorridorCentre(
+  world: World,
+  ahead: number,
+  player = 0,
+  columnStep = LANE_HEIGHT,
+): number {
+  const map = world.terrain;
+  if (map === null) return Number.NaN;
+  const ship = world.players[player];
+  const size = map.tileSize;
+  const mapH = map.rows * size;
+  let ceiling = Number.NEGATIVE_INFINITY;
+  let floor = Number.POSITIVE_INFINITY;
+  for (let dx = columnStep; dx <= ahead; dx += columnStep) {
+    const px = Math.floor(ship.x + dx);
+    let c = 0;
+    while (c < mapH && terrainAt(map, px, c) !== TerrainType.Empty) c += 4;
+    let f = mapH - 1;
+    while (f >= 0 && terrainAt(map, px, f) !== TerrainType.Empty) f -= 4;
+    if (c > ceiling) ceiling = c;
+    if (f + 1 < floor) floor = f + 1;
+  }
+  return (ceiling + floor) / 2 - world.camera.y;
+}
+
+/**
+ * Where a stage block sits at a given age in ticks (R5-P.P12): the core `MovingBlockSystem`'s own
+ * formula — base position plus drift plus the table sine of the swing — so the bot can read a
+ * moving floor ahead of time, not only where it stands now.
+ *
+ * @param event - The stage's `block` event that created the block.
+ * @param age - Ticks since the block appeared (the system's slot age plus the look-ahead ticks).
+ * @returns The block's top edge in world pixels at that age.
+ */
+export function blockYAt(event: StageBlockEvent, age: number): number {
+  const period = event.period ?? DEFAULT_BLOCK_PERIOD;
+  const angle = Math.floor((event.phase ?? 0) + (age * 1024) / period) & ANGLE_MASK;
+  return (event.y ?? 0) + (event.vy ?? 0) * age + (event.dy ?? 0) * sinB(angle);
+}
+
+/**
+ * The collision tile id of one pixel of the map's cells (R5-P.P12 helper): non-zero for a pixel
+ * standing in a solid cell, 0 for empty, decorative or outside the map. Moving blocks are terrain
+ * too, but never punch-able, so the brick rules read cells only.
+ *
+ * @param map - The terrain map.
+ * @param px - World pixel column.
+ * @param py - World pixel row.
+ * @returns The tile id, or 0 when no solid cell stands there.
+ */
+function solidTile(map: TerrainMap, px: number, py: number): number {
+  const size = map.tileSize;
+  const col = Math.floor(px / size);
+  const row = Math.floor(py / size);
+  if (col < 0 || row < 0 || col >= map.cols || row >= map.rows) return 0;
+  const id = map.tiles[row * map.cols + col];
+  if (id === 0) return 0;
+  const type = map.tileType[id];
+  return type !== TerrainType.Empty && type !== TerrainType.Hazard ? id : 0;
+}
+
+/**
+ * Whether one tile row is shot clear across a wall span (moving blocks ignored — they swing, the
+ * tiles stand; the stream's row and the ship's terrain-box rows are read this way).
+ *
+ * @param map - The stage terrain.
+ * @param x0 - First world pixel of the span.
+ * @param x1 - Last world pixel of the span.
+ * @param row - The tile row.
+ * @returns `true` when no solid tile stands in the row across the span.
+ */
+function spanRowClear(map: TerrainMap, x0: number, x1: number, row: number): boolean {
+  const y = row * map.tileSize + map.tileSize / 2;
+  for (let px = Math.floor(x0); px <= Math.floor(x1); px += 4) {
+    if (solidTile(map, px, y) !== 0) return false;
+  }
+  return true;
+}
+
+/**
+ * The destructible wall closing across the ship's terrain box that must be shot through, not
+ * dodged (R5-P.P12, zones D and F): every tile row the box touches is read at its centre, and a
+ * solid shot-able tile (`hp > 0`) in ANY of them within `ahead` px of the bow blocks — the row
+ * whose run starts nearest the bow gives the span (capped at four cells, the shipped set pieces
+ * are 12–36 px thick). `null` — today's behaviour — for open space, plain rock among the box
+ * rows, a scroll-locked camera (no wall ever arrives) or a wall with a lane the ship could still
+ * reach before it arrives.
+ *
+ * @param world - The World.
+ * @param ahead - How far ahead of the ship to look (the scan's own {@link terrainLookAhead}).
+ * @param player - The player slot whose ship asks (default 0).
+ * @returns The wall's span, or `null`.
+ */
+export function punchWallAhead(world: World, ahead = TERRAIN_AHEAD, player = 0): PunchWall | null {
+  const map = world.terrain;
+  const runner = world.stage;
+  if (map === null || runner === null || runner.locked || !(runner.speed > 0)) return null;
+  const destr = world.gimmicks.destructible;
+  if (destr === null || !destr.any) return null;
+  const ship = world.players[player];
+  const box = world.ship.terrainBox;
+  const size = map.tileSize;
+  const hp = destr.tileHp;
+  const pxFrom = Math.floor(ship.x + box.hw + 3);
+  const pxTo = Math.floor(ship.x + ahead);
+  const rowFrom = Math.floor((ship.y - box.hh) / size);
+  const rowTo = Math.floor((ship.y + box.hh) / size);
+  let wx = -1;
+  let we = -1;
+  for (let row = rowFrom; row <= rowTo; row++) {
+    const py = row * size + size / 2;
+    let x = -1;
+    for (let px = pxFrom; px <= pxTo; px += 4) {
+      if (solidTile(map, px, py) !== 0) {
+        x = px;
+        break;
+      }
+    }
+    if (x < 0) continue;
+    const t = solidTile(map, x, py);
+    if (t >= hp.length || hp[t] === 0) return null; // plain rock among the box rows: not a target
+    let col = Math.floor(x / size);
+    const firstCol = col;
+    while (col + 1 <= firstCol + 3 && solidTile(map, (col + 1) * size + size / 2, py) !== 0) col++;
+    const end = (col + 1) * size - 1;
+    if (wx < 0 || x < wx) {
+      wx = x;
+      we = end;
+    } else if (x === wx && end > we) {
+      we = end;
+    }
+  }
+  if (wx < 0) return null;
+  if (we - wx > 3 * size + 24) return null; // thicker than a set piece wall: not a punch target
+  // A gap lane the ship can still reach before the wall arrives is dodged, not drilled.
+  const camera = world.camera;
+  const sy = ship.y - camera.y;
+  const ticksToWall = (wx - (ship.x + box.hw)) / runner.speed;
+  const shipSpeed = world.ship.speeds[ship.speedLevel] ?? 1.5 * WORLD_SCALE;
+  const reach = shipSpeed * Math.max(0, ticksToWall - PUNCH_LEAD_TICKS);
+  const rowOff = LANE_HEIGHT / 2 - 2;
+  for (let k = 0; k < LANES; k++) {
+    if (Math.abs(laneCentre(k) - sy) > reach) continue;
+    const cy = camera.y + laneCentre(k);
+    let clear = true;
+    for (let r = 0; r < 3 && clear; r++) {
+      const ry = Math.floor(cy + (r - 1) * rowOff);
+      for (let px = wx; px <= we; px += 4) {
+        if (solidTile(map, px, ry) !== 0) {
+          clear = false;
+          break;
+        }
+      }
+    }
+    if (clear) return null;
+  }
+  return { x: wx, x1: we };
+}
+
+/**
+ * Whether a {@link HOLE_HEIGHT} band around the ship's own row reads clear across a punched wall's
+ * span (R5-P.P12): the design's hole test — what a straight shot stream must open before a row
+ * counts as passable. The bot's hold latches by the wall's span alone (see {@link punchWallAhead}
+ * and the remarks in {@link fourWayBot}); this is the predicate the set-piece fixtures pin.
+ *
+ * @param world - The World.
+ * @param x0 - First column of the wall's span.
+ * @param x1 - Last column of the wall's span.
+ * @param player - The player slot whose row centres the band (default 0).
+ * @returns `true` when the band is open.
+ */
+export function holeReadyAt(world: World, x0: number, x1: number, player = 0): boolean {
+  const map = world.terrain;
+  if (map === null) return true;
+  const ship = world.players[player];
+  const box = world.ship.terrainBox;
+  const rowFrom = Math.floor((ship.y - box.hh) / map.tileSize);
+  const rowTo = Math.floor((ship.y + box.hh) / map.tileSize);
+  for (let row = rowFrom; row <= rowTo; row++) {
+    if (!spanRowClear(map, x0, x1, row)) return false;
+  }
+  return true;
+}
+
+/**
+ * Whether the cell row the straight stream runs through (the ship's own tile row) is shot clear
+ * across the wall span — once it is, the ship slides to that cell's centre so its box leaves the
+ * undug neighbour row and the scroll carries it through (R5-P.P12).
+ *
+ * @param world - The World.
+ * @param x0 - First column of the wall's span.
+ * @param x1 - Last column of the wall's span.
+ * @param player - The player slot whose row the stream runs (default 0).
+ * @returns `true` when the ship's own cell row is open across the span.
+ */
+export function digRowOpen(world: World, x0: number, x1: number, player = 0): boolean {
+  const map = world.terrain;
+  if (map === null) return true;
+  const ship = world.players[player];
+  return spanRowClear(map, x0, x1, Math.floor(ship.y / map.tileSize));
+}
+
+/**
+ * A branch region the bot steers into (R5-P.P12, zone D): the trigger's ordinal (its bit in
+ * `StageRunner.triggersArmed`) and its region's bounds and centre in world pixels.
+ */
+export interface BranchSteer {
+  /** Ordinal of the trigger event among the stage's triggers (armed-bit index). */
+  readonly bit: number;
+  /** Region left edge. */
+  readonly x0: number;
+  /** Region top edge. */
+  readonly y0: number;
+  /** Region right edge. */
+  readonly x1: number;
+  /** Region bottom edge. */
+  readonly y1: number;
+  /** Region centre x. */
+  readonly cx: number;
+  /** Region centre y. */
+  readonly cy: number;
+}
+
+/** The empty steer list a stage without branch regions keeps ({@link fourWayBot}'s cache). */
+const NO_STEERS: readonly BranchSteer[] = [];
+
+/**
+ * The trigger regions whose choice the bot should take (R5-P.P12, zone D): a `trigger` event whose
+ * flag one of the stage's declared branches consumes, and which stays armed across the whole x
+ * span of its region (`until` at or past the region's far edge, the default). The shipped content
+ * has no such region: gimmick-range's `took-low` is consumed by branches but disarms at camera
+ * 2,275, before its region's far edge at 2,310 — a pass-through checkpoint, not a lane choice.
+ *
+ * @param stage - The stage spec.
+ * @returns The steer targets, in trigger order.
+ */
+export function branchSteerTriggers(stage: StageSpec): readonly BranchSteer[] {
+  if (stage.branches.length === 0) return [];
+  const consumed = new Set<number>();
+  for (const branch of stage.branches) consumed.add(branch.flagId);
+  const out: BranchSteer[] = [];
+  let bit = 0;
+  for (const event of stage.events) {
+    if (event.type !== 'trigger') continue;
+    const r = event.region;
+    const until = event.until ?? r.x + r.w;
+    if (consumed.has(event.flagId) && until >= r.x + r.w) {
+      out.push({
+        bit,
+        x0: r.x,
+        y0: r.y,
+        x1: r.x + r.w,
+        y1: r.y + r.h,
+        cx: r.x + r.w / 2,
+        cy: r.y + r.h / 2,
+      });
+    }
+    bit++;
+  }
+  return out;
+}
 
 /** Highest speed level the bot equips (a faster 4-way ship overshoots its lanes). */
 export const BOT_MAX_SPEED_LEVEL = 2;
@@ -278,10 +668,11 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
   const map = world.terrain;
   if (map !== null) {
     const box = world.ship.terrainBox;
+    const ahead = terrainLookAhead(world.stage === null ? 0 : world.stage.speed);
     for (let k = 0; k < LANES; k++) {
       const y = camera.y + laneCentre(k);
       let blocked = false;
-      for (let dx = -box.hw - 3; dx <= TERRAIN_AHEAD && !blocked; dx += 4) {
+      for (let dx = -box.hw - 3; dx <= ahead && !blocked; dx += 4) {
         for (let dy = -box.hh - 4; dy <= box.hh + 4; dy += 3.5) {
           if (terrainAt(map, ship.x + dx, y + dy) !== TerrainType.Empty) {
             blocked = true;
@@ -289,6 +680,45 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
             if (dx <= 8 * WORLD_SCALE) scan.wall[k] = 1;
             break;
           }
+        }
+      }
+    }
+
+    // Moving floors (R5-P.P12, zone H): a block swinging at least SLAB_SWING px is read at the
+    // row band it will occupy when it crosses the ship's column, not where it stands now — the
+    // lanes that survive that mark are the slot between the slabs at the crossing time, so the
+    // ship settles into it and climbs or dives with the sweep as the scan re-reads every tick.
+    // Small swings (today's pistons) stay read by position, exactly as before.
+    const sys = world.gimmicks.blocks;
+    const blocks = map.blocks;
+    const runner = world.stage;
+    if (sys !== null && blocks !== undefined && blocks !== null && runner !== null) {
+      const scroll = runner.speed;
+      if (scroll > 0) {
+        const events = runner.stage.events;
+        const slots = sys.slotEvent;
+        const ages = sys.slotAge;
+        for (let s = 0; s < slots.length; s++) {
+          const ei = slots[s];
+          if (ei < 0 || blocks.live[s] === 0) continue;
+          const e = events[ei];
+          if (e.type !== 'block') continue;
+          const dy = e.dy ?? 0;
+          if (dy > -SLAB_SWING && dy < SLAB_SWING) continue;
+          const bx0 = blocks.x0[s];
+          const bx1 = blocks.x1[s];
+          if (bx1 < ship.x + box.hw || bx0 > ship.x + ahead) continue;
+          const tIn = Math.max(0, (bx0 - ship.x - box.hw) / scroll);
+          const tOut = Math.max(0, (bx1 + box.hw - ship.x) / scroll);
+          const tau = (tIn + tOut) / 2;
+          if (tau > SLAB_HORIZON) continue;
+          const yTop = blockYAt(e, ages[s] + tau) - camera.y;
+          const yBot = yTop + e.h;
+          if (yBot < 0 || yTop > PLAYFIELD_H) continue;
+          const danger = tOut <= 10 ? TERRAIN_DANGER : TERRAIN_DANGER / 2;
+          const ka = yTop <= 0 ? 0 : Math.floor(yTop / LANE_HEIGHT);
+          const kb = yBot >= PLAYFIELD_H ? LANES - 1 : Math.floor(yBot / LANE_HEIGHT);
+          for (let k = ka; k <= kb; k++) if (scan.terrain[k] < danger) scan.terrain[k] = danger;
         }
       }
     }
@@ -342,6 +772,14 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
   let target = -1;
   let pressed = false;
   let waiting = 0;
+  // Stage-gate context (R5-P.P12): built once per stage on first sight, never on the hot path.
+  let ctxStage: StageSpec | null = null;
+  let shaft = false;
+  let steers: readonly BranchSteer[] = NO_STEERS;
+  let steer = -1;
+  let punching = false;
+  let punchX0 = 0;
+  let punchX1 = 0;
 
   /**
    * Whether the cursor sits on a slot the bot wants.
@@ -392,15 +830,28 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       if (ship.state !== 'alive') {
         target = -1;
         pressed = false;
+        steer = -1;
+        punching = false;
         // No reset: a tap already under way keeps its measured length in the recorded stream.
         return strict ? remote.filter(0) : 0;
       }
       const camera = world.camera;
       const sx = ship.x - camera.x;
       const sy = ship.y - camera.y;
+      const ahead = terrainLookAhead(world.stage === null ? 0 : world.stage.speed);
       scanLanes(world, scan, player);
       const current = laneOf(sy);
       const speed = world.ship.speeds[ship.speedLevel] ?? 1.5 * WORLD_SCALE;
+      // Stage-gate context (R5-P.P12): the shaft check and the branch regions are properties of the
+      // stage, read once when the World's stage changes (the cold path of a stage skip or remix).
+      const stageSpec = world.stage === null ? null : world.stage.stage;
+      if (stageSpec !== ctxStage) {
+        ctxStage = stageSpec;
+        shaft = stageSpec !== null && stageHasShaft(stageSpec);
+        steers = stageSpec === null ? NO_STEERS : branchSteerTriggers(stageSpec);
+        steer = -1;
+        punching = false;
+      }
       // PowerUp: one-tick presses (an edge), never two ticks in a row. Under the remote model the
       // press costs a whole tap without a direction (M3-02b), so the bot only starts one while its
       // lane stays clear for as long as the tap lasts — what a careful remote player does.
@@ -418,6 +869,84 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       } else {
         pressed = false;
         waiting = 0;
+      }
+
+      // Brick shooting (R5-P.P12, zones D and F): a shot-able wall closed across every tile row of
+      // the ship's terrain box with no reachable gap is met by HOLDING the row and letting the
+      // forced autofire drill it — a 4-way ship cannot out-climb a full-height plug, and lane
+      // changes mid-drill would widen the hole's regrow exposure (zone F's tissue). The hold
+      // latches until the wall's span has passed behind the ship: the straight stream digs the one
+      // cell row its own height runs through, the ship slides into that cell's centre (its box
+      // leaves the undug neighbour row) and the scroll carries it through; a wall that closes
+      // again in front just re-opens the hold, never a retreat.
+      if (punching) {
+        const box = world.ship.terrainBox;
+        if (punchX1 < ship.x - box.hw) punching = false;
+      }
+      if (!punching) {
+        const wall = punchWallAhead(world, ahead, player);
+        if (wall !== null) {
+          punching = true;
+          punchX0 = wall.x;
+          punchX1 = wall.x1;
+        }
+      }
+      if (punching) {
+        target = current;
+        if (digRowOpen(world, punchX0, punchX1, player)) {
+          // The stream's own cell is open — slide into its centre so the terrain box leaves the
+          // undug neighbour row (a lane centre lies on a 12-px cell edge, so the straight stream
+          // can only ever dig the cell its own height runs through).
+          const size = world.terrain === null ? 1 : world.terrain.tileSize;
+          const centre = (Math.floor(ship.y / size) + 0.5) * size;
+          if (ship.y < centre - 2) mask |= Action.Down;
+          else if (ship.y > centre + 2) mask |= Action.Up;
+        }
+        if ((mask & (Action.Up | Action.Down)) === 0) {
+          if (sx < BOT_X - speed) mask |= Action.Right;
+          else if (sx > BOT_X + speed) mask |= Action.Left;
+        }
+        return strict ? remote.filter(mask) : mask;
+      }
+
+      // The shaft's corridor centre (R5-P.P12, zone B): while a shaft stage pans, the middle pull
+      // of the lane cost follows the corridor sampled between the ceiling's bottom edge and the
+      // floor's top edge ahead — the stale playfield centre sits outside the map during a descent.
+      let midRow = PLAYFIELD_H / 2;
+      if (shaft && Math.abs(world.camera.dy) > 1e-9) {
+        const c = shaftCorridorCentre(world, ahead, player);
+        if (!Number.isNaN(c)) midRow = c < 0 ? 0 : c > PLAYFIELD_H ? PLAYFIELD_H : c;
+      }
+
+      // Branch choice (R5-P.P12, zone D): an armed branch region ahead whose centre lies within
+      // one playfield of the ship is entered, not flown past — the ship's centre walks one lane per
+      // tick towards the region centre, still never stepping into a walled lane or one about to be
+      // shot through, and the full lane model resumes the tick the centre is inside (the sim fires
+      // the trigger there).
+      let forced = -1;
+      const runner = world.stage;
+      if (steers.length > 0 && runner !== null) {
+        const armed = runner.triggersArmed;
+        let bestSteer: BranchSteer | null = null;
+        for (let i = 0; i < steers.length; i++) {
+          const t = steers[i];
+          if ((armed & (1 << t.bit)) === 0) continue;
+          if (ship.x >= t.x0 && ship.x < t.x1 && ship.y >= t.y0 && ship.y < t.y1) {
+            bestSteer = null;
+            break; // inside — the choice is being made; the flag fires this tick
+          }
+          if (t.cx <= ship.x || Math.abs(t.cy - ship.y) > PLAYFIELD_H) continue;
+          if (bestSteer === null || t.cx < bestSteer.cx) bestSteer = t;
+        }
+        if (bestSteer !== null) {
+          const want = laneOf(bestSteer.cy - camera.y);
+          if (steer < 0) steer = current;
+          const next = steer < want ? steer + 1 : steer > want ? steer - 1 : want;
+          if (scan.wall[next] === 0 && firstSlot(scan.centre[next], 0, 1) < 0) steer = next;
+          forced = steer;
+        } else {
+          steer = -1;
+        }
       }
 
       // Preferences: capsules ahead, the boss's core, the next enemy ahead (to shoot it).
@@ -460,7 +989,7 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       // and the stay (the destination's centre from arrival on), plus terrain and preferences.
       for (let k = 0; k < LANES; k++) {
         let c = scan.terrain[k] - bonus[k] + 1.5 * Math.abs(k - current);
-        c += (2 * Math.abs(laneCentre(k) - PLAYFIELD_H / 2)) / (PLAYFIELD_H / 2);
+        c += (2 * Math.abs(laneCentre(k) - midRow)) / (PLAYFIELD_H / 2);
         const goal = laneCentre(k);
         const dir = goal >= sy ? 1 : -1;
         // Lanes crossed on the way, the current one included (until the ship leaves it).
@@ -494,6 +1023,8 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
       for (let k = 0; k < LANES; k++) if (cost[k] < cost[best]) best = k;
       // Hysteresis: keep the lane already heading for unless the new one is clearly better.
       if (target < 0 || cost[best] < cost[target] - 20) target = best;
+      // The branch steer owns the lane while it runs (its step guard above keeps it careful).
+      if (forced >= 0) target = forced;
 
       // In a boss fight the bot lines up on the core's own row inside the target lane instead of
       // its centre (M3-02b) — but only while it cannot die. A remote player that changes direction
