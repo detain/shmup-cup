@@ -32,8 +32,9 @@ edit a shared file).
 | zone-d atlas page | `main-4.png` 256×256, **3,013 B** PNG (built at tip; cap 600,000 B) | — |
 | branches / triggers | **none** — the whole feature is unused here | none |
 
-The live contract (`test/integration/zones/zone-d.contract.ts`) fails today on length (14,400 <
-20,000) and checkpoints (4 < 5) — which is exactly what this design fixes.
+The live contract (`test/integration/zones/zone-d.contract.ts`): today's v1 branch passes
+(14,400 with no length gate, 4 ≥ 4); the R5-D2 v2 branch — length 20,000–22,000, ≥ 5
+checkpoints — fails on both until this design's stage lands.
 
 ## 2. Sections (design; length 21,150 px)
 
@@ -56,18 +57,22 @@ Camera keys (`speed` px/tick at `x`, `ramp` ticks, `hold` ticks, `yTo`/`yTicks` 
 | 18,300–20,400 | the calm | exactly two carriers | 1.05, y 432 | 33.3 |
 | 20,400 | the WARNING | CINDER BASTION (camera lock) | — | — |
 
-Timing check: bare scroll to WARNING ≈ **294 s** (sum above; ramps add ≈ +0.5 s, well inside the
-contract's 225–315 s = 3.75–5.25 min). Expected bot run ≈ 294 + boss ≈ 30 + intro/lock ≈ 15 +
-end-tail ≈ 12 ≈ **330–350 s** (god, no deaths) — inside 240–360 s with room; the design keeps a
-no-death god run in budget and accepts 1–2 trench/river deaths in the no-god golden (the run
-still clears: today's no-god baseline cleared 205+24 s in 245 s, +50 s headroom now).
+Timing check: bare scroll to WARNING ≈ **296 s** — measured in the live scroll model at 17,753
+ticks (the row sum is 294; the ramps add ≈ +2.0 s, not +0.5) — inside the contract's 225–315 s =
+3.75–5.25 min. Expected bot run ≈ 296 + boss ≈ 30 + intro/lock/end-tail ≈ 12–24 ≈ **338–350 s**
+(god, no deaths) — inside the contract's 240–360 s with ≈ 10–22 s of headroom. The design keeps
+a no-death god run in budget and accepts 1–2 trench/river deaths in the no-god golden: each
+death replays its checkpoint corridor, so that §15 case's `ticks/60` ceiling rises to **380 s**
+(the contract `botRunSec` ceiling 360 stays the god run's gate — ≈ 10 s of headroom at the worst
+estimate); today's no-god baseline cleared 205+24 s in 245 s.
 
 ## 3. Set pieces and what the 4-way bot needs (R5-P.P12 input)
 
-**Set piece 1 — the two-step dive.** §2. This is the purposeful redesign O2 requires: the
-ported 300-px floor dive (v1's 200 px) becomes a shelf stop at **186** and a second drop to
-**432** over 2,000 more px of cave. The taller map (64 rows, 768 px) uses the vertical space
-three bands deep: surface (rows 0–51 sky/floor), shelf (window 186–522), deep (window 432–768).
+**Set piece 1 — the two-step dive.** §2. This is the purposeful redesign §2.6 licenses (O2's
+formula: deepest camera 12·64 − 336 = 432): the ported 300-px floor dive (v1's 200 px) becomes
+a shelf stop at **186** and a second drop to **432** over 2,000 more px of cave. The taller map
+(64 rows, 768 px) uses the vertical space three bands deep: surface (rows 0–51 sky/floor),
+shelf (window 186–522), deep (window 432–768).
 
 **Set piece 2 — the branching maze with destructible shortcuts.** The deep corridor runs from
 9,900 to 13,200 with five gap-walls (§10 table); every wall can also be **punched straight
@@ -125,7 +130,7 @@ Sources before the WARNING (spawns with `drop: capsule` + formations without `dr
 | checkpoint | sources in [cp, cp+1,350) | ≥ 3? |
 |---|---|---|
 | 0 | 210 f, 450 t, 1,050 t | ✓ |
-| 3,600 | 3,900 t, 4,200 t, 4,500 f | ✓ |
+| 3,600 | 3,720 f, 3,900 t, 4,200 t, 4,500 f | ✓ |
 | 6,600 | 6,900 t, 7,400 f, 7,900 t | ✓ |
 | 9,900 | 10,050 f, 10,400 t, 10,900 f | ✓ |
 | 12,900 | 13,300 f, 13,700 t, 14,050 f | ✓ (unconditional: not the branch rewards) |
@@ -155,8 +160,8 @@ against §10):
   2,066 s magma-cone                        | 8,100 s cinder-rock          | 10,920 wall-3 · 11,150 s rock
   2,276 s basalt-turret (floor)             | 8,300 f wisp×6 i13 y231[cap] | 11,200 s rock · 11,280 wall-4
   2,550 f wisp×6 [null]                     | 8,450 s tender y156          | 11,300 f bat×5 i12 y126 b450
-  2,790 s tender y171                       | k3 8,700 dive-B hold165      | 11,460 wall-5 · 11,500 s tender
-  2,936 s magma-cone                        |   yTo 432 yTicks 165         | 11,640 wall-6 · 11,880 wall-7
+  2,790 s tender y171                       | k3 8,700 dive-B hold165      | 11,500 s tender
+  2,936 s magma-cone                        |   yTo 432 yTicks 165         | 11,640 wall-5
   3,520 s magma-geode (floor)               | 9,000 pit-B seam (no floor)  | 11,950 seam: trench opens (§3)
   3,720 f bat×5 i12 y126 b500 ↯down         |                              | 12,020 TRIG lower
   3,900 s tender y231                       |                              | 12,150 s slag-mine y252 [low]
@@ -187,7 +192,7 @@ against §10):
 `geode` = `magma-geode`, `cone` = `magma-cone`, `tender` = zone A's frozen `tender`
 (`carrier.straight`); ↯down/↯up = paths `bat-swoop-down` / `bat-swoop-up`; the BLUE row carries
 `drop: blueCapsule`, branch `take` — the zone's single blue. Spawn `screenX` stays the default
-664 everywhere; every `y` is playfield px below the camera top of the moment; the wall rows
+664 everywhere; every `y` is playfield px below the camera top of the moment; the five wall rows
 name the §10 maze columns. The lane writes the shipped `events` array from this table — every
 event gets its `interval` and `bonus` spelled out even where the table leaves them implied.)
 
@@ -214,7 +219,7 @@ is not created.
 **OBSIDIAN CLAW** (`obsidian-claw`, code `OC-04`, role `captain`) — event x **7,650** (the
 shelf; 7,650 < 21,150/2 = 10,575 ✓). One phase, script `captain.crab`. Sprites: existing
 `bosses/captain-shell` + `bosses/shield-plate` (common page — no S2 work). Entry `x` 514,
-`y` 168 (view coords, like every captain).
+`y` 168 (view coords, like `captain-crab`).
 
 | part | role | hp | score | hurtbox | note |
 |---|---|---|---|---|---|
@@ -237,14 +242,15 @@ stage skip and the `bosses-and-warning` behaviour enter at the zone boss's warni
 Script stays `boss.bastion`; entry keeps the ported view `x` 514 · `y` 168 (never re-derive),
 `introTicks` 150, boss score **40,000** (from 35,000: the longer stage and the armour layer).
 The three frozen-for-H sprites (`bastion-hull`, `bastion-core`, `bastion-arm`) keep their parts;
-every new part is an addition. Assembled height (parts at parent offsets, interim frame sizes)
-≈ **129 px** ≤ 202 (60 % of 336) ✓; width hull 84 + prow ≈ 120 ≤ 420 ✓. 19 ≤ `MAX_BOSS_PARTS` 24
+every new part is an addition. Assembled height (parts at parent offsets) ≈ **111 px** at real
+sizes — the spun arms sweep ±(43.5 + 12) about the hub — ≤ 202 (60 % of 336) ✓; width hull 84 +
+prow ≈ 120 ≤ 420 ✓. 19 ≤ `MAX_BOSS_PARTS` 24
 ✓ (S6 asserts the peak; 19 < 80 %? — R5-D5's 80 % line is a pool rule for a *design that peaks
 above 80 %*; 19/24 = 79 % ✓ under, but close: the acceptance in §15 asserts exactly 19).
 
 | # | part | parent | offset (x, y) | role | hp | score | sprite (interim size → v2 real size) |
 |---|---|---|---|---|---|---|---|
-| 1 | `hull` | — | (−45, 0) | armour (`never`) | — | — | `bastion-hull` 84×60 → ≈ 144×84, 3 frames (intact + 2 damage states) |
+| 1 | `hull` | — | (45, 0) | armour (`never`) | — | — | `bastion-hull` 84×60 → ≈ 144×84, 3f (2 damage) |
 | 2 | `prow` | hull | (−54, 0) | armour (`never`) | — | — | **new** `bastion-prow` 27×39 → ≈ 45×57, 1f + `@flash` |
 | 3 | `tower` | hull | (−33, −33) | armour (`never`) | — | — | **new** `bastion-tower` 36×27 → ≈ 48×36, 2f + `@flash` |
 | 4 | `emitter-top` | hull | (−51, −37.5) | `gun` | 22 | 1,500 | `bastion-emitter` 27×15 → 27×15, **4f** |
@@ -274,21 +280,21 @@ becomes ≈ 30–35 s, inside the run budget of §2).
 
 ## 9. Backdrops, decor, raster, cycles
 
-Parallax bands (≤ 6 + ≤ 1 `fore`, `R3-06`; `y` is a world/map row, bands repeat at their
-`spacing`):
+Parallax bands (≤ 6 + ≤ 1 `fore`, `R3-06`; `y` is the playfield row of the band's top edge at
+camera y 0 (schema −512…512), bands repeat at their `spacing`):
 
-| layer | sprite | factor | y (map px) | spacing | note |
+| layer | sprite | factor | y (px) | spacing | note |
 |---|---|---|---|---|---|
 | far | `bg/stars-far` | 0.25 | −108 | 192 | keeps (common) |
 | far | `bg/magma-peaks` | 0.7 | 228 | 192 | keeps; only reads on the surface |
 | far | **new** `bg/magma-deep` | 0.35 | 264 | 640 | cave depth behind the rock; 640×576 opaque far piece (vertical slack: yTo 432 × 0.35 ≈ 151 → 360 + 151 + margin) |
 | mid | **new** `bg/magma-chimney` | 0.6 | 330 | 640 | hanging stalactite fringe; 640×168, green key |
-| mid | `bg/magma-lava` | 0.5 | 700 | 192 | the lake: map y 700, so it only rises into the deep window (screen 268 at y 432) and through the river seams; 192×60 interim |
-| fore | **new** `bg/cinder-drift` | 1.15 | 96 | 640 | sparse drifting cinder veil in front of the ship, never a bullet lane hidden: ≤ 640×48 pieces, green key, mostly transparent |
+| mid | `bg/magma-lava` | 0.5 | 484 | 192 | the lake: screen 268 at cam 432 (deep+river); hidden 0/186 |
+| fore | **new** `bg/cinder-drift` | 1.15 | 96 | 640 | surface only; veil ahead, never hides a bullet lane |
 
-Decor (`StageSpec.decor`, R3-06, ≤ 32 entries): vent glow sprites on the crater mouths
-(`fx/glow-magma-vent` below) and `vent` empty tiles in the cave walls; decor never sits inside a
-collision tile.
+Decor (`StageSpec.decor`; R3-06 caps it at 256 — `MAX_STAGE_DECOR` — this design budgets
+≤ 32 entries): vent glow sprites on the crater mouths (`fx/glow-magma-vent` below) and `vent`
+empty tiles in the cave walls; decor never sits inside a collision tile.
 
 Raster rows (playfield rows: `top` 0…335, `bottom` 1…336):
 
@@ -305,7 +311,7 @@ channel; the lake band, chimney fringe and any cycle art paint *exactly* these):
 #4a1206  #7c1e08  #b0330c  #d95f14  #ef8a26  #f7bd4d
 ```
 
-`cycles`: one entry — layer `mid`, the six colours above, period **9 ticks** (today's speed).
+`cycles`: one entry — layer `mid`, the six colours above, `ticks` **9** (today's speed).
 Everything else on the mid layer keeps the ≥ 3/255 margin (bible §4.4). The interim
 `bg/magma-lava` and the old ramp stay shipped until P7 + the art drop; the scan exemption row
 for `bosses/bastion-arm` (exact ramp match) leaves when its real art lands.
@@ -353,7 +359,7 @@ top):
 | 10,200 | 850–851 | ceil 40–44, floor 50–55 | rows 45–49 → 108–168 (60 px) |
 | 10,560 | 880–881 | ceil 40–46, floor 51–55 (col 881: `obsidian`) | rows 47–50 → 132–180 (48 px) |
 | 10,920 | 910–911 | ceil 40–44, floor 49–55 | rows 45–48 → 108–156 (48 px) |
-| 11,280 | 940–941 | ceil 40–47, floor 52–55 (col 941: `obsidian`) | rows 48–51 → 116–168 (48 px) |
+| 11,280 | 940–941 | ceil 40–47, floor 52–55 (col 941: `obsidian`) | rows 48–51 → 144–192 (48 px) |
 | 11,640 | 970–971 | ceil 40–45, floor 50–55 | rows 46–49 → 120–168 (48 px) |
 | 12,600 (plug) | 1050–1051 | solid rows 55–63 (`brick-hot` col 1050, `brick` col 1051) | no gap — the trench's gate (§3) |
 
@@ -376,7 +382,7 @@ they thicken what the loop-2 rank already earns, never a gate:
   7,200 f bat×6 i12 y246 [null] 14,640 f wisp×8 y261 [null]
 ```
 
-**directItems** (the MANTA's plan; ≥ 30, today 26 → **36**; the plan is positional: entry *i* is
+**directItems** (the MANTA's plan; ≥ 30, today 26 → **37**; the plan is positional: entry *i* is
 handed to the *i*-th drop, cycling). Order keeps v1's opening mix and ends with a boss-prep tail:
 
 ```
@@ -385,14 +391,14 @@ red green blue orange red green blue red green | red green blue octagon red gree
 yellow red octagon
 ```
 
-(36 names; the same six-item Direct vocabulary as today — `DIRECT_ITEMS`.) `zones-de-direct`-
+(37 names; the same six-item Direct vocabulary as today — `DIRECT_ITEMS`.) `zones-de-direct`-
 style replay equality holds because the plan is only indexed by drop order.
 
 ## 12. Peaks (R5-D5's 80 % lines)
 
 | pool | max | design peak | % |
 |---|---|---|---|
-| live enemies (`MAX_ENEMIES`) | 64 | ≈ 46 (maze wave-7 + geode children ×4 + a mine stream; sampled at 10,900–12,400) | 72 % ≤ 80 % ✓ |
+| live enemies `MAX_ENEMIES` | 64 | ≈ 46 (maze wall-5, geode×4, mine stream; 10,900–12,400) | 72 % ≤ 80 % ✓ |
 | boss parts (`MAX_BOSS_PARTS`) | 24 | **19** (§8) | 79 % ≤ 80 % ✓ |
 | particles (`PARTICLE_CAPACITY`) | 256 | today 68 measured; ≈ 90–110 expected with the trench + plug debris | ≤ 43 % ✓ |
 
@@ -401,12 +407,12 @@ peak-enemy number is an arithmetic bound, **flagged for the lane to measure** (S
 
 ## 13. Atlas budget
 
-Today: the zone-d page `main-4.png` 256×256 holds 11 sprites + their `@flash` (bg 2, enemies 8,
+Today: the zone-d page `main-4.png` 256×256 holds 11 sprites + their `@flash` (bg 2, enemies 7,
 tileset, boss emitter; `bastion-hull/-core/-arm` ride the **common** page — zone H's echo names
 them) = **3,013 B** against `ATLAS_ZONE_PNG_CAP` 600,000 B (R3-04; cap from
 `test/scripts/assets/atlas-budget.ts`; page bytes from the manifest built at this tip). The
-design adds 13 sprite names (2 enemies + 4 boss parts + 3 backdrops + 1 glow + the `-v2`
-tileset; `tender`, `captain-shell`, `shield-plate` and the existing names reuse). Stand-ins add
+design adds **10** sprite names (2 enemies + 3 boss parts + 3 backdrops + 1 glow + 1 tileset;
+`tender`, `captain-shell`, `shield-plate` and the existing names reuse). Stand-ins add
 ≈ 8 KB; even the interim×1.5 real art of a full zone stays under 1/8 of the cap. Acceptance
 (S6): the zone's page ≤ `ATLAS_ZONE_PNG_CAP`, reported by the standin-budget print.
 
@@ -436,8 +442,8 @@ drop (no renames).
 | check | design value | baseline at tip |
 |---|---|---|
 | length | 20,000 ≤ 21,150 ≤ 22,000 (contract identity at `remastered: true`) | 14,400 |
-| scroll to WARNING | 225 ≤ ≈294 ≤ 315 s (`scrollTicksToWarning`) | ≈205 s |
-| bot run (god) | 240 ≤ ≈330 ≤ 360 s; `stageClear`; phases `[0,1,2]`; captain event fired | 236.9 s |
+| scroll to WARNING | 225 ≤ ≈296 ≤ 315 s (`scrollTicksToWarning`) | ≈205 s |
+| bot run (god) | 240 ≤ ≈338–350 ≤ 360 s; `stageClear`; phases `[0,1,2]`; captain event fired | 236.9 s |
 | checkpoints | 6 (§4) | 4 |
 | new types by sprite | 8 (§6; the case counts stage-event sprites vs zones A–C) | 6 |
 | capsules before WARNING | 43 plan sources (36 unconditional) ∈ [18,48]; §5 windows all ≥ 3 **unconditionally**; blue = 1 | 29 |
@@ -448,7 +454,7 @@ drop (no renames).
 | boss case | 19 parts ≤ 24; one hub; ≥ 4 `never` arms with `radius` > 0; exactly 2 guns; spin ≠ 0 every phase; assembled height ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`); reachable core (the S4b new case) | 9 parts |
 | branches case (new) | `branches` length 4; flags `lower`, `flank`; every branch event names a declared branch; the trench region + plug present (§4/§10) | 0 |
 | golden `zone-d-god` | `stageClear`, `bossDefeated`, `camera.y == 432`, death-free | re-bless (LAND) |
-| golden `zone-d-bot` | `stageClear`, `deathTicks` ⊆ trench/river window (report, ≤ 2), ticks/60 ∈ [180,360] | `deathTicks == []` |
+| golden `zone-d-bot` | `stageClear`, `deathTicks` ⊆ trench/river (report ≤ 2), ticks/60 ∈ [180,380] | none |
 | golden `zone-d-boss` | skip enters at the **WARNING** (last warning — the captain has none), boss down, deepest y == 432 | 300 |
 | demo `zone-d` | 40 s of the new dive (its description says so: the trench pass) | interim |
 | LAND scope | `--only zone-d`: `zone-d-god`, `zone-d-bot`, `zone-d-boss`, demo `zone-d` (+ their outcome cases); `atlas-groups.json` re-derivation moves the new names; fingerprints re-pin by the LAND | — |
@@ -459,7 +465,7 @@ drop (no renames).
 
 - `tender` (`carrier.straight`, sprite `enemies/carrier-red`) — used as-is from
   `content/enemies/zone-a.enemies.json`; its sim fields are never copied or edited (§5 uses
-  ~17 spawns; the calm pair is two of them).
+  ~19 spawns; the calm pair is two of them).
 - `bulwark-*` (A), `maw-*` (C), **`bastion-hull`, `bastion-core`, `bastion-arm`** (this file's
   §8 keeps a part for each), `regent-*` (F) names: added around, never renamed or deleted;
   the rebuilt bastion has 19 parts > the echo's 5.
