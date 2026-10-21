@@ -8,7 +8,9 @@
  * - a tampered golden replay (a burst of other input, a changed seed) desyncs at the first hash
  *   after the change: desync detection on real zone A content;
  * - the expectations are consistent (death ticks ordered and within the run) and
- *   `scripts/golden-update.mjs` runs this folder with the variable `golden.test.ts` reads.
+ *   `scripts/golden-update.mjs` runs this folder with the variable `golden.test.ts` reads — and
+ *   since R5-P.P3 its `--only <ids>` filter parses from every argv shape, including the `--`
+ *   pnpm 12 passes through.
  *
  * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
  */
@@ -16,9 +18,11 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Action, REPLAY_HASH_INTERVAL, decodeReplay, encodeReplay, type Replay } from '@shmup/core';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { parseOnly } from '../../scripts/golden-update.mjs';
 import {
   GOLDEN_SCENARIOS,
   GOLDEN_UPDATE_ENV,
+  GOLDEN_ONLY_ENV,
   formatGolden,
   goldenPath,
   playGolden,
@@ -168,10 +172,22 @@ describe('golden replays — the re-bless script', () => {
       'utf8',
     );
     expect(script).toContain(`${GOLDEN_UPDATE_ENV}: '1'`);
+    expect(script).toContain(`${GOLDEN_ONLY_ENV}:`);
     expect(script).toMatch(/\[vitest, 'run', '--project', 'integration', 'test\/golden'\]/);
     expect(script).toContain('process.exit(result.status ?? 1)');
     // The files are generated: Prettier leaves them alone.
     const ignore = readFileSync(new URL('../../.prettierignore', import.meta.url), 'utf8');
     expect(ignore.split('\n')).toContain('test/golden/*.replay.json');
+  });
+
+  it('parses the --only filter from its command arguments (R5-P.P3)', () => {
+    // A source grep cannot check how the three argv shapes parse — and the script must never be
+    // spawned from a test: it runs `test/golden` again, in update mode, this describe with it.
+    expect(parseOnly(['--only', 'zone-b'])).toEqual(['zone-b']);
+    // pnpm 12 passes its own `--` through to the script.
+    expect(parseOnly(['--', '--only', 'zone-b'])).toEqual(['zone-b']);
+    expect(parseOnly([])).toEqual([]);
+    expect(parseOnly(['--only', 'zone-b,zone-c'])).toEqual(['zone-b', 'zone-c']);
+    expect(() => parseOnly(['--only'])).toThrow();
   });
 });

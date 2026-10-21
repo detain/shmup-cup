@@ -4,8 +4,8 @@
  * this restarts a headless game at each checkpoint — what the `arcade` death penalty and continues
  * do — and plays it perfectly (every enemy killed on its first on-screen tick, through the public
  * damage API): the capsules those sources really drop before the next source beyond the window
- * appears are exactly the sources in the window, and at least three (`recovery.ts`; zones B and C
- * in `zone-bc-recovery.test.ts`).
+ * appears are exactly the sources in the window, and at least three (`recovery.ts`; the other
+ * zones in `zone-<x>-recovery.test.ts`).
  */
 import { describe, expect, it } from 'vitest';
 import { MIN_RECOVERY_CAPSULES, RECOVERY_WINDOW, recoveryAt } from './recovery.js';

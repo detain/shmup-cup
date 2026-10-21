@@ -118,6 +118,27 @@ export const GOLDEN_BUILD_ID = 'golden';
 /** Environment variable that turns `golden.test.ts` into the re-blessing run. */
 export const GOLDEN_UPDATE_ENV = 'SHMUP_GOLDEN_UPDATE';
 
+/** Environment variable holding the `--only <id,…>` stage ids of a filtered re-bless (R5-P.P3). */
+export const GOLDEN_ONLY_ENV = 'SHMUP_GOLDEN_ONLY';
+
+/**
+ * The update predicate (R5-P.P3): whether a re-blessing run re-records the scenarios of one
+ * stage. A scenario re-records only when updating **and** its `stageId` is in the comma list
+ * `scripts/golden-update.mjs --only <ids>` passes through `SHMUP_GOLDEN_ONLY` — or that variable
+ * is empty, which is the unfiltered `pnpm golden:update` re-blessing everything. A `null` stage
+ * (the demos' format sample) is never in a list: it re-records only without `--only`. The files
+ * the run does not re-record are still **verified** by `golden.test.ts` and `demos.test.ts` —
+ * the filtered run's proof that only the listed zones moved.
+ *
+ * @param stageId - The scenario's stage id, or `null` for the format sample.
+ * @returns Whether this filtered run re-records a scenario of that stage.
+ */
+export function goldenStageSelected(stageId: string | null): boolean {
+  const only = process.env[GOLDEN_ONLY_ENV];
+  if (only === undefined || only.trim() === '') return true;
+  return stageId !== null && only.split(',').some((id) => id.trim() === stageId);
+}
+
 /** One golden replay: how it is recorded. */
 export interface GoldenScenario {
   /** File name without `.replay.json` (`<stage id>-…`: `zone-a-…`, `gimmick-range-…`). */
@@ -1081,6 +1102,46 @@ export function playGolden(
 export function readGolden(name: string): { file: GoldenFile; replay: Replay } {
   const file = JSON.parse(readFileSync(goldenPath(name), 'utf8')) as GoldenFile;
   return { file, replay: decodeReplay(file) };
+}
+
+/** A golden run's boss history (the H and I zone files, shared since the R5-P.P3 split). */
+export interface GoldenFollowed {
+  /** The outcome after the last tick. */
+  readonly outcome: GoldenOutcome;
+  /** The World after the last tick. */
+  readonly world: Game['world'];
+  /** Every `<boss id>:<phase>` the run fought. */
+  readonly phases: Set<string>;
+  /** Each boss it saw, by id, with its last state. */
+  readonly last: Map<string, { state: number; escaped: boolean }>;
+  /** The leftmost camera x of the run (where a skip landed). */
+  readonly first: number;
+}
+
+/**
+ * Plays a golden back and follows its bosses: every `<id>:<phase>` fought, each boss's last
+ * state, and the leftmost camera x (R5-P.P3: the H and I zone files shared this from the old
+ * pair block's closure).
+ *
+ * @param name - Scenario name.
+ * @returns The outcome, the final World, the phases fought, the bosses' last states and the
+ *   leftmost camera x.
+ */
+export function follow(name: string): GoldenFollowed {
+  const db = shippedContent();
+  const phases = new Set<string>();
+  const last = new Map<string, { state: number; escaped: boolean }>();
+  let first = Number.POSITIVE_INFINITY;
+  const { outcome, world } = playGolden(readGolden(name).replay, undefined, (w) => {
+    first = Math.min(first, w.camera.x);
+    for (const b of w.bosses.slots) {
+      if (b.specIndex < 0 || b.state === BossState.None) continue;
+      const id = db.enemies[b.specIndex].id;
+      if (b.state === BossState.Fight) phases.add(id + ':' + String(b.phase));
+      last.set(id, { state: b.state, escaped: b.escaped });
+    }
+  });
+  return { outcome, world, phases, last, first };
 }
 
 /**

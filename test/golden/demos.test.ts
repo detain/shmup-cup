@@ -8,7 +8,9 @@
  * re-records the demos with the golden replays) and say why in the commit message.
  *
  * With `SHMUP_GOLDEN_UPDATE=1` the test first re-records every demo from the bot and rewrites its
- * file, then checks the new files the same way.
+ * file, then checks the new files the same way. A filtered re-bless (R5-P.P3's `--only`, seen as
+ * `SHMUP_GOLDEN_ONLY`) re-records only the demos of the listed zones; the others — and the format
+ * sample, whose `stageId` is `null` — are verified but left untouched.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -31,7 +33,7 @@ import {
   recordDemo,
   writeDemo,
 } from './demos.js';
-import { GOLDEN_UPDATE_ENV } from './golden.js';
+import { GOLDEN_UPDATE_ENV, goldenStageSelected } from './golden.js';
 
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
@@ -40,7 +42,7 @@ describe('attract demos (content/demos, 4-way bot)', () => {
   it.each(DEMO_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(
     '%s plays back through the attract playback with every state hash',
     (_id, scenario) => {
-      if (updating) {
+      if (updating && goldenStageSelected(scenario.stageId)) {
         writeDemo(scenario, recordDemo(scenario));
         console.info(`[demos] re-blessed ${scenario.id}`);
       }
@@ -93,7 +95,9 @@ describe('attract demos (content/demos, 4-way bot)', () => {
   });
 
   it('the format sample is a demo of free flight that plays in sync', () => {
-    if (updating) writeDemo(EXAMPLE_DEMO, recordDemo(EXAMPLE_DEMO));
+    // Its `stageId` is `null`, so a filtered re-bless (R5-P.P3) leaves it alone.
+    if (updating && goldenStageSelected(EXAMPLE_DEMO.stageId))
+      writeDemo(EXAMPLE_DEMO, recordDemo(EXAMPLE_DEMO));
     const { file, replay } = readDemo(EXAMPLE_DEMO.id);
     expect(file.formatVersion).toBe(1);
     expect(replay.header.stageId).toBeNull();

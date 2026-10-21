@@ -1,0 +1,49 @@
+/**
+ * Zone B's golden outcome checks (plan M2-11; split out of `golden.test.ts` by R5-P.P3): the
+ * committed `zone-b-god` and `zone-b-deaths` files and zone B's hidden bonus stage, the grotto.
+ * The file plays back (every state hash) stays in `golden.test.ts`; this file reads only zone B's
+ * own goldens (`brine-grotto-god` is a zone B stage).
+ *
+ * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
+ */
+import { describe, expect, it } from 'vitest';
+import { BONUS_CAPSULE_SCORE } from '@shmup/core';
+import { GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
+
+/** Whether this run re-blesses the files. */
+const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
+
+describe.skipIf(updating)('golden replays — zone B (M2-11)', () => {
+  it('covers zone B of M2-11: cleared in 3–6 minutes, its boss shot down, the grotto', () => {
+    const { file, replay } = readGolden('zone-b-god');
+    expect(replay.header.stageId).toBe('zone-b');
+    expect(file.expected).toMatchObject({
+      status: 'stageClear',
+      bossDefeated: true,
+      deathTicks: [],
+    });
+    expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    // Zone B's hidden bonus stage: the bonus capsules and the 1UP collected, no boss.
+    const grotto = readGolden('brine-grotto-god');
+    const { world, outcome } = playGolden(grotto.replay);
+    expect(world.stage?.stage.type).toBe('bonus');
+    expect(outcome).toMatchObject({ status: 'stageClear', bossDefeated: false, deathTicks: [] });
+    const p1 = world.scoring.board.scores[0];
+    expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
+    expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+  });
+
+  it('covers zone B without god mode (M2-11 tests): the Arcade-penalty deaths and restarts, game over', () => {
+    // BRINE NEBULA under the Arcade penalty: every death restarts at a checkpoint, then game over.
+    const deaths = readGolden('zone-b-deaths');
+    expect(deaths.replay.header.assisted).toBe(false);
+    expect(deaths.replay.header.config.deathPenalty).toBe('arcade');
+    expect(deaths.file.expected).toMatchObject({
+      status: 'gameOver',
+      lives: 0,
+      bossDefeated: false,
+    });
+    expect(deaths.file.expected.deathTicks).toHaveLength(3);
+  });
+});
