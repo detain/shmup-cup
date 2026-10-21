@@ -299,7 +299,7 @@ ending stands), `minion` `ark-hook`, `inner` `hollow-king`.
 kept 11 — `hull-4`, `pod-l`, `pod-r`: 11 → 14); the case's `guns.length ≥ 6` and the ≥ 3
 above / ≥ 3 below split stand (6 turrets; the pods
 join the fire pool from ARK phase 2, `count` 2 launches). Assembled height — the pods
-dominate, not the turrets: hull 60 + 2·(pod centre 60 + hh 7.5) = **195 px** ≤ 202
+dominate, not the turrets: parts hang off the parent CENTRE, so the hull's ±30 lies inside — pods reach ±(60 + 7.5) = ±67.5 → **135 px** ≤ 202
 (`Math.round(0.6 * PLAYFIELD_H)`) ✓; length 720 px = five sections × 144 ✓
 (bible §5.7). Raid path (5 segments, widened for the longer keel, the turrets stay off the
 ship's column — the v1 balance law): x −190 → −90 → +10 → −90 → −190; y −150 → −168 → −150 →
@@ -319,8 +319,8 @@ hp/intro cuts only. Entry view `x` 508 · `y` 168, intro **120** (was 150), scor
 | — | `body`, `bulk`, `maw` (core `whenOpen`), `jaw-top`, `jaw-bottom`, `stalk-1…3`, `lure` (gun) | as shipped | as shipped | as shipped | **maw 80 (was 96)**, **lure 24 (was 30)**, rest as shipped | as shipped | as shipped |
 | 10–11 | `fin-top` · `fin-bottom` | body | (21, ∓66) | armour `never`; box hurtbox hw 16.5 · hh 10.5 (halves of the 33×21 art, bulk-style) | — | — | **new** `bosses/king-fin` 33×21, 1 f (mirrored art) |
 
-11 parts; assembled height ≈ 202-ish check: body 120 + fins ∓66 + stalk −67 → ≈ **195 px** ≤
-202 ✓ (the fins sit inside the stalk's old silhouette). Three phases exactly, `boss.angler`,
+11 parts; assembled height measured from the body centre: fins dominate ±(66 + 10.5) = ±76.5 →
+**153 px** ≤ 202 ✓ (body ±60 and the stalk chain's ≈ ±40.5 lie inside the fins' span). Three phases exactly, `boss.angler`,
 all shipped tunables; only the `until` thresholds move with the hp cuts:
 
 | phase | until | params (units `trackSpeed margin closedTicks openTicks gape fireTicks ways spread bulletSpeed ring ringSpeed sway swayTicks gunTicks launchTicks count`) |
