@@ -285,7 +285,20 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
   });
 
   it('can spill onto several pages when the page limit is small', () => {
-    const small = buildAtlas({ maxPageSize: 256 });
+    // R3-06.L6's decor bands are 256 px wide BY DESIGN (a band exactly one frame
+    // width tiles the playfield seam-free), so they cannot fit the 254-px frame cap
+    // of a 256² page. The spill case runs the scale-1 source set (decor emits
+    // nothing there), which still overflows many small pages. The bands themselves
+    // are packed and size-validated by this file's live default-scale build below.
+    const small = buildAtlas({ maxPageSize: 256, artScale: 1 });
+    for (const band of [
+      'decor/circuit-band#0',
+      'decor/cloud-band#0',
+      'decor/frond-band#0',
+      'decor/ridge-band#0',
+    ]) {
+      expect(manifest.frames[band].w).toBe(256);
+    }
     expect(small.manifest.pages.length).toBeGreaterThan(1);
     expect(small.manifest.pages.map((p) => p.file).slice(0, 2)).toEqual(['main.png', 'main-1.png']);
     for (const frame of Object.values(small.manifest.frames)) {

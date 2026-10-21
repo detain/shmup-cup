@@ -1952,8 +1952,9 @@ export function createWorld(
     world.gimmicks.chainBatch,
   );
   // The glow batches (R3-06.L4): additive, on the owner's own layer, appended after every body
-  // so a glow draws over its owner. All are `null` on content without glows — shipped stages add
-  // no batch, so the batch list and every fingerprint stay unchanged.
+  // so a glow draws over its owner. All are `null` on content without any glow — a DB whose
+  // stages name none adds no batch, so the batch list and every fingerprint stay unchanged;
+  // once one stage names a glow the companions exist everywhere, empty until an owner glows.
   const enemyGlowGround = world.enemies.glowGroundBatch;
   if (enemyGlowGround !== null) batches.push(enemyGlowGround);
   const enemyGlowAir = world.enemies.glowAirBatch;

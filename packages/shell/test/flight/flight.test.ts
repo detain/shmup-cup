@@ -86,6 +86,13 @@ describe('shell/flight', () => {
       LayerId.AirEnemies,
       // The stage gimmicks' chains (M2-07).
       LayerId.GroundEnemies,
+      // The glow companions (R3-06.L4): the shipped content DB now names glows
+      // (decor-range), so every World carries these four additive batches — empty,
+      // hence zero draw calls, until an owner on the layer glows.
+      LayerId.GroundEnemies,
+      LayerId.AirEnemies,
+      LayerId.GroundEnemies,
+      LayerId.AirEnemies,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
