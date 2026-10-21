@@ -189,4 +189,63 @@ describe('assets/source/fonts/pixel9x12.font.json — katakana (R4-03.C4)', () =
         ).toBe(true);
     }
   });
+
+  /** Voiced kana mapped to their base: the body is the base, plus dakuten dots. */
+  const VOICED: Array<[string, string]> = [
+    ['\u30ac', '\u30ab'],
+    ['\u30ae', '\u30ad'],
+    ['\u30b0', '\u30af'],
+    ['\u30b2', '\u30b1'],
+    ['\u30b4', '\u30b3'],
+    ['\u30b6', '\u30b5'],
+    ['\u30b8', '\u30b7'],
+    ['\u30ba', '\u30b9'],
+    ['\u30bc', '\u30bb'],
+    ['\u30be', '\u30bd'],
+    ['\u30c0', '\u30bf'],
+    ['\u30c2', '\u30c1'],
+    ['\u30c5', '\u30c4'],
+    ['\u30c7', '\u30c6'],
+    ['\u30c9', '\u30c8'],
+    ['\u30d0', '\u30cf'],
+    ['\u30d3', '\u30d2'],
+    ['\u30d6', '\u30d5'],
+    ['\u30d9', '\u30d8'],
+    ['\u30dc', '\u30db'],
+  ];
+
+  /** Semi-voiced kana mapped to their base: the body is the base, plus a ring. */
+  const SEMI_VOICED: Array<[string, string]> = [
+    ['\u30d1', '\u30cf'],
+    ['\u30d4', '\u30d2'],
+    ['\u30d7', '\u30d5'],
+    ['\u30da', '\u30d8'],
+    ['\u30dd', '\u30db'],
+  ];
+
+  it('draws every voiced kana as its base body with a mark in the reserve', () => {
+    for (const [kana, base] of [...VOICED, ...SEMI_VOICED]) {
+      const r = rows(kana.codePointAt(0) ?? 0);
+      const b = rows(base.codePointAt(0) ?? 0);
+      expect(r.slice(3).join('|'), `${kana} body = ${base}`).toBe(b.slice(3).join('|'));
+      expect(
+        r.slice(0, 3).some((row) => row.includes('#')),
+        `${kana} mark`,
+      ).toBe(true);
+    }
+  });
+
+  it('keeps small kana and kana punctuation off the mark reserve and row 11', () => {
+    for (const ch of [
+      ...'\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30c3',
+      ...'\u30fc\u30fb\u3001\u3002',
+    ]) {
+      const r = rows(ch.codePointAt(0) ?? 0);
+      for (const row of [...r.slice(0, 3), r[11]]) expect(row, `${ch} band`).toBe('.........');
+      expect(
+        r.slice(3, 11).some((row) => row.includes('#')),
+        ch,
+      ).toBe(true);
+    }
+  });
 });
