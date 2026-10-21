@@ -190,9 +190,10 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
       }
     }
     // R3-03.V1: the v2 bullets, bend nodes and their variants are native, so 216 frames left the
-    // upscaled pool; since R4-03.C1 the native font too (its 195 glyph frames are unscaled). The
-    // floor measures what is still compared, not the natives.
-    expect(scaled).toBeGreaterThan(700);
+    // upscaled pool; since R4-03.C1 the native font too (its 195 glyph frames are unscaled).
+    // Since R4-04.D1/D2 the explosions (21 frames) and the small particles (15) are native at
+    // scale ≠ 1, so 36 more left. The floor measures what is still compared, not the natives.
+    expect(scaled).toBeGreaterThan(600);
     expect(wrongPixels).toEqual([]);
   });
 
