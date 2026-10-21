@@ -160,6 +160,7 @@ against §10):
   2,066 s magma-cone                        | 8,100 s cinder-rock          | 10,920 wall-3 · 11,150 s rock
   2,276 s basalt-turret (floor)             | 8,300 f wisp×6 i13 y231[cap] | 11,200 s rock · 11,280 wall-4
   2,550 f wisp×6 [null]                     | 8,450 s tender y156          | 11,300 f bat×5 i12 y126 b450
+                                            | 8,550 s cinder-rock          |
   2,790 s tender y171                       | k3 8,700 dive-B hold165      | 11,500 s tender
   2,936 s magma-cone                        |   yTo 432 yTicks 165         | 11,640 wall-5
   3,520 s magma-geode (floor)               | 9,000 pit-B seam (no floor)  | 11,950 seam: trench opens (§3)
@@ -364,7 +365,7 @@ top):
 | 12,600 (plug) | 1050–1051 | solid rows 55–63 (`brick-hot` col 1050, `brick` col 1051) | no gap — the trench's gate (§3) |
 
 Every non-plug brick column keeps its ≥ 36 px gap (the v1 content case's floor, ported: 24·1.5 =
-36 ✓); the plug columns are the case's named exception (§15). 12 brick-bearing columns ≥ 10 ✓.
+36 ✓); the plug columns are the case's named exception (§15). 12 brick-family columns (9 `brick`, 2 `obsidian`, 1 `brick-hot`) ≥ 10 ✓.
 A punch attempt needs ~8–12 hits on the ship's row (brick hp 4 / obsidian hp 6), reachable
 within the wall's 24-px × 300 px/tick approach window at 4-way fire rates (the v1 maze proved
 the head-on punch; v2 gives it 1.5× the pixels).
@@ -449,12 +450,12 @@ drop (no renames).
 | capsules before WARNING | 43 plan sources (36 unconditional) ∈ [18,48]; §5 windows all ≥ 3 **unconditionally**; blue = 1 | 29 |
 | calm | last key x 18,300 → warning 20,400: exactly `['carrier.straight','carrier.straight']` | ✓ pair at (12,600→13,650) |
 | 4-way caps | aimed ≤ 3.0 everywhere incl. the mine's 1.8 and the crab's 1.725; laser lane gap ≥ 24, `maxSeparate` ≤ 2 | ✓ |
-| maze case (rewrite) | ≥ 10 brick columns; every column except the plug pair has a ≥ 36 px gap; the plug is solid rows 55–63 at columns 1050–1051 | 14 columns all gapped |
+| maze case (rewrite) | ≥ 10 brick-family columns (`brick`, `obsidian`, `brick-hot`); every column except the plug pair has a ≥ 36 px gap; the plug is solid rows 55–63 at columns 1050–1051 | 14 columns all gapped |
 | dive case (rewrite) | a `yTo` ≥ 150 with `hold` > 0 below half the stage; **two** such keys (186 and 432); `rowsTall` 64; `world.camera.y == 432` at clear and at the skip's deepest point (replaces `v1rel(200)`) | one key, 300 |
 | boss case | 19 parts ≤ 24; one hub; ≥ 4 `never` arms with `radius` > 0; exactly 2 guns; spin ≠ 0 every phase; assembled height ≤ 202 (`Math.round(0.6 * PLAYFIELD_H)`); reachable core (the S4b new case) | 9 parts |
 | branches case (new) | `branches` length 4; flags `lower`, `flank`; every branch event names a declared branch; the trench region + plug present (§4/§10) | 0 |
 | golden `zone-d-god` | `stageClear`, `bossDefeated`, `camera.y == 432`, death-free | re-bless (LAND) |
-| golden `zone-d-bot` | `stageClear`, `deathTicks` ⊆ trench/river (report ≤ 2), ticks/60 ∈ [180,380] | none |
+| golden `zone-d-bot` | `stageClear`, `deathTicks` ⊆ trench/river (report ≤ 2), ticks/60 ∈ [180,380] | `deathTicks == []` |
 | golden `zone-d-boss` | skip enters at the **WARNING** (last warning — the captain has none), boss down, deepest y == 432 | 300 |
 | demo `zone-d` | 40 s of the new dive (its description says so: the trench pass) | interim |
 | LAND scope | `--only zone-d`: `zone-d-god`, `zone-d-bot`, `zone-d-boss`, demo `zone-d` (+ their outcome cases); `atlas-groups.json` re-derivation moves the new names; fingerprints re-pin by the LAND | — |
