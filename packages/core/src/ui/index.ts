@@ -2015,20 +2015,23 @@ export const HUD_COLORS = Object.freeze({
   bossFill: 0xf85858,
 });
 
-// The HUD's geometry (plan_resolution.md R1-01): the bars' rows and every edge- or centre-anchored
-// x derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the text
-// extents from the font's cell (GLYPH_W), and each run of labels and pips starts after the one
-// before it — so the HUD stays laid out when the frame or the font changes. The numbers in
-// parentheses are the values at 384×216 with the 6×8 font and `ART_SCALE` 1. The HUD art's own
-// sizes (the 40-px `hud/meter-slot` box, the 8-px life icons 10 px apart, the pips' sizes and
-// steps, the rows inside a bar) and its gaps are uiPx lengths since R2-01: they follow the art's
-// scale (×1.5 from the flip, with the interim art and the 12-px bars), not the frame's (R4-03
-// redraws the HUD). One-pixel borders stay one pixel.
+// The HUD's geometry (plan_resolution.md R1-01, redrawn for the v2 bars by R4-03.C5): the bars'
+// rows and every edge- or centre-anchored x derive from the frame (`core/config` FRAME_W, FRAME_CX,
+// HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the text extents from the font's cell (GLYPH_W), and each run of
+// labels and pips starts after the one before it — so the HUD stays laid out when the frame or the
+// font changes. The numbers in parentheses are the values at 384×216 with the 6×8 font and
+// `ART_SCALE` 1. The HUD art's own sizes (the `hud/meter-slot` box, the life icons and their pitch,
+// the pips' sizes and steps, the rows inside a bar) are uiPx lengths since R2-01: they follow the
+// art's scale (×1.5, R4-03's native redraw at these same sizes), not the frame's. One-pixel borders
+// stay one pixel. Two runs are laid out for the wide frame instead of packed: the boss HP bar spans
+// a quarter of the frame, and the Direct mode's four groups march over the bottom bar in an even
+// pitch that ends the family label at the right margin (R1-01's experiment found the packed v1 run
+// leaving the bar's right side empty).
 
 /** Gap in pixels between a HUD label and the number or bar after it (4). */
 const HUD_LABEL_GAP = uiPx(4);
 
-/** A row of art inside a HUD bar (the stock icons, the pips, the boss bar's frame): its top (2). */
+/** A row of art inside a HUD bar (the pips, the boss bar's frame): its top (2). */
 const HUD_ROW_DY = uiPx(2);
 
 /** Height of a HUD pip, a stock icon's stand-in and the boss bar's frame (4). */
@@ -2061,6 +2064,17 @@ const HUD_COOP_PIP_STEP = uiPx(4);
 /** Width of a stock icon (`hud/life`) — its stand-in rectangle's (8). */
 const HUD_STOCK_W = uiPx(8);
 
+/** Height of a stock icon (`hud/life` — 5; the v2 art's own 8). */
+const HUD_STOCK_H = uiPx(5);
+
+/**
+ * Row of the stock icons inside the bottom bar: the icons are centred vertically,
+ * `(HUD_BAR_HEIGHT − HUD_STOCK_H) >> 1` below the bar's top (1) — the same row the flight scene's
+ * `LIVES_Y` shows (the v1 art sat one pixel into the bar; at 12-px bars centring is what R2-01's
+ * note asked for, and it keeps the browser spec's icon band).
+ */
+const HUD_STOCK_DY = (HUD_BAR_HEIGHT - HUD_STOCK_H) >> 1;
+
 /** Pitch of the stock icons (10); the co-op count follows its icon by the same. */
 const HUD_STOCK_STEP = uiPx(10);
 
@@ -2083,25 +2097,39 @@ const HUD_SCORE_DX = 2 * GLYPH_W + HUD_LABEL_GAP;
 const HUD_HI_W = HUD_SCORE_DX + HUD_DIGITS * GLYPH_W;
 
 /**
- * Width of the boss HP bar's frame in the top HUD bar (M2-09); the fill is 2 px narrower. As wide
- * as the hi-score display it replaces (64).
+ * Width of the boss HP bar's frame in the top HUD bar (M2-09, re-anchored to the frame by
+ * R4-03.C5): a quarter of the frame — the bar replaces the centred hi-score while a boss is up,
+ * and the wide frame earns a wide bar (96). The fill is 2 px narrower.
  */
-export const BOSS_HP_BAR_WIDTH = HUD_HI_W;
+export const BOSS_HP_BAR_WIDTH = FRAME_W >> 2;
 
 /** From the boss HP bar's `BOSS` label to its frame: four glyph cells and the gap (28 — M2-09). */
 const HUD_BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
 
 /**
  * The boss HP bar's `BOSS` label x: the label, the gap and the bar centred 2 px right of the
- * frame's centre (148).
+ * frame's centre (132).
  */
 const HUD_BOSS_X = FRAME_CX - ((HUD_BOSS_BAR_DX + BOSS_HP_BAR_WIDTH) >> 1) + uiPx(2);
 
-/** Direct mode (M2-05): from the `SHOT` label to its first pip — four glyph cells and 2 px (26). */
-const HUD_SHOT_PIPS_DX = 4 * GLYPH_W + uiPx(2);
+/**
+ * Direct mode (M2-05, R4-03.C5): from a group's label to its first pip — four glyph cells and
+ * 2 px (26). Four glyphs is the widest label any shipped language shows in the run (`SHOT`, the
+ * Japanese `ソクド`), so the pips never sit under a label in any language.
+ */
+const HUD_DIRECT_PIPS_DX = 4 * GLYPH_W + uiPx(2);
 
-/** Direct mode: from a three-glyph tier label (`SUB`, `ARM`, `SPD`) to its first pip (20). */
-const HUD_TIER_PIPS_DX = 3 * GLYPH_W + uiPx(2);
+/**
+ * Direct mode: the `SPD` group's run — the label's reservation and 5 pips on the tier pitch (56).
+ * The widest group run is `SHOT` / `SUB`'s 8 pips on the level pitch; the pitch below fits it.
+ */
+const HUD_DIRECT_SPD_RUN = HUD_DIRECT_PIPS_DX + 5 * HUD_TIER_PIP_STEP;
+
+/**
+ * Direct mode: the main-shot family label's reservation — four glyph cells, the longest shipped
+ * family name (`DISC`, `WAVE` — a test keeps every content family inside it) (24).
+ */
+const HUD_DIRECT_FAMILY_W = 4 * GLYPH_W;
 
 /** Co-op Direct mode (M2-06): from a two-glyph label (`SH`, `SB`, `AR`, `SP`) to its pips (13). */
 const HUD_COOP_PIPS_DX = 2 * GLYPH_W + uiPx(1);
@@ -2118,17 +2146,30 @@ const HUD_STOCK_X = uiPx(4);
  */
 const HUD_METER_X = HUD_STOCK_X + HUD_STOCK_ICONS * HUD_STOCK_STEP + uiPx(4);
 
-/** Direct mode: the `SUB` label x — after `SHOT`'s 8 pips 5 px apart and 6 px (130). */
-const HUD_SUB_X = HUD_METER_X + HUD_SHOT_PIPS_DX + 8 * HUD_LEVEL_PIP_STEP + uiPx(6);
+/**
+ * Direct mode (R4-03.C5): the main-shot family's label x — the four-glyph reservation ending at
+ * the bar's right margin, like the `2P` run (350).
+ */
+const HUD_FAMILY_X = FRAME_W - uiPx(10) - HUD_DIRECT_FAMILY_W;
 
-/** Direct mode: the `ARM` label x — after `SUB`'s 8 pips 5 px apart and 6 px (196). */
-const HUD_ARM_X = HUD_SUB_X + HUD_TIER_PIPS_DX + 8 * HUD_LEVEL_PIP_STEP + uiPx(6);
+/**
+ * Direct mode: the pitch of the four pip groups' label x — `SHOT`, `SUB`, `ARM`, `SPD` evenly
+ * spread so the `SPD` run's widest case (its five tier pips) ends a 6 px gap before the family
+ * label (76). A group's own run is at most the `SHOT`/`SUB` 8 level pips; a test keeps it inside
+ * the pitch in every shipped language.
+ */
+const HUD_DIRECT_PITCH = Math.floor(
+  (HUD_FAMILY_X - uiPx(6) - HUD_DIRECT_SPD_RUN - HUD_METER_X) / 3,
+);
 
-/** Direct mode: the `SPD` label x — after `ARM`'s 5 pips 6 px apart and 6 px (252). */
-const HUD_SPEED_X = HUD_ARM_X + HUD_TIER_PIPS_DX + 5 * HUD_TIER_PIP_STEP + uiPx(6);
+/** Direct mode: the `SUB` label x — one pitch after `SHOT` (134). */
+const HUD_SUB_X = HUD_METER_X + HUD_DIRECT_PITCH;
 
-/** Direct mode: the main-shot family's label x — after `SPD`'s 5 pips 6 px apart and 4 px (306). */
-const HUD_FAMILY_X = HUD_SPEED_X + HUD_TIER_PIPS_DX + 5 * HUD_TIER_PIP_STEP + uiPx(4);
+/** Direct mode: the `ARM` label x — two pitches after `SHOT` (210). */
+const HUD_ARM_X = HUD_METER_X + 2 * HUD_DIRECT_PITCH;
+
+/** Direct mode: the `SPD` label x — three pitches after `SHOT` (286). */
+const HUD_SPEED_X = HUD_METER_X + 3 * HUD_DIRECT_PITCH;
 
 /** Co-op: the stock icon x in a half (2). */
 const HUD_COOP_STOCK_X = uiPx(2);
@@ -2181,19 +2222,19 @@ export const HUD_LAYOUT = Object.freeze({
   slotW: uiPx(40),
   /** First Force Field pip x: 5 pips 7 px apart ending 7 px from the right edge (344). */
   shieldX: FRAME_W - (5 * HUD_SHIELD_PIP_STEP + HUD_SHIELD_PIP_W),
-  /** Direct mode (M2-05): `SHOT` label x; its pips (5 px apart) start 26 px later. */
+  /** Direct mode (M2-05): `SHOT` label x; its pips start after the four-glyph label (R4-03.C5). */
   shotX: HUD_METER_X,
-  /** Direct mode: `SUB` label x; its pips start 20 px later. */
+  /** Direct mode: `SUB` label x — one pitch after `SHOT`. */
   subX: HUD_SUB_X,
-  /** Direct mode: `ARM` label x; its pips (6 px apart) start 20 px later. */
+  /** Direct mode: `ARM` label x — two pitches after `SHOT`. */
   armX: HUD_ARM_X,
-  /** Direct mode: `SPD` label x; its pips (6 px apart) start 20 px later. */
+  /** Direct mode: `SPD` label x — three pitches after `SHOT`. */
   speedX: HUD_SPEED_X,
-  /** Direct mode: the main-shot family's label x. */
+  /** Direct mode: the main-shot family's label x — four glyph cells end at the right margin. */
   familyX: HUD_FAMILY_X,
-  /** The boss HP bar's `BOSS` label x (M2-09; the bar replaces the hi-score while shown — 148). */
+  /** The boss HP bar's `BOSS` label x (M2-09; the bar replaces the hi-score while shown — 132). */
   bossX: HUD_BOSS_X,
-  /** The boss HP bar's frame x (176); the frame is {@link BOSS_HP_BAR_WIDTH} wide, 4 px tall. */
+  /** The boss HP bar's frame x (160); the frame is {@link BOSS_HP_BAR_WIDTH} wide, 4 px tall. */
   bossBarX: HUD_BOSS_X + HUD_BOSS_BAR_DX,
   /**
    * Co-op (M2-06): width of each player's half of the bottom bar while both play — half the frame
@@ -2606,16 +2647,16 @@ export function buildHud(
 
   const ship = players[0];
   const stock = ship.lives - 1;
-  const iconY = L.bottomY + HUD_ROW_DY;
+  const iconY = L.bottomY + HUD_STOCK_DY;
   if (stock > L.stockIcons) {
     if (sprites.life >= 0) list.sprite(sprites.life, 0, L.stockX, iconY);
-    else list.rect(L.stockX, iconY, HUD_STOCK_W, HUD_PIP_H, HUD_COLORS.p1);
+    else list.rect(L.stockX, iconY, HUD_STOCK_W, HUD_STOCK_H, HUD_COLORS.p1);
     list.number(stock, L.stockX + HUD_STOCK_COUNT_DX, L.bottomY, 0, HUD_COLORS.number);
   } else {
     for (let i = 0; i < stock; i++) {
       const x = L.stockX + i * HUD_STOCK_STEP;
       if (sprites.life >= 0) list.sprite(sprites.life, 0, x, iconY);
-      else list.rect(x, iconY, HUD_STOCK_W, HUD_PIP_H, HUD_COLORS.p1);
+      else list.rect(x, iconY, HUD_STOCK_W, HUD_STOCK_H, HUD_COLORS.p1);
     }
   }
 
@@ -2749,10 +2790,10 @@ function coopHalf(
   const life = slot === 1 && sprites.lifeP2 >= 0 ? sprites.lifeP2 : sprites.life;
   const stock = ship.lives > 0 ? ship.lives - 1 : 0;
   const iconX = ox + L.coopStockX;
-  if (life >= 0) list.sprite(life, 0, iconX, y + HUD_ROW_DY);
+  if (life >= 0) list.sprite(life, 0, iconX, y + HUD_STOCK_DY);
   else {
     const color = slot === 1 ? HUD_COLORS.p2 : HUD_COLORS.p1;
-    list.rect(iconX, y + HUD_ROW_DY, HUD_STOCK_W, HUD_PIP_H, color);
+    list.rect(iconX, y + HUD_STOCK_DY, HUD_STOCK_W, HUD_STOCK_H, color);
   }
   list.number(stock, iconX + HUD_STOCK_STEP, y, 0, HUD_COLORS.number);
   if (world.powerups.direct) {
@@ -2875,10 +2916,18 @@ function buildDirectPips(world: World, list: DrawList, text: UiText): void {
   const shotTop = directMaxLevel(family);
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
   const step = HUD_LEVEL_PIP_STEP;
-  drawPips(list, L.shotX + HUD_SHOT_PIPS_DX, step, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
+  drawPips(
+    list,
+    L.shotX + HUD_DIRECT_PIPS_DX,
+    step,
+    shotTop,
+    loadout.shot,
+    color,
+    HUD_COLORS.pipOff,
+  );
   list.text(S.sub, L.subX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);
-  const subPipsX = L.subX + HUD_TIER_PIPS_DX;
+  const subPipsX = L.subX + HUD_DIRECT_PIPS_DX;
   drawPips(list, subPipsX, step, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
   list.text(S.arm, L.armX, y, HUD_COLORS.pipLabel);
   const shield = ship.shield;
@@ -2886,14 +2935,14 @@ function buildDirectPips(world: World, list: DrawList, text: UiText): void {
     const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
     const max = shield.maxHits > 5 ? 5 : shield.maxHits;
     const on = HUD_ARM_COLORS[tier - 1];
-    const armPipsX = L.armX + HUD_TIER_PIPS_DX;
+    const armPipsX = L.armX + HUD_DIRECT_PIPS_DX;
     drawPips(list, armPipsX, HUD_TIER_PIP_STEP, max, shield.hits, on, HUD_COLORS.pipOff);
   }
   list.text(S.speed, L.speedX, y, HUD_COLORS.pipLabel);
   const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
   drawPips(
     list,
-    L.speedX + HUD_TIER_PIPS_DX,
+    L.speedX + HUD_DIRECT_PIPS_DX,
     HUD_TIER_PIP_STEP,
     speeds,
     ship.speedLevel + 1,

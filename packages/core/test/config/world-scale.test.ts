@@ -26,6 +26,7 @@ import * as core from '../../src/index.js';
 import * as options from '../../src/options/index.js';
 import { describe, expect, it } from 'vitest';
 import {
+  FRAME_W,
   PLAYFIELD_H,
   PLAYFIELD_W,
   TILE_SIZE,
@@ -247,8 +248,9 @@ const UNSCALED: readonly Unscaled[] = Object.freeze([
   { name: 'LOOP_BULLET_SPEED_STEP', reason: 'ratio', value: 0.15 },
   { name: 'MAX_BULLET_SPEED_MUL', reason: 'ratio', value: 4 },
   { name: 'MIN_BULLET_SPEED_MUL', reason: 'ratio', value: 0.25 },
-  // Frame-anchored layout (moved at the R2-01 flip `72b18a1`, not part of the world port):
-  { name: 'BOSS_HP_BAR_WIDTH', reason: 'frame', value: 96 },
+  // Frame-anchored layout (moved at the R2-01 flip `72b18a1`, not part of the world port; the
+  // boss bar moved again at R4-03.C5's frame redesign — a quarter of the wide frame):
+  { name: 'BOSS_HP_BAR_WIDTH', reason: 'frame', value: FRAME_W >> 2 },
   { name: 'DEFAULT_BOSS_Y', reason: 'frame', value: PLAYFIELD_H / 2 },
   { name: 'HUD_BOTTOM_Y', reason: 'frame', value: 348 },
   { name: 'MAX_CREDITS_LINE_LENGTH', reason: 'frame', value: 67 },

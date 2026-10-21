@@ -137,8 +137,8 @@ describe('core/ui HUD: bars and scores', () => {
     buildHud(w, list, SPRITES);
     const icons = commands(list).filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life);
     expect(icons).toEqual([
-      [DrawOp.Sprite, SPRITES.life, 0, L.stockX, HUD.rowY, 0xffffff],
-      [DrawOp.Sprite, SPRITES.life, 0, L.stockX + HUD.stockStep, HUD.rowY, 0xffffff],
+      [DrawOp.Sprite, SPRITES.life, 0, L.stockX, HUD.stockRowY, 0xffffff],
+      [DrawOp.Sprite, SPRITES.life, 0, L.stockX + HUD.stockStep, HUD.stockRowY, 0xffffff],
     ]);
     (w.players[0] as { lives: number }).lives = 8;
     buildHud(w, list, SPRITES);

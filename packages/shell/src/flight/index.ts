@@ -178,8 +178,12 @@ const LIVES_X = uiPx(4);
 /** See {@link LIVES_X}. */
 const LIVES_STEP = uiPx(10);
 
-/** Row of the stock ships: one pixel (at the art's scale) into the bottom HUD bar. */
-const LIVES_Y = HUD_BOTTOM_Y + uiPx(1);
+/**
+ * Row of the stock ships: centred in the bottom HUD bar — the icon art is 5 px tall at the
+ * v1 scale (8 at the interim's; R4-03.C5), so the row equals core `ui`'s centred stock row
+ * (`HUD_STOCK_DY`): the same `HUD_BOTTOM_Y + 2` the browser spec's icon band samples.
+ */
+const LIVES_Y = HUD_BOTTOM_Y + ((HUD_BAR_HEIGHT - uiPx(5)) >> 1);
 
 /**
  * Creates the free-flight scene for a game.

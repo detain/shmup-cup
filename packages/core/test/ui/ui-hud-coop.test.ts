@@ -203,10 +203,10 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
     // Stock icons: player 1's at x 2, player 2's palette swap at 194; each with its count.
     expect(SPRITES.lifeP2).toBeGreaterThanOrEqual(0);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life)).toEqual([
-      [DrawOp.Sprite, SPRITES.life, 0, L.coopStockX, HUD.rowY, 0xffffff, 0],
+      [DrawOp.Sprite, SPRITES.life, 0, L.coopStockX, HUD.stockRowY, 0xffffff, 0],
     ]);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.lifeP2)).toEqual([
-      [DrawOp.Sprite, SPRITES.lifeP2, 0, L.halfW + L.coopStockX, HUD.rowY, 0xffffff, 0],
+      [DrawOp.Sprite, SPRITES.lifeP2, 0, L.halfW + L.coopStockX, HUD.stockRowY, 0xffffff, 0],
     ]);
     const counts = cmds.filter((c) => c[0] === DrawOp.Number && c[4] === L.bottomY);
     const countX = L.coopStockX + HUD.stockStep;

@@ -499,6 +499,10 @@ export function collectSprites(options = {}) {
       continue;
     }
     const p2 = makeP2Sprite(sprite, map);
+    // R4-03.C5: the `@p2` sibling of a native base is itself native — it is derived from the
+    // base's art at this build's scale (the interim stage left that alone), never upscaled,
+    // exactly as the palette-variant step marks its siblings (`recolourBulletOverrides`).
+    if (sprite.native === true) p2.native = true;
     byName.set(p2.name, p2);
   }
 

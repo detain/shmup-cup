@@ -85,7 +85,7 @@ describe('core/ui HUD in Direct mode', () => {
     expect(shot).toHaveLength(8);
     expect(shot.map(([, c]) => c)).toEqual([on, on, on, off, off, off, off, off]);
     expect(shot.map(([x]) => x - HUD_LAYOUT.shotX)).toEqual(
-      [0, 1, 2, 3, 4, 5, 6, 7].map((i) => HUD.shotPipsDx + i * HUD.levelStep),
+      [0, 1, 2, 3, 4, 5, 6, 7].map((i) => HUD.directPipsDx + i * HUD.levelStep),
     );
     const sub = pips(list, HUD_LAYOUT.subX, HUD_LAYOUT.armX);
     expect(sub.filter(([, c]) => c === HUD_COLORS.subPip)).toHaveLength(5);

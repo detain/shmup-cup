@@ -1,13 +1,14 @@
 /**
- * The HUD's layout rules (plan_resolution.md R1-01, R2-01): `HUD_LAYOUT` and `BOSS_HP_BAR_WIDTH`
- * derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the font's
- * cell (GLYPH_W) and, for the art- and padding-sized lengths, the art's scale (`core/ui` uiPx). The
- * relations below are written in those, so they pin every field to its pixel (a field moved by 1 px
- * breaks one) at 384×216 and, since R2-01, at 640×360; they also cover the co-op halves and the
- * co-op Direct pips, which the presentation fingerprint's walks do not draw. A second test builds
- * every HUD mode — one player and co-op, the meter and Direct mode, the join
- * prompt, a half that may continue or is out, the boss HP bar and the caravan clock, with and
- * without the UI sprites — and checks that each command stays inside the frame and its bar, no
+ * The HUD's layout rules (plan_resolution.md R1-01, R2-01, R4-03.C5's redraw): `HUD_LAYOUT` and
+ * `BOSS_HP_BAR_WIDTH` derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y,
+ * HUD_BAR_HEIGHT), the font's cell (GLYPH_W) and, for the art- and padding-sized lengths, the art's
+ * scale (`core/ui` uiPx). The relations below are written in those, so they pin every field to its
+ * pixel (a field moved by 1 px breaks one) at 384×216 and, since R2-01, at 640×360; they also cover
+ * the co-op halves and the co-op Direct pips, which the presentation fingerprint's walks do not
+ * draw. A second test builds every HUD mode — one player and co-op, the meter and Direct mode, the
+ * join prompt, a half that may continue or is out, the boss HP bar and the caravan clock, with and
+ * without the UI sprites — in all three shipped languages (en, es, ja, from `content/strings/` —
+ * R4-03.C5's acceptance), and checks that each command stays inside the frame and its bar, no
  * bottom-bar command crosses the line between the co-op halves, and no two texts of a row overlap.
  */
 import { readFileSync } from 'node:fs';
@@ -34,8 +35,10 @@ import {
   HUD_STRING_COUNT,
   buildHud,
   resolveUiSprites,
+  resolveUiText,
   uiPx,
   type UiSprites,
+  type UiText,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
 import { HUD } from '../helpers/hud.js';
@@ -78,6 +81,32 @@ const DB: ContentDb = (() => {
   return db;
 })();
 
+/**
+ * A shipped language's UI string table (the same files the loader feeds the game).
+ *
+ * @param language - The language id (`en`, `es`, `ja`).
+ * @returns The resolved table.
+ */
+function uiTable(language: string): UiText {
+  const file = JSON.parse(
+    readFileSync(
+      new URL(`../../../../content/strings/${language}.strings.json`, import.meta.url),
+      'utf8',
+    ),
+  ) as { strings: Record<string, string> };
+  return resolveUiText(file.strings);
+}
+
+/**
+ * Every shipped language (R4-03.C5's acceptance: nothing overlaps in any of them). `en` resolves
+ * the built-in table's own entries, so the walk really compares the three tables.
+ */
+const TEXTS: ReadonlyArray<readonly [string, UiText]> = [
+  ['en', uiTable('en')],
+  ['es', uiTable('es')],
+  ['ja', uiTable('ja')],
+];
+
 describe('HUD_LAYOUT', () => {
   it('derives the bars and the frame-anchored x from the frame', () => {
     expect(L.topY).toBe(0);
@@ -89,11 +118,16 @@ describe('HUD_LAYOUT', () => {
     expect(L.p2X + SCORE_DX + 11 * GLYPH_W).toBe(FRAME_W - uiPx(10));
     // Five Force Field pips 7 px apart, the last (5 px wide) ending 7 px from the right edge.
     expect(L.shieldX + 4 * uiPx(7) + uiPx(5)).toBe(FRAME_W - uiPx(7));
-    // The boss HP bar: as wide as the HI display, BOSS + gap + bar centred 2 px right of centre.
-    expect(BOSS_HP_BAR_WIDTH).toBe(SCORE_DX + L.digits * GLYPH_W);
+    // The boss HP bar (R4-03.C5): a quarter of the frame, BOSS + gap + bar centred 2 px right of
+    // centre.
+    expect(BOSS_HP_BAR_WIDTH).toBe(FRAME_W >> 2);
     expect(L.bossBarX).toBe(L.bossX + 4 * GLYPH_W + GAP);
     const bossW = L.bossBarX - L.bossX + BOSS_HP_BAR_WIDTH;
     expect(L.bossX + (bossW >> 1)).toBe(FRAME_CX + uiPx(2));
+    // The group clears the `1P` score run and the `2P` column: it is centred, its label starts
+    // after the score digits end and its bar ends before the right-hand run.
+    expect(L.bossX).toBeGreaterThanOrEqual(L.p1X + SCORE_DX + L.digits * GLYPH_W + GAP);
+    expect(L.bossBarX + BOSS_HP_BAR_WIDTH).toBeLessThanOrEqual(L.p2X - GAP);
   });
 
   it('lays the left-anchored runs out one after the other from the font', () => {
@@ -101,13 +135,21 @@ describe('HUD_LAYOUT', () => {
     // The meter (the art's 40-px slots) after the five stock icons 10 px apart.
     expect(L.meterX).toBe(L.stockX + L.stockIcons * uiPx(10) + uiPx(4));
     expect(L.slotW).toBe(uiPx(40));
-    // Direct mode: SHOT (4 glyphs, 8 pips 5 px apart), SUB (3 glyphs, 8 pips), ARM and SPD (3
-    // glyphs, 5 pips 6 px apart), then the family's label.
+    // Direct mode (R4-03.C5): four groups on one even pitch, the family label's four-glyph
+    // reservation ending at the bar's right margin, the SPD run a 6 px gap before it.
     expect(L.shotX).toBe(L.meterX);
-    expect(L.subX).toBe(L.shotX + 4 * GLYPH_W + uiPx(2) + 8 * uiPx(5) + uiPx(6));
-    expect(L.armX).toBe(L.subX + 3 * GLYPH_W + uiPx(2) + 8 * uiPx(5) + uiPx(6));
-    expect(L.speedX).toBe(L.armX + 3 * GLYPH_W + uiPx(2) + 5 * uiPx(6) + uiPx(6));
-    expect(L.familyX).toBe(L.speedX + 3 * GLYPH_W + uiPx(2) + 5 * uiPx(6) + uiPx(4));
+    expect(L.familyX + 4 * GLYPH_W).toBe(FRAME_W - uiPx(10));
+    const pitch = Math.floor(
+      (L.familyX - uiPx(6) - (4 * GLYPH_W + uiPx(2) + 5 * uiPx(6)) - L.meterX) / 3,
+    );
+    expect(L.subX - L.shotX).toBe(pitch);
+    expect(L.armX - L.subX).toBe(pitch);
+    expect(L.speedX - L.armX).toBe(pitch);
+    // Each group's run — the label reservation and its pips — stays inside the pitch.
+    expect(HUD.directPipsDx + 7 * HUD.levelStep + HUD.pipW).toBeLessThanOrEqual(pitch);
+    expect(HUD.directPipsDx + 4 * HUD.tierStep + HUD.pipW).toBeLessThanOrEqual(pitch);
+    // The stock icons are centred in the bar (R4-03.C5): equal air above and below at 1 px each.
+    expect(HUD.stockRowY - L.bottomY).toBe(L.bottomY + HUD_BAR_HEIGHT - HUD.stockRowY - HUD.stockH);
   });
 
   it('lays the co-op halves out from the font', () => {
@@ -281,15 +323,46 @@ describe('buildHud layout', () => {
     set(w);
     const sprites: (UiSprites | undefined)[] = [resolveUiSprites(DB), undefined];
     for (const ui of sprites) {
-      for (const tick of [0, HUD_BAR_HEIGHT * 4]) {
-        (w as { tick: number }).tick = tick;
-        const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
-        buildHud(w, list, ui, true);
-        expect(list.dropped).toBe(0);
-        expect(problems(list, both)).toEqual([]);
+      for (const [, text] of TEXTS) {
+        for (const tick of [0, HUD_BAR_HEIGHT * 4]) {
+          (w as { tick: number }).tick = tick;
+          const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
+          buildHud(w, list, ui, true, text);
+          expect(list.dropped).toBe(0);
+          expect(problems(list, both)).toEqual([]);
+        }
       }
     }
     expect(FRAME_H - L.bottomY).toBe(HUD_BAR_HEIGHT);
+  });
+
+  it("reserves what every shipped language's top-bar runs show (R4-03.C5)", () => {
+    // `PRESS START` in player 2's place: the reservation's 11 glyphs are the longest shipped.
+    let longest = 0;
+    for (const [, text] of TEXTS) longest = Math.max(longest, text.pressStart.length);
+    expect(longest).toBe(11);
+    // `TIME` followed by its seconds stays left of the frame's right margin in every language.
+    let timeRun = 0;
+    for (const [, text] of TEXTS) {
+      timeRun = Math.max(timeRun, text.time.length * GLYPH_W + GAP + 3 * GLYPH_W);
+    }
+    expect(L.p2X + timeRun).toBeLessThanOrEqual(FRAME_W - uiPx(6));
+  });
+
+  it('fits every shipped Direct-mode label and family inside its reservation', () => {
+    // Group labels: the four-glyph pip offset (`SHOT`, `SUB`, `ARM`, `SPD`, longest per language).
+    const groups = ['hudShot', 'hudSub', 'hudArm', 'hudSpeed'] as const;
+    for (const [, text] of TEXTS) {
+      for (const id of groups) expect(text[id].length).toBeLessThanOrEqual(4);
+    }
+    // The main-shot family labels: the four-glyph right reservation.
+    const w = createWorld(resolveGameConfig(DIRECT), DB);
+    for (const family of w.weapons.mainFamilies) {
+      expect(family === null ? 0 : family.label.length).toBeLessThanOrEqual(4);
+    }
+    // And each group's pips clear the next group's label at the pitch.
+    expect(L.shotX + HUD.directPipsDx + 7 * HUD.levelStep + HUD.pipW).toBeLessThanOrEqual(L.subX);
+    expect(L.speedX + HUD.directPipsDx + 4 * HUD.tierStep + HUD.pipW).toBeLessThan(L.familyX);
   });
 
   it("draws the caravan clock's seconds the label gap after TIME, like a score (R2-01)", () => {

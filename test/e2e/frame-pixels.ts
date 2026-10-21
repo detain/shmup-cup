@@ -140,10 +140,10 @@ const HUD_LABEL_GAP = uiPx(4);
 const HUD_ROW_DY = uiPx(2);
 
 /**
- * Width of the boss HP bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH` = `HUD_HI_W`: `HI`, the gap and
- * eight digits — 96 at 640×360, 64 at 384×216).
+ * Width of the boss HP bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH`: a quarter of the frame since
+ * R4-03.C5 — 160 at 640×360, 96 at 384×216).
  */
-export const BOSS_BAR_W: number = 2 * GLYPH_W + HUD_LABEL_GAP + 8 * GLYPH_W;
+export const BOSS_BAR_W: number = FRAME_W >> 2;
 
 /**
  * From the `BOSS` label to the bar's frame (`core/ui` `HUD_BOSS_BAR_DX` — 42 at 640×360, 28 at

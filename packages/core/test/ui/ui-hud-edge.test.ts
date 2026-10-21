@@ -120,7 +120,7 @@ function stock(list: DrawList, sprites: UiSprites): Command[] {
   return commands(list).filter(
     (c) =>
       (c[0] === DrawOp.Sprite && c[1] === sprites.life && sprites.life >= 0) ||
-      (c[0] === DrawOp.Rect && c[4] === HUD.rowY && c[3] < HUD_LAYOUT.meterX) ||
+      (c[0] === DrawOp.Rect && c[4] === HUD.stockRowY && c[3] < HUD_LAYOUT.meterX) ||
       (c[0] === DrawOp.Number && c[4] === HUD_LAYOUT.bottomY),
   );
 }
@@ -166,7 +166,7 @@ describe('core/ui HUD edge: stock', () => {
         0,
         0,
         x0 + i * HUD.stockStep,
-        HUD.rowY,
+        HUD.stockRowY,
         HUD_COLORS.p1,
       ]),
     );
@@ -176,7 +176,7 @@ describe('core/ui HUD edge: stock', () => {
     const cmds = stock(list, NONE);
     const bottomY = HUD_LAYOUT.bottomY;
     expect(cmds).toEqual([
-      [DrawOp.Rect, 0, 0, x0, HUD.rowY, HUD_COLORS.p1],
+      [DrawOp.Rect, 0, 0, x0, HUD.stockRowY, HUD_COLORS.p1],
       [DrawOp.Number, 0, 0, x0 + HUD.stockCountDx, bottomY, HUD_COLORS.number],
     ]);
     const at = commands(list).findIndex((c) => c[0] === DrawOp.Number && c[4] === bottomY);

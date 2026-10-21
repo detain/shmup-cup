@@ -5,15 +5,19 @@
  * hold at 384×216 with the 6×8 font and `ART_SCALE` 1 and at 640×360 with the 9×12 font and
  * `ART_SCALE` 3/2. The numbers in parentheses are the values at 384×216 (v1).
  */
-import { GLYPH_W } from '../../src/config/index.js';
+import { GLYPH_W, HUD_BAR_HEIGHT } from '../../src/config/index.js';
 import { HUD_LAYOUT, uiPx } from '../../src/ui/index.js';
 
 /** The derived HUD geometry the suites read. */
 export const HUD = Object.freeze({
   /** From a two-glyph top-bar label (`1P`, `HI`, `2P`) to its number (16). */
   scoreDx: 2 * GLYPH_W + uiPx(4),
-  /** The row of the bottom bar's art: stock icons, pips, slot labels (210). */
+  /** The row of the bottom bar's art: pips and slot labels (210). */
   rowY: HUD_LAYOUT.bottomY + uiPx(2),
+  /** The row of the bottom bar's stock icons: the 8-px-tall art centred in the bar (211). */
+  stockRowY: HUD_LAYOUT.bottomY + ((HUD_BAR_HEIGHT - uiPx(5)) >> 1),
+  /** A stock icon's height — the `hud/life` art's own, v1 5 px and the v2 art's 8. */
+  stockH: uiPx(5),
   /** The row of the meter slots' stand-in boxes, 1 px inside the bar (209). */
   boxY: HUD_LAYOUT.bottomY + 1,
   /** The top bar's art row: the boss bar's frame (2). */
@@ -41,9 +45,8 @@ export const HUD = Object.freeze({
   levelStep: uiPx(5),
   tierStep: uiPx(6),
   coopStep: uiPx(4),
-  /** Direct mode: from `SHOT` to its pips (26), from a three-glyph label to its pips (20). */
-  shotPipsDx: 4 * GLYPH_W + uiPx(2),
-  tierPipsDx: 3 * GLYPH_W + uiPx(2),
+  /** Direct mode: from any group's label to its pips — four glyph cells (26; R4-03.C5). */
+  directPipsDx: 4 * GLYPH_W + uiPx(2),
   /** Co-op Direct mode: from a two-glyph label to its pips (13). */
   coopPipsDx: 2 * GLYPH_W + uiPx(1),
   /** From the caravan clock's `TIME` to its seconds: the label and the gap (28). */

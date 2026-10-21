@@ -72,3 +72,81 @@ describe('scripts/assets/procedural/hud', () => {
     });
   });
 });
+
+describe('scripts/assets/procedural/hud — the v2 art (R4-03.C5)', () => {
+  const sprites = hud.generate({ artScale: 3 / 2 });
+
+  it('draws three 60×12 native meter slots filling the 12-px bar with a bevel', () => {
+    const slot = byName(sprites, 'hud/meter-slot');
+    expect(slot.native).toBe(true);
+    expect(slot.anchor).toEqual([0, 0]);
+    expect(slot.animations).toEqual({ normal: [0], highlighted: [1], disabled: [2] });
+    expect(slot.frames).toHaveLength(3);
+    const borders = new Set<string>();
+    for (const frame of slot.frames) {
+      expect([frame.width, frame.height]).toEqual([60, 12]);
+      for (const [x, y] of [
+        [0, 0],
+        [59, 0],
+        [0, 11],
+        [59, 11],
+      ]) {
+        expect(opaque(frame, x, y)).toBe(false);
+      }
+      expect(opaqueCount(frame)).toBe(60 * 12 - 4);
+      // The ring, the lit top/left edge, the shaded bottom/right edge and the fill: four
+      // different pixels walking in from the left middle row and the top border.
+      const ring = key(getPixel(frame, 0, 5));
+      const light = key(getPixel(frame, 30, 1));
+      const fill = key(getPixel(frame, 30, 5));
+      const shade = key(getPixel(frame, 58, 5));
+      const bottom = key(getPixel(frame, 30, 10));
+      expect(new Set([ring, light, fill, shade, bottom]).size).toBe(4); // ring = bottom border
+      expect(ring).toBe(key(getPixel(frame, 30, 11)));
+      expect(light).toBe(key(getPixel(frame, 1, 5)));
+      expect(bottom).not.toBe(fill);
+      borders.add(key(getPixel(frame, 1, 0)));
+    }
+    expect(borders.size).toBe(3);
+  });
+
+  it('draws the v2 labels 54×8, white, centred, rows 1 to 5, all different', () => {
+    const labels = byName(sprites, 'hud/meter-labels');
+    expect(labels.native).toBe(true);
+    expect(labels.frames).toHaveLength(23);
+    expect(new Set(labels.frames.map((f) => Buffer.from(f.data).toString('hex'))).size).toBe(23);
+    labels.frames.forEach((frame, i) => {
+      expect([frame.width, frame.height]).toEqual([54, 8]);
+      let minX = frame.width;
+      let maxX = -1;
+      let minY = frame.height;
+      let maxY = -1;
+      eachOpaque(frame, (x, y, rgba) => {
+        expect(rgba).toEqual([255, 255, 255, 255]);
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      });
+      // The 4×5 script: ink rows 1 … 5 of the taller frame, never row 0 or the last two.
+      expect([minY, maxY], hud.METER_LABELS[i]).toEqual([1, 5]);
+      const text = hud.METER_LABELS[i];
+      const inkWidth = text.length * 5 - 1;
+      expect(maxX - minX + 1, text).toBeLessThanOrEqual(inkWidth);
+      const pen = Math.floor((54 - inkWidth) / 2);
+      expect(minX).toBeGreaterThanOrEqual(pen);
+      expect(maxX).toBeLessThan(pen + inkWidth);
+      expect(Math.abs(pen - (54 - pen - inkWidth))).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it('leaves the no-options call drawing the v1 sprites', () => {
+    const v1 = hud.generate();
+    expect(byName(v1, 'hud/meter-slot').native).not.toBe(true);
+    expect([
+      byName(v1, 'hud/meter-slot').frames[0].width,
+      byName(v1, 'hud/meter-slot').frames[0].height,
+    ]).toEqual([40, 8]);
+    expect(byName(v1, 'hud/meter-labels').frames[0].width).toBe(36);
+  });
+});

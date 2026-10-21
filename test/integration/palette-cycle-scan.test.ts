@@ -68,7 +68,7 @@ const CYCLE_ART: Readonly<Record<string, string>> = Object.freeze({
  * ramp it sits on no layer cycling): one line per sprite; later subtasks delete the line when
  * they replace the sprite, and an entry that no longer trips fails the scan. */
 const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  STORM: ['hud/meter-slot', 'bosses/raid-hull', 'bosses/turret', 'bosses/steed-head'],
+  STORM: ['bosses/raid-hull', 'bosses/turret', 'bosses/steed-head'],
   PRISM: [
     'bosses/bulwark-hull',
     'bosses/bulwark-wing-top',
