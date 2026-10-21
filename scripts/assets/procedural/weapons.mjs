@@ -63,8 +63,8 @@ function blastFrame(frame, v2) {
   const c = (size - 1) / 2;
   const outer = (v2 ? BLAST_OUTER_V2 : BLAST_OUTER)[frame];
   const inner = (v2 ? BLAST_INNER_V2 : BLAST_INNER)[frame];
-  for (let y = 0; y < BLAST_SIZE; y++) {
-    for (let x = 0; x < BLAST_SIZE; x++) {
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
       const dx = x - c;
       const dy = y - c;
       const d = Math.sqrt(dx * dx + dy * dy);

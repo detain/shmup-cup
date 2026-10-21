@@ -78,6 +78,29 @@ describe('scripts/assets/procedural/weapons (M2-03)', () => {
       expect(opaque(blast.frames[3], 23, 24)).toBe(false);
       expect(opaque(blast.frames[3], 23, 1)).toBe(true);
       expect(opaque(blast.frames[0], 23, 1)).toBe(false);
+      // RT-L5: pixels beyond the old v1 window draw too (the clipped loop bounded
+      // every frame at (31, 31); these two pins sit past it, on the ring's body).
+      expect(opaque(blast.frames[0], 35, 24)).toBe(true);
+      expect(opaque(blast.frames[3], 23, 46)).toBe(true);
+      // The opaque bbox is centred on (23.5, 23.5): equal margins on both axes,
+      // and the ring reaches past the 32-px v1 window in every frame.
+      for (let i = 0; i < blast.frames.length; i++) {
+        const frame = blast.frames[i];
+        let minX = frame.width;
+        let maxX = -1;
+        let minY = frame.height;
+        let maxY = -1;
+        eachOpaque(frame, (x, y) => {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        });
+        expect(maxX, `frame ${i}`).toBeGreaterThan(31);
+        expect(maxY, `frame ${i}`).toBeGreaterThan(31);
+        expect(minX + maxX, `frame ${i}`).toBe(47);
+        expect(minY + maxY, `frame ${i}`).toBe(47);
+      }
     });
 
     it('draws the ripple ring native over six centred 36×66 frames, the same size order', () => {

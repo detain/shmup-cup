@@ -193,7 +193,7 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // upscaled pool; since R4-03.C1 the native font too (its 195 glyph frames are unscaled).
     // Since R4-04.D1/D2 the explosions (21 frames) and the small particles (15) are native at
     // scale ≠ 1, so 36 more left; since R4-01.A7 and R4-01.A6 the generated shots and the eleven
-    // shot maps (47 + 15 frames) joined them. Measured at their SHAs and missing from this chain:
+    // shot maps (47 + 14 frames) joined them. Measured at their SHAs and missing from this chain:
     // R4-01.A1a's three v2 ship maps (-16, e90e17e) and R4-03.C5's HUD life-bar map (-28,
     // 96c4e61); A6 set 560 from a pre-rebase count while its landed tree compared 563 — a margin
     // of three. R4-03.C2/C3/C4a moved no frame of this pool (their font left it at C1: still 563
