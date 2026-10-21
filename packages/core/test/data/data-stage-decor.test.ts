@@ -169,6 +169,15 @@ describe('core/data stage decor — the extended bands', () => {
     expect([entry?.yFactor, entry?.frames, entry?.frameTicks]).toEqual([-0.5, 4, 12]);
   });
 
+  it('requires frames before frameTicks on a band', () => {
+    expect(issuesOf(load({ parallax: [{ ...band, frameTicks: 8 }] }))).toEqual([
+      'parallax[0].frameTicks needs frames',
+    ]);
+    expect(
+      load({ parallax: [{ ...band, yFactor: 0.5, frames: 2, frameTicks: 8 }] }).issues,
+    ).toEqual([]);
+  });
+
   it('checks the optional band fields at the schema', () => {
     expect(issuesOf(load({ parallax: [{ ...band, yFactor: 5 }] }))).toEqual([
       'parallax[0].yFactor must be a finite number in -4..4',

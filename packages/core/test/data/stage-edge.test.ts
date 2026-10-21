@@ -145,15 +145,6 @@ describe('core/data stage edge — schema limits', () => {
     ]);
   });
 
-  it('requires frames before frameTicks on a band', () => {
-    expect(issuesOf(load({ parallax: [{ ...band, frameTicks: 8 }] }))).toEqual([
-      'parallax[0].frameTicks needs frames',
-    ]);
-    expect(
-      load({ parallax: [{ ...band, yFactor: 0.5, frames: 2, frameTicks: 8 }] }).issues,
-    ).toEqual([]);
-  });
-
   it('checks rowsTall, the generator type and the segment count', () => {
     expect(issuesOf(load({ tilemap: { tileSize: 8, tileset: 't', rowsTall: 0 } }))).toEqual([
       'tilemap.rowsTall must be an integer in 1..255',

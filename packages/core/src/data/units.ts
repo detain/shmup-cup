@@ -54,8 +54,10 @@ import type { ObjectMeta, Schema } from './schema.js';
  *
  * - `world-px` — a world length: a radius, a hurtbox half-extent, a stage length, a wave
  *   period. ×k.
- * - `world-x` — an absolute x in the level: an event's camera x, a checkpoint, a region. ×k.
- * - `world-y` — an absolute y in the level: a spawn y, a region or block y, a ceiling's depth.
+ * - `world-x` — an absolute x in the level: an event's camera x, a checkpoint, a region, a decor
+ *   item's x (R3-06). ×k.
+ * - `world-y` — an absolute y in the level: a spawn y, a region or block y, a decor item's top
+ *   row (R3-06), a ceiling's depth.
  *   ×k plus the top pad; only ×k above the top edge (y < 0). A box's `y` ports with its height
  *   ({@link BoxYPair}).
  * - `rel-px` — a relative offset: path waypoints, part offsets, emitter offsets, a block's
@@ -70,17 +72,19 @@ import type { ObjectMeta, Schema } from './schema.js';
  * - `screen-y` — a row anchored to an edge or the centre of the playfield: raster rows, the Mode-7
  *   horizon, the boss's y. Snapped to its anchor. Raster rows also follow the parallax bands they
  *   bound ({@link rescaleBackdrop}).
- * - `band-y` — a parallax band's top row (at camera y 0). Ported with the stage's whole backdrop
+ * - `band-y` — a parallax band's top row (at camera y 0; the foreground band's too — R3-06).
+ *   Ported with the stage's whole backdrop
  *   and the bands' art heights ({@link rescaleBackdrop}); alone, it snaps like a `screen-y`.
  * - `tile-rows` — a tilemap's height in tile rows. Plus the rows the top pad inserts.
  * - `tile-px` — a tile mask entry (a column height in tile pixels). The mask is resampled.
  * - `texels` — a distance in the Mode-7 floor's art (`height`, `fogDepth`). ×k: it follows the
  *   art (O2).
- * - `ticks` — a duration or an interval. Unchanged.
+ * - `ticks` — a duration or an interval (a band's `frameTicks` — R3-06). Unchanged.
  * - `angle` — a binary angle (1024 per turn) or a turn rate. Unchanged.
- * - `count` — a count: items, loops, volleys, a rank. Unchanged.
+ * - `count` — a count: items, loops, volleys, a band's frame count (R3-06), a rank. Unchanged.
  * - `score` — points. Unchanged.
- * - `ratio` — a dimensionless factor: a parallax factor, a rank multiplier, an alpha. Unchanged.
+ * - `ratio` — a dimensionless factor: a parallax factor or a band's `yFactor` (R3-06), a rank
+ *   multiplier, an alpha. Unchanged.
  * - `hz`, `seconds`, `semitones`, `samples` — audio (owner decision O1). Unchanged.
  * - `seed`, `version`, `index` — an RNG seed, a format version, a frame / digit / phase index
  *   (O2). Unchanged.
