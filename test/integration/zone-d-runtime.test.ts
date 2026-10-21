@@ -1,11 +1,18 @@
 /**
- * Edge cases of zones D and E through the real game on the shipped content (plan M2-12), beyond
- * `zones-de-runtime.test.ts` — mostly MAGMA DEEP's two camera heights (the surface at y 0, the
- * caves at y 200 after the dive):
+ * Zone D through the real game on the shipped content (plan M2-12, R5-P.P5e's split of
+ * `zones-de-runtime.test.ts` and `zones-de-runtime-edge.test.ts`; zone E's cases live in
+ * `zone-e-runtime.test.ts`):
  *
- * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of MAGMA DEEP
- *   and TEMPEST RIDGE puts the camera at the checkpoint — zone D's last two down in the caves —
- *   and flies the ship in to open space (its terrain box never in rock) inside the view;
+ * - **MAGMA DEEP's dive.** The camera stops over the pit at the end of the caldera fields, pans
+ *   200 px down into the caves while it holds, then scrolls on down there; a practice start (the
+ *   scene flow's `startPractice`) at the checkpoint in the caves prepares zone D's music set and
+ *   puts the camera back down in the caves.
+ * - **The destructible maze.** In the caves the ship's shots break the brick walls (breakable
+ *   tiles of the zone's tileset): the walls lose bricks while the ship flies through.
+ * - **MAGMA DEEP's two camera heights** (the surface at y 0, the caves at y 200 after the dive):
+ *   every practice start at every checkpoint puts the camera at the checkpoint — the last two
+ *   down in the caves — and flies the ship in to open space (its terrain box never in rock)
+ *   inside the view;
  * - **the stage skip** into zone D (`stageSkip: 'boss'`, the debug skip the playtest uses) starts
  *   in the caves: the camera at y 200, the ship flown in there, CINDER BASTION fighting inside the
  *   view;
@@ -14,20 +21,14 @@
  *   brick shot away before the death stands again;
  * - **an Arcade restart before the dive** (a death during the scroll stop over the pit, before the
  *   cave checkpoint) takes the camera back up to the surface at the checkpoint at 2,200 — and the
- *   dive happens again on the way;
- * - **TEMPEST RIDGE's rear attackers** never fire before they are on screen and settled: every
- *   needle of a squall jumper starts inside the view.
+ *   dive happens again on the way.
  */
 import {
-  BulletKind,
   ENGINE_SPRITES,
-  EnemyState,
   KNOWN_SCRIPT_IDS,
   PLAYFIELD_H,
-  PLAYFIELD_W,
   PlayerHitCause,
-  TerrainType,
-  boxHitsTerrain,
+  SimEventKind,
   commitPlayerInput,
   createGame,
   createHeadlessPlatform,
@@ -35,13 +36,13 @@ import {
   playerHit,
   spawnPlayer,
   type ContentDb,
-  type Game,
   type SceneFlow,
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
+import { v1x, v1y, v1rel } from '../../packages/core/test/helpers/v1-port.js';
+import { expectCameraAt, expectInOpenSpace, steps, stepUntil } from './zones/helpers.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -69,80 +70,82 @@ function bricks(world: World): number {
   return count;
 }
 
-/**
- * Steps a game with its events dropped.
- *
- * @param game - The game.
- * @param ticks - Ticks.
- */
-function steps(game: Game, ticks: number): void {
-  for (let i = 0; i < ticks; i++) {
+describe('integration: zones D and E in the game (M2-12)', () => {
+  it('dives MAGMA DEEP’s camera 200 px into the caves at a scroll stop, then scrolls on', () => {
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, DB);
+    const world = game.world;
+    world.debugFlags.godMode = true;
+    world.stage?.jumpTo(v1x(3300));
+    let stopped = 0;
+    let deepest = 0;
+    for (let i = 0; i < 1200 && world.camera.x < v1x(3700); i++) {
+      const x = world.camera.x;
+      const y = world.camera.y;
+      game.step();
+      game.events.clear();
+      if (world.camera.x === x && world.camera.y > y) stopped++;
+      deepest = Math.max(deepest, world.camera.y);
+    }
+    // The pan ran while the scroll stood still, down to the caves, and the scroll went on.
+    expect(stopped).toBeGreaterThan(100);
+    expect(deepest).toBe(v1rel(200));
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(3700));
+    expect(world.camera.y).toBe(v1rel(200));
+    expect(world.status).toBe('playing');
+  });
+
+  it('starts a practice run in the caves: zone D’s music set prepared, the camera down there', () => {
+    const platform = createHeadlessPlatform();
+    const game = createGame(platform, { seed: 3, stage: 'zone-a' }, DB, { scenes: 'game' });
+    game.debug.godMode = true;
+    const flow = game.scenes as SceneFlow;
+    const prepared: number[] = [];
+    expect(flow.startPractice('d', 2)).toBe(true);
+    commitPlayerInput(platform.snapshot.players[0], 0);
     game.step();
-    game.events.clear();
-  }
-}
+    game.events.drain((e) => {
+      if (e.kind === SimEventKind.PrepareStage) prepared.push(e.id);
+    });
+    const world = game.world;
+    expect(world.stage?.stage.id).toBe('zone-d');
+    expect(prepared).toContain(DB.stageIndex.get('zone-d'));
+    expectCameraAt(world, v1x(4000));
+    expect(world.camera.y).toBe(v1rel(200));
+    // The ship flies in down there too, in the open band of the caves.
+    for (let i = 0; i < 90; i++) game.step();
+    const ship = world.players[0];
+    expect(ship.state).toBe('alive');
+    expect(ship.y - world.camera.y).toBeGreaterThan(v1y(40));
+    expect(ship.y - world.camera.y).toBeLessThan(v1y(160));
+  });
 
-/**
- * Steps a game until a condition holds (or fails the test after `limit` ticks).
- *
- * @param game - The game.
- * @param done - The condition.
- * @param limit - Most ticks.
- * @returns Ticks stepped.
- */
-function stepUntil(game: Game, done: () => boolean, limit: number): number {
-  let t = 0;
-  for (; t < limit && !done(); t++) {
+  it('breaks MAGMA DEEP’s brick walls with the ship’s shots on the way through the maze', () => {
+    const game = createGame(
+      createHeadlessPlatform(),
+      { seed: 1, stage: 'zone-d', loadout: 'full' },
+      DB,
+    );
+    const world = game.world;
+    world.debugFlags.godMode = true;
+    world.stage?.jumpTo(v1x(4300));
+    // Fly in anew where the camera is now (down in the caves), at the middle row.
+    spawnPlayer(world.players[0], world.camera);
     game.step();
-    game.events.clear();
-  }
-  expect(done(), `not reached in ${String(limit)} ticks`).toBe(true);
-  return t;
-}
-
-/**
- * Checks that player 1 flies in open space inside the view: alive, its terrain box clear of rock,
- * inside the playfield.
- *
- * @param world - The World.
- * @param where - A label for the failure message.
- */
-function expectInOpenSpace(world: World, where: string): void {
-  const ship = world.players[0];
-  const map = world.terrain;
-  expect(ship.state, where).toBe('alive');
-  if (map !== null) {
-    const box = world.ship.terrainBox;
-    expect(boxHitsTerrain(map, ship.x, ship.y, box.hw, box.hh), where).toBe(TerrainType.Empty);
-  }
-  expect(ship.x - world.camera.x, where).toBeGreaterThan(0);
-  expect(ship.x - world.camera.x, where).toBeLessThan(PLAYFIELD_W);
-  expect(ship.y - world.camera.y, where).toBeGreaterThan(8);
-  expect(ship.y - world.camera.y, where).toBeLessThan(PLAYFIELD_H - 8);
-}
-
-/**
- * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
- * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
- *
- * @param world - The running World.
- * @param x - The checkpoint's world x.
- */
-function expectCameraAt(world: World, x: number): void {
-  let speed = 0;
-  for (const key of world.stage?.stage.camera ?? []) {
-    if (key.x <= x + 1e-6) speed = key.speed;
-  }
-  expect(world.camera.x).toBeGreaterThanOrEqual(x);
-  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
-}
+    const before = bricks(world);
+    expect(before).toBeGreaterThan(200);
+    for (let i = 0; i < 2400 && world.camera.x < v1x(5700); i++) {
+      game.step();
+      game.events.clear();
+    }
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(5500));
+    // Autofire (and the Options) chewed holes into the walls the ship flew at.
+    expect(bricks(world)).toBeLessThan(before - 10);
+  });
+});
 
 describe('integration: zones D and E, edge cases (M2-12)', () => {
   const starts: [string, number, number, number][] = [];
-  for (const [letter, stageId] of [
-    ['d', 'zone-d'],
-    ['e', 'zone-e'],
-  ] as const) {
+  for (const [letter, stageId] of [['d', 'zone-d']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
     stage.checkpoints.forEach((checkpoint, i) => {
       // Zone D's camera is down in the caves from the dive (x 3,560) on.
@@ -173,7 +176,7 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
   );
 
   it('checks four checkpoints per zone, two of zone D in the caves', () => {
-    expect(starts).toHaveLength(8);
+    expect(starts).toHaveLength(4);
     expect(starts.filter((s) => s[3] === v1rel(200))).toHaveLength(2);
   });
 
@@ -264,34 +267,5 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     stepUntil(game, () => world.camera.x >= v1x(3700), 4000);
     expect(world.camera.y).toBe(v1rel(200));
     expectInOpenSpace(world, 'after the second dive');
-  });
-
-  it('keeps every squall jumper needle inside the view where it starts', () => {
-    const game = createGame(createHeadlessPlatform(), { seed: 2, stage: 'zone-e' }, DB);
-    const world = game.world;
-    world.debugFlags.godMode = true;
-    world.stage?.jumpTo(1300);
-    const jumper = DB.enemyIndex.get('squall-jumper');
-    const pool = world.bullets.pool;
-    const f = pool.fields;
-    let needles = 0;
-    const seen = new Set<string>();
-    for (let t = 0; t < 3000; t++) {
-      game.step();
-      game.events.clear();
-      for (const e of world.enemies.enemies) {
-        if (e.state === EnemyState.Live && e.specIndex === jumper) {
-          seen.add(`${String(e.spawnTick)}`);
-        }
-      }
-      for (let i = 0; i < pool.count; i++) {
-        if (f.kind[i] !== BulletKind.NeedlePink || f.age[i] > 1) continue;
-        needles++;
-        expect(f.x[i] - world.camera.x).toBeGreaterThan(0);
-        expect(f.x[i] - world.camera.x).toBeLessThan(PLAYFIELD_W);
-      }
-    }
-    expect(seen.size).toBeGreaterThanOrEqual(3); // jumpers seen
-    expect(needles).toBeGreaterThanOrEqual(1);
   });
 });

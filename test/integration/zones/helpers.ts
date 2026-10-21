@@ -9,23 +9,35 @@
  * every split file re-substitutes the very titles the single file produced — and, since
  * R5-P.P6, the zone contracts (`ZoneContract`, `boundsOf`, `contractPx`, `shapeViolations`,
  * `ZONE_CONTRACTS`): each zone's shape bounds for its v1 branch and its ported R5-D2 branch.
- * The tests themselves moved verbatim.
+ * The tests themselves moved verbatim. Since R5-P.P5e it also holds the tick steppers and the
+ * camera / open-space checks of the per-zone runtime tests (`steps`, `stepUntil`,
+ * `expectInOpenSpace`, `expectCameraAt`, `crash`), copied verbatim out of the split
+ * `zones-*-runtime*.test.ts` pair files; the fixtures a case file's own `DB` feeds
+ * (`bricks`, `tileId`, `enemyIndex`, the game's `stageOf`) stayed beside those tests.
  */
 import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  PlayerHitCause,
+  TerrainType,
+  boxHitsTerrain,
   createGame,
   createHeadlessPlatform,
   createStageRunner,
   loadContent,
+  playerHit,
   type BossPartSpec,
   type BossSpec,
   type ContentDb,
+  type Game,
   type StageSpec,
+  type World,
 } from '@shmup/core';
 import { expect } from 'vitest';
 import { readContentFiles } from '../../../vite.shared.js';
-import { K, v1x } from '../../../packages/core/test/helpers/v1-port.js';
+import { K, v1rel, v1x } from '../../../packages/core/test/helpers/v1-port.js';
 import { zoneAContract } from './zone-a.contract.js';
 import { zoneBContract } from './zone-b.contract.js';
 import { zoneCContract } from './zone-c.contract.js';
@@ -450,3 +462,88 @@ export const ZONE_CONTRACTS = {
   h: zoneHContract,
   i: zoneIContract,
 } as const;
+
+/**
+ * Steps a game with its events dropped.
+ *
+ * @param game - The game.
+ * @param ticks - Ticks.
+ */
+export function steps(game: Game, ticks: number): void {
+  for (let i = 0; i < ticks; i++) {
+    game.step();
+    game.events.clear();
+  }
+}
+
+/**
+ * Steps a game until a condition holds (or fails the test after `limit` ticks).
+ *
+ * @param game - The game.
+ * @param done - The condition.
+ * @param limit - Most ticks.
+ * @returns Ticks stepped.
+ */
+export function stepUntil(game: Game, done: () => boolean, limit: number): number {
+  let t = 0;
+  for (; t < limit && !done(); t++) {
+    game.step();
+    game.events.clear();
+  }
+  expect(done(), `not reached in ${String(limit)} ticks`).toBe(true);
+  return t;
+}
+
+/**
+ * Checks that player 1 flies in open space inside the view: alive, its terrain box clear of rock
+ * and of every destructible tile, inside the playfield.
+ *
+ * @param world - The World.
+ * @param where - A label for the failure message.
+ */
+export function expectInOpenSpace(world: World, where: string): void {
+  const ship = world.players[0];
+  const map = world.terrain;
+  expect(ship.state, where).toBe('alive');
+  if (map !== null) {
+    const box = world.ship.terrainBox;
+    expect(boxHitsTerrain(map, ship.x, ship.y, box.hw, box.hh), where).toBe(TerrainType.Empty);
+  }
+  expect(ship.x - world.camera.x, where).toBeGreaterThan(0);
+  expect(ship.x - world.camera.x, where).toBeLessThan(PLAYFIELD_W);
+  expect(ship.y - world.camera.y, where).toBeGreaterThan(8);
+  expect(ship.y - world.camera.y, where).toBeLessThan(PLAYFIELD_H - 8);
+}
+
+/**
+ * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
+ * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
+ *
+ * @param world - The running World.
+ * @param x - The checkpoint's world x.
+ */
+export function expectCameraAt(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
+}
+
+/**
+ * Crashes player 1 (god mode off for the hit, back on after) and waits until it flies again.
+ *
+ * @param game - The game.
+ */
+export function crash(game: Game): void {
+  const world = game.world;
+  const ship = world.players[0];
+  stepUntil(game, () => ship.state === 'alive' && ship.invulnTicks === 0, 400);
+  world.debugFlags.godMode = false;
+  expect(playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags)).toBe(true);
+  game.step();
+  game.events.clear();
+  expect(ship.state).toBe('dying');
+  world.debugFlags.godMode = true;
+}

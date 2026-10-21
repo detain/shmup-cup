@@ -1,15 +1,12 @@
 /**
- * Edge cases of the final zones H and I through the real game on the shipped content (plan M2-14):
+ * Zone I through the real game on the shipped content (plan M2-14, R5-P.P5e's split of
+ * `zones-hi-runtime-edge.test.ts`; zone H's cases live in `zone-h-runtime.test.ts`):
  *
- * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of IRON CITADEL
- *   and ABYSSAL THRONE puts the camera at the checkpoint and flies the ship in to open space (its
- *   terrain box never in rock — the piston hall's moving floors and ceilings included) inside the
- *   view;
- * - **the stage skip** into zone H lands before the parade's first echo (the skip stops before a
- *   `boss` event too), BULWARK ECHO fighting inside the view; into zone I, before the ABYSS ARK's
- *   WARNING — the raid's camera then follows the ARK;
- * - **an echo that outlasts its time limit** leaves without the `bossEscaped` ending flag (the
- *   parade's echoes are captains: only a stage boss's escape counts), the parade going on;
+ * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of ABYSSAL
+ *   THRONE puts the camera at the checkpoint and flies the ship in to open space (its terrain box
+ *   never in rock) inside the view;
+ * - **the stage skip** into zone I lands before the ABYSS ARK's WARNING — the raid's camera then
+ *   follows the ARK;
  * - **the ARK's escape through the shipped campaign** (the M2-14 review fix): a run that lost no
  *   ship and let the ARK sail off after its 90-s time limit ends with *THE FLAGSHIP SLIPS AWAY* —
  *   never *THE DEEP IS STILL*, whose epilogue sinks a HOLLOW KING who never showed — and the
@@ -23,25 +20,20 @@ import {
   EndingFlag,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
-  PLAYFIELD_H,
-  PLAYFIELD_W,
   RunFlag,
   SimEventKind,
-  TerrainType,
-  boxHitsTerrain,
   commitPlayerInput,
   createGame,
   createHeadlessPlatform,
   loadContent,
   resolveUiSprites,
   type ContentDb,
-  type Game,
   type SceneFlow,
-  type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
+import { v1x } from '../../packages/core/test/helpers/v1-port.js';
+import { expectCameraAt, expectInOpenSpace, steps, stepUntil } from './zones/helpers.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -52,57 +44,6 @@ const DB: ContentDb = (() => {
   expect(issues).toEqual([]);
   return db;
 })();
-
-/**
- * Steps a game with its events dropped.
- *
- * @param game - The game.
- * @param ticks - Ticks.
- */
-function steps(game: Game, ticks: number): void {
-  for (let i = 0; i < ticks; i++) {
-    game.step();
-    game.events.clear();
-  }
-}
-
-/**
- * Steps a game until a condition holds (or fails the test after `limit` ticks).
- *
- * @param game - The game.
- * @param done - The condition.
- * @param limit - Most ticks.
- * @returns Ticks stepped.
- */
-function stepUntil(game: Game, done: () => boolean, limit: number): number {
-  let t = 0;
-  for (; t < limit && !done(); t++) {
-    game.step();
-    game.events.clear();
-  }
-  expect(done(), `not reached in ${String(limit)} ticks`).toBe(true);
-  return t;
-}
-
-/**
- * Checks that player 1 flies in open space inside the view.
- *
- * @param world - The World.
- * @param where - A label for the failure message.
- */
-function expectInOpenSpace(world: World, where: string): void {
-  const ship = world.players[0];
-  const map = world.terrain;
-  expect(ship.state, where).toBe('alive');
-  if (map !== null) {
-    const box = world.ship.terrainBox;
-    expect(boxHitsTerrain(map, ship.x, ship.y, box.hw, box.hh), where).toBe(TerrainType.Empty);
-  }
-  expect(ship.x - world.camera.x, where).toBeGreaterThan(0);
-  expect(ship.x - world.camera.x, where).toBeLessThan(PLAYFIELD_W);
-  expect(ship.y - world.camera.y, where).toBeGreaterThan(8);
-  expect(ship.y - world.camera.y, where).toBeLessThan(PLAYFIELD_H - 8);
-}
 
 /**
  * The content index of an enemy id.
@@ -116,28 +57,9 @@ function enemyIndex(id: string): number {
   return index;
 }
 
-/**
- * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
- * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
- *
- * @param world - The running World.
- * @param x - The checkpoint's world x.
- */
-function expectCameraAt(world: World, x: number): void {
-  let speed = 0;
-  for (const key of world.stage?.stage.camera ?? []) {
-    if (key.x <= x + 1e-6) speed = key.speed;
-  }
-  expect(world.camera.x).toBeGreaterThanOrEqual(x);
-  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
-}
-
 describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
   const starts: [string, number, number][] = [];
-  for (const [letter, stageId] of [
-    ['h', 'zone-h'],
-    ['i', 'zone-i'],
-  ] as const) {
+  for (const [letter, stageId] of [['i', 'zone-i']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
     stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
   }
@@ -166,35 +88,7 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
   );
 
   it('checks four checkpoints per zone', () => {
-    expect(starts).toHaveLength(8);
-  });
-
-  it('skips zone H to the parade: BULWARK ECHO fights inside the view, the ship in open space', () => {
-    const game = createGame(
-      createHeadlessPlatform(),
-      { seed: 9, stage: 'zone-h', stageSkip: 'boss', loadout: 'full' },
-      DB,
-    );
-    const world = game.world;
-    world.debugFlags.godMode = true;
-    steps(game, 90);
-    expectInOpenSpace(world, 'after the skip');
-    expect(world.camera.x).toBeGreaterThan(v1x(4400));
-    expect(world.camera.x).toBeLessThan(v1x(4520));
-    const boss = world.bosses.boss;
-    stepUntil(
-      game,
-      () => boss.specIndex === enemyIndex('echo-bulwark') && boss.state === BossState.Fight,
-      1500,
-    );
-    for (let i = 0; i < boss.partCount; i++) {
-      const p = boss.parts[i];
-      expect(p.x - world.camera.x, p.name).toBeGreaterThan(0);
-      expect(p.x - world.camera.x, p.name).toBeLessThan(PLAYFIELD_W);
-      expect(p.y - world.camera.y, p.name).toBeGreaterThan(0);
-      expect(p.y - world.camera.y, p.name).toBeLessThan(PLAYFIELD_H);
-    }
-    expectInOpenSpace(world, 'while the echo fights');
+    expect(starts).toHaveLength(4);
   });
 
   it('skips zone I to the ABYSS ARK: the raid`s camera follows it', () => {
@@ -218,39 +112,6 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     steps(game, 60);
     expect(world.stage?.following).toBe(world.bosses.raidCamera);
     expectInOpenSpace(world, 'during the raid');
-  });
-
-  it('lets an echo outlast its time limit without the bossEscaped flag; the parade goes on', () => {
-    const platform = createHeadlessPlatform();
-    const game = createGame(
-      platform,
-      { seed: 9, stage: 'zone-h', stageSkip: 'boss', autofire: false, remoteMode: false },
-      DB,
-    );
-    const world = game.world;
-    world.debugFlags.godMode = true;
-    const echo = enemyIndex('echo-bulwark');
-    const spec = DB.enemies[echo].boss;
-    expect(spec?.role).toBe('captain');
-    expect(spec?.timeLimit).toBe(960);
-    const slot = (): (typeof world.bosses.slots)[number] | undefined =>
-      world.bosses.slots.find((b) => b.specIndex === echo && b.state !== BossState.None);
-    stepUntil(game, () => slot()?.state === BossState.Fight, 1500);
-    const fought = world.tick;
-    // Never shot (no fire held, no autofire): it leaves when its limit runs out.
-    stepUntil(game, () => slot() === undefined || slot()?.escaped === true, 2000);
-    expect(world.tick - fought).toBeGreaterThanOrEqual(960);
-    expect(world.endingFlags & EndingFlag.BossEscaped).toBe(0);
-    // The next echo still comes.
-    stepUntil(
-      game,
-      () =>
-        world.bosses.slots.some(
-          (b) => b.specIndex === enemyIndex('echo-maw') && b.state === BossState.Fight,
-        ),
-      3000,
-    );
-    expect(world.endingFlags).toBe(0);
   });
 
   it('ends a flawless run whose ARK escaped with THE FLAGSHIP SLIPS AWAY, the ARK sailing off at dawn', () => {

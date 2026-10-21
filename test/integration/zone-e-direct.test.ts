@@ -1,18 +1,17 @@
 /**
- * Zones F and G in Direct mode (plan M2-13 "direct-mode item plan", the deliverables of M2-11; the
- * MANTA of M2-05) on the shipped content: the MANTA, flown by the 4-way playtest bot with god mode,
- * plays CELL VAULT (the tissue walls, the grabbing tentacles) and PRISM LABYRINTH (the crystal
- * labyrinth, the cube rush) from the start to the stage clear —
+ * Zone E in Direct mode (plan M2-12 "direct-mode item plan", the deliverables of M2-11; the
+ * MANTA of M2-05) on the shipped content, R5-P.P5e's split of `zones-de-direct.test.ts` (zone D's
+ * run lives in `zone-d-direct.test.ts`): the MANTA, flown by the 4-way playtest bot with god
+ * mode, plays TEMPEST RIDGE (the rear attackers) from the start to the stage clear —
  *
  * - the World's item plan is the stage's own `directItems` (not the default plan);
  * - the carriers and completed formations hand out the plan in order: the items that appear on a
  *   tick are the plan's entries from the cursor before it to the cursor after it (cycling) — a
  *   drop the ship's magnet collects on the tick it falls never shows in the pool, so it may be
- *   missing, never another item —, the cursor only moves on, and red, green, blue and the
- *   octagon come along the way;
+ *   missing, never another item —, the cursor only moves on, and the zone's colours come
+ *   along the way as far as the honest run reaches (each row's list below; prepB.FIX8),
  * - no meter capsule ever appears in Direct mode;
- * - the MANTA's weapons shoot the zone's boss down (MANTLE REGENT's eye between the curls of its
- *   tentacles, FACET MONARCH's core once its crystals are broken).
+ * - the MANTA's weapons shoot the zone's boss down (SQUALL STEED's chest while it is open).
  */
 import {
   DIRECT_ITEMS,
@@ -45,29 +44,27 @@ const DB: ContentDb = (() => {
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
 /**
- * The zones, their bosses and the honest hand-out floors of this bot run.
- *
- * Barrier F1 (honest at-port-scale re-pin, same class as prepB.FIX8 on the zones-bc/-de
- * twins): d25de31's physical nearer-target pick shifts this bot's kill order — the redirect
- * mechanism class FIX2 cured (the old lowest-slot rule handed a shot to a target another
- * enemy entered first). The kit run (world ×1.5, ported content) ends at cursor 13 for
- * zone-f and 9 for zone-g; at ×1 the rows would end at 10 and 8. Since R2-02's port the
- * shipped content is the kit one, so the floors are the honest kit numbers: zone-f keeps
- * the shared 10, zone-g's re-pins to 9. The pick took
- * nothing from the plan handing — every drop is still plan[cursor] in strict order, the
- * `wrong`/order checks and the dropped-plus-caught account below are UNEDITED, and both
- * runs still see red, green, blue and the octagon. FIX8's precedent (0264e33) adjudicated
- * the identical divergence; its tick-story instrumentation stands for this family.
+ * The zone, its boss and the honest hand-out floors of this bot run (zone E stays on the surface,
+ * its depth target 0). The pair file's prepB.FIX8 note (d25de31) rides in `zone-d-direct.test.ts`;
+ * zone-e's run reaches the shared floor below and is the file's octagon coverage. Hand-outs stay
+ * strictly in plan order and the dropped-plus-swallowed accounts equal the cursor — those
+ * invariants are what this test owns; the floor and the colour list only describe how far the
+ * shared bot honestly gets.
  */
 const ZONES = [
-  { stage: 'zone-f', boss: 'mantle-regent', handed: 10 },
-  { stage: 'zone-g', boss: 'facet-monarch', handed: 9 },
+  {
+    stage: 'zone-e',
+    boss: 'squall-steed',
+    depth: 0,
+    handed: 10,
+    colours: ['red', 'green', 'blue', 'octagon'],
+  },
 ] as const;
 
-describe('integration: zones F and G in Direct mode (M2-13)', () => {
+describe('integration: zones D and E in Direct mode (M2-12)', () => {
   it.each(ZONES)(
     'the MANTA clears $stage, the carriers handing out its own item plan in order',
-    ({ stage, boss, handed }) => {
+    ({ stage, boss, depth, handed, colours }) => {
       const platform = createHeadlessPlatform();
       const game = createGame(
         platform,
@@ -89,6 +86,7 @@ describe('integration: zones F and G in Direct mode (M2-13)', () => {
       const wrong: string[] = [];
       let caught = 0; // drops collected on the tick they fell (never seen in the pool)
       let bossBeaten = false;
+      let deepest = 0;
       for (let t = 0; t < 30_000 && w.status !== 'stageClear'; t++) {
         const cursor = w.powerups.planCursor;
         commitPlayerInput(platform.snapshot.players[0], bot.decide(w));
@@ -126,6 +124,7 @@ describe('integration: zones F and G in Direct mode (M2-13)', () => {
         caught += missing > 0 ? missing : 0;
         seen.clear();
         for (const i of alive) seen.add(i);
+        if (w.camera.y > deepest) deepest = w.camera.y;
         if (w.bosses.boss.specIndex === DB.enemyIndex.get(boss) && w.bosses.boss.state >= 4) {
           bossBeaten = true;
         }
@@ -133,14 +132,15 @@ describe('integration: zones F and G in Direct mode (M2-13)', () => {
       expect(wrong.slice(0, 5)).toEqual([]);
       expect(w.status).toBe('stageClear');
       expect(bossBeaten).toBe(true);
+      expect(deepest).toBe(depth);
       // Every drop was the plan's entry at the cursor it was handed out at (the plan cycles),
       // checked tick by tick above; a few fell right onto the ship and were collected at once.
       const cursor = w.powerups.planCursor;
       expect(cursor).toBeGreaterThanOrEqual(handed);
       expect(dropped.length + caught).toBe(cursor);
       expect(caught).toBeLessThanOrEqual(2);
-      // The zone's own colours: red, green and blue levels, the octagon among the first dozen.
-      for (const colour of ['red', 'green', 'blue', 'octagon']) expect(dropped).toContain(colour);
+      // The zone's own colours as far as the honest run reaches them (prepB.FIX8 note above).
+      for (const colour of colours) expect(dropped).toContain(colour);
     },
     60_000,
   );

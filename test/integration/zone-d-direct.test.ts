@@ -1,8 +1,9 @@
 /**
- * Zones D and E in Direct mode (plan M2-12 "direct-mode item plan", the deliverables of M2-11; the
- * MANTA of M2-05) on the shipped content: the MANTA, flown by the 4-way playtest bot with god mode,
- * plays MAGMA DEEP (down the dive, through the brick maze) and TEMPEST RIDGE (the rear attackers)
- * from the start to the stage clear —
+ * Zone D in Direct mode (plan M2-12 "direct-mode item plan", the deliverables of M2-11; the
+ * MANTA of M2-05) on the shipped content, R5-P.P5e's split of `zones-de-direct.test.ts` (zone E's
+ * run lives in `zone-e-direct.test.ts`): the MANTA, flown by the 4-way playtest bot with god
+ * mode, plays MAGMA DEEP (down the dive, through the brick maze) from the start to the stage
+ * clear —
  *
  * - the World's item plan is the stage's own `directItems` (not the default plan);
  * - the carriers and completed formations hand out the plan in order: the items that appear on a
@@ -12,7 +13,7 @@
  *   along the way as far as the honest run reaches (each row's list below; prepB.FIX8),
  * - no meter capsule ever appears in Direct mode;
  * - the MANTA's weapons shoot the zone's boss down (CINDER BASTION's core behind its turning
- *   shield arms, SQUALL STEED's chest while it is open);
+ *   shield arms);
  * - MAGMA DEEP's camera went down into the caves on the way.
  */
 import {
@@ -47,7 +48,7 @@ const DB: ContentDb = (() => {
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
 /**
- * The zones, their bosses, the dive target and the honest hand-out floors of this bot run.
+ * The zone, its boss, the dive target and the honest hand-out floor of this bot run.
  *
  * prepB.FIX8 (d25de31, the physical nearer-target pick): zone-d's run now ends at cursor 4,
  * not 15 — ten of its nineteen tenders fly the corridor and leave alive. The pick did not
@@ -60,7 +61,7 @@ const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
  * invariants are what this test owns; the floor and the colour list only describe how far
  * the shared bot honestly gets. zone-d's plan reaches its fourth entry, so the octagon at
  * plan[7] is out of its realised range — octagon coverage lives in zone-e and in the
- * zones-bc file (zone-b's run includes it at hand-out 8).
+ * zones-bc file's zone-b row (zone-b's run includes it at hand-out 8).
  */
 const ZONES = [
   {
@@ -69,13 +70,6 @@ const ZONES = [
     depth: v1rel(200),
     handed: 4,
     colours: ['red', 'green', 'blue'],
-  },
-  {
-    stage: 'zone-e',
-    boss: 'squall-steed',
-    depth: 0,
-    handed: 10,
-    colours: ['red', 'green', 'blue', 'octagon'],
   },
 ] as const;
 

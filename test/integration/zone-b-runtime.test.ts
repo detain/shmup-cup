@@ -1,5 +1,6 @@
 /**
- * Zones B and C through the real game on the shipped content (plan M2-11):
+ * Zone B through the real game on the shipped content (plan M2-11, R5-P.P5e's split of
+ * `zones-bc-runtime.test.ts`; zone C's cases live in `zone-c-runtime.test.ts`):
  *
  * - **BRINE NEBULA's hidden bonus stage.** A practice run of zone B from its third checkpoint
  *   (the scene flow's `startPractice`): the ship flies under the left block of the marked gap, rises
@@ -8,16 +9,14 @@
  * - **The zone songs.** The flow prepares zone B's own music set when the run reaches it
  *   (`SimEventKind.PrepareStage` → the stage's index) — its stage-scoped tracks are chosen by the
  *   audio side (`content.test.ts` checks the binding).
- * - **The captain and the WARNING.** In zone B the mid-boss SPUME HERALD comes with a `boss` event
- *   (no WARNING, the camera keeps scrolling) before GALVANIC MAW's WARNING; in zone C the sand worms
- *   rise from the dunes (their segments above the floor they lay in).
+ * - **The captain and the WARNING.** The mid-boss SPUME HERALD comes with a `boss` event
+ *   (no WARNING, the camera keeps scrolling) before GALVANIC MAW's WARNING.
  */
 import {
   Action,
   BossRole,
   BossState,
   ENGINE_SPRITES,
-  EnemyState,
   KNOWN_SCRIPT_IDS,
   SimEventKind,
   commitPlayerInput,
@@ -27,12 +26,12 @@ import {
   type ContentDb,
   type Game,
   type SceneFlow,
-  type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { v1x, v1y, v1rel } from '../../packages/core/test/helpers/v1-port.js';
+import { expectCameraAt } from './zones/helpers.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -51,22 +50,6 @@ const DB: ContentDb = (() => {
  * @returns The stage id.
  */
 const stageOf = (game: Game): string => game.world.stage?.stage.id ?? '';
-
-/**
- * Asserts the camera sits within one tick of scroll of `x`: a practice start or checkpoint
- * jump lands a fraction of a scroll step past its (ported) checkpoint after the first tick.
- *
- * @param world - The running World.
- * @param x - The checkpoint's world x.
- */
-function expectCameraAt(world: World, x: number): void {
-  let speed = 0;
-  for (const key of world.stage?.stage.camera ?? []) {
-    if (key.x <= x + 1e-6) speed = key.speed;
-  }
-  expect(world.camera.x).toBeGreaterThanOrEqual(x);
-  expect(world.camera.x).toBeLessThan(x + Math.max(speed, v1rel(1)));
-}
 
 describe('integration: zones B and C in the game (M2-11)', () => {
   it('flies into BRINE NEBULA’s marked gap and plays PEARL GROTTO — its clear is the zone’s', () => {
@@ -154,27 +137,5 @@ describe('integration: zones B and C in the game (M2-11)', () => {
     }
     expect(world.status).toBe('bossWarning');
     expect(world.view.warning?.text).toContain('GALVANIC MAW');
-  });
-
-  it('makes DUNE EXPANSE’s sand worms rise out of the dunes they lay in', () => {
-    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-c' }, DB);
-    const world = game.world;
-    world.debugFlags.godMode = true;
-    world.stage?.jumpTo(v1x(4500));
-    const worm = DB.enemyIndex.get('dune-worm');
-    let lowest = Number.NEGATIVE_INFINITY;
-    let highest = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < 900; i++) {
-      game.step();
-      game.events.clear();
-      for (const e of world.enemies.enemies) {
-        if (e.state !== EnemyState.Live || e.specIndex !== worm) continue;
-        lowest = Math.max(lowest, e.y - world.camera.y);
-        highest = Math.min(highest, e.y - world.camera.y);
-      }
-    }
-    // From their holes low in the playfield up to well above the dunes.
-    expect(lowest).toBeGreaterThan(120);
-    expect(lowest - highest).toBeGreaterThan(60);
   });
 });

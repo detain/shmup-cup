@@ -1,6 +1,7 @@
 /**
- * Zones B and C in Direct mode (plan M2-11 "direct-mode item plan"; the MANTA of M2-05) on the
- * shipped content: the MANTA, flown by the 4-way playtest bot with god mode, plays BRINE NEBULA and
+ * Zone C in Direct mode (plan M2-11 "direct-mode item plan"; the MANTA of M2-05) on the shipped
+ * content, R5-P.P5e's split of `zones-bc-direct.test.ts` (zone B's run lives in
+ * `zone-b-direct.test.ts`): the MANTA, flown by the 4-way playtest bot with god mode, plays
  * DUNE EXPANSE from the start to the stage clear —
  *
  * - the World's item plan is the stage's own `directItems` (not the default plan);
@@ -8,8 +9,7 @@
  *   appears is the plan's entry at the cursor it was dropped at (cycling), the cursor only moves
  *   on, and red, green, blue and the octagon come along the way;
  * - no meter capsule ever appears in Direct mode;
- * - the MANTA's weapons shoot the zone's boss down (GALVANIC MAW's mouth weak point, SANDGRAVE
- *   WIDOW behind its fangs).
+ * - the MANTA's weapons shoot the zone's boss down (SANDGRAVE WIDOW behind its fangs).
  */
 import {
   DIRECT_ITEMS,
@@ -42,21 +42,13 @@ const DB: ContentDb = (() => {
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
 /**
- * The zones, their bosses and the honest hand-out floors of this bot run.
- *
- * prepB.FIX8 (d25de31, the physical nearer-target pick): zone-b's run now ends at cursor 9,
- * not 11. The pick did not lose zone-b anything a real player must rely on — the whole run
- * redirects exactly ONE shot, tick 5945, from the gill-dart the OLD lowest-slot rule let a
- * bolt pass THROUGH the boss's front part to reach (an abstraction leak of the same family
- * FIX2 cured at K=1.5); that one hit retimes the boss's phase and the bot's threat-aim, and
- * two tenders then fly past the firing corridor. Hand-outs stay strictly in plan order —
- * the `wrong`/order checks below are the invariant this test owns, the floor only measures
- * how much of the plan the shared bot happens to reach by the clear.
+ * The zone, its boss and the honest hand-out floor of this bot run. The pair file's prepB.FIX8
+ * story (d25de31) is zone-b's cursor and rides in `zone-b-direct.test.ts`; zone-c's run reaches
+ * the shared floor below and sees every colour. Hand-outs stay strictly in plan order — the
+ * `wrong`/order checks below are the invariant this test owns, the floor only measures how much
+ * of the plan the shared bot happens to reach by the clear.
  */
-const ZONES = [
-  { stage: 'zone-b', boss: 'galvanic-maw', handed: 9 },
-  { stage: 'zone-c', boss: 'sandgrave-widow', handed: 10 },
-] as const;
+const ZONES = [{ stage: 'zone-c', boss: 'sandgrave-widow', handed: 10 }] as const;
 
 describe('integration: zones B and C in Direct mode (M2-11)', () => {
   it.each(ZONES)(
