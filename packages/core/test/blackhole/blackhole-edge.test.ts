@@ -312,12 +312,15 @@ describe('core/blackhole — the sprite batch (M3-02)', () => {
     expect(holes.fire(0)).toBe(true);
     const hole = holes.holes[0];
     const frames = holes.batch.frame;
+    // The swirl cycles frames 0 … BLACK_HOLE_FRAMES − 2 (`sync`'s pick is `% (BLACK_HOLE_FRAMES
+    // − 1)`); the discharge holds frame BLACK_HOLE_FRAMES − 1. The expectations derive.
+    const swirl = BLACK_HOLE_FRAMES - 1;
     for (const [age, frame] of [
       [0, 0],
       [BLACK_HOLE_FRAME_TICKS, 1],
       [BLACK_HOLE_FRAME_TICKS * 2, 2],
-      [BLACK_HOLE_FRAME_TICKS * 3, 0],
-      [BLACK_HOLE_PULL_TICKS, ((BLACK_HOLE_PULL_TICKS / BLACK_HOLE_FRAME_TICKS) | 0) % 3],
+      [BLACK_HOLE_FRAME_TICKS * swirl, 0],
+      [BLACK_HOLE_PULL_TICKS, ((BLACK_HOLE_PULL_TICKS / BLACK_HOLE_FRAME_TICKS) | 0) % swirl],
       [BLACK_HOLE_PULL_TICKS + 1, BLACK_HOLE_FRAMES - 1],
     ]) {
       hole.age = age;

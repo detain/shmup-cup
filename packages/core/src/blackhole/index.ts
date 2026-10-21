@@ -129,7 +129,7 @@ export const BLACK_HOLE_SPRITE = 'fx/black-hole';
 export const BLACK_HOLE_SPRITES: readonly string[] = Object.freeze([BLACK_HOLE_SPRITE]);
 
 /** Animation frames of {@link BLACK_HOLE_SPRITE} (the swirl, then the discharge). */
-export const BLACK_HOLE_FRAMES = 4;
+export const BLACK_HOLE_FRAMES = 8;
 
 /** Ticks one animation frame is shown. */
 export const BLACK_HOLE_FRAME_TICKS = 5;
