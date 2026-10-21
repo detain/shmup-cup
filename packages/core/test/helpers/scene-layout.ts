@@ -76,11 +76,18 @@ export const ENDING_TEXT_PANEL = Object.freeze({
   h: FRAME_H - uiPx(4) - ENDING_TEXT_Y,
 });
 
-/** The WARNING band: its height (48) and top row (`FRAME_CY − 8 − 24`: 76). */
+/**
+ * The WARNING band (R4-05.E3): its height a fifth of the frame (72 at 640×360; 48 at 384×216),
+ * its top row `FRAME_CY − uiPx(8) − h/2` (132), its text row centred in the band
+ * (`(h − GLYPH_H) / 2`: 30; v1's `uiPx(9)`), the hazard stripe pitch `h/4` and the field width
+ * one band height.
+ */
 export const WARNING_BAND = Object.freeze({
-  h: uiPx(48),
-  y: FRAME_CY - uiPx(8) - (uiPx(48) >> 1),
-  textDy: uiPx(9),
+  h: FRAME_H / 5,
+  y: FRAME_CY - uiPx(8) - ((FRAME_H / 5) >> 1),
+  textDy: (FRAME_H / 5 - GLYPH_H) >> 1,
+  stripe: FRAME_H / 5 / 4,
+  field: FRAME_H / 5,
 });
 
 /** The boot bar: its width (160), left edge and top (`FRAME_CY + 2`). */

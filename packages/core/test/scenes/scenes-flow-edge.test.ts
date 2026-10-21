@@ -10,7 +10,14 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FRAME_CX, FRAME_CY, FRAME_H, GLYPH_W, resolveGameConfig } from '../../src/config/index.js';
+import {
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_H,
+  FRAME_W,
+  GLYPH_W,
+  resolveGameConfig,
+} from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -590,14 +597,46 @@ describe('core/scenes flow edge: game', () => {
     warning.text = 'WARNING!! TEST CRAFT';
     s.hold(0);
     const frame = s.game.renderFrame();
-    const band = WARNING_BAND; // 76, 48 tall at 384×216
-    expect(indicesOf(frame.ui, DrawOp.Rect).map((i) => [frame.ui.y[i], frame.ui.h[i]])).toEqual([
-      [band.y, band.h],
-      [band.y, 1],
-      [band.y + band.h - 1, 1],
-    ]);
+    const band = WARNING_BAND; // 132, 72 tall at 640×360 (R4-05.E3: a fifth of the frame)
+    // The band draws: its dim ground, the two hazard fields (alert ground plus sixteen
+    // deep-red 45° cells — eight per end), then the two 1-px alert edge lines over them.
+    const expected: { x: number; y: number; w: number; h: number; color: number }[] = [
+      { x: 0, y: band.y, w: FRAME_W, h: band.h, color: 0x000000 },
+    ];
+    for (const x of [0, FRAME_W - band.field]) {
+      expected.push({ x, y: band.y, w: band.field, h: band.h, color: UI_COLORS.alert });
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if ((c + 3 - r) % 4 < 2) {
+            expected.push({
+              x: x + c * band.stripe,
+              y: band.y + r * band.stripe,
+              w: band.stripe,
+              h: band.stripe,
+              color: 0x881818,
+            });
+          }
+        }
+      }
+    }
+    expected.push(
+      { x: 0, y: band.y, w: FRAME_W, h: 1, color: UI_COLORS.alert },
+      { x: 0, y: band.y + band.h - 1, w: FRAME_W, h: 1, color: UI_COLORS.alert },
+    );
+    const rects = indicesOf(frame.ui, DrawOp.Rect);
+    expect(rects.length).toBe(expected.length);
+    expect(
+      rects.map((i) => ({
+        x: frame.ui.x[i],
+        y: frame.ui.y[i],
+        w: frame.ui.w[i],
+        h: frame.ui.h[i],
+        color: frame.ui.color[i],
+      })),
+    ).toEqual(expected);
     const text = indicesOf(frame.ui, DrawOp.Text)[0];
     expect(frame.ui.strings[frame.ui.ref[text]]).toBe('WARNING!! TEST CRAFT');
+    expect(frame.ui.y[text]).toBe(band.y + band.textDy); // the centred text row (R4-05.E3)
     expect([frame.ui.color[text], frame.ui.flags[text]]).toEqual([
       UI_COLORS.alert,
       TextAlign.Center,

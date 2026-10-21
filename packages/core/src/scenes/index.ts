@@ -343,6 +343,7 @@ import {
   FRAME_W,
   GLYPH_H,
   GLYPH_W,
+  HUD_BAR_HEIGHT,
   LINE_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
@@ -1705,8 +1706,11 @@ const PANEL_HINT_DY = uiPx(14);
 /** From a panel's bottom edge up to the note line above its hint (26). */
 const PANEL_NOTE_DY = uiPx(26);
 
-/** Height of the WARNING band (48). */
-const WARNING_BAND_H = uiPx(48);
+/**
+ * Height of the WARNING band — R4-05.E3: the band is frame-anchored, so its height is a fifth of
+ * the frame (72 at 640×360; 48 at 384×216 was `uiPx(48)`, the same value the fifth gives here).
+ */
+const WARNING_BAND_H = FRAME_H / 5;
 
 /**
  * Screen row of the WARNING band's top edge: the band is centred 8 px above the frame's centre
@@ -1714,23 +1718,39 @@ const WARNING_BAND_H = uiPx(48);
  */
 const WARNING_BAND_Y = FRAME_CY - uiPx(8) - (WARNING_BAND_H >> 1);
 
-/** From the WARNING band's top edge to its text (9). */
-const WARNING_TEXT_DY = uiPx(9);
+/**
+ * From the WARNING band's top edge to its text: the centred text row of the band, between the
+ * hazard stripes and under the edge line — `(WARNING_BAND_H − GLYPH_H) / 2` (30; v1's `uiPx(9)`
+ * sat it 9 px under the top line).
+ */
+const WARNING_TEXT_DY = (WARNING_BAND_H - GLYPH_H) >> 1;
 
-/** Height of the zone title card (32). */
-const ZONE_CARD_H = uiPx(32);
+/** The hazard stripe's pitch: the band's height over four rows (18; art bible §5.11). */
+const WARNING_STRIPE = WARNING_BAND_H / 4;
+
+/** Width of the hazard field at each end of the band: one band height (72). */
+const WARNING_FIELD_W = WARNING_BAND_H;
+
+/** The hazard stripes' deep red between the `UI_COLORS.alert` bars of the field. */
+const WARNING_STRIPE_DEEP = 0x881818;
+
+/** Height of the zone title card — R4-05.E3: the frame's four HUD bars (48; was `uiPx(32)`). */
+const ZONE_CARD_H = 4 * HUD_BAR_HEIGHT;
 
 /**
- * Screen row of the zone title card's top edge: the 32-px card ends 40 px above the ship's fly-in
+ * Screen row of the zone title card's top edge: the card ends 40 px above the ship's fly-in
  * row (the playfield's middle, the frame's centre row), `FRAME_CY − 72`.
  */
 const ZONE_CARD_Y = FRAME_CY - uiPx(40) - ZONE_CARD_H;
 
-/** From the zone card's top edge to its title (`ZONE B` — 5). */
-const ZONE_CARD_TITLE_DY = uiPx(5);
+/**
+ * From the zone card's top edge to its title (`ZONE B`): the card's two lines centred as a
+ * `LINE_H + GLYPH_H` block, `(ZONE_CARD_H − LINE_H − GLYPH_H) / 2` (10; v1's `uiPx(5)`).
+ */
+const ZONE_CARD_TITLE_DY = (ZONE_CARD_H - LINE_H - GLYPH_H) >> 1;
 
-/** From the zone card's top edge to the zone's name (18). */
-const ZONE_CARD_NAME_DY = uiPx(18);
+/** From the zone card's top edge to the zone's name: one line advance below the title (25). */
+const ZONE_CARD_NAME_DY = ZONE_CARD_TITLE_DY + LINE_H;
 
 /** `DEMO PLAY` and the replay's status line: their row under the top HUD bar (`+ 6`). */
 const STATUS_LINE_Y = PLAYFIELD_Y + uiPx(6);
@@ -3003,6 +3023,10 @@ export class GameScene extends SceneBase {
     if (look === 0) return;
     list.setString(this.stringBase, this.world.bosses.warning.text);
     list.rect(0, WARNING_BAND_Y, FRAME_W, WARNING_BAND_H, 0x000000, 144);
+    // R4-05.E3 (art bible §5.11): the band's ends carry red hazard stripes; the 1-px edge
+    // lines are drawn over them so each edge stays one line of `UI_COLORS.alert`.
+    drawHazardField(list, 0);
+    drawHazardField(list, FRAME_W - WARNING_FIELD_W);
     list.rect(0, WARNING_BAND_Y, FRAME_W, 1, UI_COLORS.alert);
     list.rect(0, WARNING_BAND_Y + WARNING_BAND_H - 1, FRAME_W, 1, UI_COLORS.alert);
     list.text(
@@ -3015,7 +3039,8 @@ export class GameScene extends SceneBase {
   }
 
   /**
-   * Draws the zone title card (its strings are built when a World starts, never here).
+   * Draws the zone title card at a campaign zone's start (its strings are set on the World's
+   * first tick, never here).
    *
    * @param list - The UI list.
    */
@@ -3023,17 +3048,53 @@ export class GameScene extends SceneBase {
     const base = this.stringBase;
     list.setString(base + 1, this.cardTitle);
     list.setString(base + 2, this.cardName);
-    list.rect(0, ZONE_CARD_Y, FRAME_W, ZONE_CARD_H, 0x000000, 128);
-    const titleY = ZONE_CARD_Y + ZONE_CARD_TITLE_DY;
-    list.text(base + 1, FRAME_CX, titleY, UI_COLORS.focus, TextAlign.Center);
-    list.text(
-      base + 2,
-      FRAME_CX,
-      ZONE_CARD_Y + ZONE_CARD_NAME_DY,
-      UI_COLORS.title,
-      TextAlign.Center,
-    );
+    drawZoneCard(list, base + 1, base + 2);
   }
+}
+
+/**
+ * Draws one hazard field of the WARNING band (R4-05.E3 — art bible §5.11's "red hazard
+ * stripes"): four rows of four stripe cells, the deep-red cells stepping one stripe per row so
+ * the bars run at 45° over the `UI_COLORS.alert` ground.
+ *
+ * @param list - The UI list.
+ * @param x0 - Screen column of the field's left edge.
+ */
+function drawHazardField(list: DrawList, x0: number): void {
+  list.rect(x0, WARNING_BAND_Y, WARNING_FIELD_W, WARNING_BAND_H, UI_COLORS.alert);
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if ((c + 3 - r) % 4 >= 2) continue;
+      list.rect(
+        x0 + c * WARNING_STRIPE,
+        WARNING_BAND_Y + r * WARNING_STRIPE,
+        WARNING_STRIPE,
+        WARNING_STRIPE,
+        WARNING_STRIPE_DEEP,
+      );
+    }
+  }
+}
+
+/**
+ * Draws a zone title card (R4-05.E3 — the game scene's launch intro and the attract demo's share
+ * it): the frame-wide black band under the UI kit's v2 neon rim, the zone's code centred over
+ * its name.
+ *
+ * @param list - The UI list.
+ * @param slotTitle - String slot holding the zone's code (`ZONE B`).
+ * @param slotName - String slot holding the zone's name.
+ */
+function drawZoneCard(list: DrawList, slotTitle: number, slotName: number): void {
+  drawPanel(list, 0, ZONE_CARD_Y, FRAME_W, ZONE_CARD_H, 0x000000, UI_COLORS.border, 128);
+  list.text(
+    slotTitle,
+    FRAME_CX,
+    ZONE_CARD_Y + ZONE_CARD_TITLE_DY,
+    UI_COLORS.focus,
+    TextAlign.Center,
+  );
+  list.text(slotName, FRAME_CX, ZONE_CARD_Y + ZONE_CARD_NAME_DY, UI_COLORS.title, TextAlign.Center);
 }
 
 /**
@@ -8366,11 +8427,7 @@ export class DemoScene extends SceneBase {
       list.text(base + 1, FRAME_CX, STATUS_LINE_Y, UI_COLORS.text, TextAlign.Center);
     }
     if (this.demo !== null && this.ticks < DEMO_CARD_TICKS) {
-      list.rect(0, ZONE_CARD_Y, FRAME_W, ZONE_CARD_H, 0x000000, 128);
-      const titleY = ZONE_CARD_Y + ZONE_CARD_TITLE_DY;
-      list.text(base + 2, FRAME_CX, titleY, UI_COLORS.focus, TextAlign.Center);
-      const nameY = ZONE_CARD_Y + ZONE_CARD_NAME_DY;
-      list.text(base + 3, FRAME_CX, nameY, UI_COLORS.title, TextAlign.Center);
+      drawZoneCard(list, base + 2, base + 3);
     }
   }
 }
