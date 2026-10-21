@@ -410,8 +410,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 
 Since M2-17 the app keeps its **saves as files** in `<userData>/saves/` (`save.v1.json`,
 `window.json`, a `.bak` of each; atomic writes, 1 MiB a value, 8 MiB the folder), remembers the
-**window** (fullscreen — **F11** / **Alt+Enter** —, the scale of the 384×216 frame — **Ctrl+=** /
-**Ctrl+-** / **Ctrl+0**, Cmd on macOS —, the position) and the web build it loads runs as platform
+**window** (fullscreen — **F11** / **Alt+Enter** —,
+the scale of the game frame (384×216 at M2-17; 640×360 since R2-01) — **Ctrl+=** / **Ctrl+-** /
+**Ctrl+0**, Cmd on macOS —, the position) and the web build it loads runs as platform
 `'electron'` (EXIT quits, sound from boot). `package` runs a pinned electron-builder through
 `pnpm dlx` with `electron-builder.json` (Windows NSIS + portable, Linux AppImage + tar.gz, macOS dmg;
 `--publish never`, unsigned; since M2-18 every platform takes `build/icon.png`, drawn by

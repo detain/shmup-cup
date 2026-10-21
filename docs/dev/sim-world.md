@@ -209,7 +209,8 @@ blinking or not, with or without a sprite — at its centre with the hurt radius
 
 SoA-backed batches are the pools' own arrays (the enemy bullets since M1-09); object-based
 systems (enemies since M1-08, the boss's parts since M1-13) and pools whose entries draw as several sprites
-(the player shots since M1-10: a laser is a row of 8-px segments) fill a mirror batch in
+(the player shots since M1-10:
+a laser is a row of beam segments — v1's 4×8, native 6×12 since R4-01.A7) fill a mirror batch in
 phase 9 like the players do. A new
 batch must be in `view.batches` from the start — see
 [rendering-and-shell.md](rendering-and-shell.md#gotchas).

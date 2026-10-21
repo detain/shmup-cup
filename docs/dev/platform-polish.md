@@ -279,6 +279,49 @@ every frame — a new string per frame, caught in review round 1 (≈ 1.7 MB ove
 guard in `packages/render-pixi/test/debug/debug-device.test.ts` now allows 16 KiB, and
 `packages/shell/test/debug/debug-device-alloc.test.ts` guards the shell's side.
 
+## The GRAPHICS page's boot knobs (R6-04, decision W5-20)
+
+The GRAPHICS page itself is [scenes-and-ui.md](scenes-and-ui.md)'s (`GraphicsScene`); what
+belongs to the platform story is where its two **boot knobs** act. OUTPUT and RENDERER are
+read once per launch, **before the renderer exists**: the web, Tizen and webOS hosts hand
+`localStorage['shmup-cup:save.v1']`'s raw text to `@shmup/shell` `bootDisplayFromSaveText`
+(the Electron flavour of the web host first fetches the same key through the preload
+bridge), and a corrupt or older document simply lands on `auto` / `auto`. Changing a knob
+mid-session stores the choice but does not apply it — nothing between frames can re-make
+the canvas or the GL context — so the page's hint row reads `APPLIES AT RESTART`, and what
+that restart is depends on the host: on `apps/web`, a page reload; in Electron, quitting and
+reopening the app (or reloading the window — the boot read runs through the bridge either
+way); on the two TVs, exiting the app (the title's exit confirm) and launching it again
+from the portal.
+
+**OUTPUT** is the canvas backbuffer cap. `outputCapHeight` turns an `OUTPUT_CAPS` value
+into display rows (`1080` / `720` / `540`; a TV's `auto` resolves to the measured 720p cap
+already in `bootDisplayFromSaveText`, the desktop's to no cap), and `capDisplaySize`
+shrinks the window to it keeping the aspect — the canvas element keeps filling the screen
+through CSS while its backbuffer becomes that size and the display's compositor upscales.
+It is the TV render bench's mechanism (`apps/tizen/src/bench/run.ts`), measured there end
+to end; the cap never upscales a window no taller than it, and the picture is never cropped.
+
+**RENDERER** follows the floor-and-probe law of `resolveBootGLVersion`: a dev pin (`?gl=`,
+the Tizen debug key) wins; an explicit `WEBGL 2` / `WEBGL 1` row pins its version; `auto`
+asks for WebGL 2 only where `chromiumMajorFromUserAgent` clears `WEBGL2_MIN_CHROMIUM` (71)
+**and** `probeWebGL2` actually got a WebGL 2 context — the safety net for an engine nobody
+has measured (webOS 5 has never run on hardware). The floor sits above both TVs' engines
+(68 / 69), so a TV on `auto` stays on the shipped, measured WebGL 1 path even though the M7
+does expose a WebGL 2 context.
+
+The sweep that motivated the cap is
+`tools/input-probe/results/2026-10-19-m7-bench-resolutions/`: the M7's 172-scenario
+matrix, four passes per output (1080p, 720p, 540p). The output size is the main lever —
+the M7's cost is the full-screen fill, not the 640×360 scene: `640x360-worst` misses a
+vsync on 59.5 % of checks at a 1080p backbuffer, 11.3 % at 720p and 1.8 % at 540p, while
+at 720p every other 640×360 variant sits at ≤ 0.8 % two-tick and the synced p95 moves
+little with the output (within about 3 ms). WebGL 2's measured win at 1080p (21 scenarios
+better, 0 worse) is a fill-rate win and fades with the backbuffer (6 / 0 at 720p, 3 / 1 at
+540p, both inside the drift band) — the plan §13 step to WebGL 2 matters only while the
+game draws a 1080p output, so on the TVs the cap does the real work and WebGL 1 stays the
+default.
+
 ## Storage quota checks (`@shmup/shell` `storage`)
 
 `createWebStorage(backend, { prefix?, quotaBytes?, valueMaxBytes?, onIssue? })` replaced the two

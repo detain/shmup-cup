@@ -113,11 +113,12 @@ Rules worth knowing:
   hi-score line (`FRAME_H − uiPx(20)`) all take their rows from the frame constants as elsewhere.
 - **The pictures.** This page carries no embedded images; the plates live in `docs/images/` and
   `docs/images/screens/ (`pnpm docs:images` / `pnpm docs:screens`). R4-05.E6 refreshed the front
-  end's share of them: `docs/images/logo.png` — the README banner, `FRAME_W` × 144 magnified ×3
-  (1920×432) — now hangs the E1 v2 logo (its 330 × 54 sheet sits nine rows taller than the interim
-  248 × 41, so E6 hangs it from the band's top row and measures the taglines on the bottom), and
-  the screen shots `title.png`, `warning.png` and the nine `zone-<letter>.png` cards are re-shot
-  at 640×360 on the v2 art. `docs/client/` embeds them.
+  end's share of them: `docs/images/logo.png` — the README banner, `FRAME_W` × 144
+  magnified ×3 (1920×432) — now hangs the E1 v2 logo (its
+  330 × 54 sheet sits thirteen rows taller than the interim 248 × 41, so E6 hangs it from
+  the band's top row and measures the taglines on the bottom), and the screen shots
+  `title.png`, `warning.png` and the nine `zone-<letter>.png` cards are re-shot at 640×360
+  on the v2 art. `docs/client/` embeds them.
 
 - **Any input means any press** — `flow.menuInput.pressed !== 0`, every player merged — and it
   always goes to the title (`toTitle()` resets the stack), **Back included**: on an attract screen

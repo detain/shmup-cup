@@ -52,7 +52,7 @@ From `plan_resolution.md` §2.7 — art is authored for these, never for the old
 | Player ship (KESTREL) | 16×9 | **24×14** (MANTA 24×15) |
 | Player hurt radius | 1.5 | **2.25** |
 | Enemy bullet hit radius | 1.5 (needle) / 2 | **2.25 / 3** |
-| Font cell / line height | 6×8 / 10 | **≈ 9×12 / 15** — R4-03 decides 8×12 or 9×12 |
+| Font cell / line height | 6×8 / 10 | **9×12 / 15** — R4-03 decided 9×12 (the native cell, `GLYPH_W` 9) |
 | Atlas page | 1024² (one page) | up to 2048² per page, zone-grouped pages (R1-05, R3-04) |
 
 **Frame ≠ world (§2.6).** Sprite sizes are world sizes: they scale ×1.5. Anything defined by the
