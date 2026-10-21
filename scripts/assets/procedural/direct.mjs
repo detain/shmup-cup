@@ -18,6 +18,8 @@
  * - `shots/sub-disc` (12×12, 2 frames): the sub-weapon's piercing discs (radius 3.5, 5.5).
  *
  * (R4-P.P1 split the six colour items into `direct-items.mjs` and `shields/arm` into `arm.mjs`.)
+ * From R4-01.A7 every shot has a native v2 path at the art bible §5's sizes (the v1 geometry
+ * ×1.5, v1's frame counts and colours); at art scale 1 each draws the v1 sprite, byte for byte.
  *
  * Only exactly rounded maths (square roots, `+ − × ÷`).
  *
@@ -56,27 +58,42 @@ function fillPill(image, w, h, rgba) {
  * Draws a missile frame: a pill body, a hot tip at its front.
  *
  * @param {boolean} wide - The stronger, wider missile.
- * @returns {Image} 12×6 frame.
+ * @param {boolean} v2 - Draw the bible's native 18×9 missile (the v1 pill 14×5 / 17×8 with its
+ *   8×2 / 11×5 core, the white tip two columns by three rows at the front).
+ * @returns {Image} 12×6 (or 18×9) frame.
  */
-function missileFrame(wide) {
-  const image = createImage(12, 6);
-  fillPill(image, wide ? 11 : 9, wide ? 5 : 3, color('#e06018'));
-  fillPill(image, wide ? 7 : 5, wide ? 3 : 1, color('#ffb050'));
-  setPixel(image, wide ? 10 : 9, 2, color('#ffffff'));
-  setPixel(image, wide ? 10 : 9, 3, color('#ffffff'));
+function missileFrame(wide, v2) {
+  if (!v2) {
+    const image = createImage(12, 6);
+    fillPill(image, wide ? 11 : 9, wide ? 5 : 3, color('#e06018'));
+    fillPill(image, wide ? 7 : 5, wide ? 3 : 1, color('#ffb050'));
+    setPixel(image, wide ? 10 : 9, 2, color('#ffffff'));
+    setPixel(image, wide ? 10 : 9, 3, color('#ffffff'));
+    return image;
+  }
+  const image = createImage(18, 9);
+  fillPill(image, wide ? 17 : 14, wide ? 8 : 5, color('#e06018'));
+  fillPill(image, wide ? 11 : 8, wide ? 5 : 2, color('#ffb050'));
+  const tip = color('#ffffff');
+  const tipX = wide ? 15 : 13;
+  for (let y = 3; y <= 5; y++) {
+    setPixel(image, tipX, y, tip);
+    setPixel(image, tipX + 1, y, tip);
+  }
   return image;
 }
 
 /**
- * Draws a disc: a white core, a gold ring, a darker rim.
+ * Draws a disc: a white core, a ring, a darker rim.
  *
  * @param {number} size - Image side.
  * @param {number} r - Radius.
  * @param {string} ring - Ring colour.
  * @param {string} rim - Rim colour.
+ * @param {number} inset - How deep inside the edge the rim band starts (1 v1, ×1.5 the v2 disc).
  * @returns {Image} The frame.
  */
-function discFrame(size, r, ring, rim) {
+function discFrame(size, r, ring, rim, inset) {
   const image = createImage(size, size);
   const c = size / 2;
   const core = color('#ffffff');
@@ -88,7 +105,7 @@ function discFrame(size, r, ring, rim) {
       const dy = y + 0.5 - c;
       const d = Math.sqrt(dx * dx + dy * dy);
       if (d > r) continue;
-      setPixel(image, x, y, d < r * 0.45 ? core : d < r - 1 ? ringColor : rimColor);
+      setPixel(image, x, y, d < r * 0.45 ? core : d < r - inset ? ringColor : rimColor);
     }
   }
   return image;
@@ -106,13 +123,23 @@ const BEAMS = [
  * Draws one bolt of the Laser family (a pill with a bright core).
  *
  * @param {number} index - Frame index (see {@link BEAMS}).
- * @returns {Image} 26×8 frame.
+ * @param {boolean} v2 - Draw the bible's native 39×12 bolt (the v1 pill ×1.5 in a 39×12 field,
+ *   the core inset 1.5 a side — 3 px off the pill's width, at least 2 px tall).
+ * @returns {Image} 26×8 (or 39×12) frame.
  */
-function beamFrame(index) {
+function beamFrame(index, v2) {
   const spec = BEAMS[index];
-  const image = createImage(26, 8);
-  fillPill(image, spec.w, spec.h, color(spec.edge));
-  fillPill(image, spec.w - 2, Math.max(1, spec.h - 2), color(spec.core));
+  if (!v2) {
+    const image = createImage(26, 8);
+    fillPill(image, spec.w, spec.h, color(spec.edge));
+    fillPill(image, spec.w - 2, Math.max(1, spec.h - 2), color(spec.core));
+    return image;
+  }
+  const image = createImage(39, 12);
+  const w = spec.w * 1.5;
+  const h = spec.h * 1.5;
+  fillPill(image, w, h, color(spec.edge));
+  fillPill(image, w - 3, Math.max(2, h - 3), color(spec.core));
   return image;
 }
 
@@ -121,16 +148,17 @@ function beamFrame(index) {
  * shifted back by the crescent's thickness.
  *
  * @param {number} b - Half height.
- * @returns {Image} 16×34 frame.
+ * @param {boolean} v2 - Draw the bible's native 24×51 crescent (the v1 geometry ×1.5).
+ * @returns {Image} 16×34 (or 24×51) frame.
  */
-function waveFrame(b) {
-  const w = 16;
-  const h = 34;
+function waveFrame(b, v2) {
+  const w = v2 ? 24 : 16;
+  const h = v2 ? 51 : 34;
   const image = createImage(w, h);
   const cy = h / 2;
-  const r = b + 0.5;
+  const r = b + (v2 ? 0.75 : 0.5);
   const outerX = w / 2 - r * 0.35;
-  const innerX = outerX - 3 - b / 8;
+  const innerX = outerX - (v2 ? 4.5 : 3) - b / 8;
   const white = color('#ffffff');
   const cyan = color('#68e0ff');
   const deep = color('#2878d8');
@@ -140,9 +168,14 @@ function waveFrame(b) {
       const ox = x + 0.5 - outerX;
       const ix = x + 0.5 - innerX;
       const outer = ox * ox + py * py;
-      if (outer > r * r || ix * ix + py * py <= r * r || ox < -1) continue;
+      if (outer > r * r || ix * ix + py * py <= r * r || ox < -(v2 ? 1.5 : 1)) continue;
       const edge = Math.sqrt(outer);
-      setPixel(image, x, y, edge > r - 1 ? deep : edge > r - 2.5 ? cyan : white);
+      setPixel(
+        image,
+        x,
+        y,
+        edge > r - (v2 ? 1.5 : 1) ? deep : edge > r - (v2 ? 3.75 : 2.5) ? cyan : white,
+      );
     }
   }
   return image;
@@ -191,35 +224,71 @@ function subLaserFrame(size, k, wide) {
 /**
  * Generates the Direct-mode shots.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale the
+ *   eight shots are drawn at (default 1).
  * @returns {SpriteDef[]} The eight shot sprites (see the module docs; the items and the Arm
  *   moved to `direct-items.mjs` and `arm.mjs` in R4-P.P1).
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
-export function generate() {
+export function generate(options = {}) {
+  const v2 = (options.artScale ?? 1) !== 1;
+  const k = v2 ? 1.5 : 1;
   const directions = [0, 1, 2, 3, 4, 5, 6, 7];
   return [
-    makeSprite('shots/direct-missile', [missileFrame(false), missileFrame(true)], 'direct'),
+    makeSprite(
+      'shots/direct-missile',
+      [missileFrame(false, v2), missileFrame(true, v2)],
+      'direct',
+      { native: v2 },
+    ),
     makeSprite(
       'shots/disc',
-      [3.5, 5.5, 7.5, 9.5].map((r) => discFrame(20, r, '#ffd840', '#e07018')),
+      [3.5, 5.5, 7.5, 9.5].map((r) => discFrame(v2 ? 30 : 20, r * k, '#ffd840', '#e07018', k)),
       'direct',
+      { native: v2 },
     ),
-    makeSprite('shots/beam', [0, 1, 2, 3].map(beamFrame), 'direct'),
-    makeSprite('shots/wave', [7, 10, 13, 16].map(waveFrame), 'direct'),
-    makeSprite('shots/sub-bomb', [discFrame(6, 2.9, '#40d050', '#185a20')], 'direct'),
+    makeSprite(
+      'shots/beam',
+      [0, 1, 2, 3].map((i) => beamFrame(i, v2)),
+      'direct',
+      {
+        native: v2,
+      },
+    ),
+    makeSprite(
+      'shots/wave',
+      [7, 10, 13, 16].map((b) => waveFrame(b * k, v2)),
+      'direct',
+      {
+        native: v2,
+      },
+    ),
+    makeSprite(
+      'shots/sub-bomb',
+      [discFrame(v2 ? 9 : 6, 2.9 * k, '#40d050', '#185a20', k)],
+      'direct',
+      {
+        native: v2,
+      },
+    ),
     makeSprite(
       'shots/sub-laser',
-      directions.map((k) => subLaserFrame(9, k, false)),
+      directions.map((d) => subLaserFrame(v2 ? 13 : 9, d, false)),
       'direct',
+      { native: v2 },
     ),
     makeSprite(
       'shots/sub-laser-wide',
-      directions.map((k) => subLaserFrame(11, k, true)),
+      directions.map((d) => subLaserFrame(v2 ? 17 : 11, d, true)),
       'direct',
+      { native: v2 },
     ),
     makeSprite(
       'shots/sub-disc',
-      [3.5, 5.5].map((r) => discFrame(12, r, '#78f078', '#208838')),
+      [3.5, 5.5].map((r) => discFrame(v2 ? 18 : 12, r * k, '#78f078', '#208838', k)),
       'direct',
+      { native: v2 },
     ),
   ];
 }
