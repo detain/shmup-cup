@@ -2114,8 +2114,9 @@ const HUD_BOSS_X = FRAME_CX - ((HUD_BOSS_BAR_DX + BOSS_HP_BAR_WIDTH) >> 1) + uiP
 
 /**
  * Direct mode (M2-05, R4-03.C5): from a group's label to its first pip — four glyph cells and
- * 2 px (26). Four glyphs is the widest label any shipped language shows in the run (`SHOT`, the
- * Japanese `ソクド`), so the pips never sit under a label in any language.
+ * 2 px (26). This reservation fits every shipped label: the widest the run shows in any
+ * language is 4 glyphs (the Japanese `ショット`), and `ui-hud-layout.test.ts` keeps
+ * that bound for en, es and ja — so the pips never sit under a label.
  */
 const HUD_DIRECT_PIPS_DX = 4 * GLYPH_W + uiPx(2);
 
@@ -2551,10 +2552,10 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  *
  * **Direct mode** (`config.powerUpMode === 'direct'`, M2-05) — instead of the meter and the Force
  * Field: `SHOT` at x 58 with one 4×4 pip per level above 0 of the main family (8 for its 9 levels),
- * the lit ones in the family's {@link HUD_FAMILY_COLORS} colour; `SUB` at 130 (green pips); `ARM`
- * at 196 with one pip per hit the Arm can take (its tier's {@link HUD_ARM_COLORS} colour for the
- * hits left, dark for the spent ones; nothing without an Arm); `SPD` at 252 with one pip per
- * speed (the current level and those below lit); and the family's `label` at 306.
+ * the lit ones in the family's {@link HUD_FAMILY_COLORS} colour; `SUB` at 134 (green pips); `ARM`
+ * at 210 with one pip per hit the Arm can take (its tier's {@link HUD_ARM_COLORS} colour for the
+ * hits left, dark for the spent ones; nothing without an Arm); `SPD` at 286 with one pip per
+ * speed (the current level and those below lit); and the family's `label` at 350.
  *
  * **Co-op** (M2-06, `config.coop`) — the top bar shows a slot that may join
  * ({@link HudPlayerState}.Join) as `PRESS START` (blinking every {@link HUD_PROMPT_BLINK_TICKS}
@@ -2571,8 +2572,8 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  *   {@link HUD_STRING_COUNT} string slots — {@link HUD_STRING_SLOTS} are the HUD's).
  * @param sprites - UI sprite ids ({@link resolveUiSprites}); missing ones fall back to rectangles.
  * @param bossHp - Draw the boss HP bar (M2-09 — the `bossHpBar` display option; default `false`):
- *   while the World's `bosses.hpBar` is visible, `BOSS` (red) at x 148 and a 4-px frame
- *   {@link BOSS_HP_BAR_WIDTH} wide at x 176 with a 2-px red fill of {@link bossHpBarFill} over
+ *   while the World's `bosses.hpBar` is visible, `BOSS` (red) at x 132 and a 4-px frame
+ *   {@link BOSS_HP_BAR_WIDTH} wide at x 160 with a 2-px red fill of {@link bossHpBarFill} over
  *   the frame's inner width replace the hi-score (the values at 384×216, as in the remarks).
  * @param text - The UI string table the HUD's words come from (default {@link DEFAULT_UI_TEXT} —
  *   M2-16).

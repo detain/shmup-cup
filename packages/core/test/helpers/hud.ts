@@ -14,7 +14,7 @@ export const HUD = Object.freeze({
   scoreDx: 2 * GLYPH_W + uiPx(4),
   /** The row of the bottom bar's art: pips and slot labels (210). */
   rowY: HUD_LAYOUT.bottomY + uiPx(2),
-  /** The row of the bottom bar's stock icons: the 8-px-tall art centred in the bar (211). */
+  /** The row of the bottom bar's stock icons: the 8-px-tall art centred in the bar (209). */
   stockRowY: HUD_LAYOUT.bottomY + ((HUD_BAR_HEIGHT - uiPx(5)) >> 1),
   /** A stock icon's height — the `hud/life` art's own, v1 5 px and the v2 art's 8. */
   stockH: uiPx(5),
