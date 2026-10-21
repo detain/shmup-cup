@@ -52,8 +52,8 @@ seahorse that "opens its chest to launch homing minis"), §10 (checkpoints and t
 
 | What | Where |
 |---|---|
-| Zone D's stage | `content/stages/zone-d.stage.json` (MAGMA DEEP, 9,600 px, tileset `terrain-magma`, a 400-px-tall map — `rowsTall` 50) |
-| Zone E's stage | `content/stages/zone-e.stage.json` (TEMPEST RIDGE, 9,800 px, tileset `terrain-ridge`) |
+| Zone D's stage | `content/stages/zone-d.stage.json` (MAGMA DEEP, 14,400 px, tileset `terrain-magma`, a 636-px-tall map — `rowsTall` 53 at 12-px tiles; v1: 9,600 px, 400 px, `rowsTall` 50) |
+| Zone E's stage | `content/stages/zone-e.stage.json` (TEMPEST RIDGE, 14,700 px, tileset `terrain-ridge`; v1: 9,800 px) |
 | Rosters and bosses | `content/enemies/zone-d.enemies.json`, `zone-e.enemies.json` |
 | Paths | `content/paths/zone-d.paths.json` (`bat-swoop-down`, `bat-swoop-up`), `zone-e.paths.json` (`kite-overtake-high`, `kite-overtake-low`) |
 | The zone's DSL pattern | `content/patterns/zones.patterns.json` (`tempest.bolt`) |
@@ -72,45 +72,48 @@ data on systems that already existed ([the dive](#the-dive), [the arms](#the-rot
 
 A volcano field under a dark sky: distant cones with glowing craters (`bg/magma-peaks`, shimmering
 in a heat `haze`), erupting cones on the ground, then down into the caves over a lake of lava. Four
-checkpoints, the camera keys `0.8 → 0.75 → 0.6 (hold 150, yTo 200) → 1.3 → 0.75` px/tick. Times are
-the bare scroll from the start (the bot's whole run with the boss is ≈ 228 s):
+checkpoints, the camera keys `1.2 → 1.125 → 0.9 (hold 150, yTo 300) → 1.95 → 1.125` px/tick (v1's
+`0.8 → 0.75 → 0.6 → 1.3 → 0.75` through ×1.5; the dive now pans 300 px down). Times are the bare
+scroll from the start (the bot's whole run with the boss is 236.9 s — measured on the ported world):
 
 | Camera x | Time | Camera y | Section |
 |---|---|---|---|
-| 0 – 2,200 | 0 – 46 s | 0 | **The caldera fields** (checkpoint 0): `ember-wisp` streams, `cinder-bat` swoops on `bat-swoop-down` / `-up`, erupting `magma-cone`s lobbing `magma-bomb`s, a `basalt-turret` at 1,560, carriers (`tender`, zone A's capsule carrier) |
-| 2,200 – 3,560 | 46 – 77 s | 0 | **The eruption field** (checkpoint 2,200): cones, bats and wisps; a `slag-crawler-floor` at 3,000 |
-| 3,560 | 77 – 80 s | 0 → 200 | **The dive**: the scroll stops over the pit for 150 ticks while the camera pans 200 px down into the caves, where it stays ([below](#the-dive)) |
-| 4,000 – 4,800 | 92 – 114 s | 200 | **The caves** (checkpoint 4,000): `cinder-rock`s dropping from the roof, bats, carriers |
-| 4,800 – 5,776 | 114 – 141 s | 200 | **The destructible maze**: seven brick walls, each with a 48-px gap at another height ([below](#the-destructible-maze)); rocks and wisps |
-| 5,776 – 6,800 | 141 – 170 s | 200 | Past the maze: a `slag-crawler` on the ceiling at 5,800, a `basalt-turret-ceiling` at 6,020, rocks |
-| 6,800 – 8,400 | 170 – 191 s | 200 | **The lava river** (checkpoint 6,800): 1.3 px/tick over the lava lake; wisp streams, bat swoops, a ceiling turret, a rock |
-| 8,400 – 9,100 | 191 – 205 s | 200 | **The calm**: exactly two carriers (the capsules for the boss) |
-| 9,100 | ≈ 3:25 | 200 | The WARNING, then **CINDER BASTION** (CB-04) |
+| 0 – 3,300 | 0 – 46 s | 0 | **The caldera fields** (checkpoint 0): `ember-wisp` streams, `cinder-bat` swoops on `bat-swoop-down` / `-up`, erupting `magma-cone`s lobbing `magma-bomb`s, a `basalt-turret` at 2,340, carriers (`tender`, zone A's capsule carrier) |
+| 3,300 – 5,340 | 46 – 77 s | 0 | **The eruption field** (checkpoint 3,300): cones, bats and wisps; a `slag-crawler-floor` at 4,500 |
+| 5,340 | 77 – 80 s | 0 → 300 | **The dive**: the scroll stops over the pit for 150 ticks while the camera pans 300 px down into the caves, where it stays ([below](#the-dive)) |
+| 6,000 – 7,200 | 92 – 114 s | 300 | **The caves** (checkpoint 6,000): `cinder-rock`s dropping from the roof, bats, carriers |
+| 7,200 – 8,664 | 114 – 141 s | 300 | **The destructible maze**: seven brick walls, each with a 72-px gap at another height ([below](#the-destructible-maze)); rocks and wisps |
+| 8,664 – 10,200 | 141 – 170 s | 300 | Past the maze: a `slag-crawler` on the ceiling at 8,700, a `basalt-turret-ceiling` at 9,030, rocks |
+| 10,200 – 12,600 | 170 – 191 s | 300 | **The lava river** (checkpoint 10,200): 1.95 px/tick over the lava lake; wisp streams, bat swoops, a ceiling turret, a rock |
+| 12,600 – 13,650 | 191 – 205 s | 300 | **The calm**: exactly two carriers (the capsules for the boss) |
+| 13,650 | ≈ 3:25 | 300 | The WARNING, then **CINDER BASTION** (CB-04) |
 
 **Backdrops.** Three parallax bands: `bg/stars-far` (0.25), `bg/magma-peaks` (far, factor 0.7,
-`y` 128) and the lava lake `bg/magma-lava` (mid, factor 0.5, `y` **256**). The lake sits below the
-surface's view on purpose: a band scrolls vertically with the camera too, so the 200-px dive brings
-it up into the bottom of the view — the lake "rises" as the ship goes down. The `raster` list puts
-a `haze` on the peaks (rows 120–184) `to` 3,560 — until the dive — and a slow `wave` on the lake
-(rows 150–200, amplitude 2, wavelength 16, period 90) `from` 3,560; the `cycles` list rolls the
-lake's four colours every 9 ticks. The lake is painted **only** in the four colours of `MAGMA_RAMP`
+`y` 228) and the lava lake `bg/magma-lava` (mid, factor 0.5, `y` **420**) — v1's y 128 / 256 with
+the spacing re-derived from the frame at R2-01's flip (bands now tile at 192 px). The lake sits
+below the surface's view on purpose: a band scrolls vertically with the camera too, so the 300-px
+dive brings it up into the bottom of the view — the lake "rises" as the ship goes down. The `raster`
+list puts a `haze` on the peaks (rows 216–312) `to` 5,340 — until the dive — and a slow `wave` on
+the lake (rows 243–336, amplitude 3, wavelength 24, period 90) `from` 5,340; the `cycles` list rolls
+the lake's four colours every 9 ticks. The lake is painted **only** in the four colours of `MAGMA_RAMP`
 (M2-08's `bg/sea-swell` recipe, like zone B's sea), so the cycle recolours all of it.
 
 ### The dive
 
-The dive is a **scroll stop with a pan** (M2-07's `hold` key): the camera key at x 3,560 has
-`hold` 150, `yTo` 200 and `yTicks` 150 — the camera stops for 150 ticks and, meanwhile, pans 200 px
-down; on the hold's last tick the key's speed (0.6) takes over. The map is 50 rows (400 px) tall
-(`tilemap.rowsTall`): the camera at y 0 shows map rows 0–26 (the surface), at y 200 rows 25–49
-(the caves). The surface floor's heightfield ramps down into the pit, and the cave segments (from
-3,940 on) have a floor and a ceiling in the lower half of the map. Everything below uses what the stage runtime already does with a pan:
+The dive is a **scroll stop with a pan** (M2-07's `hold` key): the camera key at x 5,340 has
+`hold` 150, `yTo` 300 and `yTicks` 150 — the camera stops for 150 ticks and, meanwhile, pans 300 px
+down (v1's 200 px); on the hold's last tick the key's speed (0.9) takes over. The map is 53 rows
+(636 px) tall (`tilemap.rowsTall` at 12-px tiles): the camera at y 0 shows map rows 0–27 (the
+surface), at y 300 rows 25–52 (the caves). The surface floor's heightfield (base 324) ramps down
+into the pit, and the cave segments (from 5,910 on) have a floor and a ceiling in the lower half of
+the map. Everything below uses what the stage runtime already does with a pan:
 
-- **Checkpoints.** The third checkpoint (4,000) is in the caves. `restartAt` replays the camera
-  keys in live order, so a restart there puts the camera back at y 200; a restart at 2,200 (before
+- **Checkpoints.** The third checkpoint (6,000) is in the caves. `restartAt` replays the camera
+  keys in live order, so a restart there puts the camera back at y 300; a restart at 3,300 (before
   the dive) takes it back to the surface, and the dive happens again on the way.
 - **Spawns** use the camera y of the moment: ground enemies, rocks and turrets placed after the
   dive stand on the cave rock (the content test measures "ground enemies stand on rock" at the
-  camera y each event fires at, [below](#the-content-checks-testintegrationcontenttestts)).
+  camera y each event fires at, [below](#the-content-checks-testintegrationcontent-zone-dtestts-content-zone-etestts)).
 - **The ship** never leaves the view: the camera pan carries it down. The game's own starts — a
   practice start, the stage skip (`?skip=boss` starts in the caves), a checkpoint restart — spawn
   the ship where the camera is ([gotcha](#gotchas)).
@@ -118,29 +121,30 @@ down; on the hold's last tick the key's speed (0.6) takes over. The map is 50 ro
 ### The destructible maze
 
 Seven brick walls, written as `tilemap.rle` rows over the generated caves (the heightfield fills the
-rest): each wall is two tiles (16 px) thick, 160 px from the next, at world x 4,800, 4,960 … 5,760
-(the last ends at 5,776), map rows 26–47. The tile is the tileset's `brick` (`hp` 4, 10 points a
+rest): each wall is two tiles (24 px) thick, 240 px from the next, at world x 7,200, 7,440 … 8,640
+(the last ends at 8,664), map rows 29–50 (v1: 16-px walls 160 px apart at 4,800 … 5,760, rows 26–47).
+The tile is the tileset's `brick` (`hp` 4, 10 points a
 cell — M2-07's destructible terrain), so shots break it cell by cell, and a checkpoint restart rolls
-every broken brick back (`DestructibleTerrain`'s rollback). **Every wall has a 48-px gap** (six
-rows) at another height — map rows 37, 44, 39, 36, 43, 38, 44 — so the route zigzags, and shooting
+every broken brick back (`DestructibleTerrain`'s rollback). **Every wall has a 72-px gap** (six
+12-px rows) at another height — map rows 34, 41, 36, 33, 40, 35, 41 — so the route zigzags, and shooting
 straight through a wall is the shortcut.
 
 Why a gap in every wall: an early maze had gapless walls to shoot through, and the 4-way bot died in
 them — its lane-centred ship straddles two tile rows, so a one-row hole shot through a wall does not
-fit it. 48 px is the stage-runtime test's flyable-corridor rule (every pixel column keeps ≥ 48 open
-px in the rows the camera shows).
+fit it. 48 px is the stage-runtime test's flyable-corridor floor (every pixel column keeps ≥ 48 open
+px in the rows the camera shows); the shipped gaps are 72 px, six rows at the ported 12-px tile.
 
 ### The roster (`zone-d.enemies.json`)
 
 | Id | Behaviour | Hp / score | Notes |
 |---|---|---|---|
-| `ember-wisp` | `drifter.sine` | 1 / 100 | A flickering ember in streams (`speed` 1.15, `amp` 20) |
+| `ember-wisp` | `drifter.sine` | 1 / 100 | A flickering ember in streams (`speed` 1.725, `amp` 30) |
 | `cinder-bat` | `fan.loop` | 1 / 150 | Ash bats in formations along `bat-swoop-down` / `-up` (a dip or a rise, then away) |
 | `magma-cone` | `volcano.lob` (floor) | 12 / 800 | An erupting cone throwing three `magma-bomb`s every 100 ticks (M2-07's volcano) |
 | `magma-bomb` | `rock.fall` (`trigger` 0) | 1 / 30 | The lava bomb: a ballistic body that shatters on the terrain |
-| `cinder-rock` | `rock.fall` (ceiling, `trigger` 60) | 2 / 100 | A cracked rock on a cave roof; it drops when a ship is within 60 px horizontally |
-| `slag-crawler`, `slag-crawler-floor` | `walker.floor` | 3 / 250 | Armoured slag beetles on the ceiling / floor, an aimed 3-way of red ovals at 1.2 when they stop |
-| `basalt-turret`, `basalt-turret-ceiling` | `turret.floor` | 4 / 300 | Basalt domes on the floor / ceiling, an aimed shot every 150 ticks at 1.25 |
+| `cinder-rock` | `rock.fall` (ceiling, `trigger` 90) | 2 / 100 | A cracked rock on a cave roof; it drops when a ship is within 90 px horizontally (v1's 60) |
+| `slag-crawler`, `slag-crawler-floor` | `walker.floor` | 3 / 250 | Armoured slag beetles on the ceiling / floor, an aimed 3-way of red ovals at 1.8 when they stop |
+| `basalt-turret`, `basalt-turret-ceiling` | `turret.floor` | 4 / 300 | Basalt domes on the floor / ceiling, an aimed shot every 150 ticks at 1.875 |
 | `cinder-bastion` | boss (`boss.bastion`) | — | CB-04, [below](#cinder-bastion-cb-04) |
 
 Six new types by sprite (wisp, bat, cone, rock, crawler, turret — the bomb is the cone's child and
@@ -151,28 +155,30 @@ after the earlier zone files, so no earlier spec index moved.
 
 The second **core battleship** (HALCYON BULWARK is the first): where the bulwark hides its core
 behind plates, the bastion guards it with **rotating shield arms**. 35,000 points; the WARNING reads
-`GIANT HOSTILE "CINDER BASTION"` / `CLOSING IN - CODE CB-04`. It enters at view (300, 100).
+`GIANT HOSTILE "CINDER BASTION"` / `CLOSING IN - CODE CB-04`. It enters at view (514, 168) — the
+bulwark's home (v1: (300, 100)).
 
 | Part | Sprite | Role |
 |---|---|---|
-| `hull` | `bosses/bastion-hull` | Armour (`never`), 30 px behind the boss origin: the iron hull with its glowing vents |
-| `emitter-top`, `emitter-bottom` | `bosses/bastion-emitter` | Guns, 18 hp, 1,000 points each, attached to the hull at (−34, ∓25): the lane-laser emitters |
-| `core` | `bosses/bastion-core` | The **core**, 80 hp, 5,000 points (always vulnerable), at x −10 |
+| `hull` | `bosses/bastion-hull` | Armour (`never`), 45 px behind the boss origin: the iron hull with its glowing vents |
+| `emitter-top`, `emitter-bottom` | `bosses/bastion-emitter` | Guns, 18 hp, 1,000 points each, attached to the hull at (−51, ∓37.5): the lane-laser emitters |
+| `core` | `bosses/bastion-core` | The **core**, 80 hp, 5,000 points (always vulnerable), at x −15 |
 | `hub` | — | Attached to the core, **no hurtbox and no sprite**: the arms' pivot, the part `boss.bastion` spins |
-| `arm-a-inner`, `arm-a-outer`, `arm-b-inner`, `arm-b-outer` | `bosses/bastion-arm` | Armour (`never`), circle hurtboxes (`radius` 5): two segments on each side of the hub (±19 and ±28 px), sweeping in front of the core |
+| `arm-a-inner`, `arm-a-outer`, `arm-b-inner`, `arm-b-outer` | `bosses/bastion-arm` | Armour (`never`), circle hurtboxes (`radius` 7.5): two segments on each side of the hub (the inner ±28.5 px, the outer at ±42), sweeping in front of the core |
 
 | Phase | Until | `boss.bastion` tunables |
 |---|---|---|
-| 1 | the core below 54 hp | track 0.35, `spin` 4 (a turn in ≈ 4.3 s), a lane every 120 ticks (the first after 60) |
-| 2 | the core below 24 hp | track 0.45, `spin` −6 reversing every 240 ticks, lanes every 115 (first 40), aimed 3-ways of red ovals every 110 at 1.3 |
-| 3 | — | track 0.55, `spin` 8 reversing every 180, lanes every 115 (first 30), 3-ways every 90 at 1.35, rings of 10 every 140 at 1.1 |
+| 1 | the core below 54 hp | track 0.525, `spin` 4 (a turn in ≈ 4.3 s), a lane every 120 ticks (the first after 60) |
+| 2 | the core below 24 hp | track 0.675, `spin` −6 reversing every 240 ticks, lanes every 115 (first 40), aimed 3-ways of red ovals every 110 at 1.95 |
+| 3 | — | track 0.825, `spin` 8 reversing every 180, lanes every 115 (first 30), 3-ways every 90 at 2.025, rings of 10 every 140 at 1.65 |
 
 The lanes are telegraphed lasers fired to the left from the standing emitters in turn and
-**attached** to their emitter (HALCYON BULWARK's kind, 384 × 8, 45 warning ticks, 50 beam ticks);
-while one lane is still fading the next can already be telegraphed, so the content test allows the
-bastion two separate lanes at once — never under the 16-px gap ([the checks](#the-content-checks-testintegrationcontenttestts)).
+**attached** to their emitter (HALCYON BULWARK's kind — `PLAYFIELD_W` 640 × 12 px, 45 warning ticks,
+50 beam ticks); while one lane is still fading the next can already be telegraphed, so the content
+test allows the bastion two separate lanes at once — never under the 24-px gap
+([the checks](#the-content-checks-testintegrationcontent-zone-dtestts-content-zone-etestts)).
 The core's hit points went from 60 to **80** after the bot ran the fight: with an Option the core
-fell in 10 s. The bot now takes ≈ 14 s.
+fell in 10 s. The bot now takes ≈ 23 s on the ported world (measured at R2-03).
 
 #### The rotating shield arms are data
 
@@ -194,51 +200,54 @@ Shots that meet an arm clink (armour); the core between the sweeps takes the hit
 ## Zone E: TEMPEST RIDGE
 
 A storm over jagged mountains, in **six parallax bands**: two rows of roiling storm clouds
-(`bg/storm-clouds` at factor 0.12, `y` 0 and at 0.2, `y` 40), a band of snow-capped peaks
-(`bg/storm-ridge`, 0.35, `y` 152) and three rows of slanting rain (`bg/storm-rain`, factor 0.9,
-`y` 0 / 64 / 128 — scrolling almost with the playfield). The clouds are painted only in the four
-`STORM_RAMP` colours, which the stage's `cycles` roll every 14 ticks; a `wave` (rows 0–96,
-amplitude 2, wavelength 30, period 180) makes them heave. Jagged rock: heightfield floors whose
+(`bg/storm-clouds` at factor 0.12, `y` 0 and at 0.2, `y` 60), a band of snow-capped peaks
+(`bg/storm-ridge`, 0.35, `y` 264) and three rows of slanting rain (`bg/storm-rain`, factor 0.9,
+`y` 0 / 96 / 192 — scrolling almost with the playfield; v1's 40 / 152 / 64 / 128 re-derived at the
+flip). The clouds are painted only in the four
+`STORM_RAMP` colours, which the stage's `cycles` roll every 14 ticks; a `wave` (rows 0–144,
+amplitude 3, wavelength 45, period 180) makes them heave. Jagged rock: heightfield floors whose
 `amp` is 9–18 % of their `period` (the content test asks for steep floors). Four checkpoints,
-camera keys `0.8 → 0.7 → 0.8 → 1.4 → 0.75` (the bot's whole run ≈ 246 s):
+camera keys `1.2 → 1.05 → 1.2 → 2.1 → 1.125` (the bot's whole run 228.5 s, measured on the ported
+world):
 
 | Camera x | Time | Section |
 |---|---|---|
-| 0 – 2,200 | 0 – 46 s | **The storm front** (checkpoint 0): `hail-drifter` streams, `gale-kite` formations **from behind**, `crag-turret`s on the peaks, the first `squall-jumper`s, carriers |
-| 2,200 – 4,600 | 46 – 103 s | **The ridge pass** (checkpoint 2,200): jagged floors and overhangs; crag turrets on both, jumpers from behind, drifters |
-| 4,600 – 6,800 | 103 – 149 s | **The thunderheads** (checkpoint 4,600): `thunderhead` clouds firing the `tempest.bolt` streak, kite formations, turrets, drifters, a jumper |
-| 6,800 – 8,600 | 149 – 171 s | **The gale run** (checkpoint 6,800): 1.4 px/tick; drifter streams, kites and jumpers from behind, a thunderhead |
-| 8,600 – 9,300 | 171 – 186 s | **The calm**: two carriers |
-| 9,300 | ≈ 3:06 | The WARNING, then **SQUALL STEED** (SS-05) |
+| 0 – 3,300 | 0 – 46 s | **The storm front** (checkpoint 0): `hail-drifter` streams, `gale-kite` formations **from behind**, `crag-turret`s on the peaks, the first `squall-jumper`s, carriers |
+| 3,300 – 6,900 | 46 – 103 s | **The ridge pass** (checkpoint 3,300): jagged floors and overhangs; crag turrets on both, jumpers from behind, drifters |
+| 6,900 – 10,200 | 103 – 149 s | **The thunderheads** (checkpoint 6,900): `thunderhead` clouds firing the `tempest.bolt` streak, kite formations, turrets, drifters, a jumper |
+| 10,200 – 12,900 | 149 – 171 s | **The gale run** (checkpoint 10,200): 2.1 px/tick; drifter streams, kites and jumpers from behind, a thunderhead |
+| 12,900 – 13,950 | 171 – 186 s | **The calm**: two carriers |
+| 13,950 | ≈ 3:06 | The WARNING, then **SQUALL STEED** (SS-05) |
 
 ### Rear attackers
 
 `shmup_feat.md` §11's "rear attackers / jumpers — enter from behind" are spawned **behind the
-view**: a negative `screenX` (−24) on the `spawn` / `formation` event puts them 24 px left of the
-view's left edge (sixteen such events: six kite formations, ten jumpers). Two kinds:
+view**: a negative `screenX` (−36; v1's −24 through ×1.5) on the `spawn` / `formation` event puts
+them 36 px left of the view's left edge (sixteen such events: six kite formations, ten jumpers).
+Two kinds:
 
 - **`gale-kite` formations** on the existing `fan.loop`, flying the new rear-entry paths
   `kite-overtake-high` / `kite-overtake-low` of `zone-e.paths.json`: from behind the ship along its
-  row to the right, a curl near the right edge, then back to the left along a row 100 px lower /
-  higher. The path does the overtaking; no new behaviour.
+  row to the right, a curl near the right edge, then back to the left along a row 150 px lower /
+  higher (v1's 100). The path does the overtaking; no new behaviour.
 - **`squall-jumper`s** on the new behaviour **`rear.swoop`** ([below](#rearswoop)): in along the
-  spawn row to view x 290, a 20-tick hold with one aimed pink needle half-way through it, then back
+  spawn row to view x 499, a 20-tick hold with one aimed pink needle half-way through it, then back
   to the left along the same row.
 
 With four directions a rear attacker is dodged by **leaving its row**: it keeps its row while it
-overtakes and again while it flies back. Their speeds (1.6 in, 1.3 back) are held to the
-2-px/tick rule of aimed shots by the content test, like a dasher's.
+overtakes and again while it flies back. Their speeds (2.4 in, 1.95 back) are held to the
+3-px/tick rule of aimed shots by the content test, like a dasher's.
 
 ### The roster (`zone-e.enemies.json`)
 
 | Id | Behaviour | Hp / score | Notes |
 |---|---|---|---|
-| `hail-drifter` | `drifter.sine` | 1 / 100 | Hailstones in streams (`speed` 1.2, `amp` 14) |
+| `hail-drifter` | `drifter.sine` | 1 / 100 | Hailstones in streams (`speed` 1.8, `amp` 21) |
 | `gale-kite` | `fan.loop` | 1 / 150 | Delta-wing gliders in formations on the rear-entry paths, spawned behind the view |
-| `squall-jumper` | `rear.swoop` | 2 / 200 | A swept-wing jet from behind: `speed` 1.6, `turnX` 290, `hold` 20, one needle at 1.25, back at 1.3 |
-| `crag-turret`, `crag-turret-ceiling` | `turret.floor` | 3 / 300 | Granite domes on the peaks / overhangs, an aimed shot every 130 ticks at 1.25 |
-| `thunderhead` | `pattern.loop` + `tempest.bolt` | 5 / 500 | A storm cloud on a sine mover (`vx` −0.45, `amp` 16) firing a streak of four aimed needles, 0.85 → 1.6 px/tick, then 150 ticks (rank-scaled) + 40 of rest |
-| `steed-foal` | `rocket.homing` | 1 / 100 | SQUALL STEED's homing mini (a little seahorse): out for 16 ticks at 1, homing at 1.2 turning ≤ 4 units a tick for 70 ticks, then straight on |
+| `squall-jumper` | `rear.swoop` | 2 / 200 | A swept-wing jet from behind: `speed` 2.4, `turnX` 499, `hold` 20, one needle at 1.875, back at 1.95 |
+| `crag-turret`, `crag-turret-ceiling` | `turret.floor` | 3 / 300 | Granite domes on the peaks / overhangs, an aimed shot every 130 ticks at 1.875 |
+| `thunderhead` | `pattern.loop` + `tempest.bolt` | 5 / 500 | A storm cloud on a sine mover (`vx` −0.675, `amp` 24) firing a streak of four aimed needles, 1.275 → 2.4 px/tick, then 150 ticks (rank-scaled) + 40 of rest |
+| `steed-foal` | `rocket.homing` | 1 / 100 | SQUALL STEED's homing mini (a little seahorse): out for 16 ticks at 1.5, homing at 1.8 turning ≤ 4 units a tick for 70 ticks, then straight on |
 | `squall-steed` | boss (`boss.steed`) | — | SS-05, [below](#squall-steed-ss-05) |
 
 Five new types by sprite (drifter, kite, jumper, turret, thunderhead), new to every zone a run can
@@ -246,7 +255,8 @@ have flown before (A, B, C).
 
 ### SQUALL STEED (SS-05)
 
-The **seahorse** archetype. 35,000 points; `minion` is `steed-foal`. It enters at view (304, 100).
+The **seahorse** archetype. 35,000 points; `minion` is `steed-foal`. It enters at view (520, 168)
+(v1's (304, 100) re-derived at the flip).
 
 | Part | Sprite | Role |
 |---|---|---|
@@ -256,21 +266,22 @@ The **seahorse** archetype. 35,000 points; `minion` is `steed-foal`. It enters a
 | `head` | `bosses/steed-head` | Armour (`never`): the head with its crown and eye |
 | `snout` | `bosses/steed-snout` | Gun, 24 hp, 1,000 points, attached to the head: the spreads and rings come from it |
 | `chest` | `bosses/steed-chest` | The **core**, 64 hp, 5,000 points, `whenOpen`: the glowing hatch — hittable only while open; the minis come out of it |
-| `lid-top`, `lid-bottom` | `bosses/steed-lid-top` / `-bottom` | Armour, attached to the chest at (−3, ∓11); `gape` moves them apart while the chest is open |
+| `lid-top`, `lid-bottom` | `bosses/steed-lid-top` / `-bottom` | Armour, attached to the chest at (−4.5, ∓16.5); `gape` moves them apart while the chest is open |
 
 | Phase | Until | `boss.steed` tunables |
 |---|---|---|
-| 1 | the chest below 44 hp | bob `ry` 14 at `bobSpeed` 2; shut 130 / open 130; one mini per opening; snout 3-ways every 90 at 1.25; `gape` 3 |
-| 2 | the chest below 18 hp | `ry` 16, `bobSpeed` 3; shut 120 / open 130; two minis, 40 ticks apart; 3-ways every 80 at 1.3; `gape` 3 |
-| 3 | — | `ry` 18, `bobSpeed` 3; shut 100 / open 140; two minis, 36 apart; 5-ways (spread 36) every 70 at 1.35, a ring of 10 at 1.05 each time the chest shuts; `gape` 4 |
+| 1 | the chest below 44 hp | bob `ry` 21 at `bobSpeed` 2; shut 130 / open 130; one mini per opening; snout 3-ways every 90 at 1.875; `gape` 4.5 |
+| 2 | the chest below 18 hp | `ry` 24, `bobSpeed` 3; shut 120 / open 130; two minis, 40 ticks apart; 3-ways every 80 at 1.95; `gape` 4.5 |
+| 3 | — | `ry` 27, `bobSpeed` 3; shut 100 / open 140; two minis, 36 apart; 5-ways (spread 36) every 70 at 2.025, a ring of 10 at 1.575 each time the chest shuts; `gape` 6 |
 
 **Homing minis are minions**, as GALVANIC MAW's rockets are (M2-11): `api.launch(chest)` spawns the
 boss's `minion` at the chest — shootable, counted as enemies, no new engine call.
 
 **The bob.** The first version bobbed 40 px up and down; the chest then kept leaving the 4-way bot's
-lane while the shots flew, and the fight took three minutes. The shipped bob is 14–18 px (`ry`) on
-a narrow ellipse (`rx` 8). It is the boss system's `orbit` (per-tick motion): it starts from the
-angle of where the boss is, so a phase change moves it at most the change of the radii — 2 px
+lane while the shots flew, and the fight took three minutes. The shipped bob is 21–27 px (`ry`) on
+a narrow ellipse (`rx` 12) — v1's 14–18 on `rx` 8, through ×1.5. It is the boss system's `orbit`
+(per-tick motion): it starts from the angle of where the boss is, so a phase change moves it at
+most the change of the radii — 3 px
 between the shipped phases (a test pins the limit; the docblock once claimed it never moved).
 
 ## The new behaviours (`core/behaviors`)
@@ -281,9 +292,11 @@ no allocation per wake). Defaults in brackets; the zone content overrides many o
 ### `rear.swoop`
 
 The rear attacker. Spawned behind the view, it flies along its spawn row to the right at [`speed`
-1.6] px/tick to view x [`turnX` 280], holds [`hold` 18] ticks, turns to the nearest player and —
+1.6 · 3/2 = 2.4] px/tick to view x [`turnX` 452 — a view coordinate, re-derived from v1's 280 at
+R2-01's flip, not scaled], holds [`hold` 18] ticks, turns to the nearest player and —
 half-way through the hold — fires an aimed [`ways` 1]-way of pink needles [`spread` 40] at
-[`bulletSpeed` 1.3] (`ways` 0 = none), then leaves to the left at [`leaveSpeed` 1.4].
+[`bulletSpeed` 1.3 · 3/2 = 1.95] (`ways` 0 = none), then leaves to the left at [`leaveSpeed`
+1.4 · 3/2 = 2.1].
 
 The motion is **one `Waypoint` mover** (approach to `turnX` on the row, hold, leave at
 `-leaveSpeed`), so the script wakes exactly once: at the shot, `⌈|turnX − x| / speed⌉ + (hold >> 1)
@@ -296,15 +309,17 @@ every enemy shot, the needle goes through the primitives, so nothing fires off s
 
 ### `boss.bastion`
 
-CINDER BASTION's script. Tunables: [`trackSpeed` 0.35, `margin` 44] (follows the nearest player's
+CINDER BASTION's script. Tunables (defaults, world units in `v1 · 3/2` form since R2-02's port):
+[`trackSpeed` 0.35 · 3/2 = 0.525, `margin` 44 · 3/2 = 66] (follows the nearest player's
 height, `margin` px inside the playfield), [`spin` 4] (binary units a tick — `ANGLE_UNITS` is
 1,024 — rounded to whole units; negative turns the other way, 0 holds the arms) and [`reverseTicks`
 0 = never] (the sign flips every so many whole ticks), [`laserTicks` 120, `firstLaser` 60] with
-[`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50] (the next standing gun fires an
-attached lane to the left; a `firstLaser` below 1 is one tick), [`fireTicks` 100, `ways` 0 = none,
-`spread` 40, `bulletSpeed` 1.3] (aimed spreads of red ovals from every standing core, through its
-arms) and [`ring` 0 = none, `ringTicks` 150, `ringSpeed` 1] (rings of round purple bullets from the
-cores, each turned half a gap from the last).
+[`laserLength` `PLAYFIELD_W` (640), `laserWidth` 8 · 3/2 = 12, `telegraph` 45, `active` 50] (the
+next standing gun fires an attached lane to the left; a `firstLaser` below 1 is one tick),
+[`fireTicks` 100, `ways` 0 = none, `spread` 40, `bulletSpeed` 1.3 · 3/2 = 1.95] (aimed spreads of
+red ovals from every standing core, through its
+arms) and [`ring` 0 = none, `ringTicks` 150, `ringSpeed` 1 · 3/2 = 1.5] (rings of round purple
+bullets from the cores, each turned half a gap from the last).
 
 One script per phase that sleeps until the soonest of four timers (lane, spread, ring, reverse); a
 timer that never runs is `NEVER_TICKS`, the fire timers go through `fireWait` (rank-scaled). Lanes
@@ -313,19 +328,22 @@ gone there are no lanes.
 
 ### `boss.steed`
 
-SQUALL STEED's script. Tunables: the ellipse [`cx` 296, `cy` 100, `rx` 8, `ry` 40] at [`bobSpeed`
+SQUALL STEED's script. Tunables (defaults, world units in `v1 · 3/2` form since R2-02's port): the
+ellipse [`cx` `DEFAULT_BOSS_X` (`PLAYFIELD_W − 88 · WORLD_SCALE` = 508), `cy` `DEFAULT_BOSS_Y`
+(`PLAYFIELD_CY` = 168), `rx` 8 · 3/2 = 12, `ry` 40 · 3/2 = 60] at [`bobSpeed`
 3] units a tick (`api.orbit`; the boss should enter at `cx + rx`, `cy` — its home — so the bob
 starts without a jump; `bobSpeed` 0 holds it), [`closedTicks` 150, `openTicks` 110] (the
 `whenOpen` parts shut and open in turn, `setOpenAll`; below 1 = every tick), [`launchTicks` 45,
 `minis` 2] (while open each standing core launches the `minion` — the first **10 ticks** after the
 chest opens, then every `launchTicks`, at most `minis` per opening; 0 = none), [`fireTicks` 80,
-`ways` 3, `spread` 44, `bulletSpeed` 1.3] (aimed spreads of pink ovals from every standing gun —
-the snout; `ways` below 1 is a single shot), [`ring` 0 = none, `ringSpeed` 1] (a ring of round red
-bullets from each standing gun every time the chest **shuts**, alternating by half a gap) and
+`ways` 3, `spread` 44, `bulletSpeed` 1.3 · 3/2 = 1.95] (aimed spreads of pink ovals from every
+standing gun — the snout; `ways` below 1 is a single shot), [`ring` 0 = none, `ringSpeed` 1 · 3/2
+= 1.5] (a ring of round red bullets from each standing gun every time the chest **shuts**,
+alternating by half a gap) and
 [`gape` 0 = still] (the parts attached to a core — the lids — move `gape` px apart while it is open,
 through M2-11's `setJaws`, measured from their rest offsets).
 
-The bob's speed is **`bobSpeed`, not `speed`**: the content test's 2-px/tick check reads a boss
+The bob's speed is **`bobSpeed`, not `speed`**: the content test's 3-px/tick check reads a boss
 phase's `speed` tunable as a velocity in px/tick, and an orbit speed in binary units per tick is not
 one. Every phase starts with the chest shut and the lids at rest (`setJaws(api, 0)`).
 
@@ -362,10 +380,13 @@ Everything new is drawn by code (decision D24) — no pixel maps:
 
 Every sprite that can be hit has its `@flash` sibling; geometry uses only `+ − × ÷` and
 `Math.sqrt`, randomness the seeded asset RNG and `hash2`, so the pixels are identical on every
-engine. Both generators are registered in `procedural/index.mjs`; the atlas's enemy sprite count is
-47 now. The test round fixed the squall jumper's jet: its two frames were identical (the flame was
+engine. Both generators are registered in `procedural/index.mjs`; the atlas's enemy sprite count rose
+to 47 with this step (60 after M2-13, 72 after M2-14). The test round fixed the squall jumper's jet:
+its two frames were identical (the flame was
 drawn where the fuselage and the wings cover it), so it never flickered — the flame now differs
-behind the tail, and `procedural-zones-de-edge.test.ts` checks that every animated sprite's frames
+behind the tail, and the per-zone edge suites — `procedural-zone-d-edge.test.ts` and
+`procedural-zone-e-edge.test.ts`, R5-P.P5c's split of the old `procedural-zones-de-edge.test.ts`,
+the check shared through `procedural-zone-helpers.ts` — verify that every animated sprite's frames
 really differ.
 
 ## Songs
@@ -392,45 +413,52 @@ directions. The bot's runs changed the content in four places:
 - **Turrets and crawlers left the maze**: a turret passing under the ship fires straight up its
   column, which a lane-only dodger cannot leave in time between two walls. They now sit before and
   after it.
-- **SQUALL STEED's bob** went from 40 px to 14–18 px ([above](#squall-steed-ss-05)).
+- **SQUALL STEED's bob** went from 40 px to 14–18 px (21–27 px on the ported world) ([above](#squall-steed-ss-05)).
 - **CINDER BASTION's core** got 80 hit points (60 fell in 10 s once the bot had an Option).
 
 ## Playtests and the recovery rule
 
 - **`zone-d.test.ts`, `zone-e.test.ts`** — the 4-way bot with **god mode**: `stageClear` in 3–6
-  minutes, the boss's three phases, never diagonal, the ship at x ≈ 64, the 4-way rules on every
-  tick; zone D's camera reaches y 200. **Without god mode** the run is recorded, replays to the same
-  deaths and hash, and its deaths are **reported**. Measured: D 228 s (CINDER BASTION 14 s), E
-  246 s (SQUALL STEED 51 s); without god mode both clear with one death.
-- **`zone-de-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 900 px of every
-  checkpoint, all of them really dropped) at all eight checkpoints of D and E through the shared
+  minutes, the boss's three phases, never diagonal, the ship at x ≈ 96 (`BOT_X`), the 4-way rules on
+  every tick; zone D's camera reaches y 300. **Without god mode** the run is recorded, replays to the same
+  deaths and hash, and its deaths are **reported**. Measured on the ported world (R2-03): D 236.9 s
+  (CINDER BASTION 23.0 s), E 228.5 s (SQUALL STEED 34.1 s); without god mode D clears with no death
+  (237.6 s), E with one (241.0 s).
+- **`zone-de-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 1,350 px —
+  `RECOVERY_WINDOW`, 900 · `WORLD_SCALE` — of every checkpoint, all of them really dropped) at all
+  eight checkpoints of D and E through the shared
   `test/playtest/recovery.ts` (M2-11). Zone D's third checkpoint is in the caves: the restart puts
   the camera back down there. The cones' lava bombs drop nothing of their own.
 
 ```sh
 pnpm exec vitest run --project integration test/playtest/zone-d.test.ts test/playtest/zone-e.test.ts --reporter=verbose
-# [playtest] zone-d four-way (god mode): stageClear after 228… s, boss 14… s, 0 death(s), …
+# [playtest] zone-d four-way (remote) (god mode): stageClear after 236.9 s, boss 23.0 s, 0 death(s), …
 ```
 
-## The content checks (`test/integration/content.test.ts`)
+## The content checks (`test/integration/content-zone-d.test.ts`, `content-zone-e.test.ts`)
 
-The zones block is now **"zones B–E hold to the plan and the 4-way design rules (M2-11, M2-12)"**;
-its `zones` table got D and E and two new columns:
+The zones block splits per zone in R5-P.P2a's files, each describing **"zones B–G hold to the plan
+and the 4-way design rules (M2-11 … M2-13)"**; zone D's file carries its row of the `zones` table
+with D and E and the two new columns, and D and E's shape bounds live in
+`test/integration/zones/zone-d.contract.ts` / `zone-e.contract.ts` (`remastered: false` — every
+number below is the v1 branch through the contract scale; the
+[per-zone contracts](zone-a-and-playtest.md#the-per-zone-contracts-r5-d2-r5-pp6) explain both):
 
 | Column / check | What changed |
 |---|---|
 | `earlier` | "4–6 new types" counts the types (distinct sprites) not placed in **any zone a run can have flown before** — A for B and C, A–C for D and E |
 | `lanes` | The most separate laser lanes the boss may have up at once: 1 for the maw and the widow, **2 for the bastion** (a lane fading while the next one is telegraphed — then the narrowest gap must still be ≥ 16 px), **0 for the seahorse** |
-| Ground | "Ground enemies stand on rock" runs the stage runner to each event and measures at **the camera y it fires at** (zone D's caves are 200 px down) |
-| Speeds | The rear attackers' `speed` and `leaveSpeed` join the 2-px/tick check (they fly back through the ship's row) |
-| D's archetypes | ≥ 5 volcanoes on the floor, ≥ 6 rocks on ceilings; a map ≥ 50 rows with a `hold` key panning ≥ 150 px down in the first half of the zone; ≥ 10 brick columns, all below the surface, each with a gap ≥ 24 px; the arms — one hub (no hurtbox, no radius) attached to the core, ≥ 4 armoured circle parts on it —, two guns, a non-zero `spin` in every phase |
+| Ground | "Ground enemies stand on rock" runs the stage runner to each event and measures at **the camera y it fires at** (zone D's caves are 300 px down) |
+| Speeds | The rear attackers' `speed` and `leaveSpeed` join the 3-px/tick check (they fly back through the ship's row) |
+| D's archetypes | ≥ 5 volcanoes on the floor, ≥ 6 rocks on ceilings; a map ≥ 50 rows with a `hold` key panning ≥ 150 px down in the first half of the zone (the shipped dive pans 300 px); ≥ 10 brick columns, all below the surface, each with a gap ≥ 36 px (the 24-px v1 floor through the contract scale); the arms — one hub (no hurtbox, no radius) attached to the core, ≥ 4 armoured circle parts on it —, two guns, a non-zero `spin` in every phase |
 | E's archetypes | ≥ 12 events spawned behind the view, both `rear.swoop` and `fan.loop` among them; ≥ 5 parallax bands, a far-layer palette cycle and a `wave`; ≥ 3 floors with `amp / period` ≥ 0.1; a `whenOpen` core, a `rocket.homing` minion and `minis` > 0 in every phase |
 | Art | Every zone B–E sprite (and its hit flash) in the atlas; the zone tilesets have every tile |
 
 Also changed: `stage-runtime.test.ts`'s **flyable-corridor check** (≥ 48 open px in every column, a
-clear spawn at every checkpoint) measured map rows 0–199 of every stage; it now runs a stage runner
-alongside and measures **the rows the camera shows when the ship (x ≈ 64 in the view) reaches the
-column** — zone D's caves are map rows 200–399. Lists that pin shipped content were updated: the
+clear spawn at every checkpoint) measured the 200 surface rows of every stage; it now runs a stage
+runner alongside and measures **the rows the camera shows when the ship (x ≈ 96 in the view) reaches
+the column** — a 336-px window, and zone D's caves are the window at camera y 300. Lists that pin
+shipped content were updated: the
 music tracks (content test, `@shmup/shell` boot / loader tests), the enemy and boss behaviour
 rosters, the atlas's enemy sprite count (47), the zone tilesets of the terrain generator test, the
 golden file-name pattern.
@@ -440,16 +468,18 @@ golden file-name pattern.
 - The new behaviours use whole-tick timers only (no RNG); the movers are the existing ones.
 - **Re-blessed** (`022d0b6`): the new sprites and behaviour scripts shift the sorted sprite and
   script ids hashed through the pools, so all 33 older goldens changed their hashes — their inputs,
-  tick counts, headers and outcomes are identical.
-- **New goldens** (38 files in all):
+  tick counts, headers and outcomes are identical. (R2-03's re-record `d4ba9e8` put every golden on
+  the ported world at replay format 2, 640×360; the outcomes of this step's five runs are today's
+  numbers below.)
+- **New goldens** (38 files in all at the time; the suite has grown since):
 
 | File | Run | Outcome |
 |---|---|---|
-| `zone-d-god` | 4-way bot, god mode, seed 1 — the caldera fields, the dive, the maze, the lava river, CINDER BASTION | `stageClear` after 13,698 ticks, 54,000 points, no deaths |
-| `zone-e-god` | 4-way bot, god mode, seed 1 — kites and jumpers from behind, the thunderheads, the gale run, SQUALL STEED | `stageClear` after 14,736 ticks, 54,590 points, no deaths |
-| `zone-d-bot` (test round) | 4-way bot, no god mode, seed 77 — a death down in the caves (tick 9,564) and a Classic respawn in place there | `stageClear` after 14,634 ticks, 55,330 points |
-| `zone-d-boss` (test round) | the stage skip into the caves, full loadout, Arcade penalty, seed 75 — the core shot through the turning arms | `stageClear` after 1,301 ticks, 40,200 points, no deaths |
-| `zone-e-bot` (test round) | 4-way bot, no god mode, seed 74 — the rear attackers against a ship that can die (a death at tick 8,961) | `stageClear` after 14,427 ticks, 56,040 points |
+| `zone-d-god` | 4-way bot, god mode, seed 1 — the caldera fields, the dive, the maze, the lava river, CINDER BASTION | `stageClear` after 14,217 ticks, 59,040 points, no deaths |
+| `zone-e-god` | 4-way bot, god mode, seed 1 — kites and jumpers from behind, the thunderheads, the gale run, SQUALL STEED | `stageClear` after 13,712 ticks, 62,110 points, no deaths |
+| `zone-d-bot` (test round) | 4-way bot, no god mode, seed 77 — v1 recorded a cave death and a Classic respawn in place; on the ported world the same recording now clears deathless | `stageClear` after 14,253 ticks, 60,070 points |
+| `zone-d-boss` (test round) | the stage skip into the caves, full loadout, Arcade penalty, seed 75 — the core shot through the turning arms | `stageClear` after 1,303 ticks, 40,140 points, no deaths |
+| `zone-e-bot` (test round) | 4-way bot, no god mode, seed 74 — the rear attackers against a ship that can die (a death at tick 7,233; v1's was at 8,961) | `stageClear` after 14,459 ticks, 56,250 points |
 
 `playGolden(replay, content?, observe?)` gained an optional per-tick observer (the test uses it to
 check where `zone-d-bot`'s death happened — down in the caves). The test round changed no existing
@@ -497,16 +527,16 @@ import { describeRun, runStage } from '../playtest/harness.js';
 const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
 const world = game.world;
 world.debugFlags.godMode = true;
-world.stage?.jumpTo(3300); // just before the pit; jumpTo moves the camera only…
+world.stage?.jumpTo(4950); // just before the pit; jumpTo moves the camera only…
 spawnPlayer(world.players[0], world.camera); // …so fly the ship in again at the new view
-while (world.camera.x < 3700) {
+while (world.camera.x < 5550) {
   game.step();
   game.events.clear();
 }
-world.camera.y; // → 200: the camera held 150 ticks at x 3,560 and panned down into the caves
+world.camera.y; // → 300: the camera held 150 ticks at x 5,340 and panned down into the caves
 
 const run = runStage('zone-e', fourWayBot(), { godMode: true });
-console.info(describeRun(run)); // zone-e four-way (god mode): stageClear after 246… s, boss 51… s, …
+console.info(describeRun(run)); // zone-e four-way (remote) (god mode): stageClear after 228.5 s, boss 34.1 s, …
 ```
 
 ## Tests
@@ -517,8 +547,8 @@ console.info(describeRun(run)); // zone-e four-way (god mode): stageClear after 
 | `packages/core/test/behaviors/behaviors-zones-de-edge.test.ts` | The documented defaults; the jumper's timing (the turn on tick ⌈distance / speed⌉, the shot on hold tick `(hold >> 1) + 1`, also on a scrolling camera, and from right of `turnX` — the fix), `ways` / `hold` / `speed` floors; `spin` rounded and set only on the hub, `reverseTicks` floored, the arms' angle kept through a phase change, lanes attached to their emitter in turn (none once both are gone), floored spreads, ring offsets, tracking margins; the ellipse, a still bob, the phase-change move ≤ the radii's change, sub-1 chest timers, the 10-tick first launch, floored minis, the foal's homing phases, snout spreads and rings only as the chest shuts, floored gape, every phase starting shut |
 | `behaviors-bastion-alloc`, `behaviors-steed-alloc`, `behaviors-swoop-alloc` `.test.ts` | Zero allocation |
 | `packages/core/test/behaviors/behaviors.test.ts`, `packages/core/test/bosses/bosses-behaviors.test.ts` | The rosters' id lists |
-| `test/scripts/assets/procedural-zones-de.test.ts`, `procedural-zones-de-edge.test.ts` | Every sprite in order, size and frame count, hit flashes; the lake and the clouds only in their ramps; bands that tile (the rain both ways); mirrored lids; every hurtbox inside its sprite; kebab names, animated frames that differ (the jumper fix), the registry, zone A's bricks in the zone tilesets, distinct rims |
-| `test/integration/content.test.ts`, `stage-runtime.test.ts` | The checks above |
+| `test/scripts/assets/procedural-zone-d.test.ts`, `procedural-zone-e.test.ts`, `procedural-zone-d-edge.test.ts`, `procedural-zone-e-edge.test.ts` (R5-P.P5c's split of the `procedural-zones-de(-edge)` pair; shared checks in `procedural-zone-helpers.ts`) | Every sprite in order, size and frame count, hit flashes; the lake and the clouds only in their ramps; bands that tile (the rain both ways); mirrored lids; every hurtbox inside its sprite; kebab names, animated frames that differ (the jumper fix), the registry, zone A's bricks in the zone tilesets, distinct rims |
+| `test/integration/content-zone-d.test.ts`, `content-zone-e.test.ts`, `stage-runtime.test.ts` | The checks above |
 | `test/integration/zones-de-runtime.test.ts` | Through the real game: the dive at the scroll stop, a practice start in the caves (zone D's music set prepared), bricks broken by shots, jumpers and kites overtaking the ship |
 | `test/integration/zones-de-runtime-edge.test.ts` | Every practice start of D and E in open space at its camera height, the stage skip into the caves, an Arcade restart in the caves (the maze rolled back) and one before the dive (back on the surface, diving again), jumper needles only in view |
 | `test/integration/zones-de-direct.test.ts` | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
@@ -532,8 +562,8 @@ console.info(describeRun(run)); // zone-e four-way (god mode): stageClear after 
 | Symptom | Cause / fix |
 |---|---|
 | After `world.stage.jumpTo(x)` past the dive, the ship sits inside the cave roof | `StageRunner.jumpTo` moves the camera, not the ships: a ship spawned at the surface is clamped to the top of the view. A test that jumps there calls `spawnPlayer(ship, world.camera)` again. The game's own starts (the stage skip, a practice start, `jumpToCheckpoint`, checkpoint restarts) spawn the ship where the camera is |
-| A check of open space or ground rock fails only in zone D | It measured map rows 0–199. Measure the rows the camera shows at that x (run a stage runner alongside — `stage-runtime.test.ts`, the content test's ground check) |
-| The 4-way bot dies in the maze | A wall without a 48-px gap, or a turret / crawler between the walls — see [Balance found by the bot](#balance-found-by-the-bot) |
+| A check of open space or ground rock fails only in zone D | It measured the surface window (v1's map rows 0–199 px). Measure the rows the camera shows at that x (run a stage runner alongside — `stage-runtime.test.ts`, the content test's ground check) |
+| The 4-way bot dies in the maze | A wall without its 72-px gap, or a turret / crawler between the walls — see [Balance found by the bot](#balance-found-by-the-bot) |
 | The lava lake never shows | Its band is at `y` 256 — below the surface's view on purpose; it rises with the dive. On the surface only the peaks show |
 | The lake or the clouds do not cycle their colours | A pixel outside `MAGMA_RAMP` / `STORM_RAMP` (or a ramp that no longer matches the stage's `cycles`) — the cycle recolours exact matches only |
 | The content test flags SQUALL STEED's `speed` as a bullet speed | A boss phase's `speed` is read as px/tick. The seahorse's orbit speed is `bobSpeed` for that reason; name a new angular speed differently too |
