@@ -117,7 +117,7 @@ describe('scripts/assets/procedural/direct-items', () => {
         expect(spec.frames).toBe(4);
         const sprite = v2.find((s) => s.name === spec.sprite);
         expect(sprite, spec.sprite).toBeDefined();
-        expect(sprite.frames).toHaveLength(spec.frames);
+        expect(sprite!.frames).toHaveLength(spec.frames);
       });
     });
 

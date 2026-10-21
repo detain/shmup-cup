@@ -129,7 +129,7 @@ describe('assets/source/fonts/pixel9x12.font.json — the accented Latin and the
       ).toBe(true);
       const below = r.slice(2).join('|');
       const baseBelow = rows(base).slice(2).join('|');
-      if (acc !== 0xdc) expect(below, `U+${acc.toString(16)} body = base body`).toBe(baseBelow);
+      expect(below, `U+${acc.toString(16)} body = base body`).toBe(baseBelow);
     }
   });
 

@@ -183,10 +183,10 @@ describe('core/world enemy totals (M2-10)', () => {
 
 describe('core/powerups bonus-stage items (M2-10)', () => {
   it('registers the 1UP and the bonus capsule as world-space engine items', () => {
-    expect(ITEM_KINDS[ItemKind.OneUp]).toEqual({ sprite: ONE_UP_SPRITE, frames: 2, score: 0 });
+    expect(ITEM_KINDS[ItemKind.OneUp]).toEqual({ sprite: ONE_UP_SPRITE, frames: 4, score: 0 });
     expect(ITEM_KINDS[ItemKind.BonusCapsule]).toEqual({
       sprite: BONUS_CAPSULE_SPRITE,
-      frames: 2,
+      frames: 4,
       score: BONUS_CAPSULE_SCORE,
     });
     expect(ENGINE_SPRITES).toContain(ONE_UP_SPRITE);
