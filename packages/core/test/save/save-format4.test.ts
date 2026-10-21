@@ -109,7 +109,7 @@ describe('core/save — format 4 (R6-04)', () => {
     expect(text).toContain('"renderer":"auto","language":"en"');
   });
 
-  it('the new fields round-trip through storage', async () => {
+  it('the new fields round-trip through storage', () => {
     // (a full store round-trip lives in save.test.ts; this pins the value tables)
     expect(OUTPUT_CAPS).toEqual(['auto', '1080', '720', '540']);
     expect(RENDERER_CHOICES).toEqual(['auto', 'webgl2', 'webgl1']);

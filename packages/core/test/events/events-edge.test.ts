@@ -295,6 +295,9 @@ describe('core/events — cue registries', () => {
       Aspect: 12,
       // M3-03.
       Language: 13,
+      // R6-04.
+      Output: 14,
+      Renderer: 15,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -17,8 +17,9 @@
  *   `raster-range` a layer effect pools a target for the frame (640×360), and the review's **F3**
  *   says Pixi rounds that up to the next power of two on each axis — 1024×512 RGBA8 (2 MB), not
  *   900 KB (512×256, 512 KB, not 324 KB at v1's 384×216).
- * - **`?gl=2`** — F8's A/B switch: WebGL1 is the shipped default and the query parameter really
- *   does get a WebGL2 context, with the overlay reporting what was obtained.
+ * - **`?gl=`** — F8's A/B switch: the shipped default is `auto` since R6-04, which resolves to
+ *   WebGL 2 on an engine past the Chromium 71 floor and to WebGL 1 on the two TVs, and the pin
+ *   parameter really does force the version it names, with the overlay reporting what was obtained.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
@@ -196,27 +197,31 @@ test.describe('render profile (web test build, M3-02c)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('boots on WebGL1 by default and on WebGL2 with ?gl=2 (review F8)', async ({ page }) => {
+  test('boots on WebGL2 by default and on WebGL1 with ?gl=1 (review F8)', async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
+    // The shipped default is `auto` since R6-04, and this engine clears `resolveBootGLVersion`'s
+    // Chromium 71 floor with a WebGL 2 context — so the default boot is WebGL 2. (The two TVs, 68
+    // and 69, resolve to 1 under the same function; that is the shell's unit test, not this one.)
     const shipped = await profile(page);
-    expect(shipped.webGLVersion).toBe(1);
-    expect(shipped.statsWebGLVersion).toBe(1);
+    expect(shipped.webGLVersion).toBe(2);
+    expect(shipped.statsWebGLVersion).toBe(2);
 
-    // The A/B switch: the same page, one query parameter, a WebGL2 context — and a frame that
-    // still draws (the overlay's WEBGL figure is what the owner reads on the TV).
-    await page.goto('./?scene=flight&gl=2');
+    // The A/B switch: the same page, one query parameter, a WebGL1 context forced under the pin —
+    // and a frame that still draws (the overlay's WEBGL figure is what the owner reads on the TV,
+    // where WebGL 1 is the floor the game must keep drawing on).
+    await page.goto('./?scene=flight&gl=1');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    const two = await profile(page);
-    expect(two.webGLVersion).toBe(2);
-    expect(two.statsWebGLVersion).toBe(2);
-    expect(two.drawCalls).toBeGreaterThan(0);
-    expect(two.rebuilds).toBeGreaterThanOrEqual(0);
+    const one = await profile(page);
+    expect(one.webGLVersion).toBe(1);
+    expect(one.statsWebGLVersion).toBe(1);
+    expect(one.drawCalls).toBeGreaterThan(0);
+    expect(one.rebuilds).toBeGreaterThanOrEqual(0);
     expect(errors).toEqual([]);
   });
 
