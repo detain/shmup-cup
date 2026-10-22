@@ -3,7 +3,18 @@
   "comment": "Generated from the content by test/integration/atlas-groups.test.ts (plan R1-05): a sprite exactly one campaign zone names packs onto that zone’s own atlas pages, everything else onto common. Do not edit by hand — re-derive with SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts, then pnpm assets.",
   "groups": {
     "zone-a": [
+      "bg/azure-clouds",
+      "bg/azure-horizon",
       "bg/azure-verge",
+      "bosses/azure-captain-shell",
+      "decor/azure-arch",
+      "decor/azure-crystal-a",
+      "decor/azure-crystal-b",
+      "enemies/azure-gale",
+      "enemies/azure-gnat",
+      "enemies/azure-matron",
+      "enemies/azure-skiff",
+      "enemies/azure-warden",
       "enemies/darter",
       "enemies/drifter",
       "enemies/gyre",
@@ -11,13 +22,12 @@
       "enemies/hopper",
       "enemies/turret",
       "enemies/vane",
-      "tiles/terrain-a"
+      "tiles/terrain-azure"
     ],
     "zone-b": [
       "bg/brine-nebula",
       "bg/brine-sea",
       "bosses/herald-shell",
-      "bosses/maw-pod",
       "enemies/brood-bubble",
       "enemies/froth",
       "enemies/froth-bead",

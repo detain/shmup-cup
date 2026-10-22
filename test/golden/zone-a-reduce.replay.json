@@ -64,22 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1328,
+  "ticks": 1502,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAhQo=",
-    "ALAK"
+    "ACiCgAgBAgIAsws=",
+    "AN4L"
   ],
   "hashes": [
-    1798620334,
-    1935558598
+    2398943319,
+    899876109
   ],
-  "finalHash": 2868204027,
+  "finalHash": 4244425175,
   "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",
-    "ticks": 1328,
-    "score": 37180,
+    "ticks": 1502,
+    "score": 39080,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

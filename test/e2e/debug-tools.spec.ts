@@ -46,7 +46,9 @@ const ZONE_A = (() => {
       'utf8',
     ),
   ) as { checkpoints: Array<{ x: number }>; events: Array<{ x: number; type: string }> };
-  const warning = stage.events.find((event) => event.type === 'warning' || event.type === 'boss');
+  const warning = stage.events
+    .filter((event) => event.type === 'warning' || event.type === 'boss')
+    .pop();
   if (warning === undefined) throw new Error('zone-a has no warning/boss event');
   return {
     checkpoints: stage.checkpoints.map((checkpoint) => checkpoint.x),

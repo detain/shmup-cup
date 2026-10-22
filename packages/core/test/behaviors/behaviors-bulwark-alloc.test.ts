@@ -41,6 +41,7 @@ function db(): ContentDb {
       'player/kestrel.player.json',
       'weapons/type-a.weapons.json',
       'tilesets/terrain-a.tileset.json',
+      'tilesets/terrain-azure.tileset.json',
       'paths/zone-a.paths.json',
       'enemies/zone-a.enemies.json',
       'stages/zone-a.stage.json',

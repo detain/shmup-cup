@@ -64,21 +64,21 @@
       "blackHole": false
     }
   },
-  "ticks": 873,
+  "ticks": 942,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgMAapCAQAEAlQGQgEABAJUBkIBAAQAHgYAEAQECAIsBkIBAAQBXgoAIAQICADuQgEABAHo=",
-    "AOkG"
+    "ACiCgAgBAgMAapCAQAEAlQGQgEABAJUBkIBAAQARgYAEAQECAIEBkIBAAQCVAZCAQAEABoKACAECAgCMAZCAQAEAKQ==",
+    "AK4H"
   ],
   "hashes": [
-    1146923473
+    1830373780
   ],
-  "finalHash": 2942434078,
+  "finalHash": 1016506526,
   "description": "HALCYON BULWARK with a fully powered MANTA, god mode and the toggle autofire mode (M2-16 tests): the 4-way bot taps SHOT every 150 ticks — the Direct-mode volleys off, then on again",
   "expected": {
     "status": "stageClear",
-    "ticks": 873,
-    "score": 37120,
+    "ticks": 942,
+    "score": 39000,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

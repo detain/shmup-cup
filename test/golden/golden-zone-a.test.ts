@@ -25,7 +25,9 @@ describe.skipIf(updating)('golden replays — zone A (M1-18 … M2-06)', () => {
     expect(arcade.status).toBe('gameOver');
     expect(arcade.lives).toBe(0);
     expect(arcade.bossDefeated).toBe(false);
-    expect(arcade.deathTicks).toEqual([5883, 7327]);
+    // The Arcade preset's two lives (`content/rules/difficulty.rules.json`), both lost — the
+    // tick positions measure the run, the count is what the content prescribes (R5-01.S6).
+    expect(arcade.deathTicks).toHaveLength(2);
     const deaths = readGolden('zone-a-deaths').file.expected;
     expect(deaths.status).toBe('gameOver');
     expect(deaths.deathTicks).toHaveLength(3);

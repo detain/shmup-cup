@@ -13,7 +13,7 @@ import { MIN_RECOVERY_CAPSULES, RECOVERY_WINDOW } from '../../playtest/recovery.
 import type { ZoneContract } from './helpers.js';
 
 export const zoneAContract: ZoneContract = {
-  remastered: false,
+  remastered: true,
   v1: {
     lengthPx: [8500, 9500], // authored in v1 px; the ships case maps it with contractPx
     scrollSec: [150, 270], // 2.5–4.5 min to the WARNING

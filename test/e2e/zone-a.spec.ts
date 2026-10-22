@@ -64,9 +64,10 @@ async function capture(page: Page): Promise<Capture> {
   let band = 0;
   for (let fx = 0; fx < FRAME_W; fx++) if (is(fx, BAND_Y, WARNING_RED)) band++;
   let hull = 0;
-  // The hull's held rows: HALCYON BULWARK's art spans playfield rows 139 … 222 in its hold
-  // (`content/enemies/zone-a.enemies.json`'s boss at the ported world — measured with the e2e
-  // build at the settled fight), so the count window runs one row past its bottom.
+  // The hull's held rows: after the R5-01 remaster HALCYON BULWARK rests at y 168 and its hull
+  // art (the `m` #2e5082 rows 3 … 28 of the 48×32 v1 map, ×1.5 and centred) covers screen rows
+  // 148 … 186 — measured from `bosses/bulwark-hull.sprite.json`, not from a run — so the count
+  // window from the playfield top to row 223 holds the whole hull with margin for the bob.
   for (let fy = PLAYFIELD_Y; fy < 223; fy++) {
     for (let fx = FRAME_CX; fx < FRAME_W; fx++) if (is(fx, fy, BULWARK_HULL)) hull++;
   }

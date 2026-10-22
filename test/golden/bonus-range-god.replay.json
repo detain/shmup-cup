@@ -64,25 +64,25 @@
       "blackHole": false
     }
   },
-  "ticks": 3289,
+  "ticks": 3561,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAxxWBgAQBAQIAqwKCgAgBAgIAtgE=",
-    "ANkZ"
+    "ACiCgAgBAgIAxxWBgAQBAQIA3AKCgAgBAgkAFIGABAEBAgCHAYKACAECCAASgYAEAQECABmCgAgBAgIAtgE=",
+    "AOkb"
   ],
   "hashes": [
     719086315,
     614202760,
     3450500328,
     83358263,
-    1433431650
+    1917977937
   ],
-  "finalHash": 3570088978,
+  "finalHash": 3981023552,
   "description": "BONUS RANGE with god mode and the full loadout (M2-10): the three ground turrets shot down, the ground entrance to the vault opens, the stage runs on to its boss",
   "expected": {
     "status": "stageClear",
-    "ticks": 3289,
-    "score": 38580,
+    "ticks": 3561,
+    "score": 40520,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

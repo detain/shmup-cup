@@ -270,7 +270,8 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   },
   {
     name: 'zone-a-arcade',
-    description: 'AZURE VERGE at Arcade difficulty without god mode: the 4-way bot clears it',
+    description:
+      'AZURE VERGE at Arcade difficulty without god mode: the 4-way bot loses its two lives before HALCYON BULWARK (the R5-01 remaster is a real stage)',
     stageId: 'zone-a',
     config: { seed: 2, difficulty: 'arcade' },
     godMode: false,

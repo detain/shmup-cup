@@ -71,6 +71,8 @@ interface Scene {
   readonly tick: number;
   /** Turn the hitbox markers on before capturing. */
   readonly hitbox?: boolean;
+  /** Press the web build's F2 (debug god mode) right after the boot, before any stepping. */
+  readonly god?: boolean;
 }
 
 /**
@@ -124,6 +126,11 @@ async function open(page: Page, scene: Scene): Promise<void> {
   await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
     timeout: BOOT_TIMEOUT_MS,
   });
+  if (scene.god === true) {
+    // The web build's debug key, before the sim is frozen and stepped (R5-01.S6b).
+    await page.keyboard.press('F2');
+    await settle(page);
+  }
   await freezeSim(page);
   if (scene.tick > 0) await stepTo(page, scene.tick);
   if (scene.hitbox === true) {
@@ -199,7 +206,18 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
   test('the comparison would catch a layer drawn in the wrong place', async ({ page }) => {
     const errors = collectErrors(page);
     // A stage with terrain, a ship and a HUD, so there is something on every kind of layer.
-    await open(page, { id: 'zone-a', url: './?scene=flight&stage=zone-a', tick: 240 });
+    // R5-01.S6b re-measured this on the remastered zone A: the bible §5.10 mid bands now sit
+    // below the ship's row (their opaque pixels start at screen y 218), so the `PLAYER` control
+    // rides a spire column instead — at world tick 12,951 the camera is at x 16,050.45, and
+    // spire 1's solid tile rows (world x 16,128…16,164, y 48…336) cover the ship's screen
+    // column (BOT_X 96). God mode (F2, pressed before the stepping) keeps the ship alive and
+    // drawn at that tick in the input-less flight scene.
+    await open(page, {
+      id: 'zone-a',
+      url: './?scene=flight&stage=zone-a',
+      tick: 12_951,
+      god: true,
+    });
     const before = await capture(page);
 
     // The mutation a pixel comparison exists to catch, injected deliberately: a layer container
@@ -212,9 +230,9 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // - `PLAYER` under them as well (the ship behind the background),
     // - `HUD` under the whole world container (the bars behind the stage).
     //
-    // The `HUD` control needs the stage to draw under a bar. Since R2-02's port the zone A
-    // content fills the whole 640×336 playfield — its terrain and bands reach under the 12-px
-    // bottom bar — so moving the `HUD` under the world changes pixels (R2-03's re-measure).
+    // The `HUD` control needs the stage to draw under a bar. On the remastered zone A the spire
+    // columns and the ground tiles reach under the 12-px bottom bar at this tick, so moving the
+    // `HUD` under the world changes pixels.
     for (const layer of [3, 8, 14]) {
       const restore = await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;

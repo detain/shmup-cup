@@ -2,11 +2,11 @@
  * `boss.bulwark` (plan M1-18) driving the shipped HALCYON BULWARK (HB-01,
  * `content/enemies/zone-a.enemies.json`), reached with the debug stage skip:
  *
- * - phase 0 (four plates): slow tracking of the ship's height, a telegraphed lane laser every
+ * - phase 0 (six plates): slow tracking of the ship's height, a telegraphed lane laser every
  *   110 ticks from the top and the bottom emitter in turn, **attached** (the lane moves with the
  *   boss), no bullets;
  * - two plates down → phase 1: aimed 3-ways of purple needles at 1.5 px/tick from both emitters;
- * - the last plate down → phase 2: lanes every 55 ticks, so the two emitters' lanes overlap in
+ * - four plates down → phase 2: lanes every 55 ticks, so the two emitters' lanes overlap in
  *   time — never closer than the emitters' spacing;
  * - the core takes damage only once every plate is gone, and its death clears the stage.
  */
@@ -45,6 +45,7 @@ function db(): ContentDb {
     [
       'player/kestrel.player.json',
       'tilesets/terrain-a.tileset.json',
+      'tilesets/terrain-azure.tileset.json',
       'paths/zone-a.paths.json',
       'enemies/zone-a.enemies.json',
       'stages/zone-a.stage.json',
@@ -58,7 +59,7 @@ function db(): ContentDb {
 const DB = db();
 
 /** HB-01's part indices (the file's order). */
-const P = { emitterTop: 3, emitterBottom: 4, core: 5, plates: [6, 7, 8, 9] } as const;
+const P = { emitterTop: 3, emitterBottom: 4, core: 5, plates: [6, 7, 8, 9, 10, 11] } as const;
 
 /**
  * A zone A world at HB-01's first fight tick (skip to the boss, god mode, no weapons fired).
@@ -141,7 +142,7 @@ describe('core/behaviors boss.bulwark — HALCYON BULWARK (M1-18)', () => {
     run(w, 1);
     expect(bosses.boss.phase).toBe(1);
     let fired = 0;
-    for (let i = 0; i < 200 && fired === 0; i++) {
+    for (let i = 0; i < 300 && fired === 0; i++) {
       run(w, 1);
       fired = w.bullets.count;
     }
@@ -171,7 +172,7 @@ describe('core/behaviors boss.bulwark — HALCYON BULWARK (M1-18)', () => {
       }
     }
     expect(both).toBeGreaterThan(0);
-    expect(bosses.damagePart(P.core, 40, 0)).toBe(BossHit.Destroyed);
+    expect(bosses.damagePart(P.core, 60, 0)).toBe(BossHit.Destroyed);
     for (let i = 0; i < 400 && w.status !== 'stageClear'; i++) run(w, 1);
     expect(w.status).toBe('stageClear');
   });

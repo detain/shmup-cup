@@ -64,27 +64,28 @@
       "blackHole": false
     }
   },
-  "ticks": 4645,
+  "ticks": 5178,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAwQPAgIACAUAJALcHgYAEAQEHAAWBgAQBAQcABYGABAEBBwAGgYAEAQEHAI8BgYAEAQEHAPwIgoAIAQIeANsMgoAIAQC4AQ==",
-    "AKUk"
+    "ACiCgAgBAgQAwQPAgIACAUAJALcHgYAEAQEHAAWBgAQBAQcABYGABAEBBwAGgYAEAQEHAI8BgYAEAQEHAPwIgoAIAQIeAPAQgoAIAQC4AQ==",
+    "ALoo"
   ],
   "hashes": [
     3703170669,
     2906822215,
     686762516,
     36051850,
-    329300972,
-    482295600,
-    1333656047
+    4228487164,
+    468576549,
+    855323900,
+    2222755806
   ],
-  "finalHash": 174768555,
+  "finalHash": 2241904610,
   "description": "BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens",
   "expected": {
     "status": "stageClear",
-    "ticks": 4645,
-    "score": 37680,
+    "ticks": 5178,
+    "score": 39570,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

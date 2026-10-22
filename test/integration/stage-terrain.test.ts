@@ -35,6 +35,7 @@ import { v1rel, v1y } from '../../packages/core/test/helpers/v1-port.js';
 import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
+import * as azure from '../../scripts/assets/procedural/azure.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 import { expectHeightfieldFindsTiles, expectMasksMatchArt } from './terrain-checks.js';
 
@@ -92,6 +93,23 @@ function resampledTilesets(size: number): ContentFile[] {
     });
 }
 
+/**
+ * The 12-px frames of a shipped tileset sprite: `terrain.mjs` draws the palette families;
+ * `tiles/terrain-azure` comes from `azure.mjs`, which paints it at `options.tileSize` exactly
+ * like `renderTerrainTiles` does a palette (R5-01.S5a — later zones' -v2 sets route the same way).
+ *
+ * @param sprite - The tileset's sprite name.
+ * @param size - The tile size to draw at.
+ * @returns The drawn grid sprite's frames.
+ */
+function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof renderTerrainTiles> {
+  if (sprite !== 'tiles/terrain-azure') return renderTerrainTiles(size, sprite);
+  for (const drawn of azure.generate({ tileSize: size, artScale: 3 / 2 })) {
+    if (drawn.name === sprite) return drawn.frames;
+  }
+  throw new Error(`azure.mjs draws no ${sprite}`);
+}
+
 describe('integration: tilesets match their art', () => {
   it('ships at least one tileset, every tile on an existing frame', () => {
     const db = shipped();
@@ -122,7 +140,7 @@ describe('integration: tilesets match their art', () => {
     expect(db.tilesets.length).toBeGreaterThan(1);
     for (const tileset of db.tilesets) {
       expect(tileset.tileSize).toBe(MAX_TILE_SIZE);
-      const frames = renderTerrainTiles(MAX_TILE_SIZE, tileset.sprite);
+      const frames = tilesetFramesAt(tileset.sprite, MAX_TILE_SIZE);
       expectMasksMatchArt(
         tileset,
         (frame) => [frames[frame].width, frames[frame].height],

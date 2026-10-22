@@ -348,6 +348,7 @@ describe('core/behaviors boss.bulwark — edge cases (M1-18)', () => {
         [
           'player/kestrel.player.json',
           'tilesets/terrain-a.tileset.json',
+          'tilesets/terrain-azure.tileset.json',
           'paths/zone-a.paths.json',
           'enemies/zone-a.enemies.json',
           'stages/zone-a.stage.json',
@@ -365,7 +366,7 @@ describe('core/behaviors boss.bulwark — edge cases (M1-18)', () => {
     let laserAt = -1;
     let spreadAt = -1;
     let phaseAt = -1;
-    for (let t = 1; t <= 200 && (laserAt < 0 || spreadAt < 0); t++) {
+    for (let t = 1; t <= 300 && (laserAt < 0 || spreadAt < 0); t++) {
       run(w, 1);
       if (phaseAt < 0 && boss.phase === 1) phaseAt = t;
       const src = freshLaser(w);
@@ -377,9 +378,9 @@ describe('core/behaviors boss.bulwark — edge cases (M1-18)', () => {
       if (spreadAt < 0 && w.bullets.count > 0) spreadAt = t - phaseAt;
     }
     expect(phaseAt).toBe(1);
-    // Phase 1's tunables: firstLaser 40, fireTicks 120 (the script first runs the tick after).
+    // Phase 1's tunables: firstLaser 40, fireTicks 240 (the script first runs the tick after).
     expect(laserAt).toBe(41);
-    expect(spreadAt).toBe(121);
+    expect(spreadAt).toBe(241);
     expect(w.bullets.count).toBe(6);
     expect(boss.parts[HB.emitterBottom].destroyed).toBe(false);
   });
