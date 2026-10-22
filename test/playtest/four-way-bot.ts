@@ -178,7 +178,8 @@ export function terrainLookAhead(speed: number): number {
 
 /**
  * Whether the stage holds a vertical shaft: a camera key whose pan is deeper than one playfield
- * (R5-P.P12, zone B — shipped max is zone D's 300 px, below the 336 playfield).
+ * (R5-P.P12, zone B — the design §5 chimney is the one stage set past the 336-px playfield, the
+ * yTo 400 key R5-02 lands; every other shipped stage's deepest pan stays below one playfield).
  *
  * @param stage - The stage spec.
  * @returns `true` when some key moves the camera vertically past {@link PLAYFIELD_H}.

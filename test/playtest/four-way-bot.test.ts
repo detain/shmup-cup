@@ -13,8 +13,9 @@
  *   Option (fewer than four);
  * - the R5-P.P12 set-piece features on fixture stages: the shaft window (zone B), the high-speed
  *   look-ahead (zone C), the branch choice (zone D), brick shooting with the commit-through (zones
- *   D and F) and the moving-floor sweep prediction (zone H) — each asserted to stay gated off
- *   every shipped stage, so today's recordings are untouched.
+ *   D and F) and the moving-floor sweep prediction (zone H) — each gated off the shipped content,
+ *   the shaft admitting only zone B's design §5 chimney (R5-02), so a recording moves only with
+ *   its own zone's content.
  */
 import {
   Action,
@@ -306,8 +307,9 @@ describe('playtest four-way bot: decide', () => {
 /* ------------------------------------------------------------------------- *
  * R5-P.P12 — the set-piece features (wave-11 designs §3), each on a fixture  *
  * stage: the shaft window, the high-speed look-ahead, the branch choice,     *
- * brick shooting, and the moving floors. Every gate is also asserted to      *
- * stay shut on all the shipped content, so today's recordings are untouched. *
+ * brick shooting, and the moving floors. Every gate is asserted to hold shut *
+ * on the shipped content — the shaft admits only zone B's design §5 chimney, *
+ * the R5-02 set piece — so a gate never moves a recording on its own.        *
  * ------------------------------------------------------------------------- */
 
 /** The shipped `terrain-a` tileset JSON (the fixtures build tilemaps over it). */
@@ -430,13 +432,21 @@ function scrollTo(w: World, x: number): void {
 }
 
 describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
-  it('no shipped stage has a shaft, a branch-choice region or a moving floor, and no zone key passes the look-ahead gate', () => {
+  it('no shaft on any shipped stage but zone B, no branch-choice region or moving floor anywhere, and no zone key passes the look-ahead gate', () => {
     const stages = shippedContent().stages;
     expect(stages.length).toBeGreaterThan(10);
     let deepestPan = 0;
     let widestSwing = 0;
+    let shafts = 0;
     for (const stage of stages) {
-      expect(stageHasShaft(stage), stage.id).toBe(false);
+      // The shaft law is the helper's own gate (stageHasShaft: a camera key whose |pan| passes one
+      // playfield). By the zone-B design §5 it admits exactly one stage — the bubble shaft's yTo
+      // 400 key — so a shaft opening on any other shipped stage is a breach. Zone B's shaft itself
+      // arrives with R5-02: while its geometry is still the old one the gate holds it at zero.
+      if (stageHasShaft(stage)) {
+        shafts += 1;
+        expect(stage.id, 'the only stage allowed a shaft').toBe('zone-b');
+      }
       expect(branchSteerTriggers(stage), stage.id).toEqual([]);
       let y = 0;
       for (const key of stage.camera) {
@@ -448,11 +458,21 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
         if (e.type === 'block') widestSwing = Math.max(widestSwing, Math.abs(e.dy ?? 0));
       }
     }
-    // Today's extremes, pinned (docs/v2-run/designs §3): zone D's dive and gimmick-range's blocks.
-    expect(deepestPan).toBe(v1rel(200)); // 300 px — below one playfield (zone D)
+    // Today's extremes, pinned (docs/v2-run/designs §3 and the zone-B design §5): gimmick-range's
+    // blocks, and the deepest camera pan — zone D's 300 px dive while no shipped stage opens the
+    // shaft gate, zone B's designed 400 px sink once R5-02 lands its shaft. Both pan numbers are
+    // design constants (the shaft fixture above flies the same 400), never read off a run; the
+    // playfield relation follows stageHasShaft's own definition (|pan| > PLAYFIELD_H).
+    expect(shafts).toBeLessThanOrEqual(1);
+    if (shafts === 1) {
+      expect(deepestPan).toBe(400); // the design §5 sink — by the gate's law, past one playfield
+      expect(deepestPan).toBeGreaterThan(PLAYFIELD_H);
+    } else {
+      expect(deepestPan).toBe(v1rel(200)); // 300 px — below one playfield (zone D's dive)
+      expect(deepestPan).toBeLessThan(PLAYFIELD_H);
+    }
     expect(widestSwing).toBe(v1rel(32)); // 48 px — below the moving-floor gate (gimmick-range)
     expect(widestSwing).toBeLessThan(SLAB_SWING);
-    expect(deepestPan).toBeLessThan(PLAYFIELD_H);
     // RT-P12's cure pin: no shipped ZONE camera key reaches the widened look-ahead gate — the
     // fastest is zone A's 2.25 px/tick tail, which once moved the live-bot zone-a-extras stream.
     let fastestZoneKey = 0;
