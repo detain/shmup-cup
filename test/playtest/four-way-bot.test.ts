@@ -15,13 +15,15 @@
  *   look-ahead (zone C), the branch choice (zone D), brick shooting with the commit-through (zones
  *   D and F) and the moving-floor sweep prediction (zone H) — each gated off the shipped content,
  *   the shaft admitting only zone B's design §5 chimney (R5-02), the look-ahead only zone C's
- *   design §3 dune-surf key (R5-03) and the branch choice only zone D's design §4 channel (R5-04),
- *   so a recording moves only with its own zone's content.
+ *   design §3 dune-surf key (R5-03), the branch choice only zone D's design §4 channel (R5-04)
+ *   and the slab-class movers only zone G's design §3 shutters (R5-07), so a recording moves
+ *   only with its own zone's content.
  */
 import {
   Action,
   ANGLE_UNITS,
   BulletKind,
+  DEFAULT_BLOCK_PERIOD,
   ENTER_END_X,
   MeterSlot,
   PLAYFIELD_H,
@@ -310,8 +312,9 @@ describe('playtest four-way bot: decide', () => {
  * stage: the shaft window, the high-speed look-ahead, the branch choice,     *
  * brick shooting, and the moving floors. Every gate is asserted to hold shut *
  * on the shipped content except the set pieces it names — zone B's design    *
- * §5 chimney (R5-02), zone C's design §3 dune-surf key (R5-03) and zone D's  *
- * design §4 channel (R5-04) — so a gate never moves a recording on its own.  *
+ * §5 chimney (R5-02), zone C's design §3 dune-surf key (R5-03), zone D's     *
+ * design §4 channel (R5-04) and zone G's design §3 shutters (R5-07) — so     *
+ * a gate never moves a recording on its own.                                 *
  * ------------------------------------------------------------------------- */
 
 /** The shipped `terrain-a` tileset JSON (the fixtures build tilemaps over it). */
@@ -434,13 +437,14 @@ function scrollTo(w: World, x: number): void {
 }
 
 describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
-  it('no shaft on any shipped stage but zone B, no branch choice but zone D, no moving floor anywhere, and no zone key passes the look-ahead gate but zone C', () => {
+  it('no shaft on any shipped stage but zone B, no branch choice but zone D, no slab-class mover but zone G design shutters, and no zone key passes the look-ahead gate but zone C', () => {
     const stages = shippedContent().stages;
     expect(stages.length).toBeGreaterThan(10);
     let deepestPan = 0;
     let widestSwing = 0;
     let shafts = 0;
     let branchStages = 0;
+    let shutterStages = 0;
     for (const stage of stages) {
       // The shaft law is the helper's own gate (stageHasShaft: a camera key whose |pan| passes one
       // playfield). By the zone-B design §5 it admits exactly one stage — the bubble shaft's yTo
@@ -474,8 +478,41 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
         deepestPan = Math.max(deepestPan, Math.abs(to - y));
         y = to;
       }
+      // The moving-floor law is the bot's own slab gate (SLAB_SWING — a block swinging at least
+      // this far is predicted where its band will be when it crosses the ship's column;
+      // R5-P.P12, zone H's gate slabs). By the zone-G design §3 it admits exactly one stage —
+      // the four refraction-hall crystal shutters: 24×48 of tile `crystal` at y 408, swinging
+      // dy 96 over period 240 from phases 0/256/512/768, at x 10,080/11,200/12,400/13,600 — so
+      // a slab swing authored on any other shipped stage, or zone G's shutters moving off their
+      // designed boxes, is a breach. The shutters arrive with R5-07: while the shipped stage is
+      // still the old one the gate holds them at zero (it authors no block events at all). The
+      // law is unchanged for every other mover — admitted rows leave the widestSwing scan, so
+      // the pin under the loop reads gimmick-range's 48 px in both worlds.
+      const slabs: number[][] = [];
+      let slabSwing = 0;
       for (const e of stage.events) {
-        if (e.type === 'block') widestSwing = Math.max(widestSwing, Math.abs(e.dy ?? 0));
+        if (e.type !== 'block') continue;
+        const swing = Math.abs(e.dy ?? 0);
+        if (swing < SLAB_SWING) {
+          widestSwing = Math.max(widestSwing, swing);
+          continue;
+        }
+        slabSwing = Math.max(slabSwing, swing);
+        slabs.push([e.x, e.y, e.w, e.h, e.dy ?? 0, e.period ?? DEFAULT_BLOCK_PERIOD, e.phase ?? 0]);
+      }
+      if (slabs.length > 0) {
+        shutterStages += 1;
+        expect(stage.id, 'the only stage allowed slab-class shutters').toBe('zone-g');
+        expect(slabSwing, 'zone G design §3: the admitted swing, pinned exactly').toBe(96);
+        expect(
+          slabs,
+          'zone G design §3: the four crystal shutters — x, y, 24×48, dy 96 over period 240',
+        ).toEqual([
+          [10080, 408, 24, 48, 96, 240, 0],
+          [11200, 408, 24, 48, 96, 240, 256],
+          [12400, 408, 24, 48, 96, 240, 512],
+          [13600, 408, 24, 48, 96, 240, 768],
+        ]);
       }
     }
     // Today's extremes, pinned (docs/v2-run/designs §3, the zone-B design §5 and the zone-D
@@ -487,6 +524,7 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
     // playfield relation follows stageHasShaft's own definition (|pan| > PLAYFIELD_H).
     expect(shafts).toBeLessThanOrEqual(1);
     expect(branchStages).toBeLessThanOrEqual(1);
+    expect(shutterStages).toBeLessThanOrEqual(1);
     if (shafts === 1) {
       expect(deepestPan).toBe(400); // the design §5 sink — by the gate's law, past one playfield
       expect(deepestPan).toBeGreaterThan(PLAYFIELD_H);
