@@ -10,10 +10,13 @@
  * With `SHMUP_GOLDEN_UPDATE=1` the test first re-records every demo from the bot and rewrites its
  * file, then checks the new files the same way. A filtered re-bless (R5-P.P3's `--only`, seen as
  * `SHMUP_GOLDEN_ONLY`) re-records only the demos of the listed zones; the others — and the format
- * sample, whose `stageId` is `null` — are verified but left untouched. A zone LAND's list is
- * composite (R5-01.S7: `--only zone-a,bonus-range` — the shape wave-11's zones G and B reuse),
- * so an id naming a stage that owns no demo simply selects none, and the run fails loud only
- * when the list names no demo stage at all; `golden.test.ts` keeps the goldens' side honest.
+ * sample, whose `stageId` is `null` — are verified but left untouched. An id of the list may name a
+ * stage that owns no demo: a composite zone LAND list (`--only zone-a,bonus-range`, R5-01.S7, the
+ * shape wave-11's zones G and B reuse) or a whole list of bonus stages (R5-10.T1's bless) simply
+ * selects no demo, and the bless has nothing to write on this side. What still fails loud at
+ * collection is an id that names no stage the goldens or the demos play at all — a typo
+ * (0b166c41's law, the shape `golden.test.ts` applies to its own table); the guard is
+ * `assertDemoOnlyListKnown`, both arms pinned by `golden-edge.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -32,6 +35,7 @@ import {
   DEMO_TICKS,
   EXAMPLE_DEMO,
   EXAMPLE_DEMO_TICKS,
+  assertDemoOnlyListKnown,
   readDemo,
   recordDemo,
   writeDemo,
@@ -41,21 +45,13 @@ import { GOLDEN_ONLY_ENV, GOLDEN_UPDATE_ENV, goldenStageSelected } from './golde
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-// An --only list naming no known demo stage fails loud, never blesses nothing (R5-P.P3 review;
-// relaxed to that intent by R5-01.S7.0 — a composite zone LAND list, wave-10's
-// `--only zone-a,bonus-range` reused by wave-11's zones G and B, names a bonus stage whose goldens
-// the same run blesses but that owns no demo: such an id selects no demo here, and the guard
-// throws only when the list names no demo stage at all — a pure typo list, and a list of stages
-// with no demo among them, still fail loud).
-if (updating) {
-  const only = (process.env[GOLDEN_ONLY_ENV] ?? '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter((id) => id !== '');
-  const known = new Set(DEMO_SCENARIOS.map((scenario) => scenario.stageId));
-  if (only.length > 0 && !only.some((id) => known.has(id)))
-    throw new Error(`SHMUP_GOLDEN_ONLY names no demo stage: ${only.join(', ')}`);
-}
+// An --only list naming a stage no scenario plays fails loud, never blesses nothing (0b166c41's
+// typo law; carved to its intent by w12-MF13). The guard reads the union of the two scenario
+// tables: the demo side of a filtered bless may legitimately be empty — R5-10.T1's bonus bless
+// names four stages and owns no demo — where the R5-01.S7.0 shape here ("throw unless the list
+// names one known DEMO stage") stopped the legal bless at collection. A typo id still throws, and
+// so does a list naming only stages nothing plays. `golden.test.ts` keeps the goldens' side honest.
+if (updating) assertDemoOnlyListKnown(process.env[GOLDEN_ONLY_ENV] ?? '');
 
 describe('attract demos (content/demos, 4-way bot)', () => {
   it.each(DEMO_SCENARIOS.map((scenario) => [scenario.id, scenario] as const))(

@@ -10,7 +10,8 @@
  * - the expectations are consistent (death ticks ordered and within the run) and
  *   `scripts/golden-update.mjs` runs this folder with the variable `golden.test.ts` reads — and
  *   since R5-P.P3 its `--only <ids>` filter parses from every argv shape, including the `--`
- *   pnpm 12 passes through.
+ *   pnpm 12 passes through; since w12-MF13 the demo side of that filter is pinned too — a bless
+ *   list may name no demo stage, but an id no scenario plays still fails loud.
  *
  * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
  */
@@ -19,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { Action, REPLAY_HASH_INTERVAL, decodeReplay, encodeReplay, type Replay } from '@shmup/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { parseOnly } from '../../scripts/golden-update.mjs';
+import { assertDemoOnlyListKnown } from './demos.js';
 import {
   GOLDEN_SCENARIOS,
   GOLDEN_UPDATE_ENV,
@@ -191,5 +193,19 @@ describe('golden replays — the re-bless script', () => {
     expect(() => parseOnly(['--only'])).toThrow();
     expect(() => parseOnly(['--only', ''])).toThrow();
     expect(() => parseOnly(['--only', ','])).toThrow();
+  });
+
+  it('the demo bless guard takes a demo-less list of known stages and still fails a typo (w12-MF13)', () => {
+    // Both arms of the carved typo law (0b166c41, restated by w12-MF13 after the R5-10.T1 weld
+    // stop): a list may name no demo at all — R5-10.T1's bonus bless, or R5-01.S7's composite
+    // zone LAND list — and the unfiltered bless names nothing; but an id no scenario plays is a
+    // typo and fails loud, so a filtered run can never bless zero files through a wrong name.
+    expect(() => assertDemoOnlyListKnown('')).not.toThrow();
+    expect(() => assertDemoOnlyListKnown('zone-a,bonus-range')).not.toThrow();
+    expect(() =>
+      assertDemoOnlyListKnown('brine-grotto,glimmer-cache,bonus-vault,bonus-range'),
+    ).not.toThrow();
+    expect(() => assertDemoOnlyListKnown('brine-grotto,bonus-vaulit')).toThrow(/SHMUP_GOLDEN_ONLY/);
+    expect(() => assertDemoOnlyListKnown('no-such-stage')).toThrow(/SHMUP_GOLDEN_ONLY/);
   });
 });

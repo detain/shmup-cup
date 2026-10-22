@@ -9,7 +9,9 @@
  *
  * Once the frame constants change (R2-01: 640×360) the files are the frozen v1 record: the re-runs
  * are skipped and re-recording is refused; comparing a v2 run with them by the rules of
- * `test/fixtures/v1-baseline/README.md` is R2-02's test.
+ * `test/fixtures/v1-baseline/README.md` is R2-02's test. A stage re-authored after the v1 cut
+ * (`REAUTHORED_STAGES`, w12-MF13) is carved from the re-runs and those comparisons alike — its
+ * file stays the frozen record the consistency case reads, and nothing replays it.
  *
  * Re-recording (an intended simulation change before R2-01 only — say why in the commit):
  * `SHMUP_V1_BASELINE_UPDATE=1 pnpm exec vitest run --project integration test/golden/v1-baseline`.
@@ -24,6 +26,7 @@ import {
   BOSS_COLUMNS,
   ENEMY_COLUMNS,
   EVENT_COLUMNS,
+  REAUTHORED_STAGES,
   SPEC_COLUMNS,
   readBaseline,
   sameFrame,
@@ -41,6 +44,11 @@ import {
  */
 const POST_V1_STAGES = ['decor-range'];
 
+/** The scenario ids `REAUTHORED_STAGES` carves out of every re-run and port file. */
+const CARVED_IDS = BASELINE_SCENARIOS.filter((s) => REAUTHORED_STAGES.includes(s.stageId)).map(
+  (s) => s.id,
+);
+
 describe('v1 baseline (test/fixtures/v1-baseline, R2-02 prep)', () => {
   it('covers every shipped stage, and every zone on loop 2 too', () => {
     const db = shippedContent();
@@ -55,14 +63,29 @@ describe('v1 baseline (test/fixtures/v1-baseline, R2-02 prep)', () => {
     for (const id of POST_V1_STAGES) {
       expect(db.stages.map((stage) => stage.id)).toContain(id);
     }
+    // w12-MF13: a re-authored stage is carved from the re-runs and the port comparison while it
+    // still ships — its baseline and golden stay; the carve fails loud the day it goes stale.
+    for (const id of REAUTHORED_STAGES) {
+      expect(
+        db.stages.map((stage) => stage.id),
+        `REAUTHORED_STAGES carves ${id} — it must still ship, or the carve is stale`,
+      ).toContain(id);
+    }
     const ids = BASELINE_SCENARIOS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
     const zones = db.campaign?.zones.map((zone) => zone.stage) ?? [];
     expect(zones.length).toBeGreaterThan(0);
     for (const zone of zones) expect(ids).toContain(`${zone}-loop2`);
-    // The three re-run files share the scenarios out between them, each exactly once.
+    // The three re-run files share the scenarios out between them, each exactly once — the carved
+    // ids belong to no file, and the pin keeps both tables honest: if the composition ever stops
+    // carving (or carves more than the list), the split below no longer closes (w12-MF13).
+    expect(CARVED_IDS).toEqual(['bonus-vault']);
     const grouped = [...BASELINE_GROUPS.zones, ...BASELINE_GROUPS.loop2, ...BASELINE_GROUPS.stages];
-    expect(grouped.map((s) => s.id).sort()).toEqual([...ids].sort());
+    expect(grouped.map((s) => s.id).sort()).toEqual(
+      ids.filter((id) => !CARVED_IDS.includes(id)).sort(),
+    );
+    const groupedIds = grouped.map((s) => s.id);
+    expect(new Set(groupedIds).size).toBe(groupedIds.length);
   });
 
   it('tells the recorded frame from any other', () => {

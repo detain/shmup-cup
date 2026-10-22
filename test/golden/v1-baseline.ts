@@ -248,14 +248,32 @@ export const BASELINE_SCENARIOS: readonly BaselineScenario[] = Object.freeze([
 ]);
 
 /**
+ * Non-zone stages a wave-12 re-author re-laid after the v1 cut, by stage id. Each keeps its frozen
+ * v1 file and its scenario (the consistency case of `v1-baseline.test.ts` still reads them); only
+ * the comparisons that replay the stage against that record are carved: the baseline re-runs of
+ * `v1-baseline.test.ts` and the port comparisons of `v2-port.test.ts`, both composed from
+ * `BASELINE_GROUPS.stages`. A remastered ZONE drops out of the port comparison through its zone
+ * contract's `remastered` flag (`v2-port-suite.ts` `v2PortDropReason`); no contract can carry a
+ * non-zone stage, so a re-laid one rides this list instead — w12-MF13, option A of the R5-10.T1
+ * weld stop. The first entry is `bonus-vault`: R5-10.T1 re-laid it from a 2,400-px camera with 11
+ * events to 4,200 px with 16, a layout the v1 record cannot port-match (55 issues).
+ * `v1-baseline.test.ts` asserts every id here still ships and pins the carve's effect, so an entry
+ * that goes stale — or a carve that silently stops carving — fails loud.
+ */
+export const REAUTHORED_STAGES: readonly string[] = Object.freeze(['bonus-vault']);
+
+/**
  * The scenarios of each re-run test file (so they run in parallel workers): the zones on loop 1
  * (`v1-baseline-zones.test.ts`), on loop 2 (`v1-baseline-loop2.test.ts`) and every other stage
- * (`v1-baseline.test.ts`).
+ * (`v1-baseline.test.ts`). A stage carved by {@link REAUTHORED_STAGES} belongs to no file — its
+ * baseline stays the record the consistency case reads, and nothing replays it.
  */
 export const BASELINE_GROUPS = Object.freeze({
   zones: BASELINE_SCENARIOS.filter((s) => s.stageId.startsWith('zone-') && s.config.loop !== 2),
   loop2: BASELINE_SCENARIOS.filter((s) => s.stageId.startsWith('zone-') && s.config.loop === 2),
-  stages: BASELINE_SCENARIOS.filter((s) => !s.stageId.startsWith('zone-')),
+  stages: BASELINE_SCENARIOS.filter(
+    (s) => !s.stageId.startsWith('zone-') && !REAUTHORED_STAGES.includes(s.stageId),
+  ),
 });
 
 /** The frame a baseline was recorded at (all positions in the file are in its pixels). */

@@ -28,6 +28,7 @@ import {
 } from '@shmup/core';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { shippedContent } from '../playtest/harness.js';
+import { GOLDEN_SCENARIOS } from './golden.js';
 
 /** Ticks every demo records: 40 s of the zone from its start (the fly-in, the zone card, play). */
 export const DEMO_TICKS = 2400;
@@ -219,4 +220,38 @@ export function writeDemo(scenario: DemoScenario, replay: Replay): void {
 export function readDemo(id: string): { file: DemoFile; replay: Replay } {
   const file = JSON.parse(readFileSync(demoPath(id), 'utf8')) as DemoFile;
   return { file, replay: decodeReplay(file) };
+}
+
+/**
+ * The `--only` guard of a demo re-bless (0b166c41's typo law, carved to its intent by w12-MF13):
+ * every id of a `SHMUP_GOLDEN_ONLY` list must name a stage the goldens or the demos play, or the
+ * bless fails loud at collection — it never blesses nothing through a typo.
+ *
+ * The demo side of a filtered bless may legitimately be empty: a composite zone LAND list
+ * (`--only zone-a,bonus-range`, R5-01.S7) and, since wave-12, a whole list of bonus stages
+ * (`--only brine-grotto,glimmer-cache,bonus-vault,bonus-range`, R5-10.T1) name stages that own no
+ * demo — the run simply has no demos to write. The R5-01.S7.0 shape of this guard (throw unless the
+ * list names one known DEMO stage) mistook that legal bless for the typo it cannot tell apart, and
+ * the T1 weld stopped on its collection error (w12-SW-T1). What the typo law actually needs is the
+ * shape `golden.test.ts` applies to its own table: an id that names no stage of **either** scenario
+ * table is a typo, and throws. An empty list — the unfiltered `pnpm golden:update` — writes every
+ * demo and passes. `golden-edge.test.ts` pins both arms.
+ *
+ * @param onlyValue - The raw `SHMUP_GOLDEN_ONLY` value (comma-separated ids; may be empty).
+ * @throws {Error} When an id of the list names no stage the goldens or the demos play.
+ */
+export function assertDemoOnlyListKnown(onlyValue: string): void {
+  const only = onlyValue
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id !== '');
+  if (only.length === 0) return; // the unfiltered bless: every demo is written.
+  const known = new Set<string>();
+  for (const scenario of DEMO_SCENARIOS) if (scenario.stageId !== null) known.add(scenario.stageId);
+  for (const scenario of GOLDEN_SCENARIOS) known.add(scenario.stageId);
+  const unknown = only.filter((id) => !known.has(id));
+  if (unknown.length > 0)
+    throw new Error(
+      `SHMUP_GOLDEN_ONLY names no stage the goldens or the demos play: ${unknown.join(', ')}`,
+    );
 }
