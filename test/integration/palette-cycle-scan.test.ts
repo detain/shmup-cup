@@ -75,7 +75,7 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'enemies/prism-cube',
     'enemies/prism-lens',
   ],
-  DUNE: ['bosses/widow-head'],
+  DUNE: ['bosses/widow-head', 'bg/dune-blaze'],
   VAULT: ['bosses/regent-eye'],
   PRISM: ['enemies/hopper'],
   CITADEL: ['items/capsule-bonus'],
