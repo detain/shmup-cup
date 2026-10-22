@@ -12,10 +12,11 @@
  * - the debug tools get the residency and the timing (`__shmupDebug.atlas`, `.timing`, `.pageMs`);
  * - when the scene flow shows a new World, its stage's pages go up before its first frame — the
  *   shell-side trigger the attract demo needs (W3-9);
- * - a page drawn behind the residency's back — the weapon select's preview draws zone A's terrain
- *   page — leaves the GPU at the next stage change (the residency's self-healing unload; the fake
- *   renderer keeps a fake GPU: the residency's uploads, Pixi's `unload` events and, like Pixi, an
- *   upload of the terrain's page on its first draw).
+ * - a page drawn behind the residency's back leaves the GPU at the next stage change (the
+ *   residency's self-healing unload; the fake renderer keeps a fake GPU: the residency's uploads,
+ *   Pixi's `unload` events and, like Pixi, an upload of the terrain's page on its first draw).
+ *   Before R5-01's zone A remaster, the weapon select's preview drew zone A's terrain page this
+ *   way; since it, `terrain-a` rides the common page and the stray is simulated directly.
  */
 import {
   Action,
@@ -441,12 +442,15 @@ describe('shell/boot atlas residency (R1-05)', () => {
     // As after a zone C attract demo: common + zone C.
     shell.atlasResidency.prepare(stage('zone-c'));
     expect(gpuPages(pages)).toEqual(groupPages('zone-c'));
-    // The weapon select: its preview flies the dev weapon-range, whose terrain-a tiles sit on
-    // zone A's page — uploaded on the preview's first draw, behind the residency's back.
+    // The weapon select: its preview flies the dev weapon-range. Since R5-01's zone A remaster
+    // the range's `terrain-a` rides the common page, so the preview's first draw uploads nothing
+    // new; the stray the self-healing unload must clear — the zone A page the preview drew before
+    // the remaster — is put on the fake GPU directly, exactly behind the residency's back.
     let at = toWeaponSelect(1000);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('weaponSelect');
     const zoneAOwn = groupPages('zone-a').filter((p) => groupPages('zone-c').indexOf(p) < 0);
     expect(zoneAOwn.length).toBeGreaterThan(0);
+    for (const p of zoneAOwn) fakes.gpu.add(pages[p]);
     expect(gpuPages(pages)).toEqual([...groupPages('zone-c'), ...zoneAOwn].sort((a, b) => a - b));
     expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(groupPages('zone-c').join(','));
     // A practice start on zone D (its PrepareStage): exactly common + zone D stay on the GPU.

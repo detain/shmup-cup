@@ -4,9 +4,10 @@
  * at the stage change, so no page uploads on its first draw mid-play —, reports what is resident
  * through `onChange` with the prepare's time, and is idempotent; a throwing upload is skipped and
  * retried; without options it behaves as before (unload only). It is self-healing: `unload` reaches
- * every page the stage does not need, resident or not, so a page drawn behind its back (the weapon
- * select's preview draws zone A's terrain page) leaves the GPU at the next prepare — checked on a
- * fake GPU that also uploads on first draw, as Pixi does. And the shell's World-change trigger
+ * every page the stage does not need, resident or not, so a page drawn behind its back (before
+ * R5-01's zone A remaster, the weapon select's preview drew zone A's terrain page; since it, the
+ * stray is simulated directly on a page outside the prepared sets) leaves the GPU at the next
+ * prepare — checked on a fake GPU that also uploads on first draw, as Pixi does. And the shell's World-change trigger
  * (W3-9): `worldOfView` finds the World behind a frame — the game's, or one a scene plays itself
  * (the attract demo, a replay; never the weapon select's preview, a dev range outside the
  * campaign) —, `stageIndexOfWorld` maps it to its stage and `prepareShownWorld` prepares it,
@@ -192,18 +193,15 @@ describe('shell/memory createAtlasResidency — eager upload (R1-05)', () => {
     ]);
   });
 
-  it('heals a page drawn behind its back: the weapon preview’s page leaves at the next prepare', () => {
-    // The page the weapon select's preview draws outside `common`: its range's tileset's.
-    const range = db.stages[stage('weapon-range')];
-    const tilemap = range.tilemap;
-    if (tilemap === null) throw new Error('weapon-range has no tilemap');
-    const tileset = db.tilesets[tilemap.tilesetId];
-    const sprite = manifest.sprites[db.sprites.names[tileset.spriteId]];
-    const previewPage = manifest.frames[sprite.frames[0]].p;
-    // The premise: zone A's page, needed by neither zone C nor zone D.
-    expect(stagePages(needs, ZONE_A)).toContain(previewPage);
-    expect(stagePages(needs, ZONE_C)).not.toContain(previewPage);
-    expect(stagePages(needs, ZONE_D)).not.toContain(previewPage);
+  it('heals a page drawn behind its back: a stray zone page leaves at the next prepare', () => {
+    // R5-01.S7.1: the zone A remaster moved the stage to `terrain-azure`, so the weapon-range
+    // preview's `tiles/terrain-a` re-derived onto the common page — the preview draws nothing
+    // outside the prepared sets any more. The behind-the-back draw is simulated on the page it
+    // uploaded before the remaster: zone A's own page, needed by neither zone C nor zone D.
+    const previewPage = stagePages(needs, ZONE_A).find(
+      (p) => !stagePages(needs, ZONE_C).includes(p) && !stagePages(needs, ZONE_D).includes(p),
+    );
+    if (previewPage === undefined) throw new Error('zone A shares every page with zone C or D');
     // A fake GPU: the residency's upload and unload, plus Pixi's upload on a page's first draw.
     const gpu = new Set<number>();
     const residency = createAtlasResidency(
@@ -219,7 +217,7 @@ describe('shell/memory createAtlasResidency — eager upload (R1-05)', () => {
     const onGpu = (): number[] => [...gpu].sort((a, b) => a - b);
     residency.prepare(ZONE_C); // as after a zone C attract demo
     expect(onGpu()).toEqual(stagePages(needs, ZONE_C));
-    gpu.add(previewPage); // the weapon select: the preview draws zone A's terrain page
+    gpu.add(previewPage); // a stray draw of zone A's own page (what the weapon preview drew pre-R5-01)
     const unloads = residency.unloads;
     // A practice start on zone D: exactly common + zone D stay, the stray page included in the
     // unloads but not in the counters (it was never believed resident).
