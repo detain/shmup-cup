@@ -89,6 +89,22 @@ describe('integration: the zone contracts (R5-P.P6)', () => {
       expect(ZONE_CONTRACTS[letter].v2.newTypesBySprite, `zone-${letter}`).toEqual([6, 8]);
   });
 
+  it('item composition rows: a remastered zone must carry one, and zone A holds the design §11 tally (R5-01.S5b adjudication)', () => {
+    for (const letter of LETTERS) {
+      const contract = ZONE_CONTRACTS[letter];
+      const comp = contract.directItemComposition;
+      if (contract.remastered)
+        expect(comp, `zone-${letter} must author its composition with its flip`).toBeDefined();
+      if (comp === undefined) continue;
+      expect(Number.isInteger(comp.octagons) && comp.octagons >= 0, `zone-${letter}`).toBe(true);
+      expect(Number.isInteger(comp.maxRare) && comp.maxRare >= 1, `zone-${letter}`).toBe(true);
+    }
+    // The 34-entry plan §11 tallies (red 9, green 9, blue 8, orange 3, yellow 3, octagon 2):
+    // two power-meter octagons, rare pickups at three — the reviewed design binds over the
+    // v1 plan's constant of one, which is what made S5b stop and escalate.
+    expect(ZONE_CONTRACTS.a.directItemComposition).toEqual({ octagons: 2, maxRare: 3 });
+  });
+
   it('a fake 21,000-px ported stage is in contract with every zone on its v2 branch', () => {
     for (const letter of LETTERS) {
       expect(shapeViolations(ZONE_CONTRACTS[letter].v2, 1, FAKE_PORTED), `zone-${letter}`).toEqual(

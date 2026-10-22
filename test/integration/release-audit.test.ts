@@ -76,7 +76,9 @@ export const CAPSULE_BUDGET = Object.freeze({
 
 /**
  * A campaign zone's Direct-mode item plan — the entry budget comes from zone A's contract, the
- * composition (which the contract does not carry) from the v1 plan's M2-05 rules.
+ * composition from the zone's own contract row once it is remastered (the R5-01.S5b
+ * adjudication: design tallies bind) and, for every zone without one, from the v1 plan's
+ * M2-05 rules.
  */
 export const DIRECT_ITEM_BUDGET = Object.freeze({
   min: boundsOf(ZONE_CONTRACTS.a).directItems[0],
@@ -176,9 +178,16 @@ describe('release audit: capsule and item budgets, the recovery rule (M2-18)', (
     for (const item of ['red', 'green', 'blue']) {
       expect(count(item), `${stage.id} ${item}`).toBeGreaterThanOrEqual(DIRECT_ITEM_BUDGET.minEach);
     }
-    expect(count('octagon'), stage.id).toBe(DIRECT_ITEM_BUDGET.octagons);
-    expect(count('orange'), stage.id).toBeLessThanOrEqual(DIRECT_ITEM_BUDGET.maxRare);
-    expect(count('yellow'), stage.id).toBeLessThanOrEqual(DIRECT_ITEM_BUDGET.maxRare);
+    // A remastered zone's composition comes from its contract row (the design §11 tallies bind
+    // — R5-01.S5b adjudication); every other zone keeps the v1 plan's constants, AS-IS.
+    const contract = ZONE_CONTRACTS[stage.id.slice(-1) as ZoneLetter];
+    const comp =
+      contract.remastered && contract.directItemComposition !== undefined
+        ? contract.directItemComposition
+        : DIRECT_ITEM_BUDGET;
+    expect(count('octagon'), stage.id).toBe(comp.octagons);
+    expect(count('orange'), stage.id).toBeLessThanOrEqual(comp.maxRare);
+    expect(count('yellow'), stage.id).toBeLessThanOrEqual(comp.maxRare);
   });
 
   it.each(ZONES)(

@@ -365,6 +365,18 @@ export interface ZoneContract {
   readonly remastered: boolean;
   readonly v1: ZoneBounds;
   readonly v2: ZoneBounds;
+  /**
+   * The zone's design item composition, which the release audit checks in place of the v1
+   * plan's constants once the zone is remastered — the R5-01.S5b adjudication: the reviewed
+   * designs bind. Absent = the legacy constants (a row may author it before its flip; a
+   * remastered zone must carry it — pinned by `contract.test.ts`).
+   */
+  readonly directItemComposition?: {
+    /** Octagons (the main-shot family switch) the plan holds, checked exactly. */
+    readonly octagons: number;
+    /** Most orange (1UP) and yellow (smart bomb) items — the design tally's rare ceiling. */
+    readonly maxRare: number;
+  };
 }
 
 /** A campaign zone's letter (`stage.id` is `zone-<letter>`). */

@@ -2,8 +2,10 @@
  * Zone A (AZURE VERGE) — its content contract (R5-P.P6, decision R5-D2). The v1 branch is the
  * v1 plan's shape (its length is the only one a test gated in v1; its roster rule is the
  * behaviour count, never a new-types-over-earlier-zones count — zone A has no earlier zone);
- * the v2 branch is the ported shape every zone shares. `remastered: false` until wave 09's
- * R5-P.D-A lane ports the zone and flips the flag.
+ * the v2 branch is the ported shape every zone shares. `remastered: false` on this tree — the
+ * flip is authored: wave 11's R5-01.S5b stage commit carries it (with the §17 content rewrites
+ * and its golden re-bless) — and the design §11 item tally already rides this row, so the
+ * release audit moves to the design's composition the moment the flag flips.
  *
  * @module
  */
@@ -39,4 +41,8 @@ export const zoneAContract: ZoneContract = {
     directItems: [30, Number.POSITIVE_INFINITY], // R5-D2 sets the floor; the zone's R5 lane caps it
     blueCapsulesMax: 2,
   },
+  // The design §11 tally of the ported 34-entry plan (red 9, green 9, blue 8, orange 3,
+  // yellow 3, octagon 2) — octagons exact, rare pickups ceiling 3. R5-01.S5b authored it here
+  // so the release audit moves to it the moment its stage commit flips `remastered`.
+  directItemComposition: { octagons: 2, maxRare: 3 },
 };
