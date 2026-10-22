@@ -10,6 +10,7 @@ import {
   DEFAULT_BLOCK_SCREEN_X,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -20,6 +21,7 @@ import {
   type StageSpec,
 } from '@shmup/core';
 import { loadMusicContent, resolveMusicCues } from '@shmup/audio-web';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
@@ -167,6 +169,91 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const drops = [...stageEnemies(db, grotto)].map((index) => db.enemies[index].drop);
     expect(drops).toContain('bonusCapsule');
     expect(drops).toContain('oneUp');
+  });
+
+  // R5-02.S4b — the design §8 rebuild: the taller part tree still fits the screen, and the
+  // core stays reachable (S6's god-mode run, which must shoot the boss down, is the real proof).
+  it('keeps the rebuilt GALVANIC MAW under 60 % of the playfield with a reachable core', () => {
+    const boss = db.enemies[db.enemyIndex.get('galvanic-maw') ?? -1].boss;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    // The assembled height, exactly as `scripts/doc-images.mjs` assembles a boss plate: every
+    // part's sprite centred on the sum of its offsets up the parent chain, the frame sizes read
+    // from `buildAtlas()`'s manifest (the interim v2 art the portraits are drawn from); the
+    // untrimmed extent is the bound — trimming can only make the picture shorter.
+    const { manifest } = buildAtlas();
+    const anchors = new Map<string, { x: number; y: number }>();
+    let top = Infinity;
+    let bottom = -Infinity;
+    for (const part of boss.parts) {
+      const parent = part.parent === null ? null : (anchors.get(part.parent) ?? null);
+      const x = (parent?.x ?? 0) + part.x;
+      const y = (parent?.y ?? 0) + part.y;
+      anchors.set(part.name, { x, y });
+      const frame = part.sprite === undefined ? undefined : manifest.frames[part.sprite + '#0'];
+      if (frame === undefined) continue;
+      const row = Math.round(y) - Math.floor(frame.h / 2);
+      top = Math.min(top, row);
+      bottom = Math.max(bottom, row + frame.h);
+    }
+    expect(bottom - top).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // A reachable core: some part is the core, it is not `never` vulnerable, and every part its
+    // `requires` names exists and is not `never` either (a gate of armoured plates is a wall).
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    expect(boss.parts.some((p) => p.core)).toBe(true);
+    for (const part of boss.parts) {
+      if (!part.core) continue;
+      expect(part.vulnerable).not.toBe('never');
+      for (const need of part.requires) {
+        const required = byName.get(need);
+        expect(required, `the core requires ${need}`).toBeDefined();
+        expect(required?.vulnerable).not.toBe('never');
+      }
+    }
+  });
+
+  // R5-02.S5b — the design §7 refit: the five-part captain tree still fits the screen and the
+  // shell stays the reachable core.
+  it('keeps the refit SPUME HERALD a five-part captain under 60 % of the playfield, core open', () => {
+    const boss = db.enemies[db.enemyIndex.get('spume-herald') ?? -1].boss;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    expect(boss.role).toBe('captain');
+    expect(boss.parts.length).toBe(5);
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    // The assembled height with the same doc-images plate math as the MAW case above: the
+    // untrimmed extent of the shell, the ∓27 tubes and the ∓40 crown fins on their frame rows.
+    const { manifest } = buildAtlas();
+    const anchors = new Map<string, { x: number; y: number }>();
+    let top = Infinity;
+    let bottom = -Infinity;
+    for (const part of boss.parts) {
+      const parent = part.parent === null ? null : (anchors.get(part.parent) ?? null);
+      const x = (parent?.x ?? 0) + part.x;
+      const y = (parent?.y ?? 0) + part.y;
+      anchors.set(part.name, { x, y });
+      const frame = part.sprite === undefined ? undefined : manifest.frames[part.sprite + '#0'];
+      if (frame === undefined) continue;
+      const row = Math.round(y) - Math.floor(frame.h / 2);
+      top = Math.min(top, row);
+      bottom = Math.max(bottom, row + frame.h);
+    }
+    expect(bottom - top).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // The shell is the only core and it is always vulnerable; nothing gates it.
+    const cores = boss.parts.filter((p) => p.core);
+    expect(cores.length).toBe(1);
+    expect(cores[0].name).toBe('shell');
+    expect(cores[0].vulnerable).toBe('always');
+    for (const part of boss.parts) {
+      expect(part.vulnerable).not.toBe('never');
+      for (const need of part.requires) {
+        expect(
+          boss.parts.some((p) => p.name === need),
+          `the core requires ${need}`,
+        ).toBe(true);
+      }
+    }
   });
 
   it.each(zones)(

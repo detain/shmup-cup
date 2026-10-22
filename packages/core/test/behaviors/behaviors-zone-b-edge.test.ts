@@ -15,7 +15,11 @@
  *   part attached to the mouth on its row (rest offset 0) never moves, the jaws keep their x, it
  *   tracks the ship's height within its margins at its speed;
  * - `BossPart.restX` / `restY` (the review fix of M2-11): the boss data's offsets on activation,
- *   untouched by the jaw moves, reset for a new boss in the same slot.
+ *   untouched by the jaw moves, reset for a new boss in the same slot;
+ * - the R5-02.S4a roster types (design §6): `brine-mine`'s burst ring (eight round reds, a
+ *   quarter-turn apart, all at the design's 2.25 px/tick) and its 3 hp, and `spume-skipper`'s
+ *   capped 3-unit turn while it chases, its silence and its 250 — plus a pin that both entries
+ *   carry exactly the design's values.
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
@@ -403,6 +407,37 @@ describe('core/behaviors boss.maw — edge cases (M2-11)', () => {
   });
 });
 
+describe('core/behaviors captain.launcher — the SPUME HERALD refit (R5-02.S5b)', () => {
+  it('fights the five-part tree: tracks at 0.6 within its 96 margins, shell the single core', () => {
+    const w = fighting('spume-herald');
+    const boss = w.bosses.boss;
+    const ship = w.players[0];
+    // The refit's tracking law straight from the design row: 0.6 px/tick, margins 96 world px.
+    for (const shipY of [4, PLAYFIELD_H - 4, PLAYFIELD_H / 2 + 7]) {
+      for (let t = 0; t < 400; t++) {
+        ship.y = w.camera.y + shipY;
+        const y = boss.screenY;
+        run(w, 1);
+        expect(Math.abs(boss.screenY - y)).toBeLessThanOrEqual(0.6 + 1e-9);
+        expect(boss.screenY).toBeGreaterThanOrEqual(96 - 1e-9);
+        expect(boss.screenY).toBeLessThanOrEqual(PLAYFIELD_H - 96 + 1e-9);
+      }
+    }
+    expect(boss.phase).toBe(0);
+    // All five parts stood up on the boss: the core shell, the gunned tubes and the crown fins
+    // (the parts slots are a MAX_BOSS_PARTS pool — `partCount` is the live count).
+    expect(boss.partCount).toBe(5);
+    expect(boss.parts[part(w, 'crown-fin-top')].hp).toBe(8);
+    expect(boss.parts[part(w, 'crown-fin-bottom')].hp).toBe(8);
+    expect(boss.parts[part(w, 'shell')].core).toBe(true);
+    // And the captain launches its brood: within 110-tick cycles the minions enter the fight,
+    // and the spread bullets are on the screen too (the design's 3-way at 1.8 px/tick).
+    run(w, 130);
+    expect(live(w, 'brood-bubble').length).toBeGreaterThan(0);
+    expect(w.bullets.count).toBeGreaterThan(0);
+  });
+});
+
 describe('core/bosses BossPart.restX / restY (M2-11 review fix)', () => {
   it('holds the boss data’s offsets from activation on, whatever the behaviour moves', () => {
     const w = fighting('galvanic-maw');
@@ -439,5 +474,95 @@ describe('core/bosses BossPart.restX / restY (M2-11 review fix)', () => {
       -v1rel(8),
       -v1rel(9),
     ]);
+  });
+});
+
+describe('core/behaviors — the R5-02 new zone B types (design §6)', () => {
+  it('carries the design values on both new entries', () => {
+    const mine = DB.enemies[indexOf('brine-mine')];
+    expect([mine.script, mine.hp, mine.score, mine.hurtbox.hw, mine.hurtbox.hh]).toEqual([
+      'mine.burst',
+      3,
+      350,
+      8,
+      8,
+    ]);
+    expect(mine.params).toEqual({
+      speed: 0.45,
+      amp: 15,
+      period: 200,
+      trigger: 108,
+      fuse: 24,
+      ring: 8,
+      bulletSpeed: 2.25,
+    });
+    const skipper = DB.enemies[indexOf('spume-skipper')];
+    expect([
+      skipper.script,
+      skipper.hp,
+      skipper.score,
+      skipper.hurtbox.hw,
+      skipper.hurtbox.hh,
+    ]).toEqual(['cell.chase', 2, 250, 8, 5]);
+    expect(skipper.params).toEqual({
+      speed: 2.25,
+      enterTicks: 40,
+      turnRate: 3,
+      chaseTicks: 180,
+      scatterTicks: 24,
+    });
+  });
+
+  it('brine-mine: the burst ring is eight round reds, a quarter turn apart, all at 2.25 px/tick', () => {
+    const w = world();
+    const ship = w.players[0];
+    spawn(w, 'brine-mine', ship.x + 120, ship.y);
+    for (let t = 0; t < 400 && live(w, 'brine-mine').length > 0; t++) run(w, 1);
+    expect(live(w, 'brine-mine')).toHaveLength(0);
+    const pool = w.bullets.pool;
+    const f = pool.fields;
+    const angles: number[] = [];
+    for (let i = 0; i < pool.count; i++) {
+      if (f.kind[i] !== BulletKind.RoundRed || f.age[i] > 1) continue;
+      angles.push(((Math.round(f.angle[i]) % ANGLE_UNITS) + ANGLE_UNITS) % ANGLE_UNITS);
+      // the design ring speed — 2.25 after the C1 fold (2.4 breached the 3.0 gate at rank)
+      expect(f.speed[i]).toBeCloseTo(2.25, 9);
+    }
+    const gap = ANGLE_UNITS / 8;
+    expect(angles.sort((a, b) => a - b)).toEqual(Array.from({ length: 8 }, (_v, k) => k * gap));
+  });
+
+  it('brine-mine: 3 hit points — the third hit kills it, and it bursts nothing even so', () => {
+    const w = world();
+    const ship = w.players[0];
+    const far = spawn(w, 'brine-mine', ship.x + 250, ship.y - 150); // out of vertical reach
+    expect(w.enemies.damage(far, 1)).toBe(false);
+    expect(w.enemies.damage(far, 1)).toBe(false);
+    expect(w.enemies.damage(far, 1)).toBe(true); // exactly the design's 3 hp
+    run(w, 60);
+    expect(live(w, 'brine-mine')).toHaveLength(0);
+    expect(w.bullets.count).toBe(0); // a shot mine never bursts
+  });
+
+  it('spume-skipper: chases turning at most 3 angle units a tick, never fires, and pays its 250', () => {
+    const w = world();
+    const e = spawn(w, 'spume-skipper', w.camera.x + 420, w.camera.y + 40);
+    run(w, 41); // the 40 enter ticks done: homing now
+    let last = -1;
+    let most = 0;
+    for (let t = 0; t < 140; t++) {
+      run(w, 1);
+      if (last >= 0) {
+        const step = Math.abs(((e.s0 - last + 1.5 * ANGLE_UNITS) % ANGLE_UNITS) - 512);
+        most = Math.max(most, step);
+      }
+      last = e.s0;
+    }
+    expect(most).toBe(3); // the ship is far below-left: the chase turns at the cap
+    expect(Math.hypot(e.vx, e.vy)).toBeCloseTo(2.25, 3);
+    expect(w.bullets.count).toBe(0);
+    w.enemies.kill(e, 0);
+    run(w, 60);
+    expect(w.scoring.board.scores[0].score).toBe(250);
   });
 });

@@ -36,6 +36,7 @@ import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
 import * as azure from '../../scripts/assets/procedural/azure.mjs';
+import * as brine from '../../scripts/assets/procedural/brine.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 import { expectHeightfieldFindsTiles, expectMasksMatchArt } from './terrain-checks.js';
 
@@ -96,13 +97,20 @@ function resampledTilesets(size: number): ContentFile[] {
 /**
  * The 12-px frames of a shipped tileset sprite: `terrain.mjs` draws the palette families;
  * `tiles/terrain-azure` comes from `azure.mjs`, which paints it at `options.tileSize` exactly
- * like `renderTerrainTiles` does a palette (R5-01.S5a — later zones' -v2 sets route the same way).
+ * like `renderTerrainTiles` does a palette (R5-01.S5a — later zones' -v2 sets route the same
+ * way, `tiles/terrain-reef-v2` from `brine.mjs` since R5-02.S5a).
  *
  * @param sprite - The tileset's sprite name.
  * @param size - The tile size to draw at.
  * @returns The drawn grid sprite's frames.
  */
 function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof renderTerrainTiles> {
+  if (sprite === 'tiles/terrain-reef-v2') {
+    for (const drawn of brine.generate({ tileSize: size, artScale: 3 / 2 })) {
+      if (drawn.name === sprite) return drawn.frames;
+    }
+    throw new Error(`brine.mjs draws no ${sprite}`);
+  }
   if (sprite !== 'tiles/terrain-azure') return renderTerrainTiles(size, sprite);
   for (const drawn of azure.generate({ tileSize: size, artScale: 3 / 2 })) {
     if (drawn.name === sprite) return drawn.frames;

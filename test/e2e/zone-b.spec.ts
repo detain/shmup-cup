@@ -45,15 +45,15 @@ test.describe('zones B and C (web build)', () => {
     await open(page, './?scene=flight&stage=zone-b');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-b');
-    // The sea band — content/stages/zone-b.stage.json `brine-sea` starts at band-y 264 (R2-02's
-    // port) — in its ramp colours, before and after a few cycle steps.
-    const sea = { x0: 0, y0: 270, x1: FRAME_W, y1: 330 };
+    // The sea band — content/stages/zone-b.stage.json `brine-sea` starts at band-y 216 (the
+    // R5-02.S5a design §9 row) — in its ramp colours, before and after a few cycle steps.
+    const sea = { x0: 0, y0: 240, x1: FRAME_W, y1: 320 };
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
     await stepTo(page, start + 25);
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
     expect(await countColours(page, [MAW_PLATE], RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 13,950), then the boss.
-    await jumpTo(page, 13800);
+    // The end of the stage: the WARNING (x 19,800), then the boss.
+    await jumpTo(page, 19650);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('galvanic-maw');
     expect(await countColours(page, [MAW_PLATE], RIGHT_HALF)).toBeGreaterThan(500);

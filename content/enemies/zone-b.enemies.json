@@ -160,6 +160,55 @@
       "explosion": "medium"
     },
     {
+      "id": "brine-mine",
+      "hp": 3,
+      "score": 350,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 8
+      },
+      "script": "mine.burst",
+      "sprite": "enemies/brine-mine",
+      "anim": {
+        "frames": 4,
+        "ticks": 12
+      },
+      "params": {
+        "speed": 0.45,
+        "amp": 15,
+        "period": 200,
+        "trigger": 108,
+        "fuse": 24,
+        "ring": 8,
+        "bulletSpeed": 2.25
+      },
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "spume-skipper",
+      "hp": 2,
+      "score": 250,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 5
+      },
+      "script": "cell.chase",
+      "sprite": "enemies/spume-skipper",
+      "anim": {
+        "frames": 4,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 2.25,
+        "enterTicks": 40,
+        "turnRate": 3,
+        "chaseTicks": 180,
+        "scatterTicks": 24
+      },
+      "drop": null
+    },
+    {
       "id": "maw-rocket",
       "hp": 1,
       "score": 100,
@@ -197,12 +246,13 @@
         "parts": [
           {
             "name": "shell",
-            "hp": 40,
+            "hp": 48,
             "hurtbox": {
-              "hw": 20,
-              "hh": 14
+              "hw": 21,
+              "hh": 15
             },
             "core": true,
+            "vulnerable": "always",
             "sprite": "bosses/herald-shell",
             "anim": {
               "frames": 2,
@@ -214,7 +264,7 @@
             "name": "tube-top",
             "parent": "shell",
             "x": -3,
-            "y": -21,
+            "y": -27,
             "hp": 10,
             "hurtbox": {
               "hw": 11,
@@ -228,7 +278,7 @@
             "name": "tube-bottom",
             "parent": "shell",
             "x": -3,
-            "y": 21,
+            "y": 27,
             "hp": 10,
             "hurtbox": {
               "hw": 11,
@@ -237,16 +287,44 @@
             "gun": true,
             "sprite": "bosses/maw-pod",
             "score": 500
+          },
+          {
+            "name": "crown-fin-top",
+            "x": -6,
+            "y": -40,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 12,
+              "hh": 4
+            },
+            "sprite": "bosses/herald-fin",
+            "score": 400
+          },
+          {
+            "name": "crown-fin-bottom",
+            "x": -6,
+            "y": 40,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 12,
+              "hh": 4
+            },
+            "sprite": "bosses/herald-fin",
+            "score": 400
           }
         ],
         "phases": [
           {
             "script": "captain.launcher",
             "params": {
-              "launchTicks": 120,
+              "trackSpeed": 0.6,
+              "margin": 96,
+              "launchTicks": 110,
               "count": 2,
-              "fireTicks": 85,
-              "bulletSpeed": 1.8
+              "fireTicks": 80,
+              "bulletSpeed": 1.8,
+              "ways": 3,
+              "spread": 64
             }
           }
         ]
@@ -283,7 +361,7 @@
             "name": "pod-top",
             "x": 45,
             "y": -39,
-            "hp": 16,
+            "hp": 20,
             "hurtbox": {
               "hw": 11,
               "hh": 8
@@ -296,7 +374,7 @@
             "name": "pod-bottom",
             "x": 45,
             "y": 39,
-            "hp": 16,
+            "hp": 20,
             "hurtbox": {
               "hw": 11,
               "hh": 8
@@ -308,7 +386,7 @@
           {
             "name": "maw",
             "x": -9,
-            "hp": 64,
+            "hp": 80,
             "hurtbox": {
               "hw": 9,
               "hh": 9
@@ -346,6 +424,45 @@
               "hh": 6
             },
             "sprite": "bosses/maw-jaw-bottom"
+          },
+          {
+            "name": "spine-1",
+            "parent": "hull",
+            "x": -15,
+            "y": -48,
+            "hp": 10,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "sprite": "bosses/maw-spine",
+            "score": 600
+          },
+          {
+            "name": "spine-2",
+            "parent": "hull",
+            "x": 27,
+            "y": -48,
+            "hp": 10,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "sprite": "bosses/maw-spine",
+            "score": 600
+          },
+          {
+            "name": "spine-3",
+            "parent": "hull",
+            "x": 69,
+            "y": -48,
+            "hp": 10,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "sprite": "bosses/maw-spine",
+            "score": 600
           }
         ],
         "phases": [
@@ -357,12 +474,12 @@
               "openTicks": 90,
               "fireTicks": 40,
               "bulletSpeed": 1.95,
-              "launchTicks": 170,
+              "launchTicks": 160,
               "count": 1,
               "gape": 12
             },
             "until": {
-              "hpBelow": 40
+              "hpBelow": 50
             }
           },
           {
@@ -380,7 +497,7 @@
               "gape": 12
             },
             "until": {
-              "hpBelow": 16
+              "hpBelow": 24
             }
           },
           {

@@ -299,7 +299,7 @@ describe('core/data units: the pairs of the stage schema', () => {
 describe('core/data units: the gap entrances keep their bricks around their region', () => {
   for (const [stage, left, right, region] of [
     ['bonus-range', 1, 2, 3],
-    ['zone-b', 33, 34, 35],
+    ['zone-b', 58, 60, 59],
   ] as const) {
     it(`${stage}: events[${String(left)}]–[${String(right)}] around events[${String(region)}]`, () => {
       const data = stageFile(stage);

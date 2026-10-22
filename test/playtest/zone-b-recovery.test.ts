@@ -20,7 +20,8 @@ describe('playtest: zone B recovery after every checkpoint (M2-11)', () => {
     expect(drops).toBe(inWindow);
   });
 
-  it('checks four checkpoints per zone', () => {
-    expect(cases).toHaveLength(4);
+  it('checks six checkpoints per zone', () => {
+    // The R5-02.S5a geometry (design §4) gave BRINE NEBULA six checkpoints.
+    expect(cases).toHaveLength(6);
   });
 });

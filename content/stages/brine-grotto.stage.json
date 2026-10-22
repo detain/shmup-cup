@@ -40,7 +40,7 @@
       "layer": "mid",
       "sprite": "bg/brine-sea",
       "factor": 0.4,
-      "y": 264,
+      "y": 216,
       "spacing": 192
     }
   ],

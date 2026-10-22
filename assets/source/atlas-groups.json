@@ -25,17 +25,28 @@
       "tiles/terrain-azure"
     ],
     "zone-b": [
+      "bg/brine-deep-v2",
       "bg/brine-nebula",
       "bg/brine-sea",
+      "bosses/herald-fin",
       "bosses/herald-shell",
+      "bosses/maw-spine",
+      "decor/brine-fan-1",
+      "decor/brine-fan-2",
+      "decor/brine-fan-3",
+      "decor/brine-glow-vent",
+      "decor/brine-kelp",
+      "enemies/brine-mine",
       "enemies/brood-bubble",
       "enemies/froth",
       "enemies/froth-bead",
       "enemies/gill-dart",
       "enemies/maw-rocket",
       "enemies/reef-jelly",
+      "enemies/spume-skipper",
       "enemies/urchin",
-      "tiles/terrain-reef"
+      "fore/brine-foam",
+      "tiles/terrain-reef-v2"
     ],
     "zone-c": [
       "bg/dune-ridge",

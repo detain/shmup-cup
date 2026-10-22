@@ -71,7 +71,7 @@ describe('core/behaviors boss.maw allocation (M2-11)', () => {
     }
     const parts = boss.parts;
     const core = parts.findIndex((p) => p.core);
-    // Down to its last phase (below 16 of 64): the mouth must be open to take the damage.
+    // Down to its last phase (below 24 of 80): the mouth must be open to take the damage.
     for (let i = 0; i < 400 && boss.phase < 2; i++) {
       w.bosses.damagePart(core, 8, 0);
       stepWorld(w, input);

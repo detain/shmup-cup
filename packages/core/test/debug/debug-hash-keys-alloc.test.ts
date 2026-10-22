@@ -53,6 +53,7 @@ function zoneB(): ContentDb {
       'enemies/zone-a.enemies.json',
       'enemies/bonus.enemies.json',
       'enemies/zone-b.enemies.json',
+      'paths/zone-b.paths.json',
       'stages/zone-b.stage.json',
       'stages/brine-grotto.stage.json',
       'patterns/common.patterns.json',

@@ -82,6 +82,7 @@ const ZONE_B_FILES: ContentFile[] = [
   'enemies/zone-a.enemies.json',
   'enemies/bonus.enemies.json',
   'enemies/zone-b.enemies.json',
+  'paths/zone-b.paths.json',
   'stages/zone-b.stage.json',
   'stages/brine-grotto.stage.json',
   'patterns/common.patterns.json',
@@ -201,8 +202,9 @@ function dbA2(): ContentDb {
 }
 
 /**
- * Zone B (with both banks) on the base set. (The dummy path rides along in both sets: zone B
- * ships no path files, and `arm` needs one — B isolates the bank shift, A the path shift.)
+ * Zone B (with both banks) on the base set. (The dummy path rides along in both sets: it is the
+ * one path id `arm` names, stable under the zone's own remaster — B isolates the bank shift, A
+ * the path shift.)
  *
  * @returns The DB.
  */
