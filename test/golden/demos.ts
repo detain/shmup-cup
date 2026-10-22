@@ -74,7 +74,7 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = Object.freeze([
   },
   {
     id: 'zone-d',
-    description: 'MAGMA DEEP: the KESTREL diving into the caves',
+    description: 'MAGMA DEEP: the KESTREL under the erupting caldera fields',
     stageId: 'zone-d',
     config: { seed: 104 },
   },

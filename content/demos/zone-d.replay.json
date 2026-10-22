@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "replay",
   "id": "zone-d",
-  "description": "MAGMA DEEP: the KESTREL diving into the caves",
+  "description": "MAGMA DEEP: the KESTREL under the erupting caldera fields",
   "header": {
     "formatVersion": 2,
     "buildId": "demo",
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAqwbAgIACAUAJALgBwICAAgFACQD1BsCAgAIBQAkACoKACAECBgDNAYGABAEBBgCEAYGABAEBEgBB",
+    "ACiCgAgBAgQAqwbAgIACAUAJALgBwICAAgFACQD1BsCAgAIBQAkACoKACAECBgDNAYGABAEBBgCEAYGABAEBBQADgYAEAQEGAEQ=",
     "AOAS"
   ],
   "hashes": [
     2306729649,
     1165743430,
     3580352631,
-    2612028713
+    1570545633
   ],
-  "finalHash": 2612028713
+  "finalHash": 1570545633
 }

@@ -3,8 +3,10 @@
  * in its own file so the worker's V8 type feedback comes only from this world: CINDER BASTION in
  * its last phase in free flight — the shield arms turning and reversing, attached lane lasers from
  * the emitters, spreads and rings from the core — with the weaving, fully powered KESTREL's Laser
- * and Options hitting it (the arms clink) and its core topped up so it never dies. Every wake of
- * the phase coroutine allocates the generator's result (decision D29); nothing else may.
+ * and Options hitting it (the shield arms take the hits — since R5-04.FIX they are destructible)
+ * and every living part topped up so nothing goes down: the measured tick is the full boss, its
+ * turning arms and lane lasers included, exactly as the world the guard was written for. Every
+ * wake of the phase coroutine allocates the generator's result (decision D29); nothing else may.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -64,17 +66,28 @@ describe('core/behaviors boss.bastion allocation (M2-12)', () => {
     }
     const parts = boss.parts;
     const core = parts.findIndex((p) => p.core);
-    // Below 54, then below 24 of 80: its last phase.
+    // Below 72, then below 36 of 96: its last phase (the gates read the core only).
     w.bosses.damagePart(core, 27, 0);
     stepWorld(w, input);
-    w.bosses.damagePart(core, 30, 0);
+    w.bosses.damagePart(core, 34, 0);
     stepWorld(w, input);
     expect(boss.phase).toBe(2);
+    // Since R5-04.FIX the shield arms are destructible too: keep every living part topped up
+    // exactly the way the core was (indices built cold, read in the measured loop so the
+    // top-ups allocate nothing), so the measured tick stays the full boss.
+    const shieldIdx: number[] = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (i !== core && parts[i].hp > 0) shieldIdx.push(i);
+    }
     let t = 0;
     const growth = measureHeapGrowth(
       () => {
         commitPlayerInput(input.players[0], (t / 48) % 2 < 1 ? Action.Up : Action.Down);
         if (parts[core].hp < 20) parts[core].hp = 1000;
+        for (let k = 0; k < shieldIdx.length; k++) {
+          const p = parts[shieldIdx[k]];
+          if (p.hp < 20) p.hp = 100;
+        }
         t++;
         stepWorld(w, input);
         w.events.clear();

@@ -7,7 +7,7 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 14400,
+  "length": 21150,
   "camera": [
     {
       "x": 0,
@@ -15,27 +15,40 @@
       "ramp": 60
     },
     {
-      "x": 3300,
-      "speed": 1.125,
-      "ramp": 60
+      "x": 3600,
+      "speed": 1.35,
+      "ramp": 90
     },
     {
-      "x": 5340,
-      "speed": 0.9,
-      "ramp": 60,
+      "x": 5400,
+      "speed": 1.05,
+      "ramp": 90,
       "hold": 150,
-      "yTo": 300,
+      "yTo": 186,
       "yTicks": 150
     },
     {
-      "x": 10200,
+      "x": 8700,
+      "speed": 0.975,
+      "ramp": 90,
+      "hold": 165,
+      "yTo": 432,
+      "yTicks": 165
+    },
+    {
+      "x": 13200,
       "speed": 1.95,
       "ramp": 120
     },
     {
-      "x": 12600,
-      "speed": 1.125,
+      "x": 15600,
+      "speed": 1.35,
       "ramp": 120
+    },
+    {
+      "x": 18300,
+      "speed": 1.05,
+      "ramp": 90
     }
   ],
   "checkpoints": [
@@ -43,13 +56,19 @@
       "x": 0
     },
     {
-      "x": 3300
+      "x": 3600
     },
     {
-      "x": 6000
+      "x": 6600
     },
     {
-      "x": 10200
+      "x": 9900
+    },
+    {
+      "x": 12900
+    },
+    {
+      "x": 16200
     }
   ],
   "parallax": [
@@ -68,17 +87,43 @@
       "spacing": 192
     },
     {
+      "layer": "far",
+      "sprite": "bg/magma-deep",
+      "factor": 0.35,
+      "yFactor": 0.35,
+      "y": 264,
+      "spacing": 320
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/magma-chimney",
+      "factor": 0.6,
+      "yFactor": 0.6,
+      "y": 330,
+      "spacing": 320
+    },
+    {
       "layer": "mid",
       "sprite": "bg/magma-lava",
       "factor": 0.5,
-      "y": 420,
+      "yFactor": 0.5,
+      "y": 484,
       "spacing": 192
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/cinder-drift",
+      "factor": 1.15,
+      "yFactor": 1.15,
+      "y": 96,
+      "spacing": 320,
+      "frames": 2
     }
   ],
   "tilemap": {
     "tileSize": 12,
     "tileset": "terrain-magma",
-    "rowsTall": 53,
+    "rowsTall": 64,
     "rle": [
       "",
       "",
@@ -98,6 +143,9 @@
       "",
       "",
       "",
+      "620*0, 24",
+      "",
+      "680*0, 24",
       "",
       "",
       "",
@@ -109,90 +157,140 @@
       "",
       "",
       "",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 38*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "620*0, 2*18, 18*0, 2*18, 38*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "620*0, 2*18, 18*0, 2*18, 38*0, 2*18, 38*0, 2*18",
-      "620*0, 2*18, 58*0, 2*18, 38*0, 2*18",
-      "620*0, 2*18, 58*0, 2*18, 38*0, 2*18",
-      "620*0, 2*18, 58*0, 2*18, 38*0, 2*18",
-      "620*0, 2*18, 38*0, 2*18, 18*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 38*0, 2*18, 58*0, 2*18",
-      "600*0, 2*18, 58*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 38*0, 2*18, 18*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 38*0, 2*18, 18*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 38*0, 2*18, 18*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 38*0, 2*18, 18*0, 2*18, 38*0, 2*18",
-      "600*0, 2*18, 38*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
-      "600*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18, 18*0, 2*18",
       "",
-      ""
+      "",
+      "",
+      "",
+      "856*0, 24, 37*0, 24, 37*0, 24, 27*0, 24, 219*0, 24, 79*0, 24, 79*0, 24",
+      "",
+      "",
+      "",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 178*0, 225*23, 45*0, 24, 99*0, 24",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 178*0, 225*23",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "880*0, 18, 21, 58*0, 18, 21, 28*0, 2*18",
+      "880*0, 18, 21, 58*0, 18, 21",
+      "940*0, 18, 21",
+      "700*0, 24",
+      "910*0, 2*18",
+      "600*0, 24, 249*0, 2*18, 58*0, 2*18, 58*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 58*0, 2*18",
+      "650*0, 24, 199*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18",
+      "850*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 28*0, 18, 21, 28*0, 2*18, 78*0, 22, 18",
+      "1050*0, 22, 18, 348*0, 24, 49*0, 24, 49*0, 24, 59*0, 24, 59*0, 24, 59*0, 24",
+      "1050*0, 22, 18",
+      "858*0, 24, 7*0, 24, 25*0, 24, 7*0, 24, 27*0, 24, 19*0, 24, 13*0, 24, 15*0, 24, 71*0, 22, 18",
+      "1050*0, 22, 18",
+      "1050*0, 22, 18, 108*0, 24, 39*0, 24, 39*0, 24, 39*0, 24, 39*0, 24, 39*0, 24",
+      "1050*0, 22, 18",
+      "1012*0, 24, 15*0, 24, 15*0, 24, 5*0, 22, 18",
+      "1050*0, 22, 18"
     ],
     "generator": {
       "type": "heightfield",
       "segments": [
         {
           "from": 0,
-          "to": 5430,
+          "to": 6000,
           "floor": {
-            "base": 324,
+            "base": 456,
             "amp": 15,
             "period": 630,
             "seed": 81
           }
         },
         {
-          "from": 5910,
-          "to": 9960,
+          "from": 6600,
+          "to": 9000,
           "floor": {
-            "base": 42,
-            "amp": 15,
-            "period": 510,
+            "base": 288,
+            "amp": 12,
+            "period": 570,
             "seed": 82
           },
           "ceiling": {
-            "base": 372,
-            "amp": 15,
-            "period": 450,
+            "base": 300,
+            "amp": 12,
+            "period": 510,
             "seed": 83
           }
         },
         {
-          "from": 10080,
-          "to": 12690,
+          "from": 9900,
+          "to": 11950,
           "floor": {
-            "base": 33,
-            "amp": 9,
-            "period": 360,
+            "base": 108,
+            "amp": 12,
+            "period": 600,
             "seed": 84
           },
           "ceiling": {
-            "base": 360,
-            "amp": 12,
-            "period": 390,
+            "base": 504,
+            "amp": 9,
+            "period": 420,
             "seed": 85
           }
         },
         {
-          "from": 12780,
-          "to": 15040,
+          "from": 12050,
+          "to": 12670,
           "floor": {
-            "base": 24,
+            "base": 36,
             "amp": 6,
             "period": 450,
+            "seed": 88
+          }
+        },
+        {
+          "from": 12770,
+          "to": 13800,
+          "floor": {
+            "base": 108,
+            "amp": 12,
+            "period": 600,
+            "seed": 84
+          },
+          "ceiling": {
+            "base": 504,
+            "amp": 9,
+            "period": 420,
+            "seed": 85
+          }
+        },
+        {
+          "from": 13800,
+          "to": 16500,
+          "floor": {
+            "base": 84,
+            "amp": 9,
+            "period": 540,
             "seed": 86
           },
           "ceiling": {
-            "base": 354,
-            "amp": 6,
+            "base": 480,
+            "amp": 12,
             "period": 480,
             "seed": 87
+          }
+        },
+        {
+          "from": 16500,
+          "to": 21790,
+          "floor": {
+            "base": 144,
+            "amp": 12,
+            "period": 570,
+            "seed": 89
+          },
+          "ceiling": {
+            "base": 528,
+            "amp": 9,
+            "period": 450,
+            "seed": 90
           }
         }
       ]
@@ -206,7 +304,8 @@
       "count": 5,
       "interval": 16,
       "y": 126,
-      "bonus": 300
+      "bonus": 300,
+      "drop": "capsule"
     },
     {
       "x": 450,
@@ -226,8 +325,8 @@
       "count": 5,
       "interval": 12,
       "y": 96,
-      "bonus": 400,
-      "path": "bat-swoop-down"
+      "path": "bat-swoop-down",
+      "bonus": 400
     },
     {
       "x": 1050,
@@ -247,7 +346,8 @@
       "count": 6,
       "interval": 14,
       "y": 216,
-      "bonus": 400
+      "bonus": 400,
+      "drop": "capsule"
     },
     {
       "x": 1710,
@@ -262,8 +362,8 @@
       "count": 5,
       "interval": 12,
       "y": 261,
-      "bonus": 500,
-      "path": "bat-swoop-up"
+      "path": "bat-swoop-up",
+      "bonus": 500
     },
     {
       "x": 2066,
@@ -281,7 +381,7 @@
       "enemy": "ember-wisp",
       "count": 6,
       "interval": 14,
-      "y": 111,
+      "bonus": 0,
       "drop": null
     },
     {
@@ -296,15 +396,9 @@
       "enemy": "magma-cone"
     },
     {
-      "x": 3360,
+      "x": 3520,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 3476,
-      "type": "spawn",
-      "enemy": "magma-cone"
+      "enemy": "magma-geode"
     },
     {
       "x": 3720,
@@ -313,290 +407,430 @@
       "count": 5,
       "interval": 12,
       "y": 126,
-      "bonus": 500,
-      "path": "bat-swoop-down"
-    },
-    {
-      "x": 3900,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 5,
-      "interval": 16,
-      "y": 231,
-      "drop": null
-    },
-    {
-      "x": 4050,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 201
-    },
-    {
-      "x": 4166,
-      "type": "spawn",
-      "enemy": "magma-cone"
-    },
-    {
-      "x": 4410,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 6,
-      "interval": 14,
-      "y": 171,
-      "bonus": 400
-    },
-    {
-      "x": 4436,
-      "type": "spawn",
-      "enemy": "slag-crawler-floor"
-    },
-    {
-      "x": 4770,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 141
-    },
-    {
-      "x": 4950,
-      "type": "formation",
-      "enemy": "cinder-bat",
-      "count": 5,
-      "interval": 12,
-      "y": 111,
-      "drop": null,
-      "path": "bat-swoop-down"
-    },
-    {
-      "x": 5130,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 5,
-      "interval": 16,
-      "y": 126,
-      "drop": null
-    },
-    {
-      "x": 5340,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 6,
-      "interval": 14,
-      "y": 246,
-      "drop": null
-    },
-    {
-      "x": 6060,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 6176,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 6326,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 6540,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 6656,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 6840,
-      "type": "formation",
-      "enemy": "cinder-bat",
-      "count": 5,
-      "interval": 12,
-      "y": 171,
+      "path": "bat-swoop-down",
       "bonus": 500
     },
     {
-      "x": 7050,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 216
-    },
-    {
-      "x": 7136,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 7320,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 141
-    },
-    {
-      "x": 7590,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 201
-    },
-    {
-      "x": 7616,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 7856,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 8070,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 6,
-      "interval": 14,
-      "y": 186,
-      "bonus": 400
-    },
-    {
-      "x": 8216,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 8490,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 171
-    },
-    {
-      "x": 8636,
-      "type": "spawn",
-      "enemy": "slag-crawler"
-    },
-    {
-      "x": 8876,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 8910,
-      "type": "formation",
-      "enemy": "cinder-bat",
-      "count": 5,
-      "interval": 12,
-      "y": 201,
-      "drop": null
-    },
-    {
-      "x": 8966,
-      "type": "spawn",
-      "enemy": "basalt-turret-ceiling"
-    },
-    {
-      "x": 9330,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 126
-    },
-    {
-      "x": 10260,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 10440,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 8,
-      "interval": 10,
-      "y": 126,
-      "bonus": 600
-    },
-    {
-      "x": 10650,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 246
-    },
-    {
-      "x": 10860,
-      "type": "formation",
-      "enemy": "cinder-bat",
-      "count": 6,
-      "interval": 12,
-      "y": 231,
-      "bonus": 600,
-      "path": "bat-swoop-up"
-    },
-    {
-      "x": 11036,
-      "type": "spawn",
-      "enemy": "cinder-rock"
-    },
-    {
-      "x": 11340,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 8,
-      "interval": 10,
-      "y": 246,
-      "drop": null
-    },
-    {
-      "x": 11550,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 141
-    },
-    {
-      "x": 11666,
-      "type": "spawn",
-      "enemy": "basalt-turret-ceiling"
-    },
-    {
-      "x": 11790,
-      "type": "formation",
-      "enemy": "cinder-bat",
-      "count": 6,
-      "interval": 12,
-      "y": 141,
-      "drop": null,
-      "path": "bat-swoop-down"
-    },
-    {
-      "x": 12300,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 8,
-      "interval": 10,
-      "y": 186,
-      "drop": null
-    },
-    {
-      "x": 12780,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 13140,
+      "x": 3900,
       "type": "spawn",
       "enemy": "tender",
       "y": 231
     },
     {
-      "x": 13650,
+      "x": 4100,
+      "type": "spawn",
+      "enemy": "magma-cone"
+    },
+    {
+      "x": 4200,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 4350,
+      "type": "spawn",
+      "enemy": "slag-mine",
+      "y": 201
+    },
+    {
+      "x": 4500,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 171,
+      "bonus": 400,
+      "drop": "capsule"
+    },
+    {
+      "x": 4750,
+      "type": "spawn",
+      "enemy": "basalt-turret"
+    },
+    {
+      "x": 4900,
+      "type": "spawn",
+      "enemy": "magma-cone"
+    },
+    {
+      "x": 5050,
+      "type": "spawn",
+      "enemy": "slag-mine",
+      "y": 246
+    },
+    {
+      "x": 5750,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 6500,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 5,
+      "interval": 14,
+      "y": 201,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 6700,
+      "type": "spawn",
+      "enemy": "magma-geode"
+    },
+    {
+      "x": 6900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 7100,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 7400,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 5,
+      "interval": 12,
+      "y": 150,
+      "path": "bat-swoop-down",
+      "bonus": 450
+    },
+    {
+      "x": 7650,
+      "type": "boss",
+      "enemy": "obsidian-claw"
+    },
+    {
+      "x": 7900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
+    },
+    {
+      "x": 8100,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 8120,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 8300,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 13,
+      "y": 231,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 8450,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 9300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 9600,
+      "type": "spawn",
+      "enemy": "basalt-turret"
+    },
+    {
+      "x": 9950,
+      "type": "spawn",
+      "enemy": "magma-geode"
+    },
+    {
+      "x": 10050,
+      "type": "formation",
+      "enemy": "slag-mine",
+      "count": 3,
+      "interval": 40,
+      "y": 201,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 10300,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 10400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 10700,
+      "type": "spawn",
+      "enemy": "magma-cone"
+    },
+    {
+      "x": 10760,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 10800,
+      "type": "spawn",
+      "enemy": "cinder-rock"
+    },
+    {
+      "x": 10900,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 7,
+      "interval": 11,
+      "y": 246,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 11300,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 5,
+      "interval": 12,
+      "y": 126,
+      "bonus": 450
+    },
+    {
+      "x": 11500,
+      "type": "spawn",
+      "enemy": "tender"
+    },
+    {
+      "x": 12020,
+      "type": "trigger",
+      "flag": "lower",
+      "until": 12600,
+      "region": {
+        "x": 12100,
+        "y": 672,
+        "w": 440,
+        "h": 84
+      }
+    },
+    {
+      "x": 12150,
+      "type": "spawn",
+      "enemy": "slag-mine",
+      "y": 252,
+      "branch": "low"
+    },
+    {
+      "x": 12200,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 201,
+      "bonus": 0,
+      "branch": "low-skip"
+    },
+    {
+      "x": 12250,
+      "type": "spawn",
+      "enemy": "magma-geode",
+      "branch": "low"
+    },
+    {
+      "x": 12300,
+      "type": "spawn",
+      "enemy": "slag-mine",
+      "y": 264,
+      "branch": "low"
+    },
+    {
+      "x": 12420,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 5,
+      "interval": 12,
+      "y": 96,
+      "bonus": 0,
+      "branch": "low-skip"
+    },
+    {
+      "x": 12650,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 7,
+      "interval": 12,
+      "y": 246,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 12950,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 4,
+      "interval": 16,
+      "y": 264,
+      "bonus": 0,
+      "branch": "low"
+    },
+    {
+      "x": 13050,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 156,
+      "bonus": 350,
+      "branch": "low"
+    },
+    {
+      "x": 13300,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 201,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 13700,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 14050,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 6,
+      "interval": 13,
+      "y": 141,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 14100,
+      "type": "spawn",
+      "enemy": "magma-cone"
+    },
+    {
+      "x": 14550,
+      "type": "spawn",
+      "enemy": "basalt-turret-ceiling"
+    },
+    {
+      "x": 14700,
+      "type": "trigger",
+      "flag": "flank",
+      "until": 15200,
+      "region": {
+        "x": 14750,
+        "y": 480,
+        "w": 300,
+        "h": 72
+      }
+    },
+    {
+      "x": 14900,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 8,
+      "interval": 12,
+      "y": 261,
+      "bonus": 0,
+      "branch": "take"
+    },
+    {
+      "x": 15000,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 171,
+      "bonus": 0,
+      "branch": "hold"
+    },
+    {
+      "x": 15300,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 5,
+      "interval": 12,
+      "bonus": 0,
+      "drop": "blueCapsule",
+      "branch": "take"
+    },
+    {
+      "x": 15800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 16400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 126
+    },
+    {
+      "x": 16900,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 7,
+      "interval": 12,
+      "y": 150,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 17300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 17800,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 5,
+      "interval": 14,
+      "y": 156,
+      "bonus": 0,
+      "drop": "capsule"
+    },
+    {
+      "x": 18900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 19800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 20400,
       "type": "warning",
       "enemy": "cinder-bastion"
     },
     {
-      "x": 14400,
+      "x": 21150,
       "type": "end"
     }
   ],
@@ -626,7 +860,38 @@
     "green",
     "blue",
     "red",
-    "green"
+    "green",
+    "red",
+    "green",
+    "blue",
+    "octagon",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "yellow",
+    "red",
+    "octagon"
+  ],
+  "branches": [
+    {
+      "id": "low",
+      "flag": "lower"
+    },
+    {
+      "id": "low-skip",
+      "flag": "lower",
+      "value": false
+    },
+    {
+      "id": "take",
+      "flag": "flank"
+    },
+    {
+      "id": "hold",
+      "flag": "flank",
+      "value": false
+    }
   ],
   "raster": [
     {
@@ -637,17 +902,17 @@
       "amplitude": 1.5,
       "wavelength": 10.5,
       "period": 34,
-      "to": 5340
+      "to": 5400
     },
     {
       "layer": "mid",
       "kind": "wave",
-      "top": 243,
+      "top": 246,
       "bottom": 336,
       "amplitude": 3,
       "wavelength": 24,
       "period": 90,
-      "from": 5340
+      "from": 13200
     }
   ],
   "cycles": [
@@ -657,59 +922,153 @@
       "ticks": 9
     }
   ],
+  "decor": [
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 0,
+      "x": 900,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 1,
+      "x": 1500,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 0,
+      "x": 2300,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 1,
+      "x": 3000,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 0,
+      "x": 3600,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 1,
+      "x": 4200,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 0,
+      "x": 4800,
+      "y": 273
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-magma-vent",
+      "frame": 1,
+      "x": 5200,
+      "y": 273
+    }
+  ],
   "remix": [
     {
-      "x": 360,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 5,
-      "interval": 16,
-      "y": 246,
-      "drop": null
-    },
-    {
-      "x": 2700,
+      "x": 480,
       "type": "formation",
       "enemy": "ember-wisp",
       "count": 6,
       "interval": 14,
-      "y": 261,
+      "y": 171,
+      "bonus": 0,
       "drop": null
     },
     {
-      "x": 4560,
-      "type": "formation",
-      "enemy": "ember-wisp",
-      "count": 6,
-      "interval": 14,
-      "y": 201,
-      "drop": null
-    },
-    {
-      "x": 6990,
+      "x": 2400,
       "type": "formation",
       "enemy": "cinder-bat",
-      "count": 5,
+      "count": 6,
       "interval": 12,
       "y": 201,
+      "bonus": 0,
       "drop": null
     },
     {
-      "x": 10590,
+      "x": 3600,
+      "type": "spawn",
+      "enemy": "magma-cone"
+    },
+    {
+      "x": 5040,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 231,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 7200,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 6,
+      "interval": 12,
+      "y": 246,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 9600,
+      "type": "spawn",
+      "enemy": "basalt-turret"
+    },
+    {
+      "x": 10440,
       "type": "formation",
       "enemy": "ember-wisp",
       "count": 8,
       "interval": 10,
       "y": 246,
+      "bonus": 0,
       "drop": null
     },
     {
-      "x": 12450,
+      "x": 11340,
+      "type": "formation",
+      "enemy": "slag-mine",
+      "count": 3,
+      "interval": 40,
+      "y": 261,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 12420,
       "type": "formation",
       "enemy": "ember-wisp",
       "count": 8,
-      "interval": 10,
-      "y": 186,
+      "interval": 12,
+      "y": 201,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 14640,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 8,
+      "interval": 12,
+      "y": 261,
+      "bonus": 0,
       "drop": null
     }
   ]

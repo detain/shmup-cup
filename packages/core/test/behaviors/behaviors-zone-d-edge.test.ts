@@ -11,10 +11,14 @@
  *   standing emitters in turn, none once both are gone, a `firstLaser` below 1 → one tick; aimed
  *   spreads from the core (`ways` floored, 0 = none); rings alternating by half a gap (below 1 =
  *   none); tracking within its margins at its speed.
+ * - the R5-04.S4a types: `mine.burst` with `trigger` 0 never arms (the plain drifting obstacle),
+ *   a `fuse` below 1 burns one tick and a `ring` below 1 bursts nothing; `hatch.spawner` with
+ *   `max` 1 releases its single child and sleeps; `captain.crab` holds its steps inside a reversed
+ *   box (the bounds swap), floors `turn`, fires one bullet where `ring` is below 1.
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
-import { BossHit, BossState } from '../../src/bosses/index.js';
+import { BossHit, BossMotion, BossState } from '../../src/bosses/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W } from '../../src/config/index.js';
 import {
@@ -23,7 +27,9 @@ import {
   loadContent,
   type ContentDb,
 } from '../../src/data/index.js';
+import { EnemyState } from '../../src/enemies/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
+import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped, shippedPatterns } from '../helpers/shipped.js';
 import {
@@ -41,7 +47,7 @@ const ROSTER: Entry[] = [
   ...(shipped('enemies/zone-d.enemies.json').data as { enemies: Entry[] }).enemies,
 ];
 
-const { boss } = rosterKitDe(ROSTER);
+const { boss, enemy } = rosterKitDe(ROSTER);
 
 /** Tunables of a quiet `boss.bastion` phase: held still, no lane for a long while, no bullets. */
 const BASTION_QUIET = { trackSpeed: 0, laserTicks: 100_000, firstLaser: 100_000 } as const;
@@ -85,6 +91,40 @@ const DB: ContentDb = (() => {
               ring: 0.6,
               ringTicks: 20,
             }),
+            // R5-04.S4a — the mine as the maze's plain drifting obstacle (`trigger` 0)…
+            enemy('slag-mine', 'mine-static', {
+              speed: 0.675,
+              amp: 18,
+              period: 150,
+              trigger: 0,
+              fuse: 42,
+              ring: 8,
+              bulletSpeed: 1.8,
+            }),
+            // …and with a fuse and ring that round away (below 1).
+            enemy('slag-mine', 'mine-fuseless', {
+              speed: 0.675,
+              amp: 18,
+              period: 150,
+              trigger: 40,
+              fuse: 0.4,
+              ring: 0.6,
+              bulletSpeed: 1.8,
+            }),
+            // The geode that releases a single bat and rests (design §6's `max` edge).
+            enemy('magma-geode', 'geode-one', { interval: 60, max: 1 }),
+            // The crab given its box reversed, a part ring, and a fractional turn.
+            boss('obsidian-claw', 'crab-flip', {
+              stepTicks: 80,
+              minX: 560,
+              maxX: 400,
+              minY: 260,
+              maxY: 140,
+              ringTicks: 100,
+              ring: 0.6,
+              bulletSpeed: 1.725,
+              turn: 24.7,
+            }),
           ],
         },
       },
@@ -95,7 +135,7 @@ const DB: ContentDb = (() => {
   return db;
 })();
 
-const { fighting, part } = zoneKitEdgeDe(DB);
+const { fighting, world, spawn, live, part } = zoneKitEdgeDe(DB);
 
 describe('core/behaviors — zone D, edge cases (M2-12)', () => {
   // The case tests both zones D and E; it rides the earlier zone's file (R5-P.P5a1).
@@ -157,13 +197,21 @@ describe('core/behaviors boss.bastion — edge cases (M2-12)', () => {
     expect(parts[hub].spin).toBe(5);
     for (const name of [
       'hull',
-      'core',
+      'prow',
+      'tower',
       'emitter-top',
       'emitter-bottom',
+      'core',
       'arm-a-inner',
+      'arm-a-mid',
       'arm-a-outer',
       'arm-b-inner',
+      'arm-b-mid',
       'arm-b-outer',
+      'pod-forward',
+      'pod-aft',
+      'guard-l',
+      'guard-r',
     ]) {
       expect(parts[part(w, name)].spin, name).toBe(0);
     }
@@ -210,7 +258,7 @@ describe('core/behaviors boss.bastion — edge cases (M2-12)', () => {
     const core = part(w, 'core');
     let last = hub.worldAngle;
     const steps: number[] = [];
-    w.bosses.damagePart(core, 27, 0); // below 54: phase 1 (spin −6)
+    w.bosses.damagePart(core, 27, 0); // below 72 of 96: phase 1 (spin −6)
     for (let t = 0; t < 6; t++) {
       run(w, 1);
       const step = ((hub.worldAngle - last + 1.5 * ANGLE_UNITS) % ANGLE_UNITS) - ANGLE_UNITS / 2;
@@ -326,5 +374,76 @@ describe('core/behaviors boss.bastion — edge cases (M2-12)', () => {
       }
     }
     expect(b.phase).toBe(0);
+  });
+});
+
+describe('core/behaviors — zone D roster additions, edge cases (R5-04.S4a)', () => {
+  it('mine.burst (slag-mine, trigger 0): a plain drifting obstacle that never arms', () => {
+    const w = world();
+    const ship = w.players[0];
+    const mine = spawn(w, 'mine-static', ship.x + 300, ship.y);
+    run(w, 250);
+    expect(mine.state).toBe(EnemyState.Live);
+    expect(mine.mover).toBe(MoverKind.Sine); // still drifting — the trigger never fires
+    expect(mine.flashTicks).toBe(0);
+    expect(w.bullets.count).toBe(0);
+  });
+
+  it('mine.burst (slag-mine): a fuse below 1 burns one tick, a ring below 1 bursts nothing', () => {
+    const w = world();
+    const ship = w.players[0];
+    const mine = spawn(w, 'mine-fuseless', ship.x + 300, ship.y);
+    let armed = -1;
+    for (let t = 0; t < 600 && armed < 0; t++) {
+      run(w, 1);
+      if (mine.mover === MoverKind.None) armed = t; // trigger 40: it arms once near enough
+    }
+    expect(armed).toBeGreaterThan(0);
+    expect(mine.flashTicks).toBeLessThanOrEqual(1); // fuse 0.4 → one tick
+    run(w, 3);
+    expect(mine.state).not.toBe(EnemyState.Live); // it burst…
+    expect(w.bullets.count).toBe(0); // …ring 0.6 floors away — and fired nothing
+  });
+
+  it('hatch.spawner (magma-geode, max 1): one bat and no more, the geode rests', () => {
+    const w = world();
+    const geode = spawn(w, 'geode-one', 320, 140);
+    run(w, 61); // interval 60: the first and only child
+    const kids = live(w, 'cinder-bat');
+    expect(kids).toHaveLength(1);
+    expect(kids[0].y).toBeLessThan(geode.y);
+    w.enemies.kill(kids[0], 0);
+    run(w, 300); // past the 120th and 180th intervals — nothing hatches again
+    expect(live(w, 'cinder-bat')).toHaveLength(0);
+    expect(geode.state).toBe(EnemyState.Live); // the full spawner stands, asleep
+  });
+
+  it('captain.crab (obsidian-claw): a reversed box still holds the steps, ring 0.6 fires one, turn floors', () => {
+    const w = fighting('crab-flip');
+    const boss = w.bosses.boss;
+    const volleys: number[][] = [];
+    for (let t = 0; t < 300; t++) {
+      run(w, 1);
+      if (boss.motion === BossMotion.MoveTo) {
+        // The flipped bounds are swapped, not broken: the same 400…560 / 140…260 shelf.
+        expect(boss.moveToX).toBeGreaterThanOrEqual(400);
+        expect(boss.moveToX).toBeLessThanOrEqual(560);
+        expect(boss.moveToY).toBeGreaterThanOrEqual(140);
+        expect(boss.moveToY).toBeLessThanOrEqual(260);
+      }
+      const fresh: number[] = [];
+      const f = w.bullets.pool.fields;
+      for (let i = 0; i < w.bullets.pool.count; i++) {
+        if (f.kind[i] === BulletKind.OvalRed && f.age[i] <= 1) {
+          fresh.push(((Math.round(f.angle[i]) % 1024) + 1024) % 1024);
+        }
+      }
+      if (fresh.length > 0) volleys.push(fresh);
+    }
+    expect(volleys.length).toBeGreaterThanOrEqual(2);
+    for (const ring of volleys) expect(ring).toHaveLength(1); // ring 0.6 → the floor of one
+    // turn 24.7 floors to 24: each single bullet leaves 24 units further than the last.
+    expect((volleys[1][0] - volleys[0][0] + ANGLE_UNITS) % ANGLE_UNITS).toBe(24);
+    expect(boss.state).toBe(BossState.Fight);
   });
 });

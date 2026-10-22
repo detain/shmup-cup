@@ -32,7 +32,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
-import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -67,7 +66,8 @@ const ZONES = [
   {
     stage: 'zone-d',
     boss: 'cinder-bastion',
-    depth: v1rel(200),
+    // Design §4's deep-cave floor (R5-04.S5a's two-step dive replaces v1's single 300 px pan).
+    depth: 432,
     handed: 4,
     colours: ['red', 'green', 'blue'],
   },

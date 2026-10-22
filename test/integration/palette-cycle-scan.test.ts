@@ -11,6 +11,8 @@
  *    and named by the stage that cycles them exactly as the bible's ramp table does — except a
  *    ramp's own cycle art against its own ramp (rule 1 checks that pair) and the bible's
  *    exemption list, pinned below. An exemption that no longer trips fails: the list cannot rot.
+ *    The binding check requires each ramp's cycle art to sit on a cycled layer of one of its
+ *    stages, exactly as the `CYCLE_ART` mapping pins it below.
  * 3. a synthetic fixture backdrop passes the cycled-layer scan, and the same with one pixel
  *    2/255 off fails it — the scan really measures the margin.
  *
@@ -52,18 +54,20 @@ const RAMPS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   ABYSS: ['zone-i'],
 });
 
-/** The bible ramp table's "Cycle art" column: the sprite each ramp was painted for — rule 2
- * excepts it against its own ramp, because rule 1 checks that pair (exact is allowed there). */
-const CYCLE_ART: Readonly<Record<string, string>> = Object.freeze({
-  SEA: 'bg/sea-swell',
-  BRINE: 'bg/brine-sea',
-  DUNE: 'bg/dune-blaze',
-  MAGMA: 'bg/magma-lava',
-  STORM: 'bg/storm-clouds',
-  VAULT: 'bg/vault-membrane',
-  PRISM: 'bg/prism-facets',
-  CITADEL: 'bg/citadel-wall',
-  ABYSS: 'bg/abyss-murk',
+/** The bible ramp table's "Cycle art" column: the sprites each ramp was painted for — rule 2
+ * excepts them against their own ramp, because rule 1 checks that pair (exact is allowed
+ * there). R5-04.S5a: MAGMA gained `bg/magma-chimney` — the stage now cycles it on its mid layer,
+ * so the S2-era exemption retired to the mapping (the all-four-colours scan keeps its teeth). */
+const CYCLE_ART: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  SEA: ['bg/sea-swell'],
+  BRINE: ['bg/brine-sea'],
+  DUNE: ['bg/dune-blaze'],
+  MAGMA: ['bg/magma-lava', 'bg/magma-chimney'],
+  STORM: ['bg/storm-clouds'],
+  VAULT: ['bg/vault-membrane'],
+  PRISM: ['bg/prism-facets'],
+  CITADEL: ['bg/citadel-wall'],
+  ABYSS: ['bg/abyss-murk'],
 });
 
 /** The bible §4.4 exemption list (v1 and interim art that breaks the project-wide margin on a
@@ -89,7 +93,6 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'enemies/abyss-turret',
   ],
   BRINE: ['bg/brine-nebula', 'bg/abyss-murk'],
-  MAGMA: ['bg/magma-chimney'],
 });
 
 /** The margin the bible asks for: twice the shader's 1.5/255 tolerance, Chebyshev (max over
@@ -281,18 +284,20 @@ describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shi
     }
     const expected = Object.values(RAMPS).flat();
     expect([...cycledStages.keys()].sort()).toEqual([...expected].sort());
-    for (const [ramp, sprite] of Object.entries(CYCLE_ART)) {
-      expect(atlas.manifest.sprites[sprite], `cycle art of ${ramp}`).toBeDefined();
-      // Bind the rule-2 own-ramp skip (SRV2-N1): the pin is only justified while the sprite sits on
-      // a cycled layer of one of the ramp's stages — else rule 2 silently skips it against its ramp
-      // while rule 1 no longer sees it. The stage data is already loaded above.
-      const bound = RAMPS[ramp].some((stage) => {
-        const file = cycledStages.get(stage);
-        if (file === undefined) return false;
-        const layers = new Set((file.cycles ?? []).map((c) => c.layer));
-        return (file.parallax ?? []).some((p) => layers.has(p.layer) && p.sprite === sprite);
-      });
-      expect(bound, `cycle art ${sprite} bound to a cycled layer of ${ramp}`).toBe(true);
+    for (const [ramp, sprites] of Object.entries(CYCLE_ART)) {
+      for (const sprite of sprites) {
+        expect(atlas.manifest.sprites[sprite], `cycle art of ${ramp}`).toBeDefined();
+        // Bind the rule-2 own-ramp skip (SRV2-N1): the pin is only justified while the sprite sits on
+        // a cycled layer of one of the ramp's stages — else rule 2 silently skips it against its ramp
+        // while rule 1 no longer sees it. The stage data is already loaded above.
+        const bound = RAMPS[ramp].some((stage) => {
+          const file = cycledStages.get(stage);
+          if (file === undefined) return false;
+          const layers = new Set((file.cycles ?? []).map((c) => c.layer));
+          return (file.parallax ?? []).some((p) => layers.has(p.layer) && p.sprite === sprite);
+        });
+        expect(bound, `cycle art ${sprite} bound to a cycled layer of ${ramp}`).toBe(true);
+      }
     }
   });
 
@@ -328,7 +333,7 @@ describe('test/integration/palette-cycle-scan — the art bible §4.4 on the shi
     const tripped = new Set<string>(); // `${ramp}\u0000${sprite}` of exemptions that tripped
     for (const name of Object.keys(atlas.manifest.sprites)) {
       for (const ramp of rampColors.keys()) {
-        if (CYCLE_ART[ramp] === name) continue; // its own ramp: rule 1 checks it
+        if ((CYCLE_ART[ramp] ?? []).includes(name)) continue; // its own ramp: rule 1 checks it
         const trip = spriteTrip(atlas, name, ramp);
         if (trip === null) continue;
         if ((EXEMPT[ramp] ?? []).includes(name)) {

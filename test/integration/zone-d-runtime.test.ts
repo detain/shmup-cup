@@ -3,25 +3,27 @@
  * `zones-de-runtime.test.ts` and `zones-de-runtime-edge.test.ts`; zone E's cases live in
  * `zone-e-runtime.test.ts`):
  *
- * - **MAGMA DEEP's dive.** The camera stops over the pit at the end of the caldera fields, pans
- *   200 px down into the caves while it holds, then scrolls on down there; a practice start (the
- *   scene flow's `startPractice`) at the checkpoint in the caves prepares zone D's music set and
- *   puts the camera back down in the caves.
- * - **The destructible maze.** In the caves the ship's shots break the brick walls (breakable
- *   tiles of the zone's tileset): the walls lose bricks while the ship flies through.
- * - **MAGMA DEEP's two camera heights** (the surface at y 0, the caves at y 200 after the dive):
- *   every practice start at every checkpoint puts the camera at the checkpoint — the last two
- *   down in the caves — and flies the ship in to open space (its terrain box never in rock)
- *   inside the view;
+ * - **MAGMA DEEP's two-step dive** (`designs/zone-d.md` §4, R5-04.S5a). The camera stops at the
+ *   key at 5,400, pans 186 px onto the shelf while it holds, scrolls on, then stops again at the
+ *   key at 8,700 and pans down to the deep caves at 432; a practice start (the scene flow's
+ *   `startPractice`) at the checkpoint at 9,900 prepares zone D's music set and puts the camera
+ *   back down there.
+ * - **The destructible maze.** In the deep caves the ship's shots break the brick walls
+ *   (breakable tiles of the zone's v2 tileset): the walls lose bricks while the ship flies
+ *   through §11's five wall pairs and the hot-brick plug's `brick` column.
+ * - **MAGMA DEEP's three camera heights** (the surface at y 0, the shelf at 186, the deep caves
+ *   at 432): every practice start at every checkpoint puts the camera at the checkpoint — the
+ *   third on the shelf, the last three down in the caves — and flies the ship in to open space
+ *   (its terrain box never in rock) inside the view;
  * - **the stage skip** into zone D (`stageSkip: 'boss'`, the debug skip the playtest uses) starts
- *   in the caves: the camera at y 200, the ship flown in there, CINDER BASTION fighting inside the
- *   view;
- * - **an Arcade restart in the caves** (a death after the checkpoint at 4,000) puts the camera
- *   back down at y 200 with the ship in open space, and rolls the destructible maze back: every
- *   brick shot away before the death stands again;
- * - **an Arcade restart before the dive** (a death during the scroll stop over the pit, before the
- *   cave checkpoint) takes the camera back up to the surface at the checkpoint at 2,200 — and the
- *   dive happens again on the way.
+ *   deep in the caves: the camera at y 432, the ship flown in there, CINDER BASTION fighting
+ *   inside the view;
+ * - **an Arcade restart in the deep caves** (a death after the checkpoint at 9,900) puts the
+ *   camera back down at y 432 with the ship in open space, and rolls the destructible maze back:
+ *   every brick shot away before the death stands again;
+ * - **an Arcade restart before the dive** (a death during the scroll stop over the first dive
+ *   step, before the shelf checkpoint) takes the camera back up to the surface at the checkpoint
+ *   at 3,600 — and both dive steps happen again on the way.
  */
 import {
   ENGINE_SPRITES,
@@ -41,7 +43,7 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { v1x, v1y, v1rel } from '../../packages/core/test/helpers/v1-port.js';
+import { v1y } from '../../packages/core/test/helpers/v1-port.js';
 import { expectCameraAt, expectInOpenSpace, steps, stepUntil } from './zones/helpers.js';
 
 /** The shipped content, validated like the shell does. */
@@ -71,36 +73,45 @@ function bricks(world: World): number {
 }
 
 describe('integration: zones D and E in the game (M2-12)', () => {
-  it('dives MAGMA DEEP’s camera 200 px into the caves at a scroll stop, then scrolls on', () => {
+  it('dives MAGMA DEEP’s camera in two steps, 186 then 432 px, at scroll stops, then scrolls on', () => {
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, DB);
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(v1x(3300));
+    world.stage?.jumpTo(5200);
+    // The first step: the hold at 5,400 pans the camera down onto the shelf at 186 (design §4's
+    // `yTo 186`, `hold` 150 with the 150-tick pan inside it).
     let stopped = 0;
-    let deepest = 0;
-    for (let i = 0; i < 1200 && world.camera.x < v1x(3700); i++) {
+    for (let i = 0; i < 5000 && world.camera.x < 5650; i++) {
       const x = world.camera.x;
       const y = world.camera.y;
       game.step();
       game.events.clear();
       if (world.camera.x === x && world.camera.y > y) stopped++;
-      deepest = Math.max(deepest, world.camera.y);
     }
-    // The pan ran while the scroll stood still, down to the caves, and the scroll went on.
     expect(stopped).toBeGreaterThan(100);
-    expect(deepest).toBe(v1rel(200));
-    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(3700));
-    expect(world.camera.y).toBe(v1rel(200));
+    expect(world.camera.y).toBe(186);
+    // The second step: the hold at 8,700 pans to the deep caves at 432 and the scroll goes on.
+    let stopped2 = 0;
+    for (let i = 0; i < 5000 && world.camera.x < 8950; i++) {
+      const x = world.camera.x;
+      const y = world.camera.y;
+      game.step();
+      game.events.clear();
+      if (world.camera.x === x && world.camera.y > y) stopped2++;
+    }
+    expect(stopped2).toBeGreaterThan(100);
+    expect(world.camera.y).toBe(432);
     expect(world.status).toBe('playing');
   });
 
-  it('starts a practice run in the caves: zone D’s music set prepared, the camera down there', () => {
+  it('starts a practice run in the deep caves: zone D’s music set prepared, the camera down there', () => {
     const platform = createHeadlessPlatform();
     const game = createGame(platform, { seed: 3, stage: 'zone-a' }, DB, { scenes: 'game' });
     game.debug.godMode = true;
     const flow = game.scenes as SceneFlow;
     const prepared: number[] = [];
-    expect(flow.startPractice('d', 2)).toBe(true);
+    // Checkpoint 3 is the maze entry at 9,900 — down at the second dive step's floor.
+    expect(flow.startPractice('d', 3)).toBe(true);
     commitPlayerInput(platform.snapshot.players[0], 0);
     game.step();
     game.events.drain((e) => {
@@ -109,9 +120,9 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     const world = game.world;
     expect(world.stage?.stage.id).toBe('zone-d');
     expect(prepared).toContain(DB.stageIndex.get('zone-d'));
-    expectCameraAt(world, v1x(4000));
-    expect(world.camera.y).toBe(v1rel(200));
-    // The ship flies in down there too, in the open band of the caves.
+    expectCameraAt(world, 9900);
+    expect(world.camera.y).toBe(432);
+    // The ship flies in down there too, in the open band of the deep corridor.
     for (let i = 0; i < 90; i++) game.step();
     const ship = world.players[0];
     expect(ship.state).toBe('alive');
@@ -127,17 +138,20 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(v1x(4300));
-    // Fly in anew where the camera is now (down in the caves), at the middle row.
+    world.stage?.jumpTo(9800);
+    // Fly in anew where the camera is now (down in the deep caves), at the middle row.
     spawnPlayer(world.players[0], world.camera);
     game.step();
+    // Design §11's maze lays 103 `brick` cells: the five wall pairs' brick columns (rows 40–47
+    // and 49–55 across cols 850–971) and the plug's `brick` column 1051 (rows 55–63); the
+    // heightfield generator never emits `brick`, so the count is exactly the RLE's.
     const before = bricks(world);
-    expect(before).toBeGreaterThan(200);
-    for (let i = 0; i < 2400 && world.camera.x < v1x(5700); i++) {
+    expect(before).toBe(103);
+    for (let i = 0; i < 2400 && world.camera.x < 12000; i++) {
       game.step();
       game.events.clear();
     }
-    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(5500));
+    expect(world.camera.x).toBeGreaterThanOrEqual(11900);
     // Autofire (and the Options) chewed holes into the walls the ship flew at.
     expect(bricks(world)).toBeLessThan(before - 10);
   });
@@ -148,8 +162,11 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
   for (const [letter, stageId] of [['d', 'zone-d']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
     stage.checkpoints.forEach((checkpoint, i) => {
-      // Zone D's camera is down in the caves from the dive (x 3,560) on.
-      const y = stageId === 'zone-d' && checkpoint.x > v1rel(3560) ? v1rel(200) : 0;
+      // The camera's height at each checkpoint is design §4's key line: the surface until the
+      // first dive step (the key at 5,400 pans to 186), the deep caves (432) from the second
+      // step's key at 8,700 on.
+      const y =
+        stageId !== 'zone-d' ? 0 : checkpoint.x < 5400 ? 0 : checkpoint.x < 8700 ? 186 : 432;
       starts.push([letter, i, checkpoint.x, y]);
     });
   }
@@ -175,12 +192,12 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     },
   );
 
-  it('checks four checkpoints per zone, two of zone D in the caves', () => {
-    expect(starts).toHaveLength(4);
-    expect(starts.filter((s) => s[3] === v1rel(200))).toHaveLength(2);
+  it('checks six checkpoints per zone, four of zone D below the surface', () => {
+    expect(starts).toHaveLength(6);
+    expect(starts.filter((s) => s[3] > 0)).toHaveLength(4);
   });
 
-  it('skips into the caves: the camera at y 200, the ship flown in there, CINDER BASTION fighting in view', () => {
+  it('skips into the deep caves: the camera at y 432, the ship flown in there, CINDER BASTION fighting in view', () => {
     const game = createGame(
       createHeadlessPlatform(),
       { seed: 9, stage: 'zone-d', stageSkip: 'boss', loadout: 'full' },
@@ -188,23 +205,23 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    expect(world.camera.y).toBe(v1rel(200));
+    expect(world.camera.y).toBe(432);
     steps(game, 90);
     expectInOpenSpace(world, 'after the skip');
     const bastion = DB.enemyIndex.get('cinder-bastion');
     const boss = world.bosses.boss;
     stepUntil(game, () => boss.specIndex === bastion && boss.state === 3, 1500);
-    expect(world.camera.y).toBe(v1rel(200));
-    expect(boss.y - world.camera.y).toBeGreaterThanOrEqual(v1rel(44) - 1e-9);
-    expect(boss.y - world.camera.y).toBeLessThanOrEqual(PLAYFIELD_H - v1rel(44) + 1e-9);
+    expect(world.camera.y).toBe(432);
+    expect(boss.y - world.camera.y).toBeGreaterThanOrEqual(66 - 1e-9);
+    expect(boss.y - world.camera.y).toBeLessThanOrEqual(PLAYFIELD_H - 66 + 1e-9);
     // Its core and arms are drawn inside the view, below the cave roof's rows.
     const core = boss.parts.find((p) => p.name === 'core');
-    expect((core?.y ?? 0) - world.camera.y).toBeGreaterThan(v1rel(30));
-    expect((core?.y ?? 0) - world.camera.y).toBeLessThan(PLAYFIELD_H - v1rel(30));
+    expect((core?.y ?? 0) - world.camera.y).toBeGreaterThan(45);
+    expect((core?.y ?? 0) - world.camera.y).toBeLessThan(PLAYFIELD_H - 45);
     expectInOpenSpace(world, 'while the boss fights');
   });
 
-  it('restarts an Arcade death in the caves at the cave checkpoint, the maze rolled back', () => {
+  it('restarts an Arcade death in the deep caves at the cave checkpoint, the maze rolled back', () => {
     const game = createGame(
       createHeadlessPlatform(),
       { seed: 11, stage: 'zone-d', loadout: 'full', deathPenalty: 'arcade', startingLives: 3 },
@@ -213,10 +230,10 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     const world = game.world;
     world.debugFlags.godMode = true;
     const full = bricks(world);
-    world.stage?.jumpTo(v1x(4300));
-    // `jumpTo` moves the camera, not the ship: fly it in anew down in the caves.
+    world.stage?.jumpTo(9800);
+    // `jumpTo` moves the camera, not the ship: fly it in anew down in the deep caves.
     spawnPlayer(world.players[0], world.camera);
-    stepUntil(game, () => world.camera.x >= v1x(5400), 3000);
+    stepUntil(game, () => world.camera.x >= 12000, 3000);
     const broken = full - bricks(world);
     expect(broken).toBeGreaterThan(10);
     // A crash (god mode off for the hit).
@@ -229,15 +246,15 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     world.debugFlags.godMode = true;
     stepUntil(game, () => ship.state === 'alive', 600);
     expect(ship.lives).toBe(2);
-    // Back at the checkpoint in the caves, every brick standing again.
-    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(4000));
-    expect(world.camera.x).toBeLessThan(v1x(4400));
-    expect(world.camera.y).toBe(v1rel(200));
+    // Back at the maze-entry checkpoint at 9,900, every brick standing again.
+    expect(world.camera.x).toBeGreaterThanOrEqual(9900);
+    expect(world.camera.x).toBeLessThan(10300);
+    expect(world.camera.y).toBe(432);
     expect(bricks(world)).toBe(full);
     expectInOpenSpace(world, 'after the restart');
   });
 
-  it('restarts an Arcade death before the cave checkpoint on the surface, and dives again', () => {
+  it('restarts an Arcade death before the shelf checkpoint on the surface, and dives again', () => {
     const game = createGame(
       createHeadlessPlatform(),
       { seed: 12, stage: 'zone-d', deathPenalty: 'arcade', startingLives: 3 },
@@ -245,27 +262,30 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(v1x(3300));
+    world.stage?.jumpTo(5200);
     spawnPlayer(world.players[0], world.camera);
-    // The scroll stop over the pit: the camera half-way down.
-    stepUntil(game, () => world.camera.y >= v1rel(100), 2000);
-    expect(world.camera.x).toBeLessThan(v1x(4000));
+    // The first scroll stop over the pit: the camera half-way through the 186-px step.
+    stepUntil(game, () => world.camera.y >= 90, 2000);
+    expect(world.camera.x).toBeLessThan(6600);
     world.debugFlags.godMode = false;
     const ship = world.players[0];
     stepUntil(game, () => ship.state === 'alive' && ship.invulnTicks === 0, 400);
-    expect(world.camera.x).toBeLessThan(v1x(4000));
+    expect(world.camera.x).toBeLessThan(6600);
     expect(playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags)).toBe(true);
     game.step();
     world.debugFlags.godMode = true;
     stepUntil(game, () => ship.state === 'alive', 600);
-    // Back up on the surface at the checkpoint at 2,200.
-    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(2200));
-    expect(world.camera.x).toBeLessThan(v1x(2600));
+    // Back up on the surface at the checkpoint at 3,600.
+    expect(world.camera.x).toBeGreaterThanOrEqual(3600);
+    expect(world.camera.x).toBeLessThan(4000);
     expect(world.camera.y).toBe(0);
     expectInOpenSpace(world, 'after the restart');
-    // And down again at the pit.
-    stepUntil(game, () => world.camera.x >= v1x(3700), 4000);
-    expect(world.camera.y).toBe(v1rel(200));
-    expectInOpenSpace(world, 'after the second dive');
+    // And down again: the first step’s floor at 186, then the deep caves at 432.
+    stepUntil(game, () => world.camera.x >= 5650, 4000);
+    expect(world.camera.y).toBe(186);
+    expectInOpenSpace(world, 'after the first dive step');
+    stepUntil(game, () => world.camera.x >= 8950, 9000);
+    expect(world.camera.y).toBe(432);
+    expectInOpenSpace(world, 'after the second dive step');
   });
 });

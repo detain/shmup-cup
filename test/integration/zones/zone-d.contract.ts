@@ -3,7 +3,8 @@
  * v1 plan's shape (M2 rulings as MAGMA DEEP's per-zone cases always asserted them: no length gate,
  * 2.5–4.5 min of scroll, ≥ 4 checkpoints, 4–6 new enemy types by sprite over the earlier
  * zones); the v2 branch is the ported shape R5-D2 sets for every zone B–I. `remastered: false`
- * until the zone's wave 09 R5-P.D-D lane ports it and flips the flag.
+ * until the zone's wave 09 R5-P.D-D lane ports it and flips the flag — **wave 11's R5-04.S5b
+ * flipped it** with the authored event table, item plan and remix; the v2 branch is live.
  *
  * @module
  */
@@ -11,7 +12,7 @@ import { MIN_RECOVERY_CAPSULES, RECOVERY_WINDOW } from '../../playtest/recovery.
 import type { ZoneContract } from './helpers.js';
 
 export const zoneDContract: ZoneContract = {
-  remastered: false,
+  remastered: true,
   v1: {
     lengthPx: null, // v1 gated a stage length only in zone A's ships case
     scrollSec: [150, 270], // 2.5–4.5 min to the WARNING
@@ -36,4 +37,8 @@ export const zoneDContract: ZoneContract = {
     directItems: [30, Number.POSITIVE_INFINITY], // R5-D2 sets the floor; the zone's R5 lane caps it
     blueCapsulesMax: 2,
   },
+  // The design §11 tally of the authored 37-entry plan (red 12, green 10, blue 9, octagon 3,
+  // yellow 2, orange 1) — three power-meter octagons, rare pickups at two (orange 1, yellow 2).
+  // R5-04.S5b authored it with the flip so the release audit moves to the design's composition.
+  directItemComposition: { octagons: 3, maxRare: 2 },
 };

@@ -9,6 +9,7 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -24,6 +25,7 @@ import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
 import { K } from '../../packages/core/test/helpers/v1-port.js';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   ZONES_B_G,
   boundsOf,
@@ -132,39 +134,61 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     // Erupting volcanoes on the surface floor, rocks that drop from the cave roofs.
     expect(placed('volcano.lob', 'floor')).toBeGreaterThanOrEqual(5);
     expect(placed('rock.fall', 'ceiling')).toBeGreaterThanOrEqual(6);
-    // The dive: a map taller than the playfield, a scroll stop that pans the camera down into it.
-    expect(stage.tilemap?.rowsTall ?? 0).toBeGreaterThanOrEqual(50);
-    const dive = stage.camera.find((k) => (k.yTo ?? 0) >= 150);
-    expect(dive?.hold ?? 0).toBeGreaterThan(0);
-    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-    expect(dive?.x ?? warningX).toBeLessThan(warningX / 2);
-    // The destructible maze below: brick walls (breakable tiles), each with an open gap.
+    // The two-step dive (design §2/§10, the §15 dive case): a map of 64 rows (768 px, the
+    // deepest camera 12 · 64 − 336 = 432) and two scroll stops that pan down — the shelf at 186
+    // and the deep at 432 — both below half the stage's length.
+    expect(stage.tilemap?.rowsTall ?? 0).toBe(64);
+    const dives = stage.camera.filter((k) => (k.yTo ?? 0) >= 150);
+    expect(dives.map((k) => k.yTo ?? 0)).toEqual([186, 432]);
+    for (const dive of dives) {
+      expect(dive.hold ?? 0).toBeGreaterThan(0);
+      expect(dive.x).toBeLessThan(stage.length / 2);
+    }
+    // The branching maze below: brick-family walls (brick, obsidian, brick-hot — design §10),
+    // each with an open gap, the trench plug the case's one named exception (§15).
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
     const map = game.world.terrain;
     const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
-    const brick = (tileset?.tiles.findIndex((t) => t.name === 'brick') ?? -1) + 1;
-    expect(tileset?.tiles[brick - 1]?.hp ?? 0).toBeGreaterThan(0);
+    const family = ['brick', 'obsidian', 'brick-hot'].map(
+      (name) => (tileset?.tiles.findIndex((t) => t.name === name) ?? -2) + 1,
+    );
+    expect(
+      family.every((id) => id > 0),
+      'the §10 brick-family tiles exist',
+    ).toBe(true);
+    for (const id of family) expect(tileset?.tiles[id - 1]?.hp ?? 0).toBeGreaterThan(0);
     if (map === null) throw new Error('no terrain');
-    const walls: number[][] = [];
+    const plug = [1050, 1051]; // the §10 plug pair — world x 12,600–12,624, two map columns
+    const walls: { col: number; rows: number[] }[] = [];
     for (let col = 0; col < map.cols; col++) {
       const rows: number[] = [];
       for (let row = 0; row < map.rows; row++)
-        if (map.tiles[row * map.cols + col] === brick) rows.push(row);
-      if (rows.length > 0) walls.push(rows);
+        if (family.includes(map.tiles[row * map.cols + col])) rows.push(row);
+      if (rows.length > 0) walls.push({ col, rows });
     }
-    expect(walls.length).toBeGreaterThanOrEqual(10);
-    for (const rows of walls) {
+    expect(walls.length).toBeGreaterThanOrEqual(10); // §10: 12 (9 brick, 2 obsidian, 1 brick-hot)
+    for (const { col, rows } of walls) {
       // below the surface (one playfield of tile rows): in the caves
       expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
+      if (col === plug[0] || col === plug[1]) {
+        // The plug is solid rows 55–63 to the map's bottom (design §10) — the trench's gate.
+        expect(rows.length).toBe(9);
+        expect(rows[0]).toBe(55);
+        expect(rows[8]).toBe(63);
+        continue;
+      }
       let gap = 0;
       for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
       expect(gap * map.tileSize).toBeGreaterThanOrEqual(24 * K); // a gap the ship fits through
     }
-    // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
+    // CINDER BASTION: the core guarded by destructible shield arms on a pivot that turns (the
+    // R5-04.FIX corridor law), two lane emitters.
     const warning = stage.events.find((e) => e.type === 'warning');
     const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
     expect(boss?.phases.every((p) => p.script === 'boss.bastion')).toBe(true);
     const parts = boss?.parts ?? [];
+    expect(parts).toHaveLength(17); // the design §8 tree: hull, prow, tower, emitters, core, hub,
+    // the two three-segment arms, the two pods and the two guards (≤ MAX_BOSS_PARTS by the case below)
     const core = parts.findIndex((p) => p.core);
     const hubs = parts.filter(
       (p) => p.parentIndex === core && p.hurtbox === null && p.radius === 0,
@@ -174,13 +198,61 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const onHub = (index: number): boolean =>
       index >= 0 && (parts[index].parentIndex === hub || onHub(parts[index].parentIndex));
     const arms = parts.filter((_p, i) => onHub(i));
-    expect(arms.length).toBeGreaterThanOrEqual(4);
+    expect(arms).toHaveLength(6); // design §8: the two three-segment shield arms (≥ 4 required)
+    // R5-04.FIX (the full-loadout corridor law): the arms are destructible shields — the
+    // adjudicated numbers, 8/10/12 from the tip in, prices inside the plates' 300–600 band.
+    const hpBySegment = (name: string): number =>
+      name.endsWith('inner') ? 12 : name.endsWith('mid') ? 10 : 8;
     for (const arm of arms) {
-      expect(arm.vulnerable).toBe('never');
+      expect(arm.vulnerable).not.toBe('never');
+      expect(arm.hp, arm.name).toBe(hpBySegment(arm.name));
+      expect(arm.score).toBeGreaterThanOrEqual(300);
+      expect(arm.score).toBeLessThanOrEqual(600);
       expect(arm.radius).toBeGreaterThan(0); // turned parts are hit as circles
     }
+    expect(arms.reduce((sum, arm) => sum + (arm.hp ?? 0), 0)).toBe(60); // the +60 shell the fix prices
     expect(parts.filter((p) => p.gun)).toHaveLength(2);
     for (const phase of boss?.phases ?? []) expect(phase.params.spin ?? 4).not.toBe(0);
+  });
+
+  it('keeps the rebuilt CINDER BASTION inside the bible height with a reachable core (R5-04.S4b)', () => {
+    const stage = stageOf('zone-d');
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    const { manifest } = buildAtlas();
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const anchorY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    // Assembled like `scripts/doc-images.mjs`: each sprite centred on its anchor, parents first.
+    let minY = 0;
+    let maxY = 0;
+    for (const [i, part] of boss.parts.entries()) {
+      if (part.sprite === undefined) continue;
+      const ref = manifest.sprites[part.sprite]?.frames[0];
+      if (ref === undefined) continue;
+      const h = manifest.frames[ref].h;
+      const centre = Math.round(anchorY(i));
+      minY = Math.min(minY, centre - Math.floor(h / 2));
+      maxY = Math.max(maxY, centre + h - Math.floor(h / 2));
+    }
+    // The design §8: ≈ 111 px assembled (the spun arms sweep ±(43.5 + 9) at interim sizes) ≤ 202.
+    expect(maxY - minY).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // The core is `always` vulnerable from birth and nothing is in its `requires` — and every
+    // part a `requires` does name exists and is hittable. S6's god-mode bot run (green in
+    // pre-verification at 14,407 ticks) is the proof no hull part shadows it on the ship's line.
+    const core = boss.parts.find((p) => p.core);
+    expect(core).not.toBeUndefined();
+    expect(core?.vulnerable).not.toBe('never');
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    for (const name of core?.requires ?? []) {
+      expect(byName.get(name)?.vulnerable, name).not.toBe('never');
+    }
   });
 
   it.each(zones)(
@@ -270,6 +342,51 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       ).toBe(true);
     }
     expect(ground).toBeGreaterThanOrEqual(8);
+  });
+
+  it("branches MAGMA DEEP's maze on the trench and the flank (design §4, R5-04.S5b)", () => {
+    const stage = stageOf('zone-d');
+    // Four declared branches over exactly the two flags (design §4).
+    expect(stage.branches.map((br) => br.id)).toEqual(['low', 'low-skip', 'take', 'hold']);
+    expect(new Set(stage.branches.map((br) => br.flag))).toEqual(new Set(['lower', 'flank']));
+    // Every branch-bound event names a declared branch.
+    const declared = new Set(stage.branches.map((br) => br.id));
+    for (const event of stage.events)
+      if (event.branch !== undefined)
+        expect(declared.has(event.branch), `event at ${String(event.x)}`).toBe(true);
+    // The trench region marks the low-lane choice, the flank region the river's high lane
+    // (world px and arming rows from design §4; the plug itself is asserted by the gives case).
+    const lower = stage.events.find((e) => e.type === 'trigger' && e.flag === 'lower');
+    if (lower?.type !== 'trigger') throw new Error('no lower trigger event');
+    expect({ ...lower.region, until: lower.until ?? 0 }).toEqual({
+      x: 12100,
+      y: 672,
+      w: 440,
+      h: 84,
+      until: 12600,
+    });
+    const flank = stage.events.find((e) => e.type === 'trigger' && e.flag === 'flank');
+    if (flank?.type !== 'trigger') throw new Error('no flank trigger event');
+    expect({ ...flank.region, until: flank.until ?? 0 }).toEqual({
+      x: 14750,
+      y: 480,
+      w: 300,
+      h: 72,
+      until: 15200,
+    });
+    // The `low` route carries the design's three pressure rows inside its region window
+    // (the const copy: the assertion above has already pinned the value to the design's 12,600).
+    const lowerUntil = lower.until ?? 0;
+    const low = stage.events.filter((e) => e.branch === 'low' && e.x > 12020 && e.x < lowerUntil);
+    expect(low.map((e) => e.x)).toEqual([12150, 12250, 12300]);
+    // OBSIDIAN CLAW: the captain's `boss` event before half the stage; the only warning in the
+    // stage is the zone boss's at 20,400 — the skip never enters at the captain (R5-P.P14).
+    const captain = stage.events.find((e) => e.type === 'boss');
+    if (captain?.type !== 'boss') throw new Error('no captain boss event');
+    expect(captain.x).toBe(7650);
+    expect(captain.x).toBeLessThan(stage.length / 2);
+    expect(db.enemies[captain.enemyId].boss?.role).toBe('captain');
+    expect(stage.events.filter((e) => e.type === 'warning').map((e) => e.x)).toEqual([20400]);
   });
 
   it.each(zones)(

@@ -75,17 +75,25 @@
       "tiles/terrain-dune-v2"
     ],
     "zone-d": [
+      "bg/cinder-drift",
+      "bg/magma-chimney",
+      "bg/magma-deep",
       "bg/magma-lava",
       "bg/magma-peaks",
       "bosses/bastion-emitter",
+      "bosses/bastion-pod",
+      "bosses/bastion-prow",
+      "bosses/bastion-tower",
       "enemies/basalt-turret",
       "enemies/cinder-bat",
       "enemies/cinder-rock",
       "enemies/ember-wisp",
       "enemies/magma-bomb",
       "enemies/magma-cone",
-      "enemies/slag-crawler",
-      "tiles/terrain-magma"
+      "enemies/magma-geode",
+      "enemies/slag-mine",
+      "fx/glow-magma-vent",
+      "tiles/terrain-magma-v2"
     ],
     "zone-e": [
       "bg/storm-clouds",

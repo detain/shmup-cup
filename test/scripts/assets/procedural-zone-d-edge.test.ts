@@ -11,9 +11,11 @@
  *   the lava lake is opaque in every pixel (the cycle recolours all of it);
  * - the registry: `procedural/index.mjs` runs both generators (ids `magma` / `tempest`) and every
  *   zone D / E sprite name is drawn exactly once across all generators;
- * - the zone tilesets: the destructible tiles (brick, cube, tissue) look exactly like zone A's (a
- *   brick reads as a brick in every zone); the solid rock is drawn only in the set's own rock
- *   colours; the `content/tilesets/` files name their sprite; all five sets have distinct rims;
+ * - the zone tilesets: `tiles/terrain-magma-v2` carries `terrain-magma`'s twenty tiles verbatim
+ *   before design §10's four variants (the destructible classes still read exactly like zone A's
+ *   — a brick reads as a brick in every zone); the solid rock is drawn only in the set's own
+ *   rock colours; the `content/tilesets/` files name their -v2 sprite (D's since R5-04.S5a,
+ *   E's since R5-05.S5a); all five scale-1 sets have distinct rims;
  * - and, since R5-04.S2, the v2 stand-in set: frozen, unique names drawn at the shipped art
  *   scale, frames of one size, hittable sprites clearly visible, the same pixels every run.
  *
@@ -21,7 +23,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getPixel } from '../../../scripts/assets/image.mjs';
+import { getPixel, imagesEqual } from '../../../scripts/assets/image.mjs';
 import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
@@ -105,34 +107,47 @@ describe('scripts/assets/procedural magma / tempest — every sprite (M2-12)', (
 });
 
 describe('scripts/assets/procedural/terrain — zones D and E tilesets (M2-12)', () => {
-  const sets = terrain.generate();
-  const a = byName(sets, 'tiles/terrain-a');
-
-  it.each(['tiles/terrain-magma'])(
-    '%s: bricks, cubes and tissue exactly as in zone A; the rock in its own colours only',
-    (name) => {
-      const set = byName(sets, name);
-      for (const tile of ['brick', 'cube', 'tissue'] as const) {
-        const i = terrain.TERRAIN_TILES.indexOf(tile);
-        expect(Buffer.from(set.frames[i].data).equals(Buffer.from(a.frames[i].data)), tile).toBe(
-          true,
-        );
-      }
-      const palette = terrain.TERRAIN_PALETTES[name];
-      const solid = set.frames[terrain.TERRAIN_TILES.indexOf('solid')];
-      const colours = opaqueColours(solid);
-      expect(colours.size).toBeGreaterThan(0);
-      for (const c of colours) expect(palette.rock, c).toContain(c);
-      // Every pixel of the solid tile is rock (no hole in the ground).
-      for (let i = 3; i < solid.data.length; i += 4) expect(solid.data[i]).toBe(255);
-    },
-  );
+  it('tiles/terrain-magma-v2: carries the twenty tiles verbatim, bricks as zone A’s, rock in its own colours', () => {
+    const sprites = magma.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE });
+    const set = byName(sprites, 'tiles/terrain-magma-v2');
+    // The 24-frame reality of design §10 (R5-04.S5a's flip, the zone-B/C suites' carry shape):
+    // `terrain-magma`'s whole twenty-tile list at the shipped tile size, then four variants.
+    expect(set.frames).toHaveLength(magma.MAGMA_V2_TILE_NAMES.length);
+    expect(set.anchor).toEqual([0, 0]);
+    for (const frame of set.frames) {
+      expect([frame.width, frame.height]).toEqual([terrain.TILE_SIZE, terrain.TILE_SIZE]);
+    }
+    const base = terrain.renderTerrainTiles(terrain.TILE_SIZE, 'tiles/terrain-magma');
+    expect(base).toHaveLength(20);
+    for (let i = 0; i < base.length; i++) {
+      expect(imagesEqual(set.frames[i], base[i]), magma.MAGMA_V2_TILE_NAMES[i]).toBe(true);
+    }
+    expect(magma.MAGMA_V2_TILE_NAMES.slice(20)).toEqual([
+      'obsidian',
+      'brick-hot',
+      'lava-drip',
+      'vent',
+    ]);
+    // A brick reads as a brick in every zone — at the shipped scale too, against zone A's art.
+    const zoneA = terrain.renderTerrainTiles(terrain.TILE_SIZE, 'tiles/terrain-a');
+    for (const tile of ['brick', 'cube', 'tissue'] as const) {
+      const i = terrain.TERRAIN_TILES.indexOf(tile);
+      expect(imagesEqual(set.frames[i], zoneA[i]), tile).toBe(true);
+    }
+    const palette = terrain.TERRAIN_PALETTES['tiles/terrain-magma'];
+    const solid = set.frames[terrain.TERRAIN_TILES.indexOf('solid')];
+    const colours = opaqueColours(solid);
+    expect(colours.size).toBeGreaterThan(0);
+    for (const c of colours) expect(palette.rock, c).toContain(c);
+    // Every pixel of the solid tile is rock (no hole in the ground).
+    for (let i = 3; i < solid.data.length; i += 4) expect(solid.data[i]).toBe(255);
+  });
 
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
-    // Zone E's row is R5-05.S5a's remaster: the -v2 tileset sprite and the ten design-§10
-    // additions after zone A's twenty. Zone D's row stays at v1 until its own leg lands it.
+    // Both rows now name their -v2 art: zone D's is R5-04.S5a's remaster (design §10's four
+    // variants after zone A's twenty), zone E's is R5-05.S5a's (the ten design-§10 additions).
     const rows: [string, string, readonly string[]][] = [
-      ['terrain-magma', 'tiles/terrain-magma', []],
+      ['terrain-magma', 'tiles/terrain-magma-v2', magma.MAGMA_V2_TILE_NAMES.slice(20)],
       [
         'terrain-ridge',
         'tiles/terrain-ridge-v2',

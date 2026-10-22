@@ -597,7 +597,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-d-god',
     description:
-      'MAGMA DEEP start to stage clear with god mode (M2-12): the 4-way bot over the erupting caldera fields, down the dive into the caves, through the brick maze and along the lava river, then CINDER BASTION shot down',
+      'MAGMA DEEP start to stage clear with god mode (M2-12, R5-04.S6): the 4-way bot over the erupting caldera fields, down the two-step dive onto the shelf and into the deep caves, through the branching brick maze and along the lava river past the OBSIDIAN CLAW, then CINDER BASTION shot down',
     stageId: 'zone-d',
     config: { seed: 1 },
     godMode: true,
@@ -615,7 +615,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-d-bot',
     description:
-      'MAGMA DEEP without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, down the dive and through the brick maze — a death and a respawn in place down in the caves — to CINDER BASTION',
+      'MAGMA DEEP without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, down the two-step dive and through the branching maze — up to two deaths at the trench and the lava river, each respawned in place — to CINDER BASTION',
     stageId: 'zone-d',
     config: { seed: 77 },
     godMode: false,
@@ -624,7 +624,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-d-boss',
     description:
-      'the stage skip into the caves of MAGMA DEEP (M2-12 tests): CINDER BASTION with the full loadout under the Arcade penalty, its core shot through the turning shield arms',
+      'the stage skip into the deep caves of MAGMA DEEP (M2-12 tests): CINDER BASTION at the WARNING with the full loadout under the Arcade penalty, its core shot through the turning arms once they are chewed open',
     stageId: 'zone-d',
     config: { seed: 75, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
     godMode: false,

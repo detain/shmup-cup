@@ -18,7 +18,7 @@ import * as core from '../../src/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import { CONTENT_FILE_SCHEMAS, DEFAULT_BLOCK_SCREEN_X } from '../../src/data/index.js';
 import { DEFAULT_SPAWN_SCREEN_X } from '../../src/enemies/index.js';
-import { PAD, V1_FRAME, v1rel } from '../helpers/v1-port.js';
+import { PAD } from '../helpers/v1-port.js';
 import {
   UNIT_RULES,
   listNumberFields,
@@ -358,8 +358,11 @@ describe('core/data units: the camera’s yTo', () => {
       expect(PAD % TILE_SIZE, name).toBe(0);
       deepest = Math.max(deepest, lowest);
     }
-    // The deepest pan is v1's full playfield (200 px), ported ×k.
-    expect(deepest).toBe(v1rel(V1_FRAME.h));
+    // The deepest pan is the design's, not v1's port any more: zone D's §4 two-step dive
+    // bottoms at 432 on a rowsTall 64 map (R5-04.S5a — the per-file loop above still proves
+    // every shipped pan scrolls exactly to its own map's bottom). gimmick-range stays at
+    // v1's full playfield (200 px), ported ×k = 300.
+    expect(deepest).toBe(64 * TILE_SIZE - PLAYFIELD_H);
   });
 });
 

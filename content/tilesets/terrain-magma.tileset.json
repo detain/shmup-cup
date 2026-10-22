@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "tileset",
   "id": "terrain-magma",
-  "sprite": "tiles/terrain-magma",
+  "sprite": "tiles/terrain-magma-v2",
   "tileSize": 12,
   "tiles": [
     {
@@ -151,6 +151,38 @@
       "hp": 3,
       "regen": 240,
       "score": 10
+    },
+    {
+      "name": "obsidian",
+      "type": "solid",
+      "frame": 20,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 6,
+      "score": 15
+    },
+    {
+      "name": "brick-hot",
+      "type": "solid",
+      "frame": 21,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 3,
+      "score": 12
+    },
+    {
+      "name": "lava-drip",
+      "type": "hazard",
+      "frame": 22,
+      "anchor": "ceiling",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "vent",
+      "type": "empty",
+      "frame": 23,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
   ]
 }
