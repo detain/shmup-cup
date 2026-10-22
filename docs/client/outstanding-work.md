@@ -184,9 +184,10 @@ archive in a browser before you publish it.
 - **Real art and music**, whenever they exist. The hand-off is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
   replaces, so nothing else has to change. R5-01's zone A joins that queue as complete
-  procedural art — the nineteen `azure-*` names (five enemy types, the marshal's shell, the two
-  parallax bands, three decor props, the 26-tile `terrain-azure` set, each with its `@flash`
-  sibling) — drawn by `scripts/assets/procedural/azure.mjs` and replaceable PNG for PNG through
+  procedural art — the twelve `azure-*` names plus the pipeline's six `@flash` siblings
+  (five enemy types and the marshal's shell carry one each; the two parallax bands, three decor
+  props and the 26-tile `terrain-azure` set carry none) — drawn by
+  `scripts/assets/procedural/azure.mjs` and replaceable PNG for PNG through
   the ingest tool with a `.art.json` provenance record, no code change.
 - **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
   two art lines side by side: v1's sprites still draw the scale-1 atlas behind its digest pin

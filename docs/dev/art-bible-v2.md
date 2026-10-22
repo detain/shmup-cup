@@ -450,7 +450,7 @@ within 1.5/255** of it. The rules, from R3-03:
   Zone A cycles **nothing**: the remastered rim keeps its colours fixed (design §9 says skip), and
   R5-01's azure art therefore keeps its ≥ 3/255 margin from every reserved ramp — asserted by
   `test/scripts/assets/procedural-zone-a.test.ts` (the RT-S2 run measured every azure colour ≥ 3
-  from all 49 shipped ramp colours).
+  from the 49-colour superset — all 46 reserved ramp colours plus the example stage's three).
 
 - **Exempt: v1 and interim art that breaks the project-wide margin** but sits on no layer that
   cycles that ramp. The scan finds exact ramp colours or near misses (distance 0–2) in these — the

@@ -2855,14 +2855,14 @@ reviews at zero, the two P12 cures and the bless-guard cure in-wave):
   files, +1,966/−901, the branch's 21 sources plus the whole derived regeneration):
   - **HALCYON BULWARK rebuilt to the design's §8, twelve parts, core centred at x 0** (S4b — adjudicated
     after four measured STOPs): the weak point must clear **both** shadows — the plate row's and the
-    hull's — and the feasible window is core x ∈ (−8, +6], so v1's −36 became 0, centre of the window;
+    hull's — and the feasible window is core x ∈ (−8, +6], so the design's −36 became 0 — v1's own column, the design-clean point of the window;
     the hull (`x 42`, hw 30) is never vulnerable, the six plates carry 10 hp each at 9-px steps, the core
     (60 hp, `afterParts`, `requires` all six plates, 6,000) opens the row; three phases track
     .525 / .675 / .825 with margins 84 / 74 / 74, exactly two standing lasers ≥ 24 px apart, the
     assembled height 159 ≤ 202. The full-rank fight resolves in **2,186 ticks**; the design §2's 45–70 s
     fight prose measured empirically impossible for the shipped bot's digestion, so the landed cadence
     owns the pacing (an owner taste row below). Geometry note, on the record (review MINOR-1): the
-    window check used the core's half-width 6 against the plates while the landed box is 12 wide — at
+    window check used the core's half-width 6 against the plates while the landed box is half-width 12 — at
     x 0 the core's west face overlaps plate-1's east face by 0.5 px, harmless and empirically moot.
   - **The stage rebuilt to §2b/§3/§17** (S5a, S5b): 21,000 px × 28 rows of `terrain-azure` heightfields
     (decision R5-D3), seven checkpoints 0 / 2,700 / 6,300 / 9,600 / 12,000 / 15,600 / 18,300, seven
