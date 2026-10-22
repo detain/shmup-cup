@@ -339,6 +339,165 @@ drops the real art (owner-gated), so the row stays `done (owner parts pending)` 
   the zones contract meta-suite pins the flag logic, not the flip roster (`f5ea466` — closed for every
   later flip).
 
+### The wave-11 cures on master (MF5 … MF11)
+
+These change the run's kit, not the game: each cure is a routed review finding taken on master before (or
+between, for MF11) the six zone LANDs it unblocks — plan §11's wave-11 block keeps the ledger. The one
+recording move is MF8-c1's two zone-E goldens (the wave's first intentional-sim bless, superseded by zone
+E's LAND). Wave 11 closes with six zones landed; zone H rides its branch's first half into wave 12, and
+zone I stands before the owner — its god run measured 369.25 s against the contract's [240, 360] ceiling
+and both trim attempts STOPped on fight-RNG re-roll evidence; a four-option menu with the owner stands,
+and R5-09's row stays honestly `not started` (plan §11's wave-11 block records the wall).
+
+- **MF5 `a0abbf0a`** — the corridor law counts a full-mask destructible cell as open (zone F's tissue-seal
+  was lawful geometry, not a wall; an anti-rot pair proves solid rock still fails).
+- **MF6 `ca7c7b0a`** — the set-piece kit's shaft premise admits zone B's deep pan by shape (at most one
+  such stage; both worlds pinned).
+- **MF7 `38b8c8a1`** — the recovery rule counts branch-gated capsule rows only when reachable after the
+  restart (zone D's 12,900 checkpoint counted 5 and had 3 real).
+- **MF8 `1030012f` + `e6f4760b`** — the thunderhead's terminal bolt folds 2.4 → 2.25 (the true offender
+  behind zone E's 4-way gate; zone E's two goldens re-blessed on master), and the branch-steer premise
+  admits zone D's dive choice with the deepestPan premise's middle arm (246 = 432 − 186).
+- **MF10 `66e54bcb`** — the memory estimator's images charge re-anchors from the fossil `all` default to
+  the residency's true `resident` policy; the double count had stopped zone B's and zone E's welds (E's
+  page measured 262,144 B over its share; `resident` clears it by ~3 MiB). No budget moved — the cure is
+  model-only.
+- **MF11 `29137363`** — the slab-riding premise admits zone G's dy-96 crystal shutters by shape (a premise
+  pin, not a playability claim).
+
+### BRINE NEBULA — zone B remastered (R5-02, wave 11's first zone LAND)
+
+These change what the game shows and does: zone B is rebuilt to `docs/v2-run/designs/zone-b.md` and landed
+at `1d3fd600` under decision R5-D1's one-at-a-time flow. The art is the R5-D6 stand-in kit until
+`R5-02.S3` drops the real art (owner-gated), so the row stays `done (owner parts pending)` (R5-D7).
+
+- **The rebuilt stage**: 20,400 px, 74 events, six checkpoints, seven parallax bands, the 16-entry decor
+  block and raster waves on the new `terrain-reef-v2` tileset (nine appended variants); the set piece the
+  6600 deep pan into the **286-px shaft corridor**, its mouth re-posed to x 6600 (the wave's first
+  shared-kit admit, MF6); 38 capsule sources, the 34-entry item plan, the 13-row remix.
+- **The roster and boss**: the new types brine-mine (ring folded 2.4 → 2.25 to hold the 3.0 gate) and
+  spume-skipper; the SPUME HERALD refit with two new crown fins; **GALVANIC MAW** rebuilt to ten parts —
+  pods 20 hp, the 80-hp core and three new spine turrets on the 50/24 thresholds.
+- **It plays**: the 4-way bot clears in **321.7 s**, inside the contract's 240–360 s band, peaks inside
+  the 4-way rules; `brine-grotto`'s recordings verified unchanged at the composite bless.
+- **The weld** (three attempts): 3 recordings re-blessed through `--only zone-b,brine-grotto`, the groups
+  re-derived 12+/1−, the scale-1 digest `5c35219b… → 2e14bd20…` (324 frames relocated, no name changed),
+  2 docs plates; its two stops became the wave's fold precedent and the MF10 estimator cure; the battery
+  green at the pushed tip (integration 2,608 zero-red, e2e 99 + 73).
+
+### TEMPEST RIDGE — zone E remastered (R5-05)
+
+These change what the game shows and does: zone E is rebuilt to `docs/v2-run/designs/zone-e.md` and landed
+at `fe4cdae3` as the wave's second zone LAND. The art is the R5-D6 stand-in kit until `R5-05.S3` (R5-D7).
+
+- **The rebuilt stage**: 21,000 px, seven camera keys with the 12,900 eye-of-the-storm dip to y 60 and the
+  15,600 gale lift; seven checkpoints; `terrain-ridge-v2` with ten variants; the new **ice-slab** and
+  **lightbird** types; 77 events, 38 capsule sources, the 31-entry item plan, the 12-row remix.
+- **The roster and boss**: THE STORM EYE on `captain.circler` — its swirl ring ships as decor without a
+  hurtbox, so the entry-first hit law cannot let it shield the core; **SQUALL STEED** rebuilt to twelve
+  parts, the snout 26 hp, the three-phase heat ladder verbatim.
+- **It plays**: the 4-way bot clears in **311.8 s** (boss phase 26.9 s, 0 deaths); the no-god run clears
+  at 341.4 s with two deaths; the MF8-c1 2.25 terminal-bolt fold cured the 4-way gate on master before
+  this LAND's own bless superseded it.
+- **The weld**: the STOP-first discipline measured the memory wall before the lock, and MF10 was the
+  prerequisite; zone E's page crossed to the 1024×512 rung — the wave's first. The tileset router took the
+  wave's first real shared-file merge (master's shape kept, one branch added); 3 recordings re-blessed, the
+  digest `2e14bd20… → cbecdd2b…` (342 relocated), 4 plates; post-push 10,650 passed / zero red.
+
+### DUNE EXPANSE — zone C remastered (R5-03)
+
+These change what the game shows and does: zone C is rebuilt to `docs/v2-run/designs/zone-c.md` and landed
+at `247e39fb` as the wave's third zone LAND. The art is the R5-D6 stand-in kit until `R5-03.S3` (R5-D7).
+
+- **The rebuilt stage**: 21,000 px, eight camera keys over the eight designed sections (open dunes →
+  canyon → worm field → scorpion arena → second worm field → dune-surf → sandstorm → calm), the set piece
+  the **2.55 px/tick look-down pass** to y 84 over 2,100 px — the first shipped key above the kit's
+  look-ahead premise, admitted by shape in this land (both worlds proven); seven checkpoints, WARNING at
+  20,100, `terrain-dune-v2`, the one `DUNE_RAMP` palette-cycle, three raster rows.
+- **The roster and boss**: the new **spine-burrower** and **dune-lance**; **dust-devil retired to zero
+  placements** (the design's seven-sprite census against the ledger's six — the [6, 8] floor taken
+  exactly); the DUNE SCORPION on `captain.launcher`; **SANDGRAVE WIDOW** rebuilt to eleven parts, fangs as
+  blocker guns, the phase-3 bulletSpeed folded 2.55 → 2.40 to keep the fully-powered rank inside the
+  frozen 3.0 law.
+- **It plays**: the 4-way bot clears in **296.5 s**, widow fight 21.9 s, 0 deaths (design §8's 40–50 s
+  band stands as the owner's taste row); the no-god run falls at 84.7 s with three deaths.
+- **The weld**: groups 10/2 (the retired dust-devil and the v1 dune tiles leave the page), `main-3` at
+  1024×512; 3 recordings re-blessed, the digest `cbecdd2b… → 767900f6…` (855 relocated), 2 plates;
+  integration 2,626 / zero-red, post-push 10,659.
+
+### MAGMA DEEP — zone D remastered (R5-04)
+
+These change what the game shows and does: zone D is rebuilt to `docs/v2-run/designs/zone-d.md` and landed
+at `927b137f` as the wave's fourth zone LAND. The art is the R5-D6 stand-in kit until `R5-04.S3` (R5-D7).
+
+- **The rebuilt stage**: 21,150 px, six checkpoints, the **two-step dive** (y 186 then 432) into the caves
+  as the set piece, rowsTall 64, `terrain-magma-v2` with four variants, six parallax layers (the new
+  magma-deep / chimney / cinder-drift bands), eight vent glows; 75 events with the §4 channel's branch
+  regions, 43 capsule sources, the 37-entry item plan, the 10-row remix.
+- **The roster and boss**: the new **slag-mine** (a 10×10 hurtbox — the design's 9×9 is not representable)
+  and **magma-geode** (hatches four cinder-bats, stands spent), slag-crawler rostered but unplaced; the
+  OBSIDIAN CLAW on `captain.crab`; **CINDER BASTION** rebuilt to the §8 table's **17 parts** — and under
+  the full-loadout corridor law its chain arms became **destructible** (hp 12/10/8, scores 600/450/300)
+  with the core at part index 1: zone A's two-shadow law extended to a third shadow, the release audit's
+  own demand.
+- **It plays**: the 4-way bot clears in **318.5 s** (boss 14.0 s after the arms cure, 0 deaths); the
+  no-god run clears at 317.6 s, 0 deaths. MF7's reach law and MF8-c2's branch admit were its briefed
+  prerequisites; the land's doctrine fold refounded the deepest-pan pin on the dive (432).
+- **The weld**: groups 10/2, the page crossing to 1024×512 the wave's second; 4 recordings re-blessed
+  (the zone's boss run included), the digest `767900f6… → fe99d8a7…` (765 relocated), 2 plates;
+  integration 2,630 / zero-red, post-push 10,671.
+
+### CELL VAULT — zone F remastered (R5-06)
+
+These change what the game shows and does: zone F is rebuilt to `docs/v2-run/designs/zone-f.md` and landed
+at `5319d732` as the wave's fifth zone LAND. The art is the R5-D6 stand-in kit until `R5-06.S3` (R5-D7).
+
+- **The rebuilt stage**: 21,000 px, seven checkpoints, the hold-descent into the sub-vault (y 96), the
+  chase's **three gapless regrowing tissue-live walls** at 11,040 / 11,700 / 12,360 — lawful under MF5's
+  corridor adjudication (born of this zone's own stop) and drilled live by the shipped bot's punch; seven
+  parallax bands (the schema cap), `terrain-vault-v2`; 85 events, 41 capsule sources, the 35-name item
+  plan, the 8-row remix; no patterns or paths file.
+- **The roster and boss**: the new **tissue-cyst** pods (three chaser-cells each) and the **viral-dart**
+  missile (1.95 px/tick — the price of the speed: turn cap 4, homeTicks 110); the NUCLEUS WARDEN orbits
+  210×84 at 2.25 on shared captain art (zero new boss art); **MANTLE REGENT** rebuilt to **19 parts** —
+  the 108-hp eye core, four-segment tentacles, blisters worth 800, phases at 85 → 78 → 70 fireTicks — the
+  six v1 `regent-*` names kept for zone H's echo.
+- **It plays**: the 4-way bot clears in **331.1 s** (boss 35.6 s, 0 deaths); the no-god record case ends
+  at 135.2 s with three deaths, its replay-hash identity asserted (the O1 law reports, never promises).
+- **The weld** (41 steps, two mid-queue tip-moves): 5 recordings re-blessed — and the Arcade outcome case
+  softened its hand-pinned v1-era death-tick list to the count assertion its siblings already use,
+  disclosed in the body; groups 9/1 with no page added, the digest `fe99d8a7… → 20a7b109…` (347
+  relocated), 4 plates; integration 2,646 / zero-red, post-push 10,692, the Tizen bundle 396.6 KB gzipped
+  of the 512 KB budget.
+
+### PRISM LABYRINTH — zone G remastered (R5-07, the wave's last zone LAND)
+
+These change what the game shows and does: zone G is rebuilt to `docs/v2-run/designs/zone-g.md` and landed
+at `66122e87` on the MF11 `29137363` base as the wave's sixth and final zone LAND. The art is the R5-D6
+stand-in kit until `R5-07.S3` — with it come the core's pulse and the bands' design widths (R5-D7).
+
+- **The rebuilt stage**: 21,300 px over 56 tile rows, the three diving keys (y 168 / 312 / 168), the
+  gallery's twelve walls and heart ring; the set piece the four **crystal shutters** swinging dy 96 across
+  the lanes (MF11's shape admit) and the two five-column pinch seal bands, entirely destructible and band
+  2 drilled live; the crystal lining holds every column ≥ 48 px; a **1-based-RLE cure** (`b61c63a0` —
+  heightfield RLE tile ids count from one; the bands' legality and the bank's capsules 6 → 12 are its
+  consequences); 81 events, 33 capsule sources, the 37-entry item plan, the 10-row remix; deliberately no
+  paths file (the halo rows ride zone A's ids), the patterns file byte-identical.
+- **The roster and boss**: the new **prism-shard**, **prism-glint** (the silent capsule drifter) and
+  **prisma**; the PRISM SENTINEL on `captain.circler`, fought at 8,040 **without a warning** (P14's skip
+  rule holds); **FACET MONARCH** rebuilt to **20 parts** — the 84-hp core gated at 42, gun emitters taking
+  the needle volleys from all four guns, crown / shoulders / wings unhittable, height 147 inside the cap,
+  the core proven reachable.
+- **It plays**: the 4-way god bot clears in **315.4 s** (boss 31.2 s, 0 deaths, peaks 15 / 20); the
+  no-god case follows the **O1 identity law** ruled in this weld — the re-recorded run ends gameOver at
+  156.0 s with three deaths at the gallery mouth, reported as truth; the §15 gallery windows and the
+  mouth's volley difficulty stand as the owner's rows (wave 12).
+- **The weld**: the duty-5 O1 gate STOPped the first attempt by design; the restart's five bless hashes
+  came out **bit-identical across both attempts** (the determinism proof), `glimmer-cache`'s moving with
+  the shared tile strip only; groups 11+/2−, `main-7` grows to 512×512 with no page added, the digest
+  `20a7b109… → 7e6fc0e9…` (410 relocated), 4 plates; integration FULL zero-red, post-push **10,713 / 104**
+  at the pushed tip — six zones landed, wave 11 closed on `66122e87`.
+
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
 - **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and
