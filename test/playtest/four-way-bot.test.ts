@@ -797,8 +797,10 @@ describe('playtest four-way bot: brick shooting (zones D, F, G, I)', () => {
 
   it('does not punch while the window still has open rows across the wall', () => {
     // RT-P12's cure: the whole camera window must be sealed before a drill — a plug that leaves
-    // rows 0..7 open is a climb the lane model always finds, at any distance. The shipped zone-F
-    // tissue walls (84-px gap rows) and zone-D maze walls (72-px) are exactly this shape.
+    // rows 0..7 open is a climb the lane model always finds, at any distance. The remastered
+    // zone-D maze walls keep 48-60 px gap rows across every station — exactly this shape; the
+    // zone-F chase walls (x 11,040 / 11,700 / 12,360) are gapless and arm only inside their
+    // 84-px approach band, off the 480-px grid (the sweep probe below carries the census).
     expect(punchWallAhead(parkedAtPlug(plugDb(BRICK, 8), 240), terrainLookAhead(1.2))).toBeNull();
     expect(punchWallAhead(parkedAtPlug(plugDb(BRICK, 8), 12), terrainLookAhead(1.2))).toBeNull();
     // The same plug at full height seals the window: point-blank it is the shot target.

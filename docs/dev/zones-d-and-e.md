@@ -755,7 +755,7 @@ golden file-name pattern.
 |---|---|---|
 | `zone-d-god` | 4-way bot, god mode, seed 1 — the caldera, both dive steps, the branching maze, the lava river, CINDER BASTION | `stageClear` after 318.5 s, 87,045 points, no deaths; the World ends down at camera y 432 — the redesigned dive's floor |
 | `zone-e-god` | 4-way bot, god mode, seed 1 — kites and jumpers from behind, the eye dip, the gale run, SQUALL STEED | `stageClear` after 311.8 s, 75,730 points, no deaths |
-| `zone-d-bot` (test round) | 4-way bot, no god mode, seed 77 — the remastered recording; v1's died once in the caves | `stageClear` after 317.6 s, 85,773 points, the outcome file allows up to two trench or river deaths and this recording uses none |
+| `zone-d-bot` (test round) | 4-way bot, no god mode, seed 77 — the remastered recording; v1's died once in the caves | `stageClear` after 319.25 s, 82,308 points with 1 death — a contact at x 5,407 — within the outcome file's band of up to two trench or river deaths |
 | `zone-d-boss` (test round) | the stage skip into the deep caves — CINDER BASTION's WARNING at 20,400 (the captain's `boss` event carries none), full loadout, Arcade penalty | `stageClear`, boss down, under a quarter of the bot run's ticks, the camera never above y 432 |
 | `zone-e-bot` (test round) | 4-way bot, no god mode, seed 74 — the rear attackers against a ship that can die | `stageClear` after 341.4 s with 2 deaths — contact at x 13,730 and x 14,171 — then the clear |
 

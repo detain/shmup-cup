@@ -1051,7 +1051,7 @@ console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageCle
 | The content test flags a claw's `speed` | Claws and chasing cells fly at the ship, so their `speed` (and a claw's `retractSpeed`) are held to 3 px/tick (2 · WORLD_SCALE) like an aimed bullet |
 | Every golden fails after adding a sprite or a behaviour | The sorted sprite and script ids moved; re-bless (`pnpm golden:update`) and check that inputs, ticks and outcomes are unchanged |
 | An allocation guard of a boss behaviour fails at ≈ 66 KB under load | Load noise: the squid / facet guards take the best of five windows, and `behaviors-facet-alloc` still came in at 66,736 bytes now and then (in the full suite, or beside the squid guard) — rerun it alone; a real per-tick allocation fails in every window, alone too |
-| The Tizen bundle check fails on size | 410.9 of 512 KB gzip after R5-07 (zone F's land: 396.6); the content is inlined, so each rebuilt zone's stage, roster and songs move it |
+| The Tizen bundle check fails on size | 399.8 of 512 KB gzip after R5-07 (zone F's land: 396.6; the test build is 410.9 with the debug tools inlined); the content is inlined, so each rebuilt zone's stage, roster and songs move it |
 
 ## Next steps that build on this page
 
