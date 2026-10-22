@@ -7,7 +7,7 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 14400,
+  "length": 21000,
   "camera": [
     {
       "x": 0,
@@ -15,24 +15,43 @@
       "ramp": 60
     },
     {
-      "x": 3000,
+      "x": 3900,
       "speed": 1.05,
       "ramp": 60
     },
     {
-      "x": 6600,
+      "x": 7800,
       "speed": 1.2,
       "ramp": 60
     },
     {
-      "x": 9900,
-      "speed": 1.95,
-      "ramp": 120
+      "x": 10050,
+      "speed": 0.9,
+      "ramp": 90
     },
     {
-      "x": 12600,
+      "x": 11700,
+      "speed": 1.2,
+      "ramp": 60
+    },
+    {
+      "x": 14700,
+      "speed": 2.55,
+      "ramp": 120,
+      "yTo": 84,
+      "yOver": 2100
+    },
+    {
+      "x": 17400,
+      "speed": 1.95,
+      "ramp": 90,
+      "yTo": 0,
+      "yTicks": 90
+    },
+    {
+      "x": 19200,
       "speed": 1.125,
-      "ramp": 120
+      "ramp": 90
     }
   ],
   "checkpoints": [
@@ -40,34 +59,36 @@
       "x": 0
     },
     {
-      "x": 3300
+      "x": 3900
     },
     {
-      "x": 6600
+      "x": 7800
     },
     {
-      "x": 9900
+      "x": 10050
+    },
+    {
+      "x": 13800
+    },
+    {
+      "x": 16650
+    },
+    {
+      "x": 17400
     }
   ],
   "parallax": [
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/dune-sky",
+      "factor": 0.06,
       "y": 0,
-      "spacing": 192
-    },
-    {
-      "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
-      "y": 192,
-      "spacing": 192
+      "spacing": 320
     },
     {
       "layer": "far",
       "sprite": "bg/dune-suns",
-      "factor": 0.06,
+      "factor": 0.18,
       "y": 18,
       "spacing": 780
     },
@@ -77,59 +98,113 @@
       "factor": 0.3,
       "y": 240,
       "spacing": 192
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/dune-blaze",
+      "factor": 0.45,
+      "y": 252,
+      "spacing": 320
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/dune-grass",
+      "factor": 0.75,
+      "y": 264,
+      "spacing": 320
     }
   ],
   "tilemap": {
     "tileSize": 12,
     "tileset": "terrain-dune",
-    "rowsTall": 28,
+    "rowsTall": 35,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
           "from": 225,
-          "to": 3000,
+          "to": 3900,
           "floor": {
-            "base": 42,
-            "amp": 21,
-            "period": 630,
+            "base": 129,
+            "amp": 24,
+            "period": 720,
             "seed": 71
           }
         },
         {
-          "from": 3075,
-          "to": 6450,
+          "from": 3900,
+          "to": 7800,
           "floor": {
-            "base": 48,
-            "amp": 18,
+            "base": 174,
+            "amp": 27,
             "period": 540,
             "seed": 72
           },
           "ceiling": {
-            "base": 87,
-            "amp": 18,
+            "base": 120,
+            "amp": 30,
             "period": 450,
             "seed": 73
           }
         },
         {
-          "from": 6675,
-          "to": 9675,
+          "from": 7800,
+          "to": 10050,
           "floor": {
-            "base": 45,
-            "amp": 27,
-            "period": 720,
+            "base": 138,
+            "amp": 15,
+            "period": 480,
             "seed": 74
           }
         },
         {
           "from": 10050,
-          "to": 12300,
+          "to": 11700,
           "floor": {
-            "base": 21,
+            "base": 117,
             "amp": 9,
             "period": 390,
             "seed": 75
+          }
+        },
+        {
+          "from": 11700,
+          "to": 14700,
+          "floor": {
+            "base": 132,
+            "amp": 24,
+            "period": 630,
+            "seed": 76
+          }
+        },
+        {
+          "from": 14700,
+          "to": 17400,
+          "floor": {
+            "base": 75,
+            "amp": 30,
+            "period": 360,
+            "seed": 77
+          }
+        },
+        {
+          "from": 17400,
+          "to": 19200,
+          "floor": {
+            "base": 129,
+            "amp": 21,
+            "period": 540,
+            "seed": 78
+          }
+        },
+        {
+          "from": 19200,
+          "to": 21640,
+          "floor": {
+            "base": 114,
+            "amp": 6,
+            "period": 900,
+            "seed": 79
           }
         }
       ]
@@ -161,7 +236,7 @@
       "bonus": 600
     },
     {
-      "x": 930,
+      "x": 900,
       "type": "spawn",
       "enemy": "tender",
       "y": 171
@@ -177,28 +252,32 @@
       "path": "skim-rise"
     },
     {
-      "x": 1286,
+      "x": 1280,
       "type": "spawn",
-      "enemy": "sand-geyser"
+      "enemy": "husk-crawler-floor"
+    },
+    {
+      "x": 1320,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 126
+    },
+    {
+      "x": 1520,
+      "type": "spawn",
+      "enemy": "husk-crawler-floor"
     },
     {
       "x": 1526,
       "type": "formation",
       "enemy": "dune-worm",
       "count": 6,
-      "interval": 7,
-      "drop": null
+      "interval": 7
     },
     {
       "x": 1800,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 126
-    },
-    {
-      "x": 1946,
-      "type": "spawn",
-      "enemy": "sand-geyser"
+      "enemy": "husk-crawler-floor"
     },
     {
       "x": 2010,
@@ -211,18 +290,21 @@
       "path": "skim-dip"
     },
     {
-      "x": 2156,
-      "type": "formation",
-      "enemy": "dune-worm",
-      "count": 7,
-      "interval": 7,
-      "bonus": 700
-    },
-    {
-      "x": 3360,
+      "x": 2050,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
+    },
+    {
+      "x": 2300,
+      "type": "spawn",
+      "enemy": "husk-crawler-floor"
+    },
+    {
+      "x": 3300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
     },
     {
       "x": 3476,
@@ -230,40 +312,26 @@
       "enemy": "husk-crawler"
     },
     {
-      "x": 3656,
-      "type": "spawn",
-      "enemy": "husk-crawler-floor"
-    },
-    {
-      "x": 3900,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 5,
-      "interval": 14,
-      "y": 186,
-      "bonus": 400
-    },
-    {
       "x": 4046,
       "type": "spawn",
       "enemy": "husk-crawler"
     },
     {
-      "x": 4290,
+      "x": 4050,
       "type": "spawn",
       "enemy": "tender",
       "y": 171
     },
     {
-      "x": 4470,
+      "x": 4350,
       "type": "spawn",
-      "enemy": "dust-devil",
-      "y": 186
+      "enemy": "sand-geyser"
     },
     {
-      "x": 4586,
+      "x": 4650,
       "type": "spawn",
-      "enemy": "husk-crawler-floor"
+      "enemy": "tender",
+      "y": 141
     },
     {
       "x": 4766,
@@ -271,7 +339,12 @@
       "enemy": "husk-crawler"
     },
     {
-      "x": 5010,
+      "x": 4900,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 5100,
       "type": "spawn",
       "enemy": "tender",
       "y": 201
@@ -287,33 +360,28 @@
       "enemy": "husk-crawler"
     },
     {
-      "x": 5550,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 5,
-      "interval": 14,
-      "y": 171,
-      "drop": null
-    },
-    {
-      "x": 5576,
-      "type": "spawn",
-      "enemy": "husk-crawler-floor"
-    },
-    {
       "x": 5850,
-      "type": "spawn",
-      "enemy": "dust-devil",
-      "y": 156
-    },
-    {
-      "x": 6150,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 6660,
+      "x": 5906,
+      "type": "spawn",
+      "enemy": "husk-crawler"
+    },
+    {
+      "x": 6100,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 6506,
+      "type": "spawn",
+      "enemy": "husk-crawler"
+    },
+    {
+      "x": 6600,
       "type": "spawn",
       "enemy": "tender",
       "y": 156
@@ -327,47 +395,31 @@
       "bonus": 700
     },
     {
-      "x": 7080,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 201
-    },
-    {
       "x": 7226,
       "type": "spawn",
       "enemy": "sand-geyser"
+    },
+    {
+      "x": 7350,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
     },
     {
       "x": 7436,
       "type": "formation",
       "enemy": "dune-worm",
       "count": 7,
-      "interval": 7,
-      "drop": null
+      "interval": 7
     },
     {
-      "x": 7616,
-      "type": "formation",
-      "enemy": "dune-worm",
-      "count": 6,
-      "interval": 7,
-      "drop": null,
-      "screenX": 724
-    },
-    {
-      "x": 7890,
+      "x": 7950,
       "type": "spawn",
       "enemy": "tender",
       "y": 141
     },
     {
       "x": 8100,
-      "type": "spawn",
-      "enemy": "dust-devil",
-      "y": 171
-    },
-    {
-      "x": 8246,
       "type": "formation",
       "enemy": "dune-worm",
       "count": 8,
@@ -375,126 +427,210 @@
       "bonus": 800
     },
     {
-      "x": 8550,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 6,
-      "interval": 12,
-      "y": 111,
-      "bonus": 500,
-      "path": "skim-dip"
-    },
-    {
-      "x": 8726,
+      "x": 8400,
       "type": "spawn",
-      "enemy": "sand-geyser"
+      "enemy": "tender",
+      "y": 171
     },
     {
-      "x": 8846,
+      "x": 8850,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 126
+    },
+    {
+      "x": 9050,
       "type": "formation",
       "enemy": "dune-worm",
       "count": 8,
-      "interval": 7,
-      "drop": null
+      "interval": 7
     },
     {
-      "x": 9060,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 9960,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 10140,
+      "x": 10000,
       "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 6,
-      "interval": 10,
-      "y": 126,
-      "bonus": 500
+      "enemy": "dune-worm",
+      "count": 8,
+      "interval": 7
+    },
+    {
+      "x": 10200,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
     },
     {
       "x": 10350,
+      "type": "boss",
+      "enemy": "dune-scorpion"
+    },
+    {
+      "x": 10800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
+    },
+    {
+      "x": 11340,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 12300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 12450,
+      "type": "formation",
+      "enemy": "dune-worm",
+      "count": 7,
+      "interval": 7,
+      "bonus": 700
+    },
+    {
+      "x": 12600,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 12900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 231
+    },
+    {
+      "x": 13350,
+      "type": "formation",
+      "enemy": "dune-worm",
+      "count": 8,
+      "interval": 7
+    },
+    {
+      "x": 13800,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 13950,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 14400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
+    },
+    {
+      "x": 14850,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
+    },
+    {
+      "x": 15300,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 15450,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 15900,
+      "type": "spawn",
+      "enemy": "dune-lance",
+      "y": 261
+    },
+    {
+      "x": 16050,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
+    },
+    {
+      "x": 16200,
+      "type": "spawn",
+      "enemy": "spine-burrower"
+    },
+    {
+      "x": 16800,
       "type": "spawn",
       "enemy": "tender",
       "y": 246
     },
     {
-      "x": 10560,
+      "x": 16950,
       "type": "spawn",
-      "enemy": "dust-devil",
-      "y": 141
+      "enemy": "dune-lance",
+      "y": 261
     },
     {
-      "x": 10770,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 6,
-      "interval": 10,
-      "y": 246,
-      "bonus": 500
-    },
-    {
-      "x": 10980,
-      "type": "spawn",
-      "enemy": "dust-devil",
-      "y": 231
-    },
-    {
-      "x": 11190,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 6,
-      "interval": 10,
-      "y": 186,
-      "drop": null
-    },
-    {
-      "x": 11400,
+      "x": 17250,
       "type": "spawn",
       "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 11640,
-      "type": "spawn",
-      "enemy": "dust-devil",
       "y": 186
     },
     {
-      "x": 11850,
-      "type": "formation",
-      "enemy": "sand-skimmer",
-      "count": 6,
-      "interval": 10,
-      "y": 126,
-      "drop": null,
-      "path": "skim-dip"
+      "x": 17550,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
     },
     {
-      "x": 12780,
+      "x": 17700,
       "type": "spawn",
       "enemy": "tender",
       "y": 156
     },
     {
-      "x": 13140,
+      "x": 17850,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 231
+      "enemy": "dune-lance",
+      "y": 261
     },
     {
-      "x": 13650,
+      "x": 18000,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 246
+    },
+    {
+      "x": 18300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
+    },
+    {
+      "x": 18900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 19500,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 19850,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 20100,
       "type": "warning",
       "enemy": "sandgrave-widow"
     },
     {
-      "x": 14400,
+      "x": 21000,
       "type": "end"
     }
   ],
@@ -508,23 +644,30 @@
     "red",
     "green",
     "octagon",
+    "red",
+    "orange",
     "blue",
     "red",
     "green",
-    "blue",
-    "red",
     "yellow",
+    "red",
     "green",
     "blue",
     "red",
     "green",
-    "blue",
     "orange",
     "red",
     "green",
+    "octagon",
+    "red",
+    "green",
     "blue",
     "red",
-    "green"
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue"
   ],
   "raster": [
     {
@@ -544,6 +687,17 @@
       "amplitude": 1.5,
       "wavelength": 12,
       "period": 40
+    },
+    {
+      "layer": "far",
+      "kind": "wave",
+      "top": 0,
+      "bottom": 336,
+      "amplitude": 2,
+      "wavelength": 18,
+      "period": 24,
+      "from": 17400,
+      "to": 19200
     }
   ],
   "cycles": [
@@ -611,6 +765,57 @@
       "y": 246,
       "drop": null,
       "path": "skim-dip"
+    },
+    {
+      "x": 12150,
+      "type": "formation",
+      "enemy": "dune-worm",
+      "count": 8,
+      "interval": 7,
+      "drop": null
+    },
+    {
+      "x": 13050,
+      "type": "formation",
+      "enemy": "dune-worm",
+      "count": 8,
+      "interval": 7,
+      "drop": null
+    },
+    {
+      "x": 14100,
+      "type": "formation",
+      "enemy": "dune-worm",
+      "count": 8,
+      "interval": 7,
+      "drop": null
+    },
+    {
+      "x": 15000,
+      "type": "formation",
+      "enemy": "dune-lance",
+      "count": 4,
+      "interval": 12,
+      "y": 261,
+      "drop": null
+    },
+    {
+      "x": 17250,
+      "type": "formation",
+      "enemy": "dune-lance",
+      "count": 5,
+      "interval": 12,
+      "y": 261,
+      "drop": null
+    },
+    {
+      "x": 18600,
+      "type": "formation",
+      "enemy": "dune-lance",
+      "count": 6,
+      "interval": 12,
+      "y": 261,
+      "drop": null
     }
   ]
 }

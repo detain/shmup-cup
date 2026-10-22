@@ -71,7 +71,7 @@ describe('core/behaviors boss.widow allocation (M2-11)', () => {
     }
     const parts = boss.parts;
     const core = parts.findIndex((p) => p.core);
-    // Both fangs, then the head below 24 of 56: its last phase.
+    // Both fangs, then the head below 28 of its new 64: its last phase.
     for (const name of ['fang-top', 'fang-bottom']) {
       w.bosses.damagePart(
         parts.findIndex((p) => p.name === name),

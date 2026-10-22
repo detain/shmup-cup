@@ -37,6 +37,7 @@ import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
 import * as azure from '../../scripts/assets/procedural/azure.mjs';
 import * as brine from '../../scripts/assets/procedural/brine.mjs';
+import * as dune from '../../scripts/assets/procedural/dune.mjs';
 import * as tempest from '../../scripts/assets/procedural/tempest.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 import { expectHeightfieldFindsTiles, expectMasksMatchArt } from './terrain-checks.js';
@@ -99,8 +100,8 @@ function resampledTilesets(size: number): ContentFile[] {
  * The 12-px frames of a shipped tileset sprite: `terrain.mjs` draws the palette families;
  * `tiles/terrain-azure` comes from `azure.mjs`, which paints it at `options.tileSize` exactly
  * like `renderTerrainTiles` does a palette (R5-01.S5a — later zones' -v2 sets route the same
- * way: `tiles/terrain-reef-v2` from `brine.mjs` since R5-02.S5a, `tiles/terrain-ridge-v2` from
- * `tempest.mjs` since R5-05.S5a).
+ * way: `tiles/terrain-reef-v2` from `brine.mjs` since R5-02.S5a, `tiles/terrain-dune-v2` from
+ * `dune.mjs` since R5-03.S5a, `tiles/terrain-ridge-v2` from `tempest.mjs` since R5-05.S5a).
  *
  * @param sprite - The tileset's sprite name.
  * @param size - The tile size to draw at.
@@ -112,6 +113,12 @@ function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof render
       if (drawn.name === sprite) return drawn.frames;
     }
     throw new Error(`brine.mjs draws no ${sprite}`);
+  }
+  if (sprite === 'tiles/terrain-dune-v2') {
+    for (const drawn of dune.generate({ tileSize: size, artScale: 3 / 2 })) {
+      if (drawn.name === sprite) return drawn.frames;
+    }
+    throw new Error(`dune.mjs draws no ${sprite}`);
   }
   if (sprite === 'tiles/terrain-ridge-v2') {
     for (const drawn of tempest.generate({ tileSize: size, artScale: 3 / 2 })) {

@@ -57,6 +57,7 @@ const RAMPS: Readonly<Record<string, readonly string[]>> = Object.freeze({
 const CYCLE_ART: Readonly<Record<string, string>> = Object.freeze({
   SEA: 'bg/sea-swell',
   BRINE: 'bg/brine-sea',
+  DUNE: 'bg/dune-blaze',
   MAGMA: 'bg/magma-lava',
   STORM: 'bg/storm-clouds',
   VAULT: 'bg/vault-membrane',
@@ -76,7 +77,7 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'enemies/prism-lens',
     'bg/storm-flash',
   ],
-  DUNE: ['bosses/widow-head', 'bg/dune-blaze'],
+  DUNE: ['bosses/widow-head'],
   VAULT: ['bosses/regent-eye'],
   PRISM: ['enemies/hopper'],
   CITADEL: ['items/capsule-bonus'],

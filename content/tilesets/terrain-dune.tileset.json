@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "tileset",
   "id": "terrain-dune",
-  "sprite": "tiles/terrain-dune",
+  "sprite": "tiles/terrain-dune-v2",
   "tileSize": 12,
   "tiles": [
     {
@@ -151,6 +151,122 @@
       "hp": 3,
       "regen": 240,
       "score": 10
+    },
+    {
+      "name": "solid-2",
+      "type": "solid",
+      "frame": 20,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "solid-3",
+      "type": "solid",
+      "frame": 21,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "floor-2",
+      "type": "solid",
+      "frame": 22,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "floor-3",
+      "type": "solid",
+      "frame": 23,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "ceiling-2",
+      "type": "solid",
+      "frame": 24,
+      "anchor": "ceiling",
+      "mask": [8, 4, 6, 3, 4, 3, 9, 9, 7, 7, 4, 9]
+    },
+    {
+      "name": "corner-outer-left",
+      "type": "solid",
+      "frame": 25,
+      "anchor": "floor",
+      "mask": [4, 4, 4, 6, 6, 6, 8, 8, 8, 10, 10, 10]
+    },
+    {
+      "name": "corner-outer-right",
+      "type": "solid",
+      "frame": 26,
+      "anchor": "floor",
+      "mask": [10, 10, 10, 8, 8, 8, 6, 6, 6, 4, 4, 4]
+    },
+    {
+      "name": "corner-inner-left",
+      "type": "solid",
+      "frame": 27,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 6, 6, 6, 6, 6, 6]
+    },
+    {
+      "name": "corner-inner-right",
+      "type": "solid",
+      "frame": 28,
+      "anchor": "floor",
+      "mask": [6, 6, 6, 6, 6, 6, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "ceil-corner-outer",
+      "type": "solid",
+      "frame": 29,
+      "anchor": "ceiling",
+      "mask": [4, 4, 4, 6, 6, 6, 8, 8, 8, 10, 10, 10]
+    },
+    {
+      "name": "ceil-corner-inner",
+      "type": "solid",
+      "frame": 30,
+      "anchor": "ceiling",
+      "mask": [12, 12, 12, 12, 12, 12, 6, 6, 6, 6, 6, 6]
+    },
+    {
+      "name": "brick-crack",
+      "type": "solid",
+      "frame": 31,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 2,
+      "score": 10
+    },
+    {
+      "name": "brick-crack-2",
+      "type": "solid",
+      "frame": 32,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 1,
+      "score": 10
+    },
+    {
+      "name": "decor-tuft",
+      "type": "empty",
+      "frame": 33,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "name": "decor-bone",
+      "type": "empty",
+      "frame": 34,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "name": "decor-glass",
+      "type": "empty",
+      "frame": 35,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
   ]
 }

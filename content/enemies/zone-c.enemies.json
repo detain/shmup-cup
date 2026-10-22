@@ -193,6 +193,120 @@
       "drop": null
     },
     {
+      "id": "spine-burrower",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/spine-burrower",
+      "params": {
+        "aimTicks": 24,
+        "fireTicks": 120,
+        "bulletSpeed": 2.25
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "dune-lance",
+      "hp": 3,
+      "score": 350,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 3
+      },
+      "script": "rear.swoop",
+      "sprite": "enemies/dune-lance",
+      "anim": {
+        "frames": 4,
+        "ticks": 4
+      },
+      "params": {
+        "speed": 2.7,
+        "turnX": 380,
+        "hold": 24,
+        "ways": 1,
+        "spread": 40,
+        "bulletSpeed": 2.1,
+        "leaveSpeed": 2.4
+      },
+      "drop": null
+    },
+    {
+      "id": "dune-scorpion",
+      "boss": {
+        "code": "DS-01",
+        "displayName": "DUNE SCORPION",
+        "role": "captain",
+        "score": 4000,
+        "x": 508,
+        "y": 168,
+        "timeLimit": 1800,
+        "parts": [
+          {
+            "name": "shell",
+            "hp": 44,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 6
+            },
+            "core": true,
+            "sprite": "bosses/scorpion-shell",
+            "anim": {
+              "frames": 2,
+              "ticks": 20
+            },
+            "explosion": "large"
+          },
+          {
+            "name": "claw-top",
+            "x": 27,
+            "y": -20,
+            "hp": 10,
+            "gun": true,
+            "sprite": "bosses/scorpion-claw",
+            "score": 600
+          },
+          {
+            "name": "claw-bottom",
+            "x": 27,
+            "y": 20,
+            "hp": 10,
+            "gun": true,
+            "sprite": "bosses/scorpion-claw",
+            "score": 600
+          },
+          {
+            "name": "tail",
+            "x": 45,
+            "y": 0,
+            "vulnerable": "never",
+            "sprite": "bosses/scorpion-tail"
+          }
+        ],
+        "phases": [
+          {
+            "script": "captain.ram",
+            "params": {
+              "waves": 4,
+              "waveTicks": 42,
+              "ways": 5,
+              "spread": 40,
+              "bulletSpeed": 2.25,
+              "ramTicks": 50,
+              "ramX": 60,
+              "returnTicks": 80,
+              "restTicks": 60
+            }
+          }
+        ]
+      }
+    },
+    {
       "id": "sandgrave-widow",
       "boss": {
         "code": "SW-03",
@@ -204,79 +318,11 @@
         "minion": "widow-drone",
         "parts": [
           {
-            "name": "leg-top-front",
-            "x": 18,
-            "y": -31.5,
-            "sprite": "bosses/widow-leg-top"
-          },
-          {
-            "name": "leg-top-back",
-            "x": 60,
-            "y": -37.5,
-            "sprite": "bosses/widow-leg-top"
-          },
-          {
-            "name": "leg-bottom-front",
-            "x": 18,
-            "y": 31.5,
-            "sprite": "bosses/widow-leg-bottom"
-          },
-          {
-            "name": "leg-bottom-back",
-            "x": 60,
-            "y": 37.5,
-            "sprite": "bosses/widow-leg-bottom"
-          },
-          {
-            "name": "body",
-            "x": 45,
-            "vulnerable": "never",
-            "hurtbox": {
-              "hw": 36,
-              "hh": 26
-            },
-            "sprite": "bosses/widow-body"
-          },
-          {
-            "name": "spinneret-top",
-            "x": 81,
-            "y": -21,
-            "hp": 20,
-            "hurtbox": {
-              "hw": 8,
-              "hh": 8
-            },
-            "gun": true,
-            "sprite": "bosses/widow-spinneret",
-            "anim": {
-              "frames": 2,
-              "ticks": 12
-            },
-            "score": 1000
-          },
-          {
-            "name": "spinneret-bottom",
-            "x": 81,
-            "y": 21,
-            "hp": 20,
-            "hurtbox": {
-              "hw": 8,
-              "hh": 8
-            },
-            "gun": true,
-            "sprite": "bosses/widow-spinneret",
-            "anim": {
-              "frames": 2,
-              "ticks": 12
-            },
-            "score": 1000
-          },
-          {
             "name": "head",
-            "hp": 56,
+            "hp": 64,
             "hurtbox": {
-              "hw": 12,
-              "hh": 11
+              "hw": 8,
+              "hh": 7
             },
             "vulnerable": "afterParts",
             "requires": ["fang-top", "fang-bottom"],
@@ -291,27 +337,101 @@
           },
           {
             "name": "fang-top",
-            "x": -16.5,
-            "y": -7.5,
-            "hp": 14,
+            "x": -24,
+            "y": -12,
+            "hp": 16,
             "hurtbox": {
-              "hw": 6,
-              "hh": 9
+              "hw": 5,
+              "hh": 7
             },
             "sprite": "bosses/widow-fang",
             "score": 800
           },
           {
             "name": "fang-bottom",
-            "x": -16.5,
-            "y": 7.5,
-            "hp": 14,
+            "x": -24,
+            "y": 12,
+            "hp": 16,
             "hurtbox": {
-              "hw": 6,
-              "hh": 9
+              "hw": 5,
+              "hh": 7
             },
             "sprite": "bosses/widow-fang",
             "score": 800
+          },
+          {
+            "name": "spinneret-top",
+            "x": 117,
+            "y": -30,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 6
+            },
+            "gun": true,
+            "sprite": "bosses/widow-spinneret",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "score": 1000
+          },
+          {
+            "name": "spinneret-bottom",
+            "x": 117,
+            "y": 30,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 6
+            },
+            "gun": true,
+            "sprite": "bosses/widow-spinneret",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "score": 1000
+          },
+          {
+            "name": "egg-sac",
+            "x": 90,
+            "vulnerable": "never",
+            "sprite": "bosses/widow-egg-sac"
+          },
+          {
+            "name": "body",
+            "x": 67,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 23,
+              "hh": 18
+            },
+            "sprite": "bosses/widow-body"
+          },
+          {
+            "name": "leg-top-front",
+            "x": 27,
+            "y": -54,
+            "sprite": "bosses/widow-leg-top"
+          },
+          {
+            "name": "leg-top-back",
+            "x": 81,
+            "y": -66,
+            "sprite": "bosses/widow-leg-top"
+          },
+          {
+            "name": "leg-bottom-front",
+            "x": 27,
+            "y": 54,
+            "sprite": "bosses/widow-leg-bottom"
+          },
+          {
+            "name": "leg-bottom-back",
+            "x": 81,
+            "y": 66,
+            "sprite": "bosses/widow-leg-bottom"
           }
         ],
         "phases": [
@@ -320,10 +440,10 @@
             "params": {
               "minX": 437,
               "maxX": 538,
-              "stepTicks": 110,
-              "fireTicks": 90,
-              "bulletSpeed": 1.875,
-              "launchTicks": 180,
+              "stepTicks": 100,
+              "fireTicks": 84,
+              "bulletSpeed": 2.25,
+              "launchTicks": 170,
               "count": 1
             },
             "until": {
@@ -335,15 +455,15 @@
             "params": {
               "minX": 437,
               "maxX": 538,
-              "stepTicks": 95,
-              "fireTicks": 80,
-              "bulletSpeed": 1.95,
+              "stepTicks": 90,
+              "fireTicks": 76,
+              "bulletSpeed": 2.4,
               "launchTicks": 150,
               "count": 2,
-              "laserTicks": 160
+              "laserTicks": 150
             },
             "until": {
-              "hpBelow": 24
+              "hpBelow": 28
             }
           },
           {
@@ -351,14 +471,14 @@
             "params": {
               "minX": 437,
               "maxX": 538,
-              "stepTicks": 80,
-              "fireTicks": 64,
+              "stepTicks": 76,
+              "fireTicks": 60,
               "ways": 5,
-              "spread": 36,
-              "bulletSpeed": 2.025,
+              "spread": 40,
+              "bulletSpeed": 2.4,
               "launchTicks": 130,
               "count": 2,
-              "laserTicks": 130
+              "laserTicks": 125
             }
           }
         ]

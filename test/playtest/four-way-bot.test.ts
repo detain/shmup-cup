@@ -14,8 +14,9 @@
  * - the R5-P.P12 set-piece features on fixture stages: the shaft window (zone B), the high-speed
  *   look-ahead (zone C), the branch choice (zone D), brick shooting with the commit-through (zones
  *   D and F) and the moving-floor sweep prediction (zone H) — each gated off the shipped content,
- *   the shaft admitting only zone B's design §5 chimney (R5-02) and the branch choice only zone
- *   D's design §4 channel (R5-04), so a recording moves only with its own zone's content.
+ *   the shaft admitting only zone B's design §5 chimney (R5-02), the look-ahead only zone C's
+ *   design §3 dune-surf key (R5-03) and the branch choice only zone D's design §4 channel (R5-04),
+ *   so a recording moves only with its own zone's content.
  */
 import {
   Action,
@@ -308,9 +309,9 @@ describe('playtest four-way bot: decide', () => {
  * R5-P.P12 — the set-piece features (wave-11 designs §3), each on a fixture  *
  * stage: the shaft window, the high-speed look-ahead, the branch choice,     *
  * brick shooting, and the moving floors. Every gate is asserted to hold shut *
- * on the shipped content except the set pieces it names — zone B's design  *
- * §5 chimney (R5-02) and zone D's design §4 channel (R5-04) — so a gate  *
- * never moves a recording on its own.                                        *
+ * on the shipped content except the set pieces it names — zone B's design    *
+ * §5 chimney (R5-02), zone C's design §3 dune-surf key (R5-03) and zone D's  *
+ * design §4 channel (R5-04) — so a gate never moves a recording on its own.  *
  * ------------------------------------------------------------------------- */
 
 /** The shipped `terrain-a` tileset JSON (the fixtures build tilemaps over it). */
@@ -433,7 +434,7 @@ function scrollTo(w: World, x: number): void {
 }
 
 describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
-  it('no shaft on any shipped stage but zone B, no branch choice but zone D, no moving floor anywhere, and no zone key passes the look-ahead gate', () => {
+  it('no shaft on any shipped stage but zone B, no branch choice but zone D, no moving floor anywhere, and no zone key passes the look-ahead gate but zone C', () => {
     const stages = shippedContent().stages;
     expect(stages.length).toBeGreaterThan(10);
     let deepestPan = 0;
@@ -498,9 +499,14 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
     }
     expect(widestSwing).toBe(v1rel(32)); // 48 px — below the moving-floor gate (gimmick-range)
     expect(widestSwing).toBeLessThan(SLAB_SWING);
-    // RT-P12's cure pin: no shipped ZONE camera key reaches the widened look-ahead gate — the
-    // fastest is zone A's 2.25 px/tick tail, which once moved the live-bot zone-a-extras stream.
+    // RT-P12's cure pin: no shipped ZONE camera key passes the widened look-ahead gate but zone
+    // C's design §3 dune-surf run (R5-03) — by the kit's own law (terrainLookAhead widens only
+    // above v1rel(1.6)) it is the one stage the arm exists for, so a key passing the gate on any
+    // other stage, or zone C moving off its designed 2.55 px/tick pass, is a breach. The fastest
+    // key anywhere else is zone A's 2.25 px/tick tail, which once moved the live-bot zone-a-extras
+    // stream; while no shipped stage opens the arm the gate holds every zone key shut.
     let fastestZoneKey = 0;
+    let fastStages = 0;
     for (const id of [
       'zone-a',
       'zone-b',
@@ -516,10 +522,23 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
       expect(zone, id).toBeDefined();
       let maxKey = 0;
       for (const key of zone?.camera ?? []) maxKey = Math.max(maxKey, key.speed);
-      expect(maxKey, id).toBeLessThanOrEqual(LOOKAHEAD_SPEED_GATE);
+      if (maxKey > LOOKAHEAD_SPEED_GATE) {
+        fastStages += 1;
+        expect(zone?.id, 'the only stage allowed a look-ahead key').toBe('zone-c');
+        expect(maxKey, 'zone C design §3: the dune-surf pass').toBe(v1rel(1.7));
+      } else {
+        expect(maxKey, id).toBeLessThanOrEqual(LOOKAHEAD_SPEED_GATE);
+      }
       fastestZoneKey = Math.max(fastestZoneKey, maxKey);
     }
-    expect(fastestZoneKey).toBe(v1rel(1.5)); // the disclosed zone A tail key (2.25 px/tick)
+    expect(fastStages).toBeLessThanOrEqual(1);
+    // Today's fastest zone key, pinned: zone A's disclosed 2.25 px/tick tail while no shipped
+    // stage opens the arm, and once R5-03 lands zone C's dune-surf run the designed 2.55 pass.
+    if (fastStages === 1) {
+      expect(fastestZoneKey).toBe(v1rel(1.7)); // zone C's dune-surf pass (design §3)
+    } else {
+      expect(fastestZoneKey).toBe(v1rel(1.5)); // the disclosed zone A tail key (2.25 px/tick)
+    }
   });
 
   it('widens the terrain scan only above the gate speed, linearly (zone C)', () => {

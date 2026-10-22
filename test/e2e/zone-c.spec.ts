@@ -48,7 +48,7 @@ test.describe('zones B and C (web build)', () => {
       await countColours(page, RIDGE, { x0: 0, y0: 243, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(4000);
     expect(await countColours(page, [WIDOW_CHITIN], RIGHT_HALF)).toBe(0);
-    await jumpTo(page, 13500); // the WARNING is at 13,650
+    await jumpTo(page, 19950); // the WARNING is at 20,100 (the R5-03.S5b timeline)
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('sandgrave-widow');
     expect(await countColours(page, [WIDOW_CHITIN], RIGHT_HALF)).toBeGreaterThan(450);

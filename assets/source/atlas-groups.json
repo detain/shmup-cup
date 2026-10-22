@@ -49,22 +49,30 @@
       "tiles/terrain-reef-v2"
     ],
     "zone-c": [
+      "bg/dune-blaze",
+      "bg/dune-grass",
       "bg/dune-ridge",
+      "bg/dune-sky",
       "bg/dune-suns",
+      "bosses/scorpion-claw",
+      "bosses/scorpion-shell",
+      "bosses/scorpion-tail",
       "bosses/widow-body",
+      "bosses/widow-egg-sac",
       "bosses/widow-fang",
       "bosses/widow-head",
       "bosses/widow-leg-bottom",
       "bosses/widow-leg-top",
       "bosses/widow-spinneret",
+      "enemies/dune-lance",
       "enemies/dune-worm",
-      "enemies/dust-devil",
       "enemies/husk-crawler",
       "enemies/sand-clod",
       "enemies/sand-geyser",
       "enemies/sand-skimmer",
+      "enemies/spine-burrower",
       "enemies/widow-drone",
-      "tiles/terrain-dune"
+      "tiles/terrain-dune-v2"
     ],
     "zone-d": [
       "bg/magma-lava",

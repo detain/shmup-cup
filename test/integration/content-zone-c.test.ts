@@ -9,6 +9,7 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -23,6 +24,7 @@ import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   ZONES_B_G,
   boundsOf,
@@ -142,6 +144,44 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const head = boss?.parts.find((p) => p.core);
     expect(head?.vulnerable).toBe('afterParts');
     expect([...(head?.requires ?? [])].sort()).toEqual(['fang-bottom', 'fang-top']);
+  });
+
+  it('keeps the rebuilt SANDGRAVE WIDOW inside the bible height with a reachable core (R5-03.S4b)', () => {
+    const warning = stageOf('zone-c').events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    const { manifest } = buildAtlas();
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const anchorY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    // Assembled like `scripts/doc-images.mjs`: each sprite centred on its anchor, parents first.
+    let minY = 0;
+    let maxY = 0;
+    for (const [i, part] of boss.parts.entries()) {
+      if (part.sprite === undefined) continue;
+      const ref = manifest.sprites[part.sprite]?.frames[0];
+      if (ref === undefined) continue;
+      const h = manifest.frames[ref].h;
+      const centre = Math.round(anchorY(i));
+      minY = Math.min(minY, centre - Math.floor(h / 2));
+      maxY = Math.max(maxY, centre + h - Math.floor(h / 2));
+    }
+    // Design §8: the back legs at y ∓66 set the height (≈ 159 px on the redrawn 27-tall art;
+    // 153 on the interim stand-in the manifest still carries — either way inside 60 % of 336).
+    expect(maxY - minY).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    const core = boss.parts.find((p) => p.core);
+    expect(core).not.toBeUndefined();
+    expect(core?.vulnerable).not.toBe('never');
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    for (const name of core?.requires ?? []) {
+      expect(byName.get(name)?.vulnerable, name).not.toBe('never');
+    }
+    expect(core?.requires?.length ?? 0).toBeGreaterThan(0);
   });
 
   it.each(zones)(

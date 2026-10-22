@@ -8,10 +8,14 @@
  * - `boss.widow`: swapped box bounds still keep it inside the box, it rests on whole pixels, the
  *   head spits its (floored) spreads while armoured, drones from each standing spinneret at most
  *   once per launch, silk lines — detached, to the left, as tuned — from the spinnerets in turn,
- *   only from standing ones, and the whole-lane wait between them.
+ *   only from standing ones, and the whole-lane wait between them;
+ * - the R5-03.S4a types (§6/§7): a `burrower-quick` whose `aimTicks` of 0 clamps to one tick, a
+ *   `lance-silent` with `ways: 0` that swoops, turns and leaves without firing, and two
+ *   `captain.ram` variants — one wave after a claw died comes from the standing gun alone, and a
+ *   ram row below the 36-px clamp line is clamped inside the playfield.
  */
 import { describe, expect, it } from 'vitest';
-import { BossHit, BossState } from '../../src/bosses/index.js';
+import { BossHit, BossMotion, BossState } from '../../src/bosses/index.js';
 import {
   BulletFlag,
   BulletKind,
@@ -19,7 +23,7 @@ import {
   LASER_GROW_TICKS,
   LaserPhase,
 } from '../../src/bullets/index.js';
-import { PLAYFIELD_H } from '../../src/config/index.js';
+import { PLAYFIELD_H, WORLD_SCALE } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { DropKind, EnemyFlag, EnemyState } from '../../src/enemies/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
@@ -104,6 +108,38 @@ const DB: ContentDb = (() => {
               laserTicks: 1,
               telegraph: -5,
               active: 12,
+            }),
+            enemy('dune-lance', 'lance-silent', {
+              speed: 2.7,
+              turnX: 380,
+              hold: 24,
+              ways: 0,
+              spread: 40,
+              bulletSpeed: 2.1,
+              leaveSpeed: 2.4,
+            }),
+            enemy('spine-burrower', 'burrower-quick', { aimTicks: 0, fireTicks: 60 }),
+            boss('dune-scorpion', 'scorpion-onegun', {
+              waves: 4,
+              waveTicks: 20,
+              ways: 5,
+              spread: 40,
+              bulletSpeed: 2.25,
+              ramTicks: 500,
+              ramX: 60,
+              returnTicks: 100,
+              restTicks: 0,
+            }),
+            boss('dune-scorpion', 'scorpion-high', {
+              waves: 1,
+              waveTicks: 40,
+              ways: 5,
+              spread: 40,
+              bulletSpeed: 2.25,
+              ramTicks: 100,
+              ramX: 60,
+              returnTicks: 100,
+              restTicks: 0,
             }),
           ],
         },
@@ -396,5 +432,67 @@ describe('core/behaviors boss.widow — the whole-lane wait, edge cases (M2-18 t
     for (let k = 1; k < starts.length; k++) {
       expect(starts[k] - starts[k - 1]).toBe(lane);
     }
+  });
+});
+
+describe('core/behaviors — zone C new types (R5-03.S4a, §6/§7)', () => {
+  it('turret.floor: a zero aimTicks clamps to one tick, shots stay 60 apart', () => {
+    const w = world();
+    run(w, 45); // the ship's fly-in — `aimed` shoots at a live target
+    const turret = spawn(w, 'burrower-quick', w.camera.x + 300, w.camera.y + 200);
+    const shots: Array<[number, number]> = [];
+    for (let t = turret.spawnTick + 1; t <= turret.spawnTick + 400; t++) {
+      run(w, 1);
+      const f = w.bullets.pool.fields;
+      for (let i = 0; i < w.bullets.pool.count; i++) {
+        if (f.kind[i] === BulletKind.RoundPink && f.age[i] <= 1) shots.push([t, f.angle[i]]);
+      }
+    }
+    // The 1-tick wake fires the moment the 60-tick wait is paid (the 24-tick loop of the shipped
+    // burrower could not), and the rhythm is exactly the variant's fireTicks.
+    expect(shots.length).toBe(6); // 60, 120 … 360 of the 400 ticks measured
+    expect(shots[0][0] - turret.spawnTick).toBeGreaterThanOrEqual(60);
+    expect(shots[0][0] - turret.spawnTick).toBeLessThanOrEqual(61);
+    for (let k = 1; k < shots.length; k++) expect(shots[k][0] - shots[k - 1][0]).toBe(60);
+  });
+
+  it('rear.swoop: ways 0 turns at x 380 and leaves left, firing nothing', () => {
+    const w = world();
+    const lance = spawn(w, 'lance-silent', w.camera.x - 24, w.camera.y + 60);
+    run(w, 200); // past the (380 + 24) / 2.7 = 150-tick arrival and its 24-tick hold
+    expect(w.bullets.count).toBe(0); // ways 0 fires nothing
+    expect(lance.vx).toBeCloseTo(-2.4, 9); // it left to the left at its leaveSpeed
+    expect(lance.x - w.camera.x).toBeLessThan(380);
+  });
+
+  it('captain.ram: a dead claw stops fanning, the standing gun fires waves of five', () => {
+    const w = fighting('scorpion-onegun');
+    /** The pink-red bullets fired this very tick (age 1 — a bullet ages within its tick). */
+    const freshRed = (): number => {
+      const f = w.bullets.pool.fields;
+      let n = 0;
+      for (let i = 0; i < w.bullets.pool.count; i++) {
+        if (f.kind[i] === BulletKind.RoundRed && f.age[i] <= 1) n++;
+      }
+      return n;
+    };
+    run(w, 20); // both claws: a 5-way each (the variant's 20-tick waves)
+    expect(freshRed()).toBe(10);
+    expect(w.bosses.damagePart(part(w, 'claw-top'), 99, 0)).toBe(BossHit.Destroyed); // its 10 hp die
+    run(w, 20);
+    expect(freshRed()).toBe(5); // only the bottom claw fires now
+    run(w, 20);
+    expect(freshRed()).toBe(5);
+  });
+
+  it('captain.ram: a target above the clamp line sends the ram to the clamped row', () => {
+    const w = fighting('scorpion-high');
+    const boss = w.bosses.boss;
+    const ship = w.players[0];
+    ship.y = w.camera.y + 8; // a row inside the 24-px (36 world px) clamp line
+    run(w, 45); // the variant's single wave at 40, then the ram it starts with
+    expect(boss.motion).toBe(BossMotion.MoveTo);
+    expect(boss.moveToX).toBe(60);
+    expect(boss.moveToY).toBe(24 * WORLD_SCALE); // clamped 24 × WORLD_SCALE inside the playfield
   });
 });
