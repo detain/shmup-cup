@@ -280,9 +280,24 @@ describe('scripts/assets/pipeline — what the interim stage never upscales (W4-
         tileSize: number;
         tiles: { name: string; type: string; frame: number; anchor: string; mask: number[] }[];
       };
-      for (const tile of tileset.tiles) {
+      // R5-01.FIX1 (decision RR-1a): a tileset whose art lives only on the v2 path (a generator's
+      // v2 branch, a `*.v2.sprite.json`, a `native: true` v2 font) is legitimately ABSENT from the
+      // digest-pinned scale-1 atlas. The scale gate is data-driven off the two builds: every tile
+      // of one tileset answers alike (a mixed file is a break), and a v2-only tileset asserts
+      // absence at scale 1 where the v1-served ones keep their 8 px presence pin.
+      const atScale1 = tileset.tiles.map(
+        (tile) => `${tileset.sprite}#${tile.frame}` in v1.manifest.frames,
+      );
+      const served = atScale1.every((seen) => seen);
+      expect(served || atScale1.every((seen) => !seen), `${file}: v1 and v2 tiles mixed`).toBe(
+        true,
+      );
+      for (let i = 0; i < tileset.tiles.length; i++) {
+        const tile = tileset.tiles[i];
         const name = `${tileset.sprite}#${tile.frame}`;
-        expect([v1.manifest.frames[name].w, v1.manifest.frames[name].h], name).toEqual([8, 8]);
+        if (atScale1[i])
+          expect([v1.manifest.frames[name].w, v1.manifest.frames[name].h], name).toEqual([8, 8]);
+        else expect(v1.manifest.frames[name], name).toBeUndefined();
         const frame = framePixels(v2, name);
         expect([frame.width, frame.height], name).toEqual([12, 12]);
         if (tile.type === 'empty') continue; // decoration: its frame need not match a mask

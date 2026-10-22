@@ -518,13 +518,44 @@ export function collectSprites(options = {}) {
     : loadAtlasGroups(sourceDir);
   issues.push(...atlasGroups.issues);
   const fontSprites = new Set(Object.values(fonts).map((metrics) => metrics.sprite));
+  // R5-01.FIX1 (decision RR-1a): a v2-only source — a generator's v2 branch (a new zone tileset
+  // like `tiles/terrain-azure`), a `*.v2.sprite.json` or a `native: true` v2 font — draws nothing
+  // at scale 1, so once a zone's stage references it, its name is legitimately listed in the
+  // derived groups while absent from the digest-pinned scale-1 atlas. Only on a mismatch does the
+  // scale-1 build ask the art-scale build once for the names IT draws: an answered name is v2
+  // art, not a renamed or removed sprite. At the art scale every listed name is this build's own
+  // sprite anyway, so the probe never runs there and the scale-1 bytes never move.
+  /** @type {Set<string> | null} */
+  let artScaleNames = null;
+  const interimFraction = parseArtScale(INTERIM_ART_SCALE);
+  /**
+   * Whether the art-scale (3/2) build draws this name — its answer proves the group entry is
+   * v2-only art. Lazy: one extra source walk, only on a name this build lacks at scale 1.
+   *
+   * @param {string} name - The grouped sprite name.
+   * @returns {boolean} True when the art-scale build draws it (and this build is at scale 1).
+   */
+  const drawnAtArtScale = (name) => {
+    // Exact-fraction equality on the {num, den} pair (the terrainTileSize idiom): this build IS
+    // the art scale, so it must not ask itself (a bare `fraction !== 1` compares the pair object
+    // and is always true — the guard that let the first FIX1 cut through).
+    if (fraction.num * interimFraction.den === interimFraction.num * fraction.den) return false;
+    if (artScaleNames === null) {
+      artScaleNames = new Set(
+        collectSprites({ ...options, artScale: INTERIM_ART_SCALE }).sprites.map(
+          (sprite) => sprite.name,
+        ),
+      );
+    }
+    return artScaleNames.has(name);
+  };
   for (const [name, group] of atlasGroups.table) {
     if (fontSprites.has(name)) {
       issues.push({
         path: `${atlasGroups.file}:groups.${group}`,
         message: `"${name}" is a font sprite — fonts always pack into "${COMMON_GROUP}"`,
       });
-    } else if (!byName.has(name)) {
+    } else if (!byName.has(name) && !drawnAtArtScale(name)) {
       issues.push({
         path: `${atlasGroups.file}:groups.${group}`,
         message: `"${name}" is not a sprite of the atlas (renamed or removed?)`,
