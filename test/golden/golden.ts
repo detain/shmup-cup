@@ -552,7 +552,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'bonus-vault-god',
     description:
-      'BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end',
+      'BONUS VAULT with god mode and the full loadout (M2-10, v2 layout R5-10): the 4,200-px vault among three brick pillars, its carriers dropping 1,000-point bonus capsules and a 1UP the bot collects to the end',
     stageId: 'bonus-vault',
     config: { seed: 65, loadout: 'full' },
     godMode: true,
@@ -642,7 +642,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'brine-grotto-god',
     description:
-      "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
+      "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11, v2 layout R5-10): the 5,400-px grotto through the coral gallery and two brick walls, its carriers' bonus capsules and the 1UP collected to the end",
     stageId: 'brine-grotto',
     config: { seed: 71, loadout: 'full' },
     godMode: true,
@@ -669,7 +669,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'glimmer-cache-god',
     description:
-      "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13): its carriers' bonus capsules and the 1UP collected to the end, a cube rush and its cube walls",
+      "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13, v2 layout R5-10): the 5,400-px cache through three cube rushes and two cube walls, its carriers' bonus capsules collected to the end",
     stageId: 'glimmer-cache',
     config: { seed: 81, loadout: 'full' },
     godMode: true,

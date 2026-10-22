@@ -264,7 +264,8 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(vault.world.stage?.stage.type).toBe('bonus');
     const p1 = vault.world.scoring.board.scores[0];
     expect(vault.outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
-    // 19 kills of carriers worth at most 500 each: the rest of the score is bonus capsules.
+    // Carriers worth at most 500 each (the R5-10 layout has 42 of them): the rest of the
+    // score is bonus capsules.
     expect(vault.world.enemies.stats.killed).toBeGreaterThan(10);
     expect(vault.outcome.score).toBeGreaterThan(10 * BONUS_CAPSULE_SCORE);
     expect(vault.world.bonus.count).toBe(0);

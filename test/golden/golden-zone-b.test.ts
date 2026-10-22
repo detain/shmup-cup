@@ -31,9 +31,16 @@ describe.skipIf(updating)('golden replays — zone B (M2-11)', () => {
     const { world, outcome } = playGolden(grotto.replay);
     expect(world.stage?.stage.type).toBe('bonus');
     expect(outcome).toMatchObject({ status: 'stageClear', bossDefeated: false, deathTicks: [] });
+    // The grotto's standing law since M2-11 on the v2 layout (R5-10): its 1UP at x 3,975 sits
+    // in the third section's open mid lane, no threat near it, so the god run collects it on top
+    // of any extends. The route is 5,400 px at a constant 1.5 px/tick — 3,600 ticks plus the
+    // ramp — so the clear records inside 59–67 s.
     const p1 = world.scoring.board.scores[0];
     expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
     expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+    const grottoSeconds = grotto.file.expected.ticks / 60;
+    expect(grottoSeconds).toBeGreaterThanOrEqual(59);
+    expect(grottoSeconds).toBeLessThanOrEqual(67);
   });
 
   it('covers zone B without god mode (M2-11 tests): the Arcade-penalty deaths and restarts, game over', () => {

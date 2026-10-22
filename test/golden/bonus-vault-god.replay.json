@@ -64,23 +64,25 @@
       "blackHole": false
     }
   },
-  "ticks": 1615,
+  "ticks": 2815,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA6AWCgAgBAhIAT4GABAEBEgCPAoKACAECDgABgYAEAQEOAEmCgAgBAgwAtwGBgAQBAQwAfw==",
-    "AM8M"
+    "ACiCgAgBAgIA5wWCgAgBAgwAiwKCgAgBAgUAPoGABAEBEgCgC4KACAEAAYGABAEACIKACAECBgB+gYAEAQEGACaCgAgBAhIADg==",
+    "AP8V"
   ],
   "hashes": [
-    4203525588,
-    1510416276
+    1412929627,
+    4011056613,
+    3279865878,
+    2514810280
   ],
-  "finalHash": 892461347,
-  "description": "BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end",
+  "finalHash": 73544239,
+  "description": "BONUS VAULT with god mode and the full loadout (M2-10, v2 layout R5-10): the 4,200-px vault among three brick pillars, its carriers dropping 1,000-point bonus capsules and a 1UP the bot collects to the end",
   "expected": {
     "status": "stageClear",
-    "ticks": 1615,
-    "score": 17220,
-    "lives": 4,
+    "ticks": 2815,
+    "score": 30280,
+    "lives": 5,
     "deathTicks": [],
     "bossDefeated": false
   }

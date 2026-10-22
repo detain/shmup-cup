@@ -59,12 +59,20 @@ describe.skipIf(updating)('golden replays — zone G (M2-13)', () => {
     const { world, outcome } = playGolden(cache.replay);
     expect(world.stage?.stage.type).toBe('bonus');
     expect(outcome).toMatchObject({ status: 'stageClear', bossDefeated: false, deathTicks: [] });
-    // On the ported world the bot leaves the cache with its starting lives and no extend: the
-    // 1UP item itself stays covered by `bonus-vault-god` (zone B's grotto by M2-11's).
+    // The v2 layout (R5-10): god mode costs no life and the cache holds exactly one 1UP (the
+    // release-audit law), so the run leaves with 3 lives plus its extends plus 0 or 1. Whether
+    // the bot's lane catches the 1UP at x 4,620 is not a layout law — its drop is pinned by
+    // content-zone-g's presence check. The route is 5,400 px at a constant 1.5 px/tick — 3,600
+    // ticks plus the ramp — so the clear records inside 59–67 s; 24 carriers' capsules carry the
+    // score past five of them.
     const p1 = world.scoring.board.scores[0];
-    expect(outcome.lives).toBe(3);
-    expect(p1.extendsEarned).toBe(0);
+    const lifeDelta = outcome.lives - 3 - p1.extendsEarned;
+    expect(lifeDelta).toBeGreaterThanOrEqual(0);
+    expect(lifeDelta).toBeLessThanOrEqual(1);
     expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+    const cacheSeconds = cache.file.expected.ticks / 60;
+    expect(cacheSeconds).toBeGreaterThanOrEqual(59);
+    expect(cacheSeconds).toBeLessThanOrEqual(67);
   });
 
   it('covers zone G without god mode (M2-13 tests): the recorded replay, reported — and the skip to FACET MONARCH', () => {

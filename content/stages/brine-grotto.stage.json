@@ -8,7 +8,7 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2700,
+  "length": 5400,
   "camera": [
     {
       "x": 0,
@@ -52,19 +52,51 @@
       "type": "heightfield",
       "segments": [
         {
-          "from": 150,
-          "to": 3150,
+          "from": 0,
+          "to": 1500,
           "floor": {
-            "base": 30,
+            "base": 36,
             "amp": 12,
-            "period": 390,
+            "period": 480,
             "seed": 66
           },
           "ceiling": {
-            "base": 66,
+            "base": 36,
+            "amp": 12,
+            "period": 420,
+            "seed": 67
+          }
+        },
+        {
+          "from": 1500,
+          "to": 3300,
+          "floor": {
+            "base": 72,
+            "amp": 12,
+            "period": 540,
+            "seed": 68
+          },
+          "ceiling": {
+            "base": 96,
+            "amp": 12,
+            "period": 480,
+            "seed": 69
+          }
+        },
+        {
+          "from": 3300,
+          "to": 5400,
+          "floor": {
+            "base": 48,
+            "amp": 12,
+            "period": 390,
+            "seed": 70
+          },
+          "ceiling": {
+            "base": 48,
             "amp": 12,
             "period": 330,
-            "seed": 67
+            "seed": 71
           }
         }
       ]
@@ -105,6 +137,12 @@
       "tile": "brick"
     },
     {
+      "x": 660,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 126
+    },
+    {
       "x": 780,
       "type": "formation",
       "enemy": "vault-carrier",
@@ -117,7 +155,7 @@
       "x": 960,
       "type": "spawn",
       "enemy": "froth",
-      "y": 126
+      "y": 150
     },
     {
       "x": 1140,
@@ -129,19 +167,10 @@
       "drop": null
     },
     {
-      "x": 1350,
+      "x": 1560,
       "type": "spawn",
-      "enemy": "vault-carrier-1up",
-      "y": 186
-    },
-    {
-      "x": 1436,
-      "type": "block",
-      "screenX": 664,
-      "y": 180,
-      "w": 24,
-      "h": 108,
-      "tile": "brick"
+      "enemy": "froth",
+      "y": 222
     },
     {
       "x": 1620,
@@ -156,10 +185,10 @@
       "x": 1800,
       "type": "spawn",
       "enemy": "froth",
-      "y": 216
+      "y": 228
     },
     {
-      "x": 1950,
+      "x": 1980,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
@@ -168,7 +197,100 @@
       "drop": null
     },
     {
-      "x": 2700,
+      "x": 2160,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 126
+    },
+    {
+      "x": 2400,
+      "type": "block",
+      "screenX": 664,
+      "y": 180,
+      "w": 24,
+      "h": 108,
+      "tile": "brick"
+    },
+    {
+      "x": 2580,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 141,
+      "drop": null
+    },
+    {
+      "x": 2760,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 228
+    },
+    {
+      "x": 2940,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 198,
+      "drop": null
+    },
+    {
+      "x": 3600,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 126,
+      "drop": null
+    },
+    {
+      "x": 3975,
+      "type": "spawn",
+      "enemy": "vault-carrier-1up",
+      "y": 186
+    },
+    {
+      "x": 4200,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 240,
+      "drop": null
+    },
+    {
+      "x": 4440,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 132
+    },
+    {
+      "x": 4680,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 168,
+      "drop": null
+    },
+    {
+      "x": 4950,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 258
+    },
+    {
+      "x": 5250,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 210,
+      "drop": null
+    },
+    {
+      "x": 5400,
       "type": "end"
     }
   ],

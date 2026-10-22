@@ -8,7 +8,7 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2700,
+  "length": 5400,
   "camera": [
     {
       "x": 0,
@@ -59,19 +59,51 @@
       "type": "heightfield",
       "segments": [
         {
-          "from": 150,
-          "to": 3150,
+          "from": 0,
+          "to": 1800,
           "floor": {
-            "base": 30,
-            "amp": 15,
-            "period": 180,
+            "base": 36,
+            "amp": 12,
+            "period": 420,
             "seed": 121
           },
           "ceiling": {
-            "base": 63,
+            "base": 36,
             "amp": 12,
-            "period": 210,
+            "period": 360,
             "seed": 122
+          }
+        },
+        {
+          "from": 1800,
+          "to": 3600,
+          "floor": {
+            "base": 84,
+            "amp": 12,
+            "period": 540,
+            "seed": 123
+          },
+          "ceiling": {
+            "base": 72,
+            "amp": 12,
+            "period": 480,
+            "seed": 124
+          }
+        },
+        {
+          "from": 3600,
+          "to": 5400,
+          "floor": {
+            "base": 48,
+            "amp": 12,
+            "period": 330,
+            "seed": 125
+          },
+          "ceiling": {
+            "base": 48,
+            "amp": 12,
+            "period": 270,
+            "seed": 126
           }
         }
       ]
@@ -112,7 +144,13 @@
       "tile": "cube"
     },
     {
-      "x": 780,
+      "x": 720,
+      "type": "spawn",
+      "enemy": "glint-mote",
+      "y": 126
+    },
+    {
+      "x": 900,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
@@ -121,15 +159,13 @@
       "drop": null
     },
     {
-      "x": 960,
-      "type": "formation",
-      "enemy": "prism-cube",
-      "count": 6,
-      "interval": 22,
-      "drop": null
+      "x": 1140,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 192
     },
     {
-      "x": 1140,
+      "x": 1380,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
@@ -138,13 +174,44 @@
       "drop": null
     },
     {
-      "x": 1350,
+      "x": 1620,
       "type": "spawn",
-      "enemy": "vault-carrier-1up",
-      "y": 186
+      "enemy": "glint-mote",
+      "y": 216
     },
     {
-      "x": 1436,
+      "x": 1860,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 6,
+      "interval": 22,
+      "drop": null
+    },
+    {
+      "x": 2160,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 6,
+      "interval": 22,
+      "drop": null
+    },
+    {
+      "x": 2460,
+      "type": "spawn",
+      "enemy": "glint-mote",
+      "y": 120
+    },
+    {
+      "x": 2700,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 210,
+      "drop": null
+    },
+    {
+      "x": 2880,
       "type": "block",
       "screenX": 664,
       "y": 180,
@@ -153,7 +220,51 @@
       "tile": "cube"
     },
     {
-      "x": 1620,
+      "x": 3120,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 141,
+      "drop": null
+    },
+    {
+      "x": 3420,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 228
+    },
+    {
+      "x": 3720,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 246,
+      "drop": null
+    },
+    {
+      "x": 4020,
+      "type": "spawn",
+      "enemy": "glint-mote",
+      "y": 150
+    },
+    {
+      "x": 4320,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 6,
+      "interval": 22,
+      "drop": null
+    },
+    {
+      "x": 4620,
+      "type": "spawn",
+      "enemy": "vault-carrier-1up",
+      "y": 186
+    },
+    {
+      "x": 4860,
       "type": "formation",
       "enemy": "vault-carrier",
       "count": 3,
@@ -162,22 +273,13 @@
       "drop": null
     },
     {
-      "x": 1800,
+      "x": 5100,
       "type": "spawn",
-      "enemy": "geode",
-      "y": 216
+      "enemy": "glint-mote",
+      "y": 252
     },
     {
-      "x": 1950,
-      "type": "formation",
-      "enemy": "vault-carrier",
-      "count": 3,
-      "interval": 24,
-      "y": 216,
-      "drop": null
-    },
-    {
-      "x": 2700,
+      "x": 5400,
       "type": "end"
     }
   ],
