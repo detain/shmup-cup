@@ -1642,9 +1642,9 @@ describe('core/weapons edge cases — hits', () => {
 });
 
 describe('core/weapons edge cases — presentation and restart', () => {
-  // A segment is LASER_SEGMENT_LENGTH — 12 px at v2's world scale (the title's 8 px is the K=1
-  // number); the case pins eight quads at v1rel(64) with the last clamped to the beam's tail.
-  it('draws a laser as 8-px segments back from its head, the last one clamped to the tail', () => {
+  // A segment is LASER_SEGMENT_LENGTH: 8 * WORLD_SCALE, 12 px at v2's world scale. A
+  // v1rel(64) beam lays eight quads back from its head, the last clamped to the tail.
+  it('draws a laser as 12-px segments back from its head, the last one clamped to the tail', () => {
     const w = world(MANUAL);
     w.players[0].active = false;
     const i = w.weapons.spawnShot(WeaponRole.Laser, 0, 0, 0);
