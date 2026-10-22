@@ -7,7 +7,10 @@ zone, **PEARL GROTTO**) and **zone C, DUNE EXPANSE** (desert: sand worms burstin
 beetles walking on the ceiling, the boss **SANDGRAVE WIDOW** launching spider drones). Each zone
 brings its stage file, a roster, a Direct-mode item plan, a stage and a boss song, a recoloured
 tileset and procedural placeholder art; four new behaviours (`rocket.homing`, `worm.burst`,
-`boss.maw`, `boss.widow`) and one engine addition (`BossPart.restX` / `restY`) carry them.
+`boss.maw`, `boss.widow`) and one engine addition (`BossPart.restX` / `restY`) carry them. Wave 11
+**remastered both zones for v2** — R5-02 rebuilt BRINE NEBULA and R5-03 DUNE EXPANSE on the designs
+`docs/v2-run/designs/zone-b.md` and `zone-c.md` (landed `1d3fd600` and `247e39fb`); that record is
+[below](#the-r5-02--r5-03-remasters-v2), and the prose before it stays the v1 history.
 
 This page is the *how and why* and the map of the step's code and content. Exact signatures are in
 [api-reference.md](api-reference.md) (`behaviors`, `bosses` and the repo tooling's asset pipeline,
@@ -442,12 +445,263 @@ pass had grouped it with the v1 bounds).
 *Medians are ticks `turnTick − visibleTick` over flying event rows, n = rows with both samples;
 deaths and hits are the non-god bot (seed 1), x-ranges in v2 world px. Every median equals v1.*
 
+## The R5-02 / R5-03 remasters (v2)
+
+*Everything above this line is the M2-11 record (with the R2-04 openings tables on the ported v1
+world) kept as history. Both zones were then rebuilt for v2 on the designs
+`docs/v2-run/designs/zone-b.md` and `docs/v2-run/designs/zone-c.md`: **R5-02** landed BRINE NEBULA
+at `1d3fd600`, **R5-03** landed DUNE EXPANSE at `247e39fb` — each one commit through
+`docs/v2-run/helpers/land-zone.sh`: the zone's sources squashed, its goldens and demos re-recorded
+against its `--only` list, the three fingerprints re-pinned under the land lock, and a
+`Changed plates:` stamp naming the re-derived boss plates (`galvanic-maw.png`,
+`spume-herald.png`, `sandgrave-widow.png`, `dune-scorpion.png`). The content files are the truth
+below.*
+
+### What the remasters did not touch
+
+- The ids: `zone-b` / BRINE NEBULA, `zone-c` / DUNE EXPANSE, `brine-grotto` / PEARL GROTTO — and
+  the tileset ids `terrain-reef` / `terrain-dune`: v2's art is a scale branch inside their
+  generators (decision RR-1), not new content ids.
+- The songs: both stage files still name the M2-11 `Stage` / `Boss` cues and no audio file changed
+  in either LAND. The four M2-11 behaviours (`rocket.homing`, `worm.burst`, `boss.maw`,
+  `boss.widow`) carry both rebuilt bosses — the designs needed no new script; the new types ride
+  the existing `mine.burst`, `cell.chase`, `turret.floor`, `rear.swoop`, `walker.floor`,
+  `captain.launcher` and `captain.ram`.
+- PEARL GROTTO stays what the section above describes: 2,700 px at 1.5 px/tick, the same drops.
+  Its one edit in the whole zone-B LAND is the `y` of one parallax row (264 → 216, presentation);
+  its art fields are RR-1's — the same names, drawn at the v2 scale — and its bless row was
+  **verified unchanged** at the weld: `brine-grotto-god` still plays at 1,815 ticks and 5,650
+  points, the grotto demo too. (That is the scope law's own proof: every moved recording must name
+  a stage on the `--only` list, and the grotto's did not move.)
+- The frozen-sprite law of `boss.maw`'s roster: the `maw-*` boss names are **add-only** — zone H's
+  echo copies them — so the rebuilt MAW keeps every name and the rebuilt HERALD's brood tubes ride
+  `bosses/maw-pod`; `bosses/maw-spine` is an addition. And the M2-18 law that once opened the jaws
+  — a gape taller than the MANTA's 27-px disc — still holds: `gape` stays 12 / 12 / 13.5.
+
+### Zone B: BRINE NEBULA as rebuilt (R5-02)
+
+20,400 px (v1's 14,700), a **62-row map** (744 px — the zone can outgrow the screen at last),
+seven camera keys over seven named sections, six checkpoints (0 / 3,000 / 6,600 / 9,300 / 12,000
+/ 15,900 — every section start), 74 events, 34 direct-mode items (one octagon, at most two rares
+— the composition the contract pins), thirteen loop-2 remix rows (traffic only, every row
+`drop: null`), sixteen `decor` entries (fans, kelp, glow-vents), two `wave` rasters, the BRINE_RAMP
+cycle kept, and **seven** parallax bands (the v2 backdrop `bg/brine-deep-v2` rides the sunk
+window; `bg/brine-nebula` gained a `yFactor` so it slides during the shaft pan and the dive
+reads). The HERALD arrives at **5,400** (v1's 6,900); the WARNING reads at **19,800** (v1's
+13,950).
+
+| Section | Scroll x | Camera | Content |
+|---|---|---|---|
+| SURFACE DRIFT | 0–3,000 | 1.20 (ramp 60) | beads and gill-darts weave through the tender convoys |
+| REEF TRENCH | 3,000–6,600 | 1.05 | the reef closes overhead; urchins on both rock faces; **SPUME HERALD** at 5,400 while the view keeps scrolling |
+| **THE BUBBLE SHAFT** | 6,600–9,300 | 0.90, `yTo 400` (pan 300 ticks, hold 120) | the set piece — below |
+| UPWELLING | 9,300–12,000 | 1.35, back to `y 0` over 240 ticks | froth columns and jelly clusters on the ride to the surface |
+| NEBULA FLATS | 12,000–15,900 | **2.25** (ramp 120) | the fast run (v1's riptide was 2.1); the first `brine-mine` and `spume-skipper` fields |
+| JELLY GARDENS | 15,900–18,300 | 1.20 | jelly walls and mines, some on the new `garden-swoop` path; the grotto arms at 15,640 |
+| THE CALM | 18,300–19,800 | 1.125 | exactly two tenders (18,600 / 19,200 — the pinned pair) — then the WARNING |
+
+Capsule sources before the WARNING: **38** (23 tender spawns + the 15 bonus-carrying formations),
+inside the contract's 18–48, with **15 before the herald** (≥ 12); the six checkpoints' 1,350-px
+recovery windows hold 4 / 4 / 4 / 4 / 3 / 3 sources (the law asks ≥ 3). Ground events: sixteen
+(twelve floor urchins + four ceiling — ≥ 8). The grotto trio moved as the rigid group the content
+test's edge law pins: bonus event **15,640**, block events **15,546** and **15,666** at
+`screenX` 664, region at **16,234**, 96 × 72 at the top of the view.
+
+**The bubble shaft and the corridor law.** The camera freezes at the mouth for 120 ticks, sinks
+400 px down a 286-px corridor of bubbles, and hauls back out through the UPWELLING — the first
+shipped stage whose vertical pan crosses the playtest kit's shaft gate (|Δy| > 336; zone D's v1
+dive stopped at 300), the very stage the bot's shaft mode (R5-P.P12) was built for. Two repo-wide
+laws out-vetoed the design's geometry here:
+
+- **The flyable-corridor law** (`test/integration/stage-runtime.test.ts`) demands that every
+  column window the camera can reach hold a run of **≥ 48 px** of open cells — and since w11-MF5
+  (`a0abbf0a`) cells with `hp` count as open too: a destructible wall is a corridor a gun opens
+  (the zone-F punch-seal adjudication). The design ran the shaft ceiling from x 6,300 while the
+  pan starts at 6,600; through that 300-px mouth the sunk window reads a **0-px** corridor, and
+  the gate reddened (`zone-b: expected 0 to be greater than or equal to 48` — the no-god
+  playtest's terrain death at camera x 6,514 is the in-game witness of the same defect). The
+  shipped file starts the ceiling at **6,600**: the mouth rides open sky until the camera is
+  already diving, and §3's 286-px corridor carries the shaft itself. (It is the same law that
+  widened zone A's designed 36-px gorges to 48;
+  see [zone-a-and-playtest.md](zone-a-and-playtest.md).)
+- **The shaft admit is a shared premise** (`test/playtest/four-way-bot.test.ts`, w11-MF6
+  `ca7c7b0a`): the kit now reads *no shaft on any shipped stage **but zone B*** — at most one, and
+  when the gate opens it asserts the stage's id and pins `deepestPan` at exactly 400. A second
+  shaft fails the sweep, so the set piece is law-protected.
+
+### Zone B's roster — two new types at the ceiling
+
+`brine-mine` (hp 3, 350 pts, `mine.burst`): a drifting sea mine on a slow sine (speed 0.45,
+trigger 108) that stops about a tenth of a screen ahead, burns a 24-tick fuse and throws a ring of
+eight red shots at **2.25** px/tick — the design said 2.4 and the review leg folded it, because at
+the rank-16 MANTA audit the ring reaches 2.849 against the 3.0 rule (the maw's P3 lives on the
+same family value). `spume-skipper` (hp 2, 250 pts, `cell.chase`, speed **2.25**): drifts along a
+row, then peels onto the ship on a wide capped arc; it never fires. Both hurtboxes follow the S2
+stand-in frames (8×8 and 8×5 halves) — the art law over the design's geometry cells. The placed
+new-type set rises to **8** sprites (design §5's count: the six kept — froth, froth-bead,
+brood-bubble, gill-dart, reef-jelly, urchin on both faces — plus the mine and the skipper), so
+zone B sits at the contract's 6–8 **ceiling** with zero headroom; zone C takes the floor of the
+same window (§below) and any change
+that moves either count reddens its contract.
+
+### Zone B's rebuilt bosses
+
+**SPUME HERALD (SH-02)** stays a `captain.launcher` on the same 4,000 points and 1,800-tick limit
+— but as five parts, not three: the shell is the **always-vulnerable core at 48 hp** (v1's 40),
+the two brood tubes (10 hp / 500 points each, ∓27, drawn with the frozen `bosses/maw-pod`) carry
+its guns, and the two new **crown fins** (8 hp / 400 points, `bosses/herald-fin`, ∓40) ride the
+shell's flanks. It tracks within 96 px at 0.6 px/tick, launches its two bubbles every 110 ticks
+(v1's 120) and its 3-way at 1.8 every 80 (v1's 85); the plate stands 90 px.
+
+**GALVANIC MAW (GM-02)** grew from seven parts to **ten**. The pods wear 20 hp (v1's 16) and the
+core maw **80** (v1's 64); the new **dorsal ridge** is three spine turrets (`spine-1..3`,
+`bosses/maw-spine`, 10 hp / 600 points each at y −48 off the hull, x −15 / 27 / 69) — always
+shootable, never gating the core. The three `boss.maw` phases open on the core below **50** and
+below **24** (v1's 40 / 16 on the 64-hp core — the same 62.5 % first step), and the heat ladder
+climbs: cutters every 40 / 34 / 30 ticks at 1.95 / 2.1 / **2.25** px/tick, a ring of 8 then 10 as
+the mouth opens, rockets from both pods every 160 / 140 / 110, the 5-way (spread 40) entering at
+P3 — the `gape` untouched at 12 / 12 / 13.5. The portrait stands 102 px against the 60 %-of-
+playfield law.
+
+### Zone C: DUNE EXPANSE as rebuilt (R5-03)
+
+21,000 px (v1's 14,400), the WARNING at **20,100**, eight camera keys over eight sections,
+**seven** checkpoints (0 / 3,900 / 7,800 / 10,050 / 13,800 / 16,650 / 17,400), 70 events, 33
+direct-mode items (11 red / 10 green / 7 blue / 1 yellow / 2 orange / 2 octagons — the plan the
+direct test walks), twelve remix rows — six kept skimmer formations, three worm formations and
+three **dune-lance** waves (15,000 / 17,250 / 18,600) join at loop 2, every row `drop: null` —
+five parallax bands (the ridge rows adjudicated at review), three raster rows
+(the two kept `haze` strips and the **storm**: a `wave` row scoped 17,400–19,200), the DUNE_RAMP
+cycle kept (§9's decision: yes). The map is **35 rows** — 420 px, a playfield plus an 84-px band of sand below it —
+and every heightfield base is the ported number **+84 px** (the D-C.RV1 B1 cure: with the old
+bases the ground enemies stood below the visible playfield; the law is `base − amp ≥ 84` wherever
+the camera rides y 0 — every section holds it, S6 keeps its crest bases because its camera pans
+down). The `terrain-dune` set ships **36 tiles**: v1's 20 byte-identical frames plus 16 appended
+(inner corners, mirrored slopes, cracked bricks at 2 / 1 hp, the tissue, three decor tiles) — the
+design planned 30 and the drawn strip carries more.
+
+| Section | Scroll x | Camera | Content |
+|---|---|---|---|
+| S1 open dunes | 0–3,900 | 1.20 | skimmer fan waves on `skim-dip` / `skim-rise`, four crawlers, five tenders, the first worm bursts |
+| S2 canyon | 3,900–7,800 | 1.05 | floor and ceiling rock; crawlers on **both** faces (≥ 4 ceiling), geysers below, burrowers on the floor lips |
+| S3 worm field | 7,800–10,050 | 1.2 | three count-8 worm bursts ≥ 900 px apart with the section's tenders filling the gaps between — the v1 death pocket, engineered away |
+| S4 scorpion arena | 10,050–11,700 | 0.9 | flat ground; **DUNE SCORPION** at 10,350; three tenders across the arena |
+| S5 second worm field | 11,700–14,700 | 1.2 | worms, ridge burrowers; the remix's worm formations re-enter at loop 2 |
+| S6 dune-surf run | 14,700–17,400 | **2.55**, `yTo 84` over 2,100 px | the set piece — the look-down pass below |
+| S7 sandstorm | 17,400–19,200 | 1.95, back to `y 0` (90 ticks) | the storm raster on; a lance; five tenders, dense on purpose |
+| S8 calm | 19,200–20,100 | 1.125 | exactly two tenders (19,500 / 19,850 — the pinned pair) — then the WARNING; `end` at 21,000 |
+
+Capsule sources before the WARNING: **33**, every one a tender spawn (18–48 ✓); the seven recovery
+windows hold 3 / 3 / 3 / 3 / 3 / 4 / 4 (≥ 3 each). Ground events: sixteen (ten crawlers + six
+burrowers). Blue capsules: none, in either zone. The scroll integrates to ≈ 266 s (design §2's
+ramp-less sum, ≈ +2 % in the ramps) — inside the contract's 225–315 s.
+
+**The dune-surf run and the look-ahead law.** At 2.55 px/tick the 4-way bot's terrain look-ahead
+(84 px at the port scale) reads only ≈ 33 ticks of warning as the ship shears the crest band, so
+the kit carries R5-P.P12's widen arm: it engages only above the pinned gate speed
+(`LOOKAHEAD_SPEED_GATE`, 2.4 px/tick) and only for **one** stage by shape — `zone-c`, asserted the
+way zone B's shaft is (the same `ca7c7b0a` cure shaped the arm, the zone-C LAND closed the
+look-ahead half; both one-world counters read exactly 1 at the wave-11 tip). Burrowers fire from
+ridges that were off-screen a second before; the section's `dune-lance`s come off the right edge,
+turn at screen-x 380 and leave at 2.4 px/tick. Every kept golden and demo of every other stage is
+byte-identical across the arm — the gate's whole point.
+
+### Zone C's roster — two new types at the floor
+
+`spine-burrower` (hp 4, 300 pts, `turret.floor`): settles on its crest, aims in 24 ticks and fires
+one round at 2.25 every 120. `dune-lance` (hp 3, 350 pts, `rear.swoop`): a rear attacker that
+overtakes at 2.7 px/tick, drops one needle at screen-x 380 and leaves at 2.4 — no aimed speed
+above 3.0 anywhere. The design planned seven placed new sprites; **`dust-devil` was retired to
+zero placements** (its roster entry stays, unplaced — the design's own §11 ledger) and six landed:
+worm, crawler, skimmer, geyser, burrower, lance (`husk-crawler-floor` shares the crawler's sprite,
+`tender` is zone A's). Six is the contract's **floor**, taken exactly — zero headroom: any change
+that removes another placed type reddens it, which is why the retirement was a disclosed call, not
+a silent trim.
+
+### Zone C's rebuilt bosses
+
+**DUNE SCORPION (DS-01)** is new to v2 — zone C had no captain in v1 (the plan named one only for
+B) and the design gives it its own: a `captain.ram` at 10,350 on the arena's flat ground, four
+parts — the **44-hp shell core** (`bosses/scorpion-shell`), two claw guns (10 hp / 600 points at
+(27, ∓20), `bosses/scorpion-claw`) and the tail as decoration. It fans four 5-ways (spread 40,
+2.25 px/tick) at 42 / 84 / 126 / 168 ticks, rams to screen-x 60 over 50 ticks, returns, rests 60;
+4,000 points, `timeLimit` 1,800, no WARNING — a captain never warns.
+
+**SANDGRAVE WIDOW (SW-03)** grew from ten parts to **eleven**: the **egg-sac** joins the body and
+the four legs as decoration, the **fangs moved out as the blockers** (16 hp / 800 points, v1's 14
+at (−16.5, ∓7.5), now at (−24, ∓12) — they stand in the core's lane like the bulwark's plates),
+the spinnerets — the zone's only guns — wear 24 hp /
+1,000 points at (117, ∓30), and the head is the core at **64 hp** / 5,000, `afterParts` of both
+fangs, exactly as the content test still demands. The scuttle box holds 437–538 screen-x; the
+ladder climbs 2.25 / 2.4 / 2.4 px/tick (+20 / +23 / +19 % on v1's 1.875 / 1.95 / 2.025) with
+steps every 100 / 90 / 76, aimed fans every 84 / 76 / 60, drones launched every 170 / 150 / 130
+and silk lines every 150 / 125; the P3's 5-way spreads 40 units wide (v1's 36). The core's P2 ends
+below **28 hp** — v1's share (24 of 56 ≈ 43 %) on the new 64. The fight carries 144 hp (v1's 124:
++8 head, +2 per fang, +4 per spinneret), ≈ +6 s of human pace. Silk stays **one line at a time**;
+the 35,000 points, the 150-tick intro and the ~159-px portrait (≤ 202) stand.
+
+### The blessed banks (both zones)
+
+| Measure | R5-02 zone B | R5-03 zone C |
+|---|---|---|
+| 4-way god clear (committed golden) | 19,300 t = **321.7 s**, 71,810 pts, 0 deaths | 17,790 t = **296.5 s**, 74,770 pts, 0 deaths |
+| main-encounter fight | **32.9 s** (maw — the bank's only fight row) | **21.9 s** (widow — bank row, reviewer byte-reproduced) |
+| no-god recording | `zone-b-deaths`: 4,770 t = 79.5 s, gameOver | `zone-c-bot`: 5,086 t = 84.8 s, gameOver — deaths at ticks 3,784 / 4,201 / 4,991 (bullet at camera-x 4,435, contact at 4,865, bullet at 5,686 — all past the 3,900 checkpoint line, the worm field's answer) |
+| peaks vs cap | 15 live enemies of 64 · 10 boss parts of 24 | 12 (18.8 %) · 11 (45.8 %) |
+| rules the runs assert | phases [0, 1, 2], diagonals 0, ship at BOT_X 96 ± 4 | phases [0, 1, 2], diagonals 0, max aimed bullet 2.574 ≤ 3.0 (2.7349 before the C5 fold) |
+
+The recordings and the golden outcome files are the authority; the banks they superseded are
+disclosed, not buried:
+
+- **B's pre-LAND S6 bank** read 311.2 s / 73,330 points (and a no-god *clear* at 340.9 s): the
+  weld's re-record moved the branch to the blessed 321.7 s / 71,810, and the committed
+  `zone-b-deaths` recording game-overs after three deaths at 79.5 s. A live playtest measurement
+  and a committed recording are different instruments; both stayed inside their gates.
+- **C's widow fight read 58.5 s in the S4b-era bank** (stageClear 250.5 s) — that was the **old
+  event timeline**. S5b moved the fight (interim bank 256.2 s / 42.3 s) and the C5 review leg
+  softened P3 from 2.55 to 2.4 px/tick (at the rank-16 MANTA audit 2.55 reaches 3.101 against the
+  3.0 rule); the blessed truth is **21.9 s**. The design's 40–50 s cell stands as what it was — a
+  human-pace estimate that a fully powered god-mode DPS beats; it was disclosed and left, never
+  tuned to. (C's S6-bank no-god line, 84.7 s / 8,400 points, sits the same way beside the blessed
+  file's 84.8 s / 8,180.)
+- Both zones flipped their `test/integration/zones/zone-<letter>.contract.ts` to
+  `remastered: true` inside their S5b commits, and their playtest, golden and contract run-bands
+  now read **4–6 minutes**. The v2 branch bounds every number above is judged against: length
+  20,000–22,000 px, scroll 225–315 s, run 240–360 s, ≥ 5 checkpoints, 6–8 new types, 18–48
+  capsules before the WARNING with ≥ 3 inside every 1,350-px window, ≥ 30 direct items, ≤ 2 blues.
+
+### The shared-kit and atlas footprints
+
+- The atlas re-derived twice (the groups file is content-derived, never hand-edited): zone B's own
+  page grows to **1024×512** — the dive backdrop `bg/brine-deep-v2`, packed in the zone's own
+  group, forces the tall rung — with `tiles/terrain-reef` demoting to common; zone C's
+  `main-3.png` grows to the same rung while
+  `enemies/dust-devil` and v1's `tiles/terrain-dune` **leave** the C page and `bg/stars-far` moves
+  to common (ten-plus stages draw it). The scale-1 digest pin re-set once per landing:
+  `5c35219b → 2e14bd20` (324 frames moved) at B, `cbecdd2b → 767900f6` (855) at C. The memory
+  estimator's zone rows (policy "resident", the 1024×512 pages) are in
+  `packages/shell/src/memory/index.ts`'s docblock — w11-MF10 folded them at `66e54bcb`.
+- The presentation, content-DB and shell fingerprints re-pinned under each land lock — both zones'
+  drawn output moved on purpose (new sections, new boss silhouettes, the decor block, the storm
+  raster) — and `pnpm docs:images` re-derived exactly the four boss plates stamped in the land
+  messages.
+- The TV bundle check passed its budgets at each LAND — measured at R5-03's: **1,472.6 KB raw,
+  403.0 KB gzip** (the 307.5 KB line above is v1 history; v2's content and interim art are a
+  different scale of bundle). `test/e2e/zone-b.spec.ts` now jumps to 19,650 and
+  `test/e2e/zone-c.spec.ts` to 19,950, both 150 px before their WARNINGs. Campaign routes clear
+  both zones on every path (zone B measured 288 s on the eight MANTA routes), the recovery
+  re-audits pass under the branch-gated row rule (w11-MF7), and every sim-affecting fold listed
+  above (the mine's 2.25, the widow's 2.4, the scorpion's ram clamp) is pinned by its behaviour
+  test and by the blessed recordings.
+
 ## The content checks (`test/integration/content-zone-b.test.ts`, `content-zone-c.test.ts`)
 
 The block "zones B–G hold to the plan and the 4-way design rules" (part of `pnpm test` and
 `pnpm content:check`; one file per zone since R5-P.P2a's split of the old `content.test.ts`, the
-shape bounds read through each zone's R5-D2 contract in `test/integration/zones/` — all zones are
-`remastered: false` today, so the bounds below are the v1 branch's, the v2 branch's in
+shape bounds read through each zone's R5-D2 contract in `test/integration/zones/` — B and C carry
+their `remastered: true` flag since their S5b commits (D through G flipped in the same wave, H and
+I still ride the v1 branch), so the bounds in the table below are the v1 branch's, read as history;
+the v2 branch's numbers are §The R5-02 / R5-03 remasters (v2) above and
 [zone-a-and-playtest.md](zone-a-and-playtest.md#the-per-zone-contracts-r5-d2-r5-pp6)):
 
 | Check | What it asserts |
@@ -584,7 +838,7 @@ The recipe these two zones followed:
 | Every golden fails after adding a sprite or a behaviour | The sorted sprite and script ids moved; re-bless (`pnpm golden:update`) and check that inputs, ticks and outcomes are unchanged |
 | The brine sea does not cycle its colours | A pixel outside `BRINE_RAMP` (or a ramp that no longer matches the stage's `cycles`) — the palette cycle only recolours exact matches |
 | The bonus stage plays AZURE VERGE's theme | Expected when it is played alone (`?stage=brine-grotto`): no track is scoped to its id, so the defaults play. Inside a run it plays zone B's resident set (a bonus warp prepares nothing) |
-| The gap entrance never opens | The ship must be `alive` inside world x 8,424–8,520, y 0–72 while the camera is between the event's `x` and `until` — fly under the left block, then up |
+| The gap entrance never opens | The ship must be `alive` inside world x 8,424–8,520, y 0–72 (v1; since R5-02 the trio sits at 16,234–16,330) while the camera is between the event's `x` and `until` — fly under the left block, then up |
 | The widow's head takes no damage | By design: `afterParts` of both fangs. The fangs stand in its lane |
 | Shots clink on GALVANIC MAW | The mouth is shut (`whenOpen`), or they hit the hull or the jaws (armour) |
 | The Tizen bundle check fails on size | 307.5 of 350 KB gzip after M2-11; big content (songs, stages) is inlined — trim or wait for M2-17's budget work |
@@ -601,3 +855,6 @@ The recipe these two zones followed:
 - **M2-15** (done) — the practice select starts any zone at any checkpoint, and the attract loop
   plays a demo of each zone ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.
+- **R5-02 / R5-03** (done) — wave 11's v2 remasters of both zones on their design files: the
+  rebuilt stage geometries, the two set pieces and the laws that shaped them, the ten- and
+  eleven-part bosses, the blessed banks (§The R5-02 / R5-03 remasters (v2)).
