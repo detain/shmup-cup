@@ -7,7 +7,7 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 14700,
+  "length": 21000,
   "camera": [
     {
       "x": 0,
@@ -15,24 +15,38 @@
       "ramp": 60
     },
     {
-      "x": 3300,
+      "x": 4200,
       "speed": 1.05,
       "ramp": 60
     },
     {
-      "x": 6900,
+      "x": 7800,
+      "speed": 0.9,
+      "ramp": 90
+    },
+    {
+      "x": 9600,
       "speed": 1.2,
       "ramp": 60
     },
     {
-      "x": 10200,
-      "speed": 2.1,
-      "ramp": 120
+      "x": 12900,
+      "speed": 1.35,
+      "ramp": 90,
+      "yTo": 60,
+      "yOver": 1350
     },
     {
-      "x": 12900,
+      "x": 15600,
+      "speed": 2.1,
+      "ramp": 120,
+      "yTo": 0,
+      "yTicks": 120
+    },
+    {
+      "x": 18300,
       "speed": 1.125,
-      "ramp": 120
+      "ramp": 90
     }
   ],
   "checkpoints": [
@@ -40,69 +54,85 @@
       "x": 0
     },
     {
-      "x": 3300
+      "x": 4200
     },
     {
-      "x": 6900
+      "x": 7800
     },
     {
-      "x": 10200
+      "x": 9600
+    },
+    {
+      "x": 12900
+    },
+    {
+      "x": 15600
+    },
+    {
+      "x": 17550
     }
   ],
   "parallax": [
     {
       "layer": "far",
+      "sprite": "bg/storm-sky",
+      "factor": 0.06,
+      "y": 0,
+      "spacing": 640
+    },
+    {
+      "layer": "far",
       "sprite": "bg/storm-clouds",
       "factor": 0.12,
       "y": 0,
-      "spacing": 192
+      "spacing": 288
     },
     {
       "layer": "far",
       "sprite": "bg/storm-clouds",
       "factor": 0.2,
       "y": 60,
-      "spacing": 192
+      "spacing": 288
     },
     {
       "layer": "mid",
       "sprite": "bg/storm-ridge",
       "factor": 0.35,
       "y": 264,
-      "spacing": 192
+      "spacing": 640
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/storm-flash",
+      "factor": 0.5,
+      "y": 120,
+      "spacing": 640
     },
     {
       "layer": "mid",
       "sprite": "bg/storm-rain",
       "factor": 0.9,
-      "y": 0,
-      "spacing": 96
+      "y": 84,
+      "spacing": 144
     },
     {
-      "layer": "mid",
-      "sprite": "bg/storm-rain",
-      "factor": 0.9,
-      "y": 96,
-      "spacing": 96
-    },
-    {
-      "layer": "mid",
-      "sprite": "bg/storm-rain",
-      "factor": 0.9,
-      "y": 192,
-      "spacing": 96
+      "layer": "fore",
+      "sprite": "bg/storm-gust",
+      "factor": 1.35,
+      "y": 276,
+      "spacing": 640
     }
   ],
   "tilemap": {
     "tileSize": 12,
     "tileset": "terrain-ridge",
-    "rowsTall": 28,
+    "rowsTall": 33,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 180,
-          "to": 3210,
+          "from": 225,
+          "to": 4200,
           "floor": {
             "base": 60,
             "amp": 45,
@@ -111,8 +141,8 @@
           }
         },
         {
-          "from": 3300,
-          "to": 6840,
+          "from": 4200,
+          "to": 7800,
           "floor": {
             "base": 51,
             "amp": 33,
@@ -121,29 +151,65 @@
           },
           "ceiling": {
             "base": 87,
-            "amp": 27,
+            "amp": 36,
             "period": 270,
             "seed": 93
           }
         },
         {
-          "from": 6930,
-          "to": 10140,
+          "from": 7800,
+          "to": 9600,
           "floor": {
-            "base": 45,
-            "amp": 30,
-            "period": 210,
+            "base": 36,
+            "amp": 6,
+            "period": 600,
             "seed": 94
           }
         },
         {
-          "from": 10230,
-          "to": 12840,
+          "from": 9600,
+          "to": 12900,
+          "floor": {
+            "base": 45,
+            "amp": 30,
+            "period": 210,
+            "seed": 95
+          }
+        },
+        {
+          "from": 12900,
+          "to": 15600,
+          "floor": {
+            "base": 48,
+            "amp": 21,
+            "period": 480,
+            "seed": 96
+          },
+          "ceiling": {
+            "base": 60,
+            "amp": 24,
+            "period": 300,
+            "seed": 97
+          }
+        },
+        {
+          "from": 15600,
+          "to": 18300,
           "floor": {
             "base": 30,
             "amp": 18,
             "period": 195,
-            "seed": 95
+            "seed": 98
+          }
+        },
+        {
+          "from": 18300,
+          "to": 21640,
+          "floor": {
+            "base": 24,
+            "amp": 6,
+            "period": 900,
+            "seed": 99
           }
         }
       ]
@@ -188,6 +254,12 @@
       "enemy": "crag-turret"
     },
     {
+      "x": 1250,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
+    },
+    {
       "x": 1290,
       "type": "formation",
       "enemy": "hail-drifter",
@@ -197,26 +269,15 @@
       "bonus": 400
     },
     {
-      "x": 1500,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 201
-    },
-    {
-      "x": 1710,
-      "type": "formation",
-      "enemy": "gale-kite",
-      "count": 5,
-      "interval": 14,
-      "y": 216,
-      "bonus": 500,
-      "path": "kite-overtake-low",
-      "screenX": -36
-    },
-    {
-      "x": 1886,
+      "x": 1908,
       "type": "spawn",
       "enemy": "crag-turret"
+    },
+    {
+      "x": 2100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
     },
     {
       "x": 2130,
@@ -226,21 +287,6 @@
       "screenX": -36
     },
     {
-      "x": 2340,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 2550,
-      "type": "formation",
-      "enemy": "hail-drifter",
-      "count": 6,
-      "interval": 14,
-      "y": 96,
-      "drop": null
-    },
-    {
       "x": 2790,
       "type": "spawn",
       "enemy": "squall-jumper",
@@ -248,20 +294,10 @@
       "screenX": -36
     },
     {
-      "x": 2906,
-      "type": "spawn",
-      "enemy": "crag-turret"
-    },
-    {
-      "x": 3360,
+      "x": 3300,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
-    },
-    {
-      "x": 3476,
-      "type": "spawn",
-      "enemy": "crag-turret-ceiling"
     },
     {
       "x": 3720,
@@ -271,24 +307,10 @@
       "screenX": -36
     },
     {
-      "x": 3900,
+      "x": 4350,
       "type": "spawn",
       "enemy": "tender",
-      "y": 201
-    },
-    {
-      "x": 4016,
-      "type": "spawn",
-      "enemy": "crag-turret"
-    },
-    {
-      "x": 4290,
-      "type": "formation",
-      "enemy": "hail-drifter",
-      "count": 5,
-      "interval": 14,
-      "y": 180,
-      "bonus": 500
+      "y": 171
     },
     {
       "x": 4436,
@@ -296,10 +318,15 @@
       "enemy": "crag-turret-ceiling"
     },
     {
-      "x": 4620,
+      "x": 4672,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 4800,
       "type": "spawn",
       "enemy": "tender",
-      "y": 171
+      "y": 126
     },
     {
       "x": 4890,
@@ -309,18 +336,25 @@
       "screenX": -36
     },
     {
-      "x": 5006,
+      "x": 4980,
       "type": "spawn",
-      "enemy": "crag-turret"
+      "enemy": "crag-turret-ceiling"
     },
     {
-      "x": 5280,
-      "type": "formation",
-      "enemy": "hail-drifter",
-      "count": 6,
-      "interval": 14,
-      "y": 186,
-      "drop": null
+      "x": 5100,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 5250,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
+    },
+    {
+      "x": 5400,
+      "type": "spawn",
+      "enemy": "ice-slab"
     },
     {
       "x": 5490,
@@ -335,34 +369,42 @@
       "enemy": "crag-turret-ceiling"
     },
     {
-      "x": 5850,
+      "x": 5820,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 5880,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 5,
+      "interval": 14,
+      "y": 216,
+      "bonus": 500,
+      "path": "kite-overtake-low",
+      "screenX": -36
+    },
+    {
+      "x": 6000,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 5876,
+      "x": 6300,
       "type": "spawn",
-      "enemy": "crag-turret"
+      "enemy": "ice-slab"
     },
     {
-      "x": 6090,
+      "x": 6600,
       "type": "spawn",
-      "enemy": "squall-jumper",
-      "y": 201,
-      "screenX": -36
+      "enemy": "crag-turret-ceiling"
     },
     {
-      "x": 6960,
+      "x": 6750,
       "type": "spawn",
       "enemy": "tender",
-      "y": 171
-    },
-    {
-      "x": 7140,
-      "type": "spawn",
-      "enemy": "thunderhead",
-      "y": 126
+      "y": 156
     },
     {
       "x": 7350,
@@ -376,24 +418,48 @@
       "screenX": -36
     },
     {
-      "x": 7560,
+      "x": 7950,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 8250,
+      "type": "boss",
+      "enemy": "storm-eye"
+    },
+    {
+      "x": 8400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 201
+    },
+    {
+      "x": 8850,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 9750,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
+    },
+    {
+      "x": 9900,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 126
+    },
+    {
+      "x": 10200,
       "type": "spawn",
       "enemy": "tender",
       "y": 231
     },
     {
-      "x": 7770,
-      "type": "spawn",
-      "enemy": "thunderhead",
-      "y": 246
-    },
-    {
-      "x": 7916,
-      "type": "spawn",
-      "enemy": "crag-turret"
-    },
-    {
-      "x": 8190,
+      "x": 10290,
       "type": "formation",
       "enemy": "hail-drifter",
       "count": 6,
@@ -402,19 +468,49 @@
       "bonus": 400
     },
     {
-      "x": 8400,
+      "x": 10440,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 186
+      "enemy": "thunderhead",
+      "y": 246
     },
     {
-      "x": 8610,
+      "x": 10650,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 246
+    },
+    {
+      "x": 10800,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 5,
+      "interval": 12,
+      "y": 96,
+      "bonus": 600,
+      "path": "kite-overtake-high",
+      "screenX": -36
+    },
+    {
+      "x": 11100,
       "type": "spawn",
       "enemy": "thunderhead",
       "y": 171
     },
     {
-      "x": 8820,
+      "x": 11250,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 216,
+      "screenX": -36
+    },
+    {
+      "x": 11400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 156
+    },
+    {
+      "x": 11700,
       "type": "formation",
       "enemy": "gale-kite",
       "count": 5,
@@ -425,37 +521,110 @@
       "screenX": -36
     },
     {
-      "x": 8966,
+      "x": 11850,
       "type": "spawn",
-      "enemy": "crag-turret"
+      "enemy": "squall-jumper",
+      "y": 126,
+      "screenX": -36
     },
     {
-      "x": 9240,
-      "type": "spawn",
-      "enemy": "thunderhead",
-      "y": 126
-    },
-    {
-      "x": 9450,
+      "x": 12150,
       "type": "spawn",
       "enemy": "tender",
       "y": 201
     },
     {
-      "x": 9660,
+      "x": 12400,
       "type": "spawn",
-      "enemy": "squall-jumper",
-      "y": 246,
-      "screenX": -36
+      "enemy": "thunderhead",
+      "y": 126
     },
     {
-      "x": 10260,
+      "x": 13050,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 13150,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13250,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13400,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13500,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
+    },
+    {
+      "x": 13600,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13900,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13950,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 246
+    },
+    {
+      "x": 14150,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 14300,
+      "type": "spawn",
+      "enemy": "lightbird",
+      "y": 111
+    },
+    {
+      "x": 14450,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 171
+    },
+    {
+      "x": 14700,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 15000,
+      "type": "spawn",
+      "enemy": "lightbird",
+      "y": 201
+    },
+    {
+      "x": 15250,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 246
+    },
+    {
+      "x": 15900,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 10440,
+      "x": 16050,
       "type": "formation",
       "enemy": "hail-drifter",
       "count": 8,
@@ -464,13 +633,7 @@
       "bonus": 600
     },
     {
-      "x": 10650,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 246
-    },
-    {
-      "x": 10860,
+      "x": 16200,
       "type": "formation",
       "enemy": "gale-kite",
       "count": 6,
@@ -481,14 +644,13 @@
       "screenX": -36
     },
     {
-      "x": 11100,
+      "x": 16350,
       "type": "spawn",
-      "enemy": "squall-jumper",
-      "y": 216,
-      "screenX": -36
+      "enemy": "tender",
+      "y": 231
     },
     {
-      "x": 11340,
+      "x": 16500,
       "type": "formation",
       "enemy": "hail-drifter",
       "count": 8,
@@ -497,20 +659,20 @@
       "drop": null
     },
     {
-      "x": 11550,
+      "x": 16800,
       "type": "spawn",
       "enemy": "tender",
-      "y": 141
+      "y": 156
     },
     {
-      "x": 11760,
+      "x": 16950,
       "type": "spawn",
       "enemy": "squall-jumper",
-      "y": 126,
+      "y": 216,
       "screenX": -36
     },
     {
-      "x": 11970,
+      "x": 17100,
       "type": "formation",
       "enemy": "gale-kite",
       "count": 6,
@@ -521,37 +683,36 @@
       "screenX": -36
     },
     {
-      "x": 12240,
-      "type": "spawn",
-      "enemy": "thunderhead",
-      "y": 186
-    },
-    {
-      "x": 12480,
-      "type": "spawn",
-      "enemy": "squall-jumper",
-      "y": 246,
-      "screenX": -36
-    },
-    {
-      "x": 13080,
+      "x": 17700,
       "type": "spawn",
       "enemy": "tender",
-      "y": 156
+      "y": 201
     },
     {
-      "x": 13440,
+      "x": 18150,
       "type": "spawn",
       "enemy": "tender",
-      "y": 231
+      "y": 141
     },
     {
-      "x": 13950,
+      "x": 18500,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 19200,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
+    },
+    {
+      "x": 20100,
       "type": "warning",
       "enemy": "squall-steed"
     },
     {
-      "x": 14700,
+      "x": 21000,
       "type": "end"
     }
   ],
@@ -581,6 +742,11 @@
     "red",
     "green",
     "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "blue",
     "red"
   ],
   "raster": [
@@ -592,6 +758,27 @@
       "amplitude": 3,
       "wavelength": 45,
       "period": 180
+    },
+    {
+      "layer": "mid",
+      "kind": "wave",
+      "top": 96,
+      "bottom": 336,
+      "amplitude": 1.5,
+      "wavelength": 60,
+      "period": 120,
+      "from": 4200
+    },
+    {
+      "layer": "far",
+      "kind": "wave",
+      "top": 0,
+      "bottom": 336,
+      "amplitude": 2,
+      "wavelength": 18,
+      "period": 24,
+      "from": 12900,
+      "to": 15600
     }
   ],
   "cycles": [
@@ -617,7 +804,7 @@
       "drop": null
     },
     {
-      "x": 1860,
+      "x": 2160,
       "type": "formation",
       "enemy": "gale-kite",
       "count": 5,
@@ -628,13 +815,23 @@
       "drop": null
     },
     {
-      "x": 4440,
+      "x": 4950,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 5700,
       "type": "formation",
       "enemy": "hail-drifter",
       "count": 5,
       "interval": 14,
       "y": 192,
       "drop": null
+    },
+    {
+      "x": 6450,
+      "type": "spawn",
+      "enemy": "ice-slab"
     },
     {
       "x": 8340,
@@ -664,6 +861,26 @@
       "drop": null,
       "path": "kite-overtake-low",
       "screenX": -36
+    },
+    {
+      "x": 13350,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 13800,
+      "type": "spawn",
+      "enemy": "lightbird"
+    },
+    {
+      "x": 14250,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 16650,
+      "type": "spawn",
+      "enemy": "lightbird"
     }
   ]
 }

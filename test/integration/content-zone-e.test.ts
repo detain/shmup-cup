@@ -9,6 +9,7 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -23,6 +24,7 @@ import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   ZONES_B_G,
   boundsOf,
@@ -149,6 +151,49 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     expect(boss?.parts.find((p) => p.core)?.vulnerable).toBe('whenOpen');
     expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('rocket.homing');
     for (const phase of boss?.phases ?? []) expect(phase.params.minis ?? 2).toBeGreaterThan(0);
+  });
+
+  it('keeps the rebuilt SQUALL STEED inside the bible height with a reachable core (R5-05.S4b)', () => {
+    const stage = stageOf('zone-e');
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    // Design §8: the eight v1 parts plus mane, crest and the two flanks — twelve, inside the cap.
+    expect(boss.parts.length).toBe(12);
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    const { manifest } = buildAtlas();
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const anchorY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    // Assembled like `scripts/doc-images.mjs`: each sprite centred on its anchor, parents first.
+    let minY = 0;
+    let maxY = 0;
+    for (const [i, part] of boss.parts.entries()) {
+      if (part.sprite === undefined) continue;
+      const ref = manifest.sprites[part.sprite]?.frames[0];
+      if (ref === undefined) continue;
+      const h = manifest.frames[ref].h;
+      const centre = Math.round(anchorY(i));
+      minY = Math.min(minY, centre - Math.floor(h / 2));
+      maxY = Math.max(maxY, centre + h - Math.floor(h / 2));
+    }
+    expect(maxY - minY).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // Design §8's own arithmetic: the whole tree rides the P3 bob, so the static extent plus
+    // twice the largest ry (27 — 147 + 54 = 201 at the 202-px line) must still fit.
+    const maxRy = Math.max(...boss.phases.map((p) => p.params.ry ?? 0));
+    expect(maxY - minY + 2 * maxRy).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // The core stays reachable: not armour itself, and no part it requires is armour.
+    const core = boss.parts.find((p) => p.core);
+    expect(core).not.toBeUndefined();
+    expect(core?.vulnerable).not.toBe('never');
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    for (const name of core?.requires ?? []) {
+      expect(byName.get(name)?.vulnerable, name).not.toBe('never');
+    }
   });
 
   it.each(zones)(

@@ -60,8 +60,8 @@ test.describe('zones D and E (web build)', () => {
       await countColours(page, RIDGE, { x0: 0, y0: 276, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(2000);
     expect(await countColours(page, STEED_PLATE, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 13,950), then the boss.
-    await jumpTo(page, 13800);
+    // The end of the stage: the WARNING (x 20,100, R5-05.S5b), then the boss.
+    await jumpTo(page, 20000);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('squall-steed');
     expect(await countColours(page, STEED_PLATE, RIGHT_HALF)).toBeGreaterThan(300);

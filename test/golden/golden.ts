@@ -606,7 +606,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-e-god',
     description:
-      'TEMPEST RIDGE start to stage clear with god mode (M2-12): the 4-way bot through the storm front, the ridge pass, the thunderheads and the gale run, kites and jumpers coming from behind, then SQUALL STEED shot down',
+      'TEMPEST RIDGE start to stage clear with god mode (R5-05 remaster): the 4-way bot through the storm front and the ridge pass, the captain THE STORM EYE, the thunderheads, the eye-of-the-storm dip and the gale run, then SQUALL STEED shot down',
     stageId: 'zone-e',
     config: { seed: 1 },
     godMode: true,
@@ -633,7 +633,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-e-bot',
     description:
-      'TEMPEST RIDGE without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, the rear attackers overtaking a ship that can die — a death and a respawn in place — to SQUALL STEED',
+      'TEMPEST RIDGE without god mode (R5-05 remaster): the 4-way bot from the start, Classic penalty, the rear attackers overtaking a ship that can die — a death and a respawn in place — to SQUALL STEED',
     stageId: 'zone-e',
     config: { seed: 74 },
     godMode: false,

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "tileset",
   "id": "terrain-ridge",
-  "sprite": "tiles/terrain-ridge",
+  "sprite": "tiles/terrain-ridge-v2",
   "tileSize": 12,
   "tiles": [
     {
@@ -151,6 +151,80 @@
       "hp": 3,
       "regen": 240,
       "score": 10
+    },
+    {
+      "name": "solid-2",
+      "type": "solid",
+      "frame": 20,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "solid-3",
+      "type": "solid",
+      "frame": 21,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "floor-2",
+      "type": "solid",
+      "frame": 22,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "floor-3",
+      "type": "solid",
+      "frame": 23,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "ceiling-2",
+      "type": "solid",
+      "frame": 24,
+      "anchor": "ceiling",
+      "mask": [8, 7, 7, 5, 9, 7, 7, 9, 9, 8, 8, 9]
+    },
+    {
+      "name": "brick-crack",
+      "type": "solid",
+      "frame": 31,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 4,
+      "score": 10
+    },
+    {
+      "name": "brick-crack-2",
+      "type": "solid",
+      "frame": 32,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 4,
+      "score": 10
+    },
+    {
+      "name": "decor-scree",
+      "type": "empty",
+      "frame": 33,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "name": "decor-ice-patch",
+      "type": "empty",
+      "frame": 34,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "name": "decor-pine",
+      "type": "empty",
+      "frame": 35,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
   ]
 }

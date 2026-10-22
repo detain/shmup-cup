@@ -428,7 +428,7 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
     }
     hash.update(formatManifest(v1.manifest));
     expect(hash.digest('hex')).toBe(
-      '2e14bd201a73fa06f95e2de009c457fe4b52df1105ce0987b211f5fa6355a2c8',
+      'cbecdd2bff336bb3eb00b2f16a72323ef2652953bbbe4c5a6eeece0f52c9cb1e',
     );
   });
 });

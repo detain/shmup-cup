@@ -44,18 +44,20 @@ const DB: ContentDb = (() => {
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
 /**
- * The zone, its boss and the honest hand-out floors of this bot run (zone E stays on the surface,
- * its depth target 0). The pair file's prepB.FIX8 note (d25de31) rides in `zone-d-direct.test.ts`;
- * zone-e's run reaches the shared floor below and is the file's octagon coverage. Hand-outs stay
- * strictly in plan order and the dropped-plus-swallowed accounts equal the cursor — those
- * invariants are what this test owns; the floor and the colour list only describe how far the
- * shared bot honestly gets.
+ * The zone, its boss and the honest hand-out floors of this bot run. Zone E's camera dips to
+ * y 60 in the eye of the storm (the R5-05.S5a key at 12,900, design §2), so the depth target is
+ * 60, not the v1 surface. The pair file's prepB.FIX8 note (d25de31) rides in
+ * `zone-d-direct.test.ts`; zone-e's run reaches the shared floor below and is the file's octagon
+ * coverage (the 31-item plan keeps the octagon at index 8, inside the first ten hand-outs).
+ * Hand-outs stay strictly in plan order and the dropped-plus-swallowed accounts equal the cursor —
+ * those invariants are what this test owns; the floor and the colour list only describe how far
+ * the shared bot honestly gets.
  */
 const ZONES = [
   {
     stage: 'zone-e',
     boss: 'squall-steed',
-    depth: 0,
+    depth: 60,
     handed: 10,
     colours: ['red', 'green', 'blue', 'octagon'],
   },

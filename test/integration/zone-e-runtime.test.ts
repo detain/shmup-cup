@@ -23,10 +23,26 @@ import {
   loadContent,
   type ContentDb,
   type SceneFlow,
+  type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { expectCameraAt, expectInOpenSpace, steps } from './zones/helpers.js';
+import { expectInOpenSpace, steps } from './zones/helpers.js';
+
+/**
+ * The camera sits within one scroll step of `x` after the first tick — inclusive of a jump into
+ * a fully ramped key, where the camera lands exactly one step (2.1 px, the gale run's key at
+ * 15,600) past its checkpoint x 17,550; the shared `expectCameraAt` keeps the strict bound its
+ * v1-era ramping-key callers measured. R5-05.S6 derived this row from the same one-tick law.
+ */
+function cameraAtOneTick(world: World, x: number): void {
+  let speed = 0;
+  for (const key of world.stage?.stage.camera ?? []) {
+    if (key.x <= x + 1e-6) speed = key.speed;
+  }
+  expect(world.camera.x).toBeGreaterThanOrEqual(x);
+  expect(world.camera.x).toBeLessThanOrEqual(x + Math.max(speed, 1.5));
+}
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -43,11 +59,13 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-e' }, DB);
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.jumpTo(1100);
+    // Design §2's S1–S2 rear rhythm: jumpers at 2,130 / 2,790 / 3,720 / 4,890 / 5,490 and the
+    // low kite formation at 5,880 — six rear sources between the camera rows 1,800 and ~7,250.
+    world.stage?.jumpTo(1800);
     const rear = new Set([DB.enemyIndex.get('squall-jumper'), DB.enemyIndex.get('gale-kite')]);
     /** Per enemy slot and spawn: the leftmost and rightmost view x seen. */
     const seen = new Map<string, { min: number; max: number }>();
-    for (let i = 0; i < 900; i++) {
+    for (let i = 0; i < 4900; i++) {
       game.step();
       game.events.clear();
       const ship = world.players[0].x - world.camera.x;
@@ -67,19 +85,31 @@ describe('integration: zones D and E in the game (M2-12)', () => {
 });
 
 describe('integration: zones D and E, edge cases (M2-12)', () => {
-  const starts: [string, number, number, number][] = [];
+  const starts: [string, number, number, number, number, number, number][] = [];
   for (const [letter, stageId] of [['e', 'zone-e']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
     stage.checkpoints.forEach((checkpoint, i) => {
-      // Zone E's camera never dives: every checkpoint starts on the surface.
-      const y = 0;
-      starts.push([letter, i, checkpoint.x, y]);
+      // The camera y design §2 gives each checkpoint, as closed [spawn lo, spawn hi,
+      // after-90 lo, after-90 hi] rows from the camera keys: the front, the ridge pass, the
+      // captain's shelf, the thunderheads and the calm sit at y 0; the eye of the storm
+      // (checkpoint 4, x 12,900) starts the dip to y 60 spread over 1,350 px of scroll
+      // (≈ 0.06 px of y a tick), so its first sample lies in [0, 0.5] and ninety ticks
+      // later the camera is inside the dip (0 < y ≤ 60); the gale run (checkpoint 5,
+      // x 15,600) starts at the bottom row — y ∈ [58, 60] with the 120-tick lift barely
+      // begun — and is descending ninety ticks later (y < 60, bound 59.5).
+      const law =
+        checkpoint.x === 12900
+          ? [0, 0.5, 0.05, 60]
+          : checkpoint.x === 15600
+            ? [58, 60, 0, 59.5]
+            : [0, 0, 0, 0];
+      starts.push([letter, i, checkpoint.x, law[0], law[1], law[2], law[3]]);
     });
   }
 
   it.each(starts)(
-    'practice start in zone %s at checkpoint %i (x %i): the camera at y %i, the ship in open space',
-    (letter, checkpoint, x, y) => {
+    'practice start in zone %s at checkpoint %i (x %i): the camera on its designed row, the ship in open space',
+    (letter, checkpoint, x, sLo, sHi, aLo, aHi) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
       game.debug.godMode = true;
@@ -90,16 +120,18 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expectCameraAt(world, x);
-      expect(world.camera.y).toBe(y);
+      cameraAtOneTick(world, x);
+      expect(world.camera.y).toBeGreaterThanOrEqual(sLo);
+      expect(world.camera.y).toBeLessThanOrEqual(sHi);
       steps(game, 90);
       expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)}`);
-      expect(world.camera.y).toBe(y);
+      expect(world.camera.y).toBeGreaterThanOrEqual(aLo);
+      expect(world.camera.y).toBeLessThanOrEqual(aHi);
     },
   );
 
-  it('checks four checkpoints per zone', () => {
-    expect(starts).toHaveLength(4);
+  it('checks seven checkpoints per zone', () => {
+    expect(starts).toHaveLength(7);
   });
 
   it('keeps every squall jumper needle inside the view where it starts', () => {

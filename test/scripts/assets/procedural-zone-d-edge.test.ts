@@ -129,10 +129,28 @@ describe('scripts/assets/procedural/terrain — zones D and E tilesets (M2-12)',
   );
 
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
-    for (const [file, sprite] of [
-      ['terrain-magma', 'tiles/terrain-magma'],
-      ['terrain-ridge', 'tiles/terrain-ridge'],
-    ] as const) {
+    // Zone E's row is R5-05.S5a's remaster: the -v2 tileset sprite and the ten design-§10
+    // additions after zone A's twenty. Zone D's row stays at v1 until its own leg lands it.
+    const rows: [string, string, readonly string[]][] = [
+      ['terrain-magma', 'tiles/terrain-magma', []],
+      [
+        'terrain-ridge',
+        'tiles/terrain-ridge-v2',
+        [
+          'solid-2',
+          'solid-3',
+          'floor-2',
+          'floor-3',
+          'ceiling-2',
+          'brick-crack',
+          'brick-crack-2',
+          'decor-scree',
+          'decor-ice-patch',
+          'decor-pine',
+        ],
+      ],
+    ];
+    for (const [file, sprite, extra] of rows) {
       const data = JSON.parse(
         readFileSync(
           new URL(`../../../content/tilesets/${file}.tileset.json`, import.meta.url),
@@ -141,7 +159,7 @@ describe('scripts/assets/procedural/terrain — zones D and E tilesets (M2-12)',
       ) as { id: string; sprite: string; tiles: { name: string }[] };
       expect(data.id).toBe(file);
       expect(data.sprite).toBe(sprite);
-      expect(data.tiles.map((t) => t.name)).toEqual([...terrain.TERRAIN_TILES]);
+      expect(data.tiles.map((t) => t.name)).toEqual([...terrain.TERRAIN_TILES, ...extra]);
     }
   });
 

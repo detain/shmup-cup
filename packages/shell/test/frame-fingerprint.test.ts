@@ -349,9 +349,9 @@ function galleryWalk(): string {
  * drawn over them — the warning walk's `ui` hash moved; every other walk and hash stays).
  */
 const PINNED: Readonly<Record<string, string>> = {
-  'flight.open-space': '446d7015 ff7f3235 70c411db',
-  'flight.test-range': 'cfbdc585 ff7f3235 e7afd0f4',
-  'flight.warning': 'e6adb72c bb66561d ff9e545f',
+  'flight.open-space': 'aaea63e5 ff7f3235 7d678ef9',
+  'flight.test-range': '61071365 ff7f3235 6236a926',
+  'flight.warning': '25dff270 bb66561d a29e425a',
   showcase: 'b9c2aea8 57ecce45 58a99e5f',
   'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };

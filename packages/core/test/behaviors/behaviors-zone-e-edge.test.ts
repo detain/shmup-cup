@@ -16,10 +16,17 @@
  *   apart, the minis spawn at the chest and home like the shipped `steed-foal`; the snout's
  *   spreads (`ways` below 1 → a single shot, floored), rings from the snout only as the chest
  *   shuts, alternating by half a gap, none from a destroyed snout; the lids gape floored `gape`
- *   px (0 = never), and every phase starts shut with the lids at rest.
+ *   px (0 = never), and every phase starts shut with the lids at rest;
+ * - `rock.fall` and `rammer.aimed` (R5-05.S4a): the trigger is the |Δx| to the ship (a slab hangs
+ *   2 px past it and falls when it brackets the distance), a gravity above `maxFall` is capped on
+ *   the first flying tick, and a windup of 0 dashes on the mover's first tick, locked on its row;
+ * - `captain.circler` (R5-05.S4a, THE STORM EYE): an orbit speed of 0 switches the motion to
+ *   hold and parks the boss at its home on the ellipse's right end, and the rings come from every
+ *   standing gun — half a gap further each volley — falling back to the first standing part when
+ *   no gun lives.
  */
 import { describe, expect, it } from 'vitest';
-import { BossHit, BossState } from '../../src/bosses/index.js';
+import { BossHit, BossMotion, BossState } from '../../src/bosses/index.js';
 import { BulletKind } from '../../src/bullets/index.js';
 import {
   DEFAULT_BOSS_X,
@@ -51,6 +58,18 @@ const { enemy, boss } = rosterKitDe(ROSTER);
 
 /** Tunables of a quiet `boss.steed` phase: held still, the chest shut, no shots, no minis. */
 const STEED_QUIET = { bobSpeed: 0, closedTicks: 100_000, fireTicks: 100_000, minis: 0 } as const;
+
+/** Tunables of a held `captain.circler` phase: parked on the home, no rings (R5-05.S4a). */
+const EYE_QUIET = {
+  cx: 330,
+  cy: 168,
+  rx: 195,
+  ry: 84,
+  speed: 0,
+  fireTicks: 100_000,
+  bulletSpeed: 2.1,
+  ring: 8,
+} as const;
 
 /** The test DB: the KESTREL, Type A, the shipped zone E roster, the variants and a scrolling stage. */
 const DB: ContentDb = (() => {
@@ -119,6 +138,12 @@ const DB: ContentDb = (() => {
               closedTicks: 20,
               openTicks: 20,
             }),
+            enemy('ice-slab', 'slab-outside', { trigger: 298, gravity: 0.06, maxFall: 4.5 }),
+            enemy('ice-slab', 'slab-edge', { trigger: 302, gravity: 0.06, maxFall: 4.5 }),
+            enemy('ice-slab', 'slab-steep', { trigger: 96, gravity: 6, maxFall: 2 }),
+            enemy('lightbird', 'bird-instant', { enterTicks: 40, windup: 0, speed: 2 }),
+            boss('storm-eye', 'eye-quiet', { ...EYE_QUIET }),
+            boss('storm-eye', 'eye-single', { ...EYE_QUIET, fireTicks: 30 }),
           ],
         },
       },
@@ -513,5 +538,114 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
     // Phase 2 gapes 4 px.
     untilChest(w, true);
     expect(lid.localY).toBe(lid.restY + Math.floor(v1rel(4)));
+  });
+});
+
+describe('core/behaviors rock.fall and rammer.aimed — edge cases (R5-05.S4a)', () => {
+  it('hangs with the trigger 2 px short and falls when it brackets the distance (the |Δx| law)', () => {
+    const w = world();
+    run(w, 45); // the fly-in first: from here the ship holds its position
+    const ship = w.players[0];
+    // Both fly in ahead of the ship at the same x — the signed distance is −300 px.
+    const hang = spawn(w, 'slab-outside', ship.x + 300, w.camera.y + 24);
+    const fall = spawn(w, 'slab-edge', ship.x + 300, w.camera.y + 60);
+    const hangY = hang.y;
+    run(w, 1);
+    // trigger 298 keeps its hold; trigger 302 releases on the first mover tick.
+    expect(hang.vy).toBe(0);
+    expect(fall.vy).toBeCloseTo(0.06, 9);
+    run(w, 119);
+    expect(hang.y).toBe(hangY);
+    expect(hang.vy).toBe(0);
+    expect(fall.y).toBeGreaterThan(w.camera.y + 60);
+  });
+
+  it('caps a gravity above maxFall on the first flying tick, then falls the cap as a rule', () => {
+    const w = world();
+    run(w, 45); // the fly-in first: a `Ballistic` body only wakes its gravity on a live ship
+    const e = spawn(w, 'slab-steep', w.players[0].x + 48, w.camera.y + 24);
+    run(w, 1);
+    expect(e.vy).toBe(2); // min(0 + 6, 2): one tick of gravity is already the cap
+    const y1 = e.y;
+    run(w, 30);
+    expect(e.vy).toBe(2);
+    expect(e.y).toBeCloseTo(y1 + 60, 9); // 30 ticks at 2 px/tick, straight down
+    expect(e.vx).toBe(0);
+  });
+
+  it('dashes with a windup of 0 on the mover’s first tick, level and locked on the row', () => {
+    const w = world();
+    run(w, 45); // the fly-in first: the ship's row and position hold from here
+    const ship = w.players[0];
+    const bird = spawn(w, 'bird-instant', w.camera.x + 300, ship.y);
+    run(w, 48); // enters at 40, no telegraph: dashing for several ticks by 48 (30 would not hold)
+    expect(bird.mover).toBe(MoverKind.AimedDash);
+    expect(bird.vx).toBeCloseTo(-2, 9);
+    expect(bird.vy).toBe(0);
+    const y = bird.y;
+    run(w, 60);
+    expect(bird.y).toBe(y); // the locked due-west aim never drifts off the row
+    expect(bird.x).toBeLessThan(w.camera.x + 300 - 100);
+    expect(w.bullets.count).toBe(0); // it is a ram: it never fires
+  });
+});
+
+describe('core/behaviors captain.circler (storm-eye) — edge cases (R5-05.S4a)', () => {
+  it('holds at the ellipse’s right end when the orbit speed is 0, and fires nothing quiet', () => {
+    const w = fighting('eye-quiet');
+    const b = w.bosses.boss;
+    // The law of `api.orbit`: a speed of 0 is not a circle — the engine switches the motion to
+    // `Hold` instead. The boss rides its home, which sits on the ellipse's right end (cx + rx, cy).
+    expect(b.motion).toBe(BossMotion.Hold);
+    expect(b.screenX).toBeCloseTo(525, 6);
+    expect(b.screenY).toBeCloseTo(168, 6);
+    const [x, y] = [b.screenX, b.screenY];
+    run(w, 200);
+    expect([b.screenX, b.screenY]).toEqual([x, y]);
+    expect(w.bullets.count).toBe(0);
+  });
+
+  it('rings from every standing gun half a gap on, then from the first standing part alone', () => {
+    const w = fighting('eye-single'); // the same orbit, quiet fire, volleys every 30 ticks
+    const b = w.bosses.boss;
+    const gap = ANGLE_UNITS / 8;
+    /**
+     * The sorted headings of one 8-ring fired at `offset`.
+     *
+     * @param offset - First heading.
+     * @returns The headings.
+     */
+    const ringOf = (offset: number): number[] =>
+      Array.from({ length: 8 }, (_v, k) => (offset + k * gap) % ANGLE_UNITS).sort((p, q) => p - q);
+    /**
+     * The sorted headings of both guns' rings.
+     *
+     * @param offset - First heading.
+     * @returns The headings.
+     */
+    const bothRings = (offset: number): number[] =>
+      ringOf(offset)
+        .concat(ringOf(offset))
+        .sort((p, q) => p - q);
+    let t = 0;
+    while (t < 120 && freshAngles(w, BulletKind.RoundPurple).length === 0) {
+      run(w, 1);
+      t++;
+    }
+    expect(freshAngles(w, BulletKind.RoundPurple)).toEqual(bothRings(0));
+    run(w, 30);
+    expect(freshAngles(w, BulletKind.RoundPurple)).toEqual(bothRings(gap / 2));
+    // One gun falls: one ring of 8 a volley now, still turning half a gap on.
+    expect(w.bosses.damagePart(part(w, 'cloud-top'), 12, 0)).toBe(BossHit.Destroyed);
+    expect(b.state).toBe(BossState.Fight);
+    run(w, 30);
+    expect(freshAngles(w, BulletKind.RoundPurple)).toEqual(ringOf(gap));
+    // The last gun falls too: the volley comes from the first standing part (the swirl ring —
+    // it carries no hurtbox, so it never blocked and never dies), the fight keeps going.
+    expect(w.bosses.damagePart(part(w, 'cloud-bottom'), 12, 0)).toBe(BossHit.Destroyed);
+    run(w, 30);
+    expect(freshAngles(w, BulletKind.RoundPurple)).toEqual(ringOf(gap + gap / 2));
+    expect(b.state).toBe(BossState.Fight);
+    expect(b.parts[part(w, 'ring')].destroyed).toBe(false);
   });
 });
