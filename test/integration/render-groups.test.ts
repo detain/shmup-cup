@@ -15,7 +15,8 @@
  *   batches no test stage happens to reach;
  * - the renderer's **fixed** binding destinations (terrain, lasers, bending lasers, hitboxes,
  *   particles, the HUD and UI quad pools) are grouped too, and the only layers a parallax band
- *   may use are exactly the two that are deliberately left plain;
+ *   may use are exactly the plain ones — the two backgrounds and R3-06's `FOREGROUND`, which
+ *   `layers` leaves out of the groups like them;
  * - the `DRAW_CALL_BUDGET` figures M3-02e raised agree with each other and with what the bench's
  *   gates say about them — the drift review round 1 found twice.
  */
@@ -115,12 +116,39 @@ describe('M3-02e render groups cover what the shipped game draws', () => {
     for (const layer of [...batchLayers].sort((a, b) => a - b)) {
       expect(RENDER_GROUP_LAYERS.indexOf(layer) >= 0, `batch layer ${name(layer)}`).toBe(true);
     }
-    // And the two layers deliberately left plain are only ever used by the parallax bands, which
-    // are placed once when they are bound (their containers move, their sprites do not toggle).
-    expect([...parallaxLayers].sort((a, b) => a - b)).toEqual([LayerId.BgFar, LayerId.BgMid]);
+    // And the plain layers are only ever used by the parallax bands, which are placed once when
+    // they are bound (their containers move, their sprites do not toggle): the two backgrounds
+    // and — the R3-06 `fore` kind — Foreground. The walk sees all three since R5-10.T3 gave the
+    // dimension its strands band (`bg/dimension-strands`, `layer: "fore"`, factor 1.5, live from
+    // tick 0 — 90a20a3a), and `layers` keeps Foreground out of RENDER_GROUP_LAYERS on purpose:
+    // "the R3-06 FOREGROUND is a parallax band too and is left out like the two backgrounds".
+    // The loop below is that law measured, not recalled.
+    expect([...parallaxLayers].sort((a, b) => a - b)).toEqual([
+      LayerId.BgFar,
+      LayerId.BgMid,
+      LayerId.Foreground,
+    ]);
     for (const layer of parallaxLayers) {
       expect(RENDER_GROUP_LAYERS.indexOf(layer) < 0, `parallax layer ${name(layer)}`).toBe(true);
     }
+    // Rot-proof census (the same adjudication MF13/MF12 made for their pins): `dimension` is the
+    // only one of the four stages this walk plays that carries a `fore` band, so the set above
+    // moves only when this list does. A shipped stage gaining or losing a fore band is a
+    // decision taken here, not a red the next weld inherits (the examples are not in the DB).
+    const foreStages = DB.stages
+      .filter((stage) => stage.parallax.some((band) => band.layer === 'fore'))
+      .map((stage) => stage.id)
+      .sort();
+    expect(foreStages).toEqual([
+      'decor-range',
+      'dimension',
+      'zone-b',
+      'zone-c',
+      'zone-d',
+      'zone-e',
+      'zone-f',
+      'zone-g',
+    ]);
   });
 
   it('groups every layer @shmup/core creates a sprite batch on, played or not', () => {
