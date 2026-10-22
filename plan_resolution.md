@@ -70,8 +70,12 @@ R3-03 and R3-04 — the wave-5 scout's recommended defaults, the rows saying so 
 2026-10-19 — **R2-N1 … R2-N4** are execution-shape decisions from the R2 re-plan (N1 … N3 built by R2-02,
 N4 by R2-03), **RR-7** and **RR-8** are the R3 re-plan's stand-in decisions and **RR-3** its store-icons
 deferral, worked at R2-03.I2; all are built, as R2-02's, R3-03's, R3-04's and R2-03's As built records.
-**R5-D2**, **R5-D5** and **R5-D9** are R5 / R6 re-plan decisions built early by RUN-7's fold into R2-03's
-wave (decision R5-D1 is §11's own note). **W5-20** is the owner's graphics-options directive of 2026-10-20,
+**R5-D1 … R5-D9** are the R5 / R6 re-plan's decisions, their definitions in
+[`docs/v2-run/decisions.md`](docs/v2-run/decisions.md) §6: **R5-D2**, **R5-D5** and **R5-D9** were built
+early by RUN-7's fold into R2-03's wave, and the rest were built by the wave-10 pilot and its prep —
+zone A's LAND (`9d0b472`) is the flow's record, R5-01's As built and §11's wave-10 block are the entries.
+**R6-D1 … R6-D3** are adopted defaults that wait on their R6 waves. **W5-20** is the owner's
+graphics-options directive of 2026-10-20,
 worked into the plan as R6-04 by that directive's own order. **R2-N5 … R2-N8** complete the R2 re-plan's
 register: N6 was built in R2-02's kit flip, N5, N7 and N8 were built at R2-04 (N7's owner's feel stays open
 until the M7 play session). **RR-1** … **RR-6** are the R3 / R4 re-plan's art-pipeline, font, provenance,
@@ -151,9 +155,18 @@ provenance rule — §10's As built entries), RR-3's one move was paid at `R4-05
 | **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once — at R2-03 `pnpm store:assets` only `--check`s (R2-03.I2, that step's As built) — built by `R4-05.E5` (`d23fec0`): the icons moved to the v2 art once, as the decision says; `store-assets.mjs` now collects the default (non-1) scale — the final ships (`R4-01.A1a/A1b`), the v2 font (`R4-03.C2`), the v2 logo (`R4-05.E1`) — the four committed icons are the v2 render, `--check` green, and no later step regenerates them until `R6-03.D3` | R2-03, R4-05 |
 | **RR-2** | The v2 font cell is **9×12, line 15, advance 9** — today's `GLYPH_W` / `GLYPH_H` / `LINE_H` — so no layout moves at all; built by `R4-03.C1` (`3c8eca8`) as the native sibling `assets/source/fonts/pixel9x12.font.json` (name `pixel`, `native: true`, 195 glyphs — RR-1's font rule: the scale-1 build keeps v1's `pixel6x8`), hand-redrawn by `C2 … C4b`, pinned to core's metrics by `font-v2.test.ts` and the config tests — confirmed by the owner 2026-10-19 | R2-01, R4-03 |
 | **RR-4** | Agent-made v2 art draws from the bible text, v1's designs and the palette tables; Qwen-Image, SD3.5 and Wan winners enter only once committed and content-reviewed; never a FLUX winner while FLUX is on hold — adopted (until the FLUX decision); held through all of R4: every shipped R4 commit is a hand-drawn `*.v2.sprite.json` pixel map or a procedural generator (the logo drew from the bible row plus v1's logo, not the key art), no AI winner shipped as art | R4, R5 |
-| **R5-D2** | The v2 zone contract (built as `R5-P.P6`'s `test/integration/zones/zone-<letter>.contract.ts` v2 branches): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | R5, R5-P.P6 |
+| **R5-D1** | **Parallel zones, one LAND at a time** (overrides §11's "previous zone step" and the pre-re-plan driver's one-sim-changing-lane rule): the zones build in parallel on local branches and land one at a time, on stable content-order-independent hash keys (`R5-P.P1`), the scoped bless `golden:update --only <ids>` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock; zone A lands first, zone H's echoes wait for A, B, D and F. **Built:** zone A landed first, `9d0b472`, its composite `--only zone-a,bonus-range` bless flowing after the S7.0 guard cure `a089adb`, the weld's land lock held across the whole script | R5, R5-01 |
+| **R5-D2** | The v2 zone contract (built as `R5-P.P6`'s `test/integration/zones/zone-<letter>.contract.ts` v2 branches): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules. Wave 10's MF2 adjudication grew the contract an optional `directItemComposition` row — the release audit reads the composition from the zone, not a shared constant (zone A's row `{octagons: 2, maxRare: 3}`, `1f3040c`; every remaster authors its own) | R5, R5-P.P6, R5-01 |
+| **R5-D3** | Zone A gets the new tileset **`terrain-azure`**; `terrain-a` stays for the escape, `bonus-vault` and the ranges; `R5-10.T2` adds `escape.mjs` for the escape's look (Q-13, owner-confirmed 2026-10-18). **Built** with `R5-01`: the LAND's groups re-derive demoted `tiles/terrain-a` (with `bosses/maw-pod`) to `common`, and the scale-1 pipeline learned to carry v2-only names as *absent at scale 1* (`732bfe1`, RR-1a's first tileset) | R5-01, R5-10 |
+| **R5-D4** | The content-DB fingerprint stays as R2-02 left it and is **re-pinned only by a LAND** — through `R5-P.P10`'s write mode, never by hand. **Built:** zone A's LAND moved its `core.stages`-family rows with the stage rebuild; between LANDs the pin held through the whole `R4` round and wave 10's prep | R5-P, R5, R5-01 |
 | **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % of a pool (built early by RUN-7, as `R5-P.P8` inside R2-03) | R5, R2-03 |
+| **R5-D6** | **Stand-ins only for new sprite names**; existing sprites stay the interim ×1.5 art until their zone's `S3` real-art drop. **Built:** the wave-10 `S2` legs — zones A (`8810f32`), C (`900d24e`), D (`75fa6d2`), B (`53832f8`) on master, E … I on their branches — shipped every new name's stand-in with no golden, fingerprint or scale-1 digest move | R5 |
+| **R5-D7** | A zone that ships with stand-ins is **`done (owner parts pending)`**; its real art drops later as `S3` (the wave-12 template). **Built:** it is §17's R5-01 status since `9d0b472` | R5, §17 |
+| **R5-D8** | **One LAND per zone**, reviewed on the local zone branch before it lands (the fixer commits on the branch); `S2` and `S3` push on their own, and an `S3` whose real art changes a frame count is a small LAND of its own from branch `r5/s3-zone-<x>`. **Built:** zone A's loop — seven branch legs, `R5-01.RV` (one critical) → `R5-01.FIX1` (`732bfe1`) → the scoped re-review at zero → the one weld `R5-01.S7` | R5, R5-01 |
 | **R5-D9** | `R5-P.P1` runs inside R2-03 (RUN-7) — built in wave 6 (`6ba1187`), its hash shift paid by the step's single re-bless | R2-03, R5 |
+| **R6-D1** | The caravan clock stays **3 min** unless `R6-01.B2`'s balance report says otherwise | R6-01 |
+| **R6-D2** | `R6-03.D1`'s version bump and the CHANGELOG `[2.0.0]` section land in **one push** by the docs agent (`tooling-config.test.ts` checks the CHANGELOG's first section; precedent W1-D2) | R6-03 |
+| **R6-D3** | `gh release create v2.0.0` runs only after the owner's **explicit OK** | R6-03 |
 | **R2-N5** | R2-04's sim changes are proposed as patches; one integrator (`R2-04.G`) re-blesses once — wave 7 held: the five patches integrated once at `a285e0e`, `git log d48c0d2..origin/master` over the replay paths names that single commit | R2-04 |
 | **R2-N6** | The 15 frame-unit behaviour defaults get literal v2 values in the kit's flip (no v1-geometry helper in core) — built by R2-02 | R2-02 |
 | **R2-N7** | `ShakeMagnitude` 1 / 2 / 4 → **2 / 3 / 6** (the plan's "1/2/3" was stale; ×1.5 of v1, halves rounded up) — landed in the one bless `a285e0e`; the owner's feel decides in R2-04's play session | R2-04 |
@@ -2767,9 +2780,141 @@ their census and gates-absence checks green):
   exit 1, and the step-8 abort restored the tree byte-clean (`porcelain -uall` — the plain form misses
   nested untracked, a cure). The `conventions.md` LAND paragraph is the wave's DOCS-E lane.
 
+**R5 prep as built — wave 10** (the second prep tranche and the four zone `S2` kits that rode it; the
+reviews at zero, the two P12 cures and the bless-guard cure in-wave):
+
+- **P7 — every zone's v2 palette-cycle ramps frozen** (`3b11fbb`, reviewed APPROVE at zero on the shipped
+  code): the eight stage JSONs (zones C … I plus `glimmer-cache`) carry the designs' `cycles` lists and six
+  generators gained the `<X>_RAMP_V2` branch — the v1 arms byte-identical, the scale-1 digest pin unmoved,
+  goldens zero (a ramp is presentation, never simulation: `hashWorld` reads no cycle colour, proven from
+  source). Zone A ships no ramp (its design says so), zone B's stands verbatim. The bible's law forced one
+  nudge: the abyss murk `#07131c` sits 1 Chebyshev from the new ABYSS first stop, inside the scan's
+  margin 3, so `offRamp` moved it to `#05131c`. The exemption list re-measured both directions — nine rows
+  genuinely clear dropped, no kept row rotted, `storm-flash` deferred until its S2 art lands; presentation
+  PINNED moved 18 world cells through P10's write mode, content-DB one row, shell unmoved.
+- **P5d — the zone e2e specs one per zone** (`9592777`, reviewed APPROVE, zero findings): the four pair
+  specs became `zone-b.spec.ts` … `zone-i.spec.ts` plus a shared `zone-helpers.ts` (helpers verbatim, the
+  four interfaces' union disclosed in its docblock); the three TV pair cases dropped exactly the
+  block-enumerated first-boss `clear()` / `stepTo` / colour-check lines; the title census 307 → 310; the
+  batch 19/19 green; `zone-a.spec.ts` untouched.
+- **P12 — the bot clears the designed set pieces** (`5b82697`; cure `7df08dc`; guard `da1d8c9`): shaft
+  tracking, fast-terrain look-ahead, branch steering, brick punching, slab riding — each behind a
+  condition today's content never meets. RT-P12 measured two that did fire today (zone A's 2.25 tail key
+  opened the 2.1-px/tick look-ahead; the punch's reachable-gap rule engaged the standing zone-D and zone-F
+  walls — four live-bot goldens re-recorded differently) and the cure re-gated: the look-ahead gate is
+  `1.6 × WORLD_SCALE` = **2.4** px/tick with the gain `120 × WORLD_SCALE` (design C's 2.55 ask still buys
+  its 27 px ≈ 10.6 ticks; every shipped key ≤ 2.25 stays dead), and the punch requires closure of the
+  whole camera window on the **pristine** content grid with destructible `hp > 0` cells — no shipped stage
+  meets it, swept stage × lane × 480 px. The cure clone re-records all 71 goldens + 10 demos
+  **byte-identically**. RT-P12b caught the new permanent guard excluding three live-bot scenarios behind
+  a false sentence (`fireButtonBot` is the bot with a fire pattern on top) — so
+  `test/playtest/bot-replay-identity.test.ts` now re-records **52** live-bot scenarios and byte-compares
+  (~50 s at K=1, pinned honestly): a bot decision that moves a recording is a red test on the spot, never
+  a bless surprise.
+- **P13 — the zone-tileset pins became prefix + coverage** (`0e4a952`): the two `content.test.ts` pins now
+  demand a zone tileset's tile names as an *ordered prefix* of `terrain-a`'s with one frame per tile — the
+  law the remasters' variant tiles need (`tiles/terrain-dune-v2` is its first admittee); a reordered or
+  truncated lead still fails.
+- **P14 — the debug boss skip enters at the WARNING** (`6345f07`, reviewed APPROVE): `skipToBoss` takes the
+  stage's **last** `warning`, the first `boss` only when it has none, `BOSS_SKIP_LEAD` 144 held. Exactly
+  one recording re-recorded with the rule (`zone-h-boss`: 9,066 → 2,433 ticks — the shorter run no longer
+  crosses the extend threshold), 11 presentation PINNED rows moved with the walk (`runA.bossH` gained
+  `w.toWarning()`), content-DB and shell unmoved.
+- **The stand-in kits (decision R5-D6) — the wave's `S2` legs**: zone A's azure set with
+  `tiles/terrain-azure` (`8810f32`); zone C's with the first **v2 tileset sprite** `tiles/terrain-dune-v2`
+  (`900d24e`; its unpainted `bg/dune-blaze` rides the palette-cycle scan's EXEMPT until its cycle row
+  binds, `13d85f3`); zone D's (`75fa6d2`); zone B's (`53832f8`) — every one landed with goldens untouched,
+  fingerprints green unedited, the scale-1 digest pin unmoved, stand-in caps unraised. Zones E … I ride
+  their branches for the wave's fold: zone E's kit measured the **budget trap as designed** — green alone,
+  green on master, red on the shared stand-in residency row only at the B+D+E union — and stood down
+  without pushing; the cap stays.
+- **The bless route grew to composite lists** (the S7.0 cure, `a089adb`): P3's guard made the demos suite
+  throw at load for any `--only` id that is not a demo stage, which made the wave's prescribed
+  `--only <zone>,bonus-range` bless unsatisfiable on master's own tooling (no pre-LAND lane had executed
+  one). The guard now enforces its stated intent: a list naming **no** demo stage at all fails loud, one
+  naming the zone's demo flows — the composite bless shape holds for every later zone.
+- **The first LAND — the weld discipline proven** (the flow `R5-01.S7` ran; its record is R5-01's As
+  built): `land-zone.sh` is the named flow, the proven shape is the 34-step weld — fetch, squash the
+  branch legs, install and assets, the groups re-derive **under the stale-state digest proof** (the scale-1
+  digest measured equal to the current pin *before* the re-derive — the two-state check), the composite
+  bless, the goldens green unedited, the three fingerprints re-pinned and green as-pinned, `docs:images`,
+  the **digest re-pin measured at the derived tree** (successor hash, page shapes, name-set / moved
+  counts), the stand-in / CJK / scripts-assets re-measure, then the full battery — content:check,
+  stage-runtime, the three type-checks, lint, format, art-origins, core full, shell full, the **integration
+  sweep at K≤6**, e2e batch1 with the Chromium determinism leg and the **Firefox leg** — the scope proof
+  (every moved replay's stage id inside the `--only` list), one commit with exactly the derived paths, and
+  the push under the lock. **The land lock is held across the whole script, not around the push alone**
+  (RT-P1314's third minor, now law), and the full chain runs ~10 min on this host, not the 60–120 estimated.
+
 ### R5-01 — Zone A remaster: AZURE VERGE
 
 - **Scope:** the zone template for zone A; expansion focus per the table. Also the engine capacity check below.
+- **As built** (2026-10-21/22; the local branch `r5/zone-a`'s seven legs `8ac7dd1` … `98a86fc` over the
+  reviewed master, the `S2` kit pushed to master at `8810f32`; review loop `R5-01.RV` (one critical) →
+  `R5-01.FIX1` `732bfe1` → the scoped re-review at zero; the weld `R5-01.S7` landed **`9d0b472`** — 68
+  files, +1,966/−901, the branch's 21 sources plus the whole derived regeneration):
+  - **HALCYON BULWARK rebuilt to the design's §8, twelve parts, core centred at x 0** (S4b — adjudicated
+    after four measured STOPs): the weak point must clear **both** shadows — the plate row's and the
+    hull's — and the feasible window is core x ∈ (−8, +6], so v1's −36 became 0, centre of the window;
+    the hull (`x 42`, hw 30) is never vulnerable, the six plates carry 10 hp each at 9-px steps, the core
+    (60 hp, `afterParts`, `requires` all six plates, 6,000) opens the row; three phases track
+    .525 / .675 / .825 with margins 84 / 74 / 74, exactly two standing lasers ≥ 24 px apart, the
+    assembled height 159 ≤ 202. The full-rank fight resolves in **2,186 ticks**; the design §2's 45–70 s
+    fight prose measured empirically impossible for the shipped bot's digestion, so the landed cadence
+    owns the pacing (an owner taste row below). Geometry note, on the record (review MINOR-1): the
+    window check used the core's half-width 6 against the plates while the landed box is 12 wide — at
+    x 0 the core's west face overlaps plate-1's east face by 0.5 px, harmless and empirically moot.
+  - **The stage rebuilt to §2b/§3/§17** (S5a, S5b): 21,000 px × 28 rows of `terrain-azure` heightfields
+    (decision R5-D3), seven checkpoints 0 / 2,700 / 6,300 / 9,600 / 12,000 / 15,600 / 18,300, seven
+    camera keys with the 2.25 px/tick hold at 12,000 and under the gate at 18,300, the WARNING at 19,950
+    past the 18,600 open-space floor, the boss at 10,350, both azure parallax bands 320 apart
+    (adjudicated against design §9's 640, commit-disclosed), the eight decor rows as §9 lists them, no
+    `cycles` (zone A ships no ramp, P7's finding). The three spire gorges opened to the **48-px corridor
+    law** (S6b → S6b.2, adjudicated): design §3 carved them 36 px (three tile rows), the stage-runtime
+    law demands a ≥ 48-px flyable corridor in every pixel column of every shipped stage, four rows won —
+    openings rows 0–3 / 13–16 / 24–27, the vein tiles solid.
+  - **The roster and the plan** (S4a, S5b): the tender frozen; five new types — skiff, gale, gnat,
+    warden, matron — original, `drop: null`; the azure-marshal captain (three parts, the frozen
+    `bosses/maw-pod` tube art); 77 events (25 formations + 49 spawns + warning + boss + end) reconciling
+    to the design's §2b drop line exactly; the 34-entry `directItems` plan (red 9, green 9, blue 8,
+    orange 3, yellow 3, octagon 2) under the contract's new composition row (MF2 `1f3040c` — decision
+    R5-D2); the 11-entry remix capped at 18,450 so the calm window holds.
+  - **The playtest and the capacity check** (S6): the 4-way bot clears in **293.4 s**, inside the
+    contract's 240–360 s window, one captain kill (≤ 1), recovery three deaths, scores 66,030 / 68,060;
+    **the capacity check holds** (R5-D5's line): peak live enemies 12 ≤ 51 (80 % of 64) and peak boss
+    parts 12 ≤ 24 — the pools stand; `content:check` 100/100 at the branch tip; the v2-port suite drops
+    the zone-A family and its two feeders through the contract's flip alone — the mechanism certified for
+    waves 11/12: the flip **is** the interface, `v2-port-suite.ts` is never edited again.
+  - **The alloc hunt** (`79243ce`): the ported stage geometry alone broke the bulwark's allocation guard —
+    the parallax and decor syncs took the camera's raw fractional numbers per call and boxed them each
+    frame; the cure passes the camera object.
+  - **The LAND** (attempt 5 of the weld): the 34-step discipline of §11's wave-10 record, run end to end —
+    the stale-state digest proof `fa419802…` exact before the re-derive; the groups **12+/2−** (the twelve
+    azure names join zone A's block, `tiles/terrain-a` and `bosses/maw-pod` demote to `common`); the
+    composite bless re-recording **29 files** (26 `zone-a-*` goldens + `bonus-range-god` +
+    `bonus-range-digit` + `content/demos/zone-a`) with the blessed-numbers table in the commit body and
+    every other recording verified byte-unchanged (`zone-h-boss` included, blessed at P14); the three
+    fingerprints re-pinned through P10's write mode and green as-pinned; the scale-1 digest re-pin
+    **measured at the derived tree**, `fa419802… → 5c35219b…` (name set equal, `moved=736`; the zone-a
+    page 256×128 → 256×64); 13 `docs/images` plates written (no `echo-bulwark` — zone H's frozen boss);
+    the stand-in and CJK caps re-measured unraised; the battery — core 385/385 files, shell 77/77, the
+    integration sweep **2,605 passed / 88 skipped / zero failures** at K≤6, e2e batch1 + determinism
+    **110/110** Chromium and **73/73** Firefox, the zone-A spec green, the post-push sweeps green at the
+    pushed tip.
+  - **The three walls, adjudicated pre-LAND and cured on master, not bypassed**: **S7.0 `a089adb`** (the
+    demos bless guard relaxed to its intent — §11's bless-route row); **S7.1 `62ac4e5`** (the shell
+    residency premise re-anchored after `terrain-a`'s demotion — the class re-fires at every
+    tileset-renaming zone, the pattern stable); **S7.2 `f5ea466`** (the zones contract meta-suite pins the
+    flag logic, not the flip roster — closed for every later flip). The review loop's own cure **FIX1
+    `732bfe1`** taught the scale-1 pipeline and the interim terrain case to take RR-1a at its word: a
+    v2-only name's frames are **absent** at scale 1, and the absence is the assertion.
+- **Manual (owner) still pending:** zone A's **real art** — generate, pick, hand-clean (after the FLUX
+  decision; the picker needs a fresh `choices.json`, myadmin1 holds only a snapshot) — dropping later as
+  `R5-01.S3` (decisions R5-D6 / R5-D7: the stand-ins ship, the §17 row stays
+  `done (owner parts pending)`); the M7 play of the remaster (`build:dev`) and the readability / feel
+  sign-off; the bulwark fight's pacing to the owner's eye (the landed cadence vs design §2's prose); the
+  confirmation of the defaults the step adjudicated — R5-D1, R5-D2 (with zone A's composition row), R5-D3,
+  R5-D6, R5-D7; the 13 `docs/images` plates.
 
 ### R5-02 — Zone B remaster: BRINE NEBULA
 
@@ -3132,7 +3277,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R4-03 | Font, HUD and the UI kit | done (owner parts pending: the font legibility rows — ASCII / Spanish / katakana reader — and the HUD / kit looks) — 2026-10-21 (RR-2's 9×12 `pixel9x12` native font `3c8eca8`, all 195 glyphs hand-redrawn `2954930` `2fe757c` `450349b` `68a6fa8`, zero fingerprints moved; the HUD for 12-px bars `96c4e61` (boss bar `FRAME_W >> 2`, Direct pitch, micro script, `hud/life`); the kit's two-tone rim + slider `dcf6380`; cures `d65fcbf` `326ff03`) |
 | R4-04 | FX and particles | done (owner parts pending: the fx-gallery feel) — 2026-10-21 (explosions 24² / 48² / 72² with the white flash cross and `"blend": "normal"` `693e6ac`, content-DB `fx` row re-pinned; spark / sparkle / debris / ring native `6805952`; presets measured no-change; **Decision (R5-D5): the pool of 256 holds** — bot peaks ≤ 100/256, D3 / D4 no-commit verdicts; `R4-04.RV` APPROVE true zero) |
 | R4-05 | Title, front end, endings, store and doc images | done (owner parts pending: the title / endings / logo / screens eyeball rows, the GRAPHICS-plate decision, the optional trailer stays owner's) — 2026-10-21 (logo 330×54 `ffa083a`, title backdrop full-frame `73dcb6d` (native half-ship deviation), WARNING band + zone cards frame-derived `e7d379d`, five endings full-frame `9873156`, one-panel rule `bb153bc`, store icons on v2 art `d23fec0` (**RR-3 closed** — the icons moved once), docs plates + 18 screens re-shot `45739d8`, cure `b35cba4`; `R4-05.RV` APPROVE zero-code nits) |
-| R5-01 | Zone A remaster: AZURE VERGE | not started |
+| R5-01 | Zone A remaster: AZURE VERGE | done (owner parts pending: the `R5-01.S3` real-art drop after the FLUX decision, the M7 play and sign-off — decision R5-D7) — 2026-10-22 (the LAND `9d0b472`: zone A rebuilt to `docs/v2-run/designs/zone-a.md` — 21,000 px, 77 events, seven checkpoints, `terrain-azure` heightfields (R5-D3), the five new types + the azure-marshal captain, HALCYON BULWARK's twelve parts with the core centred at x 0 (the S4b adjudication: clear both plate and hull shadows, the feasible window (−8, +6]), the spires opened to the 48-px corridor law over design §3's 36-px gorges (S6b.2), the 34-entry item plan under the contract's new `directItemComposition` row (MF2 `1f3040c`); the 4-way bot clears in 293.4 s inside every 4-way window, the capacity check holds (peaks 12 ≤ 51 / 12 ≤ 24, R5-D5); the loop: `R5-01.RV`'s one critical cured by `R5-01.FIX1` `732bfe1`, the scoped re-review at zero; the 34-step weld in five attempts, three walls adjudicated pre-LAND — `a089adb` / `62ac4e5` / `f5ea466`; the LAND: 29 recordings re-blessed through the composite `--only zone-a,bonus-range`, three fingerprints re-pinned, groups re-derived 12+/2−, the scale-1 digest measured `fa419802… → 5c35219b…`, 13 plates, caps unraised; the battery at the pushed tip: integration 2,605 / zero failures, e2e 110 Chromium + 73 Firefox, core 385 / shell 77 files; the art is stand-in per R5-D6 until `S3`) |
 | R5-02 | Zone B remaster: BRINE NEBULA | not started |
 | R5-03 | Zone C remaster: DUNE EXPANSE | not started |
 | R5-04 | Zone D remaster: MAGMA DEEP | not started |

@@ -271,6 +271,74 @@ Nothing here changes what the game shows: these are the zone lanes' tools, all r
   release audit and the scope proof, one commit of exactly the derived paths, push — under `flock`, with a
   `--dry-run` in a throwaway detached worktree; the hostile runs proved the cross-zone scope trap.
 
+### The second R5 prep and the first stand-ins (R5-P wave 10, the zone `S2` legs)
+
+Nothing here changes what the game shows until a zone lands: these are the weld's tools and the kits.
+Every review closed at zero or cured in-wave.
+
+- **The ramps frozen** (`P7` `3b11fbb`): every zone's v2 palette-cycle ramp is now the generators'
+  `<X>_RAMP_V2` list and the stage files' `cycles`, verbatim from the designs — zone A ships none, zone B's
+  stands. Presentation-only by construction: zero goldens moved, eighteen world cells and one content-DB row
+  re-pinned through the fingerprint write mode, the scale-1 art byte-identical (RR-1). The bible's
+  near-miss law forced the abyss murk to `#05131c`.
+- **E2E specs one per zone** (`P5d` `9592777`): the four pair specs became `zone-b.spec.ts` …
+  `zone-i.spec.ts` plus a shared `zone-helpers.ts`, verbatim apart from the five contract-permitted changes;
+  titles 307 → 310, the batch 19/19 green.
+- **The bot's set pieces, and a permanent identity guard** (`P12` `5b82697`, cure `7df08dc`, guard
+  `da1d8c9`): shaft tracking, fast-terrain look-ahead, branch steering, brick punching, slab riding — each
+  behind a condition today's content never meets, **measured, not asserted**: the review caught two gates
+  that fired on the shipped zone A/D/F geometry and the cure re-gated them (the look-ahead at 2.4 px/tick,
+  the punch on full-window closure of the pristine grid), so every recording byte-reproduces again. The new
+  `bot-replay-identity.test.ts` re-records the **52** live-bot scenarios every test run — a bot decision
+  that moves a replay is a red test on the spot, never a bless surprise.
+- **The tileset law** (`P13` `0e4a952`): a zone tileset keeps `terrain-a`'s tile names as an *ordered
+  prefix* and may grow v2 variant tiles — reordered or truncated leads still fail.
+- **The boss skip enters at the WARNING** (`P14` `6345f07`): the debug skip lands at the stage boss's
+  warning (the first `boss` event only when a stage has none); one recording re-recorded with the rule
+  (`zone-h-boss`, 9,066 → 2,433 ticks), eleven presentation rows honest with it.
+- **The stand-in kits (decision R5-D6)**: zone A's azure set (`8810f32`), zone C's with the first **v2
+  tileset sprite** `tiles/terrain-dune-v2` (`900d24e`), zone D's (`75fa6d2`) and zone B's (`53832f8`)
+  landed with the goldens untouched, the fingerprints green, the scale-1 digest pin unmoved, the stand-in
+  caps unraised. Zones E … I ride their branches for the wave's fold — zone E's kit measured the **budget
+  trap as designed** (green alone, red only at the three-kit union on the shared stand-in residency row)
+  and stood down without pushing; the cap stays.
+
+### AZURE VERGE — zone A remastered (R5-01, the first zone LAND)
+
+These change what the game shows and does: zone A is rebuilt to `docs/v2-run/designs/zone-a.md` and landed
+at `9d0b472` under decision R5-D1's one-at-a-time flow. The art is the R5-D6 stand-in kit until `R5-01.S3`
+drops the real art (owner-gated), so the row stays `done (owner parts pending)` (R5-D7).
+
+- **The rebuilt stage**: 21,000 px inside the contract's 20,000–22,000; 77 events (25 formations, 49
+  spawns, the warning, the boss, the end); seven checkpoints; the 2.25 px/tick hold at 12,000 and the
+  WARNING at 19,950 past the open-space floor; the new **`terrain-azure`** 12-px tileset (R5-D3) with the
+  three spire gorges opened to the **48-px corridor law** (the adjudicated call over design §3's 36-px
+  carvings); the 34-entry item plan (2 octagons, 3 rare max) read by the release audit from the zone
+  contract's new `directItemComposition` row (`1f3040c`); an 11-entry remix; no palette-cycle ramp.
+- **The roster**: the carrier tender frozen for the later zones; five new types — skiff, gale, gnat,
+  warden, matron; the azure-marshal mid-boss; and **HALCYON BULWARK** rebuilt to twelve parts with the
+  core centred at **x 0** — the adjudicated geometry: a weak point must clear both the plate row's shadow
+  and the hull's, and the feasible window is x ∈ (−8, +6]; three phases, exactly two standing lasers, the
+  full-rank fight resolving in 2,186 ticks.
+- **It plays**: the 4-way bot clears the remaster in **293.4 s** inside the contract's 240–360 s window,
+  one captain kill, peaks 12 of 51 live enemies and 12 of 24 boss parts — the R5-D5 capacity check holds —
+  and `content:check` runs 100/100 at the branch tip.
+- **The weld** (five attempts, the 34-step shape §11 records): 29 recordings re-blessed through the
+  composite `node scripts/golden-update.mjs --only zone-a,bonus-range` route (zone A's 26 goldens, the two
+  `bonus-range` runs, the zone-A attract demo; the blessed-numbers table rides the commit body; every other
+  recording byte-verified unchanged); the three fingerprints re-pinned in the write mode; the atlas groups
+  re-derived **12+/2−** (the azure names join; `tiles/terrain-a` and `bosses/maw-pod` demote to `common`);
+  the scale-1 digest **re-pin measured at the derived tree**, `fa419802… → 5c35219b…` (name set equal,
+  736 frames relocated by the repack); 13 docs plates rewritten. The battery at the pushed tip: core
+  385/385 files, shell 77/77, the integration sweep 2,605 passed with zero failures, e2e 110/110 Chromium
+  and 73/73 Firefox.
+- **Cured on master, not bypassed, on the way in**: the scale-1 pipeline tolerates v2-only sprite names
+  (`732bfe1`, RR-1a's first tileset); the demos bless guard takes its listed intent, so composite `--only`
+  lists flow and typo-lists still fail loud (`a089adb`); the shell residency premise re-anchors past
+  `terrain-a`'s demotion (`62ac4e5` — the class re-fires per tileset-renaming zone, the pattern stable);
+  the zones contract meta-suite pins the flag logic, not the flip roster (`f5ea466` — closed for every
+  later flip).
+
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
 - **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and
