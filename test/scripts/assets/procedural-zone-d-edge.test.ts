@@ -13,13 +13,16 @@
  *   zone D / E sprite name is drawn exactly once across all generators;
  * - the zone tilesets: the destructible tiles (brick, cube, tissue) look exactly like zone A's (a
  *   brick reads as a brick in every zone); the solid rock is drawn only in the set's own rock
- *   colours; the `content/tilesets/` files name their sprite; all five sets have distinct rims.
+ *   colours; the `content/tilesets/` files name their sprite; all five sets have distinct rims;
+ * - and, since R5-04.S2, the v2 stand-in set: frozen, unique names drawn at the shipped art
+ *   scale, frames of one size, hittable sprites clearly visible, the same pixels every run.
  *
  * @module
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getPixel } from '../../../scripts/assets/image.mjs';
+import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
 import * as tempest from '../../../scripts/assets/procedural/tempest.mjs';
@@ -147,5 +150,49 @@ describe('scripts/assets/procedural/terrain — zones D and E tilesets (M2-12)',
     expect(new Set(palettes.map((p) => p.surface)).size).toBe(palettes.length);
     expect(new Set(palettes.map((p) => p.rock.join())).size).toBe(palettes.length);
     expect(Object.isFrozen(terrain.TERRAIN_PALETTES)).toBe(true);
+  });
+});
+
+describe('scripts/assets/procedural/magma — R5-04.S2 v2 stand-ins (zone-d.md §14)', () => {
+  const sprites = magma.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE });
+  const v2 = sprites.slice(magma.MAGMA_SPRITES.length);
+
+  it('names the §14 list frozen, unique and kebab-pathed', () => {
+    expect(Object.isFrozen(magma.MAGMA_V2_SPRITES)).toBe(true);
+    expect(new Set(magma.MAGMA_V2_SPRITES).size).toBe(magma.MAGMA_V2_SPRITES.length);
+    for (const name of magma.MAGMA_V2_SPRITES) {
+      expect(name).toMatch(/^(bg|enemies|bosses|fx|tiles)\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+    expect(new Set(magma.MAGMA_V2_TILE_NAMES).size).toBe(magma.MAGMA_V2_TILE_NAMES.length);
+    expect(magma.MAGMA_V2_TILE_NAMES.length).toBe(24);
+  });
+
+  it('draws v2 frames of one size, hittable sprites clearly visible, animations that animate', () => {
+    for (const sprite of v2) {
+      const [first, ...rest] = sprite.frames;
+      for (const frame of rest) {
+        expect([frame.width, frame.height], sprite.name).toEqual([first.width, first.height]);
+      }
+      if (sprite.hitFlash === true) {
+        for (const frame of sprite.frames) expect(drawn(frame), sprite.name).toBe(true);
+      }
+      const text = sprite.frames.map((f) => Buffer.from(f.data).toString('base64'));
+      if (sprite.frames.length > 1) {
+        expect(new Set(text).size, sprite.name).toBe(sprite.frames.length);
+      }
+      for (const [clip, frames] of Object.entries(sprite.animations ?? {})) {
+        expect(frames.length, `${sprite.name}.${clip}`).toBeGreaterThan(0);
+        for (const f of frames) {
+          expect(f, `${sprite.name}.${clip}`).toBeGreaterThanOrEqual(0);
+          expect(f, `${sprite.name}.${clip}`).toBeLessThan(sprite.frames.length);
+        }
+      }
+    }
+  });
+
+  it('draws the v2 set the same pixels every run', () => {
+    expect(bytes(v2)).toEqual(
+      bytes(magma.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE }).slice(13)),
+    );
   });
 });

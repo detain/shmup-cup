@@ -87,6 +87,7 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'enemies/abyss-turret',
   ],
   BRINE: ['bg/brine-nebula', 'bg/abyss-murk'],
+  MAGMA: ['bg/magma-chimney'],
 });
 
 /** The margin the bible asks for: twice the shader's 1.5/255 tolerance, Chebyshev (max over
