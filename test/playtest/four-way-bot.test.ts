@@ -14,8 +14,8 @@
  * - the R5-P.P12 set-piece features on fixture stages: the shaft window (zone B), the high-speed
  *   look-ahead (zone C), the branch choice (zone D), brick shooting with the commit-through (zones
  *   D and F) and the moving-floor sweep prediction (zone H) — each gated off the shipped content,
- *   the shaft admitting only zone B's design §5 chimney (R5-02), so a recording moves only with
- *   its own zone's content.
+ *   the shaft admitting only zone B's design §5 chimney (R5-02) and the branch choice only zone
+ *   D's design §4 channel (R5-04), so a recording moves only with its own zone's content.
  */
 import {
   Action,
@@ -308,8 +308,9 @@ describe('playtest four-way bot: decide', () => {
  * R5-P.P12 — the set-piece features (wave-11 designs §3), each on a fixture  *
  * stage: the shaft window, the high-speed look-ahead, the branch choice,     *
  * brick shooting, and the moving floors. Every gate is asserted to hold shut *
- * on the shipped content — the shaft admits only zone B's design §5 chimney, *
- * the R5-02 set piece — so a gate never moves a recording on its own.        *
+ * on the shipped content except the set pieces it names — zone B's design  *
+ * §5 chimney (R5-02) and zone D's design §4 channel (R5-04) — so a gate  *
+ * never moves a recording on its own.                                        *
  * ------------------------------------------------------------------------- */
 
 /** The shipped `terrain-a` tileset JSON (the fixtures build tilemaps over it). */
@@ -432,12 +433,13 @@ function scrollTo(w: World, x: number): void {
 }
 
 describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
-  it('no shaft on any shipped stage but zone B, no branch-choice region or moving floor anywhere, and no zone key passes the look-ahead gate', () => {
+  it('no shaft on any shipped stage but zone B, no branch choice but zone D, no moving floor anywhere, and no zone key passes the look-ahead gate', () => {
     const stages = shippedContent().stages;
     expect(stages.length).toBeGreaterThan(10);
     let deepestPan = 0;
     let widestSwing = 0;
     let shafts = 0;
+    let branchStages = 0;
     for (const stage of stages) {
       // The shaft law is the helper's own gate (stageHasShaft: a camera key whose |pan| passes one
       // playfield). By the zone-B design §5 it admits exactly one stage — the bubble shaft's yTo
@@ -447,7 +449,24 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
         shafts += 1;
         expect(stage.id, 'the only stage allowed a shaft').toBe('zone-b');
       }
-      expect(branchSteerTriggers(stage), stage.id).toEqual([]);
+      // The branch-choice law is the helper's own gate (branchSteerTriggers: a `trigger` event a
+      // declared branch consumes, armed across the whole region). By the zone-D design §4 it
+      // admits exactly one stage and exactly its two lane regions — the trench `lower` channel
+      // and the river `flank` lane — so a choice authored on any other shipped stage, or zone D
+      // moving off its designed boxes, is a breach. Zone D's choice arrives with R5-04: while
+      // the shipped stage is the old one the gate holds it at zero.
+      const steers = branchSteerTriggers(stage);
+      if (steers.length > 0) {
+        branchStages += 1;
+        expect(stage.id, 'the only stage allowed a branch choice').toBe('zone-d');
+        expect(
+          steers.map((s) => [s.x0, s.x1, s.y0, s.y1]),
+          'zone D design §4: the lower channel and the flank lane, armed across their regions',
+        ).toEqual([
+          [12100, 12540, 672, 756],
+          [14750, 15050, 480, 552],
+        ]);
+      }
       let y = 0;
       for (const key of stage.camera) {
         const to = key.yTo ?? y;
@@ -458,15 +477,21 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
         if (e.type === 'block') widestSwing = Math.max(widestSwing, Math.abs(e.dy ?? 0));
       }
     }
-    // Today's extremes, pinned (docs/v2-run/designs §3 and the zone-B design §5): gimmick-range's
-    // blocks, and the deepest camera pan — zone D's 300 px dive while no shipped stage opens the
-    // shaft gate, zone B's designed 400 px sink once R5-02 lands its shaft. Both pan numbers are
-    // design constants (the shaft fixture above flies the same 400), never read off a run; the
+    // Today's extremes, pinned (docs/v2-run/designs §3, the zone-B design §5 and the zone-D
+    // design §2): gimmick-range's blocks, and the deepest camera pan — zone D's 300 px dive
+    // while no shipped stage opens the shaft gate or authors its branch choice, zone B's designed
+    // 400 px sink once R5-02 lands its shaft, or zone D's remastered two-step dive (186, then
+    // 246 to the deep at 432) once R5-04 lands its choice. All three pan numbers are design
+    // constants (the shaft fixture above flies the same 400), never read off a run; the
     // playfield relation follows stageHasShaft's own definition (|pan| > PLAYFIELD_H).
     expect(shafts).toBeLessThanOrEqual(1);
+    expect(branchStages).toBeLessThanOrEqual(1);
     if (shafts === 1) {
       expect(deepestPan).toBe(400); // the design §5 sink — by the gate's law, past one playfield
       expect(deepestPan).toBeGreaterThan(PLAYFIELD_H);
+    } else if (branchStages === 1) {
+      expect(deepestPan).toBe(246); // the design §2 deep step — below one playfield, zone D's dive
+      expect(deepestPan).toBeLessThan(PLAYFIELD_H);
     } else {
       expect(deepestPan).toBe(v1rel(200)); // 300 px — below one playfield (zone D's dive)
       expect(deepestPan).toBeLessThan(PLAYFIELD_H);
