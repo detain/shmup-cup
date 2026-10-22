@@ -1,10 +1,12 @@
 /**
- * The zone content contracts (R5-P.P6): every zone ships its v1 branch until its wave 09 lane
- * flips `remastered`, the v2 branches hold decision R5-D2's numbers, and the shape evaluator
+ * The zone content contracts (R5-P.P6): every zone ships the branch its flag selects — wave 09
+ * authored them all on the v1 branch, and each R5 zone LAND flips its own `remastered` with the
+ * remaster (R5-01.S7.2 made this suite flag-agnostic: it pins the reader logic, not the roster
+ * of flipped zones). The v2 branches hold decision R5-D2's numbers, and the shape evaluator
  * (`shapeViolations`) runs either branch — a fake 21,000-px ported stage must sail through every
  * zone's v2 branch and be flagged by the v1 branches that gate what it breaks. The per-zone
  * `content-zone-*.test.ts` files and the release audit read the live branch through
- * `boundsOf` / `contractPx`; the shipped content is still v1-shaped, so they run the v1 gates.
+ * `boundsOf` / `contractPx`: a flipped zone gates its remastered content on the v2 numbers.
  */
 import { describe, expect, it } from 'vitest';
 import { K } from '../../../packages/core/test/helpers/v1-port.js';
@@ -39,11 +41,12 @@ const FAKE_V1_LIVE: StageShape = {
 };
 
 describe('integration: the zone contracts (R5-P.P6)', () => {
-  it('every zone ships its v1 branch until its wave 09 lane flips the flag', () => {
+  it('every zone ships the branch its flag selects — v1 until its own LAND flips it (R5-01.S7.2)', () => {
     for (const letter of LETTERS) {
       const contract = ZONE_CONTRACTS[letter];
-      expect(contract.remastered, `zone-${letter}`).toBe(false);
-      expect(boundsOf(contract), `zone-${letter}`).toBe(contract.v1);
+      expect(boundsOf(contract), `zone-${letter}`).toBe(
+        contract.remastered ? contract.v2 : contract.v1,
+      );
     }
   });
 
@@ -128,11 +131,16 @@ describe('integration: the zone contracts (R5-P.P6)', () => {
   });
 
   it('the flag alone moves every reader: boundsOf, contractPx, contractViolations', () => {
+    //  R5-01.S7.2: zone A flipped with its remaster, and its v1 branch is the only one that
+    //  gates length — so both branches run as synthetic copies of that contract, pinning the
+    //  reader logic itself rather than the roster of who has flipped.
+    const unflipped = { ...ZONE_CONTRACTS.a, remastered: false } as const;
+    expect(boundsOf(unflipped)).toBe(unflipped.v1);
+    expect(contractPx(unflipped, 8500)).toBe(K * 8500); // authored v1 px → live px
+    expect(contractViolations(unflipped, FAKE_PORTED)).toHaveLength(1); // length, gated by v1
     const flipped = { ...ZONE_CONTRACTS.a, remastered: true } as const;
     expect(boundsOf(flipped)).toBe(flipped.v2);
-    expect(contractPx(flipped, 21000)).toBe(21000);
+    expect(contractPx(flipped, 21000)).toBe(21000); // live v2 px passes through
     expect(contractViolations(flipped, FAKE_PORTED)).toEqual([]);
-    expect(contractViolations(ZONE_CONTRACTS.a, FAKE_PORTED)).toHaveLength(1); // the live branch
-    expect(contractPx(ZONE_CONTRACTS.a, 8500)).toBe(K * 8500); // authored v1 px → live px
   });
 });
