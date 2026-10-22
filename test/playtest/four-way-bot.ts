@@ -39,25 +39,31 @@
  *   (zone D's dive), below one playfield, so the gate never opens today.
  * - the **high-speed look-ahead** (zone C): terrain is read {@link terrainLookAhead} px ahead —
  *   {@link TERRAIN_AHEAD} plus {@link LOOKAHEAD_SPEED_GAIN} per px/tick of runner speed over
- *   {@link LOOKAHEAD_SPEED_GATE}. The shipped keys top out at exactly the gate (and the boss
- *   scenarios run locked), so today's scans read the same distance as before.
+ *   {@link LOOKAHEAD_SPEED_GATE}. No shipped zone's camera key reaches the gate (the maximum is
+ *   zone A's 2.25 px/tick tail, pinned by the gates-shut test), so today's scans read the same
+ *   distance as before; the designed 2.55 px/tick passes are the first to use the arm.
  * - the **branch choice** (zone D): a trigger region whose flag a declared branch consumes, and
  *   which stays armed across the region's whole x-span, is steered into — the ship's centre walks
  *   one lane per tick towards the region centre (still never into a walled or about-to-be-shot
  *   lane) and the lane model resumes on entry ({@link branchSteerTriggers}). The shipped content's
  *   one trigger (gimmick-range's `took-low`) disarms before its region's far edge, so nothing
  *   today opens this.
- * - the **brick shooting** (zones D, F, G, I): a solid tile wall closing across EVERY tile row the
- *   ship's terrain box touches ({@link punchWallAhead}: each blocking tile with `hp > 0`) with no
- *   lane clear across it the ship could still reach in time is met by holding the row and letting
- *   the forced autofire drill it: the stream runs through the one cell row its own height sits on
- *   (a lane centre lies on a 12-px cell edge, so the box clips the neighbour row too — the same
- *   row the wall is found on), and the moment that row opens the ship slides into its cell centre;
- *   the hold latches until the wall's span has passed behind the ship, so the bot commits straight
- *   through and never retreats into a regrowing band (zone F's walls regrow behind: a wall that
- *   closes again in front just re-opens the same hold). {@link holeReadyAt} is the design's own
- *   hole predicate — a {@link HOLE_HEIGHT} band clear across the span — which the tests pin. No
- *   shipped wall closes its band gaplessly with shot cells, so no run today meets it.
+ * - the **brick shooting** (zones D, F, G, I): a solid tile wall that closes the WHOLE visible
+ *   playfield gaplessly across the ship's terrain-box rows ({@link punchWallAhead}: every window
+ *   row solid across the wall's span on the content's PRISTINE tile grid — the bot's own drilling
+ *   must not disarm the latch mid-punch — and every blocking tile in the box rows with `hp > 0`) is met
+ *   by holding the row and letting the forced autofire drill it: the stream runs through the one
+ *   cell row its own height sits on (a lane centre lies on a 12-px cell edge, so the box clips the
+ *   neighbour row too — the same row the wall is found on), and the moment that row opens the ship
+ *   slides into its cell centre; the hold latches until the wall's span has passed behind the ship,
+ *   so the bot commits straight through and never retreats into a regrowing band (zone F's walls
+ *   regrow behind: a wall that closes again in front just re-opens the same hold).
+ *   {@link holeReadyAt} is the design's own hole predicate — a {@link HOLE_HEIGHT} band clear
+ *   across the span — which the tests pin. Every shipped wall leaves gap rows in the window
+ *   (zone F's tissue walls an 84-px corridor, zone D's maze walls 72 px), so no run today meets
+ *   the gate; of the designs' set pieces only zone F's gapless chase walls (rows 8-33 plus the
+ *   deep floor filling the camera-96 window) force the shot, while zone D's trench plug and zone
+ *   I's coral columns stand under open water the lane model climbs to — their designs' own route.
  * - the **moving floors** (zone H): a live block swinging {@link SLAB_SWING} px or more is read at
  *   where its band will be when it crosses the ship's column ({@link blockYAt} at the crossing's
  *   middle tick, within {@link SLAB_HORIZON} ticks) — the lane the ship settles on is the slot
@@ -115,16 +121,21 @@ export const TERRAIN_AHEAD = 56 * WORLD_SCALE;
 
 /**
  * Scroll speed over which the terrain look-ahead widens (R5-P.P12, zone C's rip tide;
- * v1 1.4 px/tick). The shipped camera keys top out at exactly this value (zone C's 2.1 px/tick
- * band — zone A's tail runs 2.25 only while its boss brake has already stopped the scan-relevant
- * approach), and a scan is widened only for what a moving window can newly show, so every shipped
- * recording reads the same ahead as before; the designed 2.55 px/tick passes are the first to use
- * the arm.
+ * v1 1.6 px/tick — the RT-P12 cure raised it from 1.4, which zone A's 2.25 px/tick tail key
+ * crossed and moved the live-bot `zone-a-extras` recording). No shipped zone's camera key
+ * reaches this gate (the maximum, 2.25 in zone A's tail, is pinned by the gates-shut test), so
+ * every shipped scan reads exactly {@link TERRAIN_AHEAD}; the designed 2.55 px/tick passes are
+ * the first to use the arm.
  */
-export const LOOKAHEAD_SPEED_GATE = 1.4 * WORLD_SCALE;
+export const LOOKAHEAD_SPEED_GATE = 1.6 * WORLD_SCALE;
 
-/** Extra look-ahead pixels per px/tick of scroll speed over {@link LOOKAHEAD_SPEED_GATE} (v1 40). */
-export const LOOKAHEAD_SPEED_GAIN = 40 * WORLD_SCALE;
+/**
+ * Extra look-ahead pixels per px/tick of scroll speed over {@link LOOKAHEAD_SPEED_GATE}
+ * (v1 120 — re-anchored by the RT-P12 cure from 40 so the designed 2.55 px/tick pass still gains
+ * (2.55 − 1.6·WORLD_SCALE) · 120·WORLD_SCALE = 0.15 · 180 = 27 px ≈ 10.6 ticks at 2.55 px/tick,
+ * zone C's ask, while the whole shipped band below the gate reads the constant 84 px).
+ */
+export const LOOKAHEAD_SPEED_GAIN = 120 * WORLD_SCALE;
 
 /**
  * Vertical swing at or above which a moving block is read ahead of its current position
@@ -142,9 +153,6 @@ export const SLAB_HORIZON = 120;
  * the row it held while drilling.
  */
 export const HOLE_HEIGHT = 16 * WORLD_SCALE;
-
-/** Ticks of slack the ship needs to reach a gap lane before a wall arrives, or it punches instead. */
-const PUNCH_LEAD_TICKS = 8;
 
 /**
  * A destructible wall across the ship's row that must be shot open rather than dodged
@@ -277,13 +285,16 @@ function spanRowClear(map: TerrainMap, x0: number, x1: number, row: number): boo
 }
 
 /**
- * The destructible wall closing across the ship's terrain box that must be shot through, not
- * dodged (R5-P.P12, zones D and F): every tile row the box touches is read at its centre, and a
- * solid shot-able tile (`hp > 0`) in ANY of them within `ahead` px of the bow blocks — the row
- * whose run starts nearest the bow gives the span (capped at four cells, the shipped set pieces
- * are 12–36 px thick). `null` — today's behaviour — for open space, plain rock among the box
- * rows, a scroll-locked camera (no wall ever arrives) or a wall with a lane the ship could still
- * reach before it arrives.
+ * The destructible wall sealing the playfield ahead of the ship, which must be shot through and
+ * not dodged (R5-P.P12, zones D and F; gate narrowed by the RT-P12 cure): a solid tile in EVERY
+ * tile row the ship's terrain box touches, each blocking tile shot-able (`hp > 0`), AND the
+ * wall's span closing the WHOLE visible window gaplessly — every playfield row from the camera's
+ * top edge to its bottom edge solid across the span (the cure's discriminator: the shipped
+ * tissue and maze walls all leave a 72–84 px gap corridor in their window, so no shipped run
+ * meets this; among the wave-11 designs only zone F's gapless chase walls force the shot, while
+ * zone D's trench plug and zone I's coral columns stand under open water the lane model climbs
+ * to, per their designs' own route). `null` — today's behaviour — for open space, plain rock
+ * among the box rows, or a scroll-locked camera (no wall ever arrives).
  *
  * @param world - The World.
  * @param ahead - How far ahead of the ship to look (the scan's own {@link terrainLookAhead}).
@@ -330,37 +341,35 @@ export function punchWallAhead(world: World, ahead = TERRAIN_AHEAD, player = 0):
     }
   }
   if (wx < 0) return null;
-  if (we - wx > 3 * size + 24) return null; // thicker than a set piece wall: not a punch target
-  // A gap lane the ship can still reach before the wall arrives is dodged, not drilled.
+  // RT-P12's cure: the span must close the whole window — measured on the content's PRISTINE
+  // tile grid, so the bot's own drilling cannot disarm the latch mid-punch (the hold commits
+  // through the closing band by design). The wall's columns are sampled every 4 px from the
+  // camera's top edge to its bottom edge — a tile row is 12 px tall, so the step cannot miss a
+  // row — and any open pristine row means the lane model can still thread a lane across the
+  // wall (every shipped set-piece wall does). Only a gapless band is drilled.
   const camera = world.camera;
-  const sy = ship.y - camera.y;
-  const ticksToWall = (wx - (ship.x + box.hw)) / runner.speed;
-  const shipSpeed = world.ship.speeds[ship.speedLevel] ?? 1.5 * WORLD_SCALE;
-  const reach = shipSpeed * Math.max(0, ticksToWall - PUNCH_LEAD_TICKS);
-  const rowOff = LANE_HEIGHT / 2 - 2;
-  for (let k = 0; k < LANES; k++) {
-    if (Math.abs(laneCentre(k) - sy) > reach) continue;
-    const cy = camera.y + laneCentre(k);
-    let clear = true;
-    for (let r = 0; r < 3 && clear; r++) {
-      const ry = Math.floor(cy + (r - 1) * rowOff);
-      for (let px = wx; px <= we; px += 4) {
-        if (solidTile(map, px, ry) !== 0) {
-          clear = false;
-          break;
-        }
-      }
+  const orig = runner.stage?.terrain ?? null;
+  if (orig === null) return null;
+  for (let px = wx; px <= we; px += 4) {
+    const col = Math.floor(px / size);
+    if (col < 0 || col >= orig.cols) return null;
+    for (let py = Math.ceil(camera.y); py <= camera.y + PLAYFIELD_H - 1; py += 4) {
+      const row = Math.floor(py / size);
+      if (row < 0 || row >= orig.rows) return null;
+      const t = orig.tiles[row * orig.cols + col];
+      if (t === 0 || map.tileType[t] !== TerrainType.Solid) return null;
     }
-    if (clear) return null;
   }
   return { x: wx, x1: we };
 }
 
 /**
- * Whether a {@link HOLE_HEIGHT} band around the ship's own row reads clear across a punched wall's
- * span (R5-P.P12): the design's hole test — what a straight shot stream must open before a row
- * counts as passable. The bot's hold latches by the wall's span alone (see {@link punchWallAhead}
- * and the remarks in {@link fourWayBot}); this is the predicate the set-piece fixtures pin.
+ * Whether a {@link HOLE_HEIGHT} band centred on the ship's row reads clear across a punched wall's
+ * span (R5-P.P12): the design's hole test — every tile row the ±24-px band touches must be open,
+ * what a straight shot stream must clear before the row counts as passable (the RT-P12 cure's M3
+ * reads the band through {@link HOLE_HEIGHT} itself, so the constant governs the predicate the
+ * set-piece fixtures pin). The bot's hold latches by the wall's span alone (see
+ * {@link punchWallAhead} and the remarks in {@link fourWayBot}); this predicate is its pin.
  *
  * @param world - The World.
  * @param x0 - First column of the wall's span.
@@ -372,9 +381,10 @@ export function holeReadyAt(world: World, x0: number, x1: number, player = 0): b
   const map = world.terrain;
   if (map === null) return true;
   const ship = world.players[player];
-  const box = world.ship.terrainBox;
-  const rowFrom = Math.floor((ship.y - box.hh) / map.tileSize);
-  const rowTo = Math.floor((ship.y + box.hh) / map.tileSize);
+  const size = map.tileSize;
+  const half = HOLE_HEIGHT / 2;
+  const rowFrom = Math.floor((ship.y - half + 1) / size);
+  const rowTo = Math.floor((ship.y + half - 1) / size);
   for (let row = rowFrom; row <= rowTo; row++) {
     if (!spanRowClear(map, x0, x1, row)) return false;
   }

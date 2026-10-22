@@ -47,6 +47,7 @@ import {
   LANES,
   LANE_HEIGHT,
   LOOKAHEAD_SPEED_GATE,
+  LOOKAHEAD_SPEED_GAIN,
   SLOTS,
   SLOT_TICKS,
   BULLET_HORIZON,
@@ -429,7 +430,7 @@ function scrollTo(w: World, x: number): void {
 }
 
 describe('playtest four-way bot: the set-piece gates stay shut on the shipped content', () => {
-  it('no shipped stage has a shaft, a branch-choice region, a moving floor or a high scroll key', () => {
+  it('no shipped stage has a shaft, a branch-choice region or a moving floor, and no zone key passes the look-ahead gate', () => {
     const stages = shippedContent().stages;
     expect(stages.length).toBeGreaterThan(10);
     let deepestPan = 0;
@@ -452,14 +453,38 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
     expect(widestSwing).toBe(v1rel(32)); // 48 px — below the moving-floor gate (gimmick-range)
     expect(widestSwing).toBeLessThan(SLAB_SWING);
     expect(deepestPan).toBeLessThan(PLAYFIELD_H);
+    // RT-P12's cure pin: no shipped ZONE camera key reaches the widened look-ahead gate — the
+    // fastest is zone A's 2.25 px/tick tail, which once moved the live-bot zone-a-extras stream.
+    let fastestZoneKey = 0;
+    for (const id of [
+      'zone-a',
+      'zone-b',
+      'zone-c',
+      'zone-d',
+      'zone-e',
+      'zone-f',
+      'zone-g',
+      'zone-h',
+      'zone-i',
+    ]) {
+      const zone = stages.find((s) => s.id === id);
+      expect(zone, id).toBeDefined();
+      let maxKey = 0;
+      for (const key of zone?.camera ?? []) maxKey = Math.max(maxKey, key.speed);
+      expect(maxKey, id).toBeLessThanOrEqual(LOOKAHEAD_SPEED_GATE);
+      fastestZoneKey = Math.max(fastestZoneKey, maxKey);
+    }
+    expect(fastestZoneKey).toBe(v1rel(1.5)); // the disclosed zone A tail key (2.25 px/tick)
   });
 
   it('widens the terrain scan only above the gate speed, linearly (zone C)', () => {
-    expect(LOOKAHEAD_SPEED_GATE).toBe(v1rel(1.4));
+    expect(LOOKAHEAD_SPEED_GATE).toBe(v1rel(1.6));
+    expect(LOOKAHEAD_SPEED_GAIN).toBe(v1rel(120));
     expect(terrainLookAhead(0)).toBe(TERRAIN_AHEAD);
-    expect(terrainLookAhead(v1rel(1.4))).toBe(v1rel(56));
+    expect(terrainLookAhead(v1rel(1.6))).toBe(TERRAIN_AHEAD); // the gate itself stays shut
+    expect(terrainLookAhead(v1rel(1.5))).toBe(TERRAIN_AHEAD); // today's fastest shipped zone key
     expect(terrainLookAhead(v1rel(1.7))).toBeCloseTo(111, 9); // C's 2.55 pass: 84 → 111 px
-    expect(terrainLookAhead(v1rel(1.2))).toBe(v1rel(56)); // today's fastest play key reads the same
+    expect(terrainLookAhead(v1rel(1.2))).toBe(TERRAIN_AHEAD); // play keys read the same
   });
 
   it('reads a wall 85..111 px ahead only while the runner scrolls past the gate', () => {
@@ -489,6 +514,48 @@ describe('playtest four-way bot: the set-piece gates stay shut on the shipped co
     scan = createLaneScan();
     scanLanes(fast, scan);
     expect(scan.terrain[7]).toBeGreaterThan(0);
+  });
+
+  it('the bot clears a fast-scroll rock corridor with the arm open (M1)', () => {
+    // Eight two-tile rock walls every 312 px under a 2.55 px/tick key. The even walls leave only
+    // the top lanes (rows 0..11) passable, the odd ones only the bottom lanes (rows 14..27), so
+    // every wall forces a 48-px lane move — about 34 ticks at the level-0 ship's sustained
+    // 1.4 px/tick, inside the 40-tick approach window the ARMED 111-px read gives at this speed
+    // (an unarmed 84-px read leaves 28 and the corridor kills). The first wall sits at column 40
+    // so the fly-in never eats the first sighting window. The pins above prove the numbers.
+    const cols = Math.ceil((2700 + PLAYFIELD_W) / TILE_SIZE);
+    const rows = PLAYFIELD_H / TILE_SIZE;
+    const rle: string[] = [];
+    for (let r = 0; r < rows; r++) {
+      const runs: string[] = [];
+      let runId = -1;
+      let runLen = 0;
+      for (let c = 0; c < cols; c++) {
+        const i = Math.floor((c - 40) / 26);
+        const inWall = i >= 0 && i <= 7 && (c - 40) % 26 <= 1;
+        const id = inWall && (i % 2 === 0 ? r >= 12 : r < 14) ? ROCK : 0;
+        if (id === runId) runLen++;
+        else {
+          if (runLen > 0) runs.push(`${String(runLen)}*${String(runId)}`);
+          runId = id;
+          runLen = 1;
+        }
+      }
+      runs.push(`${String(runLen)}*${String(runId)}`);
+      rle.push(runs.join(', '));
+    }
+    const run = runStage('fixture', fourWayBot(), {
+      content: fixtureDb({
+        length: 2700,
+        camera: [{ x: 0, speed: 2.55 }],
+        tilemap: { tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: rows, rle },
+        events: [{ x: 2640, type: 'end' }],
+      }),
+    });
+    expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
+    expect(run.status).toBe('stageClear');
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
+    expect(run.diagonalTicks).toBe(0);
   });
 });
 
@@ -626,16 +693,19 @@ describe('playtest four-way bot: brick shooting (zones D, F, G, I)', () => {
     expect(punchWallAhead(rock, terrainLookAhead(1.2))).toBeNull();
   });
 
-  it('does not punch when a gap lane is still reachable before the wall', () => {
-    // The plug leaves rows 0..7 open: from 12 ticks out the ship can still reach lane 0..2.
-    const open = parkedAtPlug(plugDb(BRICK, 8), 240);
-    expect(punchWallAhead(open, terrainLookAhead(1.2))).toBeNull();
-    // The same wall met point-blank has no reachable gap — punch.
-    const tight = parkedAtPlug(plugDb(BRICK, 8), 12);
-    expect(punchWallAhead(tight, terrainLookAhead(1.2))).not.toBeNull();
+  it('does not punch while the window still has open rows across the wall', () => {
+    // RT-P12's cure: the whole camera window must be sealed before a drill — a plug that leaves
+    // rows 0..7 open is a climb the lane model always finds, at any distance. The shipped zone-F
+    // tissue walls (84-px gap rows) and zone-D maze walls (72-px) are exactly this shape.
+    expect(punchWallAhead(parkedAtPlug(plugDb(BRICK, 8), 240), terrainLookAhead(1.2))).toBeNull();
+    expect(punchWallAhead(parkedAtPlug(plugDb(BRICK, 8), 12), terrainLookAhead(1.2))).toBeNull();
+    // The same plug at full height seals the window: point-blank it is the shot target.
+    expect(punchWallAhead(parkedAtPlug(plugDb(BRICK), 12), terrainLookAhead(1.2))).not.toBeNull();
   });
 
-  it('reads the box-sized hole across the wall span (the commit check)', () => {
+  it('reads the HOLE_HEIGHT band across the wall span (the hole predicate of the design)', () => {
+    // RT-P12's cure M3: the band is ±HOLE_HEIGHT/2 around the ship's row — here rows 14..15 at
+    // lane 7's centre 180 — so the pin measures exactly the design's 24-px hole, not the box.
     const intact = parkedAtPlug(plugDb(BRICK), 60);
     expect(holeReadyAt(intact, 528, 551)).toBe(false);
     expect(digRowOpen(intact, 528, 551)).toBe(false);
@@ -683,6 +753,38 @@ describe('playtest four-way bot: brick shooting (zones D, F, G, I)', () => {
     const run = runStage('fixture', fourWayBot(), { content: plugDb(TISSUE, 0, 1) });
     expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
     expect(run.status).toBe('stageClear');
+  });
+
+  it('meets the punch gate on no shipped stage at all (the cure sweep probe)', () => {
+    // RT-P12's C1: the shipped set-piece walls all leave gap rows — every terrain stage is swept
+    // every 480 px of its length and every lane centre, and the punch predicate stays null. The
+    // sweep reads the static tile map; blocks are never destructible, so it covers the whole
+    // shipped punch surface (the zone-D x7680 maze wall and the zone-F x4584 tissue wall from
+    // the review are inside it).
+    const stages = shippedContent().stages;
+    let withTerrain = 0;
+    for (const spec of stages) {
+      if (spec.terrain === null) continue;
+      withTerrain++;
+      const w = createWorld(resolveGameConfig({ seed: 1, stage: spec.id }), shippedContent());
+      const runner = w.stage;
+      expect(runner, spec.id).not.toBeNull();
+      if (runner === null) continue;
+      for (let x = 0; x <= spec.length; x += 480) {
+        runner.jumpTo(x);
+        const cam = w.camera;
+        const ahead = terrainLookAhead(runner.speed);
+        for (let k = 0; k < LANES; k++) {
+          w.players[0].x = cam.x + BOT_X;
+          w.players[0].y = cam.y + laneCentre(k);
+          expect(
+            punchWallAhead(w, ahead, 0),
+            `${spec.id}@${String(x)} lane ${String(k)}`,
+          ).toBeNull();
+        }
+      }
+    }
+    expect(withTerrain).toBeGreaterThan(15); // the nine zones and the ranges are all in the set
   });
 });
 
