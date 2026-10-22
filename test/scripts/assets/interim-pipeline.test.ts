@@ -202,7 +202,10 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // tree). R4-01.A2's thruster is v2-only (RR-1a: absent at scale 1), so it moves none of
     // this pool; R4-01.A4's native force field −4 more (its v1 frames leave the comparison).
     // 533 measured at tip 92b4b73. The floor measures what is still compared, not the natives.
-    expect(scaled).toBeGreaterThan(500);
+    // Since R5-10.T3 the six dimension stand-ins are native (−18, 90a20a3a): 499 measured. The
+    // R5-01.S2 to R5-07 stand-ins had already taken 533 to 517 without a note. The floor
+    // follows the natives to 450 — headroom for later stand-in waves, loud on a bulk regression.
+    expect(scaled).toBeGreaterThan(450);
     expect(wrongPixels).toEqual([]);
   });
 
