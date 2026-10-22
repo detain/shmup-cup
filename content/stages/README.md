@@ -88,10 +88,10 @@ boss, A to I, in turn.
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
 the zone map ([`content/campaign/`](../campaign/README.md)). M2-10 shipped them as short
 placeholders so every route could be played end to end; M2-11 … M2-14 replaced every one of them
-with a real zone (below); R5-02 … R5-07 (wave 11) remastered zones B–G onto their v2 designs —
-the six bullets below describe the landed files, each ≈ 20,000–21,000 px, five to six minutes
-at the bot's pace. Zones H and I still fly their M2-14 text: H's remaster lands in two halves
-(wave 12), I's waits on an owner pacing decision (`docs/client/outstanding-work.md`).
+with a real zone (below); R5-02 … R5-08 (waves 11 and 12) remastered zones B–H onto their v2
+designs — the seven bullets below describe the landed files, each ≈ 20,000–21,300 px, five to
+six minutes at the bot's pace. Zone I still flies its M2-14 text; its remaster waits on an owner
+pacing decision (`docs/client/outstanding-work.md`).
 
 **Zones B and C (M2-11, remastered by R5-02 and R5-03)** are real zones, each with six or seven
 checkpoints, a high-speed section, a calm with two capsule carriers before the WARNING, their own
@@ -215,23 +215,34 @@ item plan and roster —
   `bg/prism-facets` glints through its palette cycle; a heat `haze` shimmers over the spires
   band `bg/prism-spires`.
 
-**Zones H and I (M2-14)** are the two **final zones** — each route ends in one of them, and its
-clear leads to an ending and the credits. Same recipe (four checkpoints, a high-speed section, a
-calm with two carriers, their own tileset, songs, item plan and roster —
+**Zones H and I (M2-14; zone H remastered by R5-08)** are the two **final zones** — each route
+ends in one of them, and its clear leads to an ending and the credits. Same recipe (a chain of
+checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own
+tileset, songs, item plan and roster —
 [`content/enemies/zone-h.enemies.json`](../enemies/zone-h.enemies.json), `zone-i.enemies.json`), and
 their `music` also names the `ending` and `credits` cues (the ending screen's and the credits'
 themes, prepared with the zone's set):
 
-- `zone-h.stage.json` — **IRON CITADEL** (9,600 px, `terrain-citadel`): the outer walls (`bolt-drone`
-  streams, `rail-turret`s, `hatch-bay`s releasing `hatch-mite`s, `sentinel-walker`s), the **piston
-  hall** (checkpoint 2,200: moving floors and ceilings — `block` events swinging up and down out of
-  the plating — and `laser-emitter`s on the floor and ceiling projecting telegraphed lane lasers
-  along their rows), the **parade hangar** (checkpoint 4,400: open space at 0.6 px/tick where four
-  earlier bosses come back in reduced form one after another — BULWARK, MAW, BASTION and REGENT
-  ECHO, captains on `boss` events that ride the camera and leave after 16 s), the core run
-  (checkpoint 6,800: 1.3 px/tick), the calm, then **IRON SOVEREIGN** (IS-08), the four-phase
-  finale. The far band `bg/citadel-wall`'s running lights chase round the wall (a palette cycle); a
-  heat `haze` shimmers over the conduits `bg/citadel-pipes` during the core run.
+- `zone-h.stage.json` — **IRON CITADEL** (20,250 px since R5-08, `terrain-citadel-v2`): the
+  outer walls (the v1 ground kept verbatim — it is the attract demo's fly-in — `bolt-drone`
+  streams, `rail-turret`s, `hatch-bay`s releasing `hatch-mite`s, `sentinel-walker`s, and
+  `iron-banner` drifters riding a new banner band), the **fortress gate** (checkpoint 3,300:
+  two flat 120-px corridors through gate-door plug walls, six 36×72 plate `block` slabs — three
+  gate mouths at x 2,820 / 3,480 / 4,140, each an upper and a lower leaf sliding ∓60 px on a
+  240-tick period in opposite phase — with a `gate-sentry` (floor and ceiling) volleying at
+  every mouth), the **inner keep** (checkpoint 7,650: the ramped wall), the **parade hangar**
+  (the 0.9 px/tick key: four earlier bosses come back in reduced form one after another at
+  7,830 / 8,670 / 9,510 / 10,350 — BULWARK, MAW, BASTION and REGENT ECHO, captains on `boss`
+  events that ride the camera and leave after 16 s), the **piston hall** (checkpoint 10,950:
+  ten floor-and-ceiling `block` pairs punching a 33-px stroke every 200 ticks over flat
+  plating, and `laser-emitter`s on the floor and ceiling projecting telegraphed lane lasers
+  along their rows), the **core run** (checkpoint 13,650: the 1.95 px/tick dash key over
+  floor-only, ceilingless plating), the **muster yard** (checkpoint 16,200: the last rally),
+  the calm (carriers at 18,810 and 19,230), the WARNING at 19,500, then **IRON SOVEREIGN**
+  (IS-08, eighteen rebuilt parts in four phases). The far band `bg/citadel-wall`'s running
+  lights chase round the wall (the `CITADEL_RAMP` palette cycle); the mid band
+  `bg/citadel-banner` carries the banners; a heat `haze` shimmers over the conduits
+  `bg/citadel-pipes`.
 - `zone-i.stage.json` — **ABYSSAL THRONE** (9,600 px, `terrain-abyss`): the descent (`lumen-mote`
   streams, `gulper`s hovering at the right coughing aimed fans, `depth-mine`s that arm when a ship
   comes near and burst into rings, `abyss-turret`s), the **trench** (checkpoint 2,200: a floor and

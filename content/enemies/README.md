@@ -228,21 +228,32 @@ it, two shootable gun `emitter`s under the shoulders, and two armoured tentacle
 arms waving like claws with guns at their tips; rings and, in the last phase, lane lasers from the
 core; twenty parts, the monarch's crown grown over the old fifteen).
 
-`zone-h.enemies.json` and `zone-i.enemies.json` (M2-14) are the rosters of the final zones H and I.
-IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `hatch-bay` / `hatch-bay-ceiling`
-(`hatch.spawner` releasing `hatch-mite` / `hatch-mite-down` — `rammer.aimed` beetles leaving up out
-of a floor hatch or down out of a ceiling one), `laser-emitter` / `laser-emitter-ceiling`
-(`emitter.laser`: a telegraphed lane laser to the left along its row, attached, every 200 ticks),
-`sentinel-walker` (`walker.floor`), `rail-turret` / `rail-turret-ceiling` (`turret.floor`),
-`sovereign-drone` (`cell.chase`, the boss's `minion`), the **parade** — four earlier bosses in
-reduced form, captains with a 16-s time limit that reuse the originals' sprites and behaviours
-with fewer parts: `echo-bulwark` (BULWARK ECHO, two plates, `boss.bulwark`), `echo-maw` (MAW ECHO,
-the mouth and its jaws, `boss.maw`), `echo-bastion` (BASTION ECHO, a two-arm wheel,
-`boss.bastion`), `echo-regent` (REGENT ECHO, two short tentacles, `boss.squid`) — and the boss
-**IRON SOVEREIGN** (`iron-sovereign`, IS-08 — `boss.sovereign`, four phases: the core behind two
-shield plates with lane lasers from its emitters; then a shield wheel of four armoured pods turning
-round the core and rings; then the wheel reversing, 5-ways and drones launched from the emitters;
-then the overdrive — a turning three-arm spiral, the boss system's spiral stream). ABYSSAL THRONE:
+`zone-h.enemies.json` (M2-14, remastered by R5-08) and `zone-i.enemies.json` (M2-14) are the
+rosters of the final zones H and I.
+IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `iron-banner` (`drifter.sine` on a slower,
+wider wave, new in R5-08: the parade's capsule carrier, riding the banner band), `hatch-bay` /
+`hatch-bay-ceiling` (`hatch.spawner` releasing `hatch-mite` / `hatch-mite-down` — `rammer.aimed`
+beetles leaving up out of a floor hatch or down out of a ceiling one), `laser-emitter` /
+`laser-emitter-ceiling` (`emitter.laser`: a telegraphed lane laser to the left along its row,
+attached, every 200 ticks), `sentinel-walker` (`walker.floor`), `rail-turret` /
+`rail-turret-ceiling` (`turret.floor`), `gate-sentry` / `gate-sentry-ceiling` (`turret.floor`,
+new in R5-08: mans the three fortress-gate mouths, a volley every 150 ticks at 1.95 px/tick —
+the garrison's fastest aimed lead), `sovereign-drone` (`cell.chase`, the boss's `minion`), the
+**parade** — four earlier bosses in reduced form, captains with a 16-s time limit that reuse the
+originals' sprites and behaviours with fewer parts; the R5-08 re-rig cast them from the landed
+boss trees, so every part matches its namesake's current rig (and `echo-maw` shipped
+byte-identical — there was nothing left to change): `echo-bulwark` (BULWARK ECHO, two wings
+riding guns on the rebuilt hull, `boss.bulwark`), `echo-maw` (MAW ECHO, the mouth and its jaws,
+`boss.maw`), `echo-bastion` (BASTION ECHO, two shootable inner arms on the wheel,
+`boss.bastion`), `echo-regent` (REGENT ECHO, two four-segment tentacle chains with guns at the
+tips, `boss.squid`) — and the boss **IRON SOVEREIGN** (`iron-sovereign`, IS-08 —
+`boss.sovereign`: eighteen parts — the citadel's crest, prow, gate-plate skirts and vents over
+the hull, the core behind two shield plates, two shootable emitters, and a wheel of armoured
+pods; four phases: lane lasers from the emitters; then the pod wheel turning round the core and
+rings — the design's six-pod ring lost its two back pods to the frozen release audit at the
+R5-08 LAND (the 260 destroyable HP never moved; the pods were armour, never targets — the
+R5-D10 ruling); then the wheel reversing, 5-ways and drones launched from the emitters; then the
+overdrive — a turning three-arm spiral, the boss system's spiral stream). ABYSSAL THRONE:
 `lumen-mote` (`drifter.sine`), `depth-mine` (`mine.burst`: drifts until a ship comes within 60 px,
 then stops, flashes and bursts into a ring of eight), `trench-eel` (`worm.burst`: a formation is one
 eel bursting out of the trench floor), `gulper` / `gulper-low` (`pattern.loop` + `abyss.gulp` on a

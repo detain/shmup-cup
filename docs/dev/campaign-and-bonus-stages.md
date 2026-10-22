@@ -374,7 +374,10 @@ barriers; it plays the zone's resident music) — [zones-b-and-c.md](zones-b-and
 **The second** came with M2-13: zone G's `ground` window x 2,300 – 3,100 over the prism gallery's
 four facet turrets (floor and ceiling), into `glimmer-cache.stage.json` (GLIMMER CACHE — the vault's
 carriers, a 1UP, a cube rush, two `cube` block walls; zone G's resident music) —
-[zones-f-and-g.md](zones-f-and-g.md#the-prism-gallery-and-glimmer-cache).
+[zones-f-and-g.md](zones-f-and-g.md#the-prism-gallery-and-glimmer-cache). R5-10.T1 has since laid
+all three rooms out for the v2 frame; that record is
+[below](#r5-10t1-the-bonus-stages-laid-out-for-v2), and the prose above stands as the M2-10 to
+M2-13 history.
 
 ### R2-04: the bonus stages at the new scale
 
@@ -394,6 +397,51 @@ world, plus a non-god 4-way bot run). Nothing moved; the patch was empty (the fi
 printed its n's on three different filters that do not reconcile; every median, tick, status,
 seconds, death and hit figure reproduces). All four clear non-god at both scales, 0 deaths,
 0 hits.*
+
+### R5-10.T1: the bonus stages laid out for v2
+
+R5-10.T1 is the bonus rooms' own remaster (land `cea1b20d`): the hidden treasure vaults got the
+layouts the v2 frame wants, `--only brine-grotto,glimmer-cache,bonus-vault,bonus-range` — and the
+`bonus-range` pair came back **byte-identical**, that stage was already v2-consistent and moving
+it was never the task. The entrances that open them (zone B's `gap` at the reef blocks, zone G's
+`ground` window over the four facet turrets) were not moved, and neither were the resident songs,
+art fields or palette cycles: a layout pass on stage files.
+
+- **PEARL GROTTO and GLIMMER CACHE grew from 2,700 to 5,400 px** — a ≈ 60-second treasure run
+  (3,615 ticks clear; the v1-era recordings were 1,815 t ≈ 30.25 s): one camera key, 1.5 px/tick
+  with a 30-tick ramp, and the three-movement shape every bonus room wants — a wide mouth, a mid
+  **gallery** (grotto: floor 72 ± 12 and ceiling 96 ± 12 over the 1,500–3,300 stretch, a 144-px
+  corridor; cache: floor 84 ± 12 and ceiling 72 ± 12 over 1,800–3,600, 156 px of corridor), and
+  an open heart carrying the **1UP** at mid-lane row 186 (x 3,975 in the grotto, x 4,620 in the
+  cache). The grotto stocks twelve `vault-carrier` formations (count 3, interval 24 — 36
+  capsules) and nine froth rows, with two 24 × 108 brick walls at world x 1,140 and 3,064
+  (`block` events stand the spawn lead out: timeline x + 664); the cache, 24 capsules in eight
+  carrier groups, six glint-mote rows, two geodes, three six-cube rushes at 1,860 / 2,160 /
+  4,320 and two cube walls at world x 1,140 and 3,544.
+- **The BONUS VAULT grew from 2,400 to 4,200 px** — the item room, not a run: `terrain-a` RLE
+  columns throw brick pillar pairs at world x 1,080 / 2,304 / 3,528 (24 px wide) with a 72-px
+  open eye (rows 13–18, y 156–228) running the whole map under them; fourteen carrier formations
+  ride past — 42 carriers, two more than the v1 room, which the golden file's comment now says —
+  and the 1UP at x 2,040 / y 186 is bracketed by exactly four y-186 carrier groups (1,380 /
+  1,800 / 2,280 / 3,840) so it is catchable from any spawn. The room clears in ≈ 2,815 t, inside
+  the 3,000-tick bonus cap.
+- **The goldens' outcome laws.** The grotto and cache recordings stageClear at 3,615 t (25,950
+  and 18,410 points) and the per-zone outcome files assert the clear lands in the **59–67 s**
+  window — the layout's promise (the run is `(len − 22.5) / 1.5 + 30` ticks of scroll), not the
+  bot's luck. The grotto pins `lives − 3 − extends ≥ 1` (the bot caught its 1UP); the cache's law
+  is softer, `lifeDelta ∈ [0, 1]` — catching that item is lane-chance, not a layout law, and
+  `content-zone-g` pins the drop's presence instead. The vault: `stageClear`, no deaths, no boss,
+  more than ten kills, more than ten thousand points of bonus capsules (the cap item is worth
+  1,000), the `bonus.count` back to 0 — and the same +1-life law, for which the bracketed
+  geometry is load-bearing. Blessed digests: `brine-grotto-god` 2312891118 → 2143762895,
+  `glimmer-cache-god` 304382126 → 904451765, `bonus-vault-god` 892461347 → 73544239.
+- **Two kit cures shipped with the land** (`5a0673a7`, R5-10.MF13): the bless guard now accepts a
+  demo-less `--only` list over known stages (no demo flies a bonus room), and
+  `REAUTHORED_STAGES` carves the re-authored `bonus-vault` out of the v1-baseline port comparison
+  — its baseline is the M2-10 file, so a layout rewrite is not a port delta. The full row is in
+  [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden).
+- **Zero plates:** every sprite these rooms fly already shipped, so the atlas — and the scale-1
+  digest pin — did not move (`Changed plates: none` on the land).
 
 ## The ending screen (`EndingScene`, id `ending`)
 

@@ -365,6 +365,8 @@ One of the two ways a run ends. The Citadel is a factory, and every part of it i
 | ![](../images/enemies/laser-emitter.png) | **LASER EMITTER**<br>6 HP · 600 pts | The Citadel's lane weapon: a 60-tick telegraph line across the room, then a 9-px beam for 36 ticks, over and over every 200 ticks. The line is the whole warning you get, and it is enough. |
 | ![](../images/enemies/sentinel-walker.png) | **SENTINEL WALKER**<br>4 HP · 400 pts | A heavy walker patrolling the fortress floor, stopping every 100 ticks to fire a spread. |
 | ![](../images/enemies/rail-turret.png) | **RAIL TURRET**<br>4 HP · 300 pts | A hardened rail gun set into the walls, aiming every 180 ticks. |
+| ![](../images/enemies/gate-sentry.png) | **GATE SENTRY**<br>8 HP · 400 pts | A turret manning a fortress-gate mouth — floor and ceiling at each of the three. Quicker on the trigger than the rail guns (a volley every 150 ticks) and with a harder lead: at 1.95 px a tick even the fastest ship has to be somewhere else when it fires. |
+| ![](../images/enemies/iron-banner.png) | **IRON BANNER**<br>2 HP · 150 pts | The parade's rag, drifting in slow wide waves over the banner band. Two hit points, and it drops a capsule when it falls. The gate stretch is long and it is nearly the only supply in it — never let the turrets make you forget to shoot the banners. |
 | ![](../images/enemies/bolt-drone.png) | **SOVEREIGN DRONE**<br>2 HP · 150 pts | The Sovereign's personal escort: a bolt drone rebuilt to chase, tracking you for two seconds before it scatters. |
 
 ### The parade — BULWARK ECHO · MAW ECHO · BASTION ECHO · REGENT ECHO
@@ -377,6 +379,10 @@ One of the two ways a run ends. The Citadel is a factory, and every part of it i
 **8,000 pts each.** Before the Sovereign will see you, the Citadel sends out copies of the bosses
 you have already killed — smaller, faster, one after another with barely a breath between them.
 They fight the way the originals did. You are being shown that the Tide can simply make more.
+The v2 remaster rebuilt them part for part off the originals as they fly now: the BULWARK ECHO
+carries the new hull's wings with guns riding them, the BASTION ECHO's arms are the shootable
+inner pair, and the REGENT ECHO grew its short tentacles into the full four-segment chains with
+guns at the tips — fourteen parts, the most of the parade. The MAW ECHO needed no change at all.
 
 ### IRON SOVEREIGN · IS-08
 
@@ -385,6 +391,11 @@ They fight the way the originals did. You are being shown that the Tide can simp
 **60,000 pts.** The heart of the fortress: a slab of hull with a red core, shielded by plates,
 flanked by pods and emitters, and surrounded by its own hatches. Kill it and the Citadel falls —
 one of the game's two endings, and the only one where the fortress burns behind you.
+The remaster counts them: eighteen parts, of which the 150-HP core behind two 24-HP shield plates
+is the fight, the two 30-HP emitters under it are the lane guns, and everything else is armour —
+crest, prow, gate-plate skirts and vents bolted over the hull, and a wheel of four armoured pods
+turning around the core, never vulnerable, only flyable past. It was designed with six pods;
+the frozen release audit could not finish that boss, and four held the design's floor.
 
 ---
 

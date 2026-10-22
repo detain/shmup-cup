@@ -544,10 +544,10 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `twin-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'twin-range'` (seed 53) | the EMBER and FROST twins taking turns, one down and the survivor enraged, both shot down | `stageClear` after 3,168 ticks, 36,690 points, 4 lives, no deaths |
 | `bonus-range-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-range'` (seed 62) | the `ground` bonus entrance: the window's three turrets shot down, the entry recorded while the World plays on to the boss (the warp is the scene flow's) | `stageClear` after 3,561 ticks, 40,520 points, 4 lives, no deaths |
 | `bonus-range-digit.replay.json` (M2-10) | 4-way bot, god mode, no power-ups (seed 61) | the `digit` bonus entrance: the turrets survive, the thousands digit is 0 when the last window closes | `stageClear` after 5,178 ticks, 39,570 points, 4 lives, no deaths |
-| `bonus-vault-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-vault'` (seed 65) | the bonus stage: the carriers' 1,000-point bonus capsules and the 1UP collected, no boss | `stageClear` after 1,615 ticks, 17,220 points, 4 lives, no deaths |
+| `bonus-vault-god.replay.json` (M2-10; laid out for v2 by R5-10.T1) | 4-way bot, god mode, full loadout, `stage: 'bonus-vault'` (seed 65) | the bonus stage: the carriers' 1,000-point bonus capsules and the 1UP collected, no boss — on the 4,200-px item room the T1 layout carved through its brick pillars | `stageClear` after 2,815 ticks, 30,280 points, 5 lives, no deaths |
 | `zone-b-god.replay.json` (M2-11; re-blessed by R5-02) | 4-way bot, god mode, `stage: 'zone-b'` (seed 1) | BRINE NEBULA start to clear: the shallows' urchin tunnel, the dive to the reef floor, the riptide's mine fields, the pearl garden, SPUME HERALD, GALVANIC MAW's three phases | `stageClear` after 19,300 ticks, 71,810 points, 4 lives, no deaths |
 | `zone-c-god.replay.json` (M2-11; re-blessed by R5-03) | 4-way bot, god mode, `stage: 'zone-c'` (seed 1) | DUNE EXPANSE start to clear: the worms, the canyon burrowers, the DUNE SCORPION captain, the dune-surf diagonal, SANDGRAVE WIDOW's three phases | `stageClear` after 17,790 ticks, 74,770 points, 4 lives, no deaths |
-| `brine-grotto-god.replay.json` (M2-11) | 4-way bot, god mode, full loadout, `stage: 'brine-grotto'` (seed 71) | PEARL GROTTO, zone B's bonus stage: its carriers' bonus capsules and the 1UP, no boss | `stageClear` after 1,815 ticks, 5,650 points, 4 lives, no deaths |
+| `brine-grotto-god.replay.json` (M2-11; re-blessed by R5-02, laid out for v2 by R5-10.T1) | 4-way bot, god mode, full loadout, `stage: 'brine-grotto'` (seed 71) | PEARL GROTTO, zone B's bonus stage: its carriers' bonus capsules and the 1UP, no boss — the 5,400-px treasure run | `stageClear` after 3,615 ticks, 25,950 points, 5 lives, no deaths |
 | `zone-b-deaths.replay.json` (M2-11 tests; re-blessed by R5-02) | `weaverBot()`, Arcade penalty (seed 72) | deaths among the bubbles and the mine fields, checkpoint restarts, game over | `gameOver` after 4,770 ticks (deaths at 3,950 / 4,275 / 4,677) |
 | `zone-c-bot.replay.json` (M2-11 tests; re-blessed by R5-03) | 4-way bot, no god mode (seed 73) | three deaths, `gameOver` before SANDGRAVE WIDOW | `gameOver` after 5,086 ticks (deaths at 3,784 / 4,630 / 4,993) |
 | `zone-d-god.replay.json` (M2-12; re-blessed by R5-04) | 4-way bot, god mode, `stage: 'zone-d'` (seed 1) | MAGMA DEEP start to clear: the erupting caldera and its geodes, the two dives into the caves, the OBSIDIAN CLAW captain, the brick maze and its lava branches, CINDER BASTION's three phases | `stageClear` after 19,108 ticks, 87,045 points, 4 lives, no deaths |
@@ -557,17 +557,17 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `zone-e-bot.replay.json` (M2-12 tests; re-blessed by R5-05) | 4-way bot, no god mode (seed 74) | the rear attackers against a ship that can die, two deaths and a Classic respawn in place, SQUALL STEED shot down | `stageClear` after 20,483 ticks, 75,170 points, 2 lives (deaths at 12,323 / 12,657) |
 | `zone-f-god.replay.json` (M2-13; re-blessed by R5-06) | 4-way bot, god mode, `stage: 'zone-f'` (seed 1) | CELL VAULT start to clear: the membrane's chasing and dividing cells, the calcified ribcage and the NUCLEUS WARDEN, the living punch-walls of the chase, the pulse run, MANTLE REGENT's three phases | `stageClear` after 19,866 ticks, 71,476 points, 4 lives, no deaths |
 | `zone-g-god.replay.json` (M2-13; re-blessed by R5-07) | 4-way bot, god mode, `stage: 'zone-g'` (seed 1) | PRISM LABYRINTH start to clear: the prism field, the guarded gallery, the crystal mass and the PRISM SENTINEL, the refraction hall's shutters and cube rushes, the heart chamber's pincers, the refraction run, FACET MONARCH | `stageClear` after 18,924 ticks, 70,761 points, 4 lives, no deaths |
-| `glimmer-cache-god.replay.json` (M2-13; re-blessed by R5-07) | 4-way bot, god mode, full loadout, `stage: 'glimmer-cache'` (seed 81) | GLIMMER CACHE, zone G's bonus stage: its carriers' bonus capsules, geodes bursting into prism shards, a cube rush and its cube walls, no boss | `stageClear` after 1,815 ticks, 14,825 points, 3 lives, no deaths |
+| `glimmer-cache-god.replay.json` (M2-13; re-blessed by R5-07, laid out for v2 by R5-10.T1) | 4-way bot, god mode, full loadout, `stage: 'glimmer-cache'` (seed 81) | GLIMMER CACHE, zone G's bonus stage: its carriers' bonus capsules, geodes bursting into prism shards, a cube rush and its cube walls, no boss — the 5,400-px crystal run | `stageClear` after 3,615 ticks, 18,410 points, 4 lives, no deaths |
 | `zone-f-arcade.replay.json` (M2-13 tests; re-blessed by R5-06) | 4-way bot, Arcade difficulty, no god mode (seed 91) | CELL VAULT against the rank-scaled fire: two deaths, tissue shot open, `gameOver` | `gameOver` after 6,255 ticks (deaths at 4,550 / 6,162) |
 | `zone-f-deaths.replay.json` (M2-13 tests; re-blessed by R5-06) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths in the membrane, at the tissue walls and in the chase, checkpoint restarts, game over | `gameOver` after 6,221 ticks (deaths at 1,443 / 2,114 / 3,810 / 4,447 / 6,128) |
 | `zone-f-boss.replay.json` (M2-13 tests; re-blessed by R5-06) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | MANTLE REGENT's three phases, the eye shot between the curls of its tentacles | `stageClear` after 1,941 ticks, 46,710 points, 4 lives, no deaths |
 | `zone-g-boss.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 1,981 ticks, 47,540 points, 4 lives, no deaths |
 | `zone-g-bot.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, no god mode (seed 91) | three deaths in the labyrinth, `gameOver` before FACET MONARCH — the recording is the promise under the identity law below | `gameOver` after 9,358 ticks (deaths at 4,548 / 7,935 / 9,265) |
-| `zone-h-god.replay.json` (M2-14) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the piston hall's moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN's four phases | `stageClear` after 16,209 ticks, 129,700 points, 5 lives, no deaths |
+| `zone-h-god.replay.json` (M2-14; re-blessed by R5-08) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the fortress gate's plate slabs and sentries, the parade of four earlier bosses in reduced form, the piston hall, the core run, IRON SOVEREIGN's four phases | `stageClear` after 19,470 ticks, 130,390 points, 5 lives, no deaths |
 | `zone-i-god.replay.json` (M2-14; re-blessed by its test round's `boss.ark` fix) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 19,310 ticks, 143,110 points, 5 lives, no deaths |
-| `zone-h-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands at IRON SOVEREIGN's own warning (re-blessed by R5-P.P14, `6345f07`): the parade and the core run are skipped past, the sovereign's four phases stand | `stageClear` after 2,433 ticks, 71,700 points, 4 lives, no deaths |
-| `zone-h-arcade.replay.json` (M2-14 tests) | 4-way bot, Arcade difficulty, no god mode (seed 91) | IRON CITADEL against the rank-scaled fire | `stageClear` after 15,895 ticks, 131,860 points, 4 lives, no deaths |
-| `zone-h-deaths.replay.json` (M2-14 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls, every restart back at the start, game over | `gameOver` after 5,069 ticks (deaths at 935 / 1,558 / 3,730 / 4,353 / 4,976) |
+| `zone-h-boss.replay.json` (M2-14 tests; re-blessed by R5-P.P14 `6345f07`, again by R5-08) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands at IRON SOVEREIGN's own warning (re-blessed by R5-P.P14, `6345f07`; the remaster moved the throne's warning to 19,500): the parade and the core run are skipped past, the sovereign's four phases stand | `stageClear` after 2,223 ticks, 71,550 points, 4 lives, no deaths |
+| `zone-h-arcade.replay.json` (M2-14 tests; re-blessed by R5-08) | 4-way bot, Arcade difficulty, no god mode (seed 91) | IRON CITADEL against the rank-scaled fire: the two lives go in the parade and before it, the throne stands — the recording is the promise under the identity law, extended to a difficulty rank at this land | `gameOver` after 5,632 ticks (deaths at 4,113 / 5,539), 3,130 points |
+| `zone-h-deaths.replay.json` (M2-14 tests; re-blessed by R5-08) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls and the gate — the weaver never passes the gate checkpoint — every restart back at the start, game over | `gameOver` after 4,438 ticks (deaths at 665 / 1,749 / 2,503 / 3,587 / 4,345) |
 | `zone-i-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 4,511 ticks, 136,640 points, 5 lives, no deaths |
 | `zone-i-escape.replay.json` (M2-14 tests) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 6,038 ticks, 3,200 points, 3 lives, no deaths, no boss killed |
 | `zone-a-manta-toggle.replay.json` (M2-16 tests) | `fireButtonBot('tap')` (the 4-way bot tapping `Shot` every 150 ticks), god mode, full loadout, the MANTA, `remoteMode: false`, `autofireMode: 'toggle'`, `stageSkip: 'boss'` (seed 61) | the Direct-mode volleys switched off and on by the taps (the `firing` switch hashed in this mode), HALCYON BULWARK shot down | `stageClear` after 942 ticks, 39,000 points, 4 lives, no deaths |
@@ -728,6 +728,29 @@ file cleared — and `zone-f-arcade`'s outcome test traded its pinned death-tick
 two-deaths count the remaster can move without a law change. The old → new `finalHash` pairs ride
 each land commit's message (`git show 1d3fd600` … `git show 66122e87`).
 
+**Wave 12's zone H LAND and the bonus round** carried the chain onto the last remastered stage
+and the bonus rooms. `R5-08` re-blessed zone H's five files at the LAND (`a2d94928`, through
+`--only zone-h`): `zone-h-god` `2915704093 → 1072895145`, `zone-h-boss` `3981827088 →
+3266164439`, `zone-h-deaths` `2055581915 → 2906790926`, `zone-h-arcade` `29535609 →
+1343190531` and the demo `398308584 → 415361455` — digits re-proven on the restart's weld, and
+the arcade golden now a *reported loss*: `gameOver` after 5,632 ticks, which the design's §11
+rank reading calls legal (the identity law below, extended to a difficulty rank for the first
+time). `R5-10.T1` re-blessed the five bonus files together (`cea1b20d`, through
+`--only brine-grotto,glimmer-cache,bonus-vault,bonus-range`): the three re-laid-out rooms moved
+(`brine-grotto-god` `2312891118 → 2143762895`, `glimmer-cache-god` `304382126 → 904451765`,
+`bonus-vault-god` `892461347 → 73544239`) and the `bonus-range` pair verified byte-identical —
+the range is the frozen trio's check, and verifying it unchanged was the point of listing it.
+That land needed two master kit cures from `R5-10.MF13` (`5a0673a7`): the demo bless guard now
+accepts a *demo-less* known-stage list (bonus rooms have no attract demo), and the v1-baseline
+kit carries a `REAUTHORED_STAGES` carve for `bonus-vault` — a stage rewritten after its v1
+recording is not a port delta. The zone H LAND also folded one disclosed scale-1 atlas digest
+re-pin (808 frame positions re-located by the atlas-groups re-pack, name-set equal, every v1
+byte identical) and re-pinned the three fingerprints (presentation 117 rows, content-DB 13,
+shell 3 — the id-shift class); `R5-10.T3`'s dimension art (`90a20a3a`) moved **no** golden — no
+sim field changed — but its five new sprite id-shifted the fingerprints again (content-DB 14,
+presentation 232, shell 6 rows). The old → new digits ride `git show a2d94928` and
+`git show cea1b20d`.
+
 The same review round ruled the **identity law** for the no-god outcome cases (its G7 decision,
 with zone E's file as its twin): `golden-zone-e.test.ts` and `golden-zone-g.test.ts` assert the
 *recorded replay* rather than a promised outcome — the header's identity (`stageId`,
@@ -739,6 +762,16 @@ god run's ticks, since R5-P.P3); the case prints what it recorded. The design's 
 asserted only on the god case that owns them, and stand in the no-god files as comments naming
 the law and the measured truth. A zone whose bot dies in the mouth of the gallery no longer
 fails CI for the owner's taste; it reports it.
+
+`R5-08` carried the law onto a difficulty rank for the first time: `golden-zone-h.test.ts`'s
+arcade case asserts the blessed *loss* — header identity (`assisted: false`, the stage, the
+scenario's difficulty and death penalty), a status read from the recording out of
+{`stageClear`, `gameOver`}, a `gameOver` that must spend every life with the throne standing,
+and the deaths as a count of at most two (zone F's softened twin) — while the design's
+outcome promise for arcade play is commented, measured, and stands in the owner's taste row of
+[outstanding-work.md](../client/outstanding-work.md). The zone's `zone-h-deaths` keeps the
+weaver's world-x law in ported shape: every death sits below the gate checkpoint's x 3,300 —
+the number v1 asserted as `v1x(2200)`.
 
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
@@ -766,7 +799,13 @@ a co-op run player 2's score, lives, death ticks and continues).
   id fails (`0b166c4`). Since `R5-01.S7.0` (`a089adb`) the guard's demo half is relaxed for the
   composite runs the remaining zone LANDs repeat: a non-empty list throws only when it names no
   known demo stage at all — a typo still fails — so one invocation can bless a zone and a dev
-  range that shares its roster (`--only zone-a,bonus-range`). This is what a zone LAND runs (`docs/v2-run/helpers/land-zone.sh`), and
+  range that shares its roster (`--only zone-a,bonus-range`). Since `R5-10.MF13` (`5a0673a7`)
+  the list may also name stages that own **no demo at all** — the bonus rooms `R5-10.T1` blessed
+  (`--only brine-grotto,glimmer-cache,bonus-vault,bonus-range`): the guard lives in
+  `assertDemoOnlyListKnown` (`test/golden/demos.ts`), pins both the bless and its verification
+  arms against the union of the two scenario tables, and keeps the strict unknown-id law
+  (`0b166c4`) — an id no scenario plays still throws, a list naming no demo stage blesses the
+  goldens and writes no demo, the empty list writes every demo. This is what a zone LAND runs (`docs/v2-run/helpers/land-zone.sh`), and
   the scope proof afterwards asserts that no golden outside the `--only` list moved.
 - The files are generated (`JSON.stringify` with a two-space indent) and excluded from Prettier
   (`.prettierignore`); never edit them by hand.
@@ -781,7 +820,12 @@ a co-op run player 2's score, lives, death ticks and continues).
   `v1-baseline*.test.ts` pins every shipped stage at 384×216 in the numbers committed in
   `test/fixtures/v1-baseline/`: re-run byte for byte while the frame was v1's, and since R2-01 the
   frozen v1 record — re-runs skipped, re-recording refused — compared against by
-  `golden/v2-port*.ts` (R2-02.T3). `pnpm golden:update`
+  `golden/v2-port*.ts` (R2-02.T3). A stage **re-authored** after its v1 recording is not a port
+  delta either: since `R5-10.MF13` (`5a0673a7`) the frozen `REAUTHORED_STAGES` list in
+  `test/golden/v1-baseline.ts` carves such ids — today `bonus-vault`, re-laid out by R5-10.T1 —
+  out of the re-runs and the port comparisons alike; its scenario, baseline and golden files
+  stand, and the test pins that every carved id still ships and that the files' split equals the
+  scenarios minus the carve, so the carve cannot rot silently in either direction. `pnpm golden:update`
   does **not** re-record it: an intended simulation change before R2-01 also ran
   `SHMUP_V1_BASELINE_UPDATE=1 pnpm exec vitest run --project integration test/golden/v1-baseline`
   in the same commit ([test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02)).

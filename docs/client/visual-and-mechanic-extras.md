@@ -92,6 +92,12 @@ the ship towards a lit horizon, with the three new bosses on it —
 | **IRON TALON** | A grabber: it lines up with your ship, opens its claw and lunges, **pulling you towards it** — fly away during the recovery |
 | **GRASPING BLOOM** | A suction boss: while its maw is open it drags everything towards it (and only then can its core be hurt); when it closes, it shoots |
 
+Since the R5-10 art round the corridor has scenery: dark monoliths drift past in the middle
+distance, tendrils hang into the top of the screen from the sky and pass you faster than the grid
+does, crystal shards stand behind the floor, and the pylons, the bloom's maw and two of the
+shards glow in the dark. The three bosses wear redrawn v2 art. The flight itself is unchanged —
+same length, same bosses, same speed.
+
 The stage is a showcase for testers, not part of the run across the zone map, so it has no zone
 letter and no high-score table. Add `&skip=boss` to start at its first boss.
 

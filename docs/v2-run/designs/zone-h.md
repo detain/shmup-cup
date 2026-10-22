@@ -102,6 +102,17 @@ Spawn shapes exactly as today: ground emitters/turrets/walkers/hatches `{x, type
 these are the only five — 2,200 / 6,980 / 8,580 / 12,900 / 15,000 — keeping the source
 count at 42 ≤ 48; D-RV m-2/C-1 recomputed).
 
+> **Amended at the LAND (R5-08.FIX1, `a2d94928`):** the four in-window `iron-banner` formation
+> rows below (3,720 / 4,380 / 16,900 / 17,420) ship as SINGLE banner spawn rows, their `y`
+> preserved. The recovery law (design §5, `test/playtest/recovery.ts` `capsuleSources`) counts a
+> row as one capsule source whenever the enemy ENTRY drops one — a formation's per-member death
+> drops are entry-driven (`core/enemies` `kill()`), so the 5–6-member rows handed each window 3
+> sources while raining 5–6 capsules (measured 13 and 14 against 3; the S6 STOP). A literal
+> `"drop": null` could not cure it: the row flag mutes only the row's completion drop, never the
+> entry's per-member drop. Single riders give each window its exact 3 sources and the economy its
+> honest shape. The x 9,300 multi-member wave — outside every checkpoint window (cp2's `until`
+> anchors short of it) — keeps its formation identity as this plan's banner row.
+
 **Outer wall 0–3,300** (ground on today's rock; all x are v2):
 
 | x | enemy | kind | y / params |
@@ -407,7 +418,7 @@ reuse):
 | skirt-b | hull | −6 / −70 | `bosses/sovereign-plate` | `none`; `vulnerable: never` |
 | vent-a | hull | 40 / +48 | `bosses/sovereign-emitter` | `none`; `vulnerable: never` |
 | vent-b | hull | 40 / −48 | `bosses/sovereign-emitter` | `none`; `vulnerable: never` |
-| pod-e / pod-f | hub | explicit ring pairs pinned on the binary-angle ladder 0/64/128/192/256/320 at r 36 (D-RV M-3): **pod-e = angle 192 → x +14 / y +33, pod-f = angle 320 → x −14 / y +33** — all six ring positions pod-a…pod-f stay distinct (the old literal ±36-on-the-same-ring wording landed pod-f on pod-c and pod-e on pod-a) | `bosses/sovereign-pod` | circle r 9, `vulnerable: never` |
+| pod-e / pod-f | — | **AMENDED AT THE LAND (R5-08, `a2d94928`) — these two rows do not ship; the ring stays FOUR pods, pod-a…pod-d.** The frozen release audit out-voted this cell: the fully powered MANTA's stageSkip fight stalled 36,000 ticks at phase 0 against the 20-part ring and cleared the 18-part boss in 2,670 the moment the two pods left the core line (lane report S5b, probes A/B/C; option A, ruled in the R5-D10 class). The hatches case keeps its ≥ 4-pod floor on four pods, the destroyable 260 never moved (pods e/f were never-vulnerable armour), and every other row of this table ships as written. The "now 6" in the checks below reads 4 at the landed file | — | — |
 
 (The crown is the citadel's crest on the hull's top; the prow gives the hull a beak
 before the core line opens; the skirts read as the gate-plate motif; the vents mirror

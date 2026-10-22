@@ -14,9 +14,17 @@ and a rise off it; `zone-c.paths.json` zone C's (M2-11): the `sand-skimmer` swoo
 `zone-e.paths.json` zone E's (M2-12): the rear-entering `gale-kite` loops `kite-overtake-high` /
 `kite-overtake-low` — they start behind the ship (spawned at a negative `screenX`), overtake it,
 curl round near the right edge and fly back along another row (zone G's `halo-crystal`s fly zone
-A's `gyre-orbit-*` loops — M2-13 added no path); `test-range.paths.json` those of the dev stage.
-The v2 remasters (R5-02 … R5-07) added only `zone-b.paths.json`; zones C, D and E flew their M2-11
-/ M2-12 curves unchanged through their LANDs, and zones F, G and I shipped none of their own.
+A's `gyre-orbit-*` loops — M2-13 added no path); `zone-h.paths.json` zone H's (new at the
+R5-08 LAND): the garrison's `banner-drift` — a 1,110-px leftward drift that dips 72 px below the
+entry row and curls back up past it — and the walk-post `sentinel-loop`, a closed oval 705 px
+wide and 165 px tall that returns to its start; `test-range.paths.json` those of the dev stage.
+The v2 remasters added exactly those two files (`zone-b.paths.json` at R5-02, `zone-h.paths.json`
+at R5-08); zones C, D and E flew their M2-11 / M2-12 curves unchanged through their LANDs, and
+zones F, G and I shipped none of their own. R5-08 authored its pair as the zone's optional
+curves (the design caps a paths file at three entries); the shipped H timeline currently rides no
+event on either — the banners drift on `drifter.sine` and the walkers walk `walker.floor` — so
+the file is add-only content awaiting a placement pass, kept green by the reference rule (ids
+resolve; nothing must be referenced).
 
 A path is a list of **control points relative to where the mover starts** (normally the spawn
 point; the first point is usually `(0, 0)` — the curve is translated so its first point sits

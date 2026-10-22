@@ -142,6 +142,30 @@ only, so the pixels are identical on every engine.
 
 `test/integration/dimension-runtime.test.ts` flies the whole stage headlessly and drives the floor.
 
+**R5-10.T3 painted the corridor in** (land `90a20a3a`): the dimension is now the stage that shows
+all three of the R3-06 layer kinds beside the Mode-7 floor. The sky stays the single far band it
+was; a `mid` band hangs under it (`bg/dimension-rift`, a 320 × 84 two-frame monolith skyline at
+factor 0.375, row 84, frame turn every 240 ticks) and a `fore` band over the playfield
+(`bg/dimension-strands`, 320 × 48 two-frame tendrils at factor 1.5, row 0 — they hang into the
+top 43 rows, never the ship's lane, and pass the camera faster than the floor does); six crystal
+shards sit **back of the floor** as `decor` (`decor/dimension-shard-a` 20 × 34 and `-b` 16 × 46,
+two of them carrying an `fx/glow-rift` additive glow), and the pylon and the maw gained glows too
+— the two-line diff in `content/enemies/extras.enemies.json` is that whole change. The six
+generator names now draw v2-native sizes (floor 48², sky 192 × 72, pylon 24 × 60 × 2 frames, maw
+42² × 2, claw 27 × 21 × 2, leg 15 × 39 × 2) beside five new names, and the v1 build stays
+byte-identical at art scale 1 (RR-1). The band bottoms meet the ported horizon exactly where the
+Mode-7 floor starts — sky 96 + 72 = rift 84 + 84 = 168, the 168 / 336 window unmoved, the floor
+still one opaque frame — and the sky is still band index 0, which the runtime test pins. No
+simulation field moved: music, length, camera, checkpoints and events are identical, and the
+eight Mode-7 e2e specs stayed green on the unraised draw-call budget. The five new names shifted
+the sorted sprite ids, so the content-DB (14 rows), presentation (232) and shell flight (6)
+fingerprint tables re-pinned in that id-shift class, and `test/integration/render-groups.test.ts`
+now names the fore band in a rot-proof **content census**: exactly eight stages carry one —
+`decor-range`, the dimension, and zones B–G (the MF14 cure, `59d14ed8`; the lesson it writes into
+the wave laws is that a step moving a layer kind or a stage's bands owes the census files in its
+gate set). Four plates came with the art: `docs/images/enemies/dim-pylon.png` and the
+grasping-bloom / iron-talon / shadow-strider portraits.
+
 ## CRT / scanline pass
 
 `effects/crt.ts`, one program for both strengths (`CRT_LOOKS`, in `core/config` `CRT_FILTERS`
