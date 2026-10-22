@@ -474,9 +474,15 @@ lane's.
   families) and every other zone's boss family: untouched — E never references them. The
   `steed-*` family belongs to E alone: redrawn, never renamed or deleted; `boss-rush`
   places the *enemy id* `squall-steed`, so its parts' sprite names must survive.
-- `tempest.bolt`'s pattern speeds (aimed 1.275, streak to 2.4) stay ≤ 3.0; R5-P.P4 already
-  moved E's action **verbatim** into `content/patterns/zone-e.patterns.json` (verified at
-  tip) — the lane retunes it only on a measured need.
+- `tempest.bolt`'s pattern speeds (aimed 1.275, streak to **2.25**) stay ≤ 3.0 — the measured need
+  this clause reserves arrived: MF8-c1 (`1030012f`, the RT-BRV2 MH2 referral from R5-02's review)
+  folded the repeat 3 → 2 and made the terminal an explicit fire at 2.25; the old 2.4 terminal read
+  2.4 × 1.266 = 3.0384 px/tick at campaign rank 16, over the four-way gate. The offender is this
+  bolt terminal, fired by the `thunderhead` through `pattern.loop` — the `gale-kite` fires nothing,
+  its 2.4 rows are move speeds (the referral and the fix's own subject name the kite; the fix body
+  corrects it). R5-P.P4 had moved E's action **verbatim** into
+  `content/patterns/zone-e.patterns.json` (verified at tip); the zone-e goldens re-blessed on
+  master as the intentional-sim change this is.
 - `REPLAY_FORMAT` / `SAVE_VERSION` pins, the interim scale-1 atlas digest `fa4198…` (§13),
   the other seven reserved ramp colours (§4.4 — STORM_RAMP itself moves under P7, nothing
   else does), the `zone-e` / `boss-e` music tracks, the `kite-overtake-high` / `-low`
