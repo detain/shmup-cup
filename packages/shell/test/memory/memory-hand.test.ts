@@ -1,8 +1,11 @@
 /**
  * The memory estimate against a hand calculation (plan R1-05): for every campaign zone, the
  * estimate equals the sum worked out here from `manifest.pages` and the constants alone — the
- * GPU copies of the zone's pages, the decoded images of **every** page (policy "all": the shell
- * keeps them all, W3-2), the SFX bank and the zone's music set, the render targets (the frame
+ * GPU copies of the zone's pages, the decoded images of exactly those pages (policy "resident":
+ * the shipped lazy residency drops a detached page's image with it, R3-04.M3e / W5-15 —
+ * {@link AtlasResidency.imagePolicy} reports it and the boot's test pins it; the pre-R3-04
+ * "every page" charge of W3-2 remains the eager option, pinned beside it), the SFX bank and the
+ * zone's music set, the render targets (the frame
  * target, two pooled filter passes and three 1080p canvas buffers) and the 24 MiB heap — at the
  * current frame and at 640×360, and stays within budget. Written over whatever the atlas holds, so
  * it holds before and after lane A splits the atlas into zone pages.
@@ -116,8 +119,6 @@ describe('shell/memory estimate = the hand calculation, every campaign zone (R1-
     ['640×360', V2_FRAME],
   ])('at %s', (_label, frame) => {
     expect(zoneStages.length).toBe(9);
-    let allImages = 0;
-    for (const page of manifest.pages) allImages += page.w * page.h * 4;
     const sfxBytes = sfxBankBytes(sfx);
     for (const stageIndex of zoneStages) {
       const stage = db.stages[stageIndex];
@@ -125,11 +126,14 @@ describe('shell/memory estimate = the hand calculation, every campaign zone (R1-
       for (const p of stagePages(needs, stageIndex)) {
         textures += manifest.pages[p].w * manifest.pages[p].h * 4;
       }
+      // The image charge of the resident policy is the same page set: the shipped lazy
+      // residency holds a page's decoded image exactly while the page is attached (W5-15).
+      const images = textures;
       let musicBytes = 0;
       for (const track of stageMusicTracks(music, stage)) {
         musicBytes += trackBytes(music.tracks[track]);
       }
-      const total = textures + allImages + sfxBytes + musicBytes + handTargets(frame) + 24 * MIB;
+      const total = textures + images + sfxBytes + musicBytes + handTargets(frame) + 24 * MIB;
       const estimate = estimateStageMemory({
         content: db,
         manifest,
@@ -141,7 +145,7 @@ describe('shell/memory estimate = the hand calculation, every campaign zone (R1-
       });
       const report = `${stage.id}: ${(estimate.total / MIB).toFixed(2)} MiB`;
       expect(estimate.textures, report).toBe(textures);
-      expect(estimate.images, report).toBe(allImages);
+      expect(estimate.images, report).toBe(images);
       expect(estimate.sfx, report).toBe(sfxBytes);
       expect(estimate.music, report).toBe(musicBytes);
       expect(estimate.targets, report).toBe(handTargets(frame));
@@ -157,7 +161,15 @@ describe('shell/memory estimate = the hand calculation, every campaign zone (R1-
 
   it('charges only the zone’s own images under the lazy policy, none without images', () => {
     const stageIndex = zoneStages[0];
-    const all = estimateStageMemory({ content: db, manifest, sfx, music, stageIndex, needs });
+    const all = estimateStageMemory({
+      content: db,
+      manifest,
+      sfx,
+      music,
+      stageIndex,
+      needs,
+      imagePolicy: 'all', // the eager option's charge, passed explicitly (the default is resident)
+    });
     const resident = estimateStageMemory({
       content: db,
       manifest,

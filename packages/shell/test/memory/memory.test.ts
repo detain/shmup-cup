@@ -1,6 +1,7 @@
 /**
  * The TV memory budget (plan M2-17): the estimator adds up what one zone keeps resident — the
- * atlas pages it needs, the SFX bank and its music set, the render targets and a heap baseline —
+ * atlas pages it needs and their decoded images (the shipped residency's `resident` policy,
+ * R3-04.M3e / W5-15), the SFX bank and its music set, the render targets and a heap baseline —
  * and every campaign zone of the shipped content must stay under 100 MB (shmup_tech.md §2.5), with
  * the atlas and the audio within their shares. Also: the chip-song size bound matches what the
  * synth renders, the zones' sprite sets and page needs, and the residency that unloads the pages
@@ -87,6 +88,9 @@ describe('shell/memory', () => {
       const report = `${stage.id}: ${(estimate.total / MIB).toFixed(1)} MiB`;
       expect(estimate.withinBudget, report).toBe(true);
       expect(estimate.total, report).toBeLessThanOrEqual(MEMORY_BUDGET_BYTES);
+      // The default charge follows the shipped residency (W5-15): the decoded images of the
+      // zone's own pages — the pages it needs — and no page the next zone's prepare drops.
+      expect(estimate.images, report).toBe(estimate.textures);
       expect(estimate.textures + estimate.images, report).toBeLessThanOrEqual(TEXTURE_BUDGET_BYTES);
       expect(estimate.sfx + estimate.music, report).toBeLessThanOrEqual(AUDIO_BUDGET_BYTES);
       // The zone's music set is resident: at least the title theme and the stage's own theme.

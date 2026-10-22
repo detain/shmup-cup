@@ -6,10 +6,13 @@
  * {@link MEMORY_BUDGET_BYTES}):
  *
  * - **Estimator** ({@link estimateMemory}, {@link estimateStageMemory}). What one zone keeps
- *   resident, from the data alone: the atlas pages it needs on the GPU, the decoded images the
- *   pages were uploaded from — **every** page's, since the runtime keeps them all (policy "all",
- *   plan R1-05 / W3-2: the shell loads every page at boot and Pixi keeps each image as the
- *   texture's resource, to re-upload it) —, the audio (the whole SFX bank — pre-rendered at boot —
+ *   resident, from the data alone: the atlas pages it needs on the GPU, the decoded images those
+ *   pages were uploaded from — the stage's own pages' (policy "resident", what the shipped lazy
+ *   residency reports through {@link AtlasResidency.imagePolicy} since R3-04.M3e / decision
+ *   W5-15: prepare drops every page the stage does not need with its image; policy "all" —
+ *   Pixi keeping each image as the texture's resource, to re-upload it — is the pre-R3-04 eager
+ *   runtime and stays the `all` charge ({@link ImagePolicy}) of the `atlasPages: 'eager'`
+ *   option), the audio (the whole SFX bank — pre-rendered at boot —
  *   and the zone's
  *   music set: the title theme plus every cue the stage can ask for, `stageMusicCues`; mono
  *   32-bit float buffers, one copy — `audio-web` `toAudioBuffer` drops the PCM once the buffer
@@ -275,8 +278,10 @@ export function textureBudgetFor(frame: Size): number {
  * decision W5-14): a zone's `common` (1024²) plus one 2048×1024 stand-in page charges
  * 12,582,912 B of textures + images under `imagePolicy: 'none'` — inside this share — while the
  * same row under `'resident'` charges 25,165,824 B, **1 MiB over it**. That split is why the
- * stand-in is gated at `'none'` and why the lazy residency (R3-04.M3b, decision W5-15) drops the
- * decoded images: at the bible's density, keeping them does not fit.
+ * stand-in is gated at `'none'` and why the lazy residency (R3-04.M3b, decision W5-15) drops a
+ * page's decoded image the moment it detaches the page: at the bible's density, keeping even the
+ * stage's own pages' images does not fit. The zone estimates anchor there —
+ * {@link estimateStageMemory} charges the `resident` set, what the shipped residency holds.
  */
 export const TEXTURE_BUDGET_BYTES = textureBudgetFor({ width: FRAME_W, height: FRAME_H });
 
@@ -313,10 +318,11 @@ export interface MemoryInputs {
    */
   readonly keepPageImages?: boolean;
   /**
-   * The pages whose decoded images stay in memory (R1-05; default `atlasPages`). The shell loads
-   * every page at boot and keeps every image — even of a page another zone needs, whose GPU copy
-   * was unloaded — so a whole-atlas estimate passes every page here ({@link estimateStageMemory}
-   * does). Ignored when `keepPageImages` is `false`.
+   * The pages whose decoded images stay in memory (R1-05; default `atlasPages`). The eager
+   * residency keeps every image even of a page whose GPU copy was unloaded, so an estimate for it
+   * passes every page here ({@link estimateStageMemory} does under the `all` policy); the shipped
+   * lazy residency drops a detached page's image with it, so the default charges the stage's own
+   * pages only. Ignored when `keepPageImages` is `false`.
    */
   readonly imagePages?: readonly PageSize[];
   /** Bytes of the SFX bank's buffers. */
@@ -1374,7 +1380,12 @@ export interface StageMemoryInputs {
   readonly needs?: AtlasPageNeeds;
   /** Display size (default {@link DEFAULT_DISPLAY}). */
   readonly display?: MemoryInputs['display'];
-  /** Which decoded page images are charged (default `all` — the runtime's policy, W3-2). */
+  /**
+   * Which decoded page images are charged (default `resident` — the policy the shipped lazy
+   * residency reports, R3-04.M3e / decision W5-15; `all` — every page's, W3-2 — is the
+   * `atlasPages: 'eager'` option's charge, and the boot passes the residency's own
+   * {@link AtlasResidency.imagePolicy}).
+   */
   readonly imagePolicy?: ImagePolicy;
   /** The internal frame size (default core's `FRAME_W` × `FRAME_H`). */
   readonly frame?: MemoryInputs['frame'];
@@ -1388,9 +1399,26 @@ export interface StageMemoryInputs {
 
 /**
  * Estimates what playing one stage keeps resident: its atlas pages on the GPU
- * ({@link stagePages}), the decoded images of every page (policy `all` — what the runtime keeps,
- * R1-05; see {@link ImagePolicy}), the SFX bank and its music set ({@link stageMusicTracks}), the
- * render targets and the heap baseline.
+ * ({@link stagePages}), the decoded images of exactly those pages (policy `resident` — what the
+ * shipped lazy residency holds; see {@link ImagePolicy}), the SFX bank and its music set
+ * ({@link stageMusicTracks}), the render targets and the heap baseline.
+ *
+ * @remarks
+ * The default is the residency's own report, not a theory: the shipped boot runs the lazy
+ * residency (`atlasPages` defaults to `lazy` since R3-04.M3e, decision W5-15), whose
+ * {@link AtlasResidency.imagePolicy} is `resident` (pinned by
+ * `packages/shell/test/boot/boot-residency.test.ts` against a real boot) — `prepare` detaches
+ * every page the stage does not need and drops its decoded image with it
+ * (`Atlas.unloadPage` → `TextureSource.resource = null`), a context restore re-fetches the
+ * resident pages from their URLs (plan R3-04.M3d), and only the attached pages keep their images
+ * to re-upload from. The old `all` default charged the whole atlas's decoded set (13.25 MiB at
+ * the scale-1 manifest) as a constant to every zone — the pre-R3-04 eager runtime. Measured at
+ * wave 11's zone LANDs with the re-derived atlas groups: zone E's own page grows to 1024×512, so
+ * its row sits at 10,485,760 B of textures + 13,893,632 B of `all` images = 24,379,392 B,
+ * **262,144 B over** the 24,117,248 B (23 MiB) share at 640×360, while the held set is 20,971,520
+ * B — 3 MiB inside it; zone B's LAND (its own page 1024×512 too, `bg/brine-deep-v2` forcing the
+ * 512-tall rung) measures the same shape. Under the fossil charge every zone's own page was
+ * capped at ~1.5 MiB — a ceiling of the pre-R3-04 runtime, not of the TV.
  *
  * @param inputs - Content, manifest, audio content, stage.
  * @returns The estimate.
@@ -1407,7 +1435,12 @@ export function estimateStageMemory(inputs: StageMemoryInputs): MemoryEstimate {
   const needs =
     inputs.needs ?? atlasPageNeeds(manifest, content.sprites.names, stageSpriteSets(content));
   const pages = stagePages(needs, stageIndex).map((p) => manifest.pages[p]);
-  const policy = inputs.imagePolicy ?? 'all';
+  // The shipped residency is the lazy one (boot's `atlasPages` default since R3-04.M3e, decision
+  // W5-15), and it reports `imagePolicy: 'resident'` — only the pages attached now hold their
+  // decoded images, the rest were dropped with them. The estimate follows the residency's own
+  // report (see {@link AtlasResidency.imagePolicy}); `all` (every page's image) is the `eager`
+  // option's charge, and `none` the stand-in gate's.
+  const policy = inputs.imagePolicy ?? 'resident';
   const stage = content.stages[stageIndex];
   let musicBytes = 0;
   if (stage !== undefined) {
