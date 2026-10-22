@@ -620,6 +620,11 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   makes vitest ignore the filter and run the whole project (wave 4's FIXE mis-run: 1,959 passed /
   421 skipped / 2 failed, EXIT 1, where one file was the target) — the flag is how one prints a
   passing test's stdout, since the default reporter hides it.
+- **Band/layer/census-moving steps owe the shared-kit gates** (R5-10.T3): a step that adds a
+  parallax band kind, moves a `LayerId` census or changes an upscaled-pool floor includes
+  `test/scripts/assets` — the `interim-pipeline.test.ts` floor in particular — and
+  `test/integration/render-groups.test.ts` in its gate set, the lesson and mechanism the
+  `c86ad478` / `59d14ed8` commit bodies carry.
 - **Allocation guards** run in the shared worker pool, next to everything else: the guard lands
   V8's background compiles before every round it measures and leaves compiled code out of its
   count, so the full suite's load no longer shows in its result

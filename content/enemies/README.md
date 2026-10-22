@@ -230,8 +230,8 @@ core; twenty parts, the monarch's crown grown over the old fifteen).
 
 `zone-h.enemies.json` (M2-14, remastered by R5-08) and `zone-i.enemies.json` (M2-14) are the
 rosters of the final zones H and I.
-IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `iron-banner` (`drifter.sine` on a slower,
-wider wave, new in R5-08: the parade's capsule carrier, riding the banner band), `hatch-bay` /
+IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `iron-banner` (`drifter.sine` on a wider
+wave, new in R5-08: the parade's capsule carrier, riding the banner band), `hatch-bay` /
 `hatch-bay-ceiling` (`hatch.spawner` releasing `hatch-mite` / `hatch-mite-down` — `rammer.aimed`
 beetles leaving up out of a floor hatch or down out of a ceiling one), `laser-emitter` /
 `laser-emitter-ceiling` (`emitter.laser`: a telegraphed lane laser to the left along its row,
