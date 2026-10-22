@@ -37,8 +37,13 @@ import {
   watchErrors,
 } from './zone-helpers.js';
 
-/** MANTLE REGENT's skin (#3c5a4c, #2c4238) — only its mantle, segments and tips use them. */
-const REGENT_SKIN = [rgb('#3c5a4c'), rgb('#2c4238')] as const;
+/**
+ * MANTLE REGENT's mantle skin (#3c5a4c) — its own: the committed generator paints that hue
+ * nowhere outside `bosses/regent-mantle` (S2). The mantle's back tone (#2c4238) is the
+ * `bg/vault-ribcage` band's mid cartilage too (vault.mjs `RIB_MID`), so it does not ride in
+ * this constant — the before-boss zero law must not count the band.
+ */
+const REGENT_SKIN = [rgb('#3c5a4c')] as const;
 /** `bg/vault-folds`' far and near flesh (#1e2e26, #2c4034). */
 const FOLDS = [rgb('#1e2e26'), rgb('#2c4034')] as const;
 /** The cell wall's ramp (the only colours its palette cycle shows). */
@@ -67,11 +72,13 @@ test.describe('zones F and G (web build)', () => {
       await countColours(page, FOLDS, { x0: 0, y0: 264, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(3000);
     expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 13,650), then the boss.
-    await jumpTo(page, 13500);
+    // The end of the stage: the WARNING (x 20,250, design §2), then the boss.
+    await jumpTo(page, 20100);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('mantle-regent');
-    expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBeGreaterThan(700);
+    // The mantle paints 645 skin px at scale 1 (measured from the committed generator); the
+    // tentacles crossing its front hide a band — more than 400 is the boss drawn on screen.
+    expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBeGreaterThan(400);
     // Its tentacles curl in after their 120 open ticks (phase 0).
     expect(fight.armAngle === 0).toBe(true); // straight (0 or −0)
     let now = fight;
@@ -96,7 +103,8 @@ test.describe('zones F and G (Tizen build via file://)', () => {
     expect(await startBoss(page, 'mantle-regent')).toBe(true);
     const regent = await stepUntilFight(page, 20);
     expect(regent.boss).toBe('mantle-regent');
-    expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBeGreaterThan(700);
+    // The same skin law on the TV engine: the straight-phased mantle paints 645 px alone.
+    expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBeGreaterThan(400);
     expect(errors).toEqual([]);
   });
 });

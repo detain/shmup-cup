@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "tileset",
   "id": "terrain-vault",
-  "sprite": "tiles/terrain-vault",
+  "sprite": "tiles/terrain-vault-v2",
   "tileSize": 12,
   "tiles": [
     {
@@ -151,6 +151,32 @@
       "hp": 3,
       "regen": 240,
       "score": 10
+    },
+    {
+      "name": "tissue-live",
+      "type": "solid",
+      "frame": 20,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 4,
+      "regen": 120,
+      "score": 12
+    },
+    {
+      "name": "calcified",
+      "type": "solid",
+      "frame": 21,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 6,
+      "score": 15
+    },
+    {
+      "name": "nodule",
+      "type": "empty",
+      "frame": 22,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
   ]
 }

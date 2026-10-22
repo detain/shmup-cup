@@ -40,6 +40,7 @@ import * as brine from '../../scripts/assets/procedural/brine.mjs';
 import * as dune from '../../scripts/assets/procedural/dune.mjs';
 import * as magma from '../../scripts/assets/procedural/magma.mjs';
 import * as tempest from '../../scripts/assets/procedural/tempest.mjs';
+import * as vault from '../../scripts/assets/procedural/vault.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 import { expectHeightfieldFindsTiles, expectMasksMatchArt } from './terrain-checks.js';
 
@@ -102,9 +103,9 @@ function resampledTilesets(size: number): ContentFile[] {
  * `tiles/terrain-azure` comes from `azure.mjs`, which paints it at `options.tileSize` exactly
  * like `renderTerrainTiles` does a palette (R5-01.S5a — later zones' -v2 sets route the same
  * way: `tiles/terrain-reef-v2` from `brine.mjs` since R5-02.S5a, `tiles/terrain-dune-v2` from
- * `dune.mjs` since R5-03.S5a, `tiles/terrain-ridge-v2` from `tempest.mjs` since R5-05.S5a, and
+ * `dune.mjs` since R5-03.S5a, `tiles/terrain-ridge-v2` from `tempest.mjs` since R5-05.S5a,
  * zone D's flipped tileset `tiles/terrain-magma-v2` from `magma.mjs` by the very route since
- * R5-04.S5a).
+ * R5-04.S5a, and `tiles/terrain-vault-v2` from `vault.mjs` since R5-06.S5a).
  *
  * @param sprite - The tileset's sprite name.
  * @param size - The tile size to draw at.
@@ -134,6 +135,12 @@ function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof render
       if (drawn.name === sprite) return drawn.frames;
     }
     throw new Error(`magma.mjs draws no ${sprite}`);
+  }
+  if (sprite === 'tiles/terrain-vault-v2') {
+    for (const drawn of vault.generate({ tileSize: size, artScale: 3 / 2 })) {
+      if (drawn.name === sprite) return drawn.frames;
+    }
+    throw new Error(`vault.mjs draws no ${sprite}`);
   }
   if (sprite !== 'tiles/terrain-azure') return renderTerrainTiles(size, sprite);
   for (const drawn of azure.generate({ tileSize: size, artScale: 3 / 2 })) {

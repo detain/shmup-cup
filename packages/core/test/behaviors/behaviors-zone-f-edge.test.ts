@@ -24,7 +24,12 @@
  *   snapped the arms straight at the end (a 50-unit jump after a wider sweep, 42 after a facet wave
  *   had curled them away from the eye's row);
  * - both bosses track the ship's height at their speed, never past their margins (the one `it.each`
- *   tests F and G; it rides here whole, R5-P.P5a2).
+ *   tests F and G; it rides here whole, R5-P.P5a2);
+ * - the shipped §6 bodies (R5-06.S4a): a ceiling `tissue-cyst` releases its cells out of the
+ *   bottom of the body — the anchor's open side — on the shipped interval (130, not the default
+ *   60), and the shipped `viral-dart` flies its mover line exactly as the design prices it
+ *   (S×30, H4×110 turning at most 4 units a tick, H0 straight on with the heading it had — and
+ *   it never fires).
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
@@ -441,7 +446,7 @@ describe('core/behaviors boss.squid — edge cases (M2-13)', () => {
       expect(tip(broken).angle, `tick ${String(t)}`).toBe(tip(whole).angle);
     }
     // The broken arm's segments stay where they fell and turn no more.
-    for (const name of ['seg-top-1', 'seg-top-2', 'seg-top-3', 'tip-top']) {
+    for (const name of ['seg-top-1', 'seg-top-2', 'seg-top-3', 'seg-top-4', 'tip-top']) {
       expect(broken.bosses.boss.parts[part(broken, name)].destroyed, name).toBe(true);
     }
   });
@@ -591,4 +596,42 @@ describe('core/behaviors boss.squid / boss.facet — tracking (M2-13)', () => {
       expect(b.phase).toBe(0);
     },
   );
+
+  // The R5-06.S4a leg: the design's new bodies on their existing scripts (§6), flown shipped.
+  it('releases a ceiling tissue-cyst’s cells out of its bottom (the anchor’s open side)', () => {
+    const w = world();
+    spawn(w, 'tissue-cyst-ceiling', w.camera.x + 300, 60);
+    run(w, 131);
+    const kids = live(w, 'chaser-cell');
+    // Exactly one at tick 131: the shipped `interval` is 130, not the default 60 (a 60-tick
+    // cyst would have a second cell in play by now), and the ceiling hatch opens downward.
+    expect(kids).toHaveLength(1);
+    expect(kids[0].y).toBe(60 + 6); // dy = +hh, below the body (§6's ceiling sibling)
+  });
+
+  it('flies the shipped viral-dart line: S×30 at 1.5, H4×110 at the cap, then H0 — never firing', () => {
+    const w = world();
+    const dart = spawn(w, 'viral-dart', w.camera.x + 420, 40);
+    let last = -1;
+    let most = 0;
+    let heading = -1;
+    const out = timeline(w, 200, () => {
+      if (dart.mover === MoverKind.Homing) {
+        if (dart.m1 > 0) {
+          if (last >= 0) {
+            const step = Math.abs(((dart.s0 - last + 1.5 * ANGLE_UNITS) % ANGLE_UNITS) - 512);
+            most = Math.max(most, step);
+          }
+          last = dart.s0;
+        } else if (heading < 0) {
+          heading = dart.s0; // the homing hands its heading to the straight run (no jump)
+        }
+      }
+      return moverOf(dart);
+    });
+    expect(out).toEqual(['S×30', 'H4×110', 'H0×60']);
+    expect(most).toBe(4); // the ship is far below-left: the dart turns at the cap, never past it
+    expect(dart.s0).toBe(heading);
+    expect(w.bullets.count).toBe(0); // the body is the danger; it never fires (§6)
+  });
 });

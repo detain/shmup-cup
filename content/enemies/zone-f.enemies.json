@@ -221,6 +221,144 @@
       "explosion": "medium"
     },
     {
+      "id": "tissue-cyst",
+      "hp": 9,
+      "score": 450,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 6
+      },
+      "script": "hatch.spawner",
+      "sprite": "enemies/tissue-cyst",
+      "anim": {
+        "frames": 4,
+        "ticks": 14
+      },
+      "params": {
+        "interval": 130,
+        "max": 3
+      },
+      "drop": null,
+      "ground": "floor",
+      "child": "chaser-cell"
+    },
+    {
+      "id": "tissue-cyst-ceiling",
+      "hp": 9,
+      "score": 450,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 6
+      },
+      "script": "hatch.spawner",
+      "sprite": "enemies/tissue-cyst",
+      "anim": {
+        "frames": 4,
+        "ticks": 14
+      },
+      "params": {
+        "interval": 130,
+        "max": 3
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "child": "chaser-cell"
+    },
+    {
+      "id": "viral-dart",
+      "hp": 2,
+      "score": 250,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 2
+      },
+      "script": "rocket.homing",
+      "sprite": "enemies/viral-dart",
+      "anim": {
+        "frames": 4,
+        "ticks": 6
+      },
+      "params": {
+        "launchTicks": 30,
+        "launchSpeed": 1.5,
+        "speed": 1.95,
+        "turnRate": 4,
+        "homeTicks": 110
+      },
+      "drop": null
+    },
+    {
+      "id": "nucleus-warden",
+      "boss": {
+        "code": "NW-06",
+        "displayName": "NUCLEUS WARDEN",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 4500,
+        "x": 514,
+        "y": 168,
+        "parts": [
+          {
+            "name": "shell",
+            "hp": 48,
+            "hurtbox": {
+              "hw": 20,
+              "hh": 14
+            },
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/captain-shell",
+            "anim": {
+              "frames": 2,
+              "ticks": 30
+            },
+            "explosion": "large"
+          },
+          {
+            "name": "claw-left",
+            "parent": "shell",
+            "x": -30,
+            "y": -16,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 12
+            },
+            "sprite": "bosses/shield-plate",
+            "score": 300
+          },
+          {
+            "name": "claw-right",
+            "parent": "shell",
+            "x": -30,
+            "y": 16,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 12
+            },
+            "sprite": "bosses/shield-plate",
+            "score": 300
+          }
+        ],
+        "phases": [
+          {
+            "script": "captain.circler",
+            "params": {
+              "cx": 320,
+              "cy": 168,
+              "rx": 210,
+              "ry": 84,
+              "speed": 2.25,
+              "fireTicks": 100,
+              "ring": 8,
+              "bulletSpeed": 1.575
+            }
+          }
+        ]
+      }
+    },
+    {
       "id": "mantle-regent",
       "boss": {
         "code": "MR-06",
@@ -253,7 +391,7 @@
           {
             "name": "eye",
             "x": -15,
-            "hp": 90,
+            "hp": 108,
             "hurtbox": {
               "hw": 9,
               "hh": 9
@@ -272,7 +410,7 @@
             "parent": "mantle",
             "x": -18,
             "y": -25.5,
-            "hp": 24,
+            "hp": 30,
             "radius": 9,
             "sprite": "bosses/regent-root",
             "score": 1500,
@@ -303,8 +441,16 @@
             "sprite": "bosses/regent-segment"
           },
           {
-            "name": "tip-top",
+            "name": "seg-top-4",
             "parent": "seg-top-3",
+            "x": -15,
+            "radius": 7.5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-top",
+            "parent": "seg-top-4",
             "x": -15,
             "radius": 6,
             "vulnerable": "never",
@@ -316,7 +462,7 @@
             "parent": "mantle",
             "x": -18,
             "y": 25.5,
-            "hp": 24,
+            "hp": 30,
             "radius": 9,
             "sprite": "bosses/regent-root",
             "score": 1500,
@@ -347,13 +493,79 @@
             "sprite": "bosses/regent-segment"
           },
           {
-            "name": "tip-bottom",
+            "name": "seg-bottom-4",
             "parent": "seg-bottom-3",
+            "x": -15,
+            "radius": 7.5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-bottom",
+            "parent": "seg-bottom-4",
             "x": -15,
             "radius": 6,
             "vulnerable": "never",
             "gun": true,
             "sprite": "bosses/regent-tip"
+          },
+          {
+            "name": "plate-l",
+            "parent": "mantle",
+            "x": 0,
+            "y": -30,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 15,
+              "hh": 12
+            },
+            "sprite": "bosses/regent-plate"
+          },
+          {
+            "name": "plate-r",
+            "parent": "mantle",
+            "x": 0,
+            "y": 30,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 15,
+              "hh": 12
+            },
+            "sprite": "bosses/regent-plate"
+          },
+          {
+            "name": "blister-upper",
+            "parent": "mantle",
+            "x": 20,
+            "y": -10,
+            "hp": 14,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 6
+            },
+            "sprite": "bosses/regent-blister",
+            "anim": {
+              "frames": 4,
+              "ticks": 10
+            },
+            "score": 800
+          },
+          {
+            "name": "blister-lower",
+            "parent": "mantle",
+            "x": 20,
+            "y": 10,
+            "hp": 14,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 6
+            },
+            "sprite": "bosses/regent-blister",
+            "anim": {
+              "frames": 4,
+              "ticks": 10
+            },
+            "score": 800
           }
         ],
         "phases": [
@@ -365,13 +577,13 @@
               "sweepTicks": 30,
               "guardTicks": 70,
               "openTicks": 120,
-              "fireTicks": 90,
+              "fireTicks": 85,
               "ways": 3,
               "spread": 40,
               "bulletSpeed": 1.8
             },
             "until": {
-              "hpBelow": 60,
+              "hpBelow": 72,
               "partsDestroyed": ["root-top", "root-bottom"],
               "count": 1
             }
@@ -384,16 +596,16 @@
               "sweepTicks": 30,
               "guardTicks": 60,
               "openTicks": 110,
-              "fireTicks": 80,
+              "fireTicks": 78,
               "ways": 3,
               "spread": 40,
               "bulletSpeed": 1.875,
-              "gunTicks": 100,
-              "launchTicks": 200,
+              "gunTicks": 95,
+              "launchTicks": 190,
               "count": 1
             },
             "until": {
-              "hpBelow": 28,
+              "hpBelow": 34,
               "partsDestroyed": ["root-top", "root-bottom"]
             }
           },
@@ -409,10 +621,10 @@
               "ways": 5,
               "spread": 36,
               "bulletSpeed": 1.95,
-              "gunTicks": 80,
+              "gunTicks": 75,
               "ring": 10,
               "ringSpeed": 1.575,
-              "launchTicks": 180,
+              "launchTicks": 175,
               "count": 1
             }
           }

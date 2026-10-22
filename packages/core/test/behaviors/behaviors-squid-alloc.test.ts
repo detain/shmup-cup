@@ -77,10 +77,10 @@ describe('core/behaviors boss.squid allocation (M2-13)', () => {
       parts.findIndex((p) => p.name === 'root-top'),
       parts.findIndex((p) => p.name === 'root-bottom'),
     ];
-    // The eye below 28 of 90 (it passes 60 on the way): its last phase.
-    w.bosses.damagePart(core, 31, 0);
+    // The eye below 34 of 108 (it passes 72 on the way): its last phase.
+    w.bosses.damagePart(core, 38, 0);
     stepWorld(w, input);
-    w.bosses.damagePart(core, 32, 0);
+    w.bosses.damagePart(core, 38, 0);
     stepWorld(w, input);
     expect(boss.phase).toBe(2);
     let t = 0;

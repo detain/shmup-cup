@@ -18,7 +18,7 @@ import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
-  it('covers zone F of M2-13: cleared in 3–6 minutes, its boss shot down', () => {
+  it('covers zone F of M2-13: cleared in 4–6 minutes, its boss shot down', () => {
     const { file, replay } = readGolden('zone-f-god');
     expect(replay.header.stageId).toBe('zone-f');
     expect(replay.header.assisted).toBe(true);
@@ -27,7 +27,9 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
       bossDefeated: true,
       deathTicks: [],
     });
-    expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    // The v2 band (design §2): 4 to 6 minutes. The LAND's `--only zone-f` re-bless raises
+    // the recording into the window (an intentional red until then).
+    expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
     expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
     // CELL VAULT's run shot tissue cells open on the way (breaks since the last restore).
     const vault = playGolden(readGolden('zone-f-god').replay);
@@ -38,8 +40,9 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
     // CELL VAULT at Arcade difficulty: on the ported world the 4-way bot dies to the rank-scaled
     // fire before the clear (v1's survived): game over with its two recorded deaths, after having
     // shot tissue open on the way. R2-04 Z2 thinned F's openings and de-overlapped section 1, so
-    // the blessed run survives ~330 ticks longer to its first death — still two deaths, still
-    // game over, still no boss.
+    // the blessed run survived longer to its first death; R5-06's remaster moves the deaths with
+    // the rebuilt stage — so, as in zone-b, zone-c and zone-e's outcome files, the assertion
+    // pins the COUNT and the invariants above, never the tick list itself.
     const arcade = readGolden('zone-f-arcade');
     expect(arcade.replay.header.assisted).toBe(false);
     expect(arcade.replay.header.config.difficulty).toBe('arcade');
@@ -48,7 +51,7 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
       bossDefeated: false,
       lives: 0,
     });
-    expect(arcade.file.expected.deathTicks).toEqual([3900, 4891]);
+    expect(arcade.file.expected.deathTicks).toHaveLength(2);
     expect(playGolden(arcade.replay).world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(
       0,
     );

@@ -16,13 +16,16 @@
  *   VAULT's regenerating walls are zone A's tissue, PRISM LABYRINTH's stacked rush zone A's cube);
  *   the solid rock is drawn only in the set's own rock colours, opaque in every pixel; the
  *   `content/tilesets/` files name their sprite and list the tiles in zone A's order; all seven
- *   sets have distinct rims and rock.
+ *   sets have distinct rims and rock.;
+ * - and, since R5-06.S2, the v2 stand-in set: frozen, unique names drawn at the shipped art
+ *   scale, frames of one size, hittable sprites clearly visible, the same pixels every run.
  *
  * @module
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
+import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
 import * as prism from '../../../scripts/assets/procedural/prism.mjs';
@@ -141,9 +144,9 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
   );
 
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
-    for (const [file, sprite] of [
-      ['terrain-vault', 'tiles/terrain-vault'],
-      ['terrain-prism', 'tiles/terrain-prism'],
+    for (const [file, sprite, names] of [
+      ['terrain-vault', 'tiles/terrain-vault-v2', vault.VAULT_V2_TILE_NAMES],
+      ['terrain-prism', 'tiles/terrain-prism', terrain.TERRAIN_TILES],
     ] as const) {
       const data = JSON.parse(
         readFileSync(
@@ -153,7 +156,7 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
       ) as { id: string; sprite: string; tiles: { name: string }[] };
       expect(data.id).toBe(file);
       expect(data.sprite).toBe(sprite);
-      expect(data.tiles.map((t) => t.name)).toEqual([...terrain.TERRAIN_TILES]);
+      expect(data.tiles.map((t) => t.name)).toEqual([...names]);
     }
   });
 
@@ -162,5 +165,49 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
     expect(palettes).toHaveLength(9);
     expect(new Set(palettes.map((p) => p.surface)).size).toBe(palettes.length);
     expect(new Set(palettes.map((p) => p.rock.join())).size).toBe(palettes.length);
+  });
+});
+
+describe('scripts/assets/procedural/vault — R5-06.S2 v2 stand-ins (zone-f.md §14)', () => {
+  const sprites = vault.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE });
+  const v2 = sprites.slice(vault.VAULT_SPRITES.length);
+
+  it('names the §14 list frozen, unique and kebab-pathed', () => {
+    expect(Object.isFrozen(vault.VAULT_V2_SPRITES)).toBe(true);
+    expect(new Set(vault.VAULT_V2_SPRITES).size).toBe(vault.VAULT_V2_SPRITES.length);
+    for (const name of vault.VAULT_V2_SPRITES) {
+      expect(name).toMatch(/^(bg|enemies|bosses|fx|tiles)\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+    expect(new Set(vault.VAULT_V2_TILE_NAMES).size).toBe(vault.VAULT_V2_TILE_NAMES.length);
+    expect(vault.VAULT_V2_TILE_NAMES.length).toBe(23);
+  });
+
+  it('draws v2 frames of one size, hittable sprites clearly visible, animations that animate', () => {
+    for (const sprite of v2) {
+      const [first, ...rest] = sprite.frames;
+      for (const frame of rest) {
+        expect([frame.width, frame.height], sprite.name).toEqual([first.width, first.height]);
+      }
+      if (sprite.hitFlash === true) {
+        for (const frame of sprite.frames) expect(drawn(frame), sprite.name).toBe(true);
+      }
+      const text = sprite.frames.map((f) => Buffer.from(f.data).toString('base64'));
+      if (sprite.frames.length > 1) {
+        expect(new Set(text).size, sprite.name).toBe(sprite.frames.length);
+      }
+      for (const [clip, frames] of Object.entries(sprite.animations ?? {})) {
+        expect(frames.length, `${sprite.name}.${clip}`).toBeGreaterThan(0);
+        for (const f of frames) {
+          expect(f, `${sprite.name}.${clip}`).toBeGreaterThanOrEqual(0);
+          expect(f, `${sprite.name}.${clip}`).toBeLessThan(sprite.frames.length);
+        }
+      }
+    }
+  });
+
+  it('draws the v2 set the same pixels every run', () => {
+    expect(bytes(v2)).toEqual(
+      bytes(vault.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE }).slice(14)),
+    );
   });
 });

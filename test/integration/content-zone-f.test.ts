@@ -9,6 +9,7 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -20,6 +21,7 @@ import {
 } from '@shmup/core';
 import { loadMusicContent, resolveMusicCues } from '@shmup/audio-web';
 import { describe, expect, it } from 'vitest';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
@@ -181,6 +183,56 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     );
     expect(first?.count).toBe(1);
     expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('cell.chase');
+  });
+
+  it('keeps the rebuilt MANTLE REGENT inside the bible height with a reachable core (R5-06.S4b)', () => {
+    const stage = stageOf('zone-f');
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    // §8: the rebuild is exactly 19 parts (13 + 2 segments + 2 plates + 2 blisters) inside the
+    // 24-part cap, and exactly three phases.
+    expect(boss.parts).toHaveLength(19);
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    expect(boss.phases).toHaveLength(3);
+    const { manifest } = buildAtlas();
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const anchorY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    // Assembled like `scripts/doc-images.mjs`: each sprite centred on its anchor, parents first.
+    let minY = 0;
+    let maxY = 0;
+    for (const [i, part] of boss.parts.entries()) {
+      if (part.sprite === undefined) continue;
+      const ref = manifest.sprites[part.sprite]?.frames[0];
+      if (ref === undefined) continue;
+      const h = manifest.frames[ref].h;
+      const centre = Math.round(anchorY(i));
+      minY = Math.min(minY, centre - Math.floor(h / 2));
+      maxY = Math.max(maxY, centre + h - Math.floor(h / 2));
+    }
+    expect(maxY - minY).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    const core = boss.parts.find((p) => p.core);
+    expect(core).not.toBeUndefined();
+    expect(core?.vulnerable).not.toBe('never');
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    for (const name of core?.requires ?? []) {
+      expect(byName.get(name)?.vulnerable, name).not.toBe('never');
+    }
+    // The §8 firing line (reachability where zone A's `requires` list stands here): the eye is
+    // defenceless by design, and at the straight pose no arm circle reaches its rows — every
+    // tentacle part hangs ∓25.5 out with radius ≤ 9 (|y| − r ≥ 16.5 past the core's half-height),
+    // so a shot on the core's line never clinks until the tentacles choose to curl over it. The
+    // S6 bot run is the kill proof (§8's law), so this file asserts the geometry, not a
+    // `requires` list.
+    for (const [i, p] of boss.parts.entries()) {
+      if (p.radius === 0) continue;
+      expect(Math.abs(anchorY(i)) - p.radius, p.name).toBeGreaterThan(core?.hurtbox?.hh ?? 0);
+    }
   });
 
   it.each(zones)(

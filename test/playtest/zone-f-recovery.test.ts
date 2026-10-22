@@ -19,7 +19,7 @@ describe('playtest: zone F recovery after every checkpoint (M2-13)', () => {
     expect(drops).toBe(inWindow);
   });
 
-  it('checks four checkpoints per zone', () => {
-    expect(cases).toHaveLength(4);
+  it('checks seven checkpoints per zone', () => {
+    expect(cases).toHaveLength(7);
   });
 });

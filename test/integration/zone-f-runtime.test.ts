@@ -8,16 +8,17 @@
  * - **CELL VAULT's grabbing tentacles.** In the tentacle garden a claw on its chain lunges at the
  *   ship passing within reach, pulling it with a pull field, then retracts.
  * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of CELL VAULT
- *   puts the camera at the checkpoint and flies the ship in to open space (its terrain box never
- *   in rock, tissue or crystal) inside the view;
+ *   puts the camera at the checkpoint — the first four at the surface, the three from 13,200 on
+ *   down in the sub-vault at y 96 (design §2/§4) — and flies the ship in to open space (its
+ *   terrain box never in rock, tissue or crystal) inside the view;
  * - **the stage skip** into zone F (`stageSkip: 'boss'`, the debug skip the playtest uses)
  *   brings MANTLE REGENT in, fighting inside the view with the ship in open space;
- * - **an Arcade restart in the tissue passage** (a death after the checkpoint at 2,200) rolls the
+ * - **an Arcade restart in the tissue passage** (a death after the checkpoint at 3,600, design §4) rolls the
  *   regenerating walls back at once: every tissue cell shot away stands again when the ship
  *   returns, long before a cell's own `regen` would have grown it back;
  * - **MANTLE REGENT's launched cells** (its second and third phases launch its `minion`, the
- *   chasing cell): none in the first phase, then one out of the eye inside the view every 200
- *   ticks.
+ *   chasing cell): none in the first phase, then one out of the eye inside the view every 190
+ *   ticks (§8's rebuild cadence, R5-06.S4b).
  */
 import {
   BossState,
@@ -167,15 +168,20 @@ describe('integration: zones F and G in the game (M2-13)', () => {
 });
 
 describe('integration: zones F and G, edge cases (M2-13)', () => {
-  const starts: [string, number, number][] = [];
+  const starts: [string, number, number, number][] = [];
   for (const [letter, stageId] of [['f', 'zone-f']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
-    stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
+    // The camera is down in the sub-vault (y 96, §2) from the checkpoint at 13,200 on (§4);
+    // the lip at 10,500 still sits at the surface as the descent's pan opens.
+    stage.checkpoints.forEach((checkpoint, i) => {
+      const y = checkpoint.x >= 13200 ? 96 : 0;
+      starts.push([letter, i, checkpoint.x, y]);
+    });
   }
 
   it.each(starts)(
-    'practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space',
-    (letter, checkpoint, x) => {
+    'practice start in zone %s at checkpoint %i (x %i): the camera at y %i, the ship flown in to open space',
+    (letter, checkpoint, x, y) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
       game.debug.godMode = true;
@@ -186,15 +192,34 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expectCameraAt(world, x);
-      expect(world.camera.y).toBe(0);
+      if (x === 16800) {
+        // §2's k4 at a settled 1.95 px/tick: the fly-in step advances exactly one scroll tick
+        // past the checkpoint, so the camera lands x + 1.95 rather than inside the key's band.
+        expect(world.camera.x).toBeCloseTo(x + 1.95, 6);
+      } else {
+        expectCameraAt(world, x);
+      }
+      if (x === 10500) {
+        // The throat lip: §2's hold+pan has opened but not moved a pixel row yet.
+        expect(world.camera.y).toBeLessThan(1);
+      } else {
+        expect(world.camera.y).toBe(y);
+      }
       steps(game, 90);
       expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)}`);
+      if (x === 10500) {
+        // The 90 settle steps carry the pan into the descent — somewhere on its 96-px way.
+        expect(world.camera.y).toBeGreaterThan(0);
+        expect(world.camera.y).toBeLessThanOrEqual(96);
+      } else {
+        expect(world.camera.y).toBe(y);
+      }
     },
   );
 
-  it('checks four checkpoints per zone', () => {
-    expect(starts).toHaveLength(4);
+  it('checks seven checkpoints per zone, the last three down in the sub-vault', () => {
+    expect(starts).toHaveLength(7);
+    expect(starts.filter((s) => s[3] === 96)).toHaveLength(3);
   });
 
   it.each([['zone-f', 'mantle-regent']])(
@@ -318,8 +343,9 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
         expect(e.x - world.camera.x).toBeLessThan(PLAYFIELD_W);
       }
     }
-    // Phase 1 launches one every 200 ticks (rank-scaled — the default rank leaves it as it is).
+    // Phase 1 launches one every 190 ticks (rank-scaled — the default rank leaves it as it is;
+    // §8's rebuild cadence, R5-06.S4b).
     expect(launches.length).toBeGreaterThanOrEqual(3);
-    for (let k = 1; k < launches.length; k++) expect(launches[k] - launches[k - 1]).toBe(200);
+    for (let k = 1; k < launches.length; k++) expect(launches[k] - launches[k - 1]).toBe(190);
   });
 });

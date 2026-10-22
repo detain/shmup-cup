@@ -64,23 +64,23 @@
       "blackHole": false
     }
   },
-  "ticks": 2112,
+  "ticks": 1941,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA7QSBgAQBAQUAtwGCgAgBAgUAQ4KACAECBgCGAYKACAECBQA/gYAEAQEFAAKCgAgBAgsAEYGABAEAAYGABAEBBAAagoAIAQIFAKABgYAEAQEFACaBgAQBAQUAngGBgAQBAQYAOoGABAEBBQA1gYAEAQEGAGaCgAgBAgYAAYGABAEBDAAQgoAIAQABgYAEAQAQgoAIAQABgYAEAQEGAOoB",
-    "AMAQ"
+    "ACiCgAgBAgIA4QSBgAQBAQUAqwGCgAgBAgUAvQGBgAQBAQUAnAGCgAgBAgUAJIGABAEBBQACgoAIAQIMAA+BgAQBAAGBgAQBAAGCgAgBAgEAeYKACAECBQAogYAEAQEBAAGCgAgBAgcAvwGBgAQBAQsAH4KACAEAAYKACAECBAD8AQ==",
+    "AJUP"
   ],
   "hashes": [
-    2010795341,
-    915817248,
-    1001601897
+    2379109393,
+    3184434963,
+    1761008212
   ],
-  "finalHash": 1548984531,
+  "finalHash": 258808902,
   "description": "the stage skip to MANTLE REGENT (M2-13 tests): the full loadout under the Arcade penalty, the eye shot between the curls of its tentacles",
   "expected": {
     "status": "stageClear",
-    "ticks": 2112,
-    "score": 46970,
+    "ticks": 1941,
+    "score": 46710,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

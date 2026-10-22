@@ -128,15 +128,23 @@
     ],
     "zone-f": [
       "bg/vault-folds",
+      "bg/vault-haze",
       "bg/vault-membrane",
+      "bg/vault-ribcage",
+      "bg/vault-substrate",
+      "bosses/regent-blister",
       "bosses/regent-fin",
+      "bosses/regent-plate",
       "enemies/chaser-cell",
       "enemies/lymph-mote",
       "enemies/mitosis-cell",
       "enemies/polyp-turret",
       "enemies/spore-sac",
+      "enemies/tissue-cyst",
       "enemies/vault-claw",
-      "tiles/terrain-vault"
+      "enemies/viral-dart",
+      "fx/glow-vault-node",
+      "tiles/terrain-vault-v2"
     ],
     "zone-g": [
       "bg/prism-facets",
