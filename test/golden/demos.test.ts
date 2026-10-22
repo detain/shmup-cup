@@ -10,7 +10,10 @@
  * With `SHMUP_GOLDEN_UPDATE=1` the test first re-records every demo from the bot and rewrites its
  * file, then checks the new files the same way. A filtered re-bless (R5-P.P3's `--only`, seen as
  * `SHMUP_GOLDEN_ONLY`) re-records only the demos of the listed zones; the others — and the format
- * sample, whose `stageId` is `null` — are verified but left untouched.
+ * sample, whose `stageId` is `null` — are verified but left untouched. A zone LAND's list is
+ * composite (R5-01.S7: `--only zone-a,bonus-range` — the shape wave-11's zones G and B reuse),
+ * so an id naming a stage that owns no demo simply selects none, and the run fails loud only
+ * when the list names no demo stage at all; `golden.test.ts` keeps the goldens' side honest.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -38,16 +41,20 @@ import { GOLDEN_ONLY_ENV, GOLDEN_UPDATE_ENV, goldenStageSelected } from './golde
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-// An --only list naming no known demo stage fails loud, never blesses nothing (R5-P.P3 review).
+// An --only list naming no known demo stage fails loud, never blesses nothing (R5-P.P3 review;
+// relaxed to that intent by R5-01.S7.0 — a composite zone LAND list, wave-10's
+// `--only zone-a,bonus-range` reused by wave-11's zones G and B, names a bonus stage whose goldens
+// the same run blesses but that owns no demo: such an id selects no demo here, and the guard
+// throws only when the list names no demo stage at all — a pure typo list, and a list of stages
+// with no demo among them, still fail loud).
 if (updating) {
   const only = (process.env[GOLDEN_ONLY_ENV] ?? '')
     .split(',')
     .map((id) => id.trim())
     .filter((id) => id !== '');
   const known = new Set(DEMO_SCENARIOS.map((scenario) => scenario.stageId));
-  const unknown = only.filter((id) => !known.has(id));
-  if (unknown.length > 0)
-    throw new Error(`SHMUP_GOLDEN_ONLY names no demo stage: ${unknown.join(', ')}`);
+  if (only.length > 0 && !only.some((id) => known.has(id)))
+    throw new Error(`SHMUP_GOLDEN_ONLY names no demo stage: ${only.join(', ')}`);
 }
 
 describe('attract demos (content/demos, 4-way bot)', () => {
