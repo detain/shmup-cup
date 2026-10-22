@@ -1,5 +1,5 @@
 /**
- * Browser tests of zone B (plan M2-11), split out of `zones-bc.spec.ts`, in headless Chromium, on
+ * Browser tests of zone B (plan M2-11), split out of the `zones-bc` pair, in headless Chromium, on
  * the test builds (their `window.__shmupDebug` hands the spec the game; frame advance for exact
  * tick counts):
  *

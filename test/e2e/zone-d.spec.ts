@@ -1,5 +1,5 @@
 /**
- * Browser tests of zone D (plan M2-12), split out of `zones-de.spec.ts`, in headless Chromium, on
+ * Browser tests of zone D (plan M2-12), split out of the `zones-de` pair, in headless Chromium, on
  * the test builds (their `window.__shmupDebug` hands the spec the game; frame advance for exact
  * tick counts):
  *
