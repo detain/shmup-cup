@@ -132,61 +132,101 @@ grey, until it leaves the view (they are lost) or dies to a Mega Crash or a blue
 drift free and can be picked up again). Give it the `hunter.option` behaviour, a generous
 hurtbox and no `megaCrashImmune`.
 
-`zone-b.enemies.json` and `zone-c.enemies.json` (M2-11) are the rosters of the real zones B and C.
+`zone-b.enemies.json` and `zone-c.enemies.json` (M2-11, remastered by R5-02 and R5-03) are the
+rosters of the real zones B and C.
 BRINE NEBULA: `froth` (a splitting bubble → two `froth-bead`s, `bubble.split`), `froth-bead` (a small
 bubble, also flown in popcorn streams), `brood-bubble` (a bubble with a `gill-dart` fish inside —
 `bubble.split` with `count` 1), `gill-dart` (`rammer.aimed`), `reef-jelly` (`pattern.loop` on a sine
 mover: the `brine.jelly-ring` pattern of `content/patterns/zone-b.patterns.json`), `urchin` /
-`urchin-ceiling` (`turret.floor`), `maw-rocket` (`rocket.homing`: launched away from the middle
+`urchin-ceiling` (`turret.floor`), `brine-mine` (`mine.burst`, new in R5-02: bobs a slow sine
+until a ship nears its row, stops, burns a 24-tick fuse and bursts into a ring of eight reds at
+2.25), `spume-skipper` (`cell.chase`, new in R5-02: drifts in along its row, peels onto the
+nearest ship on a wide capped arc and never fires — flown on `garden-swoop`, the one curve of
+`zone-b.paths.json`), `maw-rocket` (`rocket.homing`: launched away from the middle
 row, homing for a while, then straight on), the captain **SPUME HERALD** (`spume-herald`,
 `captain.launcher` launching brood bubbles, a 30-s time limit) and the boss **GALVANIC MAW**
 (`galvanic-maw`, GM-02 — `boss.maw`: a mechanical fish tracking the player's height; its mouth, the
-`whenOpen` core, opens with its jaws — the parts attached to it — moving apart, fires cutters and,
-from the second phase, rings while open; the two rocket pods launch its `minion`, the homing
-rockets). DUNE EXPANSE: `dune-worm` (`worm.burst` on the floor: a formation is one worm),
+`whenOpen` core, opens with its jaws — the parts attached to it — moving apart, fires aimed
+3-ways and, from the third phase, 5-way fans, plus rings of red from the second while open; the
+two rocket pods launch its `minion`, the homing rockets); ten parts in the R5-02 rebuild — three
+shootable `spine` plates ride the hull, the crowned fish's extra damage). DUNE EXPANSE: `dune-worm` (`worm.burst` on the floor: a formation is one worm),
 `husk-crawler` / `husk-crawler-floor` (`walker.floor` on the ceiling / floor), `sand-skimmer`
-(`fan.loop`), `dust-devil` (`pattern.loop`, the `dune.whirl` spiral), `sand-geyser` (`volcano.lob`)
+(`fan.loop`), `spine-burrower` (`turret.floor`, new in R5-03: one aimed needle every 120 ticks),
+`dune-lance` (`rear.swoop`, new in R5-03: overtakes, holds one needle back from its turn column,
+then leaves), the captain **DUNE SCORPION** (`dune-scorpion`, DS-01, new in R5-03 —
+`captain.ram`: four waves of 5-way fans from its two claw guns, then a ram down the player's
+lane; its tail is pure armour), `dust-devil` (`pattern.loop`, the `dune.whirl` spiral — the
+definition still ships; R5-03 retired it from the dunes' placement), `sand-geyser` (`volcano.lob`)
 and its `sand-clod`s (`rock.fall`), `widow-drone` (`rammer.aimed`) and the boss **SANDGRAVE WIDOW**
 (`sandgrave-widow`, SW-03 — `boss.widow`: scuttling inside a box, spreads from its head — which
-takes damage only once its two fangs are gone —, spider drones launched from its spinnerets and,
+takes damage only once its two fangs are gone —, spider drones launched from its spinnerets —
+the R5-03 rebuild made them guns, 24 HP apiece — and,
 from the second phase, silk lines — telegraphed horizontal lasers, one at a time).
 
-`zone-d.enemies.json` and `zone-e.enemies.json` (M2-12) are the rosters of the real zones D and E.
+`zone-d.enemies.json` and `zone-e.enemies.json` (M2-12, remastered by R5-04 and R5-05) are the
+rosters of the real zones D and E.
 MAGMA DEEP: `ember-wisp` (`drifter.sine` popcorn), `cinder-bat` (`fan.loop` on the `bat-swoop-*`
 paths), `magma-cone` (`volcano.lob` on the floor) and its `magma-bomb`s (`rock.fall`, `trigger` 0),
-`cinder-rock` (`rock.fall` hanging from a cave roof, `trigger` 60), `slag-crawler` /
-`slag-crawler-floor` (`walker.floor`), `basalt-turret` / `basalt-turret-ceiling` (`turret.floor`)
+`cinder-rock` (`rock.fall` hanging from a cave roof, `trigger` 90), `slag-crawler` /
+`slag-crawler-floor` (`walker.floor`), `basalt-turret` / `basalt-turret-ceiling` (`turret.floor`),
+`slag-mine` (`mine.burst`, new in R5-04: swings on an 18-px sine, arms within 120 px, a 42-tick
+fuse and an eight-way ring at 1.8) and `magma-geode` (`hatch.spawner` on the ground, new in
+R5-04: every 120 ticks it cracks and lets a `cinder-bat` out, four on screen at most), the
+captain **OBSIDIAN CLAW** (`obsidian-claw`, OC-04, new in R5-04 — `captain.crab`: a shell with
+two 8-HP claw arms, sidestepping its shelf and turning a ring of ten ovals every 100 ticks)
 and the boss **CINDER BASTION** (`cinder-bastion`, CB-04 — `boss.bastion`: a core battleship whose
 core is guarded by **rotating shield arms** — a `hub` part attached to the core, no hurtbox and no
-sprite, turned by the behaviour, and four armoured arm segments with circle hurtboxes attached to
-it — plus two lane-laser emitters, the guns; the arms reverse in the later phases, spreads and rings
+sprite, turned by the behaviour, and six armoured arm segments with circle hurtboxes — two
+three-joint chains — chained from it — plus two lane-laser emitters, the guns, and two soft
+pods; the arms reverse in the later phases, spreads and rings
 come from the core). TEMPEST RIDGE: `hail-drifter` (`drifter.sine`), `gale-kite` (`fan.loop` on the
 rear-entry `kite-overtake-*` paths), `squall-jumper` (`rear.swoop`: in from behind along its row,
 a shot back from its turn point, then away left), `crag-turret` / `crag-turret-ceiling`
-(`turret.floor`), `thunderhead` (`pattern.loop` + `tempest.bolt`), `steed-foal` (`rocket.homing`)
+(`turret.floor`), `thunderhead` (`pattern.loop` + `tempest.bolt`), `ice-slab` (`rock.fall` from the
+ceiling, new in R5-05: a floe that lets go when a ship passes under it and falls slow),
+`lightbird` (`rammer.aimed`, new in R5-05: enters, telegraphs 30 ticks level with you and dashes
+dead straight, never firing), `steed-foal` (`rocket.homing`), the captain **THE STORM EYE**
+(`storm-eye`, TE-01, new in R5-05 — `captain.circler`: an eye with two cloud guns swinging on a
+wide ellipse over the ridge, rings of eight aimed through the turning gap; no warning, no
+camera lock)
 and the boss **SQUALL STEED** (`squall-steed`, SS-05 — `boss.steed`: a seahorse bobbing on a tall
 ellipse; its chest, the `whenOpen` core, opens with its lids and launches the homing foals, the
-snout — the gun — fires spreads and, in the last phase, a ring as the chest shuts).
+snout — the gun — fires spreads and, in the last phase, a ring as the chest shuts; twelve parts
+in the R5-05 rebuild, the mane, crest and flanks decoration).
 
-`zone-f.enemies.json` and `zone-g.enemies.json` (M2-13) are the rosters of the real zones F and G.
+`zone-f.enemies.json` and `zone-g.enemies.json` (M2-13, remastered by R5-06 and R5-07) are the
+rosters of the real zones F and G.
 CELL VAULT: `lymph-mote` (`drifter.sine` popcorn), `chaser-cell` (`cell.chase`: drifts in along its
 row, then chases the nearest ship with a capped turn for a while, then swims straight on),
 `mitosis-cell` (`bubble.split` whose `child` is the chaser: shot, it divides into two chasing
 cells), `vault-claw` / `vault-claw-ceiling` (`tentacle.grab` on the floor / ceiling),
-`polyp-turret` / `polyp-turret-ceiling` (`turret.floor`), `spore-sac` / `spore-sac-low`
+`polyp-turret` / `polyp-turret-ceiling` (`turret.floor`), `tissue-cyst` (`hatch.spawner`, new in
+R5-06: every 130 ticks it buds a `chaser-cell` off, three on screen at most), `viral-dart`
+(`rocket.homing`, new in R5-06: launches away from the middle row, then turns after the nearest
+ship for two seconds, never firing), `spore-sac` / `spore-sac-low`
 (`pattern.loop` + `vault.spores` on a `waypoint` mover: it hovers at the right, then drifts off up /
-down) and the boss **MANTLE REGENT** (`mantle-regent`, MR-06 — `boss.squid`: a squid whose two
-tentacles — a breakable root, three armoured segments and a gun at the tip, circle-hit parts chained
+down), the captain **NUCLEUS WARDEN** (`nucleus-warden`, NW-06, new in R5-06 — F's first mid-boss,
+`captain.circler`: a shell with two 8-HP shield claws riding a wide orbit and turning rings of
+eight through the gap) and the boss **MANTLE REGENT** (`mantle-regent`, MR-06 — `boss.squid`: a squid whose two
+tentacles — a breakable root, four armoured segments and a gun at the tip, circle-hit parts chained
 from the mantle — curl in front of its eye (the core) and uncurl in a cycle; breaking a tentacle
-ends the first phase; from the second phase the eye launches chasing cells, its `minion`). PRISM
-LABYRINTH: `glint-mote` (`drifter.sine`), `prism-cube` (`cube.stack`: a formation is a seeded cube
-rush), `facet-turret` / `facet-turret-ceiling` (`turret.floor`), `halo-crystal` (`orbiter.loop` on a
+ends the first phase; from the second phase the eye launches chasing cells, its `minion`; the
+R5-06 rebuild grew it to nineteen parts, two soft 14-HP `blister`s swelling beside the eye and
+the mantle plates added to its armour). PRISM
+LABYRINTH: `glint-mote` (`drifter.sine`), `prism-glint` (`drifter.sine` on a slower, wider wave,
+new in R5-07: the rush's capsule carrier), `prism-cube` (`cube.stack`: a formation is a seeded cube
+rush), `prisma` (`cube.pincer`, new in R5-07: two cubes meet ±12 px off the midline at a fixed
+column, then shoot flat out — the pincer that closes the corridor), `facet-turret` / `facet-turret-ceiling` (`turret.floor`), `halo-crystal` (`orbiter.loop` on a
 path, rings), `prism-lens` / `prism-lens-low` (`pattern.loop` + `prism.fan` on a `waypoint` mover),
-`geode` (`bubble.split` into three `geode-shard`s — a `bubble.split` with `count` 0 that only
-drifts) and the boss **FACET MONARCH** (`facet-monarch`, FM-07 — `boss.facet`: a crystal core
-`afterParts` of two crystals in front of it, an armoured hull behind it, and two armoured tentacle
+the captain **PRISM SENTINEL** (`prism-sentinel`, PS-08, new in R5-07 —
+`captain.circler`: a spinning core guarded by four orbs that cannot be broken, only flown
+around), `geode` (`bubble.split` with `count` 3: shot, it bursts into three `prism-shard`s — the
+R5-07 rename of the old `geode-shard` child, a `drifter.sine` flake worth 75; the `geode-shard`
+definition still ships, unreferenced) and the boss **FACET MONARCH** (`facet-monarch`, FM-07 — `boss.facet`: a crystal core —
+84 HP in the R5-07 rebuild — `afterParts` of two crystals in front of it, an armoured hull behind
+it, two shootable gun `emitter`s under the shoulders, and two armoured tentacle
 arms waving like claws with guns at their tips; rings and, in the last phase, lane lasers from the
-core).
+core; twenty parts, the monarch's crown grown over the old fifteen).
 
 `zone-h.enemies.json` and `zone-i.enemies.json` (M2-14) are the rosters of the final zones H and I.
 IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `hatch-bay` / `hatch-bay-ceiling`

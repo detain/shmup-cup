@@ -8,12 +8,30 @@ floor").
 
 `terrain-a.tileset.json` describes the placeholder tileset `tiles/terrain-a` the asset
 pipeline draws (`scripts/assets/procedural/terrain.mjs`): solid rock, flat floor / ceiling /
-wall edges, and 45° and 22.5° slopes for floors and ceilings. `terrain-reef.tileset.json` and
-`terrain-dune.tileset.json` (M2-11) are the same tiles in zone B's coral-and-stone and zone C's sand
-colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN_PALETTES`);
-`terrain-magma.tileset.json` and `terrain-ridge.tileset.json` (M2-12) are zone D's basalt with an
-ember rim and zone E's storm-grey granite with a pale frost rim (`tiles/terrain-magma`,
-`tiles/terrain-ridge`). Zone D's brick maze uses their `brick` tile (hp 4).
+wall edges, and 45° and 22.5° slopes for floors and ceilings. The six zone sets below it
+arrived recoloured in M2-11 … M2-13 at 12 px with the world port (R2-02); the v2 art round
+then gave each remastered zone a set of its own — the tileset JSON's `sprite` re-anchored to a
+`tiles/terrain-<zone>-v2` sheet drawn by that zone's generator (`brine` / `dune` / `magma` /
+`tempest` / `vault` / `prism` .mjs, decision RR-1's generator v2 path). Every v2 sheet keeps its
+v1 set's twenty names and frames verbatim first — the R5-P.P13 rule keeps every zone set a
+name-prefix of `terrain-a` — and only then lays design §10's variant tiles. The v1 sheets stay
+for the scale-1 atlas until the post-release clean-up.
+`terrain-reef.tileset.json` (R5-02, 29 tiles) is zone B's coral-and-stone: nine fresh names —
+three `coral-floor` grades, `floor-edge` / `ceil-edge`, the two `coral-corner` joins, and the
+hydrothermal `vent-rock` (hp 6, 10 points) with its spent `vent-rock-broken` (hp 3).
+`terrain-dune.tileset.json` (R5-03, 36 tiles) is zone C's sand: sixteen — `solid-2` / `solid-3`,
+`floor-2` / `floor-3` / `ceiling-2` grades, four `corner` joins plus the two ceiling corners, the
+ruin's `brick-crack` (hp 2) and `brick-crack-2` (hp 1), and the `decor-tuft` / `decor-bone` /
+`decor-glass` scenery; its stage map is pure heightfield, as it always was.
+`terrain-magma.tileset.json` and `terrain-ridge.tileset.json` (M2-12, remastered by R5-04 and
+R5-05 at 24 and 30 tiles) are zone D's basalt with an ember rim and zone E's storm-grey granite
+with a pale frost rim (`tiles/terrain-magma-v2`, `tiles/terrain-ridge-v2`). The magma set's four
+new names: a `lava-drip` hazard — the one the deep run's ceiling actually places — and
+`obsidian` (hp 6, 15 points), `brick-hot` (hp 3) and the empty `vent` completing design §10's
+row in the set; the ridge set mirrors the dune's
+grades (ten new names, its `brick-crack` pair tougher at hp 4) with `decor-scree` /
+`decor-ice-patch` / `decor-pine` scenery. Zone D's brick maze is its `brick` (hp 4)
+wall under the `lava-drip` teeth.
 `terrain-azure.tileset.json` (R5-01) is zone A's remaster set at `tiles/terrain-azure` — drawn
 by `scripts/assets/procedural/azure.mjs`, **26 tiles at 12 px**: `terrain-a`'s first twenty names
 and frames verbatim (the R5-P.P13 rule keeps every zone set a name-prefix of `terrain-a`) plus
@@ -23,13 +41,19 @@ like `tissue`). It is a v2-only name (`native: true`, decision RR-1): the scale-
 sees it, and the interim-pipeline contract allows a whole tileset to be absent there as long as
 no v1/v2 tiles are mixed (R5-01.FIX1, `732bfe1`); `terrain-a` stays the common-page art the dev
 ranges draw.
-`terrain-vault.tileset.json` and `terrain-prism.tileset.json` (M2-13) are zone F's dark olive flesh
-with a pale-green rim and zone G's deep-blue crystal with an ice-blue rim (`tiles/terrain-vault`,
-`tiles/terrain-prism`). Zone F's regenerating walls use their `tissue` tile (hp 3, regen 240), zone
-G's cube rush stacks into their `cube` tile (hp 2). `terrain-citadel.tileset.json` and
+`terrain-vault.tileset.json` and `terrain-prism.tileset.json` (M2-13, remastered by R5-06 and
+R5-07 at 23 and 24 tiles) are zone F's dark olive flesh with a pale-green rim and zone G's
+deep-blue crystal with an ice-blue rim (`tiles/terrain-vault-v2`, `tiles/terrain-prism-v2`).
+The vault's new trio is the living wall rebuilt: `tissue-live` (hp 4, regrows after only 120
+ticks, 12 points) is what heals in front of you, `calcified` (hp 6) is the tissue that forgot
+how, and an empty `nodule` decorates the membrane; the plain `tissue` tile still lines the
+veins. Zone F's regenerating walls are its `tissue-live`, zone G's cube rush still stacks into
+its `cube` tile (hp 2), and the refraction hall's shutters and crystal walls ride the prism
+set's new `crystal` (hp 5) and the floor-sharp `shard-floor` (hp 8, 20 points); `crystal-hot`
+(hp 3) and the empty `facet-glow` complete the §10 row in the set. `terrain-citadel.tileset.json` and
 `terrain-abyss.tileset.json` (M2-14) are zone H's steel plating with an amber hazard rim and zone
 I's black-teal rock with a faint glowing rim (`tiles/terrain-citadel`, `tiles/terrain-abyss`); zone
-H's pistons are moving blocks of their `solid` tile.
+H's pistons are moving blocks of their `solid` tile — both sets wait on their zones' remasters.
 
 ## Format (formatVersion 1)
 

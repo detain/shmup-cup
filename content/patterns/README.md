@@ -107,10 +107,13 @@ they have no file:
 - [`zone-b.patterns.json`](zone-b.patterns.json) — `brine.jelly-ring` (zone B's `reef-jelly`: a
   six-bullet ring, the first aimed, at 1.275 px/tick);
 - [`zone-c.patterns.json`](zone-c.patterns.json) — `dune.whirl` (zone C's `dust-devil`: a short
-  two-armed spiral of needles at 1.65 px/tick);
+  two-armed spiral of needles at 1.65 px/tick — the definition still ships, but the R5-03
+  remaster places no `dust-devil` in the dunes, so nothing on the route runs it);
 - [`zone-e.patterns.json`](zone-e.patterns.json) — `tempest.bolt` (zone E's `thunderhead`: a
-  streak of four aimed needles, 1.275 → 2.4 px/tick — the first fire aimed, the others `sequence`
-  0 in direction and +0.375 in speed);
+  streak of four aimed needles, 1.275 → 2.25 px/tick — the first fire aimed, the next two
+  `sequence` 0 in direction and +0.375 in speed, the last an explicit fire at 2.25; a wave-11
+  review cure lowered that terminal from 2.4 so the bolt stays inside the aimed-3 gate at
+  campaign rank);
 - [`zone-f.patterns.json`](zone-f.patterns.json) — `vault.spores` (zone F's `spore-sac`: a fan of
   three round spores, 56 units apart, aimed, at 1.125 px/tick);
 - [`zone-g.patterns.json`](zone-g.patterns.json) — `prism.fan` (zone G's `prism-lens`: two fans of

@@ -139,8 +139,10 @@ export const LOOKAHEAD_SPEED_GAIN = 120 * WORLD_SCALE;
 
 /**
  * Vertical swing at or above which a moving block is read ahead of its current position
- * (R5-P.P12, zone H's gate slabs; v1 40 px). Today's movers swing less (gimmick-range's ±48,
- * zone-h's ∓33), so no shipped run meets it and block predictions never open a recording.
+ * (R5-P.P12, zone H's gate slabs; v1 40 px). gimmick-range's ±48 and zone-h's ∓33 movers stay
+ * under it; only zone G's refraction-hall shutters cross it (96 px), and the playtest premise
+ * admits their stage by shape — the four rows pinned in its zone-G case — so block predictions
+ * open on that recording and on no other shipped run.
  */
 export const SLAB_SWING = 40 * WORLD_SCALE;
 

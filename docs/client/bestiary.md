@@ -100,6 +100,8 @@ something else.
 | ![](../images/enemies/gill-dart.png) | **GILL DART**<br>1 HP · 150 pts | The nebula's rammer: a finned dart that lines up for 18 ticks and then runs its line at 2.625 px a tick. |
 | ![](../images/enemies/reef-jelly.png) | **REEF JELLY**<br>4 HP · 400 pts | A drifting bell that swims a wide sine and fires scripted bullet patterns between 30-tick rests. It is the zone's first real bullet source — learn its rhythm and the rest of the nebula is easy. |
 | ![](../images/enemies/urchin.png) | **URCHIN**<br>3 HP · 300 pts | A spined turret rooted to the reef floor or ceiling, aiming at you every 140 ticks. |
+| ![](../images/enemies/brine-mine.png) | **BRINE MINE**<br>3 HP · 350 pts | It bobs on an almost-still tide until your ship comes within a playfield row of it — then it plants, burns a 24-tick fuse and lets go of eight reds in every direction at once. It sits in fields through the riptide lanes. Shoot it early, or do not pass near it. |
+| ![](../images/enemies/spume-skipper.png) | **SPUME SKIPPER**<br>2 HP · 250 pts | It sails the pearl garden on one baked curve, then peels onto you and follows on the widest arc a hunter takes — three seconds of chase, no bullets. For once the bullet is the enemy. |
 | ![](../images/enemies/maw-rocket.png) | **MAW ROCKET**<br>1 HP · 100 pts | A homing torpedo, fired in pairs by the zone's boss. It drifts for 20 ticks, then turns after you for a full second before it gives up and flies straight. Shoot them, or make them chase you into a wall. |
 
 ### SPUME HERALD · SH-02
@@ -108,7 +110,10 @@ something else.
 
 **4,000 pts.** A ridged shell with two launch tubes that glides in from the right **with no
 WARNING and without stopping the scroll**. The zone keeps moving while you fight it. It is here to
-teach you that not every big thing gets a siren.
+teach you that not every big thing gets a siren. The remaster grew it a crown: the two launch
+tubes (10 HP, 500 pts each) spit brood bubbles in pairs every 110 ticks, 8 HP fins (400 pts) ride
+its flanks, and the herald itself tracks your height and answers with aimed three-way spreads
+every 80. Thirty seconds of clock, and the scroll never waits.
 
 ### GALVANIC MAW · GM-02
 
@@ -117,7 +122,11 @@ teach you that not every big thing gets a siren.
 **35,000 pts.** A mechanical fish the size of the playfield. Hull and jaws are armour — shots
 clink off them and nothing happens. The only way in is the **mouth**, and the mouth is only open
 when it is about to bite. Sit under the jaw, wait for it to yawn, and empty everything you have
-into the throat before it shuts.
+into the throat before it shuts. The remaster crowned the fish: two gun pods (20 HP, 1,000 pts
+each) launch the homing MAW ROCKETS, and three dorsal spines (10 HP, 600 pts) stand always
+hittable along the back. As the gullet bleeds the gape comes faster and the fire grows: an aimed
+three-way to start, then a ring of eight reds with every yawn, and in the last rage the mouth
+gapes widest of all on a five-way fan and a ring of ten.
 
 ---
 
@@ -134,19 +143,34 @@ A desert route the Tide colonised from below. Half of this zone is the floor.
 | ![](../images/enemies/dune-worm.png) | **DUNE WORM**<br>2 HP · 100 pts | It is not on screen until you are close. Fly within range and it erupts from the sand, arcs up at 4.95 px a tick and falls back under gravity. The dunes are full of them, and nothing warns you. |
 | ![](../images/enemies/husk-crawler.png) | **HUSK CRAWLER**<br>3 HP · 250 pts | A shelled walker that crawls the dunes for 80 ticks, plants itself for 50, fires a spread, and starts walking again. Hit it while it is stopped. |
 | ![](../images/enemies/sand-skimmer.png) | **SAND SKIMMER**<br>1 HP · 100 pts | A paper-thin glider that comes in on a baked curve — fast, fragile, and always in a formation whose shape is the actual attack. |
-| ![](../images/enemies/dust-devil.png) | **DUST DEVIL**<br>6 HP · 500 pts | A standing column of sand that walks slowly against the scroll and fires patterned bursts with 70-tick pauses. It soaks up fire; do not fight it in the open unless you have to. |
 | ![](../images/enemies/sand-geyser.png) | **SAND GEYSER**<br>10 HP · 700 pts | A vent in the dunes that lobs three clods at a time in a spreading arc, every 110 ticks. Ten hit points means it is usually cheaper to fly past it. |
 | ![](../images/enemies/sand-clod.png) | **SAND CLOD**<br>1 HP · 30 pts | What a geyser throws — and what the ceiling drops the moment you fly under it. One hit point, worth almost nothing, kills you exactly as dead. |
 | ![](../images/enemies/widow-drone.png) | **WIDOW DRONE**<br>2 HP · 150 pts | The SANDGRAVE WIDOW's brood, sent ahead of her. Slower to commit than most rammers, and tougher. |
+| ![](../images/enemies/spine-burrower.png) | **SPINE BURROWER**<br>4 HP · 300 pts | A spine standing out of the sand — a turret in everything but the name: four hit points of patience and one aimed needle every two seconds. The canyon lanes are drawn by where these sit. |
+| ![](../images/enemies/dune-lance.png) | **DUNE LANCE**<br>3 HP · 350 pts | It comes off the horizon behind you at a run, pulls level ahead of the ship for a heartbeat, and puts one needle back down the line it came before it is gone. You will not see it twice in the same second. |
+
+### DUNE SCORPION · DS-01
+
+![DUNE SCORPION](../images/bosses/dune-scorpion.png)
+
+**4,000 pts.** The deep dunes' first mid-boss, opened at x 10,350: a captain, so no siren and no
+scroll stop. The tail you cannot shoot — it is decoration — and the two claw guns (10 HP, 600 pts
+each) are what makes the fight. It runs four waves of five-way fans every 42 ticks, then throws
+its whole body down the lane you are in and back, resting a bare second between passes. With the
+claws gone it rams you without covering fire, which is not an improvement.
 
 ### SANDGRAVE WIDOW · SW-03
 
 ![SANDGRAVE WIDOW](../images/bosses/sandgrave-widow.png)
 
 **35,000 pts.** A spider the size of a gunship, hung over the dunes on lines you cannot see until
-she spins them. Break the **fangs** first — while they stand, everything else on her is armour.
-Then it becomes a dance around her drones and the silk lines she lays across the playfield. She
-never spins a second line before the first has faded, so there is always one clean side.
+she spins them. Break the **fangs** first (16 HP, 800 pts each) — while they stand, the head is not
+in the fight at all. The remaster gave her spinnerets a trigger finger: each is now a 24 HP gun
+(1,000 pts) that lays a telegraphed silk beam across a lane and drops widow drones into the
+room, while she **scuttles** a narrow strip at the right of the room. With the fangs off the
+fans come faster and the silk starts arriving on a timer; below twenty-eight hit points it is a
+five-way fan every second. She never spins a second line before the first has faded, so there is
+always one clean side.
 
 ---
 
@@ -168,14 +192,31 @@ floor. The terrain here can kill you on its own, and often does it first.
 | ![](../images/enemies/cinder-rock.png) | **CINDER ROCK**<br>2 HP · 100 pts | A boulder in the cave roof that lets go when you come within 90 px and falls fast. In the maze this is the trap: the gap you are aiming for is the one with the rock over it. |
 | ![](../images/enemies/slag-crawler.png) | **SLAG CRAWLER**<br>3 HP · 250 pts | A walker of fused rock, slow even for a walker, that stops to fire a spread every 90 ticks of walking. |
 | ![](../images/enemies/basalt-turret.png) | **BASALT TURRET**<br>4 HP · 300 pts | The cave's gun: four hit points, an aimed shot every 150 ticks, and a habit of being placed exactly where the corridor narrows. |
+| ![](../images/enemies/slag-mine.png) | **SLAG MINE**<br>2 HP · 200 pts | Cooled crust floating over a live vent. It swings a short, low arc; when you close within 120 px it stops, burns a 42-tick fuse and lets go of an eight-way ring. The deep run's ceiling is strung with them. |
+| ![](../images/enemies/magma-geode.png) | **MAGMA GEODE**<br>9 HP · 450 pts | A blister in the cave floor that cracks open every two seconds to release a CINDER BAT climbing out — up to four live at once. Nine hit points: gun it, or fight an endless sky. |
+
+### OBSIDIAN CLAW · OC-04
+
+![OBSIDIAN CLAW](../images/bosses/obsidian-claw.png)
+
+**4,500 pts.** The first captain below the caldera, posted on a shelf at the bottom of the upper
+caves: a crab of fused rock whose two claws (8 HP, 300 pts each) are its armour, while the
+48 HP shell is the gun. It sidesteps its shelf in 80-tick shuffles and answers with a turning ring
+of ten red ovals every 100 ticks, each volley turned a further 24° so you cannot learn one line.
+Break the claws and the shell keeps the appointment with you alone.
 
 ### CINDER BASTION · CB-04
 
 ![CINDER BASTION](../images/bosses/cinder-bastion.png)
 
-**35,000 pts.** A battleship that fills the shaft it sits in. Its core is exposed — but two
-armoured arms turn around it, and lane lasers sweep the room. Fire when no arm covers the core;
-hitting the arms does nothing but noise.
+**40,000 pts.** A battleship that fills the shaft it sits in. Its core is exposed — 96 hit points
+dead centre — but two arms turn around it, each in three segmented joints (12, 10, 8 HP from the
+shoulder in), and while an arm crosses the core your shots cross the arm. Two emitter guns
+(22 HP, 1,500 pts) sweep the lane lasers, and prow, tower and guards are armour that never
+comes off. Shoot the arms away when you have the spare time; shoot the core when you have a
+clear line. Below three quarters of its hull the spin reverses and the lasers double to aimed
+three-ways; below three eighths the arms turn flat out, the laser lanes overlap, and a turning
+ring of ten joins them.
 
 ---
 
@@ -195,6 +236,18 @@ The first zone that attacks the half of the screen you have been ignoring.
 | ![](../images/enemies/crag-turret.png) | **CRAG TURRET**<br>3 HP · 300 pts | A ridge gun, aiming every 130 ticks — the busiest turret of the middle zones. |
 | ![](../images/enemies/thunderhead.png) | **THUNDERHEAD**<br>5 HP · 500 pts | A storm cell that drifts against the scroll and fires patterned bursts with 40-tick rests. It is slow, it is wide, and it is in the way. |
 | ![](../images/enemies/steed-foal.png) | **STEED FOAL**<br>1 HP · 100 pts | A little homing seahorse the boss sends out in litters. It turns after you for over a second. |
+| ![](../images/enemies/ice-slab.png) | **ICE SLAB**<br>2 HP · 150 pts | A floe in the ridge roof that lets go when you pass under it. Gravity is gentle, so it hangs in your lane for a beat or two after it falls — and the hole it opened is now above the next slab's lane. |
+| ![](../images/enemies/lightbird.png) | **LIGHTBIRD**<br>3 HP · 350 pts | The storm's cleanest attempt on your life: it enters level, squares up for half a second with its tail spread, then crosses the ridge flat and dead-straight at 2.7 px a tick — on the line you were standing on. No bullets. The dash is the bullet. |
+
+### THE STORM EYE · TE-01
+
+![THE STORM EYE](../images/bosses/storm-eye.png)
+
+**6,000 pts.** The ridge's first captain, and it does not announce itself: the eye opens at
+x 8,250 mid-pass. A 44 HP core under a swirl you cannot hurt, with two cloud guns (12 HP, 600 pts
+each) riding just above and below it, the whole thing sweeping the room on an ellipse most of its
+width and half its height at 2.7 px a tick. It rings eight purples every 95 ticks with half
+the gap always on its own line. Shoot the guns, or thread the gap it leaves.
 
 ### SQUALL STEED · SS-05
 
@@ -202,7 +255,10 @@ The first zone that attacks the half of the screen you have been ignoring.
 
 **35,000 pts.** A vast seahorse of plate and cable that bobs on the storm. Body, head and lids are
 armour. The **chest** opens to let the foals out — that is the only moment it can be hurt, and
-the only moment the screen is full of little homing things.
+the only moment the screen is full of little homing things. The remaster gave it a mane, a crest
+and flank plates, and made its snout a 26 HP gun (1,000 pts) you can take off before it fires;
+below two thirds its hull the chest opens on a shorter beat and the foals come in pairs, and in
+the last rage the lids gape widest of all on a five-way fan and a ring of ten.
 
 ---
 
@@ -222,6 +278,18 @@ The Tide's nursery. The walls are tissue: you can shoot through them, and they h
 | ![](../images/enemies/vault-claw.png) | **VAULT CLAW**<br>5 HP · 400 pts | An eight-link tentacle rooted to the wall. It extends 108 px looking for you, and if your ship is inside its grab radius it **takes hold and pulls** — into the wall, usually. Shoot the root, not the arm. |
 | ![](../images/enemies/polyp-turret.png) | **POLYP TURRET**<br>4 HP · 300 pts | A growth in the tissue that aims every 190 ticks. |
 | ![](../images/enemies/spore-sac.png) | **SPORE SAC**<br>4 HP · 500 pts | It flies to a fixed post high or low in the room, anchors there for 320 ticks laying down patterns, and lifts away. Two of them, one high one low, is the zone's signature crossfire. |
+| ![](../images/enemies/tissue-cyst.png) | **TISSUE CYST**<br>9 HP · 450 pts | A swelling in the floor or the ceiling that pops out a CHASER CELL every 130 ticks, three live at once. Nine hit points. Leave the cysts and the cell count only ever goes up. |
+| ![](../images/enemies/viral-dart.png) | **VIRAL DART**<br>2 HP · 250 pts | It is fired away from the middle of the room to gather speed, then turns and chases you for two seconds at 1.95 px a tick before it forgets how to aim. Kill it during the turn. |
+
+### NUCLEUS WARDEN · NW-06
+
+![NUCLEUS WARDEN](../images/bosses/nucleus-warden.png)
+
+**4,500 pts.** The vault's first mid-boss — v1 never had one; the remaster posts it over the heart
+chamber at x 9,450. A 48 HP shell with two shield plates (8 HP, 300 pts each) riding it like an
+open book, the whole thing orbiting the room on a 420-px ellipse at 2.25 px a tick and letting
+go of a ring of eight purples every 100 ticks, half-gap turned with the orbit. The plates stop
+your shots from reaching the shell. They do not stop the ring.
 
 ### MANTLE REGENT · MR-06
 
@@ -229,7 +297,11 @@ The Tide's nursery. The walls are tissue: you can shoot through them, and they h
 
 **40,000 pts.** The thing the vault was grown around. Its mantle and its tentacles are armour, and
 the tentacles curl in front of the **eye** whenever it feels threatened. Wait for them to open,
-hit the eye, and get out before they close on you.
+hit the eye, and get out before they close on you. The remaster stands it nineteen parts tall:
+the tentacle chains are four long armoured segments ending in gun tips, each rooted to the mantle
+by a 30 HP joint (1,500 pts) whose breaking changes the regent's fire for good, and two soft
+blisters (14 HP, 800 pts) pulse under the eye. Eye (108 HP), roots and blisters are all the
+regent has that will take a bullet — nineteen parts, five of them flesh.
 
 ---
 
@@ -248,8 +320,20 @@ Everything here is glass, including the walls that appear in front of you.
 | ![](../images/enemies/facet-turret.png) | **FACET TURRET**<br>4 HP · 300 pts | A crystal gun that aims every 180 ticks, grown into corridor walls you cannot shoot through. |
 | ![](../images/enemies/halo-crystal.png) | **HALO CRYSTAL**<br>6 HP · 600 pts | An orbiting crystal that circles the room and lets go of an eight-way ring every 120 ticks. |
 | ![](../images/enemies/prism-lens.png) | **PRISM LENS**<br>5 HP · 500 pts | It takes a post at the top or bottom of the corridor, holds for 360 ticks firing patterns, then lifts away. |
-| ![](../images/enemies/geode.png) | **GEODE**<br>8 HP · 700 pts | A slow armoured nodule. Eight hit points, and it breaks into **three** shards scattered wide. |
-| ![](../images/enemies/geode-shard.png) | **GEODE SHARD**<br>1 HP · 50 pts | What comes out of a GEODE — quick, small, and going somewhere you are. |
+| ![](../images/enemies/geode.png) | **GEODE**<br>8 HP · 700 pts | A slow armoured nodule. Eight hit points, and it breaks into **three prism shards** scattered wide. |
+| ![](../images/enemies/prism-shard.png) | **PRISM SHARD**<br>1 HP · 75 pts | What comes out of a GEODE now — quick, small, riding a wave of its own into where you are. Worth more than the shard it replaces; it should be, it kills just as dead. |
+| ![](../images/enemies/prism-glint.png) | **PRISM GLINT**<br>2 HP · 150 pts | The slowest thing in the labyrinth carrying the most: a capsule in its belly, drifting a wide lazy wave. Two hit points. Never let the turret lines make you forget to shoot it. |
+| ![](../images/enemies/prism-cube.png) | **PRISMA**<br>1 HP · 100 pts | Two of them, floor and ceiling, snapping toward one point a hair off the midline at the left edge and leaving flat before you can react — a cube pincer wearing the rush's art. One hit point, and the heart chamber is full of them. |
+
+### PRISM SENTINEL · PS-08
+
+![PRISM SENTINEL](../images/bosses/prism-sentinel.png)
+
+**4,000 pts.** The captain that grows out of the refraction hall's doorframe at x 8,040: a spinning
+36 HP core behind four orbs that **cannot be broken** — the sentinel never loses an orb, the orbs
+are the armour, permanently. It orbits the room's centre at 2.4 px a tick and rings eight purples
+every 90, half the gap always in line with the orbit. You shoot the core through the gap, or you
+do not shoot the core.
 
 ### FACET MONARCH · FM-07
 
@@ -257,6 +341,11 @@ Everything here is glass, including the walls that appear in front of you.
 
 **40,000 pts.** A crown of crystal segments around a single core, growing new facets as you break
 the old ones. The core is the only thing that counts; the facets exist to make you waste time.
+The remaster counts them: twenty parts, of which the two 22 HP crystals (1,000 pts) before the
+84 HP core are the fight — while either stands the core is not in it — the two emitters under the
+shoulders (16 HP, 900 pts) are the guns, and a pair of curling four-segment arms carry gun tips
+in front of the crown. In the last rage the monarch telegraphs a lane laser — always one at a
+time — and its rings of ten come faster.
 
 ---
 

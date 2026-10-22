@@ -47,6 +47,12 @@ Everything else on this page can wait behind this one. Set up per
   a remote-only clear proves on hardware — Back / Home / exit behaviour,
   audio, saves across a relaunch and an update install, 15 minutes without a hitch, gamepad and
   keyboard. Guide: [`debug-tools.md`](debug-tools.md#the-m1-release-check).
+- **The six wave-11 zone sign-offs** — zones B (`1d3fd600`), C (`247e39fb`), D (`927b137f`),
+  E (`fe4cdae3`), F (`5319d732`) and G (`66122e87`) each landed their remaster with recorded
+  god-mode clears; none of the six has been played on a monitor since. The owner's part per zone:
+  a `build:dev` install on the M7, fly the stage, sign it off — the WARNING-to-boss stretch in
+  particular, where each remaster's new set pieces arrive (the dive, the dune-surf, the chase,
+  the shutters).
 - **M2 / v1.0 checks** — plan [§8.5](../old/shmup_plan.md#85-m2-on-device-checks-both-monitors):
   co-op, three routes to both endings, the attract loop, rebinding, the 30-minute soak, the update
   and uninstall save rules, live reload. Guide:
@@ -180,7 +186,9 @@ archive in a browser before you publish it.
   `replay.last` kept by a v2 build, shown delete-only —
   [`extra-modes-and-replays.md`](extra-modes-and-replays.md)). R2-04's play session continues the
   look: zones A, D and I on the M7 with the overlay's `TPF` and `RENDER` — and zone A again after
-  R5-01's remaster: the rebuilt 21,000 px of it has never been seen on a TV.
+  R5-01's remaster: the rebuilt 21,000 px of it has never been seen on a TV. Wave 11 rewrites that
+  last clause six times over: the remasters of zones B, C, D, E, F and G each replace their v1
+  entry here — none of them has ever drawn a frame on a TV either.
 - **Real art and music**, whenever they exist. The hand-off is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
   replaces, so nothing else has to change. R5-01's zone A joins that queue as complete
@@ -188,12 +196,36 @@ archive in a browser before you publish it.
   (five enemy types and the marshal's shell carry one each; the two parallax bands, three decor
   props and the 26-tile `terrain-azure` set carry none) — drawn by
   `scripts/assets/procedural/azure.mjs` and replaceable PNG for PNG through
-  the ingest tool with a `.art.json` provenance record, no code change.
+  the ingest tool with a `.art.json` provenance record, no code change. Wave 11's six remasters
+  joined the same queue the day they landed: the `brine` / `dune` / `magma` / `tempest` / `vault`
+  / `prism` generator sets and their `terrain-*-v2` tilesheets in the same folder, each zone's new
+  roster names and rebuilt boss parts, and the `@flash` siblings the packer derives from them.
+  Each zone's own art round waits on one owner decision first — the FLUX serving-model ruling,
+  [`art-provenance.md`](../dev/art-provenance.md) §8 — before candidates are generated.
 - **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
   two art lines side by side: v1's sprites still draw the scale-1 atlas behind its digest pin
   (`5c35219b…44b3`), the v2 azure set draws the art-scale build. After a v2.0.x release the owner
   schedules the clean-up that deletes the v1 sources and the pin's reason to exist — until then
   nothing waits on it and both builds stay green.
+- **The campaign remaster's last two zones.** Zone H's remaster landed half on the run's branch
+  and waits on wave 12 to finish it (its S4c four-pod parade option is banked in the run record);
+  zone I's remaster is **walled on an owner decision** — the run's `RESUME.md` holds the
+  four-option menu the review round left standing. Nothing here ships-blocked: v1's citadel and
+  abyss still fly on master. The walling fact, in one line: zone I's god-mode bot run measured
+  369.25 s against the contract's 240–360 s ceiling, and the review proved the fight-adjacent
+  cells are ±20 s RNG lotteries — the menu is an honest response, not a bug.
+- **Fight-pacing taste rows — disclosed, not tuned.** The wave-11 reviews measured the landed
+  remasters' boss clocks under the bot, and four sit under their design bands: SANDGRAVE WIDOW
+  21.9 s, CINDER BASTION 14.0 s, SQUALL STEED 26.9 s (against the design's 40–50 s estimate — the
+  record's 49.4 / 27.7 / 17.9 / 26.9 s are different measurement windows of one content), FACET
+  MONARCH 31.2 s. Every hard gate stayed green and no boss parameter moved for a measurement;
+  whether the bands still describe the fights the design wanted is an owner call with a controller.
+- **Zone G's gallery mouth (O1).** The remaster's first recorded death is the four-way bot's, at
+  the bonus gallery's mouth near camera x ≈ 5,458 — outside the slide window the stage's design
+  §10 quoted. The golden says so openly under the identity law
+  ([debug-and-replays.md](../dev/debug-and-replays.md)) and CI is green; whether the mouth reads
+  as too mean for human hands is the owner's taste call on a `build:dev` fly-through, and the
+  same measurement law keeps it honest either way.
 
 ---
 
@@ -232,4 +264,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | The v2 TV-bench run on the M7 — stand-in scenario, lazy-load and context-loss timings (plan_resolution.md R0-03, W5-15 / W5-19) | Nothing — it produces the measured zone-load verdict R3-04 waits on | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
 | Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |
+| The six wave-11 remasters played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
+| Zone I's remaster — the owner's four-option menu; zone H's wave-12 finish | Nothing — v1's citadel and abyss still ship | the run's `RESUME.md` / plan_resolution.md §17 |
+| Boss-fight pacing bands (C, D, E, G) and zone G's gallery mouth | Nothing — disclosed by the goldens, not tuned | [§3](#3-polish--blocks-nothing) |
 | The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |

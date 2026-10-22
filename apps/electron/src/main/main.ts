@@ -9,7 +9,7 @@
  * `pnpm dev` runs) loads the Vite dev server instead for HMR.
  *
  * **Window (M2-17).** The window remembers its settings in the same folder (`window.json`,
- * `main/window-state.ts`): fullscreen, the scale of the 384×216 frame (×1 … ×10, lowered to fit
+ * `main/window-state.ts`): fullscreen, the scale of the 640×360 frame (×1 … ×10, lowered to fit
  * the screen) and its position — saved once a move settles (`move`, which every platform emits:
  * Linux has no `moved`) and again when the window closes; the app waits for these writes before it
  * quits. **F11** / **Alt+Enter** toggle fullscreen, **Ctrl+=** / **Ctrl+-**

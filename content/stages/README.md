@@ -12,7 +12,7 @@ capsule carriers over a low floor at 1.05 px/tick, (2) the vane gallery of path 
 rammers (checkpoint 2,700), (3) a floor / ceiling corridor with turrets, walkers, hatches and
 the new `warden` (checkpoint 6,300), (4) the marshal block: the captain **AZURE MARSHAL**
 (AM-01) opens on a `boss` event at 10,350, no WARNING (checkpoint 9,600), (5) the blue lick at
-**2.25 px/tick** — the fastest shipped key under the 4-way gate (checkpoint 12,000),
+**2.25 px/tick** (checkpoint 12,000),
 (6) the Azure spires: three full-height terrain columns with staggered 48-px openings
 (checkpoint 15,600), (7) the calm (checkpoint 18,300), then the WARNING at 19,950 and the
 rebuilt HALCYON BULWARK. `pnpm content:check` checks its capsule budget (47 capsule sources
@@ -88,90 +88,132 @@ boss, A to I, in turn.
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
 the zone map ([`content/campaign/`](../campaign/README.md)). M2-10 shipped them as short
 placeholders so every route could be played end to end; M2-11 … M2-14 replaced every one of them
-with a real zone (below).
+with a real zone (below); R5-02 … R5-07 (wave 11) remastered zones B–G onto their v2 designs —
+the six bullets below describe the landed files, each ≈ 20,000–21,000 px, five to six minutes
+at the bot's pace. Zones H and I still fly their M2-14 text: H's remaster lands in two halves
+(wave 12), I's waits on an owner pacing decision (`docs/client/outstanding-work.md`).
 
-**Zones B and C (M2-11)** are the real zones, each ≈ 3½–4 minutes with the 4-way bot, four
-checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own tileset,
+**Zones B and C (M2-11, remastered by R5-02 and R5-03)** are real zones, each with six or seven
+checkpoints, a high-speed section, a calm with two capsule carriers before the WARNING, their own
+tileset,
 songs (`stages`-scoped tracks), Direct-mode item plan and roster
 ([`content/enemies/zone-b.enemies.json`](../enemies/zone-b.enemies.json), `zone-c.enemies.json`):
 
-- `zone-b.stage.json` — **BRINE NEBULA** (9,800 px, `terrain-reef`): the shallows (splitting `froth`
-  bubbles, popcorn bead streams, `brood-bubble`s with a `gill-dart` fish inside, carriers), a reef
-  tunnel with `urchin` turrets on its floor and ceiling (checkpoint 2,000), the mid-boss **SPUME
-  HERALD** (a captain launching brood bubbles, `boss` event at 3,800), the deep current with
-  `reef-jelly` ring-firers and the **hidden bonus entrance** — a `gap` at the top between two reef
-  blocks (world x 5,616–5,680, y 0–24: fly under the left block, then up into it) into
-  `brine-grotto.stage.json` (**PEARL GROTTO**, type `bonus`: bonus capsules, a 1UP, bubbles, two
-  brick barriers) — (checkpoint 4,600), a 1.4 px/tick riptide (checkpoint 6,800), the calm, then
-  **GALVANIC MAW** (GM-02). A `wave` raster effect makes the sea band (`bg/brine-sea`, painted in its
+- `zone-b.stage.json` — **BRINE NEBULA** (20,400 px, `terrain-reef`, a 744-px-tall heightfield —
+  `rowsTall` 62): the shallows at 1.2 px/tick (splitting `froth`
+  bubbles, popcorn bead streams, `brood-bubble`s with a `gill-dart` fish inside, carriers), a
+  coral tunnel with `urchin` turrets on its floor and ceiling (checkpoint 3,000), the mid-boss **SPUME
+  HERALD** (a captain launching brood bubbles, `boss` event at 5,400), **the dive** (checkpoint
+  6,600: a camera key that holds, drops to y 400 through the nebula's deep band and lifts back
+  at 9,300), the `reef-jelly` gardens, the **2.25 px/tick riptide**
+  (checkpoint 12,000), the pearl garden (checkpoint 15,900 — from 13,050 the new `spume-skipper`
+  rows comb across the lane, the last two flown on `garden-swoop`, the one curve of
+  `zone-b.paths.json`, among `brine-mine` fields; and here the **hidden bonus entrance**
+  waits: a `gap` `bonus` event at 15,640, the gap at world x 16,234–16,330 along the ceiling:
+  fly up into it) into
+  `brine-grotto.stage.json` (**PEARL GROTTO**, type `bonus`, 2,700 px: bonus capsules, a 1UP,
+  bubbles, brick barriers) — then the calm and the WARNING at 19,800 for
+  **GALVANIC MAW** (GM-02, ten rebuilt parts). A `wave` raster effect makes the sea band (`bg/brine-sea`, painted in its
   palette cycle's four colours) and the nebula (`bg/brine-nebula`) wobble.
-- `zone-c.stage.json` — **DUNE EXPANSE** (9,600 px, `terrain-dune`): dunes with `dune-worm` sand
-  worms (a formation is one worm: its head lies in the sand until a ship comes within 190 px, then
-  bursts out on an arc and dives back through the ground, the segments following) and `sand-skimmer`
+- `zone-c.stage.json` — **DUNE EXPANSE** (21,000 px, `terrain-dune`, `rowsTall` 35 — pure
+  heightfield, no `rle` rows — the dunes are all generated): dunes with `dune-worm` sand
+  worms (a formation is one worm: its head lies in the sand until a ship comes within 285 px,
+  then bursts out on an arc and dives back through the ground, the segments following) and `sand-skimmer`
   swoops on `content/paths/zone-c.paths.json` curves, a canyon with `husk-crawler` walkers on its
-  ceiling and floor, `dust-devil` spirals and `sand-geyser`s (checkpoint 2,200), the worm field
-  (checkpoint 4,400), a 1.3 px/tick sandstorm run (checkpoint 6,600), the calm, then **SANDGRAVE
-  WIDOW** (SW-03). Heat `haze` raster effects shimmer over the twin suns (`bg/dune-suns`) and the dune
+  ceiling and floor, the new `spine-burrower` guns and `sand-geyser`s (checkpoint 3,900), the worm flats
+  (checkpoint 7,800), the **DUNE SCORPION** captain (`boss` event at 10,350), the deep dunes
+  (checkpoint 13,800), the **dune-surf diagonal — 2.55 px/tick** (checkpoint 16,650: the fastest
+  camera key any shipped zone flies, admitted through the look-ahead gate by its shape — a
+  ramped pan up to the skimmer pass, not a flat sprint), the glass field under a 1.95 surge back
+  to the floor (checkpoint 17,400), the calm, then the WARNING at 20,100 for **SANDGRAVE
+  WIDOW** (SW-03, eleven parts, her spinnerets now guns). Heat `haze` raster effects shimmer over the twin suns (`bg/dune-suns`) and the dune
   ridge band (`bg/dune-ridge`).
 
-**Zones D and E (M2-12)** are real zones on the same recipe (four checkpoints, a high-speed
-section, a calm with two carriers, their own tileset, songs, item plan and roster —
+**Zones D and E (M2-12, remastered by R5-04 and R5-05)** are real zones on the same recipe (six
+or seven checkpoints, a high-speed section, a calm with two carriers, their own tileset, songs,
+item plan and roster —
 [`content/enemies/zone-d.enemies.json`](../enemies/zone-d.enemies.json), `zone-e.enemies.json`):
 
-- `zone-d.stage.json` — **MAGMA DEEP** (9,600 px, `terrain-magma`, a 400-px-tall map — `rowsTall`
-  50): the caldera fields on the surface (`ember-wisp` streams, `cinder-bat` swoops on the
-  `content/paths/zone-d.paths.json` curves, erupting `magma-cone`s lobbing lava bombs, a
-  `basalt-turret`), the eruption field (checkpoint 2,200), then **the dive**: a camera key at 3,560
-  with `hold` 150 and `yTo` 200 stops the scroll over the pit and pans the camera 200 px down into
-  the caves, where it stays. In the caves (checkpoint 4,000): `cinder-rock`s that drop from the roof,
-  `slag-crawler`s, then the **destructible maze** — seven brick walls (the tileset's `brick`, hp 4,
-  written as `rle` rows over the generated caves at world x 4,800–5,776), each with a 48-px gap at
-  another height: the route zigzags, shooting through a wall is the shortcut. The lava river
-  (checkpoint 6,800: 1.3 px/tick over the palette-cycled lava lake `bg/magma-lava`, whose band sits
-  below the surface's view — `y` 256 — and rises into view with the dive), the calm, then **CINDER
-  BASTION** (CB-04). A heat `haze` shimmers over the volcano peaks (`bg/magma-peaks`) until the dive,
-  a slow `wave` rolls the lava after it.
-- `zone-e.stage.json` — **TEMPEST RIDGE** (9,800 px, `terrain-ridge`): the storm front over jagged
-  peaks (steep heightfield floors — `amp` 9–18 % of the `period` — with `crag-turret`s,
-  `hail-drifter` streams and the **rear attackers**: `gale-kite` formations and `squall-jumper`s
-  spawned behind the ship — a negative `screenX` — that overtake it), the ridge pass between jagged
-  floors and overhangs (checkpoint 2,200), the thunderheads (checkpoint 4,600: `thunderhead`
-  clouds firing the `tempest.bolt` streak), the gale run (checkpoint 6,800: 1.4 px/tick), the calm,
-  then **SQUALL STEED** (SS-05). Heavy weather: two storm-cloud bands (`bg/storm-clouds`, painted in
-  the four colours of their palette cycle, rolled by a `wave`), a mountain band (`bg/storm-ridge`)
-  and three rows of slanting rain (`bg/storm-rain`) scrolling almost at the playfield's speed.
+- `zone-d.stage.json` — **MAGMA DEEP** (21,150 px, `terrain-magma`, a 768-px-tall heightfield —
+  `rowsTall` 64): the caldera fields on the surface at 1.2 rising to 1.35 px/tick (`ember-wisp`
+  streams, `cinder-bat` swoops on the `content/paths/zone-d.paths.json` curves, erupting
+  `magma-cone`s lobbing lava bombs, `basalt-turret`s, the new `magma-geode`s cracking bats out of
+  the ground), the eruption field (checkpoint 3,600), then **the dive in two moves**: a camera key
+  at 5,400 with `hold` 150 stops the scroll over the pit and pans 186 px down into the upper
+  caves, where the new `slag-mine` fields and `cinder-rock` roofs wait (checkpoint 6,600) and the
+  captain **OBSIDIAN CLAW** sidesteps its shelf (`boss` event at 7,650); at 8,700 a second hold
+  drops the camera another 246 px — to y 432, the deepest pan a shipped zone takes — into the
+  deep (checkpoint 9,900). The **destructible maze** is the `brick` wall (hp 4) written as `rle`
+  rows across x 10,188–11,652 near the cave floor: shooting through it is the shortcut, and a
+  ship that finds the breach in the floor at x 12,100–12,540 sets the `lower` flag and flies the
+  mine-laden branch there instead of the ordinary popcorn. The lava river run (checkpoint 12,900:
+  1.95 px/tick under the `lava-drip` teeth over the palette-cycled lava lake `bg/magma-lava`,
+  whose band sits below the surface's view and rises into view with the dive), a flank ledge at
+  x 14,750–15,050 whose `trigger` opens a second wisp branch, the calm (checkpoint 16,200), then
+  the WARNING at 20,400 for **CINDER BASTION** (CB-04, seventeen parts, 40,000 points). A heat
+  `haze` shimmers over the volcano peaks (`bg/magma-peaks`) until the dive, a slow `wave` rolls
+  the lava after it.
+- `zone-e.stage.json` — **TEMPEST RIDGE** (21,000 px, `terrain-ridge`, `rowsTall` 33): the storm
+  front over jagged peaks with `crag-turret`s, `hail-drifter` streams and the **rear attackers**:
+  `gale-kite` formations and `squall-jumper`s spawned behind the ship — a negative `screenX` —
+  that overtake it (checkpoint 4,200), the ridge pass under the first `ice-slab` ceilings
+  (checkpoint 7,800), the captain **THE STORM EYE** swinging its cloud guns on a wide ellipse
+  (`boss` event at 8,250 — no WARNING, no camera lock), the thunderheads (checkpoint 9,600:
+  `thunderhead` clouds firing the `tempest.bolt` streak, and the new `lightbird` dashes), the
+  **eye dip diagonal** (checkpoint 12,900: a pan up to y 60 through a dense ice-slab roof), the
+  gale run (checkpoint 15,600: 2.1 px/tick back to the floor), the calm (checkpoint 17,550), then
+  the WARNING at 20,100 for **SQUALL STEED** (SS-05, twelve rebuilt parts). Heavy weather: two
+  storm-cloud bands (`bg/storm-clouds`, painted in the four colours of their palette cycle,
+  rolled by a `wave`), a mountain band (`bg/storm-ridge`) and three rows of slanting rain
+  (`bg/storm-rain`) scrolling almost at the playfield's speed.
 
-**Zones F and G (M2-13)** are real zones on the same recipe (four checkpoints, a high-speed
-section, a calm with two carriers, their own tileset, songs, item plan and roster —
+**Zones F and G (M2-13, remastered by R5-06 and R5-07)** are real zones on the same recipe (six
+or seven checkpoints, a high-speed section, a calm with two carriers, their own tileset, songs,
+item plan and roster —
 [`content/enemies/zone-f.enemies.json`](../enemies/zone-f.enemies.json), `zone-g.enemies.json`):
 
-- `zone-f.stage.json` — **CELL VAULT** (9,600 px, `terrain-vault`): the membrane (`lymph-mote`
-  streams, `chaser-cell`s that drift in and then chase the ship, `mitosis-cell`s that divide into
-  two chasing cells when shot, `polyp-turret`s on the floor and ceiling), the **tissue passage**
-  (checkpoint 2,200: seven **regenerating tissue walls** — the tileset's `tissue` tile, hp 3, grows
-  back 240 ticks after it was shot open, never into a ship — written as `rle` rows at world x
-  2,896–3,872, each 16 px thick with a 56-px gap at another height), the **tentacle garden**
-  (checkpoint 4,400: `vault-claw` grabbing tentacles on the floor and ceiling — a claw on a chain
-  that lunges at a ship in reach and drags it with a short pull — and hovering `spore-sac`s puffing
-  fans of spores), the pulse run (checkpoint 6,800: 1.3 px/tick), the calm, then **MANTLE REGENT**
-  (MR-06). The far band `bg/vault-membrane` (a wall of cells painted in its palette cycle's four
-  colours) pulses and a slow `wave` makes it breathe; the fleshy folds `bg/vault-folds` scroll in
-  front of it.
-- `zone-g.stage.json` — **PRISM LABYRINTH** (9,800 px, `terrain-prism`): the prism field over
-  crystal spires (`glint-mote` streams, `halo-crystal` orbiters on zone A's `gyre-orbit-*` loops,
-  `prism-lens`es that hover at the right fanning needles, then drift off up or down, `geode`s that
-  shatter into shards, `facet-turret`s), the **prism gallery** (checkpoint 2,200: four
-  `facet-turret`s on the floor and ceiling — shoot every one down before the camera passes 3,100
-  and the `ground` entrance, armed at 2,300 once the turret before the gallery has left the
-  screen, opens the **hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER
-  CACHE**: carriers dropping bonus capsules, a 1UP carrier, a cube rush and two cube walls), the
-  **crystal labyrinth** (seven solid crystal walls at world x 3,392–4,272, hanging from the ceiling
-  and rising from the floor in turn — the route zigzags), the **cube rush** (checkpoint 4,600: four
-  seeded `prism-cube` rushes — `cube.stack` formations — whose cubes stack onto short crystal
-  pillars on the floor and ceiling as breakable `cube` tiles), the refraction run (checkpoint 6,800:
-  1.3 px/tick over jagged spires), the calm, then **FACET MONARCH** (FM-07). The facet wall
-  `bg/prism-facets` glints through its palette cycle; a heat `haze` shimmers over the spires band
-  `bg/prism-spires`.
+- `zone-f.stage.json` — **CELL VAULT** (21,000 px, `terrain-vault`, `rowsTall` 36): the membrane
+  (`lymph-mote` streams, `chaser-cell`s that drift in and then chase the ship,
+  `mitosis-cell`s that divide into two chasing cells when shot, `polyp-turret`s on the floor and
+  ceiling, the new `tissue-cyst`s budding chasers, `vault-claw` grabbing tentacles on floor and
+  ceiling — a claw on a chain that lunges at a ship in reach and drags it with a short pull —
+  and hovering `spore-sac`s puffing fans of spores) (checkpoint 3,600), the **dead tissue
+  passage** (the tileset's plain `tissue`, written as `rle` rows at world x 4,344–5,808 — walls
+  that remember how to be walls, checkpoint 6,900), the **calcified ribcage** x 7,080–9,264
+  (`calcified`, hp 6, never regrowing) where the captain **NUCLEUS WARDEN** orbits — F's first
+  mid-boss (`boss` event at 9,450), the **heart dip** (checkpoint 10,500: a key that holds and
+  settles the camera at y 96 for the hunt), the **chase** (from 10,800: chaser cells and the new
+  `viral-dart`s behind three **living punch-walls** — the tileset's `tissue-live`, hp 4, grown
+  back 120 ticks after being shot open, never into a ship, `rle` at x 11,040–12,396 with the
+  divider row at 12,300 — the corridor rule reading a destructible cell as open, checkpoint
+  13,200), the pulse run (checkpoint 14,400: 1.95 px/tick), the calm pair at 18,600 and 19,200,
+  then the WARNING at 20,250 for **MANTLE REGENT** (MR-06, nineteen rebuilt parts). The far band
+  `bg/vault-membrane` (a wall of cells painted in its palette cycle's four colours) pulses and a
+  slow `wave` makes it breathe; the fleshy folds `bg/vault-folds` scroll in front of it; the
+  `nodule` decoration rides the living walls' rows.
+- `zone-g.stage.json` — **PRISM LABYRINTH** (21,300 px, `terrain-prism`, `rowsTall` 56): the
+  prism field over crystal spires (`glint-mote` streams and the slower capsule-carrying
+  `prism-glint`s, `halo-crystal` orbiters on zone A's `gyre-orbit-*` loops, `prism-lens`es that
+  hover at the right fanning needles, then drift off up or down, `geode`s that shatter into
+  `prism-shard`s, `facet-turret`s), the **prism gallery** (checkpoint 3,300's key holds the
+  camera at mid-height for 180 ticks; four `facet-turret`s on
+  the floor and ceiling between 4,950 and 5,700 guard the **hidden bonus entrance** — a
+  `ground` event armed at 4,800 until 6,000: shoot every ground enemy in the window and the
+  floor opens into `glimmer-cache.stage.json`, **GLIMMER CACHE**: carriers dropping bonus
+  capsules, a 1UP carrier, geodes and a cube rush over the shard floor), the **slide**
+  (checkpoint 8,400: a hold pans the camera down to y 312 past the crystal mass at x
+  8,472–8,964, the captain **PRISM SENTINEL** waiting at 8,040 with its four unbreakable orb
+  guards, the first seeded `cube.stack` rushes stacking into `cube` walls), the **refraction
+  hall** (checkpoint 11,700: eight crystal `block` events — four fixed pillars and four
+  shutters swinging a 96-px stroke every 240 ticks in and out of phase — over the shard-floor
+  and the last rushes at 11,700 and 13,050), the **heart chamber** (the 13,800 key holds the
+  camera back at mid-height for 180 ticks through the monarch's antechamber while `prisma`
+  pincers snap the lane at 14,400 and 15,000, checkpoint
+  16,800), the refraction run (16,800: 1.95 px/tick over jagged spires, a final `prisma` pair at
+  18,450), the calm (from 19,200),
+  then the WARNING at 20,550 for **FACET MONARCH** (FM-07, twenty rebuilt parts). The facet wall
+  `bg/prism-facets` glints through its palette cycle; a heat `haze` shimmers over the spires
+  band `bg/prism-spires`.
 
 **Zones H and I (M2-14)** are the two **final zones** — each route ends in one of them, and its
 clear leads to an ending and the credits. Same recipe (four checkpoints, a high-speed section, a

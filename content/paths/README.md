@@ -6,13 +6,17 @@ spline paths, arc-length parameterized").
 
 `zone-a.paths.json` holds zone A's curves (M1-18): the `vane-*` fan flights (arcs, loops, a
 swoop — `-up` / `-down` mirror each other) and the `gyre-orbit-*` orbiter loops;
-`zone-c.paths.json` zone C's (M2-11): the `sand-skimmer` swoops `skim-dip` / `skim-rise` (mirrors);
+`zone-b.paths.json` zone B's (the R5-02 remaster's one new file): the single `garden-swoop`
+curve the `spume-skipper` rows ride through the pearl garden — a long dive, a level bottom,
+and a rise off it; `zone-c.paths.json` zone C's (M2-11): the `sand-skimmer` swoops
+`skim-dip` / `skim-rise` (mirrors);
 `zone-d.paths.json` zone D's (M2-12): the `cinder-bat` swoops `bat-swoop-down` / `bat-swoop-up`;
 `zone-e.paths.json` zone E's (M2-12): the rear-entering `gale-kite` loops `kite-overtake-high` /
 `kite-overtake-low` — they start behind the ship (spawned at a negative `screenX`), overtake it,
 curl round near the right edge and fly back along another row (zone G's `halo-crystal`s fly zone
-A's `gyre-orbit-*` loops — M2-13 added no path);
-`test-range.paths.json` those of the dev stage.
+A's `gyre-orbit-*` loops — M2-13 added no path); `test-range.paths.json` those of the dev stage.
+The v2 remasters (R5-02 … R5-07) added only `zone-b.paths.json`; zones C, D and E flew their M2-11
+/ M2-12 curves unchanged through their LANDs, and zones F, G and I shipped none of their own.
 
 A path is a list of **control points relative to where the mover starts** (normally the spawn
 point; the first point is usually `(0, 0)` — the curve is translated so its first point sits

@@ -46,7 +46,7 @@
  * sand worms and SANDGRAVE WIDOW) start to stage clear — and zone B's hidden bonus stage
  * `brine-grotto` with the full loadout. Two more (M2-11 tests) fly them without god mode: the
  * weaving pilot in zone B under the Arcade penalty (deaths, the checkpoint restarts, `gameOver`)
- * and the 4-way bot through the whole of zone C (its deaths and respawns in place, the boss). Two
+ * and the 4-way bot through the whole of zone C (three deaths, its `gameOver` before the boss). Two
  * more (M2-12) fly the real zones D and E with the 4-way bot and god mode, start to stage clear —
  * `zone-d` (MAGMA DEEP: the dive into the caves, the brick maze, CINDER BASTION) and `zone-e`
  * (TEMPEST RIDGE: the rear attackers, SQUALL STEED). Three more (M2-12 tests) fly them without god
@@ -55,10 +55,10 @@
  * into zone D's caves to CINDER BASTION with the full loadout under the Arcade penalty. Three more
  * (M2-13) fly the real zones F and G with the 4-way bot and god mode, start to stage clear —
  * `zone-f` (CELL VAULT: the chasing cells, the tissue walls, the grabbing tentacles, MANTLE REGENT)
- * and `zone-g` (PRISM LABYRINTH: the crystal labyrinth, the cube rush, FACET MONARCH) — and zone
+ * and `zone-g` (PRISM LABYRINTH: the refraction hall, the cube rushes, FACET MONARCH) — and zone
  * G's hidden bonus stage `glimmer-cache` with the full loadout. Five more (M2-13 tests) fly them
- * without god mode: the 4-way bot through the whole of zone F at Arcade difficulty (it survives
- * the rank-scaled fire) and of zone G (a death in the cube rush and a Classic respawn in place),
+ * without god mode: the 4-way bot through the whole of zone F at Arcade difficulty (two deaths,
+ * `gameOver` under the rank-scaled fire) and of zone G (three deaths, `gameOver` before the boss),
  * the weaving pilot in zone F on Easy under the Arcade penalty (deaths, the checkpoint restarts
  * rolling the tissue it shot open back, `gameOver`), and the stage skips to MANTLE REGENT and
  * FACET MONARCH with the full loadout under the Arcade penalty. Two more (M2-14) fly the final

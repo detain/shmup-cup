@@ -545,24 +545,24 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `bonus-range-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-range'` (seed 62) | the `ground` bonus entrance: the window's three turrets shot down, the entry recorded while the World plays on to the boss (the warp is the scene flow's) | `stageClear` after 3,561 ticks, 40,520 points, 4 lives, no deaths |
 | `bonus-range-digit.replay.json` (M2-10) | 4-way bot, god mode, no power-ups (seed 61) | the `digit` bonus entrance: the turrets survive, the thousands digit is 0 when the last window closes | `stageClear` after 5,178 ticks, 39,570 points, 4 lives, no deaths |
 | `bonus-vault-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-vault'` (seed 65) | the bonus stage: the carriers' 1,000-point bonus capsules and the 1UP collected, no boss | `stageClear` after 1,615 ticks, 17,220 points, 4 lives, no deaths |
-| `zone-b-god.replay.json` (M2-11) | 4-way bot, god mode, `stage: 'zone-b'` (seed 1) | BRINE NEBULA start to clear: the bubbles, the reef tunnel, SPUME HERALD, the riptide, GALVANIC MAW's three phases | `stageClear` after 14,246 ticks, 72,110 points, 4 lives, no deaths |
-| `zone-c-god.replay.json` (M2-11) | 4-way bot, god mode, `stage: 'zone-c'` (seed 1) | DUNE EXPANSE start to clear: the sand worms, the ceiling walkers, the sandstorm run, SANDGRAVE WIDOW's three phases | `stageClear` after 13,846 ticks, 61,430 points, 4 lives, no deaths |
+| `zone-b-god.replay.json` (M2-11; re-blessed by R5-02) | 4-way bot, god mode, `stage: 'zone-b'` (seed 1) | BRINE NEBULA start to clear: the shallows' urchin tunnel, the dive to the reef floor, the riptide's mine fields, the pearl garden, SPUME HERALD, GALVANIC MAW's three phases | `stageClear` after 19,300 ticks, 71,810 points, 4 lives, no deaths |
+| `zone-c-god.replay.json` (M2-11; re-blessed by R5-03) | 4-way bot, god mode, `stage: 'zone-c'` (seed 1) | DUNE EXPANSE start to clear: the worms, the canyon burrowers, the DUNE SCORPION captain, the dune-surf diagonal, SANDGRAVE WIDOW's three phases | `stageClear` after 17,790 ticks, 74,770 points, 4 lives, no deaths |
 | `brine-grotto-god.replay.json` (M2-11) | 4-way bot, god mode, full loadout, `stage: 'brine-grotto'` (seed 71) | PEARL GROTTO, zone B's bonus stage: its carriers' bonus capsules and the 1UP, no boss | `stageClear` after 1,815 ticks, 5,650 points, 4 lives, no deaths |
-| `zone-b-deaths.replay.json` (M2-11 tests) | `weaverBot()`, Arcade penalty (seed 72) | deaths among the bubbles, checkpoint restarts, game over | `gameOver` after 5,787 ticks (deaths at 1,660 / 5,013 / 5,694) |
-| `zone-c-bot.replay.json` (M2-11 tests) | 4-way bot, no god mode (seed 73) | three deaths, `gameOver` before SANDGRAVE WIDOW | `gameOver` after 5,164 ticks (deaths at 3,937 / 4,463 / 5,071) |
-| `zone-d-god.replay.json` (M2-12) | 4-way bot, god mode, `stage: 'zone-d'` (seed 1) | MAGMA DEEP start to clear: the erupting caldera fields, the dive into the caves, the brick maze, the lava river, CINDER BASTION's three phases | `stageClear` after 14,217 ticks, 59,040 points, 4 lives, no deaths |
-| `zone-e-god.replay.json` (M2-12) | 4-way bot, god mode, `stage: 'zone-e'` (seed 1) | TEMPEST RIDGE start to clear: kites and jumpers from behind, the thunderheads, the gale run, SQUALL STEED's three phases | `stageClear` after 13,712 ticks, 62,110 points, 4 lives, no deaths |
-| `zone-d-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 77) | the caves' floor reached (camera y 300) and held to the deathless clear, CINDER BASTION shot down | `stageClear` after 14,253 ticks, 60,070 points, 4 lives, no deaths |
-| `zone-d-boss.replay.json` (M2-12 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 75) | the stage skip into the caves: CINDER BASTION's core shot through the turning arms | `stageClear` after 1,303 ticks, 40,140 points, 4 lives, no deaths |
-| `zone-e-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 74) | the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down | `stageClear` after 14,459 ticks, 56,250 points, 3 lives (death at 7,233) |
-| `zone-f-god.replay.json` (M2-13) | 4-way bot, god mode, `stage: 'zone-f'` (seed 1) | CELL VAULT start to clear: the membrane's chasing and dividing cells, the regenerating tissue walls, the tentacle garden, the pulse run, MANTLE REGENT's three phases | `stageClear` after 13,228 ticks, 63,080 points, 4 lives, no deaths |
-| `zone-g-god.replay.json` (M2-13; re-blessed by its review fix) | 4-way bot, god mode, `stage: 'zone-g'` (seed 1) | PRISM LABYRINTH start to clear: the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars, the refraction run, FACET MONARCH | `stageClear` after 14,426 ticks, 52,890 points, 4 lives, no deaths |
-| `glimmer-cache-god.replay.json` (M2-13) | 4-way bot, god mode, full loadout, `stage: 'glimmer-cache'` (seed 81) | GLIMMER CACHE, zone G's bonus stage: its carriers' bonus capsules, a cube rush and its cube walls, no boss | `stageClear` after 1,815 ticks, 14,750 points, 3 lives, no deaths |
-| `zone-f-arcade.replay.json` (M2-13 tests) | 4-way bot, Arcade difficulty, no god mode (seed 91) | CELL VAULT against the rank-scaled fire: two deaths, tissue shot open, `gameOver` | `gameOver` after 4,560 ticks (deaths at 3,577 / 4,467) |
-| `zone-f-deaths.replay.json` (M2-13 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths in the membrane and at the first tissue walls, restarts back at the start only (the run never crosses the ported checkpoint 3,300), game over | `gameOver` after 3,588 ticks (deaths at 935 / 1,556 / 2,215 / 2,836 / 3,495) |
-| `zone-f-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | MANTLE REGENT's three phases, the eye shot between the curls of its tentacles | `stageClear` after 2,112 ticks, 46,970 points, 4 lives, no deaths |
-| `zone-g-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 1,769 ticks, 47,380 points, 4 lives, no deaths |
-| `zone-g-bot.replay.json` (M2-13 tests) | 4-way bot, no god mode (seed 91) | two deaths in the labyrinth before the cube rush, Classic respawns in place, FACET MONARCH shot down | `stageClear` after 14,409 ticks, 53,870 points, 2 lives (deaths at 3,552 / 3,947) |
+| `zone-b-deaths.replay.json` (M2-11 tests; re-blessed by R5-02) | `weaverBot()`, Arcade penalty (seed 72) | deaths among the bubbles and the mine fields, checkpoint restarts, game over | `gameOver` after 4,770 ticks (deaths at 3,950 / 4,275 / 4,677) |
+| `zone-c-bot.replay.json` (M2-11 tests; re-blessed by R5-03) | 4-way bot, no god mode (seed 73) | three deaths, `gameOver` before SANDGRAVE WIDOW | `gameOver` after 5,086 ticks (deaths at 3,784 / 4,630 / 4,993) |
+| `zone-d-god.replay.json` (M2-12; re-blessed by R5-04) | 4-way bot, god mode, `stage: 'zone-d'` (seed 1) | MAGMA DEEP start to clear: the erupting caldera and its geodes, the two dives into the caves, the OBSIDIAN CLAW captain, the brick maze and its lava branches, CINDER BASTION's three phases | `stageClear` after 19,108 ticks, 87,045 points, 4 lives, no deaths |
+| `zone-e-god.replay.json` (M2-12; re-blessed by R5-05) | 4-way bot, god mode, `stage: 'zone-e'` (seed 1) | TEMPEST RIDGE start to clear: jumpers from behind, the ice-slab roof, THE STORM EYE, the thunderheads and the lightbird dashes, the gale run, SQUALL STEED's three phases | `stageClear` after 18,710 ticks, 75,730 points, 4 lives, no deaths |
+| `zone-d-bot.replay.json` (M2-12 tests; re-blessed by R5-04) | 4-way bot, no god mode (seed 77) | the dive to the caves' floor under fire, one death and its Classic respawn in place, CINDER BASTION shot down | `stageClear` after 19,155 ticks, 82,308 points, 3 lives (death at 4,552) |
+| `zone-d-boss.replay.json` (M2-12 tests; re-blessed by R5-04) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 75) | the stage skip into the caves: CINDER BASTION's core shot through the turning arms | `stageClear` after 1,340 ticks, 50,310 points, 4 lives, no deaths |
+| `zone-e-bot.replay.json` (M2-12 tests; re-blessed by R5-05) | 4-way bot, no god mode (seed 74) | the rear attackers against a ship that can die, two deaths and a Classic respawn in place, SQUALL STEED shot down | `stageClear` after 20,483 ticks, 75,170 points, 2 lives (deaths at 12,323 / 12,657) |
+| `zone-f-god.replay.json` (M2-13; re-blessed by R5-06) | 4-way bot, god mode, `stage: 'zone-f'` (seed 1) | CELL VAULT start to clear: the membrane's chasing and dividing cells, the calcified ribcage and the NUCLEUS WARDEN, the living punch-walls of the chase, the pulse run, MANTLE REGENT's three phases | `stageClear` after 19,866 ticks, 71,476 points, 4 lives, no deaths |
+| `zone-g-god.replay.json` (M2-13; re-blessed by R5-07) | 4-way bot, god mode, `stage: 'zone-g'` (seed 1) | PRISM LABYRINTH start to clear: the prism field, the guarded gallery, the crystal mass and the PRISM SENTINEL, the refraction hall's shutters and cube rushes, the heart chamber's pincers, the refraction run, FACET MONARCH | `stageClear` after 18,924 ticks, 70,761 points, 4 lives, no deaths |
+| `glimmer-cache-god.replay.json` (M2-13; re-blessed by R5-07) | 4-way bot, god mode, full loadout, `stage: 'glimmer-cache'` (seed 81) | GLIMMER CACHE, zone G's bonus stage: its carriers' bonus capsules, geodes bursting into prism shards, a cube rush and its cube walls, no boss | `stageClear` after 1,815 ticks, 14,825 points, 3 lives, no deaths |
+| `zone-f-arcade.replay.json` (M2-13 tests; re-blessed by R5-06) | 4-way bot, Arcade difficulty, no god mode (seed 91) | CELL VAULT against the rank-scaled fire: two deaths, tissue shot open, `gameOver` | `gameOver` after 6,255 ticks (deaths at 4,550 / 6,162) |
+| `zone-f-deaths.replay.json` (M2-13 tests; re-blessed by R5-06) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths in the membrane, at the tissue walls and in the chase, checkpoint restarts, game over | `gameOver` after 6,221 ticks (deaths at 1,443 / 2,114 / 3,810 / 4,447 / 6,128) |
+| `zone-f-boss.replay.json` (M2-13 tests; re-blessed by R5-06) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | MANTLE REGENT's three phases, the eye shot between the curls of its tentacles | `stageClear` after 1,941 ticks, 46,710 points, 4 lives, no deaths |
+| `zone-g-boss.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 1,981 ticks, 47,540 points, 4 lives, no deaths |
+| `zone-g-bot.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, no god mode (seed 91) | three deaths in the labyrinth, `gameOver` before FACET MONARCH — the recording is the promise under the identity law below | `gameOver` after 9,358 ticks (deaths at 4,548 / 7,935 / 9,265) |
 | `zone-h-god.replay.json` (M2-14) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the piston hall's moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN's four phases | `stageClear` after 16,209 ticks, 129,700 points, 5 lives, no deaths |
 | `zone-i-god.replay.json` (M2-14; re-blessed by its test round's `boss.ark` fix) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 19,310 ticks, 143,110 points, 5 lives, no deaths |
 | `zone-h-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands at IRON SOVEREIGN's own warning (re-blessed by R5-P.P14, `6345f07`): the parade and the core run are skipped past, the sovereign's four phases stand | `stageClear` after 2,433 ticks, 71,700 points, 4 lives, no deaths |
@@ -712,6 +712,34 @@ armour plates, and `zone-h-boss` had already moved inside the branch at `6345f07
 made the skip target the stage's last warning — 9,066 ticks with five lives became 2,433 with
 four. The old → new `finalHash` pairs ride the land commit's message (`git show 9d0b472`). The
 demo kept its scripted 2,400 ticks — the bot's whole run lives moved under the new layout.
+
+**Wave 11's six zone remasters** continued the chain one LAND each: `R5-02` re-blessed zone B's
+three files (`1d3fd600`, through `--only zone-b,brine-grotto` — the grotto's own recording came
+out byte-identical), `R5-03` zone C's three (`247e39fb`), `R5-04` zone D's four (`927b137f`),
+`R5-05` zone E's three (`fe4cdae3` — the earlier master bless of E's files by the bolt-terminal
+cure `1030012f` was superseded here, the LAND re-recording the remastered stage), `R5-06` zone F's
+five (`5319d732`) and `R5-07` zone G's five (`66122e87`, through `--only zone-g,glimmer-cache` —
+the cache's score moved 14,750 → 14,825 because its geodes now burst into 75-point PRISM SHARDS).
+Every zone's attract demo re-recorded inside its own LAND. As in wave 10 the outcomes moved with
+the rebuilt stages, not with the engine: the full-stage clears run the 20,400–21,300-px layouts
+(zone B's god run 14,246 → 19,300 ticks), the no-god runs fall differently on the ×1.5 fields —
+zone G's bot recording ends `gameOver` with three deaths before FACET MONARCH where the v1-era
+file cleared — and `zone-f-arcade`'s outcome test traded its pinned death-tick list for a
+two-deaths count the remaster can move without a law change. The old → new `finalHash` pairs ride
+each land commit's message (`git show 1d3fd600` … `git show 66122e87`).
+
+The same review round ruled the **identity law** for the no-god outcome cases (its G7 decision,
+with zone E's file as its twin): `golden-zone-e.test.ts` and `golden-zone-g.test.ts` assert the
+*recorded replay* rather than a promised outcome — the header's identity (`stageId`,
+`assisted: false`, the scenario's death penalty; the boss-skip case also its `stageSkip`, full
+loadout and Arcade penalty), the recorded status read from the file with `gameOver` tolerated,
+`deathTicks` as a list, and the boss-skip length under its fraction law (under a quarter of the
+god run's ticks, since R5-P.P3); the case prints what it recorded. The design's outcome promises
+— the 3–6-minute clear band, the death caps, the §15 death-window walk, respawn-in-place — are
+asserted only on the god case that owns them, and stand in the no-god files as comments naming
+the law and the measured truth. A zone whose bot dies in the mouth of the gallery no longer
+fails CI for the owner's taste; it reports it.
+
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
