@@ -498,6 +498,99 @@ stand-in kit until `R5-07.S3` — with it come the core's pulse and the bands' d
   `20a7b109… → 7e6fc0e9…` (410 relocated), 4 plates; integration FULL zero-red, post-push **10,713 / 104**
   at the pushed tip — six zones landed, wave 11 closed on `66122e87`.
 
+### The wave-12 cures on master (MF12 … MF15)
+
+These change the run's kit, not the game: each cure is a routed review finding or a weld STOP referral
+taken on master (MF15 between, as H's weld demanded) — plan §11's wave-12 block keeps the ledger. Wave 12
+closes with zone H landed (the eighth remaster of nine) and R5-10 part 1 (`T1`, `T3`, the report-only
+`T6`): zone I still stands before the owner — the god run measured 369.25 s against the contract's
+[240, 360] ceiling and both trim attempts STOPped on fight-RNG re-roll evidence, the four-option menu
+unchanged — and `T2`, `T8` and every `R5-0n.S3` real-art drop carry to wave 13.
+
+- **MF12 `c86ad478`** — the interim pipeline's upscaled-pool floor follows the natives: 500 → 450 as the
+  dimension's six stand-ins went native and the compared pool fell 517 → 499 (RT-T3's one Major; the
+  file's own chain-comment precedent, now naming the silent 533 → 517 drain of the earlier waves).
+- **MF13 `5a0673a7`** — the demo bless-list guard takes a demo-less list of known stages yet fails an
+  unknown id loud (restoring the strict arm over the S7.0 relaxation), and `REAUTHORED_STAGES` carves a
+  re-authored non-zone baseline stage (`bonus-vault`) out of the v1-port comparison: the drop disclosed,
+  the name asserted still-shipping, the list two-way pinned, the protected port files untouched.
+- **MF14 `59d14ed8`** — the render-groups census follows the dimension's new fore band:
+  `LayerId.Foreground` joins the `dimension` pin beside a rot-proof content census pinning the exactly
+  eight fore-carrying shipped stages; the lesson is law — a step moving a layer kind owes the
+  shared-kit censuses in its gate set (master rode red through four SHAs before the weld sweep caught
+  it).
+- **MF15 `cd4bb68c`** — the four-way bot's slab-ride floor admit became per-stage: zone H's six gate
+  slabs pin beside zone G's four shutters, at most two slab stages hold the admit and a third must
+  re-earn it, both worlds proven, the fail-loud control reproducing the welder's red verbatim.
+
+### The high-speed dimension's v2 stand-in art (R5-10.T3)
+
+These change what the game shows, never what it simulates: the `dimension` stage — the Mode-7 gallop —
+got its v2 stand-in kit at `90a20a3a`, presentation-only lines throughout.
+
+- **Six names native, five new**: floor, sky, pylon, maw, claw and leg repainted at v2 sizes; the new
+  `bg/dimension-rift` mid band (a half-frame skyline of monoliths with blinking windows),
+  `bg/dimension-strands` fore band (sagging into the top rows, never the ship's lane), two decor shards
+  and a rift halo. The parallax's single band becomes three (the sky stays index 0 — the runtime law),
+  six decor backdrops join, and glows hang on the pylon and the maw's mouth.
+- **The geometry holds**: the Mode-7 pass is untouched — every landed horizon/bottom spec row held
+  unedited (8/8 green, the budget 16 unraised); v1's bytes stay served at scale 1 (RR-1); no sim field
+  moves (glows are never hashed); 4 plates, and the fingerprints' re-pin (232 / 14 / 6 rows) rode the
+  five new names' id shift.
+
+### The bonus stages laid out for v2 (R5-10.T1)
+
+These change what the game shows and does at the run's hidden detours: the three bonus stages were
+re-laid for the v2 world at `cea1b20d` — the wave's first LAND and a two-day weld (kit cures `MF13` and
+`MF14` are its stops' children).
+
+- **The re-lay**: `brine-grotto` and `glimmer-cache` doubled to **5,400 px**, `bonus-vault` to
+  **4,200 px**, all three on the single 1.5-speed camera key — forced by the live loop caps (5,400 px
+  clears in 3,615 ticks against the 4,000-tick runtime pins); carrier groups, cube walls, the prism
+  rushes, the vault's pillar pairs and its 1UP's four mid-lane brackets all authored to layout;
+  `bonus-range` was the check case, verified untouched. The looks ride their zones: every backdrop,
+  raster and cycle field byte-identical, the carriers' art fields v1 (no new sprite name — no plate).
+- **The laws, from layout**: every bonus outcome law rewritten for the new runs, none pasted — seconds
+  windows 59–67 s (the old 30.25 / 26.9 s recordings are arithmetically unpastable at double length),
+  the grotto's 1UP promise `lives − 3 − extends ≥ 1`, the cache's relaxation to `lifeDelta ∈ [0, 1]`
+  (the old `lives === 3` asserted the old run's accident), the vault's four promises kept.
+- **The weld**: the program's first `--only` bless list owning zero demo stages and first re-authored
+  non-zone baseline stage — two STOPped steps became MF13's bless guard and `REAUTHORED_STAGES` carve
+  and MF14's census, and resume-3 landed: three goldens blessed (2,143,762,895 / 904,451,765 /
+  73,544,239) with the `bonus-range` pair byte-identical, the digest unmoved (zero churn), fingerprints
+  4 / 1 rows, post-push full suite zero red and a seven-spec e2e batch exercising the re-laid stages.
+
+### IRON CITADEL — zone H remastered (R5-08, the wave's zone LAND)
+
+These change what the game shows and does: zone H is rebuilt to `docs/v2-run/designs/zone-h.md` and
+landed at `a2d94928` on the MF15 `cd4bb68c` base, the eighth remaster of nine (zone I alone stands down
+before the owner). The art is the R5-D6 stand-in kit until `R5-08.S3` drops the real art (R5-D7).
+
+- **The rebuilt stage**: 20,250 px of six sections — the fortress gate with its six swinging plate slabs
+  and plug doors, the void parade hall, the ten-piston hall with 33-px throws, the ceilingless core run
+  and the breathing throne; 103 events on eight camera keys past six checkpoints, `terrain-citadel-v2`
+  with §9's four appended tiles, the fifth parallax band riding the banners.
+- **The roster and boss**: the new **gate-sentry** pair (floor + ceiling `turret.floor`, one quantised
+  volley every 150 ticks) and **iron-banner** drifter with five v1 types — seven new-by-sprite inside
+  rule 3's band; **IRON SOVEREIGN** rebuilt to **18 parts**, design §7's six-pod ring out-voted by the
+  frozen release-audit law (R5-D10 class: the fully-powered MANTA stalls the 20-part ring past 36,000
+  ticks — pods at four, height 168 inside the 202 cap); the OBSIDIAN parade's four echoes re-rigged
+  from the landed boss trees under a machine-asserted match law (the maw's byte-identical, disclosed).
+- **The cures riding the land**: the S6 capsule-window cure (four in-window banner rows → spawn rows —
+  the literal option-1 proved engine-impossible: a row's `drop: null` suppresses only the formation's
+  completion drop, every member still drops); the arcade golden rewritten to assert its RECORDED replay
+  (the F/G twin law — gameOver at 5,632 ticks with two deaths and score 3,130 is the design's honest
+  Arcade truth, and whether the bot should survive Arcade rank stays the owner's taste row).
+- **It plays**: the 4-way god bot clears in **324.5 s** (boss 42.9 s, 0 deaths, score 130,390, four
+  parade captains); the no-god record case runs 397.6 s with two deaths, its replay-hash identity
+  asserted (the O1 law reports, never promises).
+- **The weld**: 39 steps, one STOP class outside every enumerated derivation (B-1's slab floor cured
+  law-side on master as MF15, B-2's arcade assertion as FIX3 — content unmoved both times); restart-2
+  blessed 5 files digit-for-digit against the banked table, every other recording bit-unchanged;
+  groups +5/−1, the wave's one disclosed fold — the interim digest `7e6fc0e9… → da5879b4…` (808 scale-1
+  positions relocated, name set equal, pixels byte-identical); fingerprints 117 / 13 / 3, 5 plates;
+  post-push **10,733 / 892 files** zero red, the weld's e2e batch 100 + 73 under the lock.
+
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
 - **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and
