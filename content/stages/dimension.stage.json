@@ -19,6 +19,24 @@
       "factor": 0.15,
       "y": 96,
       "spacing": 192
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/dimension-rift",
+      "factor": 0.375,
+      "y": 84,
+      "spacing": 320,
+      "frames": 2,
+      "frameTicks": 240
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/dimension-strands",
+      "factor": 1.5,
+      "y": 0,
+      "spacing": 320,
+      "frames": 2,
+      "frameTicks": 160
     }
   ],
   "mode7": {
@@ -48,5 +66,27 @@
     { "x": 6600, "type": "boss", "enemy": "iron-talon" },
     { "x": 7500, "type": "warning", "enemy": "grasping-bloom" },
     { "x": 9300, "type": "end" }
+  ],
+  "decor": [
+    { "layer": "back", "sprite": "decor/dimension-shard-b", "frame": 0, "x": 1050, "y": 24 },
+    {
+      "layer": "back",
+      "sprite": "decor/dimension-shard-a",
+      "frame": 0,
+      "x": 2100,
+      "y": 294,
+      "glow": "fx/glow-rift"
+    },
+    { "layer": "back", "sprite": "decor/dimension-shard-a", "frame": 0, "x": 3300, "y": 28 },
+    {
+      "layer": "back",
+      "sprite": "decor/dimension-shard-b",
+      "frame": 0,
+      "x": 4650,
+      "y": 288,
+      "glow": "fx/glow-rift"
+    },
+    { "layer": "back", "sprite": "decor/dimension-shard-a", "frame": 0, "x": 6050, "y": 26 },
+    { "layer": "back", "sprite": "decor/dimension-shard-b", "frame": 0, "x": 8100, "y": 292 }
   ]
 }

@@ -12,6 +12,7 @@
       },
       "script": "drifter.sine",
       "sprite": "enemies/dim-pylon",
+      "glow": "fx/glow-rift",
       "anim": {
         "frames": 2,
         "ticks": 14
@@ -42,6 +43,7 @@
             },
             "vulnerable": "never",
             "sprite": "bosses/bloom-maw",
+            "glow": "fx/glow-rift",
             "anim": {
               "frames": 2,
               "ticks": 1
