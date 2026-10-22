@@ -13,7 +13,7 @@
  * - **Flight.** Shots ride the camera (both axes), exact culling at the view ± 16 px on every
  *   side (lasers by head and tail), non-finite spawns culled without hitting, the laser stopped
  *   at a wall column (also while the stage scrolls) and following its Option / keeping its row,
- *   the missile on an 8-px step with `slideSpeed` 7 (climbs, descends) and 6 (dies / falls over
+ *   the missile on a 12-px step with `slideSpeed` 10.5 (climbs, descends) and 6 (dies / falls over
  *   the cliff), into a wall's side, without terrain, and its animation frames.
  * - **Hits.** Closed box tests, the physical pick (nearest entry edge, exact ties to the lowest
  *   slot), a second shot flying on past an enemy killed this tick, ghosts, damage 0, missile
@@ -1216,14 +1216,14 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     expect(group.y[0]).not.toBe(row);
   });
 
-  it('climbs and descends an 8-px step when the slide may climb 8 px (slideSpeed 7)', () => {
+  it('climbs and descends a 12-px step when the slide may climb 12 px (slideSpeed 10.5)', () => {
     const w = world(
       { ...MANUAL, stage: 't' },
       db(typeA({ 'missile.ground': { params: { slideSpeed: v1speed(7) } } })),
     );
     const set = flatFloor(w);
-    // Plateau over tile columns 20…24: surface one tile above the floor (x 160…199, surface
-    // 152 — at K=1).
+    // Plateau over tile columns 20…24: surface one tile above the floor (x 240…299, surface
+    // 228). The climb window is ceil(slideSpeed) + 1 = ceil(10.5) + 1 = 12 px — the step.
     for (let col = 20; col < 25; col++) set(col, 19, 2);
     const FLOOR_RIDE = 20 * TILE - v1rel(2);
     const PLAT_RIDE = 19 * TILE - v1rel(2);
@@ -1252,7 +1252,7 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     expect(path[path.length - 1].x).toBeGreaterThan(PLAYFIELD_W + 6);
   });
 
-  it('dies at an 8-px step and falls off the far side when it may climb 7 px (slideSpeed 6)', () => {
+  it('dies at a 12-px step, falls off the far side when it may climb 7 px (slideSpeed 6)', () => {
     const content = db(typeA({ 'missile.ground': { params: { slideSpeed: 6 } } }));
     // Into the step's face.
     const w = world({ ...MANUAL, stage: 't' }, content);
@@ -1275,7 +1275,7 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     expect(last.x).toBeLessThan(20 * TILE);
     expect(last.x).toBeGreaterThan(20 * TILE - v1rel(7));
 
-    // Landed on the plateau, it drops off its far end (8 px > 7) and lands on the floor below.
+    // Landed on the plateau, it drops off its far end (12 px > 7) and lands on the floor below.
     const v = world({ ...MANUAL, stage: 't' }, content);
     const setV = flatFloor(v);
     for (let col = 20; col < 25; col++) setV(col, 19, 2);
