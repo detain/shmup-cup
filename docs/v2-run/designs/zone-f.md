@@ -375,6 +375,11 @@ tileset's `sprite` points at the new `tiles/terrain-vault-v2`, §14):
 | `calcified` (22) | solid | 6 | 15 | — | floor | all 12 | the garden's four pillars (hard ground: go around, not through) |
 | `nodule` (23) | empty | — | — | — | floor | all 0 | wall-studding decor (RLE, never a collision cell) |
 
+*RLE footnote: the table's ids are **token values**, not array positions — the shipped
+heightfield-RLE tokens are 1-based against tileset order (`tilemap.ts`'s `const id = i + 1`, slot 0
+is the empty sentinel; zone G's S5a authored array indices and its cure rebased them, `546bc521`).
+Copy an id into an RLE row only after +1.*
+
 23 ∈ [20, 40] ✓. Today's `tissue` (id 20, hp 3, regen 240) stays exactly as it is — the
 content case's `tileColumns('zone-f', tissue)` reads only id 20, so the **new chase walls are
 invisible to today's tissue case** (no rewrite of it is needed; §15 adds new assertions

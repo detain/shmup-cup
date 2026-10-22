@@ -450,9 +450,10 @@ Two gates read them: `test/integration/cjk-budget.test.ts` (the shipped zone-spl
 **The estimator.** `estimateMemory(inputs)` adds up what stays resident: the atlas pages on the GPU
 (`w × h × 4`, `pageBytes`) plus the decoded images (Pixi keeps each page's `HTMLImageElement` as the
 texture's resource, to re-upload it; the estimate charges the images of the `imagePages` it is
-given, default the GPU pages, under the `imagePolicy` it is given — the conservative `all`, every
-page's image, is its default; the shipped runtime reports its real policy from the residency, see
-below), the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
+given, default the GPU pages themselves — the `resident` set, the estimator's default since MF10
+`66e54bcb` — and the shipped runtime reports its real policy from the residency, see below; the
+conservative `all`, every page's image, is the explicit charge of the eager `atlasPages: 'eager'`
+option), the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
 (`trackBytes`: chip songs from their rows — `songFrameBound`, `renderSong`'s length without
 rendering —, recorded tracks up to their loop end, else `FILE_TRACK_FALLBACK_SECONDS` of stereo),
 the render targets and a
@@ -461,9 +462,11 @@ on-device check compares it with DevTools' heap). `withinBudget` also needs the 
 images) within `textureBudgetFor` of the estimate's own frame — so a 640×360 estimate is judged
 against 23 MiB — and the audio within `AUDIO_BUDGET_BYTES`.
 `estimateStageMemory({ content, manifest, sfx, music, stageIndex, imagePolicy? })` estimates one
-stage: its pages (`stagePages`), the images its `imagePolicy` charges — `all` (the estimator's
-conservative default — every page), `resident` (only the stage's own pages — what the shipped lazy
-residency keeps) or `none` (no image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
+stage: its pages (`stagePages`), the images its `imagePolicy` charges — `resident` (only the stage's
+own pages — the default since MF10 `66e54bcb`, what the shipped lazy residency keeps and reports to
+the estimator) or, explicitly, `all` (every page's image — the charge of the eager
+`atlasPages: 'eager'` option, what the whole-atlas and hand-comparison rows pass) or `none` (no
+image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
 stage can ask for). Every campaign zone passes, the figures pinned at R1-05's v1-era atlas:
 A–G ≈ 64.7 MiB, H ≈ 71.7, I ≈ 72.5 at 384×216 (2.1–2.25 MiB of GPU pages — `common` plus the
 zone's page — and 3.5 MiB of images, 0.76 MiB SFX,

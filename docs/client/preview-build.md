@@ -1737,6 +1737,15 @@ The zone stays down in the caves after the dive: a checkpoint restart (ARCADE, o
 the caves' checkpoint starts down there, one at the checkpoint before it starts on the surface and
 dives again; broken bricks stand again after a restart.
 
+In this build the dive comes **in two steps** — into the upper caves first, then down again past a
+second pit to the game's deepest view, the lava lake welling up closer each time — and the maze
+below is **five wall pairs** with **two shoot-open shortcuts**: a cut in the cave floor just past
+the last wall is plugged by **hot bricks** (they break after 3 hits) that drop you into a low lane
+of drifting **mines** and a **geode** that hatches, marked by vent steam, and along the far ridge a
+second cut lets you take a denser stream of embers and wisps low for the zone's one **blue
+capsule** instead of the plain lane. Two of the wall pairs alternate ordinary brick with darker
+**obsidian** (6 hits); anything you break stands again on a restart.
+
 **The enemies of MAGMA DEEP:**
 
 | Enemy | Hits to destroy | Points | Shoots? |

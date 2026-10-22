@@ -19,6 +19,16 @@
  * - and, since R5-04.S2, the v2 stand-in set: frozen, unique names drawn at the shipped art
  *   scale, frames of one size, hittable sprites clearly visible, the same pixels every run.
  *
+ * R5-04's land addendum (the record the commit body cannot carry): the D weld's re-rebase took
+ * zone C's land under the branch, so its shared-file merge sites were THREE — the body's
+ * collision bullet, counting "two" and naming only `test/integration/stage-terrain.test.ts`'s
+ * reef and ridge arms, was written before it. The second site is this file: the merge kept
+ * master's rows shape, pointed the magma row at `tiles/terrain-magma-v2`, and let the tileset
+ * bullet above carry the D/E coexistence resolution (both zones' content tilesets name their
+ * -v2 sprite); the third is `test/integration/palette-cycle-scan.test.ts`, where the
+ * array-valued `CYCLE_ART` merged with C's scalar addition as `DUNE: ['bg/dune-blaze']`. The
+ * merged shapes ran green pre-lock (w11-SW-D-report, §Shared-file collision resolutions).
+ *
  * @module
  */
 import { readFileSync } from 'node:fs';

@@ -858,11 +858,14 @@ describe('playtest four-way bot: brick shooting (zones D, F, G, I)', () => {
   });
 
   it('meets the punch gate on no shipped stage at all (the cure sweep probe)', () => {
-    // RT-P12's C1: the shipped set-piece walls all leave gap rows — every terrain stage is swept
-    // every 480 px of its length and every lane centre, and the punch predicate stays null. The
-    // sweep reads the static tile map; blocks are never destructible, so it covers the whole
-    // shipped punch surface (the zone-D x7680 maze wall and the zone-F x4584 tissue wall from
-    // the review are inside it).
+    // RT-P12's C1: every terrain stage is swept every 480 px of its length and every lane
+    // centre, and the punch predicate stays null. The sweep reads the static tile map; blocks
+    // are never destructible, so it covers the whole shipped punch surface. The two walls the
+    // v1 review named are remaster history: zone D now flies five maze wall pairs that keep
+    // their 48-60 px gap rows across every station, and the zone-F chase walls (x 11,040 /
+    // 11,700 / 12,360) are gapless but arm only inside their 84-px approach band, off the
+    // 480-px grid — first-arm cameras 10,862 / 11,522 / 12,182, the F6b census. The law
+    // stands; on zone F the grid's null is held by sampling, not by gap rows.
     const stages = shippedContent().stages;
     let withTerrain = 0;
     for (const spec of stages) {

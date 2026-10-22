@@ -379,6 +379,11 @@ entries in order and **appends** 4 (S5a's rule; the tileset's `sprite` points at
 | `facet-glow` (23) | empty | — | — | floor | all 0 | decor gas facets in the walls (RLE-placed) |
 | `shard-floor` (24) | solid | 8 | 20 | floor | all 12 | the heart ring's footing columns |
 
+*RLE footnote: the table's ids are **token values**, not array positions — the shipped
+heightfield-RLE tokens are 1-based against tileset order (`tilemap.ts`'s `const id = i + 1`, slot 0
+is the empty sentinel); §10's own first authoring used array indices and the cure rebased every
+token +1 (`546bc521`, RT-GRV C1). Copy an id into an RLE row only after +1.*
+
 24 tiles (20 + 4 appends; frames == tiles is the loader's rule — `content.test.ts`
 ~923). Masks written in the tileset, art clipped to mask (W5-11; S2's
 stand-ins draw the same masks). The existing `cube` tile keeps `hp > 0` (the rush-stack
