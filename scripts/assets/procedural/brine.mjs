@@ -25,9 +25,28 @@
  * asset RNG and `hash2` (seeded from the sprite names), so the pixels are identical on every
  * engine.
  *
+ * **Since R5-02.S2 this generator also draws zone B's v2 stand-ins** (design
+ * `docs/v2-run/designs/zone-b.md` §14 — the mirror of the zone-C landing, `dune.mjs`): the mine
+ * and the skipper, the Herald's crown fin and the Maw's ridge spine, the deep-water far band and
+ * the fore foam, the three coral fans, the swaying kelp and the glow vent of the §9 decor, and the
+ * first v2 tileset sprite `tiles/terrain-reef-v2` — {@link BRINE_V2_SPRITES}. They appear **only
+ * on the `(options.artScale ?? 1) !== 1` path** and every one is `native` (decision RR-1a), so the
+ * scale-1 build returns exactly the sixteen v1 sprites above, byte for byte, and the v2 names are
+ * simply absent there. The bands are seamless tiles at a half-`FRAME_W` period like zone A's and
+ * zone C's (design §14 asks a full-frame deep band; the 512-page pack law of
+ * `test/scripts/assets/pipeline-edge.test.ts` ships it at the repeating half-frame tile, the
+ * disclosed precedent); `bg/brine-deep-v2` is fully opaque, `fore/brine-foam` is binary, and the
+ * only translucent paint anywhere is the design-named glow of {@link SOFT_ALPHA} — the vent's halo
+ * and the armed mine's lamp. Every lit colour of every new name sits at Chebyshev distance ≥ 3
+ * from every reserved palette-cycle ramp (bible §4.4, asserted by
+ * `test/scripts/assets/procedural-zone-b.test.ts`) — no flat-ramp band here rides a cycle, so no
+ * exemption is needed.
+ *
  * **Public API.** {@link generate}, {@link BRINE_SPRITES}, {@link BRINE_RAMP} (the colours zone B's
  * palette cycle must name), {@link NEBULA_TILE_W} / {@link NEBULA_TILE_H}, {@link BRINE_SEA_W} /
- * {@link BRINE_SEA_H} (the bands' tile sizes, their parallax `spacing`).
+ * {@link BRINE_SEA_H} (the bands' tile sizes, their parallax `spacing`) and — since R5-02.S2 —
+ * {@link BRINE_V2_SPRITES}, {@link BRINE_V2_TILES}, {@link BRINE_V2_TILE_NAMES},
+ * {@link BAND_TILE_W}, {@link DEEP_H}, {@link FOAM_H}.
  *
  * @module
  */
@@ -43,6 +62,16 @@ import {
   seedOf,
   withAlpha,
 } from './common.mjs';
+import { renderTerrainTiles, TERRAIN_PALETTES, TERRAIN_TILES, TILE_SIZE } from './terrain.mjs';
+
+// The frame constants come from the scripts' pinned mirror (`scripts/frame.mjs`, owner decision
+// O8) directly, not through `../v2kit.mjs`: the kit imports this module for `BRINE_RAMP`, and it
+// re-exports the mirror only in a statement at its own foot — read through the kit, this module's
+// top-level `BAND_TILE_W = FRAME_W / 2` would run before the kit finishes evaluating whenever the
+// pipeline enters the cycle at the kit (the edge suite did), and see `undefined`. The leaf mirror
+// initializes first under every entry order, and the pipeline's `CODE_HASH` hashes `frame.mjs`
+// itself (R4-P.P3), so a moved mirror still re-draws every sprite.
+import { FRAME_H, FRAME_W } from '../../frame.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../image.mjs').Rgba} Rgba */
@@ -78,7 +107,9 @@ function triangle(x, period) {
   return t < 0.5 ? t * 2 : 2 - t * 2;
 }
 
-/** The sprites this generator draws, in order. */
+/**
+ * The sprites this generator draws at art scale 1, in order.
+ */
 export const BRINE_SPRITES = Object.freeze([
   'bg/brine-nebula',
   'bg/brine-sea',
@@ -99,14 +130,69 @@ export const BRINE_SPRITES = Object.freeze([
 ]);
 
 /**
- * Generates zone B's art.
- *
- * @returns {SpriteDef[]} The sprites of {@link BRINE_SPRITES}, in that order.
+ * Tile width of the v2 `bg/brine-deep-v2` and `fore/brine-foam` bands: half the frame, derived
+ * from `FRAME_W` — the {@link ./dune.mjs|zone-C} precedent (design §14 asks a full-frame far
+ * band; an atlas frame cannot exceed the 512-page scenario of
+ * `test/scripts/assets/pipeline-edge.test.ts`, and every shipped band here is a seamless
+ * repeating tile, so these are, at a period that fills the frame exactly twice).
  */
-export function generate() {
+export const BAND_TILE_W = FRAME_W / 2;
+
+/** Height of the `bg/brine-deep-v2` band (zone-b.md §14: the full frame of deep water). */
+export const DEEP_H = FRAME_H;
+
+/** Height of the `fore/brine-foam` band (zone-b.md §14). */
+export const FOAM_H = 48;
+
+/**
+ * The v2 stand-in names {@link generate} adds at an art scale ≠ 1, in its output order (§14).
+ */
+export const BRINE_V2_SPRITES = Object.freeze([
+  'enemies/brine-mine',
+  'enemies/spume-skipper',
+  'bosses/herald-fin',
+  'bosses/maw-spine',
+  'bg/brine-deep-v2',
+  'fore/brine-foam',
+  'decor/brine-fan-1',
+  'decor/brine-fan-2',
+  'decor/brine-fan-3',
+  'decor/brine-kelp',
+  'decor/brine-glow-vent',
+  'tiles/terrain-reef-v2',
+]);
+
+/** The nine §14 variant tiles after `terrain-reef`'s twenty, in list order. */
+export const BRINE_V2_TILES = /** @type {const} */ ([
+  'coral-floor-a',
+  'coral-floor-b',
+  'coral-floor-c',
+  'floor-edge',
+  'ceil-edge',
+  'coral-corner-outer',
+  'coral-corner-inner',
+  'vent-rock',
+  'vent-rock-broken',
+]);
+
+/** The tile names of `tiles/terrain-reef-v2`: `terrain-reef`'s list verbatim, then the variants. */
+export const BRINE_V2_TILE_NAMES = /** @type {const} */ ([...TERRAIN_TILES, ...BRINE_V2_TILES]);
+
+/**
+ * Generates zone B's art: the sixteen v1 sprites always, plus the twelve v2 stand-ins of design
+ * §14 when the build runs at an art scale ≠ 1 (decision RR-1a).
+ *
+ * @param {{ tileSize?: number, artScale?: number }} [options] - The build's art scale and tile
+ *   side (the pipeline passes both; `artScale` 1 or absent draws the v1 set only, `tileSize`
+ *   defaults to the v2 {@link TILE_SIZE}).
+ * @returns {SpriteDef[]} {@link BRINE_SPRITES} in that order at art scale 1; the v1 set followed
+ *   by {@link BRINE_V2_SPRITES} in theirs at any other scale (the new names all `native`, their
+ *   `@flash` siblings derived by the pipeline's flash pass).
+ */
+export function generate(options = {}) {
   const flash = { hitFlash: true };
   const jawTop = jawFrame();
-  return [
+  const sprites = [
     makeSprite('bg/brine-nebula', [nebula()], 'brine', { anchor: [0, 0] }),
     makeSprite('bg/brine-sea', [sea()], 'brine', { anchor: [0, 0] }),
     makeSprite('enemies/froth', [bubbleFrame(18, 0), bubbleFrame(18, 1)], 'brine', {
@@ -145,6 +231,48 @@ export function generate() {
       animations: { blink: [0, 1] },
     }),
   ];
+  const artScale = options.artScale ?? 1;
+  if (artScale === 1) return sprites;
+  const size = options.tileSize ?? TILE_SIZE;
+  const native = { native: true };
+  const hit = { hitFlash: true, ...native };
+  return sprites.concat([
+    makeSprite('enemies/brine-mine', [0, 1, 2, 3].map(mineFrame), 'brine', {
+      ...hit,
+      animations: { idle: [0, 1], armed: [2, 3] },
+    }),
+    makeSprite('enemies/spume-skipper', [0, 1, 2, 3].map(skipperFrame), 'brine', {
+      ...hit,
+      animations: { flap: [0, 1, 2, 3] },
+    }),
+    makeSprite('bosses/herald-fin', [heraldFinFrame()], 'brine', hit),
+    makeSprite('bosses/maw-spine', [spineFrame(0), spineFrame(1)], 'brine', {
+      ...hit,
+      animations: { flex: [0, 1] },
+    }),
+    makeSprite('bg/brine-deep-v2', [deepBand()], 'brine', { anchor: [0, 0], ...native }),
+    makeSprite('fore/brine-foam', [foamBand(0), foamBand(1)], 'brine', {
+      anchor: [0, 0],
+      ...native,
+      animations: { drift: [0, 1] },
+    }),
+    makeSprite('decor/brine-fan-1', [fanFrame(0)], 'brine', native),
+    makeSprite('decor/brine-fan-2', [fanFrame(1)], 'brine', native),
+    makeSprite('decor/brine-fan-3', [fanFrame(2)], 'brine', native),
+    makeSprite('decor/brine-kelp', [0, 1, 2, 3].map(kelpFrame), 'brine', {
+      ...native,
+      animations: { sway: [0, 1, 2, 3] },
+    }),
+    makeSprite('decor/brine-glow-vent', [ventFrame(0), ventFrame(1)], 'brine', {
+      ...native,
+      animations: { pulse: [0, 1] },
+    }),
+    makeSprite('tiles/terrain-reef-v2', reefTilesV2(size), 'brine', {
+      anchor: [0, 0],
+      ...native,
+      animations: Object.fromEntries(BRINE_V2_TILE_NAMES.map((n, i) => [n, [i]])),
+    }),
+  ]);
 }
 
 /**
@@ -550,4 +678,672 @@ function shellFrame(slit) {
     return v < -0.5 ? lit : shell;
   });
   return image;
+}
+
+// ─────────────────────────── v2 stand-ins (R5-02.S2, zone-b.md §14) ──────────────────────────
+
+/**
+ * Zone B's v2 water, coral and steel family — `tiles/terrain-reef`'s palette (pale coral over
+ * indigo rock) read from `terrain.mjs` so the new art sits on the old terrain with one source of
+ * truth, plus the v2 literals of the deep band, the mine, the skipper, the herald's crown fin, the
+ * Maw's ridge spine, the foam, the fans, the kelp and the glow vent. Every lit colour keeps
+ * Chebyshev distance ≥ 3 from every reserved palette-cycle ramp (bible §4.4).
+ */
+const PAL = TERRAIN_PALETTES['tiles/terrain-reef'];
+const SUR = color(PAL.surface);
+const SUBS = color(PAL.subsurface);
+const RK = PAL.rock.map(color);
+const OUT = color('#1a2230');
+const STEEL = color('#5c6e80');
+const MINE_DK = color('#2e4450');
+const RUST = color('#8a6a4a');
+const LAMP_DIM = color('#d8a040');
+const LAMP_LIT = color('#f0d060');
+const SK_BODY = color('#3e6a82');
+const SK_FIN = color('#7fb0c0');
+const SK_BELLY = color('#c8dce4');
+const HF_PLATE = color('#caa268');
+const HF_LIT = color('#ead0a0');
+const HF_RIM = color('#4a3826');
+const SP_METAL = color('#708898');
+const SP_GLOW = color('#60e0c0');
+const STREAK = color('#4a7294');
+const PLANK = color('#a8c8d8');
+const REEF_DK = color('#0c1826');
+const REEF_RIM = color('#1a2f4a');
+const FOAM = color('#e8f4f0');
+const FOAM_SH = color('#a8c8cc');
+const FAN_A = color('#c06a5a');
+const FAN_B = color('#d89070');
+const FAN_C = color('#a85058');
+const FAN_PALE = color('#f0c8b0');
+const KELP = color('#3a7a58');
+const KELP_HI = color('#5ca878');
+const KELP_DK = color('#1e4a38');
+const VT_ROCK = color('#3e3a4e');
+const VT_DK = color('#1a1626');
+const VT_GLOW = color('#f0a030');
+const VT_HOT = color('#ffd060');
+const CF_A = color('#6e4a6a');
+const CF_B = color('#54385c');
+const CRUST = color('#e8b078');
+
+/** The depth steps of `bg/brine-deep-v2`, the lit surface row band down to the deep (§9's column). */
+const DEEP_STEPS = [
+  color('#3d607f'),
+  color('#31506f'),
+  color('#27405c'),
+  color('#1d3148'),
+  color('#15263a'),
+  color('#0f1e30'),
+];
+
+/** The three fans' ray tips of §9's decor (design: a fanned coral, three seeded silhouettes). */
+const FAN_TIPS = [
+  [
+    [2, 4],
+    [8, 1],
+    [15, 0],
+    [22, 1],
+    [28, 4],
+  ],
+  [
+    [4, 6],
+    [10, 2],
+    [16, 1],
+    [22, 3],
+    [27, 7],
+  ],
+  [
+    [3, 5],
+    [9, 0],
+    [15, 2],
+    [20, 0],
+    [26, 5],
+  ],
+];
+
+/**
+ * Paints a filled rectangle, clamped to the image.
+ *
+ * @param {Image} img - The image.
+ * @param {number} x0 - First column.
+ * @param {number} y0 - First row.
+ * @param {number} x1 - Last column (inclusive).
+ * @param {number} y1 - Last row (inclusive).
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function rect(img, x0, y0, x1, y1, rgba) {
+  for (let y = Math.max(0, y0); y <= Math.min(img.height - 1, y1); y++) {
+    for (let x = Math.max(0, x0); x <= Math.min(img.width - 1, x1); x++) {
+      setPixel(img, x, y, rgba);
+    }
+  }
+}
+
+/**
+ * Paints one pixel, skipping coordinates outside the image.
+ *
+ * @param {Image} img - The image.
+ * @param {number} x - The column.
+ * @param {number} y - The row.
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function px(img, x, y, rgba) {
+  if (x < 0 || y < 0 || x >= img.width || y >= img.height) return;
+  setPixel(img, x, y, rgba);
+}
+
+/**
+ * Paints one pixel with the column wrapped into the image (for the seamless bands).
+ *
+ * @param {Image} img - The image.
+ * @param {number} x - The column (any integer).
+ * @param {number} y - The row.
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function pxw(img, x, y, rgba) {
+  if (y < 0 || y >= img.height) return;
+  setPixel(img, ((x % img.width) + img.width) % img.width, y, rgba);
+}
+
+/**
+ * A deterministic small integer: `hash2` of two coordinates and a seed, modulo `n`.
+ *
+ * @param {number} a - First input.
+ * @param {number} b - Second input.
+ * @param {number} seed - The sprite's seed.
+ * @param {number} n - The modulus.
+ * @returns {number} 0 … n − 1.
+ */
+function pick(a, b, seed, n) {
+  return hash2(a, b, seed) % n;
+}
+
+/**
+ * `enemies/brine-mine` (16×16, 4 frames, hittable): the drifting sea mine of the design — a
+ * spiked steel body (dark rim, rust along the lower right) on eight spokes, with the lamp on its
+ * face dark (0), dim (1), lit (2) or lit in the armed {@link SOFT_ALPHA} halo (3).
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function mineFrame(k) {
+  const img = createImage(16, 16);
+  const c = 7.5;
+  for (const [dx, dy] of [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+    [-1, -1],
+  ]) {
+    const s = dx === 0 || dy === 0 ? 1 : 0.75;
+    drawLine(img, c + dx * 4.5 * s, c + dy * 4.5 * s, c + dx * 8 * s, c + dy * 8 * s, MINE_DK);
+  }
+  fillEllipse(img, c, c, 5.4, 5.4, (u, v, e) => {
+    if (e > 0.82) return MINE_DK;
+    if (u > 0.25 && v > 0.4) return RUST;
+    return STEEL;
+  });
+  const lamp = k === 0 ? OUT : k === 1 ? LAMP_DIM : LAMP_LIT;
+  rect(img, 7, 7, 8, 8, lamp);
+  if (k === 3) {
+    for (const [hx, hy] of [
+      [5, 7],
+      [5, 8],
+      [10, 7],
+      [10, 8],
+      [7, 5],
+      [8, 5],
+      [7, 10],
+      [8, 10],
+      [5, 5],
+      [10, 5],
+      [5, 10],
+      [10, 10],
+    ]) {
+      px(img, hx, hy, withAlpha(LAMP_LIT, SOFT_ALPHA));
+    }
+  }
+  return img;
+}
+
+/**
+ * `enemies/spume-skipper` (18×11, 4 frames, hittable): the foam-skimming chaser, facing left like
+ * every flying sprite of the zone — a steel-blue body with a pale belly and lit head, one swept
+ * fin in four beat phases (frames 0 and 3 up, 1 mid-up, 2 down), a short beak and twin tail
+ * streamers.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function skipperFrame(k) {
+  const img = createImage(18, 11);
+  const tipY = [1, 4, 9, 6][k];
+  fillEllipse(img, 9, 6, 5.6, 3.3, (u, v, e) => {
+    if (e > 0.9) return OUT;
+    if (v > 0.5) return SK_BELLY;
+    if (u < -0.6) return SK_FIN;
+    return SK_BODY;
+  });
+  for (let d = 0; d <= 5; d++) {
+    const fy = Math.round(4 + ((tipY - 4) * (d + 1)) / 6);
+    px(img, 8 + d, fy, SK_FIN);
+    px(img, 9 + d, fy + (tipY < 4 ? 1 : -1), OUT);
+  }
+  px(img, 2, 5, SK_BELLY);
+  px(img, 1, 6, SK_BELLY);
+  px(img, 4, 5, OUT);
+  for (let t = 0; t < 2; t++) {
+    for (let d = 0; d <= 3; d++) px(img, 14 + d, 6 - t * 3 + (d > 1 ? 1 : 0), OUT);
+  }
+  return img;
+}
+
+/**
+ * `bosses/herald-fin` (24×9, 1 frame, hittable): the SPUME HERALD's rebuilt crown plate — a
+ * gold plate with a lit upper edge, a dark rim along the bottom and three short spikes, the two
+ * gill slits picked out dark. Unreferenced by content until S5a arranges the herald.
+ *
+ * @returns {Image} The frame.
+ */
+function heraldFinFrame() {
+  const img = createImage(24, 9);
+  for (const bx of [4, 12, 20]) {
+    px(img, bx, 0, HF_LIT);
+    px(img, bx - 1, 1, HF_PLATE);
+    px(img, bx, 1, HF_LIT);
+    px(img, bx + 1, 1, HF_PLATE);
+  }
+  rect(img, 0, 2, 23, 6, HF_PLATE);
+  rect(img, 0, 2, 23, 2, HF_LIT);
+  rect(img, 0, 7, 23, 8, HF_RIM);
+  for (const nx of [7, 16]) {
+    px(img, nx, 4, HF_RIM);
+    px(img, nx, 5, HF_RIM);
+  }
+  return img;
+}
+
+/**
+ * `bosses/maw-spine` (18×18, 2 frames, hittable): a ridge spine of the rebuilt GALVANIC MAW — a
+ * steel wedge rising from its base row to a glowing tip, its trailing edge dark; frame 1 the
+ * chipped look (bible §5.7, hash-scoured notches, the `@flash` derived).
+ *
+ * @param {number} k - The frame, 0 or 1.
+ * @returns {Image} The frame.
+ */
+function spineFrame(k) {
+  const img = createImage(18, 18);
+  const seed = seedOf('bosses/maw-spine');
+  for (let y = 0; y < 18; y++) {
+    const w = 1 + Math.floor((y * 11) / 17);
+    const x0 = 2 + Math.floor(((17 - y) * 6) / 17);
+    for (let x = x0; x < x0 + w; x++) {
+      if (k === 1 && y > 5 && y < 14 && pick(x, y, seed, 4) === 0) continue;
+      px(img, x, y, pick(x, y, seed, 6) === 0 ? MINE_DK : SP_METAL);
+    }
+    px(img, x0 + w - 1, y, MINE_DK);
+  }
+  px(img, 8, 0, SP_GLOW);
+  px(img, 7, 1, SP_GLOW);
+  return img;
+}
+
+/**
+ * The reef silhouette's roof row at column `x` — a sum of triangle waves with periods 160, 80
+ * and 32 (they all divide {@link BAND_TILE_W}, so the band repeats seamlessly).
+ *
+ * @param {number} x - Column.
+ * @param {number} roof - The deepest row the waves leave free above the silhouette.
+ * @returns {number} The first silhouette row.
+ */
+function reefTop(x, roof) {
+  return roof - Math.round(8 * triangle(x, 160) + 5 * triangle(x + 40, 80) + 3 * triangle(x, 32));
+}
+
+/**
+ * `bg/brine-deep-v2` (`BAND_TILE_W`×{@link DEEP_H}, 1 frame): the opaque far layer of §14 — the
+ * water column in six depth steps (light surface down to the near-black deep, a period that
+ * fills the frame exactly twice), three thin light-shaft streak rows and sparse plankton dots on
+ * a 16-column lattice, closed at the foot by the reef silhouette with its coral nubs (every
+ * period divides the tile width, so the band wraps without a seam).
+ *
+ * @returns {Image} The band.
+ */
+function deepBand() {
+  const img = createImage(BAND_TILE_W, DEEP_H);
+  const seed = seedOf('bg/brine-deep-v2');
+  for (let y = 0; y < DEEP_H; y++) {
+    const s = Math.min(DEEP_STEPS.length - 1, Math.floor((y * DEEP_STEPS.length) / DEEP_H));
+    for (let x = 0; x < BAND_TILE_W; x++) setPixel(img, x, y, DEEP_STEPS[s]);
+  }
+  for (const [row, phase, lit] of [
+    [84, 20, 18],
+    [150, 41, 12],
+    [212, 9, 22],
+  ]) {
+    for (let x = 0; x < BAND_TILE_W; x++) {
+      if ((x + phase) % 64 < lit) setPixel(img, x, row, STREAK);
+    }
+  }
+  for (let q = 0; q < 20; q++) {
+    const col = 7 + q * 16;
+    for (let m = 0; m < 3; m++) {
+      const py = 18 + m * 92 + pick(q, m + 18, seed, 60);
+      px(img, col, py, PLANK);
+    }
+  }
+  const roof = DEEP_H - 34;
+  for (let x = 0; x < BAND_TILE_W; x++) {
+    const t = reefTop(x, roof);
+    for (let y = t; y < DEEP_H; y++) setPixel(img, x, y, REEF_DK);
+    setPixel(img, x, t, REEF_RIM);
+  }
+  for (let x = 8; x < BAND_TILE_W; x += 16) {
+    const t = reefTop(x, roof);
+    const h = 2 + pick(x, 23, seed, 4);
+    for (let d = 1; d <= h; d++) pxw(img, x, t - d, REEF_DK);
+    pxw(img, x, t - h, REEF_RIM);
+  }
+  return img;
+}
+
+/**
+ * `fore/brine-foam` (`BAND_TILE_W`×{@link FOAM_H}, 2 frames): the foreground froth of §14 — eight
+ * foam pieces on a 40-column lattice near the band's top edge (a lit body, a shaded underside),
+ * drawn at all three wrapped positions so the drift repeats seamless; frame 1 drifts the whole
+ * lattice eight pixels on.
+ *
+ * @param {number} k - The frame, 0 or 1.
+ * @returns {Image} The frame.
+ */
+function foamBand(k) {
+  const img = createImage(BAND_TILE_W, FOAM_H);
+  const seed = seedOf('fore/brine-foam');
+  for (let s = 0; s < 8; s++) {
+    const cx = s * 40 + 8 + pick(s, 21, seed, 20) + k * 8;
+    const cy = 6 + pick(s, 22, seed, 8);
+    const rx = 5 + pick(s, 23, seed, 7);
+    for (const off of [-BAND_TILE_W, 0, BAND_TILE_W]) {
+      fillEllipse(img, cx + off, cy, rx, 2.6, (u, v, e) => {
+        if (e > 0.95) return null;
+        if (v > 0.5) return FOAM_SH;
+        return FOAM;
+      });
+    }
+  }
+  return img;
+}
+
+/**
+ * `decor/brine-fan-{1,2,3}` (30×24, 1 frame): the fanned corals of §9's decor — five rays of a
+ * seeded silhouette from a rock foot to their pale tips, binary alpha.
+ *
+ * @param {number} i - The fan, 0 … 2.
+ * @returns {Image} The frame.
+ */
+function fanFrame(i) {
+  const img = createImage(30, 24);
+  const tone = [FAN_A, FAN_B, FAN_C][i];
+  rect(img, 12, 20, 17, 21, FAN_C);
+  rect(img, 12, 22, 17, 23, OUT);
+  for (const [tx, ty] of FAN_TIPS[i]) {
+    drawLine(img, 15, 21, tx, ty, tone, 2);
+    px(img, tx, ty, FAN_PALE);
+  }
+  return img;
+}
+
+/**
+ * `decor/brine-kelp` (12×48, 4 frames): the slow swaying frond of §14 — a two-column stalk rooted
+ * at the bottom edge, its lean advancing through the four sway phases (`off` 0 → 1 → 3 → 2, the
+ * loop), a pale lit tip and four side blades on seeded rows.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function kelpFrame(k) {
+  const img = createImage(12, 48);
+  const off = [0, 1, 3, 2][k];
+  for (let y = 47; y >= 3; y--) {
+    const x = 5 + Math.round((off * (47 - y)) / 44);
+    px(img, x, y, y < 9 ? KELP_HI : KELP);
+    px(img, x + 1, y, y < 9 ? KELP : KELP_DK);
+  }
+  px(img, 5 + off, 2, KELP_HI);
+  px(img, 5 + off, 1, KELP_HI);
+  for (let b = 0; b < 4; b++) {
+    const by = 13 + b * 8;
+    const side = b % 2 === 0 ? -1 : 1;
+    const bx = 5 + Math.round((off * (47 - by)) / 44);
+    for (let d = 1; d <= 3; d++) {
+      px(img, bx + side * d + (side < 0 ? 0 : 1), by - d, d === 3 ? KELP_HI : KELP);
+    }
+  }
+  return img;
+}
+
+/**
+ * `decor/brine-glow-vent` (24×24, 2 frames): the black-smoker of §9's decor (design: additive
+ * glow) — a rock collar with a dark rim and base around a black opening; the vent core lit
+ * amber (0) or flared hot gold with a wider {@link SOFT_ALPHA} halo (1). The halo ring is the
+ * only translucent paint outside the armed mine's lamp.
+ *
+ * @param {number} k - The frame, 0 or 1.
+ * @returns {Image} The frame.
+ */
+function ventFrame(k) {
+  const img = createImage(24, 24);
+  fillEllipse(img, 12, 16, 9.5, 6.5, (u, v, e) => {
+    if (e > 0.88) return VT_DK;
+    if (v > 0.45) return VT_DK;
+    return VT_ROCK;
+  });
+  px(img, 6, 14, VT_DK);
+  px(img, 17, 15, VT_DK);
+  fillEllipse(img, 12, 11.5, 4.5, 2.8, () => VT_DK);
+  rect(img, 9, 10, 14, 13, k === 1 ? VT_HOT : VT_GLOW);
+  const soft = withAlpha(k === 1 ? VT_HOT : VT_GLOW, SOFT_ALPHA);
+  for (const [hx, hy] of [
+    [8, 10],
+    [8, 11],
+    [8, 12],
+    [15, 10],
+    [15, 11],
+    [15, 12],
+    [10, 9],
+    [11, 9],
+    [13, 9],
+    [10, 14],
+    [11, 14],
+    [13, 14],
+  ]) {
+    px(img, hx, hy, soft);
+  }
+  if (k === 1) {
+    px(img, 7, 11, soft);
+    px(img, 16, 11, soft);
+    px(img, 12, 8, soft);
+    px(img, 12, 15, soft);
+  }
+  return img;
+}
+
+/**
+ * The coral-crusted floor fill: a crust pair on top (the plain `SUR`/`SUBS` in variants a and b,
+ * the pale `CRUST` crown over `SUR` in c) over a speckled coral-rock body, every pixel opaque
+ * (the §14 fill classes sit under the game's floor like the base terrain).
+ *
+ * @param {number} s - Tile side.
+ * @param {number} v - The variant, 0 … 2.
+ * @returns {Image} The tile.
+ */
+function coralFloorTile(s, v) {
+  const img = createImage(s, s);
+  const seed = seedOf(`tiles/terrain-reef-v2/coral-floor-${'abc'[v]}`);
+  rect(img, 0, 0, s - 1, 0, v === 2 ? CRUST : SUR);
+  rect(img, 0, 1, s - 1, 1, v === 2 ? SUR : SUBS);
+  const tint = v === 0 ? CF_A : v === 1 ? CF_B : RK[2];
+  for (let y = 2; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      let c = tint;
+      if (pick(x, y, seed, 5) === 0) c = v === 2 ? RK[0] : RK[2];
+      else if (v === 1 && (x + y) % 7 === 3) c = RK[1];
+      setPixel(img, x, y, c);
+    }
+  }
+  if (v === 2) {
+    for (let x = 0; x < s; x++) if (x % 4 === 0) px(img, x, 2, CRUST);
+  }
+  return img;
+}
+
+/**
+ * `floor-edge`: the lit crust over a banded body — `SUR`, `SUBS`, a course of `RK[1]`, speckled
+ * rock and a dark base row, fully opaque.
+ *
+ * @param {number} s - Tile side.
+ * @returns {Image} The tile.
+ */
+function floorEdgeTile(s) {
+  const img = createImage(s, s);
+  const seed = seedOf('tiles/terrain-reef-v2/floor-edge');
+  rect(img, 0, 0, s - 1, 0, SUR);
+  rect(img, 0, 1, s - 1, 1, SUBS);
+  rect(img, 0, 2, s - 1, 2, RK[1]);
+  for (let y = 3; y < s - 1; y++) {
+    for (let x = 0; x < s; x++) {
+      setPixel(img, x, y, pick(x, y, seed, 5) === 0 ? RK[2] : RK[0]);
+    }
+  }
+  rect(img, 0, s - 1, s - 1, s - 1, RK[2]);
+  return img;
+}
+
+/**
+ * `ceil-edge`: the hung crust — an attach band on the top rows, a `SUBS` face under it and a
+ * speckled body with pale coral nubs, fully opaque.
+ *
+ * @param {number} s - Tile side.
+ * @returns {Image} The tile.
+ */
+function ceilEdgeTile(s) {
+  const img = createImage(s, s);
+  const seed = seedOf('tiles/terrain-reef-v2/ceil-edge');
+  rect(img, 0, 0, s - 1, 1, RK[1]);
+  rect(img, 0, 2, s - 1, 2, SUBS);
+  for (let y = 3; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      setPixel(img, x, y, pick(x, y, seed, 5) === 0 ? RK[0] : RK[2]);
+    }
+  }
+  for (let x = 0; x < s; x += 3) {
+    px(img, x, 3, CRUST);
+    px(img, x + 1, 3, CRUST);
+  }
+  return img;
+}
+
+/**
+ * The stepped end-cap of a coral floor run (design §14's outer corner, the zone-C shape law):
+ * each column solid from a height that steps three times across the tile, `SUR` on the cap,
+ * `SUBS` under it and on the exposed side column, `MINE_DK` on the base row. Binary alpha.
+ *
+ * @param {number} s - Tile side (even, ≥ 8).
+ * @param {boolean} flip - Mirror left ↔ right.
+ * @param {number} seed - The tile's seed.
+ * @returns {Image} The tile.
+ */
+function cornerOuterTile(s, flip, seed) {
+  const img = createImage(s, s);
+  const step = Math.floor((s - 4) / 3);
+  const side = flip ? s - 1 : 0;
+  for (let x = 0; x < s; x++) {
+    const q = Math.floor(((flip ? s - 1 - x : x) * 4) / s);
+    const t = 2 + (3 - q) * step;
+    for (let y = t; y <= s - 1; y++) {
+      px(
+        img,
+        x,
+        y,
+        y === s - 1
+          ? MINE_DK
+          : y === t
+            ? SUR
+            : y === t + 1
+              ? SUBS
+              : pick(x, y, seed, 5) === 0
+                ? RK[2]
+                : RK[0],
+      );
+    }
+    if (x === side) {
+      for (let y = t; y <= s - 1; y++) px(img, x, y, SUBS);
+    }
+  }
+  return img;
+}
+
+/**
+ * The concave wall-meets-crust corner (design §14's inner corner, the zone-C shape law): one half
+ * of the tile solid to the bottom edge, the other half only under a flat shoulder at mid-tile —
+ * `SUR` along both faces, the wall's exposed flank in `SUBS`. Binary alpha.
+ *
+ * @param {number} s - Tile side (even, ≥ 8).
+ * @param {boolean} flip - Mirror left ↔ right.
+ * @param {number} seed - The tile's seed.
+ * @returns {Image} The tile.
+ */
+function cornerInnerTile(s, flip, seed) {
+  const img = createImage(s, s);
+  const half = Math.floor(s / 2);
+  const shoulder = Math.floor(s / 2);
+  const face = flip ? half : half - 1;
+  for (let x = 0; x < s; x++) {
+    const wall = flip ? x >= s - half : x < half;
+    const a = wall ? 0 : shoulder;
+    for (let y = a; y <= s - 1; y++) {
+      const flank = x === face && y >= shoulder;
+      const cap = y === a || (wall && y === a + 1 && !flank);
+      px(
+        img,
+        x,
+        y,
+        y === s - 1
+          ? MINE_DK
+          : y === a
+            ? SUR
+            : cap || flank
+              ? SUBS
+              : pick(x, y, seed, 5) === 0
+                ? RK[2]
+                : RK[0],
+      );
+    }
+  }
+  return img;
+}
+
+/**
+ * The vent rocks: a speckled rock tile scored by a dark hash fissure with embers glowing in it
+ * (§14's hydrothermal decor); the broken variant the wider crack, a scoured corner and a
+ * brighter flare. Fully opaque.
+ *
+ * @param {number} s - Tile side.
+ * @param {boolean} broken - The damaged variant.
+ * @returns {Image} The tile.
+ */
+function ventRockTile(s, broken) {
+  const img = createImage(s, s);
+  const seed = seedOf(
+    broken ? 'tiles/terrain-reef-v2/vent-rock-broken' : 'tiles/terrain-reef-v2/vent-rock',
+  );
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      setPixel(img, x, y, pick(x, y, seed, 5) === 0 ? RK[2] : RK[0]);
+    }
+  }
+  for (let y = 1; y < (broken ? s - 1 : 8); y++) {
+    const cx = (broken ? 3 : 3) + Math.floor(y / 2) - (y % 3 === 2 ? 1 : 0);
+    px(img, cx, y, OUT);
+    px(img, cx + 1, y, OUT);
+    if (broken && y > 5) px(img, cx + 2, y, OUT);
+  }
+  px(img, broken ? 7 : 5, broken ? 8 : 6, VT_GLOW);
+  px(img, broken ? 8 : 6, broken ? 8 : 6, VT_HOT);
+  if (broken) {
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 3; x++) px(img, x, s - 1 - y, OUT);
+  }
+  return img;
+}
+
+/**
+ * The twenty-nine frames of `tiles/terrain-reef-v2`: `terrain-reef`'s whole twenty-tile list
+ * first in its order (the wave-11 law — terrain-a's order, the base list off-limits), then the
+ * nine §14 variants: the three coral floors, the two edges, the two corners and the vent-rock
+ * pair (the frame order is the list this function appends and {@link BRINE_V2_TILE_NAMES} names).
+ *
+ * @param {number} size - The tile side (`options.tileSize`).
+ * @returns {Image[]} The frames, in list order.
+ */
+function reefTilesV2(size) {
+  const base = renderTerrainTiles(size, 'tiles/terrain-reef');
+  const s = size;
+  return [
+    ...base,
+    coralFloorTile(s, 0),
+    coralFloorTile(s, 1),
+    coralFloorTile(s, 2),
+    floorEdgeTile(s),
+    ceilEdgeTile(s),
+    cornerOuterTile(s, false, seedOf('tiles/terrain-reef-v2/coral-corner-outer')),
+    cornerInnerTile(s, false, seedOf('tiles/terrain-reef-v2/coral-corner-inner')),
+    ventRockTile(s, false),
+    ventRockTile(s, true),
+  ];
 }

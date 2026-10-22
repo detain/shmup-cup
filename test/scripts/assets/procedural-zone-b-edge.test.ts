@@ -9,6 +9,8 @@
  *   pixel's own coordinates, a centre between pixels paints a mirror-symmetric shape;
  * - the brine generator: deterministic, frozen name list, every frame of a sprite the same size,
  *   every sprite that can be hit is clearly visible in every frame (a quarter of it ≥ half opaque);
+ * - since R5-02.S2 the same invariants for brine's v2 stand-in set of design §14, drawn through
+ *   the art-scale path (`procedural-zone-c-edge.test.ts`'s dune block mirrored);
  * - the rosters: every zone B and C hurtbox fits inside the sprite drawn for it (a shot never
  *   hits empty space around the art). Zone C's own edge cases are in `procedural-zone-c-edge.test.ts`.
  *
@@ -18,8 +20,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createImage, getPixel, type Image } from '../../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
+import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
 import { color, drawLine, fillEllipse } from '../../../scripts/assets/procedural/common.mjs';
+import { TILE_SIZE } from '../../../scripts/assets/procedural/terrain.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
 import { drawn } from './procedural-zone-helpers.js';
 
@@ -180,5 +184,40 @@ describe('zone B and C hurtboxes fit their art (M2-11)', () => {
       }
     }
     expect(checked).toBeGreaterThanOrEqual(30);
+  });
+});
+
+describe('scripts/assets/procedural brine — R5-02.S2 v2 stand-ins', () => {
+  const sets: readonly [string, readonly string[], () => SpriteDef[]][] = [
+    [
+      'brine v2',
+      brine.BRINE_V2_SPRITES,
+      () => brine.generate({ artScale: WORLD_SCALE, tileSize: TILE_SIZE }),
+    ],
+  ];
+
+  it.each(sets)(
+    '%s: frozen names, frames of one size, every hit sprite clearly visible',
+    (_id, names, generate) => {
+      expect(Object.isFrozen(names)).toBe(true);
+      expect(new Set(names).size).toBe(names.length);
+      for (const sprite of generate()) {
+        const [first, ...rest] = sprite.frames;
+        for (const frame of rest) {
+          expect([frame.width, frame.height], sprite.name).toEqual([first.width, first.height]);
+        }
+        if (sprite.hitFlash === true) {
+          for (const frame of sprite.frames) expect(drawn(frame), sprite.name).toBe(true);
+        }
+      }
+    },
+  );
+
+  it.each(sets)('%s: draws the same pixels every run', (_id, _names, generate) => {
+    const hash = (sprites: SpriteDef[]): string[] =>
+      sprites.map(
+        (s) => s.name + ':' + s.frames.map((f) => Buffer.from(f.data).toString('base64')).join('|'),
+      );
+    expect(hash(generate())).toEqual(hash(generate()));
   });
 });
