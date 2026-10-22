@@ -65,7 +65,7 @@ describe('core/behaviors boss.facet allocation (M2-13)', () => {
     }
     const parts = boss.parts;
     const core = parts.findIndex((p) => p.core);
-    // The crystals broken, then the core below 38 of 72: its last phase.
+    // The crystals broken, then the core below 42 of its 84 (R5-07.S4b): its last phase.
     for (const name of ['crystal-top', 'crystal-bottom']) {
       w.bosses.damagePart(
         parts.findIndex((p) => p.name === name),
@@ -74,7 +74,7 @@ describe('core/behaviors boss.facet allocation (M2-13)', () => {
       );
     }
     stepWorld(w, input);
-    w.bosses.damagePart(core, 40, 0);
+    w.bosses.damagePart(core, 43, 0);
     stepWorld(w, input);
     expect(boss.phase).toBe(2);
     let t = 0;

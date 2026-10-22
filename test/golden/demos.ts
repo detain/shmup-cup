@@ -92,7 +92,8 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = Object.freeze([
   },
   {
     id: 'zone-g',
-    description: 'PRISM LABYRINTH: the KESTREL in the crystal walls',
+    description:
+      'PRISM LABYRINTH: the KESTREL through the refraction hall of moving crystal blocks',
     stageId: 'zone-g',
     config: { seed: 107 },
   },

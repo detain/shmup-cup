@@ -660,7 +660,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-g-god',
     description:
-      'PRISM LABYRINTH start to stage clear with god mode (M2-13): the 4-way bot through the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars and the refraction run, then FACET MONARCH shot down',
+      'PRISM LABYRINTH start to stage clear with god mode (M2-13, remastered R5-07): the 4-way bot through the prism field, the pan into the crystal gallery and its PRISM SENTINEL, the slide to the deep band, the cube rush stacking on its stubs, the refraction hall of moving crystal blocks, the prism heart pincers and the geyser run, then FACET MONARCH shot down',
     stageId: 'zone-g',
     config: { seed: 1 },
     godMode: true,
@@ -723,7 +723,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-g-bot',
     description:
-      'PRISM LABYRINTH without god mode (M2-13 tests): the 4-way bot from the start, Classic penalty, through the crystal labyrinth — a death in the cube rush and a respawn in place — to FACET MONARCH',
+      'PRISM LABYRINTH without god mode (M2-13 tests, remastered R5-07): the 4-way bot from the start, Classic penalty, through the diving labyrinth — its deaths inside the §15 slide, rush and run windows, each with a respawn in place — to FACET MONARCH',
     stageId: 'zone-g',
     config: { seed: 91 },
     godMode: false,
@@ -732,7 +732,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-g-boss',
     description:
-      'the stage skip to FACET MONARCH (M2-13 tests): the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down',
+      'the stage skip to FACET MONARCH (M2-13 tests, remastered R5-07): the last warning enters at 20,550, the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down',
     stageId: 'zone-g',
     config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
     godMode: false,

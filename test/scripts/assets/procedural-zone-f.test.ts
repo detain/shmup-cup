@@ -162,11 +162,10 @@ describe('scripts/assets/procedural/terrain — the zone F and G tilesets (M2-13
       const tileset = content<{ id: string; sprite: string }>(
         `tilesets/terrain-${id}.tileset.json`,
       );
-      // The tileset's sprite field follows the §10 flip — the v2 grid carries the twenty
-      // base tiles verbatim plus the three §10 variants; prism still rides its v1 sheet.
-      expect(tileset.sprite).toBe(
-        id === 'vault' ? 'tiles/terrain-vault-v2' : `tiles/terrain-${id}`,
-      );
+      // The tileset's sprite field follows the §10 flip — the v2 grid carries the
+      // base tiles verbatim plus the §10 variants appended. Both sheets are flipped
+      // now: terrain-vault-v2 by R5-06.S5a, terrain-prism-v2 by R5-07.S5a.
+      expect(tileset.sprite).toBe(`tiles/terrain-${id}-v2`);
     }
   });
 });

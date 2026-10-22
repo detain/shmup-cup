@@ -4,7 +4,7 @@
  * tick counts):
  *
  * - **PRISM LABYRINTH** — `?scene=flight&stage=zone-g`: the palette-cycled crystal facets
- *   (`bg/prism-facets`, the four ramp colours zone G cycles) fill the top of the view and the
+ *   (`bg/prism-facets`, the ramp colours zone G cycles) fill the top of the view and the
  *   crystal spires (`bg/prism-spires`) its bottom; at the end FACET MONARCH's hexagonal housing
  *   (`bosses/facet-body`) holds the right half of the playfield, its arms waving;
  * - **the TV build** — the Tizen `dist/` from `file://` in open space (`?scene=flight`; the TV has
@@ -51,19 +51,27 @@ test.describe('zones F and G (web build)', () => {
     await open(page, './?scene=flight&stage=zone-g');
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-g');
+    // The v2 sky is a seven-band composition (design §9, R5-07.S5a): the S2 facet band draws
+    // its 16-px triangle cells sparsely on the seams, and the fore veil eats its rows at the
+    // window's foot — the frozen ramp shows on about 29 % of the window (16,412 px measured at
+    // R5-07.S6, deterministic at the fixed tick), a quarter above this floor. v1's four-band
+    // sky cleared 20,000; the 14,000 floor is 25 % of the window, the same shape as zone E's.
     const facets = await rampMap(page, FACETS, SKY);
-    expect(facets.filter((k) => k >= 0).length).toBeGreaterThan(20000);
-    await stepTo(page, start + 45);
+    expect(facets.filter((k) => k >= 0).length).toBeGreaterThan(14000);
+    // 5 ticks later — a quarter of the cycle period (`cycles.ticks` 20), the same effective
+    // colour offset v1's 45-tick gap sampled (2.25 periods), and still inside the fly-in where
+    // the §10 ceiling (which eats the window from x ≈ 130) stays above row 13.
+    await stepTo(page, start + 5);
     const later = await rampMap(page, FACETS, SKY);
-    expect(later.filter((k) => k >= 0).length).toBeGreaterThan(20000);
+    expect(later.filter((k) => k >= 0).length).toBeGreaterThan(14000);
     expect(stepped(facets, later)).toBeGreaterThan(1000);
     expect(
       // The spires band (content/stages/zone-g.stage.json `prism-spires`, band-y 252).
       await countColours(page, SPIRES, { x0: 0, y0: 252, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
     ).toBeGreaterThan(3000);
     expect(await countColours(page, MONARCH_FACE, RIGHT_HALF)).toBe(0);
-    // The end of the stage: the WARNING (x 13,950), then the boss.
-    await jumpTo(page, 13800);
+    // The end of the stage: the WARNING (x 20,550, R5-07.S5b), then the boss.
+    await jumpTo(page, 20400);
     const fight = await stepUntilFight(page, 40);
     expect(fight.boss).toBe('facet-monarch');
     expect(await countColours(page, MONARCH_FACE, RIGHT_HALF)).toBeGreaterThan(700);

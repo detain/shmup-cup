@@ -144,9 +144,11 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
   );
 
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
-    for (const [file, sprite, names] of [
+    // Both zones now ship their own -v2 strip: F flipped terrain-vault with R5-06.S5a and
+    // G flipped terrain-prism with R5-07.S5a (each row carries the strip's full name list).
+    for (const [file, sprite, tileNames] of [
       ['terrain-vault', 'tiles/terrain-vault-v2', vault.VAULT_V2_TILE_NAMES],
-      ['terrain-prism', 'tiles/terrain-prism', terrain.TERRAIN_TILES],
+      ['terrain-prism', 'tiles/terrain-prism-v2', prism.PRISM_V2_TILE_NAMES],
     ] as const) {
       const data = JSON.parse(
         readFileSync(
@@ -156,7 +158,7 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
       ) as { id: string; sprite: string; tiles: { name: string }[] };
       expect(data.id).toBe(file);
       expect(data.sprite).toBe(sprite);
-      expect(data.tiles.map((t) => t.name)).toEqual([...names]);
+      expect(data.tiles.map((t) => t.name)).toEqual([...tileNames]);
     }
   });
 

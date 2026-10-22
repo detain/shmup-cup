@@ -183,7 +183,7 @@
         "scatterTicks": 30
       },
       "drop": null,
-      "child": "geode-shard",
+      "child": "prism-shard",
       "explosion": "medium"
     },
     {
@@ -203,6 +203,171 @@
         "count": 0
       },
       "drop": null
+    },
+    {
+      "id": "prism-shard",
+      "hp": 1,
+      "score": 75,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/prism-shard",
+      "anim": {
+        "frames": 3,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.5,
+        "amp": 12,
+        "period": 120,
+        "memberPhase": 24
+      },
+      "drop": null
+    },
+    {
+      "id": "prism-glint",
+      "hp": 2,
+      "score": 150,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/prism-glint",
+      "anim": {
+        "frames": 4,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.275,
+        "amp": 27,
+        "period": 200,
+        "memberPhase": 40
+      },
+      "drop": "capsule"
+    },
+    {
+      "id": "prisma",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "cube.pincer",
+      "sprite": "enemies/prism-cube",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 2.25,
+        "meetX": 296,
+        "gap": 12,
+        "leaveSpeed": 2.625
+      },
+      "drop": null
+    },
+    {
+      "id": "prism-sentinel",
+      "boss": {
+        "code": "PS-08",
+        "displayName": "PRISM SENTINEL",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 4000,
+        "x": 530,
+        "y": 168,
+        "parts": [
+          {
+            "name": "core",
+            "hp": 36,
+            "radius": 12,
+            "spin": 6,
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/core",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "explosion": "large"
+          },
+          {
+            "name": "orb-east",
+            "parent": "core",
+            "x": 30,
+            "hp": 6,
+            "score": 250,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "orb-south",
+            "parent": "core",
+            "y": 30,
+            "hp": 6,
+            "score": 250,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "orb-west",
+            "parent": "core",
+            "x": -30,
+            "hp": 6,
+            "score": 250,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "orb-north",
+            "parent": "core",
+            "y": -30,
+            "hp": 6,
+            "score": 250,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          }
+        ],
+        "phases": [
+          {
+            "script": "captain.circler",
+            "params": {
+              "cx": 320,
+              "cy": 168,
+              "rx": 100,
+              "ry": 60,
+              "speed": 2.4,
+              "fireTicks": 90,
+              "bulletSpeed": 1.5,
+              "ring": 8
+            }
+          }
+        ]
+      }
     },
     {
       "id": "facet-monarch",
@@ -233,7 +398,7 @@
             "name": "core",
             "parent": "body",
             "x": -18,
-            "hp": 72,
+            "hp": 84,
             "hurtbox": {
               "hw": 11,
               "hh": 11
@@ -342,6 +507,73 @@
             "vulnerable": "never",
             "gun": true,
             "sprite": "bosses/facet-tip"
+          },
+          {
+            "name": "crown",
+            "parent": "body",
+            "x": -54,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-crown"
+          },
+          {
+            "name": "shoulder-l",
+            "parent": "body",
+            "x": 18,
+            "y": -48,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-plating"
+          },
+          {
+            "name": "shoulder-r",
+            "parent": "body",
+            "x": 18,
+            "y": 48,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-plating"
+          },
+          {
+            "name": "emitter-l",
+            "parent": "shoulder-l",
+            "x": 0,
+            "y": -18,
+            "hp": 16,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "gun": true,
+            "sprite": "bosses/facet-emitter",
+            "score": 900
+          },
+          {
+            "name": "emitter-r",
+            "parent": "shoulder-r",
+            "x": 0,
+            "y": 18,
+            "hp": 16,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "gun": true,
+            "sprite": "bosses/facet-emitter",
+            "score": 900
+          },
+          {
+            "name": "wing-l",
+            "parent": "body",
+            "x": -33,
+            "y": -54,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-wing"
+          },
+          {
+            "name": "wing-r",
+            "parent": "body",
+            "x": -33,
+            "y": 54,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-wing"
           }
         ],
         "phases": [
@@ -375,7 +607,7 @@
               "ringSpeed": 1.5
             },
             "until": {
-              "hpBelow": 38
+              "hpBelow": 42
             }
           },
           {

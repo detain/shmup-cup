@@ -39,6 +39,7 @@ import * as azure from '../../scripts/assets/procedural/azure.mjs';
 import * as brine from '../../scripts/assets/procedural/brine.mjs';
 import * as dune from '../../scripts/assets/procedural/dune.mjs';
 import * as magma from '../../scripts/assets/procedural/magma.mjs';
+import * as prism from '../../scripts/assets/procedural/prism.mjs';
 import * as tempest from '../../scripts/assets/procedural/tempest.mjs';
 import * as vault from '../../scripts/assets/procedural/vault.mjs';
 import { readContentFiles } from '../../vite.shared.js';
@@ -105,7 +106,8 @@ function resampledTilesets(size: number): ContentFile[] {
  * way: `tiles/terrain-reef-v2` from `brine.mjs` since R5-02.S5a, `tiles/terrain-dune-v2` from
  * `dune.mjs` since R5-03.S5a, `tiles/terrain-ridge-v2` from `tempest.mjs` since R5-05.S5a,
  * zone D's flipped tileset `tiles/terrain-magma-v2` from `magma.mjs` by the very route since
- * R5-04.S5a, and `tiles/terrain-vault-v2` from `vault.mjs` since R5-06.S5a).
+ * R5-04.S5a, `tiles/terrain-vault-v2` from `vault.mjs` since R5-06.S5a, and
+ * `tiles/terrain-prism-v2` from `prism.mjs` since R5-07.S5a).
  *
  * @param sprite - The tileset's sprite name.
  * @param size - The tile size to draw at.
@@ -123,6 +125,12 @@ function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof render
       if (drawn.name === sprite) return drawn.frames;
     }
     throw new Error(`dune.mjs draws no ${sprite}`);
+  }
+  if (sprite === 'tiles/terrain-prism-v2') {
+    for (const drawn of prism.generate({ tileSize: size, artScale: 3 / 2 })) {
+      if (drawn.name === sprite) return drawn.frames;
+    }
+    throw new Error(`prism.mjs draws no ${sprite}`);
   }
   if (sprite === 'tiles/terrain-ridge-v2') {
     for (const drawn of tempest.generate({ tileSize: size, artScale: 3 / 2 })) {

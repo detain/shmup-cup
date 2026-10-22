@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "replay",
   "id": "zone-g",
-  "description": "PRISM LABYRINTH: the KESTREL in the crystal walls",
+  "description": "PRISM LABYRINTH: the KESTREL through the refraction hall of moving crystal blocks",
   "header": {
     "formatVersion": 2,
     "buildId": "demo",
@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAnAiBgAQBAQkABoGABAEBCgD/AYGABAEBCgCtBYKACAECKgCVAoKACAECBA==",
+    "ACiCgAgBAgQAqwbAgIACAUAJAFSCgAgBAgcAiwGBgAQBAQcABIKACAECDwCXBMCAgAIBQAkAwgGBgAQBAQUAJoKACAEAAYKACAECBACoAYKACAECBgCQAoGABAEBBgAUgYAEAQEK",
     "AOAS"
   ],
   "hashes": [
-    539691493,
-    898211975,
-    3418897164,
-    3546822199
+    2893686515,
+    1091864853,
+    3869442446,
+    3434717621
   ],
-  "finalHash": 3546822199
+  "finalHash": 3434717621
 }

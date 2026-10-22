@@ -147,21 +147,30 @@
       "tiles/terrain-vault-v2"
     ],
     "zone-g": [
+      "bg/prism-deep",
       "bg/prism-facets",
+      "bg/prism-ridge",
       "bg/prism-spires",
+      "bg/prism-veil",
       "bosses/facet-body",
       "bosses/facet-core",
+      "bosses/facet-crown",
       "bosses/facet-crystal",
+      "bosses/facet-emitter",
+      "bosses/facet-plating",
       "bosses/facet-segment",
       "bosses/facet-tip",
+      "bosses/facet-wing",
       "enemies/facet-turret",
       "enemies/geode",
-      "enemies/geode-shard",
       "enemies/glint-mote",
       "enemies/halo-crystal",
       "enemies/prism-cube",
+      "enemies/prism-glint",
       "enemies/prism-lens",
-      "tiles/terrain-prism"
+      "enemies/prism-shard",
+      "fx/glow-prism-vent",
+      "tiles/terrain-prism-v2"
     ],
     "zone-h": [
       "bg/citadel-pipes",

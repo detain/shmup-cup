@@ -64,22 +64,23 @@
       "blackHole": false
     }
   },
-  "ticks": 1769,
+  "ticks": 1981,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAnAqBgAQBAQUAJIKACAECBQAkgYAEAQEFAFKBgAQBAQYADYKACAECAQABgYAEAQEBAN0B",
-    "AOkN"
+    "ACiCgAgBAgIAkQqBgAQBAAGBgAQBAQEAAYKACAECDAABgYAEAQEJAEqBgAQBAQUAMIGABAEBFwABgoAIAQIKAA6CgAgBAgUAIIGABAEBBQAMgYAEAQEPAAGCgAgBAg8AMYKACAEAAYGABAEBBgA/gYAEAQEMANMB",
+    "AL0P"
   ],
   "hashes": [
-    570094775,
-    2031469793
+    2397388813,
+    623943291,
+    451216588
   ],
-  "finalHash": 181898252,
-  "description": "the stage skip to FACET MONARCH (M2-13 tests): the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down",
+  "finalHash": 2688009023,
+  "description": "the stage skip to FACET MONARCH (M2-13 tests, remastered R5-07): the last warning enters at 20,550, the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down",
   "expected": {
     "status": "stageClear",
-    "ticks": 1769,
-    "score": 47380,
+    "ticks": 1981,
+    "score": 47540,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

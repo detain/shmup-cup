@@ -9,6 +9,7 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_SPAWN_SCREEN_X,
+  MAX_BOSS_PARTS,
   MUSIC_CUES,
   PLAYFIELD_H,
   TerrainType,
@@ -23,6 +24,7 @@ import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   ZONES_B_G,
   bossArms,
@@ -122,25 +124,48 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
 
   it('gives PRISM LABYRINTH crystal walls, a seeded cube rush, a crystal core with tentacle arms and a hidden bonus stage', () => {
     const stage = stageOf('zone-g');
-    // Crystal walls: rock hanging from the ceiling past the playfield's middle row, and rising
-    // from the floor past it, in turn — the labyrinth (drawn with the tileset's wall edges).
+    // v2 (R5-07.S5a, design §15): the map is 56 rows and the camera dives, so the bands
+    // are measured in playfield rows — a hanging band fills rows 15-26 below the ceiling,
+    // a rising band rows 28-39 above the floor. The facet-glow gas cells are empty-type
+    // rock holes and never count as rock.
     const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
     const map = game.world.terrain;
     if (map === null) throw new Error('no terrain');
     const middle = Math.floor(PLAYFIELD_H / 2 / map.tileSize);
+    const prismTiles = db.tilesets.find((t) => t.id === stage.tilemap?.tileset)?.tiles ?? [];
+    // The engine's tile ids are the array index + 1 (slot 0 is the empty sentinel —
+    // `buildTilesetTables`, packages/core/src/data/tilemap.ts); R5-07.S5a.2 (RT-GRV C1).
+    const solidIds = new Set(
+      prismTiles.map((_, i) => i + 1).filter((id) => prismTiles[id - 1].type === 'solid'),
+    );
+    const gasId = prismTiles.findIndex((t, i) => i > 0 && t.type === 'empty') + 1;
+    const shardId = prismTiles.findIndex((t) => t.name === 'shard-floor') + 1;
     const rock = (col: number, from: number, to: number): boolean => {
       for (let row = from; row <= to; row++)
-        if (map.tiles[row * map.cols + col] === 0) return false;
+        if (!solidIds.has(map.tiles[row * map.cols + col])) return false;
       return true;
     };
+    expect(middle).toBe(14);
     let hanging = 0;
     let rising = 0;
+    let shardCols = 0;
+    let gasCells = 0;
     for (let col = 0; col < map.cols; col++) {
-      if (rock(col, 0, middle)) hanging++;
-      if (rock(col, middle, map.rows - 1)) rising++;
+      if (rock(col, 15, 26)) hanging++;
+      if (rock(col, 28, 39)) rising++;
+      if (
+        shardId > 0 &&
+        [...Array(map.rows).keys()].some((row) => map.tiles[row * map.cols + col] === shardId)
+      )
+        shardCols++;
+      if (gasId > 0)
+        for (let row = 0; row < map.rows; row++)
+          if (map.tiles[row * map.cols + col] === gasId) gasCells++;
     }
     expect(hanging).toBeGreaterThanOrEqual(6);
     expect(rising).toBeGreaterThanOrEqual(6);
+    expect(shardCols).toBeGreaterThanOrEqual(4);
+    expect(gasCells).toBeGreaterThanOrEqual(1);
     // A seeded cube rush: formations of cubes that stack into the tileset's breakable cube tiles.
     const rushes = stage.events.filter(
       (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'cube.stack',
@@ -202,6 +227,32 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const drops = [...stageEnemies(db, cache)].map((index) => db.enemies[index].drop);
     expect(drops).toContain('bonusCapsule');
     expect(drops).toContain('oneUp');
+  });
+
+  it('dives the camera through the labyrinth — three pans over a 56-row map (R5-07.S5a)', () => {
+    // The design's expansion focus (§11): a vertical bubble shaft the camera follows.
+    // v1 baseline: zero yTo pans on a 28-row map; v2: three held pans over 56 rows.
+    const stage = stageOf('zone-g');
+    const panKeys = stage.camera.filter((key) => key.yTo !== undefined);
+    expect(panKeys.length).toBeGreaterThanOrEqual(3);
+    for (const key of panKeys) {
+      expect(key.hold ?? 0).toBeGreaterThan(0);
+      expect(key.yTicks ?? 0).toBeGreaterThan(0);
+    }
+    expect(stage.tilemap?.rowsTall).toBe(56);
+    const runner = createStageRunner(stage, { event() {}, clear() {} });
+    const yAt = (x: number): number => {
+      let guard = 0;
+      while (runner.camera.x < x && guard < 60 * 60 * 20) {
+        runner.tick();
+        guard++;
+      }
+      return Math.round(runner.camera.y);
+    };
+    expect(yAt(5700)).toBe(168); // the gallery, under the mouth pan
+    expect(yAt(11700)).toBe(312); // the deep band, under the dive
+    const warning = stage.events.find((e) => e.type === 'warning');
+    expect(yAt(warning?.type === 'warning' ? warning.x : 13950)).toBe(168); // back at centre
   });
 
   it.each(zones)(
@@ -319,4 +370,46 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       if (zone.lanes > 1) expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
     },
   );
+
+  it('keeps the rebuilt FACET MONARCH inside the bible height with a reachable core (R5-07.S4b)', () => {
+    const stage = stageOf('zone-g');
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    // Design §8: the 13 shipped parts kept, seven added — 20 within the 24-part cap.
+    expect(boss.parts.length).toBe(20);
+    expect(boss.parts.length).toBeLessThanOrEqual(MAX_BOSS_PARTS);
+    // Exactly four guns — the two arm tips and the two emitters (design §8/§15) — and no spin.
+    expect(boss.parts.filter((p) => p.gun).length).toBe(4);
+    for (const p of boss.parts) expect(p.spin ?? 0).toBe(0);
+    const { manifest } = buildAtlas();
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const anchorY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    // Assembled like `scripts/doc-images.mjs`: each sprite centred on its anchor, parents first.
+    let minY = 0;
+    let maxY = 0;
+    for (const [i, part] of boss.parts.entries()) {
+      if (part.sprite === undefined) continue;
+      const ref = manifest.sprites[part.sprite]?.frames[0];
+      if (ref === undefined) continue;
+      const h = manifest.frames[ref].h;
+      const centre = Math.round(anchorY(i));
+      minY = Math.min(minY, centre - Math.floor(h / 2));
+      maxY = Math.max(maxY, centre + h - Math.floor(h / 2));
+    }
+    expect(maxY - minY).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    const core = boss.parts.find((p) => p.core);
+    expect(core).not.toBeUndefined();
+    expect(core?.vulnerable).not.toBe('never');
+    const byName = new Map(boss.parts.map((p) => [p.name, p]));
+    for (const name of core?.requires ?? []) {
+      expect(byName.get(name)?.vulnerable, name).not.toBe('never');
+    }
+    expect(core?.requires?.length ?? 0).toBeGreaterThan(0);
+  });
 });

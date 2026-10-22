@@ -11,14 +11,15 @@
  * - **PRISM LABYRINTH's cube rush.** The rush's cubes that hit the crystal pillars become the
  *   tileset's cube tiles — the rush stacks into walls; a checkpoint restart rolls them back.
  * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of PRISM
- *   LABYRINTH puts the camera at the checkpoint and flies the ship in to open space (its terrain
- *   box never in rock, tissue or crystal) inside the view;
+ *   LABYRINTH puts the camera at the checkpoint on its designed row (design §2/§4: the settled
+ *   bands at 0 / 168 / 312, the two pan-start rows mid-ease) and flies the ship in to open
+ *   space (its terrain box never in rock, tissue or crystal) inside the view;
  * - **the stage skip** into zone G (`stageSkip: 'boss'`, the debug skip the playtest uses)
  *   brings FACET MONARCH in, fighting inside the view with the ship in open space;
  * - **an Arcade restart in the prism gallery** (a death after its `ground` window armed) disarms
- *   the entrance — the camera goes back to 2,200, before the window — and it arms afresh at 2,300:
- *   the turrets shot before the death count for nothing, three of the four shot after it keep it
- *   shut, all four open it;
+ *   the entrance — the camera goes back to the 3,300 gallery mouth, before the window — and it
+ *   arms afresh on the re-advance to 4,800 (R5-07.S5b): the turrets shot before the death count
+ *   for nothing, three of the four shot after it keep it shut, all four open it;
  * - **a death in GLIMMER CACHE** sends the ships back into zone G at the gallery's entrance with
  *   the entrances locked ("dying locks you out"): every gallery turret shot down again opens
  *   nothing.
@@ -244,17 +245,17 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.restartAt(2);
+    world.stage?.restartAt(3);
     spawnPlayer(world.players[0], world.camera);
     const cube = tileId(world, 'cube');
     let most = 0;
-    for (let i = 0; i < 2400; i++) {
+    for (let i = 0; i < 3000; i++) {
       game.step();
       game.events.clear();
       if (i % 30 === 0) most = Math.max(most, placed(world, cube));
     }
     expect(most).toBeGreaterThanOrEqual(3);
-    world.stage?.restartAt(2);
+    world.stage?.restartAt(3);
     game.step();
     game.events.clear();
     expect(placed(world, cube)).toBe(0);
@@ -262,15 +263,32 @@ describe('integration: zones F and G in the game (M2-13)', () => {
 });
 
 describe('integration: zones F and G, edge cases (M2-13)', () => {
-  const starts: [string, number, number][] = [];
+  const starts: [string, number, number, number, number, number, number][] = [];
   for (const [letter, stageId] of [['g', 'zone-g']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
-    stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
+    stage.checkpoints.forEach((checkpoint, i) => {
+      // The camera law at this checkpoint (design §2/§4, measured at S6): the two pan-start
+      // rows ease (the mouth 0→168 over 180 ticks, the slide 168→312 over 144), so their
+      // first-tick and after-90 bounds sit mid-pan; the settled rows are exact.
+      const law: readonly [number, number, number, number] =
+        checkpoint.x === 3300
+          ? [0, 0.5, 80, 90]
+          : checkpoint.x === 5700
+            ? [168, 168, 168, 168]
+            : checkpoint.x === 8400
+              ? [168, 169, 268, 280]
+              : checkpoint.x === 11700
+                ? [312, 312, 312, 312]
+                : checkpoint.x === 16800
+                  ? [168, 168, 168, 168]
+                  : [0, 0, 0, 0];
+      starts.push([letter, i, checkpoint.x, ...law]);
+    });
   }
 
   it.each(starts)(
-    'practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space',
-    (letter, checkpoint, x) => {
+    'practice start in zone %s at checkpoint %i (x %i): the camera on its designed row, the ship in open space',
+    (letter, checkpoint, x, sLo, sHi, aLo, aHi) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
       game.debug.godMode = true;
@@ -282,14 +300,17 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
       expectCameraAt(world, x);
-      expect(world.camera.y).toBe(0);
+      expect(world.camera.y).toBeGreaterThanOrEqual(sLo);
+      expect(world.camera.y).toBeLessThanOrEqual(sHi);
       steps(game, 90);
       expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)}`);
+      expect(world.camera.y).toBeGreaterThanOrEqual(aLo);
+      expect(world.camera.y).toBeLessThanOrEqual(aHi);
     },
   );
 
-  it('checks four checkpoints per zone', () => {
-    expect(starts).toHaveLength(4);
+  it('checks six checkpoints per zone', () => {
+    expect(starts).toHaveLength(6);
   });
 
   it.each([['zone-g', 'facet-monarch']])(
@@ -419,7 +440,7 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     for (let i = 0; i < 100 && stageOf(game) === 'zone-g'; i++) step();
     expect(stageOf(game)).toBe('glimmer-cache');
     const returnX = flow.run.bonusReturnX;
-    expect(returnX).toBe(v1x(2300));
+    expect(returnX).toBe(4800); // the design §5 entrance x (R5-07.S5b)
     const cache = game.world;
     for (let i = 0; i < 200 && cache.players[0].state !== 'alive'; i++) step();
     game.debug.godMode = false;
@@ -445,7 +466,8 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     // suite's note), as the entry loop's flag test cannot see those.
     game.debug.godMode = true;
     const killed = back.enemies.stats.groundKilled;
-    for (let i = 0; i < 3000 && back.camera.x <= v1x(3160); i++) {
+    for (let i = 0; i < 3000 && back.camera.x <= 6060; i++) {
+      // the §5 window closes at 6,000
       shootGround(back);
       step();
     }
