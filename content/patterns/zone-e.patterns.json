@@ -17,7 +17,7 @@
         },
         {
           "op": "repeat",
-          "times": 3,
+          "times": 2,
           "body": [
             {
               "op": "fire",
@@ -34,6 +34,17 @@
               }
             }
           ]
+        },
+        {
+          "op": "fire",
+          "direction": {
+            "type": "sequence",
+            "value": 0
+          },
+          "speed": 2.25,
+          "bullet": {
+            "kind": "needle-pink"
+          }
         },
         {
           "op": "wait",
