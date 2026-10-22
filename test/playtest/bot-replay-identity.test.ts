@@ -8,16 +8,17 @@
  * checked. This file closes that hole for the whole bot-driven set: a decision change that
  * touches any live-bot run of the shipped content is now a red test, not a surprise re-bless.
  *
- * Which scenarios count as live-bot: `pilotOf` hands `four-way` and `bomber` (the four-way bot
- * throwing bombs on a fixed cadence) to `fourWayBot`, and co-op runs fly
- * `fourWayBot(1)` for player 2 — so a scenario is guarded when its own pilot is `four-way` or
- * `bomber` (a `weaver`, `toggler` or `burster` pilot is a scripted mask, not the bot) and its
- * `p2`, when present, is the four-way too. The scripted pilots and the weaver seats move only
- * when the sim itself moves, which the replay playback already proves.
+ * Which scenarios count as live-bot: `pilotOf` hands `four-way`, `bomber`, `toggler` and
+ * `burster` to the live bot — the wrappers only add their own fixed button pattern on top of
+ * `fourWayBot().decide` (`fireButtonBot`, `bomberBot`), so every bot decision moves their input
+ * streams too. A scenario is guarded on its **own** pilot; only the `weaver` is truly scripted
+ * (its `decide` reads the tick and never the World) and is excluded, and a co-op's scripted p2
+ * seat cannot drift the live player-1 half — that run is guarded. The weaver's own runs move
+ * only when the sim itself moves, which the replay playback already proves.
  *
  * Runtime: every guarded scenario replays its full simulation live (the goldens run to
- * `stageClear` / `gameOver`, the longest ~14k ticks); the whole file is about a minute at
- * `VITEST_MAX_WORKERS=1` — the numbers ride in the cure's report.
+ * `stageClear` / `gameOver`, the longest ~14k ticks); the whole file takes about 50 seconds at
+ * `VITEST_MAX_WORKERS=1` (measured twice at 53 tests, 48.2 s and 50.2 s) — RT-P12b's re-measure.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -33,21 +34,27 @@ import {
 const RECORD_TIMEOUT_MS = 300_000;
 
 /**
- * Whether the scenario's input stream is produced by the live playtest bot (see the module docs).
+ * Whether the scenario's player-1 stream is produced by the live playtest bot — the four-way and
+ * its button wrappers, never the tick-only weaver (see the module docs). A scripted p2 seat is
+ * irrelevant: player 1's half of the run is still the bot's own.
  *
  * @param scenario - The golden scenario.
  * @returns `true` when a bot decision change must re-record it.
  */
 function flownByLiveBot(scenario: GoldenScenario): boolean {
-  if (scenario.bot !== 'four-way' && scenario.bot !== 'bomber') return false;
-  return scenario.p2 === undefined || scenario.p2.bot === 'four-way';
+  return (
+    scenario.bot === 'four-way' ||
+    scenario.bot === 'bomber' ||
+    scenario.bot === 'toggler' ||
+    scenario.bot === 'burster'
+  );
 }
 
 /** The guarded set, in file order. */
 const LIVE_BOT_SCENARIOS = GOLDEN_SCENARIOS.filter(flownByLiveBot);
 
 describe('playtest bot: every live-bot golden re-records byte for byte (RT-P12 C1)', () => {
-  it('covers the four scenarios the P12 cure review caught drifting, plus zone-a-boss', () => {
+  it('covers the four scenarios the P12 cure review caught drifting, the fire-button wrappers and the co-op death run (RT-P12b)', () => {
     const names = LIVE_BOT_SCENARIOS.map((scenario) => scenario.name);
     for (const name of [
       'zone-a-boss',
@@ -55,11 +62,17 @@ describe('playtest bot: every live-bot golden re-records byte for byte (RT-P12 C
       'zone-d-god',
       'zone-d-bot',
       'zone-f-arcade',
+      // RT-P12b: `fireButtonBot` IS the four-way bot with a fire pattern, and a co-op is guarded
+      // on its live player 1 whatever seat 2 flies.
+      'zone-a-manta-toggle',
+      'zone-a-hold',
+      'zone-a-coop-deaths',
     ]) {
       expect(names, name).toContain(name);
     }
-    // The guard is general: it holds far more than those five.
-    expect(names.length).toBeGreaterThan(30);
+    // Completeness pin: the whole roster is 62 scenarios, 52 flown by a live pilot. When a lane
+    // adds a live-bot golden it lands here — recount the roster and raise the number with it.
+    expect(names.length).toBe(52);
   });
 
   for (const scenario of LIVE_BOT_SCENARIOS) {

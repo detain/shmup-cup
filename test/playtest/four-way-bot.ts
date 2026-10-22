@@ -365,8 +365,9 @@ export function punchWallAhead(world: World, ahead = TERRAIN_AHEAD, player = 0):
 
 /**
  * Whether a {@link HOLE_HEIGHT} band centred on the ship's row reads clear across a punched wall's
- * span (R5-P.P12): the design's hole test — every tile row the ±24-px band touches must be open,
- * what a straight shot stream must clear before the row counts as passable (the RT-P12 cure's M3
+ * span (R5-P.P12): the design's hole test — every tile row the 24-px band (±12 px around the
+ * ship) touches must be open, what a straight shot stream must clear before the row counts as
+ * passable (the RT-P12 cure's M3
  * reads the band through {@link HOLE_HEIGHT} itself, so the constant governs the predicate the
  * set-piece fixtures pin). The bot's hold latches by the wall's span alone (see
  * {@link punchWallAhead} and the remarks in {@link fourWayBot}); this predicate is its pin.
@@ -881,8 +882,9 @@ export function fourWayBot(player = 0, options: FourWayBotOptions = {}): Playtes
         waiting = 0;
       }
 
-      // Brick shooting (R5-P.P12, zones D and F): a shot-able wall closed across every tile row of
-      // the ship's terrain box with no reachable gap is met by HOLDING the row and letting the
+      // Brick shooting (R5-P.P12, zones D and F): a shot-able wall — one that closes the WHOLE
+      // camera window on the pristine content grid, every cell of it in the ship's rows
+      // destructible (see {@link punchWallAhead}) — is met by HOLDING the row and letting the
       // forced autofire drill it — a 4-way ship cannot out-climb a full-height plug, and lane
       // changes mid-drill would widen the hole's regrow exposure (zone F's tissue). The hold
       // latches until the wall's span has passed behind the ship: the straight stream digs the one
