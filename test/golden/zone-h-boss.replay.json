@@ -64,24 +64,23 @@
       "blackHole": false
     }
   },
-  "ticks": 2433,
+  "ticks": 2223,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIArAWBgAQBAQUA0AGCgAgBAgUA4QGBgAQBAQUAtQGCgAgBAgUAoAGCgAgBAgYAAYGABAEBBgAdgYAEAQEFALkBgoAIAQIFAHWBgAQBAAGCgAgBAHGBgAQBAQUAsAGCgAgBAgUA9gE=",
-    "AIET"
+    "ACiCgAgBAgIAtgWBgAQBAQUAyAGCgAgBAgUA4QGBgAQBAQUA0AGCgAgBAgUA5gGBgAQBAQUA4gGCgAgBAgUA6QI=",
+    "AK8R"
   ],
   "hashes": [
-    1409276578,
-    2851716925,
-    894166766,
-    246190343
+    1998172649,
+    1754339301,
+    386777637
   ],
-  "finalHash": 3981827088,
-  "description": "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade): the full loadout under the Arcade penalty, the core run, then IRON SOVEREIGN through its four phases",
+  "finalHash": 3266164439,
+  "description": "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade, at the remastered throne's 19,500): the full loadout under the Arcade penalty, then IRON SOVEREIGN through its four phases",
   "expected": {
     "status": "stageClear",
-    "ticks": 2433,
-    "score": 71700,
+    "ticks": 2223,
+    "score": 71550,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

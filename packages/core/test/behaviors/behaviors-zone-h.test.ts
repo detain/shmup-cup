@@ -3,7 +3,12 @@
  * in free flight (a static camera) with the ship holding its fire: `emitter.laser` (IRON CITADEL's
  * laser emitters: telegraphed lanes to the left, attached, one per `laserTicks`) and
  * `boss.sovereign` (IRON SOVEREIGN's four-phase finale: the core behind its plates with lanes from
- * the emitters, the turning shield wheel and rings, the drones, the spiral).
+ * the emitters, the turning shield wheel and rings, the drones, the spiral). R5-08.S4a adds the
+ * design §6 types: `turret.floor` (gate-sentry: the gate's anchored aimed shot) and `drifter.sine`
+ * (iron-banner: the yard's drifting standard, the zone's new capsule drop). R5-08.S4b rebuilds
+ * IRON SOVEREIGN to the §7 tree, and R5-08.S4c trims the shield wheel to the case's four pods:
+ * eighteen parts — six dark armour rows that add art and no destroyable HP (the release audit's
+ * MANTA law out-vetoes §7's sixth pod — the option-A ruling, lanes report S5b).
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,10 +17,12 @@ import {
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
 } from '../../src/behaviors/index.js';
-import { BossHit } from '../../src/bosses/index.js';
-import { LaserPhase } from '../../src/bullets/index.js';
+import { BossHit, BossVulnerable, type BossPart } from '../../src/bosses/index.js';
+import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
 import { PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
+import { MoverKind } from '../../src/patterns/index.js';
+import { ItemKind } from '../../src/powerups/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped, shippedPatterns } from '../helpers/shipped.js';
 import { lasersOf, part, run, zoneKit } from '../helpers/zone-behaviors.js';
@@ -41,6 +48,16 @@ const DB: ContentDb = (() => {
 })();
 
 const { freeFlight, fighting, live } = zoneKit(DB);
+
+/**
+ * The roster index of an enemy id.
+ *
+ * @param id - Enemy id.
+ * @returns Its index.
+ */
+function indexOf(id: string): number {
+  return DB.enemyIndex.get(id) ?? -1;
+}
 
 describe('core/behaviors — zone H (M2-14)', () => {
   // The case tests both zones H and I (it registers the mine, the ark and the king with the
@@ -195,5 +212,167 @@ describe('core/behaviors — zone H (M2-14)', () => {
       before = w.bullets.count;
     }
     expect(volleys).toBeGreaterThanOrEqual(9);
+  });
+
+  it('boss.sovereign: the rebuilt tree fights eighteen parts — six dark rows, four pods on the ring', () => {
+    const w = fighting('iron-sovereign');
+    const boss = w.bosses.boss;
+    expect(boss.partCount).toBe(18); // the shipped twelve plus §7's armour rows, S4c's ring trim
+    const hull = boss.parts[part(w, 'hull')];
+    // The six armour rows are dark armour: every hit clinks, none can die, and the loaded
+    // destroyable HP of the shipped twelve is untouched (D-RV m-3/m-4).
+    for (const name of ['crown', 'prow', 'skirt-a', 'skirt-b', 'vent-a', 'vent-b']) {
+      const i = part(w, name);
+      expect(w.bosses.damagePart(i, 999, 0), name).toBe(BossHit.Clink);
+      expect(boss.parts[i].destroyed, name).toBe(false);
+    }
+    let destroyable = 0;
+    for (let i = 0; i < boss.partCount; i++) {
+      const p = boss.parts[i];
+      if (p.vulnerable !== BossVulnerable.Never) destroyable += p.hp;
+    }
+    expect(destroyable).toBe(260);
+    // The six hull rows stand at the design's offsets off the hull (the un-turned chain is exact).
+    const off = (name: string): number[] => {
+      const p = boss.parts[part(w, name)];
+      return [p.x - hull.x, p.y - hull.y];
+    };
+    expect(off('crown')).toEqual([0, -66]);
+    expect(off('prow')).toEqual([-42, 0]);
+    expect(off('skirt-a')).toEqual([-6, 70]);
+    expect(off('skirt-b')).toEqual([-6, -70]);
+    expect(off('vent-a')).toEqual([40, 48]);
+    expect(off('vent-b')).toEqual([40, -48]);
+    // The wheel stands at the case's minimum four never-vulnerable pods on the r-36 ring, every
+    // position distinct (R5-08.S4c option A: pod-e and pod-f left the ring — the MANTA audit law
+    // out-vetoes §7's sixth; the content case's floor of ≥ 4 holds at four).
+    const hubIndex = part(w, 'hub');
+    const core = boss.parts[part(w, 'core')];
+    const pods: BossPart[] = [];
+    for (let i = 0; i < boss.partCount; i++) {
+      const p = boss.parts[i];
+      if (p.parent !== hubIndex) continue;
+      expect(p.vulnerable).toBe(BossVulnerable.Never);
+      expect(p.radius).toBe(9);
+      pods.push(p);
+    }
+    expect(pods).toHaveLength(4);
+    for (const p of pods) {
+      const dx = p.x - core.x;
+      const dy = p.y - core.y;
+      const r = Math.sqrt(dx * dx + dy * dy); // ring geometry is rotation-invariant
+      expect(r).toBeGreaterThan(35);
+      expect(r).toBeLessThanOrEqual(36.5);
+    }
+    for (let a = 0; a < pods.length; a++) {
+      for (let b = a + 1; b < pods.length; b++) {
+        const dx = pods[a].x - pods[b].x;
+        const dy = pods[a].y - pods[b].y;
+        expect(Math.sqrt(dx * dx + dy * dy), `pod ${String(a)} vs ${String(b)}`).toBeGreaterThan(
+          12,
+        );
+      }
+    }
+  });
+
+  // R5-08.S4a — the design §6 types, flown at the design's v2 values.
+
+  it('turret.floor: gate-sentry stands its ground and fires one aimed 1.95 pink round every fireTicks', () => {
+    const w = freeFlight();
+    const sentry = w.enemies.spawn(indexOf('gate-sentry'), w.camera.x + 300, w.camera.y + 150);
+    expect(sentry).not.toBeNull();
+    if (sentry === null) return;
+    const x = sentry.x;
+    const y = sentry.y;
+    // Watch the volleys like `behaviors-fire` does: a live bullet of age 1 is one fired last tick.
+    const shots: Array<[number, number, number]> = []; // [tick, angle, speed]
+    const f = w.bullets.pool.fields;
+    for (let t = 0; t < 400; t++) {
+      run(w, 1);
+      for (let i = 0; i < w.bullets.count; i++) {
+        if (f.age[i] === 1 && f.delay[i] === 0 && f.kind[i] === BulletKind.RoundPink) {
+          shots.push([w.tick - 1, f.angle[i], f.speed[i]]);
+        }
+      }
+    }
+    expect(sentry.mover).toBe(MoverKind.None); // it stands still…
+    expect([sentry.x, sentry.y]).toEqual([x, y]); // …on its row, every tick of the watch
+    expect(shots).toHaveLength(2); // fireTicks 150: the shots land at 150 and 300
+    expect(shots[0][0] - sentry.spawnTick).toBeGreaterThanOrEqual(30); // settleTicks (default 30)
+    expect(shots[1][0] - shots[0][0]).toBe(150); // the design interval, exact at scale 1
+    for (const [, angle, speed] of shots) {
+      expect(angle % 32).toBe(0); // aimed: quantised to the 32-way grid
+      expect(speed).toBeCloseTo(1.95, 9); // the design speed, inside the 3.0 4-way bound
+    }
+  });
+
+  it('drifter.sine: iron-banner drifts the design wave, silent, and pays 150 with its capsule', () => {
+    const w = freeFlight();
+    const banner = w.enemies.spawn(indexOf('iron-banner'), w.camera.x + 380, w.camera.y + 90);
+    expect(banner).not.toBeNull();
+    if (banner === null) return;
+    const row = banner.y; // the wave's centre line: the spawn row, before the mover ticks
+    run(w, 5);
+    expect(banner.mover).toBe(MoverKind.Sine);
+    expect(banner.vx).toBeCloseTo(-1.8, 9); // the design speed, due left
+    expect([banner.m1, banner.m2, banner.m3]).toEqual([30, 90, 0]); // amp, period, phase (alone: 0)
+    let low = 0;
+    let high = 0;
+    for (let t = 0; t < 135; t++) {
+      run(w, 1);
+      low = Math.min(low, banner.y - row);
+      high = Math.max(high, banner.y - row);
+    }
+    expect(high).toBeGreaterThan(25); // the wave climbs its 30 px above the row…
+    expect(low).toBeLessThan(-25); // …and dives 30 below, silent the whole way
+    expect(w.bullets.count).toBe(0); // a banner carries no gun
+    const score = w.scoring.board.scores[0].score;
+    const x = banner.x;
+    const y = banner.y;
+    w.enemies.kill(banner, 0);
+    run(w, 1);
+    expect(w.scoring.board.scores[0].score).toBe(score + 150); // the design score, on the kill
+    expect(w.powerups.count).toBe(1); // the design's capsule drop, at the death point
+    const g = w.powerups.pool.fields;
+    expect(g.kind[0]).toBe(ItemKind.Capsule);
+    expect(Math.abs(g.x[0] - x)).toBeLessThan(4);
+    expect(Math.abs(g.y[0] - y)).toBeLessThan(4);
+  });
+
+  it('design §6: the three new entries carry exactly the planned values', () => {
+    const floor = DB.enemies[indexOf('gate-sentry')];
+    expect([
+      floor.script,
+      floor.hp,
+      floor.score,
+      floor.hurtbox.hw,
+      floor.hurtbox.hh,
+      floor.sprite,
+      floor.ground,
+      floor.drop,
+    ]).toEqual(['turret.floor', 8, 400, 8, 8, 'enemies/gate-sentry', 'floor', null]);
+    expect(floor.params).toEqual({ fireTicks: 150, bulletSpeed: 1.95 });
+    const ceiling = DB.enemies[indexOf('gate-sentry-ceiling')];
+    expect([
+      ceiling.script,
+      ceiling.hp,
+      ceiling.score,
+      ceiling.hurtbox.hw,
+      ceiling.hurtbox.hh,
+      ceiling.ground,
+      ceiling.drop,
+    ]).toEqual(['turret.floor', 8, 400, 8, 8, 'ceiling', null]);
+    expect(ceiling.params).toEqual(floor.params); // the twin differs only by its anchor
+    const banner = DB.enemies[indexOf('iron-banner')];
+    expect([
+      banner.script,
+      banner.hp,
+      banner.score,
+      banner.hurtbox.hw,
+      banner.hurtbox.hh,
+      banner.sprite,
+      banner.drop,
+    ]).toEqual(['drifter.sine', 2, 150, 6, 6, 'enemies/iron-banner', 'capsule']);
+    expect(banner.params).toEqual({ speed: 1.8, amp: 30, period: 90, memberPhase: 24 });
   });
 });

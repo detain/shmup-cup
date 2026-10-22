@@ -9,7 +9,7 @@
     "ending": "Ending",
     "credits": "Credits"
   },
-  "length": 14400,
+  "length": 20250,
   "camera": [
     {
       "x": 0,
@@ -19,22 +19,37 @@
     {
       "x": 3300,
       "speed": 1.05,
+      "ramp": 90
+    },
+    {
+      "x": 5550,
+      "speed": 1.35,
       "ramp": 60
     },
     {
-      "x": 6600,
+      "x": 7650,
       "speed": 0.9,
       "ramp": 90
     },
     {
-      "x": 10200,
+      "x": 10950,
+      "speed": 1.2,
+      "ramp": 90
+    },
+    {
+      "x": 13650,
       "speed": 1.95,
       "ramp": 120
     },
     {
-      "x": 12600,
-      "speed": 1.125,
-      "ramp": 120
+      "x": 16200,
+      "speed": 1.35,
+      "ramp": 90
+    },
+    {
+      "x": 18450,
+      "speed": 1.05,
+      "ramp": 60
     }
   ],
   "checkpoints": [
@@ -45,10 +60,16 @@
       "x": 3300
     },
     {
-      "x": 6600
+      "x": 7650
     },
     {
-      "x": 10200
+      "x": 10950
+    },
+    {
+      "x": 13650
+    },
+    {
+      "x": 16200
     }
   ],
   "parallax": [
@@ -79,6 +100,13 @@
       "factor": 0.45,
       "y": 264,
       "spacing": 192
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/citadel-banner",
+      "factor": 0.6,
+      "y": 48,
+      "spacing": 320
     }
   ],
   "tilemap": {
@@ -106,7 +134,39 @@
         },
         {
           "from": 3300,
-          "to": 6570,
+          "to": 5400,
+          "floor": {
+            "base": 60,
+            "amp": 0,
+            "period": 96,
+            "seed": 133
+          },
+          "ceiling": {
+            "base": 60,
+            "amp": 0,
+            "period": 96,
+            "seed": 134
+          }
+        },
+        {
+          "from": 5400,
+          "to": 7620,
+          "floor": {
+            "base": 33,
+            "amp": 9,
+            "period": 480,
+            "seed": 131
+          },
+          "ceiling": {
+            "base": 63,
+            "amp": 9,
+            "period": 540,
+            "seed": 132
+          }
+        },
+        {
+          "from": 10980,
+          "to": 13860,
           "floor": {
             "base": 36,
             "amp": 0,
@@ -121,13 +181,29 @@
           }
         },
         {
-          "from": 10230,
-          "to": 12600,
+          "from": 13890,
+          "to": 16140,
           "floor": {
             "base": 30,
             "amp": 9,
             "period": 300,
             "seed": 125
+          }
+        },
+        {
+          "from": 16200,
+          "to": 18420,
+          "floor": {
+            "base": 36,
+            "amp": 9,
+            "period": 360,
+            "seed": 127
+          },
+          "ceiling": {
+            "base": 72,
+            "amp": 6,
+            "period": 420,
+            "seed": 128
           }
         }
       ]
@@ -135,19 +211,16 @@
   },
   "events": [
     {
-      "x": 210,
-      "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 5,
-      "interval": 16,
-      "y": 126,
-      "bonus": 300
-    },
-    {
-      "x": 450,
+      "x": 120,
       "type": "spawn",
       "enemy": "tender",
-      "y": 201
+      "y": 192
+    },
+    {
+      "x": 560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 168
     },
     {
       "x": 626,
@@ -159,15 +232,14 @@
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 5,
-      "interval": 16,
-      "y": 231,
-      "bonus": 300
+      "interval": 15,
+      "y": 120,
+      "bonus": 350
     },
     {
-      "x": 990,
+      "x": 896,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 141
+      "enemy": "rail-turret-ceiling"
     },
     {
       "x": 1136,
@@ -175,459 +247,677 @@
       "enemy": "hatch-bay"
     },
     {
-      "x": 1440,
+      "x": 1480,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 210
+    },
+    {
+      "x": 1560,
+      "type": "spawn",
+      "enemy": "hatch-bay-ceiling"
+    },
+    {
+      "x": 1720,
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 6,
       "interval": 14,
-      "y": 171,
+      "y": 240,
       "bonus": 400
     },
     {
-      "x": 1650,
+      "x": 1900,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 2040,
       "type": "spawn",
       "enemy": "tender",
-      "y": 216
+      "y": 120
     },
     {
-      "x": 1796,
-      "type": "spawn",
-      "enemy": "rail-turret-ceiling"
+      "x": 2200,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 280,
+      "bonus": 300,
+      "drop": null
     },
     {
-      "x": 2006,
+      "x": 2266,
       "type": "spawn",
       "enemy": "sentinel-walker"
     },
     {
       "x": 2280,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 2440,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 15,
+      "y": 200,
+      "bonus": 350
+    },
+    {
+      "x": 2700,
+      "type": "spawn",
+      "enemy": "gate-sentry"
+    },
+    {
+      "x": 2820,
+      "type": "block",
+      "y": 204,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -60,
+      "period": 240,
+      "phase": 0
+    },
+    {
+      "x": 2820,
+      "type": "block",
+      "y": 60,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 60,
+      "period": 240,
+      "phase": 512
+    },
+    {
+      "x": 2860,
+      "type": "spawn",
+      "enemy": "gate-sentry-ceiling"
+    },
+    {
+      "x": 2960,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 240
+    },
+    {
+      "x": 3040,
+      "type": "spawn",
+      "enemy": "gate-sentry"
+    },
+    {
+      "x": 3300,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 3400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 168
+    },
+    {
+      "x": 3480,
+      "type": "block",
+      "y": 204,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -60,
+      "period": 240,
+      "phase": 80
+    },
+    {
+      "x": 3480,
+      "type": "block",
+      "y": 60,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 60,
+      "period": 240,
+      "phase": 592
+    },
+    {
+      "x": 3620,
+      "type": "spawn",
+      "enemy": "gate-sentry-ceiling"
+    },
+    {
+      "x": 3720,
+      "type": "spawn",
+      "enemy": "iron-banner",
+      "y": 240
+    },
+    {
+      "x": 3900,
+      "type": "spawn",
+      "enemy": "gate-sentry"
+    },
+    {
+      "x": 4140,
+      "type": "block",
+      "y": 204,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -60,
+      "period": 240,
+      "phase": 160
+    },
+    {
+      "x": 4140,
+      "type": "block",
+      "y": 60,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 60,
+      "period": 240,
+      "phase": 672
+    },
+    {
+      "x": 4240,
+      "type": "spawn",
+      "enemy": "gate-sentry-ceiling"
+    },
+    {
+      "x": 4380,
+      "type": "spawn",
+      "enemy": "iron-banner",
+      "y": 120
+    },
+    {
+      "x": 4400,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 4900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 204
+    },
+    {
+      "x": 5000,
+      "type": "spawn",
+      "enemy": "hatch-bay"
+    },
+    {
+      "x": 5260,
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 6,
       "interval": 14,
-      "y": 126,
-      "drop": null
+      "y": 180,
+      "bonus": 400
     },
     {
-      "x": 2336,
+      "x": 5300,
       "type": "spawn",
       "enemy": "hatch-bay-ceiling"
     },
     {
-      "x": 2520,
+      "x": 5440,
       "type": "spawn",
       "enemy": "tender",
-      "y": 186
+      "y": 132
     },
     {
-      "x": 2850,
+      "x": 5880,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 222
+    },
+    {
+      "x": 6240,
       "type": "formation",
       "enemy": "bolt-drone",
-      "count": 6,
-      "interval": 14,
-      "y": 246,
-      "bonus": 400
+      "count": 5,
+      "interval": 15,
+      "y": 260,
+      "bonus": 350
     },
     {
-      "x": 2996,
+      "x": 6400,
       "type": "spawn",
-      "enemy": "rail-turret"
+      "enemy": "sentinel-walker"
     },
     {
-      "x": 3356,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 0
-    },
-    {
-      "x": 3360,
+      "x": 6600,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 186
+      "enemy": "laser-emitter-ceiling"
     },
     {
-      "x": 3446,
-      "type": "spawn",
-      "enemy": "laser-emitter"
-    },
-    {
-      "x": 3596,
-      "type": "block",
-      "y": 57,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": 33,
-      "period": 200,
-      "phase": 512
-    },
-    {
-      "x": 3836,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 256
-    },
-    {
-      "x": 3840,
+      "x": 6720,
       "type": "spawn",
       "enemy": "tender",
       "y": 156
     },
     {
-      "x": 4020,
+      "x": 6980,
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 5,
-      "interval": 16,
-      "y": 186,
-      "bonus": 500
-    },
-    {
-      "x": 4076,
-      "type": "block",
-      "y": 57,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": 33,
-      "period": 200,
-      "phase": 768
-    },
-    {
-      "x": 4200,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 216
-    },
-    {
-      "x": 4316,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 512
-    },
-    {
-      "x": 4376,
-      "type": "spawn",
-      "enemy": "laser-emitter-ceiling"
-    },
-    {
-      "x": 4556,
-      "type": "block",
-      "y": 57,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": 33,
-      "period": 200,
-      "phase": 0
-    },
-    {
-      "x": 4616,
-      "type": "spawn",
-      "enemy": "sentinel-walker"
-    },
-    {
-      "x": 4796,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 768
-    },
-    {
-      "x": 4800,
-      "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 5,
-      "interval": 16,
-      "y": 186,
+      "interval": 15,
+      "y": 140,
+      "bonus": 300,
       "drop": null
     },
     {
-      "x": 5036,
-      "type": "block",
-      "y": 57,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": 33,
-      "period": 200,
-      "phase": 256
-    },
-    {
-      "x": 5096,
-      "type": "spawn",
-      "enemy": "laser-emitter"
-    },
-    {
-      "x": 5276,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 0
-    },
-    {
-      "x": 5340,
+      "x": 7480,
       "type": "spawn",
       "enemy": "tender",
-      "y": 186
+      "y": 198
     },
     {
-      "x": 5396,
-      "type": "spawn",
-      "enemy": "hatch-bay"
-    },
-    {
-      "x": 5516,
-      "type": "block",
-      "y": 57,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": 33,
-      "period": 200,
-      "phase": 512
-    },
-    {
-      "x": 5640,
-      "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 6,
-      "interval": 14,
-      "y": 156,
-      "bonus": 500
-    },
-    {
-      "x": 5696,
-      "type": "spawn",
-      "enemy": "laser-emitter-ceiling"
-    },
-    {
-      "x": 5756,
-      "type": "block",
-      "y": 243,
-      "w": 36,
-      "h": 72,
-      "tile": "solid",
-      "dy": -33,
-      "period": 200,
-      "phase": 256
-    },
-    {
-      "x": 6060,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 231
-    },
-    {
-      "x": 6630,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 6690,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 126
-    },
-    {
-      "x": 6780,
+      "x": 7830,
       "type": "boss",
       "enemy": "echo-bulwark"
     },
     {
-      "x": 7050,
+      "x": 7860,
       "type": "spawn",
       "enemy": "tender",
-      "y": 261
+      "y": 240
     },
     {
-      "x": 7290,
+      "x": 8340,
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 5,
       "interval": 16,
-      "y": 96,
+      "y": 200,
+      "bonus": 350
+    },
+    {
+      "x": 8580,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 180,
+      "bonus": 300,
       "drop": null
     },
     {
-      "x": 7620,
+      "x": 8670,
       "type": "boss",
       "enemy": "echo-maw"
     },
     {
-      "x": 7950,
+      "x": 8820,
       "type": "spawn",
       "enemy": "tender",
       "y": 126
     },
     {
-      "x": 8130,
+      "x": 9300,
       "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 5,
-      "interval": 16,
-      "y": 276,
-      "drop": null
+      "enemy": "iron-banner",
+      "count": 6,
+      "interval": 14,
+      "y": 260,
+      "bonus": 400
     },
     {
-      "x": 8460,
+      "x": 9510,
       "type": "boss",
       "enemy": "echo-bastion"
     },
     {
-      "x": 8790,
+      "x": 9720,
       "type": "spawn",
       "enemy": "tender",
-      "y": 246
+      "y": 204
     },
     {
-      "x": 8970,
+      "x": 10200,
       "type": "formation",
       "enemy": "bolt-drone",
       "count": 5,
-      "interval": 16,
-      "y": 111,
-      "drop": null
+      "interval": 15,
+      "y": 150,
+      "bonus": 350
     },
     {
-      "x": 9300,
+      "x": 10350,
       "type": "boss",
       "enemy": "echo-regent"
     },
     {
-      "x": 9660,
+      "x": 10500,
       "type": "spawn",
       "enemy": "tender",
-      "y": 186
+      "y": 162
     },
     {
-      "x": 9930,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 126
+      "x": 10956,
+      "type": "block",
+      "y": 243,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -33,
+      "period": 200,
+      "phase": 0
     },
     {
-      "x": 10260,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 10440,
-      "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 8,
-      "interval": 10,
-      "y": 126,
-      "bonus": 600
-    },
-    {
-      "x": 10556,
-      "type": "spawn",
-      "enemy": "rail-turret"
-    },
-    {
-      "x": 10710,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 246
-    },
-    {
-      "x": 10890,
-      "type": "formation",
-      "enemy": "bolt-drone",
-      "count": 8,
-      "interval": 10,
-      "y": 246,
-      "bonus": 600
-    },
-    {
-      "x": 11036,
-      "type": "spawn",
-      "enemy": "laser-emitter"
-    },
-    {
-      "x": 11280,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 141
-    },
-    {
-      "x": 11366,
+      "x": 11000,
       "type": "spawn",
       "enemy": "hatch-bay"
     },
     {
-      "x": 11606,
-      "type": "spawn",
-      "enemy": "laser-emitter"
+      "x": 11196,
+      "type": "block",
+      "y": 57,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 33,
+      "period": 200,
+      "phase": 512
     },
     {
-      "x": 11640,
+      "x": 11320,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 228
+    },
+    {
+      "x": 11400,
+      "type": "spawn",
+      "enemy": "rail-turret-ceiling"
+    },
+    {
+      "x": 11436,
+      "type": "block",
+      "y": 243,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -33,
+      "period": 200,
+      "phase": 256
+    },
+    {
+      "x": 11676,
+      "type": "block",
+      "y": 57,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 33,
+      "period": 200,
+      "phase": 768
+    },
+    {
+      "x": 11700,
       "type": "formation",
       "enemy": "bolt-drone",
-      "count": 8,
-      "interval": 10,
-      "y": 171,
-      "drop": null
+      "count": 6,
+      "interval": 14,
+      "y": 230,
+      "bonus": 400
     },
     {
-      "x": 11786,
+      "x": 11800,
       "type": "spawn",
       "enemy": "sentinel-walker"
     },
     {
-      "x": 12270,
+      "x": 11916,
+      "type": "block",
+      "y": 243,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -33,
+      "period": 200,
+      "phase": 512
+    },
+    {
+      "x": 12156,
+      "type": "block",
+      "y": 57,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 33,
+      "period": 200,
+      "phase": 0
+    },
+    {
+      "x": 12240,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 144
+    },
+    {
+      "x": 12300,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 12396,
+      "type": "block",
+      "y": 243,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -33,
+      "period": 200,
+      "phase": 768
+    },
+    {
+      "x": 12600,
       "type": "formation",
       "enemy": "bolt-drone",
-      "count": 8,
-      "interval": 10,
-      "y": 111,
+      "count": 5,
+      "interval": 15,
+      "y": 130,
+      "bonus": 350
+    },
+    {
+      "x": 12636,
+      "type": "block",
+      "y": 57,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 33,
+      "period": 200,
+      "phase": 256
+    },
+    {
+      "x": 12700,
+      "type": "spawn",
+      "enemy": "sentinel-walker"
+    },
+    {
+      "x": 12876,
+      "type": "block",
+      "y": 243,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": -33,
+      "period": 200,
+      "phase": 0
+    },
+    {
+      "x": 12900,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 280,
+      "bonus": 300,
       "drop": null
     },
     {
-      "x": 12780,
+      "x": 13000,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 156
+      "enemy": "hatch-bay-ceiling"
     },
     {
-      "x": 13140,
+      "x": 13100,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 231
+      "enemy": "rail-turret"
     },
     {
-      "x": 13650,
+      "x": 13116,
+      "type": "block",
+      "y": 57,
+      "w": 36,
+      "h": 72,
+      "tile": "solid",
+      "dy": 33,
+      "period": 200,
+      "phase": 512
+    },
+    {
+      "x": 13120,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 192
+    },
+    {
+      "x": 13500,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 14050,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 138
+    },
+    {
+      "x": 14400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 210
+    },
+    {
+      "x": 14720,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 162
+    },
+    {
+      "x": 15000,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 15,
+      "y": 250,
+      "bonus": 300,
+      "drop": null
+    },
+    {
+      "x": 15380,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 234
+    },
+    {
+      "x": 15700,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 15720,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 6,
+      "interval": 14,
+      "y": 170,
+      "bonus": 400
+    },
+    {
+      "x": 16000,
+      "type": "spawn",
+      "enemy": "rail-turret-ceiling"
+    },
+    {
+      "x": 16010,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 150
+    },
+    {
+      "x": 16300,
+      "type": "spawn",
+      "enemy": "hatch-bay"
+    },
+    {
+      "x": 16440,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 198
+    },
+    {
+      "x": 16600,
+      "type": "spawn",
+      "enemy": "rail-turret"
+    },
+    {
+      "x": 16850,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 16900,
+      "type": "spawn",
+      "enemy": "iron-banner",
+      "y": 240
+    },
+    {
+      "x": 17200,
+      "type": "spawn",
+      "enemy": "sentinel-walker"
+    },
+    {
+      "x": 17400,
+      "type": "spawn",
+      "enemy": "hatch-bay-ceiling"
+    },
+    {
+      "x": 17420,
+      "type": "spawn",
+      "enemy": "iron-banner",
+      "y": 120
+    },
+    {
+      "x": 17940,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 168
+    },
+    {
+      "x": 18810,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 138
+    },
+    {
+      "x": 19230,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 198
+    },
+    {
+      "x": 19500,
       "type": "warning",
       "enemy": "iron-sovereign"
     },
     {
-      "x": 14400,
+      "x": 20250,
       "type": "end"
     }
   ],
@@ -657,9 +947,26 @@
     "green",
     "blue",
     "red",
+    "green",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "orange",
     "green"
   ],
   "raster": [
+    {
+      "layer": "mid",
+      "kind": "haze",
+      "top": 240,
+      "bottom": 300,
+      "amplitude": 1.5,
+      "wavelength": 20,
+      "period": 96,
+      "from": 3300,
+      "to": 5400
+    },
     {
       "layer": "mid",
       "kind": "haze",
@@ -668,8 +975,8 @@
       "amplitude": 1.5,
       "wavelength": 16.5,
       "period": 80,
-      "from": 10200,
-      "to": 12600
+      "from": 13890,
+      "to": 16140
     }
   ],
   "cycles": [
@@ -687,34 +994,1280 @@
       "y": 171
     },
     {
-      "x": 3510,
+      "x": 2240,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 6210,
+      "x": 3540,
       "type": "spawn",
       "enemy": "tender",
       "y": 141
     },
     {
-      "x": 7200,
+      "x": 5760,
       "type": "spawn",
       "enemy": "tender",
       "y": 111
     },
     {
-      "x": 10080,
+      "x": 8040,
       "type": "spawn",
       "enemy": "tender",
       "y": 246
     },
     {
-      "x": 12930,
+      "x": 10980,
       "type": "spawn",
       "enemy": "tender",
       "y": 216
+    },
+    {
+      "x": 13800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 171
+    },
+    {
+      "x": 16560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    }
+  ],
+  "decor": [
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3300,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3324,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3348,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3372,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3396,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3420,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3444,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3468,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3492,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3516,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3540,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3564,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3588,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3612,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3636,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3660,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3684,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3708,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3732,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3756,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3780,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3804,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3828,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3852,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3876,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3900,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3924,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3948,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3972,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3996,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4020,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4044,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4068,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4092,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4116,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4140,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4164,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4188,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4212,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4236,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4260,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4284,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4308,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4332,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4356,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4380,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4404,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4428,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4452,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4476,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4500,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4524,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4548,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4572,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4596,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4620,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4644,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4668,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4692,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4716,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4740,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4764,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4788,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4812,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4836,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4860,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4884,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4908,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4932,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4956,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4980,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5004,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5028,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5052,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5076,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5100,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5124,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5148,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5172,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5196,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5220,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5244,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5268,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5292,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5316,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5340,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5364,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5388,
+      "y": 72
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3300,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3324,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3348,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3372,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3396,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3420,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3444,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3468,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3492,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3516,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3540,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3564,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3588,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3612,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3636,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3660,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3684,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3708,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3732,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3756,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3780,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3804,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3828,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3852,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3876,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3900,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3924,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3948,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3972,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 3996,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4020,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4044,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4068,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4092,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4116,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4140,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4164,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4188,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4212,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4236,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4260,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4284,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4308,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4332,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4356,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4380,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4404,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4428,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4452,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4476,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4500,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4524,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4548,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4572,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4596,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4620,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4644,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4668,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4692,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4716,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4740,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4764,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4788,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4812,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4836,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4860,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4884,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4908,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4932,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4956,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 4980,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5004,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5028,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5052,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5076,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5100,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5124,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5148,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5172,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5196,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5220,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5244,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5268,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5292,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5316,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5340,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5364,
+      "y": 264
+    },
+    {
+      "layer": "back",
+      "tile": "grate",
+      "frame": 0,
+      "x": 5388,
+      "y": 264
     }
   ]
 }

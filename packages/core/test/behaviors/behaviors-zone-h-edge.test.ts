@@ -10,7 +10,10 @@
  * - `boss.sovereign`: `spin` rounded, reversing every `reverseTicks`; `firstLaser` below 1 is one
  *   tick, the lanes go to the standing guns in turn (a destroyed one skipped); the spiral's
  *   tunables floored and each phase's spiral turning from heading 0; `count` 0 launches nothing,
- *   `count` 2 launches from both guns.
+ *   `count` 2 launches from both guns;
+ * - the R5-08.S4a design §6 tunables at their limits: `turret.floor` with `aimTicks` and
+ *   `fireTicks` below 1 fires one aimed 1.95 round every tick once settled, and `drifter.sine`
+ *   with the banner's `memberPhase` 24 staggers a formation's waves 24 units per member index.
  *
  * The mine, the ark and the king are in `behaviors-zone-i-edge.test.ts`; the `drone` entry the
  * sovereign launches rides both files (R5-P.P5a2).
@@ -51,6 +54,15 @@ const ROSTER = [
   // The drone the sovereign below launches (the ark and the king cast it too — the entry rides
   // both H and I edge files, R5-P.P5a2).
   enemy('drone', 'drifter.sine', {}),
+  // The R5-08.S4a design §6 tunables at their limits: the gate sentry with both its intervals
+  // below one tick (clamped to one), the banner with its member stagger (the §6 values).
+  enemy(
+    'gs-clamp',
+    'turret.floor',
+    { aimTicks: 0.3, fireTicks: 0.4, bulletSpeed: 1.95 },
+    { ground: 'floor' },
+  ),
+  enemy('ib-wave', 'drifter.sine', { speed: 1.8, amp: 30, period: 90, memberPhase: 24 }),
   {
     id: 'sov',
     boss: {
@@ -286,6 +298,45 @@ describe('core/behaviors — zone H, edge cases (M2-14 tests)', () => {
       expect(drones.length).toBe(2);
       const ys = drones.map((d) => d.y).sort((a, b) => a - b);
       expect(ys[1] - ys[0]).toBeGreaterThan(60); // one from each gun
+    });
+  });
+
+  describe('the R5-08.S4a design §6 tunables at their limits', () => {
+    it('turret.floor: aimTicks and fireTicks below 1 are one tick: a 1.95 aimed round every tick', () => {
+      const w = freeFlight();
+      const sentry = spawn(w, 'gs-clamp', 300, 150); // settleTicks 0: settled at once
+      const shots: number[] = []; // the ticks of the volleys
+      const f = w.bullets.pool.fields;
+      for (let t = 0; t < 10; t++) {
+        run(w, 1);
+        for (let i = 0; i < w.bullets.count; i++) {
+          if (f.age[i] !== 1 || f.delay[i] !== 0) continue;
+          expect(f.kind[i]).toBe(BulletKind.RoundPink);
+          expect(f.angle[i] % 32).toBe(0); // every one still quantised to the 32-way grid
+          expect(f.speed[i]).toBeCloseTo(1.95, 9); // the design speed past both clamps
+          shots.push(t);
+        }
+      }
+      expect(sentry.mover).toBe(MoverKind.None); // a ground turret, on its row, stands
+      expect(shots[0]).toBeLessThanOrEqual(1); // the fire wait clamped to one tick
+      for (let k = 1; k < shots.length; k++) expect(shots[k] - shots[k - 1]).toBe(1);
+      expect(shots.length).toBeGreaterThanOrEqual(8);
+    });
+
+    it('drifter.sine: the banner wave staggers 24 units a member and a lone banner sits at 0', () => {
+      const w = freeFlight();
+      w.enemies.startFormation(DB.enemyIndex.get('ib-wave') ?? -1, 3, 1, 420, 100, -1, 0, 0);
+      run(w, 3); // one member a tick
+      const members = live(w, 'ib-wave');
+      expect(members).toHaveLength(3);
+      expect(members.map((e) => e.m3)).toEqual([0, 24, 48]); // phase + member · memberPhase
+      for (const e of members) {
+        expect([e.mover, e.m1, e.m2]).toEqual([MoverKind.Sine, 30, 90]); // amp, period
+        expect(e.vx).toBeCloseTo(-1.8, 9); // the design speed
+      }
+      const alone = spawn(w, 'ib-wave', 420, 60);
+      run(w, 1);
+      expect(alone.m3).toBe(0); // outside a formation: the member counts as 0
     });
   });
 });

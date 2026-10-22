@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "kind": "tileset",
   "id": "terrain-citadel",
-  "sprite": "tiles/terrain-citadel",
+  "sprite": "tiles/terrain-citadel-v2",
   "tileSize": 12,
   "tiles": [
     {
@@ -150,6 +150,36 @@
       "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
       "hp": 3,
       "regen": 240,
+      "score": 10
+    },
+    {
+      "name": "plate",
+      "type": "solid",
+      "frame": 20,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "rivet-plate",
+      "type": "solid",
+      "frame": 21,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    },
+    {
+      "name": "grate",
+      "type": "empty",
+      "frame": 22,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+      "name": "gate-door",
+      "type": "solid",
+      "frame": 23,
+      "anchor": "floor",
+      "mask": [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
+      "hp": 8,
       "score": 10
     }
   ]

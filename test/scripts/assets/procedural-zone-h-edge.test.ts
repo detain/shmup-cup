@@ -10,12 +10,15 @@
  *   no other cycle's ramp nor with each other;
  * - the registry: every zone H / I / ending sprite is drawn by exactly one generator, and every
  *   sprite the zone H and I rosters, stages and tilesets name is in the built atlas;
- * - the zone tilesets: the destructible tiles exactly zone A's; the rock only in the set's own
- *   colours, opaque; the `content/tilesets/` files name their sprite and zone A's tile order.
+ * - the zone tilesets: the destructible tiles exactly zone A's (H's v2 set adds its §9 gate-door
+ *   on top, R5-08.S5a); the rock only in the set's own
+ *   colours, opaque; the `content/tilesets/` files name their sprite and zone A's tile order
+ *   (H's v2 set continues it with its four variants).
  *
  * @module
  */
 import { describe, expect, it } from 'vitest';
+import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import * as abyss from '../../../scripts/assets/procedural/abyss.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
@@ -160,16 +163,18 @@ describe('scripts/assets/procedural/terrain — zones H and I tilesets (M2-14 te
   );
 
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
-    for (const [file, sprite] of [
-      ['terrain-citadel', 'tiles/terrain-citadel'],
-      ['terrain-abyss', 'tiles/terrain-abyss'],
+    // H's set rides `tiles/terrain-citadel-v2` since R5-08.S5a: zone A's 20 tiles first, then
+    // its 4 variants — the order `citadel.mjs` draws, pinned by CITADEL_V2_TILE_NAMES.
+    for (const [file, sprite, tileNames] of [
+      ['terrain-citadel', 'tiles/terrain-citadel-v2', citadel.CITADEL_V2_TILE_NAMES],
+      ['terrain-abyss', 'tiles/terrain-abyss', terrain.TERRAIN_TILES],
     ] as const) {
       const data = content<{ id: string; sprite: string; tiles: { name: string }[] }>(
         `tilesets/${file}.tileset.json`,
       );
       expect(data.id).toBe(file);
       expect(data.sprite).toBe(sprite);
-      expect(data.tiles.map((t) => t.name)).toEqual([...terrain.TERRAIN_TILES]);
+      expect(data.tiles.map((t) => t.name)).toEqual([...tileNames]);
     }
   });
 
@@ -181,5 +186,65 @@ describe('scripts/assets/procedural/terrain — zones H and I tilesets (M2-14 te
     expect(h.rock.filter((c) => i.rock.includes(c))).toEqual([]);
     expect(h.rock.join()).not.toBe(zoneA.rock.join());
     expect(i.rock.join()).not.toBe(zoneA.rock.join());
+  });
+});
+
+describe('scripts/assets/procedural/citadel — R5-08.S2 v2 stand-ins, edges (zone-h.md §13)', () => {
+  const built = citadel.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE });
+  const v2 = built.slice(citadel.CITADEL_SPRITES.length);
+
+  it('names the four §13 sprites frozen, unique, kebab paths including the tile strip', () => {
+    expect(Object.isFrozen(citadel.CITADEL_V2_SPRITES)).toBe(true);
+    expect(new Set(citadel.CITADEL_V2_SPRITES).size).toBe(4);
+    for (const name of citadel.CITADEL_V2_SPRITES) {
+      expect(name).toMatch(/^(bg|enemies|tiles)\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+    expect(v2.map((s) => s.name)).toEqual([...citadel.CITADEL_V2_SPRITES]);
+    expect(new Set(citadel.CITADEL_V2_TILE_NAMES).size).toBe(24);
+    // the no-echo law: the parade and the rebuilt Sovereign add no new names of their own
+    for (const name of citadel.CITADEL_V2_SPRITES) {
+      expect(name.startsWith('bosses/'), name).toBe(false);
+      expect(name.includes('echo'), name).toBe(false);
+    }
+  });
+
+  it('draws v2 frames of one size, hittable sprites clearly visible, animations in range', () => {
+    for (const sprite of v2) {
+      const [first, ...rest] = sprite.frames;
+      for (const frame of rest) {
+        expect([frame.width, frame.height], sprite.name).toEqual([first.width, first.height]);
+      }
+      if (sprite.hitFlash === true) {
+        for (const frame of sprite.frames) expect(drawn(frame), sprite.name).toBe(true);
+      }
+      for (const anim of Object.values(sprite.animations ?? {})) {
+        for (const i of anim) {
+          expect(Number.isInteger(i), sprite.name).toBe(true);
+          expect(i, sprite.name).toBeGreaterThanOrEqual(0);
+          expect(i, sprite.name).toBeLessThan(sprite.frames.length);
+        }
+      }
+    }
+    expect(byName(v2, 'bg/citadel-banner').anchor).toEqual([0, 0]);
+    expect(byName(v2, 'tiles/terrain-citadel-v2').anchor).toEqual([0, 0]);
+  });
+
+  it('draws the v2 set the same pixels every run', () => {
+    const again = citadel
+      .generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE })
+      .slice(citadel.CITADEL_SPRITES.length);
+    expect(bytes(v2)).toEqual(bytes(again));
+  });
+
+  it('packs the four v2 sprites and the two flash siblings into the shipped atlas', () => {
+    const { manifest } = buildAtlas();
+    for (const name of citadel.CITADEL_V2_SPRITES) {
+      expect(manifest.sprites[name], name).toBeDefined();
+    }
+    for (const name of ['enemies/gate-sentry', 'enemies/iron-banner']) {
+      expect(manifest.sprites[`${name}@flash`], `${name}@flash`).toBeDefined();
+    }
+    const tiles = manifest.sprites['tiles/terrain-citadel-v2'];
+    expect(tiles.frames).toHaveLength(24);
   });
 });

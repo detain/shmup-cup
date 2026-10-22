@@ -2,35 +2,41 @@
  * The zone H playtest (plan M2-14): the 4-way bot (`four-way-bot.ts`) plays IRON CITADEL headless
  * through the harness (`harness.ts`), the way a remote player would.
  *
- * - With **god mode** the bot plays the whole zone — the outer walls with their hatches, the piston
- *   hall's moving floors and ceilings and its laser emitters, the parade of four earlier bosses in
- *   reduced form, the core run — shoots IRON SOVEREIGN (IS-08) down through its four phases and
- *   reaches `stageClear` in 3 to 6 minutes (shmup_feat.md §14), never diagonal, the ship at x ≈ 64,
- *   with the 4-way design rules of `rules.ts` holding on every tick.
+ * - With **god mode** the bot plays the whole remastered zone — the outer walls, the gate's slab
+ *   pistons and sentries, the keep's plug walls, the parade of four earlier bosses in reduced form
+ *   over the void hangar, the piston hall's moving floors and ceilings and its laser emitters,
+ *   the core run — shoots IRON SOVEREIGN (IS-08) down through its four phases and reaches
+ *   `stageClear` in 4 to 6 minutes (`designs/zone-h.md` §17's window, the R5-08.S6 retarget of
+ *   the v1 §14 band), never diagonal, the ship at x ≈ 96, with the 4-way design rules of
+ *   `rules.ts` holding on every tick.
  * - **Without god mode** the run is recorded (its input replays to the same deaths and the same
  *   final `hashWorld`) and its deaths are reported — not asserted.
  */
-import { BossRole, BossState, EnemyState } from '@shmup/core';
+import { BossRole, BossState, EnemyState, MAX_BOSS_PARTS, MAX_ENEMIES } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { BOT_X, fourWayBot } from './four-way-bot.js';
 import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone H with the 4-way bot (M2-14)', () => {
-  it('fights the parade, kills IRON SOVEREIGN and reaches stage clear in god mode, in 3 to 6 minutes', () => {
+  it('fights the parade, kills IRON SOVEREIGN and reaches stage clear in god mode, in 4 to 6 minutes', () => {
     const rules = createRuleWatch();
     const phases = new Set<number>();
     const captains = new Set<string>();
     const blockYs = new Set<number>();
     let emitterLasers = 0;
     let mites = 0;
+    let maxEnemies = 0;
+    let maxParts = 0;
     const run = runStage('zone-h', fourWayBot(), {
       godMode: true,
       observe(world) {
         rules.observe(world);
+        if (world.enemies.count > maxEnemies) maxEnemies = world.enemies.count;
         const enemies = world.content.enemies;
         for (const boss of world.bosses.slots) {
           if (boss.state !== BossState.Fight) continue;
+          if (boss.partCount > maxParts) maxParts = boss.partCount;
           if (boss.role === BossRole.Captain) captains.add(enemies[boss.specIndex].id);
           else phases.add(boss.phase);
         }
@@ -63,7 +69,9 @@ describe('playtest: zone H with the 4-way bot (M2-14)', () => {
     );
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
-    expect(run.seconds).toBeGreaterThanOrEqual(3 * 60);
+    // `designs/zone-h.md` §17: the remastered zone runs 4.0 to 6.0 minutes (the R5-08.S6 retarget
+    // of the v1 §14 3-to-6 band; §11's stress note expects the bot's run at 335–350 s).
+    expect(run.seconds).toBeGreaterThanOrEqual(4 * 60);
     expect(run.seconds).toBeLessThanOrEqual(6 * 60);
     // The finale's four phases; the whole parade; the pistons swinging, the emitters and hatches.
     expect([...phases].sort()).toEqual([0, 1, 2, 3]);
@@ -86,6 +94,10 @@ describe('playtest: zone H with the 4-way bot (M2-14)', () => {
     expect(rules.maxBulletSpeed).toBeGreaterThan(0);
     expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
     expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
+    // The pools keep their headroom (design §17): never more than 80 % of the 64 enemy
+    // slots live at once, and never more parts on screen than the part space.
+    expect(maxEnemies).toBeLessThanOrEqual(0.8 * MAX_ENEMIES);
+    expect(maxParts).toBeLessThanOrEqual(MAX_BOSS_PARTS);
   }, 60_000);
 
   it('records a run without god mode and reports its deaths', () => {

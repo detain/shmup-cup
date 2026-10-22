@@ -63,7 +63,7 @@
  * rolling the tissue it shot open back, `gameOver`), and the stage skips to MANTLE REGENT and
  * FACET MONARCH with the full loadout under the Arcade penalty. Two more (M2-14) fly the final
  * zones H and I with the 4-way bot and god mode, start to stage clear — `zone-h` (IRON CITADEL:
- * the piston hall, the parade of earlier bosses in reduced form, IRON SOVEREIGN's four-phase
+ * the parade of earlier bosses in reduced form, the piston hall, IRON SOVEREIGN's four-phase
  * finale) and `zone-i` (ABYSSAL THRONE: the depth mines, the trench eels, the ABYSS ARK raid and
  * THE HOLLOW KING inside it). Five more (M2-14 tests): the stage skips to IRON SOVEREIGN's
  * WARNING (R5-P.P14 — the skip enters at the stage's own boss, past the parade, which the full
@@ -678,7 +678,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-h-god',
     description:
-      'IRON CITADEL start to stage clear with god mode (M2-14): the 4-way bot through the outer walls, the piston hall with its moving floors and laser emitters, the parade of four earlier bosses in reduced form and the core run, then IRON SOVEREIGN shot down through its four phases',
+      'IRON CITADEL start to stage clear with god mode (M2-14, remastered by R5-08 for §2b): the 4-way bot through the outer walls and the gate with its slabs and sentries, the keep, the parade of four earlier bosses in reduced form, the piston hall with its moving floors and laser emitters and the ceilingless core run, then IRON SOVEREIGN shot down through its four phases',
     stageId: 'zone-h',
     config: { seed: 1 },
     godMode: true,
@@ -741,7 +741,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-h-boss',
     description:
-      "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade): the full loadout under the Arcade penalty, the core run, then IRON SOVEREIGN through its four phases",
+      "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade, at the remastered throne's 19,500): the full loadout under the Arcade penalty, then IRON SOVEREIGN through its four phases",
     stageId: 'zone-h',
     config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
     godMode: false,
@@ -750,7 +750,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-h-arcade',
     description:
-      'IRON CITADEL at Arcade difficulty without god mode (M2-14 tests): the 4-way bot from the start against the rank-scaled fire — the piston hall, the laser emitters, the parade — to IRON SOVEREIGN shot down',
+      'IRON CITADEL at Arcade difficulty without god mode (M2-14 tests, R5-08.FIX3): the 4-way bot from the start against the rank-scaled fire — the gate, the parade, the piston hall with its laser emitters and the core run — loses its two lives in the parade before the throne (the blessed re-record; the R5-08 remaster is a real stage)',
     stageId: 'zone-h',
     config: { seed: 91, difficulty: 'arcade' },
     godMode: false,

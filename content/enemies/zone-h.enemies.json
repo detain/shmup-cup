@@ -25,6 +25,28 @@
       "drop": null
     },
     {
+      "id": "iron-banner",
+      "hp": 2,
+      "score": 150,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 6
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/iron-banner",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.8,
+        "amp": 30,
+        "period": 90,
+        "memberPhase": 24
+      },
+      "drop": "capsule"
+    },
+    {
       "id": "hatch-bay",
       "hp": 6,
       "score": 500,
@@ -234,6 +256,50 @@
       "explosion": "medium"
     },
     {
+      "id": "gate-sentry",
+      "hp": 8,
+      "score": 400,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 8
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/gate-sentry",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "fireTicks": 150,
+        "bulletSpeed": 1.95
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "gate-sentry-ceiling",
+      "hp": 8,
+      "score": 400,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 8
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/gate-sentry",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "fireTicks": 150,
+        "bulletSpeed": 1.95
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
       "id": "sovereign-drone",
       "hp": 2,
       "score": 150,
@@ -281,8 +347,8 @@
           {
             "name": "wing-top",
             "parent": "hull",
-            "x": -9,
-            "y": -34.5,
+            "x": 0,
+            "y": -60,
             "hurtbox": {
               "hw": 39,
               "hh": 9
@@ -293,8 +359,8 @@
           {
             "name": "wing-bottom",
             "parent": "hull",
-            "x": -9,
-            "y": 34.5,
+            "x": 0,
+            "y": 60,
             "hurtbox": {
               "hw": 39,
               "hh": 9
@@ -305,8 +371,8 @@
           {
             "name": "emitter-top",
             "parent": "wing-top",
-            "x": -51,
-            "y": -3,
+            "x": -6,
+            "y": -13.5,
             "hurtbox": {
               "hw": 12,
               "hh": 6
@@ -322,8 +388,8 @@
           {
             "name": "emitter-bottom",
             "parent": "wing-bottom",
-            "x": -51,
-            "y": 3,
+            "x": -6,
+            "y": 13.5,
             "hurtbox": {
               "hw": 12,
               "hh": 6
@@ -525,20 +591,20 @@
             "parent": "core"
           },
           {
-            "name": "arm-a",
+            "name": "arm-a-inner",
             "parent": "hub",
             "x": 28.5,
             "radius": 7.5,
-            "vulnerable": "never",
-            "sprite": "bosses/bastion-arm"
+            "sprite": "bosses/bastion-arm",
+            "hp": 8
           },
           {
-            "name": "arm-b",
+            "name": "arm-b-inner",
             "parent": "hub",
             "x": -28.5,
             "radius": 7.5,
-            "vulnerable": "never",
-            "sprite": "bosses/bastion-arm"
+            "sprite": "bosses/bastion-arm",
+            "hp": 8
           }
         ],
         "phases": [
@@ -609,7 +675,7 @@
             "explosion": "medium"
           },
           {
-            "name": "seg-top",
+            "name": "seg-top-1",
             "parent": "root-top",
             "x": -16.5,
             "radius": 7.5,
@@ -617,8 +683,32 @@
             "sprite": "bosses/regent-segment"
           },
           {
+            "name": "seg-top-2",
+            "parent": "seg-top-1",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
+            "name": "seg-top-3",
+            "parent": "seg-top-2",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
+            "name": "seg-top-4",
+            "parent": "seg-top-3",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
             "name": "tip-top",
-            "parent": "seg-top",
+            "parent": "seg-top-4",
             "x": -15,
             "radius": 6,
             "vulnerable": "never",
@@ -637,7 +727,7 @@
             "explosion": "medium"
           },
           {
-            "name": "seg-bottom",
+            "name": "seg-bottom-1",
             "parent": "root-bottom",
             "x": -16.5,
             "radius": 7.5,
@@ -645,8 +735,32 @@
             "sprite": "bosses/regent-segment"
           },
           {
+            "name": "seg-bottom-2",
+            "parent": "seg-bottom-1",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
+            "name": "seg-bottom-3",
+            "parent": "seg-bottom-2",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
+            "name": "seg-bottom-4",
+            "parent": "seg-bottom-3",
+            "x": -15,
+            "sprite": "bosses/regent-segment",
+            "radius": 7.5,
+            "vulnerable": "never"
+          },
+          {
             "name": "tip-bottom",
-            "parent": "seg-bottom",
+            "parent": "seg-bottom-4",
             "x": -15,
             "radius": 6,
             "vulnerable": "never",
@@ -806,6 +920,52 @@
             "sprite": "bosses/sovereign-plate",
             "score": 1000,
             "explosion": "medium"
+          },
+          {
+            "name": "crown",
+            "parent": "hull",
+            "y": -66,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-hatch"
+          },
+          {
+            "name": "prow",
+            "parent": "hull",
+            "x": -42,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-hatch"
+          },
+          {
+            "name": "skirt-a",
+            "parent": "hull",
+            "x": -6,
+            "y": 70,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-plate"
+          },
+          {
+            "name": "skirt-b",
+            "parent": "hull",
+            "x": -6,
+            "y": -70,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-plate"
+          },
+          {
+            "name": "vent-a",
+            "parent": "hull",
+            "x": 40,
+            "y": 48,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-emitter"
+          },
+          {
+            "name": "vent-b",
+            "parent": "hull",
+            "x": 40,
+            "y": -48,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-emitter"
           }
         ],
         "phases": [
