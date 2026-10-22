@@ -586,9 +586,10 @@ export interface GameConfig {
    */
   readonly stage: string | null;
   /**
-   * Debug stage skip (plan M1-18; the e2e smoke and the playtest reach the boss with it):
-   * `'boss'` makes every World of the session jump its stage to just before the first `warning`
-   * / `boss` event at creation (`core/debug` `skipToBoss`); `'none'` (the default) plays the
+   * Debug stage skip (plan M1-18; the e2e smoke and the playtest reach the boss with it;
+   * R5-P.P14 re-aimed it): `'boss'` makes every World of the session jump its stage, at
+   * creation, to just before the stage's last `warning` event — else its first `boss` event
+   * (`core/debug` `skipToBoss`); `'none'` (the default) plays the
    * stage from its start. Sim-affecting, so it lives here (a replay records it). Ignored in free
    * flight and on a stage without a boss.
    */

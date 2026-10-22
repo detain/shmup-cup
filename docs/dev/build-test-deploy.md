@@ -609,15 +609,15 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   `window.__shmupDebug`), and zones B and C: `?stage=zone-b`'s palette-cycled brine sea and, the
   stage jumped to its end, GALVANIC MAW's hull fighting with its mouth opening, `?stage=zone-c`'s
   dune ridge and SANDGRAVE WIDOW, `?stage=brine-grotto`'s reef over the brine sea, and the widow
-  drawn on the Tizen build from `file://` (`zones-bc.spec.ts`, M2-11), and zones D and E:
+  drawn on the Tizen build from `file://` (`zone-b.spec.ts`, `zone-c.spec.ts`, M2-11 — one file per zone since R5-P.P5d `9592777`, over the shared `zone-helpers.ts`), and zones D and E:
   `?stage=zone-d`'s volcano peaks, its palette-cycled lava lake rising into view with the dive and
   CINDER BASTION's hull fighting down in the caves with its shield arms turning, `?stage=zone-e`'s
   palette-cycled storm clouds over the jagged ridge and SQUALL STEED opening its chest, and both
-  bosses drawn on the Tizen build from `file://` (`zones-de.spec.ts`, M2-12), and zones F and G:
+  bosses drawn on the Tizen build from `file://` (`zone-d.spec.ts`, `zone-e.spec.ts`, M2-12 — one file per zone since R5-P.P5d), and zones F and G:
   `?stage=zone-f`'s palette-cycled cell wall (its pixels recoloured as the cycle steps) over the
   fleshy folds and MANTLE REGENT fighting with its tentacles curling in, `?stage=zone-g`'s
   palette-cycled crystal facets over the spires and FACET MONARCH waving its arms, and both bosses
-  drawn on the Tizen build from `file://` (`zones-fg.spec.ts`, M2-13), and the Options pages of
+  drawn on the Tizen build from `file://` (`zone-f.spec.ts`, `zone-g.spec.ts`, M2-13 — one file per zone since R5-P.P5d; zones H and I stand in `zone-h.spec.ts` and `zone-i.spec.ts` likewise), and the Options pages of
   M2-16: SHOT rebound to J on the web build, saved, shown in the input test and applied after a
   reload, and on the Tizen build from `file://` POWER-UP swapped with CH− and kept across a
   relaunch (`rebind.spec.ts`); a version-1 save booting and rewritten as version 2 with its co-op

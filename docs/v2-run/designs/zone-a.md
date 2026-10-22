@@ -123,6 +123,13 @@ the bot already has (it dodges vertically in today's corridor and the v1 zone-A 
 the openings are 36 px ≥ the 24 px lane rule, and a god-mode run passes terrain through.
 P12's own list names zone A's feature nowhere — do not add a zone-A case to it.
 
+**LAND note (R5-01 S6b):** the shipped openings are **48 px (4 tile rows), not 36** — at
+y 0–48 / 156–204 / 288–336 (rows 0–3 / 13–16 / 24–27). The 36-px figure mis-mapped the 24-px
+laser-lane rule onto a terrain corridor: the repo's corridor law is the `≥ 48` open-run assert
+(`test/integration/stage-terrain.test.ts`), and the S6b STOP adjudicated (i) widened all three
+gorges to it (L4m authored the rows). The threading math above is unchanged in kind; the §2
+row-6 phrase "staggered 36-px openings" reads 48-px now. §17's terrain pin shipped to match.
+
 ## 4. Checkpoints (7) and their capsule windows
 
 `checkpoints: [{x:0}, {x:2700}, {x:6300}, {x:9600}, {x:12000}, {x:15600}, {x:18300}]` —
@@ -259,6 +266,24 @@ Part tree (12 parts ≤ `MAX_BOSS_PARTS` 24):
   with margin 84 the origin band is 84…252 and the boss tips (±79.5) stay on the playfield;
   the tighter later margins raise the pressure as the plates die. `bulletSpeed` default
   2.25 ≤ 3.0 ✓.
+
+**LAND note (R5-01 S4b/L4, adjudicated):** the shipped part numbers moved on three cells and
+nothing else — (d)'s invariants (height 159 ≤ 202, emitter lanes ±73.5 / ≈130 px gap,
+`maxSeparate === 2` both lanes all fight, `trackSpeed` 0.525/0.675/0.825 < 1, `bulletSpeed`
+2.25 ≤ 3.0) all hold as designed:
+
+| cell | design | shipped | why |
+|---|---|---|---|
+| `core` x | −36 | **0 — CENTRED** | the exact feasible window is (−8, +6]: +36 sits inside the `never` hull shadow (hull west face 20,507), −36 inside the live-plate line — a closed `afterParts` weak point WEST of still-live plates consumes every straight shot with a clink forever (`core/src/weapons` hit law). 0 = v1 HB-01's own column. Control-proven: the cured bot cleared the full stage 53,240 ticks. Adjudicated twice — STOP v3, `l4g-pre.log` / `l4g-decide3.log`. The count-4 gate's plate-side effect was proven empirically at +36 (all six plates died, +1,500 = 3×500 score delta). The 6-plate / 3-phase §8 letter is fully preserved. |
+| `hull` hurtbox | 54×36 | **30×36** (`hw` 30) | the conditional in §8's own text — trim to keep the 45–70 s destroyable budget honest with the centred core; real art may still grow to the 108×72 bible target. |
+| margins ph1/ph2 | 96 / 108 | **74 / 74** | at the 159-px full height the later-phase tips must keep both beams ON the playfield (84/96/108 drove the wing tips off-row at track speeds ≥ 0.675); ph0's 84 stands. |
+| fireTicks ph1/ph2 | 120 / 90 | **240 / 240** | proven **not a lever**: a 24-config full-rank sweep froze identically at 18,900 ticks; the adjudication kept the slower cadence for the plate-side spreads, and the x0 geometry measured 18,704 t full-stage (≈ 312 s — INSIDE the [240, 360] bot budget; the §2 trim lever went unused), fight 2,186 t. |
+
+One perf carry for the wave-11 lanes: the arena anchor this section's fight sits at lands on
+fractional camera x under `WORLD_SCALE` (the probe read 19,981.875) — that fractional anchor is
+what exposed the boxing hole the R5-01 hunt closed in `79243ce` (parallax/decor sync now take
+the camera object; conventions' R5-01 perf entry). No design change — annotate-only, per the
+fold row; fractional stage anchors are the v2 norm.
 - Total destroyable hp 6×10 + 60 = 120 (vs today's 88) → the fight budgets 45–70 s
   (§2 timing). The emitters are **not** destroyable: both guns keep the shipped part's
   `vulnerable: never`, so 120 is the whole tree's destroyable hp — and both laser lanes
@@ -285,6 +310,12 @@ except the two new mid bands (factors are the content's, the renderer floors the
 | mid | `bg/azure-horizon` | 0.375 | 168 | 640 | **new**: 640×120 seamless mesa silhouette band, green-key (bible §5.10 mid) |
 | mid | `bg/azure-clouds` | 0.625 | 252 | 640 | **new**: 640×96 seam-light cloud band, 2 frames, drift right |
 | mid | `bg/azure-verge` | 0.125 | 264 | 192 | carried planet band — **stays last mid** |
+
+**LAND note (R5-01 S2/S5a):** the two new bands ship as **320-px seamless half-tiles**
+(`bg/azure-horizon` 320×120, `bg/azure-clouds` 320×96) with parallax `spacing` **320** on both
+— heights and factors above stand. `azure.mjs` derives the width as `BAND_TILE_W = FRAME_W / 2`: the
+512-px-page pinned scenario caps frames at 510 px (`maxPageSize` 512 − `ATLAS_EXTRUDE` 1), so a
+full-`FRAME_W` tile could never pack. The §2 row's `640` and §14's size column read 320 now.
 
 Decor (new `decor` array, ≤ 256, existing schema — `back` layer crystals, `front` arch
 pieces ≤ 640×48 in feel):
@@ -417,6 +448,9 @@ Sizes are bible v2 art sizes (§5.6/§5.7/§5.9/§5.10).
 | `bosses/azure-captain-shell` | 45×36 | 2 | yes | S2 |
 | `bg/azure-horizon` | 640×120 | 1 | no (not hittable) | S2 (full-width `FRAME_W`, seamless) |
 | `bg/azure-clouds` | 640×96 | 2 | no | S2 (seamless) |
+
+**LAND note (R5-01 S2):** both bg rows ship at **320 px** — the seamless half-tile law
+(§9's note, `azure.mjs` `BAND_TILE_W`); heights unchanged.
 | `decor/azure-crystal-a` | 24×36 | 1 | no | S2 |
 | `decor/azure-crystal-b` | 36×48 | 1 | no | S2 |
 | `decor/azure-arch` | 96×48 | 1 | no | S2 |
@@ -484,6 +518,12 @@ are rewritten to pin these exact values:
 | remix | 11 entries, sorted, all `drop: null` |
 | mid-boss | `boss` event 10,350 (< length/2), role captain, 3 parts, 1 phase `captain.launcher` |
 | HB-01 | 12 parts ≤ 24, 3 phases exactly [0,1,2], guns exactly [emitter-top, emitter-bottom], plates hp [10×6], core 60 `afterParts` requires all six, height 159 ≤ 202, per-phase margins 84/96/108, `trackSpeed` 0.525/0.675/0.825 < 1 |
+
+**LAND note (R5-01):** two cells above were superseded by the §8 adjudication — shipped
+margins **84/74/74** (not 84/96/108), fireTicks 240/240 — and the bot run measured **293.4 s**
+god clear at tip `9d0b472` (pre-widening 306.4 s; the 18,704 t ≈ 312 s control number is the
+S4b-era one) — inside [240, 360] with the §2 trim lever unused. (DRIFT-1 lesson for the next
+zones: re-record the playtest headline at the geometry commit.)
 | terrain | ceiling columns only in [5,100, 9,800) ∪ [16,128, 17,604) — the corridor carry-over and the spire bodies (a full-height spire column is solid at row 0, so it counts as ceiling under the test's `terrainAt(map, x, 0)` predicate; spire-1's top-row opening excepted) — and > (9,600−5,160)/4; floors at 900, 1,500, 7,500, 8,400, 13,200; **no ceiling or floor from 18,600 to length + 640** |
 | atlas / budget | §13 green post-LAND |
 | names | original throughout (`AM-01 AZURE MARSHAL`, `HB-01 HALCYON BULWARK`) |

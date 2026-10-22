@@ -471,15 +471,20 @@ became a boss too, and the sample stages lost their redundant `boss` / `music` e
 
 ## HALCYON BULWARK (HB-01)
 
-Zone A's boss (M1-18), `content/enemies/zone-a.enemies.json` — a core battleship: an armoured hull
-and wings (`never`), two armoured laser **emitters** as its `gun`s, a 40-hp `core` (5,000 points)
-that takes damage only after all **four shield plates** (12 hp, 500 points each) stacked in front
-of it along its lane are destroyed, a 30,000-point tally and a 150-tick intro. Three
-`boss.bulwark` phases — lane lasers only, then (two plates down) plus aimed 3-ways of needles at
-1.5 px/tick, then (all plates down) a lane every 55 ticks so both emitters' lanes overlap in time
-with ≥ 16 px between them. Parts, phases, the 4-way checks and the playtest that kills it:
+Zone A's boss (M1-18; rebuilt by R5-01 on design §8), `content/enemies/zone-a.enemies.json` —
+a core battleship: an armoured hull and wings (`never`), two armoured laser **emitters** as its
+`gun`s, and a 60-hp `core` (6,000 points) **centred in the hull** that takes damage only after
+all **six shield plates** (10 hp, 500 points each — a wall 9 px apart with no straight-shot lane)
+stacked in front of it along its lane are destroyed; 120 destroyable hp all told, a 30,000-point
+tally and a 150-tick intro. Three `boss.bulwark` phases (tracks 0.525 / 0.675 / 0.825, margins
+84 / 74 / 74 as shipped) — lane lasers only, then (two plates down) plus aimed 3-ways of needles
+at 2.25 px/tick every 240 ticks, then (four plates down) a lane every 55 ticks so both emitters'
+lanes overlap in time with ≈ 130 px between them. Parts, phases, the 4-way checks and the
+playtest that kills it:
 [zone-a-and-playtest.md](zone-a-and-playtest.md#the-boss-halcyon-bulwark-hb-01). Reach it quickly
-with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip`).
+with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip` — since R5-P.P14
+it lands 144 px before the stage's **last** WARNING, flying past the mid-stage captain
+`azure-marshal`).
 
 ## World integration
 

@@ -140,11 +140,13 @@ into a vault of 1,000-point capsules and an extra ship; a loss there locks you o
 [preview-build.md](preview-build.md#the-endings-and-the-credits),
 [preview-build.md](preview-build.md#hidden-bonus-stages)).
 
-**Every game starts in the first real zone, AZURE VERGE — on the TV too**: about three minutes of
-scrolling over rolling ground, through a long cave with turrets on its floor and ceiling and a
-fast stretch, with rows of pods, red saucers that leave power capsules, fan fliers, dashing
+**Every game starts in the first real zone, AZURE VERGE — on the TV too**: about five minutes of
+scrolling (its R5-01 remaster) over rolling ground, through a long cave with turrets on its floor
+and ceiling, a captain — the **AZURE MARSHAL** — mid-stage without warning, a fastest-in-the-game
+stretch and three full-height azure spires to thread, with rows of pods, red saucers that leave
+power capsules, fan fliers, dashing
 arrowheads, walkers, hatches and ring spinners, and then the **WARNING** and the zone's boss,
-the battleship **HALCYON BULWARK** — shoot its four shield plates, then its core, and dodge the
+the battleship **HALCYON BULWARK** — shoot its six shield plates, then its core, and dodge the
 laser rows of its two emitters by stepping up or down. Every bullet and laser can be dodged with
 single arrow presses. In a browser `?skip=boss` starts a game right before the boss
 ([preview-build.md](preview-build.md#the-first-zone-azure-verge)). The KESTREL glides in from the

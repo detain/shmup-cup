@@ -240,22 +240,23 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
 
 ## The standard e2e batches
 
-Every one of the 50 specs of `test/e2e/` is in exactly one batch. A subtask that "runs all e2e" runs the five
-Chromium batches A … E one after another (each under the lock) — plus batch G once it exists — and Firefox's
+Every one of the 57 specs of `test/e2e/` is in exactly one batch. A subtask that "runs all e2e" runs the six
+Chromium batches A1/A2, B … E one after another (each under the lock) — plus batch G once it exists — and Firefox's
 determinism spec (F).
 
 | Batch | Specs |
 |---|---|
-| **A** (zones and stages) | `zone-a.spec.ts zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts` |
+| **A1** (zones A–E, stages) | `zone-a.spec.ts zone-b.spec.ts zone-c.spec.ts zone-d.spec.ts zone-e.spec.ts stage.spec.ts mode7.spec.ts` |
+| **A2** (zones F–I, stages) | `zone-f.spec.ts zone-g.spec.ts zone-h.spec.ts zone-i.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts` |
 | **B** (sprites and colours) | `bullets.spec.ts bullet-palette.spec.ts enemies.spec.ts weapons.spec.ts direct-items.spec.ts option-hunter.spec.ts powerups.spec.ts lives.spec.ts coop.spec.ts coop-gamepad.spec.ts` |
 | **C** (bosses, HUD, debug, recordings) | `boss.spec.ts advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts` |
 | **D** (front end and options) | `smoke.spec.ts boot.spec.ts frame-layout.spec.ts scenes.spec.ts front-end.spec.ts options.spec.ts game-options.spec.ts display-options.spec.ts rebind.spec.ts input.spec.ts` |
 | **E** (hosts and the rest) | `flight.spec.ts ship-select.spec.ts weapon-select.spec.ts fx-gallery.spec.ts audio.spec.ts shell.spec.ts webos.spec.ts platform-polish.spec.ts release-check.spec.ts render-profile.spec.ts` |
 | **F** (Firefox) | `E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts` |
-| **G** (new specs) | none yet; `atlas-context-loss.spec.ts` (R3-04.M3d) and `decor.spec.ts` (R3-06.L6) when they land |
+| **G** (new specs) | `atlas-context-loss.spec.ts` (R3-04.M3d), `decor.spec.ts` (R3-06.L6) and `graphics-options.spec.ts` (R6-04 `6ee8174`) |
 
-When R5-P.P5d (wave 10, after `R5-P.P7`'s review is at zero, in the wave's e2e pass 1) splits
-`zones-{bc,de,fg,hi}.spec.ts` into `zone-{b…i}.spec.ts`, batch A becomes two batches:
+R5-P.P5d (wave 10, `9592777`) split `zones-{bc,de,fg,hi}.spec.ts` into `zone-{b…i}.spec.ts` over the
+shared `zone-helpers.ts`, so batch A stands as the two rows above:
 `A1` = `zone-a … zone-e` + `stage mode7`, `A2` = `zone-f … zone-i` + `raster gimmicks campaign-run`. A new spec
 (`atlas-context-loss.spec.ts` from R3-04.M3d, `decor.spec.ts` from R3-06.L6) goes into a new batch **G** (≤ 10
 specs; batches A … E already hold 10 each).

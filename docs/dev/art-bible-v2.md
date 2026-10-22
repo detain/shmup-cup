@@ -417,41 +417,61 @@ within 1.5/255** of it. The rules, from R3-03:
   any layer can later be cycled and art can move between layers without a recheck. Ingest pushes
   near pixels away and its report lists them. The project-wide scan exists —
   `test/integration/palette-cycle-scan.test.ts` (R3-03.V3) checks the whole shipped atlas by these
-  rules: rule 1 per stage on the layers it cycles, rule 2 project-wide against all eight reserved
-  ramps (a ramp's own cycle art excepted), and a synthetic fixture proves the measure. It **fails**,
+  rules: rule 1 per stage on the layers it cycles, rule 2 project-wide against every reserved
+  ramp — the nine names in both art lines (the `*_RAMP` lists the scale-1 atlas still draws plus
+  the six `*_RAMP_V2` families that `scripts/assets/v2kit.mjs` `offRamp` reads; `DUNE_RAMP_V2`
+  is reserved through the stage files and the scan, not the kit list; a ramp's own cycle art
+  excepted), and a synthetic fixture proves the measure. It **fails**,
   never warns (decision W5-12), and the exemptions below are pinned inside it — an exemption that
   stops tripping is itself a failure, so the list cannot rot.
 - **A ramp's own colours differ by at least 2 in some channel** — the loader rejects closer ones.
   A layer cycles at most 8 colours.
 - **Cycled regions are flat-coloured,** not dithered (a dithered ramp shimmers), and binary-alpha
   (3.6).
-- **Today's ramps** — all eight shipped `cycles`, defined in `scripts/assets/procedural/` and
-  repeated in the stage files. They stay reserved until R5 re-authors them per zone:
+- **The frozen R5 ramps** — every shipped `cycles` list, re-authored per zone by R5-P.P7
+  (`3b11fbb`) from the wave-10 designs' §9 and written into the stage files, with the v2 list
+  frozen in the generator as a `<X>_RAMP_V2` export **below** the v1 constant (interim rule
+  RR-1: the scale-1 art still draws the v1 lists; the art-scale band is
+  `v2 ? scaleImage(recipe(<X>_RAMP_V2…), artScale) : recipe()` with `native: v2`). Colours and
+  cadences are disk truth from the stage files; the scan's `RAMPS` pin holds the nine names:
 
-  | Ramp | Stage, cycled layer | Cycle art |
-  |---|---|---|
-  | `SEA_RAMP` | raster-range, mid | `bg/sea-swell` |
-  | `BRINE_RAMP` | zone B and brine-grotto, mid | `bg/brine-sea` |
-  | `MAGMA_RAMP` | zone D, mid | `bg/magma-lava` |
-  | `STORM_RAMP` | zone E, far | `bg/storm-clouds` |
-  | `VAULT_RAMP` | zone F, far | `bg/vault-membrane` |
-  | `PRISM_RAMP` | zone G and glimmer-cache, far | `bg/prism-facets` |
-  | `CITADEL_RAMP` | zone H, far | `bg/citadel-wall` |
-  | `ABYSS_RAMP` | zone I, far | `bg/abyss-murk` |
+  | Ramp | Stage, layer, ticks | Colours | Cycle art |
+  |---|---|---|---|
+  | `SEA_RAMP` | raster-range, mid, 8 | `#183c78 #24569c #3474bc #5096d8` | `bg/sea-swell` (v1 line; dev stage, no remaster yet) |
+  | `BRINE_RAMP` | zone B + brine-grotto, mid, 10 | `#10323e #184658 #225c6e #2e7486` | `bg/brine-sea` (stays **verbatim** — zone B is not remastered yet) |
+  | `DUNE_RAMP_V2` (new) | zone C, mid, 45 | `#6b4a2a #7d5630 #8f6438 #a17442` | none when P7 froze it — R5-03.S2 paints `bg/dune-blaze` in exactly these colours; until it hangs on the cycled layer the ride stays on the measured-clear far/mid art |
+  | `MAGMA_RAMP_V2` | zone D, mid, 9 | `#4a1206 #7c1e08 #b0330c #d95f14 #ef8a26 #f7bd4d` | `bg/magma-lava` (reaches the full six) |
+  | `STORM_RAMP_V2` | zone E, far 14 **and** mid 5 — one list, two layers | `#10182a #1d2c46 #2f4166 #475d84` | `bg/storm-clouds` (design §9's `bg/storm-flash` joins when its art ships — no pin row before the sprite, per the rot law) |
+  | `VAULT_RAMP_V2` | zone F, far, 12 | `#101e18 #18261e #203428 #2a4434 #385a44 #4c7856` | `bg/vault-membrane` (keeps its length-4 colour picks — entries 0–3) |
+  | `PRISM_RAMP_V2` | zone G far, 20; glimmer-cache far, 14 | `#0e1a2e #1a2b52 #24407e #3560ad #5c8ed1 #9dbfe8` | `bg/prism-facets` (length-4 picks) |
+  | `CITADEL_RAMP_V2` | zone H, far, 10 | `#2e1a06 #4a2c10 #7a4c18 #b87824 #e8a838 #f8d878` | `bg/citadel-wall` (lights reach the full six) |
+  | `ABYSS_RAMP_V2` | zone I, far, 14 | `#08141c #0e2a34 #16485a #2a7a8a #48b8c8 #6ad8e0` | `bg/abyss-murk` (specks reach the full six) |
+
+  Zone A cycles **nothing**: the remastered rim keeps its colours fixed (design §9 says skip), and
+  R5-01's azure art therefore keeps its ≥ 3/255 margin from every reserved ramp — asserted by
+  `test/scripts/assets/procedural-zone-a.test.ts` (the RT-S2 run measured every azure colour ≥ 3
+  from all 49 shipped ramp colours).
 
 - **Exempt: v1 and interim art that breaks the project-wide margin** but sits on no layer that
-  cycles that ramp. The scan finds exact ramp colours or near misses (distance 1–2) in these — the
-  list it pins, from the atlas scan of 2026-10-17; each row leaves the list when R4 or R5 replaces
-  it, and the list is empty by the end of R5:
+  cycles that ramp. The scan finds exact ramp colours or near misses (distance 0–2) in these — the
+  list was re-measured against the frozen v2 ramps by R5-P.P7 and is pinned in
+  `test/integration/palette-cycle-scan.test.ts` `EXEMPT`; each row leaves when R4 or the zone's own
+  remaster replaces the sprite, and an exemption that stops tripping is itself a failure:
 
   | Ramp | Sprites |
   |---|---|
-  | `STORM_RAMP` | `hud/meter-slot`, `bosses/raid-hull`, `bosses/turret` (near); `bosses/steed-head` (exact) |
-  | `PRISM_RAMP` | `bosses/bulwark-hull`, `bulwark-wing-top`, `bulwark-wing-bottom`, `bulwark-emitter` (near); `bosses/hull-block` (exact) |
-  | `VAULT_RAMP` | `bosses/regent-eye` (near) |
-  | `ABYSS_RAMP` | `bg/brine-sea` (near; zone B and brine-grotto, which cycle BRINE); `bosses/king-lure`, `bosses/ark-turret`, `enemies/lumen-mote`, `enemies/abyss-turret` (exact) |
-  | `MAGMA_RAMP` | `bosses/bastion-arm` (exact) |
+  | `STORM_RAMP_V2` | `bosses/shield-plate`, `enemies/facet-turret`, `enemies/prism-cube`, `enemies/prism-lens` (Δ2 vs the new storm base family) |
+  | `DUNE_RAMP_V2` | `bosses/widow-head` (Δ2), `bg/dune-blaze` |
+  | `VAULT_RAMP_V2` | `bosses/regent-eye` (kept) |
+  | `PRISM_RAMP_V2` | `enemies/hopper` (Δ2) |
+  | `CITADEL_RAMP_V2` | `items/capsule-bonus` (Δ0 vs `#f8d878`) |
+  | `ABYSS_RAMP_V2` | `bg/brine-sea` (near; zone B and brine-grotto, which cycle BRINE); `bosses/king-lure`, `bosses/ark-turret`, `enemies/lumen-mote`, `enemies/abyss-turret` (exact; the five kept) |
   | `BRINE_RAMP` | `bg/brine-nebula` (near; zone B's far layer, the cycle is on mid), `bg/abyss-murk` (near; zone I, which cycles ABYSS) |
+  | `MAGMA_RAMP_V2` | `bg/magma-chimney` |
+
+  P7 deleted the rows that rotted against the new lists — `hud/meter-slot`, `bosses/raid-hull`,
+  `bosses/turret` and `bosses/steed-head` (STORM), the four bulwark parts and `bosses/hull-block`
+  (PRISM), and `bosses/bastion-arm` (MAGMA — the new v2 lava simply clears v1's arm).
 
 ### 4.5 Variants derived from the art — never drawn by hand
 

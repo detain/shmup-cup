@@ -688,7 +688,7 @@ console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageCle
 | `test/integration/zone-f-direct.test.ts` + `zone-g-direct.test.ts` (R5-P.P5e's split) | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
 | `test/playtest/zone-f.test.ts`, `zone-g.test.ts`, `zone-f-recovery.test.ts`, `zone-g-recovery.test.ts` | The playtests and the recovery rule |
 | `test/golden/*` | The eight goldens above |
-| `test/e2e/zones-fg.spec.ts` | In headless Chromium: the cell wall and the crystal facets recoloured by their palette cycles over the folds and spires, MANTLE REGENT curling its tentacles, FACET MONARCH waving its arms, both bosses on the Tizen build from `file://` |
+| `test/e2e/zone-f.spec.ts`, `test/e2e/zone-g.spec.ts` (one file per zone since R5-P.P5d `9592777`, over the shared `test/e2e/zone-helpers.ts`) | In headless Chromium: the cell wall and the crystal facets recoloured by their palette cycles over the folds and spires, MANTLE REGENT curling its tentacles, FACET MONARCH waving its arms, both bosses on the Tizen build from `file://` |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |
 
 ## Gotchas

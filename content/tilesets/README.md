@@ -14,6 +14,15 @@ colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN
 `terrain-magma.tileset.json` and `terrain-ridge.tileset.json` (M2-12) are zone D's basalt with an
 ember rim and zone E's storm-grey granite with a pale frost rim (`tiles/terrain-magma`,
 `tiles/terrain-ridge`). Zone D's brick maze uses their `brick` tile (hp 4).
+`terrain-azure.tileset.json` (R5-01) is zone A's remaster set at `tiles/terrain-azure` — drawn
+by `scripts/assets/procedural/azure.mjs`, **26 tiles at 12 px**: `terrain-a`'s first twenty names
+and frames verbatim (the R5-P.P13 rule keeps every zone set a name-prefix of `terrain-a`) plus
+six azure tiles in design §10's order — `solid-a2`, `solid-a3`, `floor-2`, `ceiling-2` (fresh
+rock grades) and the spires' `vein` / `vein-crack` (hp 6, 200 points, regrowing after 240 ticks
+like `tissue`). It is a v2-only name (`native: true`, decision RR-1): the scale-1 atlas never
+sees it, and the interim-pipeline contract allows a whole tileset to be absent there as long as
+no v1/v2 tiles are mixed (R5-01.FIX1, `732bfe1`); `terrain-a` stays the common-page art the dev
+ranges draw.
 `terrain-vault.tileset.json` and `terrain-prism.tileset.json` (M2-13) are zone F's dark olive flesh
 with a pale-green rim and zone G's deep-blue crystal with an ice-blue rim (`tiles/terrain-vault`,
 `tiles/terrain-prism`). Zone F's regenerating walls use their `tissue` tile (hp 3, regen 240), zone

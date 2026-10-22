@@ -502,6 +502,13 @@ the looser of two rules rather than the rule.
   weapon-select preview boxed ~79 B (`compileRole`'s `tunable()` reads); the per-weapon compiled
   row is captured once into a `Float64Array` and restored by number (`captureRow` / `applyRow`,
   commit `3b56c26`) — [meter-arsenal.md](meter-arsenal.md#zero-allocation-and-the-hot-path-rules).
+  And from R5-01: **the parallax and decor sync take the camera object, not its raw numbers** —
+  `updateParallaxView` / `updateDecorView` carried fractional `camera.x` per tick into non-inlined
+  callees (one `HeapNumber` per tick at a fractional anchor); `syncParallaxView` /
+  `syncDecorView` write carrier fields on the view instead (M1-10 family, the R2-02 muzzle-dx
+  transport law one boundary earlier, commit `79243ce`). Fractional camera values are the v2 norm,
+  so **any stage anchor can step on this class** — the two grep-found raw-number call sites were
+  the only per-tick ones, and a checkpoint or off-loop site is exempt.
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -586,8 +593,9 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   `test/integration/zone-<letter>-direct.test.ts` (zones B–G), and
   `test/playtest/zone-<letter>-recovery.test.ts`, beside the content-side
   `content-zone-<letter>.test.ts`. A new case for a zone goes into that zone's file, never into a
-  shared pair file. (The Playwright specs kept their pair shape — `test/e2e/zones-bc.spec.ts` and
-  its three siblings are unchanged; only the Vitest trees were split.)
+  shared pair file. (Since R5-P.P5d (`9592777`) the Playwright specs follow the same shape:
+  nine `test/e2e/zone-<letter>.spec.ts` files sharing `test/e2e/zone-helpers.ts` replaced
+  `zones-bc.spec.ts` and its three siblings.)
 - **A zone LAND lands one commit** (`docs/v2-run/helpers/land-zone.sh`, R5-P.P1): the branch's
   sources are squashed to one commit and the derived files are regenerated on the landing base
   under the land lock — the atlas groups and pages, the zone's `--only` golden re-bless, the three

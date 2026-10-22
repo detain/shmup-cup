@@ -47,18 +47,39 @@ nearest.
 | ![](../images/enemies/hatch.png) | **BURROW**<br>8 HP · 500 pts | A buried hatch that opens every 90 ticks and lets out a mite, up to four at a time. Eight hit points is a lot for this early in the game, and it keeps producing until it is gone: kill the hatch, not the swarm. |
 | ![](../images/enemies/darter.png) | **BURROW MITE**<br>1 HP · 50 pts | What comes out of a BURROW. It climbs away from the hatch, turns, and dives at you at 2.625 px a tick after a short wind-up. One shot kills it. There are always more. |
 | ![](../images/enemies/gyre.png) | **GYRE**<br>4 HP · 400 pts | A rotating ring-gun that circles the playfield at 2.1 px a tick and lets go of a full ring of bullets every 150 ticks. Rings are slow (1.5 px a tick) and generous — you fly through the gaps, you do not outrun them. |
+| ![](../images/enemies/azure-skiff.png) | **SKIFF**<br>1 HP · 120 pts | The rim's fast scout: a slim hull riding a short, tight sine wave — 1.95 px a tick, 21 px of swing every 75. Shallower and quicker than a SKEET, it crosses your lane before you have read the wave. |
+| ![](../images/enemies/azure-gale.png) | **GALE**<br>2 HP · 200 pts | A VANE's heavier sister: the same one-loop fan entry, at 2.7 px a tick with two hit points apiece and wider fingers. You cannot cut inside a gale fan — leave the way it came in. |
+| ![](../images/enemies/azure-warden.png) | **WARDEN**<br>4 HP · 320 pts | A floor gun with patience: bolted to the ground, an aimed shot at 2.1 px a tick every 130 ticks. Slower than a PICKET, and four hit points that make the shot permanent until it dies. The spires post one on every pedestal. |
+| ![](../images/enemies/azure-matron.png) | **MATRON**<br>10 HP · 600 pts | A hatch with a full cargo: it lets a GNAT out every 105 ticks, three at a time on screen, and keeps producing until it is dead. Ten hit points. Kill the hatch, not the swarm. |
+| ![](../images/enemies/azure-gnat.png) | **GNAT**<br>1 HP · 120 pts | What the MATRON flies out. It drifts left off the hatch for 40 ticks, reads you for an 18-tick wind-up, then dives at 2.25 px a tick along the line it took and never turns. One shot kills it; three at once is the point. |
+
+### AZURE MARSHAL · AM-01
+
+![AZURE MARSHAL](../images/bosses/azure-marshal.png)
+
+**6,000 pts.** A captain — the Tide's officer class — and the rebuilt rim's mid-stage test. Captains
+do not play by boss rules: no WARNING band, no camera lock, no death-cut scroll. One opens the
+marshal's block at 9,600 — it arrives over 90 ticks, takes its post at x 520 and holds the lane
+while the stage keeps scrolling past it.
+
+Two launcher tubes (12 HP each, borrowed gun-pod armour) flank a 45 HP shell, and the whole
+marshal drifts to stay level with you — it tracks your height and answers with aimed three-way
+volleys at 1.8 px a tick every 85. Kill the tubes and the shell is just a hull — but nothing dies
+the stage's respect for it: this is where you learn captains exist.
 
 ### HALCYON BULWARK · HB-01
 
 ![HALCYON BULWARK](../images/bosses/halcyon-bulwark.png)
 
-**30,000 pts.** The first fortress the Tide could spare. Four shield plates stand in a wall in
-front of its core, and the two emitters on its wing tips paint a warning line across the screen
-before the beam arrives.
+**30,000 pts.** The first fortress the Tide could spare, re-laid for the deeper rim: six shield
+plates stand shoulder to shoulder — nine pixels apart, no lane for a straight shot between them —
+in front of the core, and the core sits dead centre of the hull. The two emitters on its wing tips
+paint a warning line across the screen before the beam arrives, and at 159 px it is tall enough to
+make the whole playfield its gun deck.
 
 Shoot the plates down — the core cannot be hurt while a single one stands. With two gone it starts
-aiming three-way spreads at you as well, and at the end the two lanes overlap: there is always a
-gap, and it is always where the lines are not.
+aiming three-way spreads at you as well; with four gone the tracks pick up again and the beam lanes
+overlap on a shorter tell. There is always a gap, and it is always where the lines are not.
 
 ---
 

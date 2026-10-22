@@ -6,15 +6,25 @@ of `packages/core/src/behaviors`. Implements `shmup_feat.md` §11 ("HP, score va
 flash-on-hit, death explosion, drops — defined in `enemies.json`", movement primitives,
 off-screen and settle rules) and §15 (score values).
 
-`zone-a.enemies.json` is zone A's roster (M1-18): eight enemy types — `skeet` popcorn (and the
-`skeet-chain` sine chains), `vane` fans, `tender` capsule carriers, `lancer` rammers, `picket`
-floor / ceiling turrets, `strider` walkers, the `burrow` hatch (with its `burrow-mite`) and
-`gyre` orbiters (the `vane` fans fire an aimed revenge bullet from rank 12 — a fully powered ship
-on Normal) — and the boss HALCYON BULWARK (`halcyon-bulwark`, code HB-01): an armoured hull
-and wings, four shield plates (12 hp) stacked in front of a 40-hp core that takes damage only once
-every plate is gone, and two laser emitters above and below it (`boss.bulwark`: slow tracking,
-alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A is held to the
-4-way design rules (no aimed bullet over 3 px/tick, no two laser lanes closer than 24 px) by
+`zone-a.enemies.json` is zone A's roster (M1-18; remastered by R5-01): eighteen entries —
+the carried twelve: `skeet` popcorn (and the `skeet-chain` sine chains), `vane` fans, `tender`
+capsule carriers (frozen exactly as M1-18 shipped them), `lancer` rammers, `picket` floor /
+ceiling turrets, `strider` walkers, the `burrow` hatch (with its `burrow-mite`) and `gyre`
+orbiters (the `vane` fans fire an aimed revenge bullet from rank 12 — a fully powered ship
+on Normal) — plus five azure types on new `enemies/azure-*` sprites, each reusing a carried
+behaviour so the roster stays at 8 scripts: `skiff` (a tighter, faster sine `drifter`), `gale`
+(a heavier 2.7 px/tick `fan.loop`), `gnat` (an aimed-dash `rammer` the `matron` flies out),
+`warden` (a 4-hp floor `turret` firing aimed 2.1 px/tick shots every 130 ticks) and `matron`
+(a 10-hp floor `hatch` that spawns up to 3 gnats every 105 ticks) — all five `drop: null`. The
+boss entries are the captain **AZURE MARSHAL** (`azure-marshal`, AM-01: a 45-hp shell core with
+two 12-hp launcher tubes on frozen maw-pod art, `captain.launcher` aimed 3-ways every 85 ticks,
+no minion — a mid-stage `boss` event without the WARNING) and the rebuilt **HALCYON BULWARK**
+(`halcyon-bulwark`, HB-01): an armoured hull and wings, six shield plates (10 hp, 9 px apart)
+stacked in front of a centred 60-hp core that takes damage only once every plate is gone, and two
+laser emitters on the wing tips (`boss.bulwark`: tracks 0.525 / 0.675 / 0.825, alternating
+attached lane lasers, aimed 3-ways once two plates are down, both lanes on a shorter tell once
+four are). Zone A is held to the 4-way design rules (no aimed bullet over 3 px/tick, no two laser
+lanes closer than 24 px, ≥ 3 capsule sources within 1,350 px after every checkpoint) by
 `pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages;
 `test-sentry.enemies.json` holds the `sentry`, which runs the `common.spiral` DSL pattern
 (`pattern.loop`, M2-02). `weapon-range.enemies.json` (M2-03) holds the harmless targets of the

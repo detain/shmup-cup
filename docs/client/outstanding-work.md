@@ -42,7 +42,9 @@ Everything else on this page can wait behind this one. Set up per
 [`install-on-tv.md`](install-on-tv.md), then work the two checklists:
 
 - **M1 checks** — plan [§8.4](../old/shmup_plan.md#84-m1-on-device-checks-both-monitors): launch
-  ≤ 10 s, a crisp ×5 picture, zone A cleared with the remote alone, Back / Home / exit behaviour,
+  ≤ 10 s, a crisp ×5 picture, zone A cleared with the remote alone — since R5-01 that means the
+  remastered rim (`9d0b472`): its 2.25 px/tick blue lick and the 48-px spire gaps are exactly what
+  a remote-only clear proves on hardware — Back / Home / exit behaviour,
   audio, saves across a relaunch and an update install, 15 minutes without a hitch, gamepad and
   keyboard. Guide: [`debug-tools.md`](debug-tools.md#the-m1-release-check).
 - **M2 / v1.0 checks** — plan [§8.5](../old/shmup_plan.md#85-m2-on-device-checks-both-monitors):
@@ -177,10 +179,20 @@ archive in a browser before you publish it.
   `build:dev` bundle on the M7), the es front end on a TV, and a `V1 REPLAY` row (an old
   `replay.last` kept by a v2 build, shown delete-only —
   [`extra-modes-and-replays.md`](extra-modes-and-replays.md)). R2-04's play session continues the
-  look: zones A, D and I on the M7 with the overlay's `TPF` and `RENDER`.
+  look: zones A, D and I on the M7 with the overlay's `TPF` and `RENDER` — and zone A again after
+  R5-01's remaster: the rebuilt 21,000 px of it has never been seen on a TV.
 - **Real art and music**, whenever they exist. The hand-off is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
-  replaces, so nothing else has to change.
+  replaces, so nothing else has to change. R5-01's zone A joins that queue as complete
+  procedural art — the nineteen `azure-*` names (five enemy types, the marshal's shell, the two
+  parallax bands, three decor props, the 26-tile `terrain-azure` set, each with its `@flash`
+  sibling) — drawn by `scripts/assets/procedural/azure.mjs` and replaceable PNG for PNG through
+  the ingest tool with a `.art.json` provenance record, no code change.
+- **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
+  two art lines side by side: v1's sprites still draw the scale-1 atlas behind its digest pin
+  (`5c35219b…44b3`), the v2 azure set draws the art-scale build. After a v2.0.x release the owner
+  schedules the clean-up that deletes the v1 sources and the pin's reason to exist — until then
+  nothing waits on it and both builds stay green.
 
 ---
 
@@ -219,3 +231,4 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | The v2 TV-bench run on the M7 — stand-in scenario, lazy-load and context-loss timings (plan_resolution.md R0-03, W5-15 / W5-19) | Nothing — it produces the measured zone-load verdict R3-04 waits on | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
 | Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |
+| The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |

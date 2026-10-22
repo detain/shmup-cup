@@ -142,6 +142,11 @@ A boss section with **`role: "captain"`** (`BossRole.Captain` 1; `BOSS_ROLES` in
   boss fights;
 - **rides the scrolling camera** like a regular enemy group would: no brake, no scroll lock, no
   change of music (the stage theme keeps playing), no `bossWarning` status;
+- **no longer moves the debug skip**: since R5-P.P14 (`6345f07`) `?skip=boss` reads the stage's
+  **last** `warning` event — its first `boss` event only as fallback — so a captain's mid-stage
+  `boss` event is flown past on the way to the stage's real finale. R5-01's remaster leans on
+  this: in zone A the skip lands at HALCYON BULWARK's WARNING (19,950 − 144), not at AZURE
+  MARSHAL's event at 10,350;
 - has a **short death sequence** — chain explosions until `CAPTAIN_CHAIN_TICKS` 48, then a blast
   (`FX ExplosionLarge` + `BossChain`, `SFX BossExplode`, a **medium** shake of
   `CAPTAIN_BLAST_SHAKE_TICKS` 20 — no flash, no hit-stop, no rumble), the tally on 49

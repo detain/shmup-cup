@@ -1,11 +1,13 @@
 # Zone A, HALCYON BULWARK and the 4-way playtest
 
 How the M1 vertical slice's real level is put together and kept honest: **zone A, AZURE VERGE**
-(`content/stages/zone-a.stage.json` and its roster), its boss **HALCYON BULWARK (HB-01)** and the
-boss behaviour `boss.bulwark`, the **4-way design rules** that `pnpm content:check` enforces, the
-**debug stage skip** (`GameConfig.stageSkip`, `?skip=boss`), how the apps came to **play zone A by
-default**, and the headless **playtest** in `test/playtest/` — the `runStage` harness and the
-`fourWayBot` that plays like a Samsung-remote player. Built in plan step **M1-18**.
+(`content/stages/zone-a.stage.json` and its roster), its captain **AZURE MARSHAL (AM-01)**, its
+boss **HALCYON BULWARK (HB-01)** and the boss behaviour `boss.bulwark`, the **4-way design
+rules** that `pnpm content:check` enforces, the **debug stage skip** (`GameConfig.stageSkip`,
+`?skip=boss`), how the apps came to **play zone A by default**, and the headless **playtest** in
+`test/playtest/` — the `runStage` harness and the `fourWayBot` that plays like a Samsung-remote
+player. Built in plan step **M1-18**; remastered by **R5-01** on the design
+`docs/v2-run/designs/zone-a.md` (landed `9d0b472`).
 
 This page is the *how and why*. Exact signatures are in [api-reference.md](api-reference.md)
 (`config`, `debug`, `stage`, `behaviors`, `@shmup/shell`, `apps/web`, and
@@ -31,9 +33,10 @@ reads `2.0 · WORLD_SCALE`, 3.0 px/tick, and the content carries ported tunables
 
 ```text
 content/stages/zone-a.stage.json ──┐          content/enemies/zone-a.enemies.json
-  camera keys, checkpoints,        │            8 enemy types (M1 roster behaviours)
-  heightfield terrain, parallax,   │            halcyon-bulwark (HB-01): parts + 3 phases
-  58 events, warning @ 12,900      │                          │ phases run
+  camera keys, checkpoints,        │            18 entries — the carried M1 roster,
+  heightfields, spire rows,        │            5 new azure types, azure-marshal
+  parallax, decor, 77 events,      │            (AM-01) and halcyon-bulwark (HB-01):
+  warning @ 19,950                 │            12 parts, 3 phases run
                                    ▼                          ▼
                     loadContent ─► createWorld(config) ─► boss.bulwark (core/behaviors)
                                         │
@@ -53,100 +56,183 @@ test/playtest/                                    pnpm content:check (content-zo
 
 ## The stage: AZURE VERGE
 
-*The zone's own narrative — the at-a-glance diagram and the section table with its scroll x,
-checkpoints, camera keys and warning x — reads the **ported** content: R2-02 carried every position
-and speed ×1.5 (the file today holds length 13,500, checkpoints 0 / 5,250 / 9,000 and the WARNING at
-12,900), and R2-03 re-derived this section from it with fresh bot runs. The frame-anchored numbers —
-the planet band's y and spacing, the boss's home — were re-derived at R2-01's flip, not multiplied.
-The machinery written around it — the 4-way rule numbers, the bot geometry, the skip lead, the
-capsule budget below — reads at v2 numbers.*
+*The zone's own narrative — the at-a-glance diagram, the section table with its scroll x,
+checkpoints, camera keys and warning x, the roster, the captain and the boss — describes the
+**R5-01 remaster as shipped** (design `docs/v2-run/designs/zone-a.md`; the content files are the
+truth). R2-02's port had carried v1's layout ×1.5 at length 13,500; R5-01 rebuilt the stage
+around the full 336-px playfield — length 21,000, eight sections, a mid-stage captain, the Azure
+spires and the rebuilt HB-01. The carried pieces keep their ported numbers where the design said
+"do not rescale": the rolling floor 300–2,100, the corridor 5,160–9,600 and the marshal floor
+9,750–11,850 are still R2-02's geometry, and the planet band `bg/azure-verge` rides where R2-03
+re-derived it.*
 
-`content/stages/zone-a.stage.json` — `id` `zone-a`, `name` `AZURE VERGE`, `length` 13,500,
-`music` `{ stage: 'Stage', boss: 'Boss' }` (the M1-15 songs `zone-a` / `boss`; no new song was
-written for M1-18). Just over 3 minutes of scrolling to the WARNING, ≈ 3.6 minutes to the stage
-clear with the bot.
+`content/stages/zone-a.stage.json` — `id` `zone-a`, `name` `AZURE VERGE`, `length` 21,000
+(the tilemap runs `length + 640` = 21,640 px, `rowsTall` 28), `music` `{ stage: 'Stage',
+boss: 'Boss' }` (the M1-15 songs `zone-a` / `boss`, unchanged since). The four-way bot's
+god-mode stage-clear run measures **293.4 s** at the LAND tip (design estimate 331–356 s, the
+contract's acceptance band 240–360 s; scroll to the WARNING alone is 266.7 s, inside the
+contract's 225–315 s).
 
 | Section | Scroll x | Camera key (px/tick) | Content |
 |---|---|---|---|
-| 1 — tutorial | 0–2,250 | 1.125 at 0 (ramp 60) | `skeet` popcorn formations (5–6, bonus 300 / 400), three `tender` capsule carriers, two `skeet-chain` sine chains (8, no drop); a low rolling floor 300–2,100 |
-| 2 — fans and rammers | 2,250–5,250 | 1.2 at 2,250 | five `vane` fan formations on the `vane-*` paths (bonus 1,000; since M2-01 a `vane` shot down at rank ≥ 12 fires an aimed revenge bullet), `lancer` rammers in pairs (and a file of three, no drop), a 10-long chain, two carriers; open space |
-| 3 — the corridor | 5,250–9,000 (checkpoint 5,250) | 0.9 at 5,250 (ramp 90) | floor **and** ceiling 5,160–9,600 (≥ 138 px open); `picket` floor turrets, `picket-ceiling` ceiling turrets, `strider` walkers, two `burrow` hatches with their mites, a vane swoop, popcorn, four carriers |
-| 4 — high speed | 9,000–12,000 (checkpoint 9,000) | **2.25** at 9,000 (ramp 120) | four `gyre` orbiters on the `gyre-orbit-*` paths, two vane formations, a popcorn formation, a lancer pair, three carriers; a low floor 9,750–11,850 |
-| 5 — the calm | 12,000–12,900 | 1.125 at 12,000 (ramp 120) | two carriers (`tender` at 12,180 / 12,480) and nothing else; open space |
-| WARNING → boss | 12,900 (`warning` → `halcyon-bulwark`) | braked to a lock | the boss arena is open space; `end` at 13,500 after the kill |
+| 1 — the shallows | 0–2,700 | 1.05 at 0 (ramp 60) | `skeet` popcorn and the `skiff` debut (fives and sixes, bonus 200 / 300), three `tender` carriers, one `skeet-chain` sine chain (8, no drop), the first `vane` arc on `vane-arc-up`; a low rolling floor 300–2,100 |
+| 2 — the vane gallery | 2,700–6,300 (checkpoint 2,700) | 1.2 at 2,700 (ramp 60) | the pathed-fan section: `vane` arcs and `gale` loops on the `vane-*` paths (bonus 400–1,000; since M2-01 a `vane` shot down at rank ≥ 12 fires an aimed revenge bullet), `lancer` and `gnat` rammers, `skiff` singles, five carriers; open space |
+| 3 — the corridor | 6,300–9,600 (checkpoint 6,300) | 0.9 at 6,300 (ramp 90) | floor **and** ceiling 5,160–9,600; `picket` floor turrets, `picket-ceiling` ceiling turrets, `strider` walkers, the `burrow` hatch with its mites, the new `warden` floor gun at 7,800, two vane swoops, popcorn, five carriers |
+| 4 — the marshal | 9,600–12,000 (checkpoint 9,600) | 1.35 at 9,600 (ramp 90) | mid-boss **AZURE MARSHAL (AM-01)** — a `boss` event at x 10,350, below half stage, its captain role starting without a WARNING — escorted by a `gyre` ring, a `skeet` formation and a `vane` arc, four carriers; a low floor 9,750–11,850 |
+| 5 — blue lick | 12,000–15,600 (checkpoint 12,000) | **2.25** at 12,000 (ramp 120) | high speed: `gyre` orbiters on `gyre-orbit-down`, `vane` swoops, `skiff`, `lancer` and `gnat` runs, three carriers; a low floor 12,750–14,775 |
+| 6 — the Azure spires | 15,600–18,300 (checkpoint 15,600) | 1.5 at 15,600 (ramp 90) | the set piece: three full-height `terrain-azure` spires with staggered 48-px openings (§Terrain); `matron` hatches, a `warden` and a `strider` on the two pedestals, a lancer pair and a closing `gale` loop, four carriers |
+| 7 — the calm | 18,300–19,950 (checkpoint 18,300) | 1.05 at 18,300 (ramp 90) | three carriers (18,540 / 19,140 / 19,620) and nothing else; no terrain from 18,600 |
+| WARNING → boss | 19,950 (`warning` → `halcyon-bulwark`) | braked to a lock | the rebuilt HB-01 in fully open space; `end` at 21,000 after the kill |
 
 **Capsule budget** (the recovery rule of `shmup_feat.md` §10): a *source* is a `spawn` of an
-enemy with `drop: "capsule"` or a `formation` whose `drop` is not `null`. Zone A has 28 before the
-boss, and 5 / 3 / 4 within 1,350 px after the checkpoints at 0 / 5,250 / 9,000 (the rule asks ≥ 3;
-the window is `900 · WORLD_SCALE`, R2-02's port),
-2 in the calm. The same sources serve the Direct-mode MANTA (M2-05): its ship has no meter, so
-every `capsule` drop becomes the next colour item of the stage's **`directItems`** plan — 27
-entries, eight each of red, green and blue plus an octagon, a yellow and an orange, cycling and
-never rewound at a checkpoint ([direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
+enemy with `drop: "capsule"` or a `formation` whose `drop` is not `null`. Only the `tender`
+drops a capsule, and of the 25 formations 20 carry a drop and 5 say `drop: null` — so zone A
+has 47 sources before the WARNING (27 tenders + 20 dropping formations), and the seven
+checkpoint windows hold 5 / 6 / 3 / 4 / 3 / 3 / 3 sources (the rule asks ≥ 3; the window is
+`900 · WORLD_SCALE` = 1,350 px, R2-02's port). The calm holds exactly the two carriers after
+18,900 — the contract pins that pair (`carrier.straight` twice, no third source inside the
+WARNING band). The same sources serve the Direct-mode MANTA (M2-05): its ship has no meter, so
+every `capsule` drop becomes the next colour item of the stage's **`directItems`** plan — 34
+entries (nine red, nine green, eight blue, three orange, three yellow, two octagons), cycling
+and never rewound at a checkpoint
+([direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)); the release
+audit reads the composition straight out of the zone contract (1f3040c).
 
-**Terrain.** The heightfield generator of M1-07 on `terrain-a` (12-px tiles, 28 rows since
-R2-02's port; 8-px, 25 rows in v1): three
-segments — a low floor (base 30, amplitude 18), the corridor (floor base 60 ± 24, ceiling base
-90 ± 24 measured from the map's top) and a low floor under the high-speed section (base 21 ± 12).
-Ground enemies are only spawned inside the corridor (their spawn x + 600 lies before 9,600), so
-they always have rock to stand on. The calm and the boss arena have no rock.
+**Terrain.** The heightfield generator of M1-07 now runs on **`terrain-azure`** (12-px tiles,
+28 rows — the R5-D3 zone set, `terrain-a`'s twenty names first in their order plus six azure
+variants; `terrain-a` itself stays the escape/bonus-vault/range set). Six generator segments:
+the rolling floor (base 30 ± 18), the corridor (floor base 60 ± 24, ceiling base 90 ± 24
+measured from the map's top), the marshal floor (base 21 ± 12), the blue-lick floor
+(base 30 ± 12) and the two spire pedestals (base 36 ± 6, seeds 41 / 42). Ground enemies spawn
+only inside the corridor or on the pedestals, so they always have rock to stand on. Above the
+generators the tilemap carries 28 hand-written `rle` rows: **three full-height Azure spires**
+at x 16,128 / 16,848 / 17,568 — three solid columns each, full 336 px minus a staggered
+opening at the top (playfield y 0–48), the middle (156–204) and the bottom (288–336); the ship
+threads them in four-row (48-px) corridors — the ships test requires a ≥ 48 px open run through
+every full-height obstacle, and the S6b adjudication widened the design's 36-px gorges to that
+repo-wide corridor law (36 px had mis-mapped the 24-px laser-lane gap rule onto solid
+terrain) — plus `vein` destructible tiles at the pedestal column edges 16,560 / 17,280.
+The calm and the boss arena have no rock, and no ceiling or floor column exists from 18,600 to
+the map's end.
 
-**Parallax.** The two star bands on `far` and `mid`, plus a new far **planet band**
-`bg/azure-verge` (factor 0.125, y 264, spacing 192 — frame-anchored numbers re-derived at
-R2-01's flip from the v1 band's y 152 / spacing 128) — the rim of a blue planet, from the new
-procedural generator `scripts/assets/procedural/backdrops.mjs`. It is listed **last** on the `mid`
-layer, so it is drawn over the mid stars and no star shows in front of the planet.
+**Parallax.** Five bands (the schema's 7 are not needed): the two carried star rows on
+`bg/stars-far` (`far`, factor 0.25, spacing 192), the two new azure bands drawn by
+`scripts/assets/procedural/azure.mjs` — `bg/azure-horizon` (a seamless mesa silhouette at
+y 168, factor 0.375) and `bg/azure-clouds` (a seam-light drift band at y 252, factor 0.625),
+both **320-px tiles at spacing 320** (the S2 half-frame-tile law: `BAND_TILE_W = FRAME_W / 2`,
+so a band's frames fit the 512-px atlas page — the design's 640 would not) — and the carried
+**planet band** `bg/azure-verge` (factor 0.125, y 264, spacing 192 — frame-anchored numbers
+re-derived at R2-01's flip). It stays listed **last** on the `mid` layer, so it is drawn over
+the mid stars and no star shows in front of the planet; the ships test pins that order.
+
+**Decor and effects.** Eight `decor` rows — back-layer crystals (`decor/azure-crystal-a`/`-b`)
+and two arches (`decor/azure-arch`) across the run, the 18,750 crystal carrying the one
+`fx/glow-lantern` glow (disclosed at review). Zone A has **no raster effects and no palette
+cycles** — the tutorial zone stays visually stable while zones B–I pulse (design §9; the
+frozen §4.4 ramp palette lives in [art-bible-v2.md](art-bible-v2.md)).
 
 ## The roster
 
-`content/enemies/zone-a.enemies.json` — eight behaviours of the M1 roster (no new enemy behaviour
-was needed), with zone A's own tunables. Two new pixel-map sprites (`enemies/vane`,
-`enemies/gyre`); the others reuse the M1-03 art.
+`content/enemies/zone-a.enemies.json` — **18 ids**: the eleven carried M1-roster entries (their
+tunables frozen by design §16), the five new azure types on five new sprites (R5-01's
+`scripts/assets/procedural/azure.mjs` art), the mid-stage captain and the boss:
 
 | Id | Behaviour | Sprite | HP | Score | Tunables / notes |
 |---|---|---|---|---|---|
 | `skeet` | `drifter.sine` | `enemies/drifter` | 1 | 100 | `speed` 1.65, `amp` 27, `period` 100 |
 | `skeet-chain` | `drifter.sine` | `enemies/drifter` | 1 | 100 | `speed` 1.875, `amp` 42, `period` 120, `memberPhase` 48 (a travelling wave, an angle — never scaled); its formations have `drop: null` |
-| `vane` | `fan.loop` | `enemies/vane` (new) | 1 | 100 | `speed` 2.4 on the formation's path |
-| `tender` | `carrier.straight` | `enemies/carrier-red` | 3 | 200 | `speed` 1.05, `drop: "capsule"`, medium explosion |
+| `vane` | `fan.loop` | `enemies/vane` | 1 | 100 | `speed` 2.4 on the formation's path |
+| `tender` | `carrier.straight` | `enemies/carrier-red` | 3 | 200 | `speed` 1.05, `drop: "capsule"`, medium explosion — the only capsule dropper, 27 spawns |
 | `lancer` | `rammer.aimed` | `enemies/darter` | 1 | 150 | enters straight at −1.875 px/tick for 70 ticks, `windup` 24, dash `speed` 3 |
 | `picket`, `picket-ceiling` | `turret.floor` | `enemies/turret` | 3 | 300 | `ground` floor / ceiling, `fireTicks` 110, `bulletSpeed` 1.875 |
 | `strider` | `walker.floor` | `enemies/hopper` | 2 | 200 | `speed` 0.9, `bulletSpeed` 1.875 |
 | `burrow` | `hatch.spawner` | `enemies/hatch` | 8 | 500 | `interval` 90, `max` 4, `child` `burrow-mite`, large explosion |
 | `burrow-mite` | `rammer.aimed` | `enemies/darter` | 1 | 50 | rises at (−0.75, −1.5) for 36 ticks, `windup` 14, dash `speed` 2.625 |
-| `gyre` | `orbiter.loop` | `enemies/gyre` (new) | 4 | 400 | `speed` 2.1 on its path, a ring every `ringTicks` 150 at `bulletSpeed` 1.5 |
+| `gyre` | `orbiter.loop` | `enemies/gyre` | 4 | 400 | `speed` 2.1 on its path, a ring every `ringTicks` 150 at `bulletSpeed` 1.5 |
+| `skiff` | `drifter.sine` | `enemies/azure-skiff` (new) | 1 | 120 | `speed` 1.95, `amp` 21, `period` 75, `drop: null`, 4-frame anim |
+| `gale` | `fan.loop` | `enemies/azure-gale` (new) | 2 | 200 | `speed` 2.7 on the formation's path, `drop: null`, 4-frame anim |
+| `gnat` | `rammer.aimed` | `enemies/azure-gnat` (new) | 1 | 120 | enters at −1.5 px/tick for 40 ticks, `windup` 18, dash `speed` 2.25, `drop: null`; the `matron`'s child |
+| `warden` | `turret.floor` | `enemies/azure-warden` (new) | 4 | 320 | `ground` floor, `fireTicks` 130, `bulletSpeed` 2.1 (≤ the D17 ceiling of 3.0), `drop: null` |
+| `matron` | `hatch.spawner` | `enemies/azure-matron` (new) | 10 | 600 | `interval` 105, `max` 3, `child` `gnat`, `ground` floor, `drop: null` — the spire pedestals' heavy hatch |
+
+No new enemy **behaviour** was needed — the five types ride carried scripts (the 8 behaviour
+types are the design §17 bound's full width). Every new sprite ships with its `@flash` sibling
+(21 distinct zone sprites in all).
 
 `content/paths/zone-a.paths.json`: `vane-arc-up` / `-down`, `vane-loop-up` / `-down`, `vane-swoop`,
-`gyre-orbit-down` / `-up` (each `-up` / `-down` pair mirrors the other).
+`gyre-orbit-down` / `-up` (each `-up` / `-down` pair mirrors the other) — the R5-01 event plan flies
+the same seven paths; the file did not change.
+
+## The captain: AZURE MARSHAL (AM-01)
+
+R5-01's new mid-boss, a `boss` event at x 10,350 (below half stage, design §7). The `azure-marshal`
+entry's `boss` section: code `AM-01`, `role: 'captain'`, intro 90 ticks, tally 6,000, home
+(520, 168). A captain starts **directly** — the boss system runs its intro without a WARNING band
+(the same rule every zone's mid-boss captains use, [advanced-bosses.md](advanced-bosses.md)) — and
+the 4-way skip no longer stops for it (see [the debug stage skip](#the-debug-stage-skip): the skip
+reads warnings, and the marshal's section has none).
+
+Three parts: an armoured-less `shell` core (hp 45, 20×14, `core`, 2-frame anim, large explosion)
+on the new `bosses/azure-captain-shell` sprite, and `tube-top` / `tube-bottom` (hp 12 each, 11×8,
+`gun`, x −3, y ∓21) on **frozen** `bosses/maw-pod` art — a name the zone-C boss already draws, so
+marshal adds one sprite, not three, to the atlas (§13's budget). One phase runs `captain.launcher`
+with `{ launchTicks: 120, count: 2, fireTicks: 85, bulletSpeed: 1.8, ways: 3 }` — one of the four
+M2-09 captain scripts ([advanced-bosses.md](advanced-bosses.md)). The entry carries no `minion`, so the
+launcher's launch arm never fires and the `launchTicks`/`count` pair is inert; the live half is the
+behaviour's defaults — tracks the player's height at `trackSpeed` 0.4 inside a `margin` 40 — plus aimed
+3-ways at 1.8 px/tick every 85 ticks.
 
 ## The boss: HALCYON BULWARK (HB-01)
 
 The `halcyon-bulwark` entry's `boss` section: code `HB-01`, display name `HALCYON BULWARK`, intro
 150 ticks, tally **30,000**, home (514, 168) — 126 px left of the frame's right edge (v1's 84
-through ×1.5, re-derived at R2-01's flip) and the centre of the 336-px playfield — a core
-battleship (`shmup_feat.md` §13) in the right quarter of the playfield.
+through ×1.5, re-derived at R2-01's flip) and the centre of the 336-px playfield. R5-01 rebuilt
+it bigger on the frozen skeleton — the code, the script and every `bulwark-*` sprite name stay
+(design §16: zone H's echo copies them) — and the taller playfield pays off: **12 parts** (≤
+`MAX_BOSS_PARTS` 24) standing 2 × (60 + 13.5 + 6) = **159 px** tall, 47 % of the playfield and
+pinned ≤ 202 px (`0.6 · PLAYFIELD_H`), with 6 × 10 + 60 = 120 hp of destroyable armour (v1's was
+88) for the design's 45–70 s fight budget.
 
 | Part | Parent, offset | HP | Rule | Score | Sprite |
 |---|---|---|---|---|---|
-| `hull` | origin, x +42 | — | `never` (armour) | — | `bosses/bulwark-hull` (new) |
-| `wing-top`, `wing-bottom` | `hull`, x −9, y ∓34.5 | — | `never` | — | `bosses/bulwark-wing-top` / `-bottom` (new) |
-| `emitter-top`, `emitter-bottom` (**guns**) | the wings, x −51, y ∓3 | — | `never` | — | `bosses/bulwark-emitter` (new, 2-frame glow) |
-| `core` (**core**) | origin | 40 | `afterParts`: all four plates | 5,000 | `bosses/core` (M1-13) |
-| `plate-1` … `plate-4` | origin, x −16.5 / −25.5 / −34.5 / −43.5 | 12 each | `always` | 500 each | `bosses/bulwark-plate` (new) |
+| `hull` | origin, x +42 (hurtbox 30 × 36 — the design's 54 wide trimmed at S4b) | — | `never` (armour) | — | `bosses/bulwark-hull` |
+| `wing-top`, `wing-bottom` | `hull`, y ∓60 (78 × 16) | — | `never` | — | `bosses/bulwark-wing-top` / `-bottom` |
+| `emitter-top`, `emitter-bottom` (**guns**) | the wings, x −6, y ∓13.5 (12 × 6) | — | `never` | — | `bosses/bulwark-emitter` (2-frame glow, anim 2:16) |
+| `core` (**core**) | origin, **x 0 — centred** (12 × 12) | 60 | `afterParts`: all six plates | 6,000 | `bosses/core` (M1-13, anim 2:12) |
+| `plate-1` … `plate-6` | origin, x −16.5 … −61.5, step −9 (5 × 14) | 10 each | `always` | 500 each | `bosses/bulwark-plate` |
 
 The plates stand **in a row along the core's lane**, in front of it: shots meet the outer one
-(`plate-4`) first, and the core is hittable only once all four are gone. The emitters are the
-`gun`s — they fire the lanes and the spreads — and are armour, so the lanes cannot be shot off
-(unlike TRIAL WARDEN's guns). Their lanes are 75 px apart (edge to edge 63 px with the 12-px beam —
-v1's 50 / 42 with an 8-px beam, carried through the port), and the core's lane lies between them.
+(`plate-6` at −61.5) first, and the core is hittable only once all six are gone. The core sits
+**east of the whole row**, centred on the boss column at x 0 as v1's HB-01 had it — the design's
+x −36 failed the S4b control prover, because an `afterParts` core tucked inside the plate row is
+a closed weak point *west of live plates*, and the weapons' hit law consumes every straight shot
+on it forever, leaving the eastern plates unshottable (the admitted window was (−8, +6]; x 0
+clears the whole stage, control-proven at 53,240 ticks). The plates and core parent to the boss
+origin, not the hull (the V2 adjudication — the plate row is the ship's column geometry, not
+armour bolted to the hull). The emitters are the `gun`s — they fire the lanes and the spreads —
+and are armour, so the lanes cannot be shot off (unlike TRIAL WARDEN's guns): the fight test
+pins **exactly two standing lanes for the whole fight** (`maxSeparate === 2`), and a killable
+emitter could drop a live run to one and take the pin red. Their centres sit at y ∓73.5 from the
+boss, so the beams are 147 px apart centre to centre — about 130 px of open water between the
+widened lane edges, far above the 24 px the rule asks — and the core's lane (y 0) lies between
+them.
 
 **Phases** — all three run `boss.bulwark`:
 
 | Phase | Until | Params (over the defaults) | What the player sees |
 |---|---|---|---|
-| 0 | two plates destroyed | `trackSpeed` 0.525, `laserTicks` 110 | Lane lasers only, alternating top / bottom |
-| 1 | all four plates destroyed | `trackSpeed` 0.675, `laserTicks` 100, `ways` 3, `fireTicks` 120, `firstLaser` 40 | + aimed 3-ways of purple needles at 2.25 px/tick from each emitter |
-| 2 | the core's death | `trackSpeed` 0.825, `laserTicks` 55, `telegraph` 40, `active` 60, `ways` 3, `fireTicks` 90, `firstLaser` 30 | A lane every 55 ticks, each closed for 108 ticks (warning 40 + grow 8 + beam 60), so **both emitters' lanes overlap in time** — the gap between them stays ≥ 24 px (the phase values are R2-02's ported ones; v1 ran 0.35 / 0.45 / 0.55 at 1.5 px/tick and a 16 px gap) |
+| 0 | two plates destroyed | `trackSpeed` 0.525, `margin` 84, `laserTicks` 110 | Lane lasers only, alternating top / bottom |
+| 1 | four plates destroyed | `trackSpeed` 0.675, `margin` 74, `laserTicks` 100, `ways` 3, `fireTicks` 240, `firstLaser` 40 | + aimed 3-ways of purple needles at 2.25 px/tick from each emitter |
+| 2 | the core's death | `trackSpeed` 0.825, `margin` 74, `laserTicks` 55, `telegraph` 40, `active` 60, `ways` 3, `fireTicks` 240, `firstLaser` 30 | A lane every 55 ticks, each closed for 108 ticks (warning 40 + grow 8 + beam 60), so **both emitters' lanes overlap in time** — the beams stay far apart (≈ 130 px), the gap the phase must hold is ≥ 24 px |
+
+The S4b adjudication is on the margins and the volley. The design's deepening 84 / 96 / 108
+margins became 84 / 74 / 74: at 159 px tall, the wider margins would push the later phases'
+emitter rows off the playfield at the tracking limits, and the phase-1 gate of four destroyed
+plates was proven empirically. And a 24-config cadence sweep came out identical — the fight froze
+at the same 18,900 ticks whatever `fireTicks` said — so the volley is not a difficulty lever and
+both shooting phases settle on 240 (v1's ported 120 / 90 would merely spam). `trackSpeed` keeps
+the ported 0.525 / 0.675 / 0.825 (< 1, the two-lane test's rule); `bulletSpeed` keeps the
+default 2.25 ≤ 3.0.
 
 ### `boss.bulwark`
 
@@ -199,19 +285,29 @@ narrowest gap, the narrowest widest-open band while lanes were live, the narrowe
 (`narrowestColumn`, M2-18) and the first 20 violations as `tick N: …` strings.
 
 What `pnpm content:check` (`test/integration/content-zone-a.test.ts` — R5-P.P2a's split of the old
-`content.test.ts` — "zone A holds to the 4-way design rules") asserts:
+`content.test.ts` — "zone A holds to the 4-way design rules") asserts since R5-01 flipped the
+zone's contract (the ships case and the sections/terrain cases were rewritten to design §17):
 
-- the stage's shape (since R2-02 the test states these as v1 numbers mapped through `v1x` / `v1speed`
-  helpers — the shape is v1's scaled): name, length 8,500–9,500 px → 12,750–14,250, checkpoints
-  0 / 3,500 / 6,000 → 0 / 5,250 / 9,000, the 1.5 px/tick key at 6,000 → 2.25 at 9,000 and a slower
-  one at 8,000 → 12,000, the WARNING at
-  8,500–8,700 → 12,750–13,050 naming HB-01; HB-01's plates (4 × 12),
-  core (40, `afterParts` of the plates), armoured hull and the two emitter guns; 6–8 behaviours;
-- every section's archetypes (popcorn and carriers only in section 1, fans on paths and rammers in
-  2, floor / ceiling turrets, walkers and hatches in 3, orbiters in 4, exactly two carriers in the
-  calm), ground enemies only in the corridor, the songs and the planet band drawn last on `mid`;
-- the terrain: ceiling only 3,400–6,500, floors where expected, no rock from 8,000 on;
-- the capsule budget above; the scroll takes 2.5–4.5 minutes to the WARNING;
+- the stage's exact shape: length 21,000 and map width 21,640, the seven checkpoints at 0 / 2,700
+  / 6,300 / 9,600 / 12,000 / 15,600 / 18,300, the seven camera keys with 2.25 at 12,000 and a
+  slower one at 18,300, no vertical travel, the WARNING at exactly x 19,950 naming HB-01, the
+  calm band's exactly two `carrier.straight` sources in [18,900, 19,950), `end` at 21,000, and
+  the scroll to the WARNING inside the contract's 225–315 s (measured 266.7 s);
+- the roster: 18 ids — the carried 12 plus `skiff gale gnat warden matron azure-marshal` — 8
+  behaviour types in the bound's [6, 8] window, 21 distinct zone sprites each with its `@flash`
+  sibling, and the mid-boss: a `boss` event at 10,350 (< length / 2), role captain, 3 parts, one
+  `captain.launcher` phase;
+- rebuilt HB-01: 12 parts, exactly 3 phases [0, 1, 2], guns exactly `[emitter-top,
+  emitter-bottom]`, plates 6 × 10 hp, core 60 hp `afterParts` requiring all six, height 159 ≤
+  202, per-phase margins 84 / 74 / 74, `trackSpeed` 0.525 / 0.675 / 0.825 < 1;
+- every section's archetypes per the §2b event plan (77 events: 25 formations, 49 spawns,
+  warning, boss, end), ground enemies only in the corridor and on the spire pedestals, the songs,
+  and the planet band drawn last on `mid`;
+- the terrain: ceiling columns only in the carried corridor span and the full-height spire
+  bodies, floors at the six generator segments, **no ceiling or floor from 18,600 to the map's
+  end**, and every full-height obstacle opening ≥ 48 px;
+- the capsule budget above (47 sources, ≥ 3 in every checkpoint window, zero blue-capsule
+  drops) and the 34-entry `directItems` plan; the remix's 11 entries, sorted, all `drop: null`;
 - every `bulletSpeed` tunable ≤ 3.0; HB-01's lane geometry per phase (the two lanes ≥ 24 px
   apart after widening, the core's lane between them, both on the playfield at the tracking
   limits, `trackSpeed` < 1);
@@ -226,11 +322,14 @@ Each zone's shape bounds live in their own contract file, `test/integration/zone
 … `zone-i.contract.ts` (shared machinery `helpers.ts`, suite `contract.test.ts`), and the per-zone
 checks live in `content-zone-a.test.ts` … `content-zone-i.test.ts`. A `ZoneContract` carries two
 bound sets and a **`remastered` flag**: `boundsOf()` and `contractPx()` pick the v1 branch while
-`remastered` is false — **all nine zones ship `remastered: false` today**, because the ported
-content is still v1's shape at ×1.5 — and the v2 branch once the zone's wave-09 remaster step
-(R5-P.D-\*) flips the flag. Zone A's v1 branch is the list above: length 8,500–9,500 px through
-`v1x`, checkpoints exactly 0 / 3,500 / 6,000, 6–8 behaviours (the one zone that bounds *behaviours*
-rather than new types, in both branches). The v2 branch is the wave-5 design contract
+`remastered` is false and the v2 branch once the zone's remaster step flips the flag. **Zone A
+shipped `remastered: true` with R5-01** — S5b flipped it with the rebuilt content (`2091411`) and
+the ships cases now pin design §17 exactly, not a v1 branch through `v1x`; the flag's v1 branch
+stays in the file inert, the pre-remaster record (it still bounds *behaviours*, 6–8, rather than
+new types — the one zone whose bound reads behaviour types in both branches). The other eight
+zones hold `remastered: false` — ported v1 shape at ×1.5 — and their wave-11/12 remaster flips
+ride the same flip-plus-cases route; S7.2 made the meta-suite flag-agnostic so the contract tests
+pin `boundsOf()` logic, not the flip roster. The v2 branch is the wave-5 design contract
 (`plan_resolution.md` R5-D2) a remastered zone must meet:
 
 | Bound | v2 value |
@@ -252,10 +351,14 @@ rather than new types, in both branches). The v2 branch is the wave-5 design con
 config and a replay records it. `createWorld` calls `skipToBoss(world)` (`core/debug`) after
 queuing the stage theme when it is `'boss'`:
 
-1. find the stage's **first** `warning` or `boss` event; none (or free flight) → `false`, nothing
-   changes;
+1. find the stage's **last** `warning` event — since R5-P.P14 (`6345f07`). A rebuilt zone can
+   carry several `boss` events and captain spawns with no warning of their own, and the skip must
+   mean "just before *the* boss", not "the first marker"; a stage without any `warning` falls back
+   to its **first** `boss` event; none of either (or free flight) → `false`, nothing changes. Zone
+   A proves the rule — its mid-boss is a `boss` event at 10,350, and `?skip=boss` still lands
+   before the BULWARK (jumpTo(19,806)), never at the marshal;
 2. `runner.jumpTo(max(0, event.x − BOSS_SKIP_LEAD))` — `BOSS_SKIP_LEAD` is `96 · WORLD_SCALE`,
-   144 px today, about two seconds of the calm's scroll before zone A's WARNING (lead and scroll
+   144 px today, about two seconds of the calm's scroll before the WARNING (lead and scroll
    speed both scaled ×1.5, so the tick count — the time — is unchanged);
 3. `spawnPlayer(ship, camera)` for every active ship that is not dying or dead — the fly-in starts
    again at the new view.
@@ -360,6 +463,43 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 - **Power-ups**: a one-tick `PowerUp` press when the meter's cursor is on Speed (up to
   `BOT_MAX_SPEED_LEVEL` 2 — a faster 4-way ship overshoots its lanes), Missile or Option and the
   slot can be equipped; never Double, Laser, the Force Field or Mega Crash.
+- **Set-piece gates (R5-P.P12, cured by RT-P12 `7df08dc`)** — five features that let the bot fly
+  the later zones' designed set pieces, each behind a condition that never fires — or stays
+  benign — on shipped content:
+  - *vertical-shaft corridor tracking* (zone B's shaft): while a camera key pans more than one
+    playfield (|Δy| > `PLAYFIELD_H`), the centre-pull row follows `shaftCorridorCentre`, sampled
+    between ceiling bottom and floor top ahead of the ship, instead of the stale playfield
+    middle; the deepest shipped key travel is 300 px (zone D's dive), so the gate never fires
+    (pinned by the gates-shut test);
+  - *fast terrain look-ahead* (zone C's 2.55 pass): when `world.stage.speed` is strictly above
+    **`1.6 · WORLD_SCALE` = 2.4 px/tick**, `TERRAIN_AHEAD` grows by `(speed − 2.4) ·
+    120 · WORLD_SCALE` — the cure moved the gate off `1.4 · WORLD_SCALE` (which fired on zone A's
+    own 2.25 tail key and that is why `zone-a-extras` moved) and re-anchored the slope from
+    `40 · WORLD_SCALE`; at 2.55 the gain is exactly 0.15 · 180 = **27 px ≈ 10.6 ticks**, and
+    every speed ≤ 2.4 reads the flat 84 px. The same test pins each zone's max camera key under
+    the gate: zone A is the fastest shipped stage at **2.25**, B and E hold 2.1, C/D/F/G/H/I 1.95;
+  - *the brick punch* (zone D and F's plugs, zone I's coral): a destructible wall that **closes
+    the whole camera window** — sampled every 4 px from `camera.y` to `camera.y + PLAYFIELD_H − 1`
+    on the content's **pristine** tile grid, every box-row cell `tileHp > 0`, because a live-grid
+    check would disarm itself the moment the autofire opens a hole — is held and drilled: the bot
+    keeps the row, waits for the design's ≥ 24-px hole on the `HOLE_HEIGHT` band (`holeReadyAt`),
+    slides to the opened cell's centre, and the latch releases only when the wall span is fully
+    behind and the row actually open (`span-behind + digRowOpen` — the design's commit rule; the
+    old `PUNCH_LEAD_TICKS` preview died with the cure). Plain rock among the box rows keeps the
+    old avoidance. No shipped stage meets the gate — a sweep test walks all 18 shipped terrain
+    stages, every lane, every 480 px, and the predicate returns `null` everywhere (zone D's
+    x 7,680 wall leaves window rows 36–41/44–45/48 open, zone F's x 4,584 tissue rows
+    10/16–22 — gapless only by REACH); among the wave-11 designs only zone F's chase plug arms,
+    and the D/I designs publish climb routes past their open rows;
+  - *branch choice* (zone D's capsule branch): a trigger region whose flag a stage branch consumes
+    **and** that stays armed across its whole span (the naive reading would fire on a region that
+    unarms inside its span, e.g. x 1,950 w 360 against an `until` 2,275 < 2,310) pulls the bot one
+    lane per tick towards its centre while it lies within one playfield height ahead;
+  - *moving-floor slot tracking* (zone H's pistons): a block event swinging |dy| ≥ 60 px is read
+    at `blockYAt` — where the slab **will be** when it crosses the ship's column, the
+    MovingBlockSystem's own `sinB`/period maths, re-evaluated every tick — so the slot between
+    ceiling and floor slabs is followed; shipped swings top out at 48 px (gimmick range) and 33
+    (zone H), so the gate never fires today (pinned).
 - It reads the World only, so a run replays from its recorded input. One bot per run (it keeps its
   target lane and last press).
 
@@ -410,20 +550,24 @@ broken) and the rollbacks of `gimmick-range-deaths`.
 |---|---|
 | `zone-a.test.ts` | God mode: the bot kills HB-01 and reaches `stageClear` in 3–6 minutes, never diagonal, x within ±4 of `BOT_X` (96), the rules hold, and HB-01's last phase really overlaps two lanes. Without god mode: the run is recorded, `replayStage` reproduces its deaths and hash, the deaths are **printed, not asserted** (they measure the balance). With `stageSkip: 'boss'`: everything but the fight takes < 15 s |
 | `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 1,350 px (`RECOVERY_WINDOW`, 900 · `WORLD_SCALE`) are exactly the ≥ 3 sources of the window — since M2-11 through the shared helper `recovery.ts` (`capsuleSources`, `perfectFrom`, `recoveryAt`) |
-| `zone-b.test.ts`, `zone-c.test.ts`, `zone-bc-recovery.test.ts` (M2-11) | The same for BRINE NEBULA and DUNE EXPANSE: god-mode clears in 3–6 minutes with the boss's three phases (and zone B's captain), the rules on every tick, a reported no-god run; the recovery rule at all eight checkpoints ([zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)) |
-| `zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts` (M2-12) | The same for MAGMA DEEP (the camera reaching the caves, y 300) and TEMPEST RIDGE (the rear attackers): god-mode clears in 3–6 minutes (236.9 s and 228.5 s), the rules on every tick, a reported no-god run (no death in D's, one in E's); the recovery rule at all eight checkpoints — zone D's third restarts down in the caves ([zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule)) |
-| `zone-f.test.ts`, `zone-g.test.ts`, `zone-fg-recovery.test.ts` (M2-13) | The same for CELL VAULT (shots break tissue, the claws lunge) and PRISM LABYRINTH (the rush stacks cubes into the terrain): god-mode clears in 3–6 minutes (220.5 s and 240.4 s), the rules on every tick, a reported no-god run (F's loses all its lives, G's clears with two deaths); the recovery rule at all eight checkpoints ([zones-f-and-g.md](zones-f-and-g.md#playtests-and-the-recovery-rule)) |
+| `zone-b.test.ts`, `zone-c.test.ts`, `zone-b-recovery.test.ts`, `zone-c-recovery.test.ts` (M2-11; the R5-P.P4/P5a split made every file per-zone) | The same for BRINE NEBULA and DUNE EXPANSE: god-mode clears in 3–6 minutes with the boss's three phases (and zone B's captain), the rules on every tick, a reported no-god run; the recovery rule at all eight checkpoints ([zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)) |
+| `zone-d.test.ts`, `zone-e.test.ts`, `zone-d-recovery.test.ts`, `zone-e-recovery.test.ts` (M2-12) | The same for MAGMA DEEP (the camera reaching the caves, y 300) and TEMPEST RIDGE (the rear attackers): god-mode clears in 3–6 minutes (236.9 s and 228.5 s), the rules on every tick, a reported no-god run (no death in D's, one in E's); the recovery rule at all eight checkpoints — zone D's third restarts down in the caves ([zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule)) |
+| `zone-f.test.ts`, `zone-g.test.ts`, `zone-f-recovery.test.ts`, `zone-g-recovery.test.ts` (M2-13) | The same for CELL VAULT (shots break tissue, the claws lunge) and PRISM LABYRINTH (the rush stacks cubes into the terrain): god-mode clears in 3–6 minutes (220.5 s and 240.4 s), the rules on every tick, a reported no-god run (F's loses all its lives, G's clears with two deaths); the recovery rule at all eight checkpoints ([zones-f-and-g.md](zones-f-and-g.md#playtests-and-the-recovery-rule)) |
 | `campaign-routes-b.test.ts`, `campaign-routes-c.test.ts` (M2-10) | All 16 routes of the zone map flown in god mode with the campaign harness `campaign.ts` (`playRunZone`, `walkCampaignRoutes` — each zone a fresh World built as the scene flow builds it, the players carried): every zone cleared, the rank stage term = depth + 1, the score growing, an ending per route ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#using-it-headlessly)) |
 | `harness.test.ts`, `four-way-bot.test.ts`, `rules.test.ts` | The tooling itself: scripted bots, the tick limit, a terrain death to `gameOver` that replays; lane geometry, the danger scan, the decisions (including the two regressions), one-tick presses; the rules on hand-made lasers and bullets (merging, clipping, the off-playfield beam regression, the violation cap) |
 | `remote-strict.test.ts`, `remote-strict-edge.test.ts` (M3-02b) | The model and its checker: one key a tick, the pre-tap gap, tap length, the direction-change gap, release-only actions, a recorded run counted back, and the harness reporting `remoteViolations` |
+| `bot-replay-identity.test.ts` (R5-P.P12b cure, `da1d8c9`) | The early-warning net against golden-shaping bot drift: every live-bot scenario a golden or attract replay records (52 of them — the roster is 62 with the scripted pilots excluded) is re-run live and **byte-compared** to its recording's input stream, so a bot change that would silently reshape the goldens goes red here first, ~50 s at `VITEST_MAX_WORKERS=1` (RT-P12b added zone A's toggle / hold / co-op-deaths pilots after the P12 cure moved them) |
 
-After the port (R2-02) and the re-measurement (R2-03) the bot clears zone A in 215.9 s (HB-01 in
-27.4 s) with no death in god mode; without god mode the same remote bot now spends all three lives
-in the corridor and the run ends at `gameOver` after 133.4 s — deaths are reported, not asserted:
+R5-01 rebuilt zone A and the review reproduced the runs at the LAND tip: the bot clears the
+zone in **293.4 s** with no death in god mode (∈ the contract's [240, 360]; the spire widening
+shifted the 306.4 s of the pre-widen geometry — a disclosed pathing effect), kills the marshal
+under the ≤ 1-captain law, banks 66,030, and holds both R5-D5 peak lines (12 live enemies
+against the 51 stop line of the 64-slot pool, 12 boss parts against the cap of 24) — so no pool
+moved; the recovery run takes 3 deaths for 68,060, and deaths stay reported, not asserted:
 
 ```sh
 pnpm exec vitest run --project integration test/playtest/zone-a.test.ts --reporter=verbose
-# [playtest] zone-a four-way (remote) (god mode): stageClear after 215.9 s, boss 27.4 s, 0 death(s), …
+# [playtest] zone-a four-way (remote) (god mode): stageClear after 293.4 s, …
 ```
 
 Headless, in your own test:
@@ -435,12 +579,18 @@ import { createRuleWatch } from '../playtest/rules.js';
 
 const rules = createRuleWatch();
 const run = runStage('zone-a', fourWayBot(), { godMode: true, observe: rules.observe });
-console.info(describeRun(run)); // zone-a four-way (remote) (god mode): stageClear after 215.9 s, …
+console.info(describeRun(run)); // zone-a four-way (remote) (god mode): stageClear after 293.4 s, …
 rules.violations; // → []
 replayStage('zone-a', run.inputs, { godMode: true }).hash === run.hash; // → true
 ```
 
 ## R2-04: the openings at the new scale
+
+> **Superseded for zone A (R5-01):** the measurements below were taken on the pre-remaster ported
+> stage — zone A's rows in them describe a 13,500-px layout that no longer exists. The rebuilt
+> zone re-opened the opening-time question on its own geometry and answers it through the §2b
+> event plan and the green four-way runs at the tip. The finding's law — ×1.5 preserves opening
+> time, the wider field adds area not lead time — still governs the zones not yet remastered.
 
 **The finding, as R2-04.Z1/Z3 recorded it:** "R2-04.Z1/Z3 measured all 23 sections of zones A–C
 and G–I (RT-Z13 N1 fix — the tables carry 3 + 4×5 = 23 rows); the ×1.5 port preserved every
@@ -537,7 +687,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 | Symptom | Cause / fix |
 |---|---|
 | `?skip=boss` does nothing | Only the web build reads it (the TV has no query string); it must be exactly `boss`, lower case; a stage without a `warning` / `boss` event (open space, `test-range`) has nothing to skip to |
-| `?skip=boss` in zone H (IRON CITADEL) starts at the parade, not IRON SOVEREIGN | By design: the skip stops before the **first** `warning` or `boss` event — there the parade's first echo (as in zone B, before SPUME HERALD); the debug key 8 does the same ([zones-h-and-i.md](zones-h-and-i.md#gotchas)) |
+| `?skip=boss` in zone H (IRON CITADEL) lands at IRON SOVEREIGN's WARNING — it used to start at the parade | By design since R5-P.P14 (`6345f07`): the skip stops before the stage's **last** `warning` event, falling back to the first `boss` event only when it has no warning at all — the parade's warning-less `boss` events no longer move the skip (the old rule stopped at the first `warning` or `boss` event, which was the first echo); the debug key 8 does the same ([zones-h-and-i.md](zones-h-and-i.md#gotchas)) |
 | A skipped session's hash differs from an unskipped one's | By design: `stageSkip` is sim-affecting (it lives in `GameConfig` and a replay carries it) |
 | After `jumpTo` the enemies of the skipped part are missing | By design: events between the old and the new position never fire, and `clear()` empties the pools |
 | `?scene=flight` flies in open space although the game plays zone A | The dev scenes keep open space unless `?stage=` names a stage — the gameplay e2e specs depend on it |
@@ -600,7 +750,8 @@ in the right half of the playfield, with no console errors or atlas warnings.
   the ship, a flatter start to zone G, crystal pillars for the cube rush to stack on
   ([zones-f-and-g.md](zones-f-and-g.md#balance-found-by-the-bot)).
 - **M2-14** (done) — the final zones H and I, the same way (`zone-h.test.ts`, `zone-i.test.ts`,
-  `zone-hi-recovery.test.ts`); the bot's runs turned IRON SOVEREIGN's shield wheel 45° off the core's
+  `zone-h-recovery.test.ts` and `zone-i-recovery.test.ts` after the R5-P.P4/P5a per-zone split);
+  the bot's runs turned IRON SOVEREIGN's shield wheel 45° off the core's
   lane, kept the ARK's turrets off the ship's column and the eels out of the undertow; zone I's
   content fight flies fully powered (a bare ship cannot beat the ARK's time limit); the 16 routes
   end in the real finales ([zones-h-and-i.md](zones-h-and-i.md#balance-found-by-the-bot)).

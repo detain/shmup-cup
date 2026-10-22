@@ -570,7 +570,7 @@ The recipe these two zones followed:
 | `test/integration/zone-b-direct.test.ts` + `zone-c-direct.test.ts` (R5-P.P5e's split) | The MANTA clears both zones in Direct mode, the carriers handing out each stage's own plan in order |
 | `test/playtest/zone-b.test.ts`, `zone-c.test.ts`, `zone-b-recovery.test.ts`, `zone-c-recovery.test.ts` | The playtests and the recovery rule |
 | `test/golden/*` | `zone-b-god`, `zone-b-deaths`, `zone-c-god`, `zone-c-bot`, `brine-grotto-god` |
-| `test/e2e/zones-bc.spec.ts` | In headless Chromium: zone B's palette-cycled sea and GALVANIC MAW fighting with its mouth opening, zone C's dune ridge and SANDGRAVE WIDOW, the grotto's reef over the sea, the widow on the Tizen build from `file://` |
+| `test/e2e/zone-b.spec.ts`, `test/e2e/zone-c.spec.ts` (one file per zone since R5-P.P5d `9592777`, over the shared `test/e2e/zone-helpers.ts`) | In headless Chromium: zone B's palette-cycled sea and GALVANIC MAW fighting with its mouth opening, zone C's dune ridge and SANDGRAVE WIDOW, the grotto's reef over the sea, the widow on the Tizen build from `file://` |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new content files in the shipped lists |
 
 ## Gotchas

@@ -1174,12 +1174,14 @@ checked against four recorded runs of AZURE VERGE. See [debug-tools.md](debug-to
 
 Before that, **the first real zone, AZURE VERGE, with its boss — on the TV too.** Until
 now START flew in empty space on the TV and the desktop; the test stages could only be opened in a
-browser. Now **START plays AZURE VERGE on every device**: about three minutes in five parts —
-rows of pods and red saucers to get started, groups of new amber fan fliers and dashing
-arrowheads, a long cave with turrets on its floor and ceiling, walkers and hatches, a fast stretch
-with new teal ring spinners, a calm with two last capsules — then the **WARNING** and **HALCYON
-BULWARK**, an armoured battleship whose four shield plates guard its core and whose two emitters
-fire laser rows that move with it. Everything is made to be dodged with single arrow presses; a
+browser. Now **START plays AZURE VERGE on every device**: about five minutes in eight parts since
+R5-01 rebuilt the rim — rows of pods, azure scouts and red saucers to get started, groups of amber
+fan fliers and azure gales with dashing arrowheads, a long cave with turrets on its floor and
+ceiling, walkers, hatches and the new azure wardens, a captain — **AZURE MARSHAL** — dropping in
+mid-stage without warning, a fast stretch at twice the pace with teal ring spinners, three
+full-height azure spires to thread, a calm with two last capsules — then the **WARNING** and
+**HALCYON BULWARK**, an armoured battleship whose six shield plates guard its centred core and
+whose two emitters fire laser rows that move with it. Everything is made to be dodged with single arrow presses; a
 test program that plays like a remote player (never two arrows at once) clears the whole zone.
 The zone's music (AZURE VERGE, then BULWARK ASSAULT for the boss) now plays on the TV too, and on
 the TV scores are now saved like in the browser. In a browser, `?skip=boss` starts a game right
@@ -1364,21 +1366,25 @@ build) is all it takes, and the TV never needs a network connection to load it.
 **Every game plays AZURE VERGE** — on the TV, in a browser and on the desktop. It is the first real
 level of the game: about three minutes of scrolling in five parts, then the **WARNING** and the
 zone's boss, **HALCYON BULWARK**. Everything in it is an original placeholder made for this
-project (names, pictures, music). Times below count from the start of the game (about):
+project (names, pictures, music). Since R5-01 the beats are quoted in **stage pixels** — your
+own pace moves the clock; the test program reaches the WARNING after 266.7 s and clears the zone
+in 293.4 s:
 
 | Time | What happens |
 |---|---|
-| 0–35 s | **Getting started.** The view scrolls gently over low rolling ground along the bottom; far behind, the rim of a **blue planet** fills the bottom of the picture, drifting very slowly. Rows of small **green pods** weave through (the first about 3 s in), **red saucers** drift across at about 8 s, 16 s and 27 s (each leaves a power capsule when you shoot it down), and at 24 s and 30 s long **wavy chains** of pods ripple through (they never leave a capsule) |
-| 35–75 s | **Fans and dashers**, in open space: groups of five or six **amber swept-wing fliers** swing in along arcs, loops and swoops, one behind the other (destroy a whole group for a big bonus and a capsule); pairs of **arrowhead fighters**, one high and one low, stop, aim and dash at you; a few more saucers |
-| about 66 s | Rock comes into view on the right — the ground below **and** a ceiling above: a long **cave** |
-| 75–145 s | **The cave.** The scrolling slows down. **Gun turrets** stand on the floor and hang from the ceiling, **walkers** stroll along the floor, two **armoured hatches** release small fighters, and saucers keep bringing capsules. The cave is always wide enough to fly through — but touching the rock costs a ship |
-| about 145 s | **High speed.** The cave ends and the scrolling speeds up to twice its normal pace over low ground, for about 20 seconds: **teal ring spinners** fly wide loops sending out rings of bullets, more fans, a pair of arrowhead fighters, three saucers |
-| about 168 s | **The calm.** The scrolling eases off; two last red saucers — the capsules for the boss fight — and nothing else. No rock any more |
-| about 3:00 | **The WARNING.** The scrolling slows to a stop, the playfield darkens and pulses red three times with the siren, the music fades, and the band reads `WARNING!!` · `GIANT HOSTILE "HALCYON BULWARK"` · `CLOSING IN - CODE HB-01` for three seconds |
-| about 3:03 | The boss glides in from the right (it cannot be hurt until it stops, about 2½ seconds later) and its theme starts. The stage waits until it is destroyed |
+| 0 – 2,700 | **Getting started.** The view scrolls gently over low rolling ground along the bottom; far behind, the rim of a **blue planet** fills the bottom of the picture under drifting new azure cloud and horizon bands. Rows of small **green pods** weave through, slim **azure scouts** ride a faster, shallower wave, and **red saucers** drift across (each leaves a power capsule when you shoot it down) |
+| 2,700 – 6,300 | **Fans and dashers — the vane gallery**, in open space: groups of **amber swept-wing fliers** swing in along arcs, loops and swoops (destroy a whole group for a big bonus and a capsule), with the heavier **azure gales** in the wider fans; pairs of **arrowhead fighters** and quick **gnats** stop, aim and dash at you; a checkpoint at 2,700 |
+| about 6,300 | Rock comes into view on the right — the ground below **and** a ceiling above: a long **cave** |
+| 6,300 – 9,600 | **The cave.** The scrolling slows down. **Gun turrets** stand on the floor and hang from the ceiling, the new **azure warden** adds a patient aimed floor gun, **walkers** stroll along the floor, **armoured hatches** release small fighters, and saucers keep bringing capsules. The cave is always wide enough to fly through — but touching the rock costs a ship |
+| 9,600 – 12,000 | **The marshal block.** Past the cave's end the **AZURE MARSHAL** — the Tide's officer, code AM-01 — glides in on its own without a WARNING: two launcher tubes flanking an armoured shell, aimed three-way volleys while it tracks your height. Kill it or outfight it; the zone keeps scrolling either way. Checkpoint at 9,600 |
+| about 12,000 | **Blue lick — high speed.** The scrolling jumps to **2.25 px a tick**, twice the normal pace — the fastest stretch in the game — over low ground for a long run: **teal ring spinners** fly wide loops sending out rings of bullets, more fans, scout and gnat runs. Checkpoint at 12,000 |
+| 15,600 – 18,300 | **The Azure spires.** The set piece: three full-height **azure rock columns** across the whole playfield, their openings staggered top → middle → bottom, each a 48-px gap you thread. Between them two rock pedestals carry a warden and a walker, and the heavy **azure matron** hatches fly gnats. Checkpoint at 15,600 |
+| 18,300 – 19,950 | **The calm.** The scrolling eases off; two last red saucers — the capsules for the boss fight — and nothing else. No rock any more |
+| about 4:27 | **The WARNING** (at x 19,950). The scrolling slows to a stop, the playfield darkens and pulses red three times with the siren, the music fades, and the band reads `WARNING!!` · `GIANT HOSTILE "HALCYON BULWARK"` · `CLOSING IN - CODE HB-01` for three seconds |
+| +3 s | The boss glides in from the right (it cannot be hurt until it stops, about 2½ seconds later) and its theme starts. The stage waits until it is destroyed
 
 **The enemies of AZURE VERGE** (the pods, saucers, turrets, walkers, hatches and arrowheads look
-like the test stage's; the fan fliers and ring spinners are new):
+like the test stage's; the fan fliers, ring spinners and the R5-01 azure steel are new):
 
 | Enemy | Hits to destroy | Points | Shoots? |
 |---|---|---|---|
@@ -1390,16 +1396,21 @@ like the test stage's; the fan fliers and ring spinners are new):
 | Walker (cave floor) | 2 | 200 | A fan of three **red ovals** each time it stops |
 | Gun turret (cave floor or ceiling) | 3 | 300 | One **pink round** bullet aimed at you about every two seconds |
 | Teal ring spinner (high-speed part) | 4 | 400 | A **ring of eight purple** bullets every two and a half seconds |
+| Azure scout (fast shallow wave) | 1 | 120 | No |
+| Azure gale (heavier fan flier) | 2 | 200 | No |
+| Azure warden (patient floor gun) | 4 | 320 | An aimed shot every just over two seconds |
+| Azure matron (heavy hatch, spires) | 10 | 600 | No — it flies out gnats |
+| Gnat (dasher from a matron) | 1 | 120 | No — it rams |
 | Armoured hatch (cave floor) | 8 | 500 | No — it releases up to four small fighters, one every second and a half |
 | A whole group of pods or fan fliers | — | 300 to 1,000 bonus (+ a capsule) | — |
 
 No enemy bullet in this zone crosses the whole picture in less than about four seconds, so every
 one can be side-stepped with the arrow buttons alone.
 
-**Capsules.** Across the zone 28 red saucers and complete groups leave a capsule — at least three
-within about half a minute after the start, after the cave's entrance and after the high-speed
-part begins, so a ship lost there can soon be powered up again — and two come in the calm right
-before the boss.
+**Capsules.** Across the zone **47** red saucers and complete groups leave a capsule — at least
+three within reach after **every** checkpoint (there are now seven: 2,700 / 6,300 / 9,600 /
+12,000 / 15,600 / 18,300, and `pnpm content:check` counts the windows), so a ship lost there can
+soon be powered up again — and two come in the calm right before the boss.
 
 ### HALCYON BULWARK (HB-01)
 
@@ -1409,8 +1420,8 @@ A big armoured battleship that holds the right part of the screen:
 |---|---|---|
 | **Hull and wings** | A big dark-blue armoured hull on the right, with a long wing reaching forward above and one below | Nothing, ever — shots vanish on them (a small spark bounces back) |
 | **Laser emitters** | A glowing blue emitter at the front tip of each wing | Nothing: they are armour too, so the lasers never stop |
-| **Shield plates** | Four light-blue plates in a row in front of the core, at its height | 12 hits each; the outermost (leftmost) one takes the shots first. 500 points each |
-| **Core** | The glowing, pulsing cyan eye at the front middle, behind the plates | Nothing while any plate stands; then 40 hits. Destroying it destroys the boss (5,000 points) |
+| **Shield plates** | Six light-blue plates in a tight row (9 px apart — no lane for a straight shot) in front of the core, at its height | 10 hits each; the outermost (leftmost) one takes the shots first. 500 points each |
+| **Core** | The glowing, pulsing cyan eye **at the centre of the hull**, behind the plates | Nothing while any plate stands; then 60 hits. Destroying it destroys the boss (6,000 points) |
 
 **How it fights.** It slowly follows your ship's height up and down, and its lasers come from the
 two emitters — never from the core, which sits between them:
@@ -1418,8 +1429,8 @@ two emitters — never from the core, which sits between them:
 | When | What it does |
 |---|---|
 | From the start | Every two seconds or so one emitter — top and bottom taking turns — fires a **laser** straight to the left across the screen along its row: first a thin **blinking warning line** for about ¾ of a second, then the beam for a little under a second. Only the beam hurts. The laser **moves up and down with the boss** while it follows you |
-| After two plates are destroyed | It follows you a little faster, and each emitter also fires a fan of three **purple needles** at you every two seconds |
-| After all four plates are gone (the core can be hit) | A laser every second or so, each lasting a bit longer, so often **both** rows are closed at the same time — the space between them, level with the core, always stays open. Needles every second and a half |
+| After two plates are destroyed | It follows you a little faster, and each emitter also fires a fan of three **purple needles** at you every four seconds |
+| After all six plates are gone (the core can be hit) — and from the fourth plate down the tracks run fastest | A laser every second or so, each lasting a bit longer, so often **both** rows are closed at the same time — the space between them, level with the core, always stays open. Needles keep their four-second cadence |
 
 **Tip:** stay level with the core — that is where your shots must go anyway, and the lasers then
 pass above and below you. When a warning line blinks across your row, step up or down out of it
@@ -1447,9 +1458,9 @@ What "good" looks like:
   get out of the way.
 - The capsules come often enough that a lost ship can be powered up again soon after.
 - The WARNING text is complete and readable; the boss's parts always stay together; the plates
-  flash white when hit and burst when destroyed; the core only reacts once all four plates are
+  flash white when hit and burst when destroyed; the core only reacts once all six plates are
   gone; each laser always blinks as a warning line first.
-- The whole zone, boss included, takes about three and a half minutes when nothing goes wrong.
+- The whole zone, boss included, takes about five minutes when nothing goes wrong.
 
 ## The zone map: a run through nine zones
 
@@ -2445,9 +2456,9 @@ Things to check on the monitor and report:
 22. **The rock** (new): in the cave (about 1:15–2:25) the ship explodes when it touches the floor
    or the ceiling; the cave is always wide enough to fly through. Report any spot that felt too
    narrow or where the ship exploded without touching rock.
-23. **The boss** (new): at about 3:00 the WARNING band, the siren and the red pulses, then HALCYON
+23. **The boss**: at about 4:30 the WARNING band, the siren and the red pulses, then HALCYON
    BULWARK glides in and its theme starts. Each laser first blinks as a thin line along its row —
-   step up or down out of it — and then fires; shoot the four plates in front of the glowing core,
+   step up or down out of it — and then fires; shoot the six plates guarding the glowing core,
    then the core. Report whether the WARNING text is readable from the sofa, whether the lasers'
    warning comes early enough, and roughly how long the fight took. After the final blast your
    ship flies out and the **ZONE A CLEAR** result shows your score (checks 53–56 go on from there).
@@ -3720,7 +3731,7 @@ It works on the TV too — in AZURE VERGE for HALCYON BULWARK.
 
 - The bar **fills up while the boss glides in**, is full when the fight starts, and **gets shorter
   only when you damage what matters** — the core(s) and the parts protecting them (HALCYON
-  BULWARK's four shield plates and its core; IRON LEVIATHAN's reactor and the two turrets guarding
+  BULWARK's six shield plates and its core; IRON LEVIATHAN's reactor and the two turrets guarding
   it). Hitting armour, guns or other extra parts does not move it. Any strength left shows at least
   a sliver.
 - It **empties** when the last core is destroyed and **disappears with the big blast** — `HI`
@@ -4180,9 +4191,9 @@ mean the build itself is broken; they are not caused by anything you did.
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected — the STAGE CLEAR screen follows. If it stops earlier, please report where |
 | `?stage=test-boss` flies in open space with no WARNING | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
 | The Boss Range stopped scrolling after five seconds | Expected: the WARNING stops the scrolling, and it stays stopped until the boss is destroyed |
-| AZURE VERGE slowed down, sped up or stopped | Expected: it slows down in the cave (from about 1:15), runs at twice the normal speed in the fast stretch (about 2:25–2:50), eases off in the calm and stops for good at the WARNING (about 3:00) until the boss is destroyed. A stop anywhere else, please report with the time |
+| AZURE VERGE slowed down, sped up or stopped | Expected: it slows down in the cave, runs at more than twice the normal pace in the blue lick, threads the spires, eases off in the calm and stops for good at the WARNING (a little before 4½ minutes at the test program's pace) until the boss is destroyed — and never stops for the mid-stage marshal. A stop anywhere else, please report with the time |
 | `?skip=boss` starts at the beginning of the zone | Check the spelling — exactly `skip=boss`, lower case. It works only in a browser (not on the TV) and only for stages with a boss: with `&stage=test-range` there is nothing to skip to |
-| My shots vanish on HALCYON BULWARK | Expected on its hull, its wings and its two emitters (armour — they can never be destroyed), on the core while any of the four plates still stands, and during its first 2½ seconds while it glides in. Shoot the plates at the core's height first, the leftmost one first |
+| My shots vanish on HALCYON BULWARK | Expected on its hull, its wings and its two emitters (armour — they can never be destroyed), on the core while any of the six plates still stands, and during its first 2½ seconds while it glides in. Shoot the plates at the core's height first, the leftmost one first |
 | HALCYON BULWARK's lasers never stop | Expected: its emitters are armour, so the lasers last until the core is destroyed. Stay level with the core — the laser rows pass above and below it |
 | A laser hit me although I had left its row | Only the beam hurts, and the rows **move with the boss** as it follows you up and down — move well clear of the blinking line. If it still happens, please report the time into the fight |
 | The WARNING shows but there is no siren | In a browser, press a key once first — nothing plays before that. Otherwise not expected: the siren should wail three times with the red pulses. Please report it |

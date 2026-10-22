@@ -726,7 +726,7 @@ sprites, the atlas's enemy sprite count (72), the zone tilesets, the golden file
 |---|---|---|
 | `zone-h-god` | 4-way bot, god mode, seed 1 — the outer walls, the piston hall, the parade, the core run, IRON SOVEREIGN's four phases | `stageClear` after 16,209 ticks, 129,700 points, no deaths |
 | `zone-i-god` | 4-way bot, god mode, seed 1 — the descent, the trench, the mine field, the undertow, the ARK raid and THE HOLLOW KING | `stageClear` after 19,310 ticks, 143,110 points, no deaths |
-| `zone-h-boss` (test round) | stage skip (lands before the parade), full loadout, Arcade penalty, seed 95 — the four echoes shot down, the core run, IRON SOVEREIGN | `stageClear` after 9,066 ticks, 124,280 points |
+| `zone-h-boss` (test round) | stage skip (lands at IRON SOVEREIGN's WARNING — the rule since R5-P.P14 `6345f07` skips past the parade), full loadout, Arcade penalty, seed 95 — the sovereign's phases | `stageClear` after 2,433 ticks, 71,700 points, 4 lives |
 | `zone-h-arcade` (test round) | 4-way bot, Arcade difficulty, no god mode, seed 91 | `stageClear` after 15,895 ticks (265 s), 131,860 points, no deaths |
 | `zone-h-deaths` (test round) | the weaver, Easy, Arcade penalty, seed 91 — five deaths on the way into the fortress | `gameOver` after 5,069 ticks (deaths at 935 / 1,558 / 3,730 / 4,353 / 4,976), 2,720 points |
 | `zone-i-boss` (test round) | stage skip, full loadout, Arcade penalty, seed 95 — the raid's two phases, the king's three | `stageClear` after 4,511 ticks, 136,640 points |
@@ -821,7 +821,7 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
 | `test/playtest/zone-h.test.ts`, `zone-i.test.ts`, `zone-hi-recovery.test.ts`, `campaign-routes-*.test.ts` | The playtests, the recovery rule, the 16 routes to their endings |
 | `test/scripts/assets/procedural-zone-h.test.ts` / `-i.test.ts` and their `-edge` files (R5-P.P5c split of `procedural-zones-hi(-edge).test.ts`; shared fixtures in `procedural-zone-helpers.ts`) | The three generators: names, sizes, frames, hit flashes, determinism, the ramps, bands that tile, the ARK turret's sixteen distinct headings, the ending pieces, the registry, every sprite the zone H / I content names in the atlas, the two tilesets |
 | `test/golden/*` | The seven goldens above |
-| `test/e2e/zones-hi.spec.ts` | In headless Chromium: the cycling citadel wall and IRON SOVEREIGN, the cycling murk and the ARK raid, the ending scenes drawn (the flagship sailing off under the dawn, the citadel under its blasts); IRON SOVEREIGN, the ARK and the citadel's ending on the Tizen build from `file://` |
+| `test/e2e/zone-h.spec.ts`, `test/e2e/zone-i.spec.ts` (one file per zone since R5-P.P5d `9592777`, over the shared `test/e2e/zone-helpers.ts`) | In headless Chromium: the cycling citadel wall and IRON SOVEREIGN, the cycling murk and the ARK raid, the ending scenes drawn (the flagship sailing off under the dawn, the citadel under its blasts); IRON SOVEREIGN, the ARK and the citadel's ending on the Tizen build from `file://` |
 | `test/e2e/campaign-run.spec.ts` | A whole run to the ending's story, the card and the credits |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |
 
@@ -829,7 +829,7 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
 
 | Symptom | Cause / fix |
 |---|---|
-| `?skip=boss` in zone H starts at the parade, not at IRON SOVEREIGN | The stage skip stops before the first `warning` **or `boss`** event — the parade's first echo (as zone B's skip lands before SPUME HERALD). A skipped zone H still flies the parade and the core run; the debug key 8 behaves the same — pressed **after** the parade it jumps back to it (`skipToBoss` takes the first such event, wherever the camera is). To test IRON SOVEREIGN, jump to the last checkpoint (key 7 three times) and fly on |
+| `?skip=boss` in zone H expected the parade | Since R5-P.P14 (`6345f07`) `skipToBoss` lands `BOSS_SKIP_LEAD` (96 × `WORLD_SCALE` = 144 v2 px) before the stage's **last** `warning` event, falling back to its first `boss` event only when the stage has no warning — so zone H skips past the parade's captain `boss` events and opens on IRON SOVEREIGN's WARNING (the debug key 8 obeys the same rule wherever the camera is). A captain-only stage keeps its old landing: `?stage=zone-b&skip=boss` still stops before SPUME HERALD through the fallback. To fly the parade, jump to its checkpoint (key 7) and go on |
 | A flawless zone I run gets the escape ending | By design since the review fix: an escape (`bossEscaped`) always wins over the flawless ending, whose epilogue has the King sink; the scene still draws the dawn |
 | The ending plays over the stage-clear tune, no ending theme | The final zone's stage names no `music.ending` (or `credits`): only one music set is resident, and the ending's cue must be in the final zone's set |
 | The content test fails on the credits after adding a generator | The credits must list every `PROCEDURAL_GENERATORS` id as `<id>.mjs` — add it to `PLACEHOLDER ART GENERATORS` in `main.campaign.json` |

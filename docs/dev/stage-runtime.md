@@ -367,8 +367,9 @@ such pairs further apart than the scroll speed, or at the same x.
 `RangeError`): steps 1–4 above with `x` in place of the checkpoint's x, and `checkpoint` becomes
 the last one at or before `x` (−1 when none). `jumpTo(checkpoints[i].x)` leaves the runner exactly
 as `restartAt(i)`; without a checkpoint at 0, `jumpTo(0)` equals `restartAt(-1)`. It is the debug
-stage skip's primitive — `core/debug` `skipToBoss` jumps to 96 px before the first `warning` /
-`boss` event when `GameConfig.stageSkip` is `'boss'`
+stage skip's primitive — `core/debug` `skipToBoss` jumps to `BOSS_SKIP_LEAD` (96 ×
+`WORLD_SCALE` = 144 v2 px) before the stage's **last** `warning` event, else its first `boss`
+event, when `GameConfig.stageSkip` is `'boss'` (the rule since R5-P.P14 `6345f07`)
 ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)) and the M1-19 debug
 controls' "skip to boss"; their "jump to the next checkpoint" (`jumpToCheckpoint` /
 `jumpToNextCheckpoint`) and a replay's checkpoint start use `restartAt`. Like a restart, it may be

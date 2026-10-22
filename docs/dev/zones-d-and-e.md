@@ -582,7 +582,7 @@ console.info(describeRun(run)); // zone-e four-way (remote) (god mode): stageCle
 | `test/integration/zone-d-direct.test.ts` + `zone-e-direct.test.ts` (R5-P.P5e's split) | The MANTA clears both zones in Direct mode, each stage's own plan handed out in order |
 | `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-d-recovery.test.ts`, `zone-e-recovery.test.ts` | The playtests and the recovery rule |
 | `test/golden/*` | `zone-d-god`, `zone-d-bot`, `zone-d-boss`, `zone-e-god`, `zone-e-bot` |
-| `test/e2e/zones-de.spec.ts` | In headless Chromium: the magma peaks, the lava lake rising into view with the dive (only its four ramp colours), CINDER BASTION with its arms turning, the storm clouds and ridge, SQUALL STEED opening its chest, both bosses on the Tizen build from `file://` |
+| `test/e2e/zone-d.spec.ts`, `test/e2e/zone-e.spec.ts` (one file per zone since R5-P.P5d `9592777`, over the shared `test/e2e/zone-helpers.ts`) | In headless Chromium: the magma peaks, the lava lake rising into view with the dive (only its four ramp colours), CINDER BASTION with its arms turning, the storm clouds and ridge, SQUALL STEED opening its chest, both bosses on the Tizen build from `file://` |
 | `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |
 
 ## Gotchas

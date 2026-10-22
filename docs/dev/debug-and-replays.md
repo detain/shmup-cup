@@ -134,9 +134,12 @@ The two stage jumps act only while a stage is being played: the World has a stag
 `playing` or `bossWarning`, and — with the scene flow — the game scene is on top (not the title,
 the pause menu or an end screen). Otherwise `run` returns `false` and nothing happens.
 
-- `skipToBoss(world)` (M1-18) jumps the stage runner to `BOSS_SKIP_LEAD` (96) px before the
-  stage's first `warning` / `boss` event ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip))
-  — a captain's `boss` event counts, so in zone H it lands before the parade, not IRON SOVEREIGN.
+- `skipToBoss(world)` (M1-18; rule changed by R5-P.P14, `6345f07`) jumps the stage runner to
+  `BOSS_SKIP_LEAD` (96 × `WORLD_SCALE` — 144 v2 px) before the stage's **last** `warning` event,
+  falling back to its first `boss` event when the stage carries no warning
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)) — a captain's `boss`
+  event no longer moves the skip, so in zone H it lands at IRON SOVEREIGN's warning and skips the
+  parade.
 - `jumpToCheckpoint(world, index)` restarts the stage at a checkpoint (`StageRunner.restartAt`,
   `-1` = the stage start; `false` for an index outside `[-1, checkpoints.length)` or free flight);
   `jumpToNextCheckpoint(world)` picks the checkpoint after the last one the camera passed
@@ -514,23 +517,23 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 
 | File | Who plays | Covers | Ends |
 |---|---|---|---|
-| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 12,953 ticks, 47,260 points, 4 lives, no deaths |
-| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `gameOver` after 7,420 ticks (deaths at 5,883 / 7,327) |
-| `zone-a-deaths.replay.json` | `weaverBot()` — weaves up / down, never dodges (seed 4) | deaths, Classic respawns, game over | `gameOver` after 4,379 ticks (deaths at 2,353 / 4,004 / 4,286) |
-| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 945 ticks, 37,180 points, 4 lives, no deaths |
-| `zone-a-type-b.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, `weaponPreset: 'type-b'` (seed 6) | the Ripple Laser's rings and the Spread Bomb's blasts against HALCYON BULWARK | `stageClear` after 1,493 ticks, 37,180 points, 4 lives, no deaths |
-| `zone-a-edit.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, a Weapon Edit (2-Way Missile, Free Way, Twin Laser), LIFE OPTION on `!` (seed 7) | Weapon Edit and a `!` choice | `stageClear` after 810 ticks, 37,060 points, 4 lives, no deaths |
-| `zone-a-type-c.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type C, SPEED DOWN on `!` (seed 8) | the Cyclone Laser, 2-Way Missile and Vertical | `stageClear` after 949 ticks, 37,180 points, 4 lives, no deaths |
-| `zone-a-type-d.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type D, FULL BARRIER on `!` (seed 9) | the Twin Laser, Photon Torpedo and Free Way | `stageClear` after 810 ticks, 37,060 points, 4 lives, no deaths |
-| `zone-a-rotate.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, `optionChoice: 'rotate'`, `shieldChoice: 'rotateShield'` (seed 10) | orbiting Options and the spinning Rotate Shield pods against the boss | `stageClear` after 1,205 ticks, 37,180 points, 4 lives, no deaths |
-| `zone-a-reduce.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, Formation Options, Reduce (seed 11) | the `>` of Options and the shrunken hurtbox | `stageClear` after 1,328 ticks, 37,180 points, 4 lives, no deaths |
-| `zone-a-snake.replay.json` (M2-04) | 4-way bot, full loadout, Snake Options, the front Shield (seed 12) | the whole stage: the pulled chain, two pods wearing apart, a death | `stageClear` after 12,058 ticks, 67,480 points, 1 lives (deaths at 5,862 / 6,620 / 7,472) |
-| `zone-a-free-shield.replay.json` (M2-04) | 4-way bot, Arcade difficulty, full loadout, the Free Shield (seed 13) | the whole stage at Arcade: a pod pair ahead taking hits, a death | `gameOver` after 8,841 ticks (deaths at 5,860 / 7,304 / 8,748) |
-| `zone-a-manta.replay.json` (M2-05) | 4-way bot, `shipId: 'manta'`, `powerUpMode: 'direct'` (seed 14) | the whole stage in Direct mode: planned colour items from the carriers, the Arm, a family switch at the octagon | `stageClear` after 11,845 ticks, 60,220 points, 4 lives, no deaths |
-| `zone-a-manta-boss.replay.json` (M2-05) | 4-way bot, the MANTA, stage skip, full loadout (seed 15) | HALCYON BULWARK against level-8 discs and sub discs and the gold Hyper Arm | `stageClear` after 741 ticks, 37,000 points, 4 lives, no deaths |
-| `zone-a-manta-deaths.replay.json` (M2-05) | `weaverBot()`, the MANTA, the Arcade penalty (seed 16) | Direct-mode deaths (the Arm, levels and family lost), checkpoint restarts, game over | `gameOver` after 6,970 ticks (deaths at 314 / 4,679 / 6,877) |
-| `zone-a-coop.replay.json` (M2-06) | two 4-way bots, `coop: true` — player 2's controller presses START at tick 300 (seed 17) | a co-op game: the drop-in join, two ships sharing the capsules, the co-op drop scaling | `stageClear` after 11,884 ticks; player 1 58,530 points, 4 lives; player 2 7,150 points, 2 lives (death at 6,588) |
-| `zone-a-coop-deaths.replay.json` (M2-06) | the 4-way bot and a weaving player 2 from its START at tick 120, `coop: true` (seed 18) | player 2's deaths, its mid-game continues with START (no stage restart) while player 1 plays on | `stageClear` after 13,038 ticks; player 1 56,530 points, 4 lives; player 2 4,803 points, 0 lives (deaths at 4,438 / 4,755 / 5,157 / 5,551 / 5,871 / 6,195 / 6,598 / 7,189 / 7,479 / 7,796 / 8,278 / 8,835) |
+| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 17,604 ticks, 66,030 points, 4 lives, no deaths |
+| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `gameOver` after 9,349 ticks (deaths at 7,384 / 9,256) |
+| `zone-a-deaths.replay.json` | `weaverBot()` — weaves up / down, never dodges (seed 4) | deaths, Classic respawns, game over | `gameOver` after 5,372 ticks (deaths at 2,515 / 3,349 / 5,279) |
+| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 1,062 ticks, 39,120 points, 4 lives, no deaths |
+| `zone-a-type-b.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, `weaponPreset: 'type-b'` (seed 6) | the Ripple Laser's rings and the Spread Bomb's blasts against HALCYON BULWARK | `stageClear` after 1,013 ticks, 39,060 points, 4 lives, no deaths |
+| `zone-a-edit.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, a Weapon Edit (2-Way Missile, Free Way, Twin Laser), LIFE OPTION on `!` (seed 7) | Weapon Edit and a `!` choice | `stageClear` after 885 ticks, 39,000 points, 4 lives, no deaths |
+| `zone-a-type-c.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type C, SPEED DOWN on `!` (seed 8) | the Cyclone Laser, 2-Way Missile and Vertical | `stageClear` after 1,063 ticks, 39,120 points, 4 lives, no deaths |
+| `zone-a-type-d.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type D, FULL BARRIER on `!` (seed 9) | the Twin Laser, Photon Torpedo and Free Way | `stageClear` after 885 ticks, 39,000 points, 4 lives, no deaths |
+| `zone-a-rotate.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, `optionChoice: 'rotate'`, `shieldChoice: 'rotateShield'` (seed 10) | orbiting Options and the spinning Rotate Shield pods against the boss | `stageClear` after 1,480 ticks, 39,070 points, 4 lives, no deaths |
+| `zone-a-reduce.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, Formation Options, Reduce (seed 11) | the `>` of Options and the shrunken hurtbox | `stageClear` after 1,502 ticks, 39,080 points, 4 lives, no deaths |
+| `zone-a-snake.replay.json` (M2-04) | 4-way bot, full loadout, Snake Options, the front Shield (seed 12) | the whole stage: the pulled chain, two pods wearing apart, a death | `stageClear` after 18,441 ticks, 84,530 points, 3 lives (death at 6,966) |
+| `zone-a-free-shield.replay.json` (M2-04) | 4-way bot, Arcade difficulty, full loadout, the Free Shield (seed 13) | the whole stage at Arcade: a pod pair ahead taking hits, two deaths | `gameOver` after 8,928 ticks (deaths at 6,963 / 8,835) |
+| `zone-a-manta.replay.json` (M2-05) | 4-way bot, `shipId: 'manta'`, `powerUpMode: 'direct'` (seed 14) | the whole stage in Direct mode: planned colour items from the carriers, the Arm, a family switch at the octagon | `stageClear` after 17,124 ticks, 73,800 points, 5 lives, no deaths |
+| `zone-a-manta-boss.replay.json` (M2-05) | 4-way bot, the MANTA, stage skip, full loadout (seed 15) | HALCYON BULWARK against level-8 discs and sub discs and the gold Hyper Arm | `stageClear` after 777 ticks, 39,000 points, 4 lives, no deaths |
+| `zone-a-manta-deaths.replay.json` (M2-05) | `weaverBot()`, the MANTA, the Arcade penalty (seed 16) | Direct-mode deaths (the Arm, levels and family lost), checkpoint restarts, game over | `gameOver` after 2,009 ticks (deaths at 316 / 1,506 / 1,916) |
+| `zone-a-coop.replay.json` (M2-06) | two 4-way bots, `coop: true` — player 2's controller presses START at tick 300 (seed 17) | a co-op game: the drop-in join, two ships sharing the capsules, the co-op drop scaling | `stageClear` after 17,082 ticks; player 1 73,330 points, 4 lives; player 2 14,300 points, 2 lives (death at 12,934) |
+| `zone-a-coop-deaths.replay.json` (M2-06) | the 4-way bot and a weaving player 2 from its START at tick 120, `coop: true` (seed 18) | player 2's deaths, its mid-game continues with START (no stage restart) while player 1 plays on | `stageClear` after 18,774 ticks; player 1 76,970 points, 4 lives; player 2 6,423 points, 0 lives (deaths at 4,755 / 5,157 / 5,526 / 6,832 / 7,151 / 7,479 / 8,196 / 8,598 / 9,251 / 10,267 / 11,818 / 12,239) |
 | `gimmick-range-god.replay.json` (M2-07) | 4-way bot, god mode, `stage: 'gimmick-range'` (seed 31) | the advanced stage systems: a brick shot open, both moving blocks, the suction pod's pull, the tentacle's chain, the cube rush stacking a cube into the terrain, the hold and both pans, the trigger fired: low branch, 3 bricks | `stageClear` after 2,906 ticks, 1,830 points, 3 lives, no deaths, no boss killed |
 | `gimmick-range-weaver.replay.json` (M2-07) | `weaverBot()`, god mode (seed 35) | the region trigger fired — the low branch — and a dozen bricks broken | `stageClear` after 2,906 ticks, 1,100 points, 3 lives, no deaths, no boss killed |
 | `raster-range-god.replay.json` (M2-08) | 4-way bot, god mode, `stage: 'raster-range'` (seed 41) | the raster-effect dev stage to its end; `golden.test.ts` plays it back a second time on the stage with its `raster` / `cycles` stripped and every hash still matches — the effects are presentation only | `stageClear` after 3,630 ticks, 1,100 points, 3 lives, no deaths, no boss killed |
@@ -539,8 +542,8 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `raid-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'raid-range'` (seed 52) | IRON LEVIATHAN: the WARNING, the raid's boss-relative camera path, its death and the camera's return, LEVIATHAN HEART revealed by the blast (slot 1) and shot down, the camera handed back | `stageClear` after 3,911 ticks, 75,650 points, 4 lives, no deaths |
 | `raid-range-escape.replay.json` (M2-09) | 4-way bot, god mode, no power-ups (seed 52) | the boss timer: the battleship outlasts the bot and escapes after 5,400 fight ticks — `escaped`, `EndingFlag.BossEscaped`, no heart | `stageClear` after 6,325 ticks, 2,600 points, 3 lives, no deaths, no boss killed |
 | `twin-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'twin-range'` (seed 53) | the EMBER and FROST twins taking turns, one down and the survivor enraged, both shot down | `stageClear` after 3,168 ticks, 36,690 points, 4 lives, no deaths |
-| `bonus-range-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-range'` (seed 62) | the `ground` bonus entrance: the window's three turrets shot down, the entry recorded while the World plays on to the boss (the warp is the scene flow's) | `stageClear` after 3,289 ticks, 38,580 points, 4 lives, no deaths |
-| `bonus-range-digit.replay.json` (M2-10) | 4-way bot, god mode, no power-ups (seed 61) | the `digit` bonus entrance: the turrets survive, the thousands digit is 0 when the last window closes | `stageClear` after 4,645 ticks, 37,680 points, 4 lives, no deaths |
+| `bonus-range-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-range'` (seed 62) | the `ground` bonus entrance: the window's three turrets shot down, the entry recorded while the World plays on to the boss (the warp is the scene flow's) | `stageClear` after 3,561 ticks, 40,520 points, 4 lives, no deaths |
+| `bonus-range-digit.replay.json` (M2-10) | 4-way bot, god mode, no power-ups (seed 61) | the `digit` bonus entrance: the turrets survive, the thousands digit is 0 when the last window closes | `stageClear` after 5,178 ticks, 39,570 points, 4 lives, no deaths |
 | `bonus-vault-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-vault'` (seed 65) | the bonus stage: the carriers' 1,000-point bonus capsules and the 1UP collected, no boss | `stageClear` after 1,615 ticks, 17,220 points, 4 lives, no deaths |
 | `zone-b-god.replay.json` (M2-11) | 4-way bot, god mode, `stage: 'zone-b'` (seed 1) | BRINE NEBULA start to clear: the bubbles, the reef tunnel, SPUME HERALD, the riptide, GALVANIC MAW's three phases | `stageClear` after 14,246 ticks, 72,110 points, 4 lives, no deaths |
 | `zone-c-god.replay.json` (M2-11) | 4-way bot, god mode, `stage: 'zone-c'` (seed 1) | DUNE EXPANSE start to clear: the sand worms, the ceiling walkers, the sandstorm run, SANDGRAVE WIDOW's three phases | `stageClear` after 13,846 ticks, 61,430 points, 4 lives, no deaths |
@@ -562,13 +565,13 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `zone-g-bot.replay.json` (M2-13 tests) | 4-way bot, no god mode (seed 91) | two deaths in the labyrinth before the cube rush, Classic respawns in place, FACET MONARCH shot down | `stageClear` after 14,409 ticks, 53,870 points, 2 lives (deaths at 3,552 / 3,947) |
 | `zone-h-god.replay.json` (M2-14) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the piston hall's moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN's four phases | `stageClear` after 16,209 ticks, 129,700 points, 5 lives, no deaths |
 | `zone-i-god.replay.json` (M2-14; re-blessed by its test round's `boss.ark` fix) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 19,310 ticks, 143,110 points, 5 lives, no deaths |
-| `zone-h-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands before the parade: the four echoes shot down before their time limits (no ending flag), the core run, IRON SOVEREIGN's four phases | `stageClear` after 9,066 ticks, 124,280 points, 5 lives, no deaths |
+| `zone-h-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands at IRON SOVEREIGN's own warning (re-blessed by R5-P.P14, `6345f07`): the parade and the core run are skipped past, the sovereign's four phases stand | `stageClear` after 2,433 ticks, 71,700 points, 4 lives, no deaths |
 | `zone-h-arcade.replay.json` (M2-14 tests) | 4-way bot, Arcade difficulty, no god mode (seed 91) | IRON CITADEL against the rank-scaled fire | `stageClear` after 15,895 ticks, 131,860 points, 4 lives, no deaths |
 | `zone-h-deaths.replay.json` (M2-14 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls, every restart back at the start, game over | `gameOver` after 5,069 ticks (deaths at 935 / 1,558 / 3,730 / 4,353 / 4,976) |
 | `zone-i-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 4,511 ticks, 136,640 points, 5 lives, no deaths |
 | `zone-i-escape.replay.json` (M2-14 tests) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 6,038 ticks, 3,200 points, 3 lives, no deaths, no boss killed |
-| `zone-a-manta-toggle.replay.json` (M2-16 tests) | `fireButtonBot('tap')` (the 4-way bot tapping `Shot` every 150 ticks), god mode, full loadout, the MANTA, `remoteMode: false`, `autofireMode: 'toggle'`, `stageSkip: 'boss'` (seed 61) | the Direct-mode volleys switched off and on by the taps (the `firing` switch hashed in this mode), HALCYON BULWARK shot down | `stageClear` after 873 ticks, 37,120 points, 4 lives, no deaths |
-| `zone-a-hold.replay.json` (M2-16 tests) | `fireButtonBot('burst')` (`Shot` / `Sub` held for 45 of every 90 ticks), god mode, full loadout, `remoteMode: false`, `autofireMode: 'hold'`, `autofireInterval: 2`, `stageSkip: 'boss'` (seed 62) | shots only while the buttons are held, HALCYON BULWARK shot down | `stageClear` after 1,066 ticks, 37,180 points, 4 lives, no deaths |
+| `zone-a-manta-toggle.replay.json` (M2-16 tests) | `fireButtonBot('tap')` (the 4-way bot tapping `Shot` every 150 ticks), god mode, full loadout, the MANTA, `remoteMode: false`, `autofireMode: 'toggle'`, `stageSkip: 'boss'` (seed 61) | the Direct-mode volleys switched off and on by the taps (the `firing` switch hashed in this mode), HALCYON BULWARK shot down | `stageClear` after 942 ticks, 39,000 points, 4 lives, no deaths |
+| `zone-a-hold.replay.json` (M2-16 tests) | `fireButtonBot('burst')` (`Shot` / `Sub` held for 45 of every 90 ticks), god mode, full loadout, `remoteMode: false`, `autofireMode: 'hold'`, `autofireInterval: 2`, `stageSkip: 'boss'` (seed 62) | shots only while the buttons are held, HALCYON BULWARK shot down | `stageClear` after 1,922 ticks, 39,090 points, 4 lives, no deaths |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -698,6 +701,17 @@ documentation debt). `R2-03.FIXG` (`bdd820a`) rewrote the 44 gate-debt cases of 
 port gate; `R2-03.G1` itself deleted the stale gates (`test/golden/stale.ts`, `test/e2e/gates.ts`
 with their pinning tests, `replay-version-shipped.test.ts` and the `golden:update` refusal) —
 [conventions.md](conventions.md) § Frame numbers keeps the story.
+
+**Wave 10's zone A remaster** continued the chain: `R5-01.S7` (`9d0b472`) re-blessed 29 files on
+purpose in one composite `land-zone.sh` run — all 26 `zone-a-*` goldens, the two `bonus-range-*`
+files (the range plays zone A's roster, whose sprite and enemy-spec indices the rebuilt content
+shifts) and the attract demo `content/demos/zone-a.replay.json`. The outcomes moved with the
+rebuilt stage, not with the engine: the full-stage clears run the 21,000-px layout (the god
+golden 12,953 → 17,604 ticks), the skip fights meet the rebuilt HALCYON BULWARK behind its six
+armour plates, and `zone-h-boss` had already moved inside the branch at `6345f07` when R5-P.P14
+made the skip target the stage's last warning — 9,066 ticks with five lives became 2,433 with
+four. The old → new `finalHash` pairs ride the land commit's message (`git show 9d0b472`). The
+demo kept its scripted 2,400 ticks — the bot's whole run lives moved under the new layout.
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -721,7 +735,10 @@ a co-op run player 2's score, lives, death ticks and continues).
 - **Re-bless one zone** with `node scripts/golden-update.mjs --only zone-b,zone-c` (R5-P.P3;
   `pnpm` needs `golden:update -- --only zone-b,zone-c`): the listed stage ids' goldens **and**
   demos re-record, every other recording is still verified byte-for-byte, and an unknown or empty
-  id fails (`0b166c4`). This is what a zone LAND runs (`docs/v2-run/helpers/land-zone.sh`), and
+  id fails (`0b166c4`). Since `R5-01.S7.0` (`a089adb`) the guard's demo half is relaxed for the
+  composite runs the remaining zone LANDs repeat: a non-empty list throws only when it names no
+  known demo stage at all — a typo still fails — so one invocation can bless a zone and a dev
+  range that shares its roster (`--only zone-a,bonus-range`). This is what a zone LAND runs (`docs/v2-run/helpers/land-zone.sh`), and
   the scope proof afterwards asserts that no golden outside the `--only` list moved.
 - The files are generated (`JSON.stringify` with a two-space indent) and excluded from Prettier
   (`.prettierignore`); never edit them by hand.
