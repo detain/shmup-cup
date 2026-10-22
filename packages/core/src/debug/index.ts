@@ -76,8 +76,9 @@
  * (`GameConfig.graze`), every ship's bomb stock and death-bomb window (with the black-hole bomb or
  * a death-bomb window) and every open black hole (`GameConfig.blackHole`).
  *
- * **Stage jumps.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
- * first `warning` / `boss` event and {@link jumpToCheckpoint} / {@link jumpToNextCheckpoint}
+ * **Stage jumps.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before
+ * the stage's own boss — its last `warning`, else its first `boss` event — and
+ * {@link jumpToCheckpoint} / {@link jumpToNextCheckpoint}
  * restart it at a checkpoint (`StageRunner.jumpTo` / `restartAt`: speed, pan and flags
  * re-derived, every pool and system cleared) and fly the ships in again at the new view.
  * `createWorld` calls `skipToBoss` when `GameConfig.stageSkip` is `'boss'` — a sim option, so a
@@ -1043,9 +1044,10 @@ function statusCode(world: World): number {
 export const BOSS_SKIP_LEAD = 96 * WORLD_SCALE;
 
 /**
- * The debug stage skip: jumps the World's stage to {@link BOSS_SKIP_LEAD} px before its first
- * `warning` / `boss` event and flies every ship in play (not dying / dead) in again at the new
- * view.
+ * The debug stage skip: jumps the World's stage to {@link BOSS_SKIP_LEAD} px before the stage's
+ * **own boss** — its **last** `warning` event, falling back to its **first** `boss` event only
+ * when the stage has no warning at all — and flies every ship in play (not dying / dead) in again
+ * at the new view.
  *
  * @remarks
  * Load-time / debug code (cold): `StageRunner.jumpTo` re-derives the scroll speed, pan and flags
@@ -1055,10 +1057,13 @@ export const BOSS_SKIP_LEAD = 96 * WORLD_SCALE;
  * debug controls ({@link createDebugControls}, `DebugCommand.SkipToBoss`) call it on a running
  * World.
  *
- * Only the **first** `warning` / `boss` event counts (a stage with two bosses skips to the first);
- * the target is clamped to 0, so a WARNING closer than {@link BOSS_SKIP_LEAD} px to the start
- * restarts the stage there. The ships' `spawnPlayer` restarts their fly-in (the controls are
- * ignored for its ticks, as at a respawn); a dying or dead ship keeps its death sequence. The
+ * The **last** warning is the stage's own finale: a zone whose parade of captains or mid-bosses
+ * comes first (zone H's echoes, zone B's SPUME HERALD) skips past them to the final boss (R5-P.P14
+ * — the skip used to stop at the first WARNING *or* `boss` event, which landed it in the parade).
+ * With no warning the first `boss` event is the target (a captain range or a boss that flies
+ * straight in); the target is clamped to 0, so a WARNING closer than {@link BOSS_SKIP_LEAD} px to
+ * the start restarts the stage there. The ships' `spawnPlayer` restarts their fly-in (the controls
+ * are ignored for its ticks, as at a respawn); a dying or dead ship keeps its death sequence. The
  * World's tick counter, RNG streams and hashed state move on from the jump like any other
  * restart, so a replay of a skipped session reproduces it exactly.
  *
@@ -1079,14 +1084,23 @@ export function skipToBoss(world: World): boolean {
   const runner = world.stage;
   if (runner === null) return false;
   const codes = runner.eventCodes;
+  let index = -1;
   for (let i = 0; i < codes.length; i++) {
-    if (codes[i] !== StageEventCode.Warning && codes[i] !== StageEventCode.Boss) continue;
-    const x = runner.stage.events[i].x - BOSS_SKIP_LEAD;
-    runner.jumpTo(x > 0 ? x : 0);
-    flyShipsIn(world);
-    return true;
+    if (codes[i] === StageEventCode.Warning) index = i; // the last warning: the stage's own boss
   }
-  return false;
+  if (index < 0) {
+    for (let i = 0; i < codes.length; i++) {
+      if (codes[i] === StageEventCode.Boss) {
+        index = i; // no warning anywhere: the first boss event (a captain range, a direct entry)
+        break;
+      }
+    }
+  }
+  if (index < 0) return false;
+  const x = runner.stage.events[index].x - BOSS_SKIP_LEAD;
+  runner.jumpTo(x > 0 ? x : 0);
+  flyShipsIn(world);
+  return true;
 }
 
 /**

@@ -3,7 +3,9 @@
  * `GameConfig.stageSkip`), beyond `debug-skip.test.ts`:
  *
  * - a boss event within {@link BOSS_SKIP_LEAD} px of the stage start: the jump clamps to 0;
- * - a `boss` event (no WARNING) counts like a `warning`, and the first of them is the target;
+ * - the target is the stage's **own** boss (R5-P.P14): its last `warning`, else its first `boss`
+ *   event — an earlier `boss` event (a mid-boss) is skipped past, two warnings skip to the later,
+ *   and two bosses without any warning go to the first;
  * - what survives the jump (loadout, lives, score) and what does not (items, lasers, bullets);
  *   a dying / dead ship is not flown in, an inactive player 2 stays out;
  * - skipping twice lands at the same place (a restart each time);
@@ -87,11 +89,21 @@ function db(): ContentDb {
       ].map(shipped),
       // The WARNING closer to the start than the lead.
       stageFile('early', [{ x: 50, type: 'warning', enemy: 'halcyon-bulwark' }]),
-      // A boss without a WARNING, and a later WARNING: the first of them counts.
+      // A mid-boss `boss` event BEFORE the stage boss's WARNING: the warning is the target.
       stageFile('direct', [
         { x: 300, type: 'music', cue: 'Boss' },
         { x: 600, type: 'boss', enemy: 'halcyon-bulwark' },
         { x: 900, type: 'warning', enemy: 'halcyon-bulwark' },
+      ]),
+      // Two warnings: the later one is the stage's own boss.
+      stageFile('twice', [
+        { x: 600, type: 'warning', enemy: 'halcyon-bulwark' },
+        { x: 1200, type: 'warning', enemy: 'halcyon-bulwark' },
+      ]),
+      // Two boss events and no warning at all: the first is the target.
+      stageFile('pair', [
+        { x: 500, type: 'boss', enemy: 'halcyon-bulwark' },
+        { x: 1000, type: 'boss', enemy: 'halcyon-bulwark' },
       ]),
     ],
     { extraSprites: ENGINE_SPRITES },
@@ -129,13 +141,31 @@ describe('core/debug skipToBoss — edge cases (M1-18)', () => {
     expect(ticks).toBeLessThanOrEqual(60); // 50 px at 1 px/tick
   });
 
-  it('counts a `boss` event like a `warning`: the first of them is the target', () => {
+  it('lands at the last `warning`, past an earlier `boss` event (R5-P.P14)', () => {
     const w = createWorld(resolveGameConfig({ stage: 'direct', seed: 2 }), DB);
     expect(skipToBoss(w)).toBe(true);
-    expect(w.camera.x).toBe(600 - BOSS_SKIP_LEAD);
+    expect(w.camera.x).toBe(900 - BOSS_SKIP_LEAD); // the stage boss's WARNING, not the mid-boss
     expect(w.stage?.checkpoint).toBe(1); // the one at 400
-    expect(w.stage?.eventCursor).toBe(1); // the music at 300 lies behind
-    // No WARNING: the boss flies straight in once the camera covers the lead.
+    expect(w.stage?.eventCursor).toBe(2); // the music at 300 and the boss at 600 lie behind
+    // The skipped `boss` event never fires; the WARNING carries the enemy, and it comes.
+    for (let i = 0; i < 200 && w.status !== 'bossWarning'; i++) run(w, 1);
+    expect(w.status).toBe('bossWarning');
+    for (let i = 0; i < 200 && w.bosses.boss.state === BossState.None; i++) run(w, 1);
+    expect(w.bosses.boss.state).not.toBe(BossState.None);
+  });
+
+  it('skips to the later of two warnings — the stage finale, not its first boss', () => {
+    const w = createWorld(resolveGameConfig({ stage: 'twice', seed: 2 }), DB);
+    expect(skipToBoss(w)).toBe(true);
+    expect(w.camera.x).toBe(1200 - BOSS_SKIP_LEAD);
+  });
+
+  it('takes the first of two boss events when the stage has no warning at all', () => {
+    const w = createWorld(resolveGameConfig({ stage: 'pair', seed: 2 }), DB);
+    expect(skipToBoss(w)).toBe(true);
+    expect(w.camera.x).toBe(500 - BOSS_SKIP_LEAD);
+    expect(w.stage?.checkpoint).toBe(0); // the one at 400 lies ahead
+    // No WARNING anywhere: the boss flies straight in once the camera covers the lead.
     for (let i = 0; i < 200 && w.bosses.boss.state === BossState.None; i++) run(w, 1);
     expect(w.status).not.toBe('bossWarning');
     expect(w.bosses.boss.state).not.toBe(BossState.None);

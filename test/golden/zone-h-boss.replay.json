@@ -64,36 +64,25 @@
       "blackHole": false
     }
   },
-  "ticks": 9066,
+  "ticks": 2433,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA8QaCgAgBAhIA8QGBgAQBARIA8AGBgAQBAQUA1gGCgAgBAgUAjQWBgAQBAQUAwwKCgAgBAhgA9wKBgAQBARIAuQGBgAQBAQUADIGABAEBBgAjgoAIAQABgoAIAQIFAKMCgoAIAQIFAL4CgYAEAQEMAIkFgoAIAQIfAFyBgAQBAR8A5QSBgAQBAQsAgwSCgAgBAiUAmwSBgAQBAQwA4gGBgAQBAQUA9gGCgAgBAgUA4gGBgAQBAQUA4QGCgAgBAgUA4QGBgAQBAQUAyQGCgAgBAgUAoAGCgAgBAgEAAYGABAEBAQAngYAEAQEFALkBgoAIAQIFAIACgYAEAQEFALABgoAIAQIFAN4C",
-    "AOpG"
+    "ACiCgAgBAgIArAWBgAQBAQUA0AGCgAgBAgUA4QGBgAQBAQUAtQGCgAgBAgUAoAGCgAgBAgYAAYGABAEBBgAdgYAEAQEFALkBgoAIAQIFAHWBgAQBAAGCgAgBAHGBgAQBAQUAsAGCgAgBAgUA9gE=",
+    "AIET"
   ],
   "hashes": [
-    3525709258,
-    3218768105,
-    630977778,
-    2823869097,
-    2555639728,
-    1543553784,
-    3881728815,
-    2304029779,
-    1795764952,
-    4159887021,
-    179909092,
-    1017164492,
-    368792228,
-    2746095452,
-    4277244458
+    1409276578,
+    2851716925,
+    894166766,
+    246190343
   ],
-  "finalHash": 2332754994,
-  "description": "the stage skip into the parade hangar of IRON CITADEL (M2-14 tests): the full loadout under the Arcade penalty, the four echoes of earlier bosses shot down, the core run, then IRON SOVEREIGN through its four phases",
+  "finalHash": 3981827088,
+  "description": "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade): the full loadout under the Arcade penalty, the core run, then IRON SOVEREIGN through its four phases",
   "expected": {
     "status": "stageClear",
-    "ticks": 9066,
-    "score": 124280,
-    "lives": 5,
+    "ticks": 2433,
+    "score": 71700,
+    "lives": 4,
     "deathTicks": [],
     "bossDefeated": true
   }

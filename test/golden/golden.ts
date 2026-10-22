@@ -65,8 +65,9 @@
  * zones H and I with the 4-way bot and god mode, start to stage clear — `zone-h` (IRON CITADEL:
  * the piston hall, the parade of earlier bosses in reduced form, IRON SOVEREIGN's four-phase
  * finale) and `zone-i` (ABYSSAL THRONE: the depth mines, the trench eels, the ABYSS ARK raid and
- * THE HOLLOW KING inside it). Five more (M2-14 tests): the stage skips into zone H's parade hangar
- * and to zone I's ARK with the full loadout under the Arcade penalty (the four echoes, IRON
+ * THE HOLLOW KING inside it). Five more (M2-14 tests): the stage skips to IRON SOVEREIGN's
+ * WARNING (R5-P.P14 — the skip enters at the stage's own boss, past the parade, which the full
+ * runs cover) and to zone I's ARK with the full loadout under the Arcade penalty (IRON
  * SOVEREIGN's four phases; the raid and THE HOLLOW KING), the 4-way bot through the whole of zone
  * H at Arcade difficulty without god mode, the weaving pilot in zone H on Easy under the Arcade
  * penalty (deaths, the restarts, `gameOver`) and, with god mode and no power-ups, the weaving pilot
@@ -739,7 +740,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'zone-h-boss',
     description:
-      'the stage skip into the parade hangar of IRON CITADEL (M2-14 tests): the full loadout under the Arcade penalty, the four echoes of earlier bosses shot down, the core run, then IRON SOVEREIGN through its four phases',
+      "the stage skip to IRON SOVEREIGN's WARNING (M2-14 tests; R5-P.P14 lands it at the stage's own boss, past the parade): the full loadout under the Arcade penalty, the core run, then IRON SOVEREIGN through its four phases",
     stageId: 'zone-h',
     config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
     godMode: false,

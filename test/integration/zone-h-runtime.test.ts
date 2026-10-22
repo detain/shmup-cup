@@ -5,12 +5,14 @@
  * - **every practice start** (the scene flow's `startPractice`) at every checkpoint of IRON
  *   CITADEL puts the camera at the checkpoint and flies the ship in to open space (its terrain box
  *   never in rock — the piston hall's moving floors and ceilings included) inside the view;
- * - **the stage skip** into zone H lands before the parade's first echo (the skip stops before a
- *   `boss` event too), BULWARK ECHO fighting inside the view;
+ * - **the parade** entered by a direct `jumpTo` before BULWARK ECHO's `boss` event (R5-P.P14 made
+ *   the stage skip itself land at the stage boss's WARNING, past the parade), BULWARK ECHO
+ *   fighting inside the view;
  * - **an echo that outlasts its time limit** leaves without the `bossEscaped` ending flag (the
  *   parade's echoes are captains: only a stage boss's escape counts), the parade going on.
  */
 import {
+  BOSS_SKIP_LEAD,
   BossState,
   ENGINE_SPRITES,
   EndingFlag,
@@ -23,6 +25,7 @@ import {
   loadContent,
   type ContentDb,
   type SceneFlow,
+  type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
@@ -49,6 +52,21 @@ function enemyIndex(id: string): number {
   const index = DB.enemyIndex.get(id);
   if (index === undefined) throw new Error('no enemy ' + id);
   return index;
+}
+
+/**
+ * Jumps zone H's stage to {@link BOSS_SKIP_LEAD} px before the parade's first `boss` event — the
+ * entry R5-P.P14 took away from the stage skip itself (it now lands at the stage boss's WARNING).
+ * The ship is still in its camera-relative fly-in, so it arrives at the new view.
+ *
+ * @param world - The zone H world, freshly created.
+ */
+function enterParade(world: World): void {
+  const stage = world.stage;
+  expect(stage).not.toBeNull();
+  const echoes = (stage?.stage.events ?? []).filter((e) => e.type === 'boss');
+  expect(echoes.length).toBeGreaterThanOrEqual(4); // the four parade echoes
+  stage?.jumpTo((echoes[0]?.x ?? 0) - BOSS_SKIP_LEAD);
 }
 
 describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
@@ -85,14 +103,15 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     expect(starts).toHaveLength(4);
   });
 
-  it('skips zone H to the parade: BULWARK ECHO fights inside the view, the ship in open space', () => {
+  it('brings BULWARK ECHO into the view: the parade entered before its first event', () => {
     const game = createGame(
       createHeadlessPlatform(),
-      { seed: 9, stage: 'zone-h', stageSkip: 'boss', loadout: 'full' },
+      { seed: 9, stage: 'zone-h', loadout: 'full' },
       DB,
     );
     const world = game.world;
     world.debugFlags.godMode = true;
+    enterParade(world); // (R5-P.P14: the stage skip now lands at the sovereign's WARNING)
     steps(game, 90);
     expectInOpenSpace(world, 'after the skip');
     expect(world.camera.x).toBeGreaterThan(v1x(4400));
@@ -117,11 +136,12 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     const platform = createHeadlessPlatform();
     const game = createGame(
       platform,
-      { seed: 9, stage: 'zone-h', stageSkip: 'boss', autofire: false, remoteMode: false },
+      { seed: 9, stage: 'zone-h', autofire: false, remoteMode: false },
       DB,
     );
     const world = game.world;
     world.debugFlags.godMode = true;
+    enterParade(world); // (R5-P.P14: entered directly, the skip itself goes to the stage boss)
     const echo = enemyIndex('echo-bulwark');
     const spec = DB.enemies[echo].boss;
     expect(spec?.role).toBe('captain');

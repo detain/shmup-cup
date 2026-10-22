@@ -1,16 +1,18 @@
 /**
  * Zone H's golden outcome checks (plan M2-14; split out of `golden.test.ts` by R5-P.P3): the
  * committed `zone-h-god`, `zone-h-boss`, `zone-h-arcade` and `zone-h-deaths` files — IRON
- * CITADEL clears with god mode and IRON SOVEREIGN falls in its last phase, the skip lands in
- * the parade and fights the four echoes and the sovereign's four phases, the Arcade run
+ * CITADEL clears with god mode and IRON SOVEREIGN falls in its last phase, the skip (R5-P.P14)
+ * lands at the sovereign's WARNING and fights it through its four phases past the parade, the
+ * Arcade run
  * survives to the clear, and the weaving pilot dies at the outer walls and restarts at the
  * start. The file plays back (every state hash) stays in `golden.test.ts`; this file reads only
  * zone H's own goldens.
  *
  * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
  */
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { BossState } from '@shmup/core';
+import { BOSS_SKIP_LEAD, BossState } from '@shmup/core';
 import { follow, GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
 import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 
@@ -39,10 +41,18 @@ describe.skipIf(updating)('golden replays — zone H (M2-14)', () => {
     expect(sovereign?.escaped).toBe(false);
   });
 
-  it('covers zone H without god mode (M2-14 tests): the skip into the parade, Arcade rank, restarts', () => {
-    // The skip into IRON CITADEL lands before the parade's first echo (the skip stops before a
-    // `boss` event too): the four echoes of earlier bosses, each shot down before its time limit
-    // (captains: no ending flag), the core run, then IRON SOVEREIGN through all four phases.
+  it('covers zone H without god mode (M2-14 tests): the skip to the stage boss, Arcade rank, restarts', () => {
+    // Since R5-P.P14 the skip lands at the stage's OWN boss: BOSS_SKIP_LEAD px before IRON
+    // SOVEREIGN's WARNING — the four echoes of the parade never fight in this recording (the
+    // full runs zone-h-god, -arcade and -deaths cover the parade). The sovereign falls through
+    // all four phases; an escaped echo or skipped captain sets no ending flag here anyway.
+    const stage = JSON.parse(
+      readFileSync(new URL('../../content/stages/zone-h.stage.json', import.meta.url), 'utf8'),
+    ) as { events: { type: string; x: number }[] };
+    const warnings = stage.events.filter((e) => e.type === 'warning');
+    const sovereignWarning = warnings[warnings.length - 1];
+    expect(warnings).toHaveLength(1); // the skip's target is the sovereign's own WARNING
+    const land = (sovereignWarning?.x ?? 0) - BOSS_SKIP_LEAD;
     const h = follow('zone-h-boss');
     expect(readGolden('zone-h-boss').replay.header.config).toMatchObject({
       stageSkip: 'boss',
@@ -50,12 +60,11 @@ describe.skipIf(updating)('golden replays — zone H (M2-14)', () => {
       deathPenalty: 'arcade',
     });
     expect(h.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true, deathTicks: [] });
-    expect(h.first).toBeGreaterThan(v1x(4400)); // the parade hangar's checkpoint …
-    expect(h.first).toBeLessThan(v1x(4520)); // … before BULWARK ECHO's `boss` event — the pair
-    // moved ×1.5 with R2-02's port (v1 measured 4,400–4,520; the recording lands at 6,636.9)
+    expect(h.first).toBeGreaterThanOrEqual(land); // the camera starts at the skip's landing
+    expect(h.first).toBeLessThan(land + 4); // … one or two slow scroll ticks into the recording
     for (const echo of ['echo-bulwark', 'echo-maw', 'echo-bastion', 'echo-regent']) {
-      expect(h.phases.has(echo + ':0'), echo).toBe(true);
-      expect(h.last.get(echo), echo).toEqual({ state: BossState.Dead, escaped: false });
+      expect(h.phases.has(echo + ':0'), echo).toBe(false); // the parade is not in this run
+      expect(h.last.has(echo), echo).toBe(false);
     }
     expect([...h.phases].filter((p) => p.startsWith('iron-sovereign:')).sort()).toEqual([
       'iron-sovereign:0',

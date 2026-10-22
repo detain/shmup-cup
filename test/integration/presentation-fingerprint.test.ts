@@ -1300,8 +1300,10 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
       zoneClear(w, `runA.zone${zone}`);
       toZone(w, `runA.map${zone}`, next);
     }
-    // Zone H's boss skip lands at the parade's first echo (a boss without a WARNING).
+    // Zone H's boss skip lands at IRON SOVEREIGN's WARNING (R5-P.P14): the stage's own boss,
+    // entered past the parade — so it takes the same walk to the WARNING as every other zone.
     w.begin('runA.bossH');
+    w.toWarning();
     w.hold(Action.Shot, 400);
     expect(w.game.world.bosses.hpBar.visible).toBe(true);
     zoneClear(w, 'runA.zoneH');
@@ -1762,8 +1764,8 @@ const PINNED: Record<string, Record<string, string>> = {
   runA: {
     'runA.boss': 'bcc635b8 30f1568a 1044abd1 a2623345',
     'runA.zoneA': '2e610526 11f8f002 dbfbc272 11568378',
-    'runA.mapA': '201a5204 906c6a0e 52bdfe90 7e24c625',
-    'runA.bonus': 'b71ae69d 2c3b896d 96d20af5 7c941945',
+    'runA.mapA': '201a5204 906c6a0e 8381b378 7e24c625',
+    'runA.bonus': 'b71ae69d 2c3b896d 1fcede8b 7c941945',
     'runA.bonusClear': 'a9696812 013cfc29 01305b7f 11568378',
     'runA.mapB': 'c2087b9c 658e6b0e f415a465 7e24c625',
     'runA.bossD': 'cf95da69 b6526534 f8846179 6e85cbc5',
@@ -1771,15 +1773,15 @@ const PINNED: Record<string, Record<string, string>> = {
     'runA.mapD': 'b57c1b4d e7eae31e 1317573c 7e24c625',
     'runA.bossF': '7435b7d8 3e02c2c6 c5378f2f 6e85cbc5',
     'runA.zoneF': '33b357ff 7ce703e2 4df3447d 11568378',
-    'runA.mapF': '1baafda5 c1662492 263dae9d 7e24c625',
-    'runA.bossH': 'c7c3e0ac d0c180b3 6df082a4 c897cfc5',
-    'runA.zoneH': 'bbe57578 6e6b3065 c4ac72c1 11568378',
-    'runA.escape': '351fd1c9 a88b2ea5 06dd9f5e 157bb6c5',
-    'runA.escapeClear': '895af83f d0563aed a981c135 11568378',
-    'runA.ending.story': 'e4420e24 4c23c6e8 5003ac52 304d08e5',
-    'runA.ending.card': '4ebd2fe9 a1a5e151 bfc125ec c57fb005',
-    'runA.credits': '0d948359 cb29e5ec 4087ac74 54c731a5',
-    'runA.nameEntry': '12791a60 16eb6249 a9a0eb3e 9f7d7385',
+    'runA.mapF': '1baafda5 c1662492 be053d20 7e24c625',
+    'runA.bossH': '83930aa0 a8604db6 4af1a705 b8ffdfc5',
+    'runA.zoneH': 'ed992be7 bf80b724 815a31bd 11568378',
+    'runA.escape': '351fd1c9 234cd985 06dd9f5e 157bb6c5',
+    'runA.escapeClear': 'aa4cd014 e3fd3461 0bc21c21 11568378',
+    'runA.ending.story': 'c055240b 4c23c6e8 85b10c29 304d08e5',
+    'runA.ending.card': '4fa4ccf1 a1a5e151 064ee330 c57fb005',
+    'runA.credits': 'd1a09d72 cb29e5ec 720f37f0 54c731a5',
+    'runA.nameEntry': '97def220 16eb6249 6a588881 9f7d7385',
   },
   runB: {
     'runB.zoneA': '0f80bfec cdd77075 8d331a56 157bb6c5',

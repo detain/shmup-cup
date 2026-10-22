@@ -1,8 +1,9 @@
 /**
  * The debug stage skip (plan M1-18): `skipToBoss(world)` and `GameConfig.stageSkip`.
  *
- * - `skipToBoss` jumps the stage to `BOSS_SKIP_LEAD` px before its first `warning` / `boss`
- *   event, clears the session and flies the ship in again at the new view; the WARNING follows
+ * - `skipToBoss` jumps the stage to `BOSS_SKIP_LEAD` px before the stage's own boss — its last
+ *   `warning`, else its first `boss` event (R5-P.P14) — clears the session and flies the ship in
+ *   again at the new view; the WARNING follows
  *   once the camera covers the lead; `false` (nothing changed) in free flight and on a stage
  *   without a boss;
  * - `stageSkip: 'boss'` does it at world creation (so a new World of the scene flow, a retry and a
