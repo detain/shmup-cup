@@ -425,8 +425,8 @@ import {
   createStageRunner,
   createStageTerrain,
   createTerrainView,
-  updateDecorView,
-  updateParallaxView,
+  syncDecorView,
+  syncParallaxView,
   type BonusEntrances,
   type StageDecorView,
   type StageGimmicks,
@@ -579,7 +579,7 @@ export interface World {
   readonly parallax: StageParallaxView | null;
   /**
    * The stage's decor (R3-06, also `view.decor`): the compiled items and the two batches
-   * {@link updateDecorView} refills by camera culling, or `null` for a stage without decor.
+   * {@link syncDecorView} refills by camera culling, or `null` for a stage without decor.
    */
   readonly decor: StageDecorView | null;
   /**
@@ -2174,9 +2174,9 @@ function syncThrusters(
  */
 export function syncWorldView(world: World): void {
   const parallax = world.parallax;
-  if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y, world.tick);
+  if (parallax !== null) syncParallaxView(parallax, world.camera, world.tick);
   const decor = world.decor;
-  if (decor !== null) updateDecorView(decor, world.camera.x);
+  if (decor !== null) syncDecorView(decor, world.camera);
   world.gimmicks.sync();
   world.enemies.sync();
   world.bosses.sync();

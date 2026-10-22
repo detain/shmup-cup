@@ -152,6 +152,7 @@ import {
   RasterKind,
   createSpriteBatch,
   pushSprite,
+  type CameraView,
   type ColorCycleView,
   type DecorView,
   type Mode7View,
@@ -1523,6 +1524,15 @@ export interface StageParallaxView extends ParallaxView {
   readonly frameTicks: Uint16Array;
   /** Current animated frame per band (R3-06), filled by {@link updateParallaxView}. */
   readonly frameIndex: Uint8Array;
+  /**
+   * The camera x the scroll loop reads (R5-01 alloc hunt): the entries of
+   * {@link updateParallaxView} / {@link syncParallaxView} write it before the loop, so the
+   * fractional camera number never crosses a call boundary V8 leaves un-inlined (M1-10's law —
+   * a boxed double per tick a fractional anchor would otherwise pay).
+   */
+  cameraX: number;
+  /** The camera y the scroll loop reads (see {@link StageParallaxView.cameraX}). */
+  cameraY: number;
 }
 
 /**
@@ -1548,6 +1558,8 @@ export function createParallaxView(stage: StageSpec): StageParallaxView | null {
     frames: new Uint8Array(count),
     frameTicks: new Uint16Array(count),
     frameIndex: new Uint8Array(count),
+    cameraX: 0,
+    cameraY: 0,
   };
   for (let i = 0; i < count; i++) {
     const band = bands[i];
@@ -1575,7 +1587,9 @@ const PARALLAX_LAYERS: Readonly<Record<string, LayerId>> = Object.freeze({
  * Scrolls the parallax bands with the camera: `offsetX = (camera.x · factor) mod spacing`,
  * `y = baseY − camera.y · yFactor` (R3-06: `yFactor` is the content's own, defaulting to the
  * horizontal factor, so a plain band moves exactly as before), and for an animated band
- * `frameIndex = (tick / frameTicks) mod frames`. Never allocates.
+ * `frameIndex = (tick / frameTicks) mod frames`. Never allocates. The World's per-tick sync
+ * takes the camera as an object through {@link syncParallaxView} (R5-01 alloc hunt: a fractional
+ * camera x must not cross this boundary — it would box a HeapNumber every tick).
  *
  * @param view - The view.
  * @param cameraX - Camera x.
@@ -1594,6 +1608,36 @@ export function updateParallaxView(
   cameraY: number,
   tick = 0,
 ): void {
+  view.cameraX = cameraX;
+  view.cameraY = cameraY;
+  scrollParallaxView(view, tick);
+}
+
+/**
+ * The {@link updateParallaxView} twin for the World's per-tick sync (R5-01 alloc hunt): it
+ * carries the camera's own x / y into the view's fields, so no fractional camera coordinate
+ * ever crosses this call either — only the two object pointers do.
+ *
+ * @param view - The view.
+ * @param camera - The live camera.
+ * @param tick - The sim tick — the animation clock (default 0).
+ */
+export function syncParallaxView(view: StageParallaxView, camera: CameraView, tick = 0): void {
+  view.cameraX = camera.x;
+  view.cameraY = camera.y;
+  scrollParallaxView(view, tick);
+}
+
+/**
+ * The parallax scroll loop of {@link updateParallaxView}: reads the camera from the view's
+ * carried fields. Only typed-array writes; never allocates.
+ *
+ * @param view - The view, camera carried.
+ * @param tick - The sim tick.
+ */
+function scrollParallaxView(view: StageParallaxView, tick: number): void {
+  const cameraX = view.cameraX;
+  const cameraY = view.cameraY;
   for (let i = 0; i < view.count; i++) {
     const factor = view.factor[i];
     const spacing = view.spacing[i];
@@ -1636,6 +1680,13 @@ export interface StageDecorView extends DecorView {
   readonly glowBack: SpriteBatch | null;
   /** The `front` items' glows (additive, `LayerId.DecorFront`, R3-06.L4); `null` = none. */
   readonly glowFront: SpriteBatch | null;
+  /**
+   * The camera x the culling window is built from (R5-01 alloc hunt): written by the entries of
+   * {@link updateDecorView} / {@link syncDecorView} before the refill, so the fractional camera
+   * number never crosses a call boundary V8 leaves un-inlined (see
+   * {@link StageParallaxView.cameraX}).
+   */
+  cameraX: number;
 }
 
 /**
@@ -1720,6 +1771,7 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
     front: fronts > 0 ? createSpriteBatch(LayerId.DecorFront, fronts) : null,
     glowBack: glowBacks > 0 ? createSpriteBatch(LayerId.DecorBack, backs, 'additive') : null,
     glowFront: glowFronts > 0 ? createSpriteBatch(LayerId.DecorFront, fronts, 'additive') : null,
+    cameraX: 0,
   };
 }
 
@@ -1727,7 +1779,8 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
  * Refills the decor batches from the camera window (R3-06): an item is in a batch while its
  * `x` lies within {@link DECOR_CULL_MARGIN} of the playfield's two columns. Called at the end of
  * every tick next to {@link updateParallaxView}; the glow batches (R3-06.L4) carry the visible
- * items that name a glow, additive over their owner. Never allocates.
+ * items that name a glow, additive over their owner. Never allocates. The World's per-tick sync
+ * takes the camera as an object through {@link syncDecorView} (R5-01 alloc hunt).
  *
  * @param view - The compiled view.
  * @param cameraX - The camera's world x.
@@ -1738,6 +1791,30 @@ export function createDecorView(stage: StageSpec, content: ContentDb): StageDeco
  * ```
  */
 export function updateDecorView(view: StageDecorView, cameraX: number): void {
+  view.cameraX = cameraX;
+  refillDecorView(view);
+}
+
+/**
+ * The {@link updateDecorView} twin for the World's per-tick sync (R5-01 alloc hunt): carries the
+ * camera's own x into the view's field, so no fractional camera coordinate crosses this call —
+ * only the two object pointers do.
+ *
+ * @param view - The compiled view.
+ * @param camera - The live camera.
+ */
+export function syncDecorView(view: StageDecorView, camera: CameraView): void {
+  view.cameraX = camera.x;
+  refillDecorView(view);
+}
+
+/**
+ * The decor cull-and-refill loop of {@link updateDecorView}: reads the camera from the view's
+ * carried field. Only batch writes; never allocates.
+ *
+ * @param view - The view, camera carried.
+ */
+function refillDecorView(view: StageDecorView): void {
   const back = view.back;
   if (back !== null) back.count = 0;
   const front = view.front;
@@ -1746,6 +1823,7 @@ export function updateDecorView(view: StageDecorView, cameraX: number): void {
   if (glowBack !== null) glowBack.count = 0;
   const glowFront = view.glowFront;
   if (glowFront !== null) glowFront.count = 0;
+  const cameraX = view.cameraX;
   const left = cameraX - DECOR_CULL_MARGIN;
   const right = cameraX + PLAYFIELD_W + DECOR_CULL_MARGIN;
   for (let i = 0; i < view.count; i++) {

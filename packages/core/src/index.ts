@@ -1200,6 +1200,8 @@ export {
   createTerrainView,
   findEventCursor,
   stageMapWidth,
+  syncDecorView,
+  syncParallaxView,
   updateDecorView,
   updateParallaxView,
   type StageCamera,
