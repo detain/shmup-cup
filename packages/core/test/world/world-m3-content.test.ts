@@ -154,7 +154,7 @@ describe('core score-milking cap (M3-01)', () => {
     const none = world(content({ bulletCancel: 10, repeatKills: 0 }).db);
     for (let i = 0; i < 6; i++) none.enemies.spawn(0, none.camera.x + 200, 40 + i * 20);
     expect(killAll(none)).toBe(600);
-    expect(DEFAULT_SCORING_RULES).toMatchObject({ repeatKills: 40, repeatPercent: 10 });
+    expect(DEFAULT_SCORING_RULES).toMatchObject({ repeatKills: 100, repeatPercent: 10 });
   });
 });
 

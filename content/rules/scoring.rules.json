@@ -3,7 +3,7 @@
   "kind": "rules",
   "scoring": {
     "bulletCancel": 10,
-    "repeatKills": 40,
+    "repeatKills": 100,
     "repeatPercent": 10,
     "graze": 10
   }

@@ -260,7 +260,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.tilesets': '1233f37533926397',
     'core.tilesetIndex': '457688315255ea3a',
     'core.difficulty': '1f340af9648e812c',
-    'core.scoring': 'b2430506b3320967',
+    'core.scoring': '3771a970c28cbd32',
     'core.patterns': '7e84392e26732461',
     'core.campaign': 'e14ec68ab26f2b90',
     'core.demos': '2a5d53acb8356ca8',

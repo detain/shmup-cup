@@ -140,7 +140,7 @@ export const MAX_BULLET_CANCEL_POINTS = 10_000;
 export const MAX_REPEAT_KILLS = 1000;
 
 /** The milking cap's default kill count per spawned enemy kind and World (M3-01). */
-export const DEFAULT_REPEAT_KILLS = 40;
+export const DEFAULT_REPEAT_KILLS = 100;
 
 /** The milking cap's default share of the score after the cap, in percent (M3-01). */
 export const DEFAULT_REPEAT_PERCENT = 10;
@@ -153,7 +153,7 @@ export const DEFAULT_GRAZE_POINTS = 10;
 
 /**
  * The built-in scoring rules (what `content/rules/scoring.rules.json` ships with): 10 points per
- * cancelled bullet; M3-01's milking cap — 40 full-score kills per spawned enemy kind, then 10 %;
+ * cancelled bullet; M3-01's milking cap — 100 full-score kills per spawned enemy kind, then 10 %;
  * M3-02's 10 points a graze.
  */
 export const DEFAULT_SCORING_RULES: ScoringRules = Object.freeze({

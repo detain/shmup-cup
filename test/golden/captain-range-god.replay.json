@@ -78,16 +78,16 @@
     596835601,
     2253622467,
     3990671816,
-    645984605,
-    276474226,
-    592704795
+    195989857,
+    2238948301,
+    206004703
   ],
-  "finalHash": 662350759,
+  "finalHash": 2255082165,
   "description": "CAPTAIN RANGE with god mode (M2-09): four captains fly in on the scrolling camera, the 4-way bot fights them, the stage ends at its end",
   "expected": {
     "status": "stageClear",
     "ticks": 6415,
-    "score": 20950,
+    "score": 28780,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true
