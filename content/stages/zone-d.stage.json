@@ -1070,6 +1070,66 @@
       "y": 261,
       "bonus": 0,
       "drop": null
+    },
+    {
+      "x": 15300,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 8,
+      "interval": 12,
+      "y": 231,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 16400,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 6,
+      "interval": 14,
+      "y": 171,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 16900,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 8,
+      "interval": 12,
+      "y": 150,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 17800,
+      "type": "formation",
+      "enemy": "cinder-bat",
+      "count": 6,
+      "interval": 12,
+      "y": 246,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 18300,
+      "type": "formation",
+      "enemy": "slag-mine",
+      "count": 3,
+      "interval": 40,
+      "y": 261,
+      "bonus": 0,
+      "drop": null
+    },
+    {
+      "x": 18900,
+      "type": "formation",
+      "enemy": "ember-wisp",
+      "count": 8,
+      "interval": 10,
+      "y": 201,
+      "bonus": 0,
+      "drop": null
     }
   ]
 }
