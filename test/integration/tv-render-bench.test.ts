@@ -12,8 +12,11 @@
  * analyzer's decode table, its synthetic pages are drawn the same on every machine, and `pnpm bench`
  * opens it headlessly too. Since plan R3-04.M4a the decode pages are the real stand-in zone's page
  * and the two shipped ones, the run's last page load is the **stand-in zone drawn once**
- * (`standin-zone`, plan R3-04.M4b on the headless side), and the analyzer estimates the zone load
- * from those measured pages — while the synthetic-page sessions of the R0-03 campaign keep reading
+ * (`standin-zone`, plan R3-04.M4b) — on the TV, in the owner's R0-03 campaign; since plan
+ * **R5-10.T7** the headless bench no longer opens that page load, sweeping the nine real campaign
+ * zones through the harness instead (`render.perf.ts`, gated by `load.ts`
+ * `zoneSweepViolations`) — and the analyzer estimates the zone load from those measured pages,
+ * while the synthetic-page sessions of the R0-03 campaign keep reading
  * through the old formula (both shapes are pinned here).
  *
  * The matrix is the resolution sweep (the owner's R0-03 follow-up): 25 frame sizes × 6 variants
@@ -454,13 +457,15 @@ describe('render bench: the headless driver gates every TV scenario', () => {
     expect(perf).not.toContain('rgba-2048');
   });
 
-  it('opens the run’s last page load, the stand-in zone, and gates it (R3-04.M4b)', () => {
-    expect(perf).toContain('runTvScenario(tvUrl, STANDIN_SCENARIO_ID)');
-    // The gate is the tested helper in render-harness/load.js, driven by the expectations the
-    // Node side derives from the same stand-in manifest the build bakes.
-    expect(perf).toContain('standinBenchViolations(record, expected)');
-    expect(perf).toContain('buildDecodeStandin()');
-    expect(perf).toContain('standinEnemyCopies(');
+  it('sweeps the nine real zones headlessly instead of opening the stand-in page load (R5-10.T7)', () => {
+    // The stand-in draw stays a TV-side page load for the owner's R0-03 campaign — its record
+    // shape is pinned by the payload tests below, and the widget itself by `apps/tizen/test/bench`.
+    // Headless, the driver must not open it any more; the real-zone sweep replaced it: the list
+    // comes from the shipped campaign file and every arm passes the tested sweep gate.
+    expect(perf).not.toContain('runTvScenario(tvUrl, STANDIN_SCENARIO_ID)');
+    expect(perf).not.toContain('standinBenchViolations');
+    expect(perf).toContain('content/campaign/main.campaign.json');
+    expect(perf).toContain('zoneSweepViolations(stage, result)');
   });
 
   it('renders on a 1280x720 display, a whole multiple of 640x360', () => {

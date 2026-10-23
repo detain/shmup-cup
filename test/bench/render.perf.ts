@@ -16,9 +16,13 @@
  * layer effects (`raster-range`), one with the Mode-7 floor (`dimension`) and one with the R3-06
  * decor stack (`decor-range`: seven parallax bands — two animated, one foreground — the back and
  * front decor groups and the additive glow batches, measured on the frame the lantern pillar is
- * on screen). Each scenario
+ * on screen). Then the **real-zone sweep** (plan R5-10.T7): the campaign's nine zones, read off
+ * `content/campaign/main.campaign.json`, each flying its own remastered stage under the same load,
+ * its art drawn from the shipped atlas's group pages — the plan R3-04.M4b stand-in zone they
+ * replace has nothing left to measure here. Each zone scenario
  * asserts the *minimum* live count over the measured frames, so the stated load is the load every
- * timed frame carried. The **internal frame size is a parameter** (review §7.5): the scenarios
+ * timed frame carried, and `zoneSweepViolations` asserts the stage really ran. The **internal frame
+ * size is a parameter** (review §7.5): the scenarios
  * run at the shipped frame (`FRAME_W` × `FRAME_H` from `@shmup/core` — 640×360 since R2-01,
  * 384×216 before), and the last one runs the same load at ×2 of it (1280×720 — the first integer
  * step the owner would try), so "what would a higher internal resolution cost?" is a bench run.
@@ -43,22 +47,23 @@
  * R1-05 (B4) it also opens the bench's **decode scenario** (`?scenario=decode&reps=2`) and checks
  * its shape: the pages fetched, decoded and uploaded, with their sizes, encodings and bytes — since
  * plan R3-04.M4a that is the stand-in zone A page first, then the shipped `common` and `zone-a`
- * pages, every shape read off `buildDecodePages()` rather than pinned. And since plan **R3-04.M4b**
- * the run ends head-to-head with the TV run: it opens the bench's last page load, the **stand-in
- * load** (`?scenario=standin-zone`), and gates the one 640×360 frame it draws from those pages with
- * `standinBenchViolations` — counts and the ordinary budgets, never milliseconds raised; plan
- * R3-04's zone-load figure itself rides on the decode scenario's page timings (decision W5-19).
+ * pages, every shape read off `buildDecodePages()` rather than pinned — and plan R3-04's zone-load
+ * figure rides on those page timings (decision W5-19). Plan **R5-10.T7** retired the headless twin
+ * of the TV bench's **stand-in load** (`?scenario=standin-zone`, R3-04.M4b): with the nine
+ * remastered zones shipped, the run no longer gates a stand-in frame — the real zones are flown by
+ * the first suite's sweep above. The widget keeps the page load itself for the owner's on-TV
+ * R0-03 campaign; its record shape is pinned in Node by `test/integration/tv-render-bench.test.ts`.
  *
  * Not part of `pnpm test`: it needs a browser and a quiet machine.
  *
  * @module
  */
 import { createServer, type Server } from 'node:http';
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
-import { FRAME_H, FRAME_W, TILE_SIZE } from '@shmup/core';
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
@@ -67,17 +72,11 @@ import {
   BENCH_DENSITIES,
   BENCH_SCENARIOS,
   BENCH_SIZES,
-  BENCH_V2_SIZE,
 } from '../../apps/tizen/src/bench/matrix.js';
-import {
-  DECODE_SCENARIO_ID,
-  STANDIN_SCENARIO_ID,
-  STANDIN_SCENARIO_INDEX,
-} from '../../apps/tizen/src/bench/decode.js';
+import { DECODE_SCENARIO_ID } from '../../apps/tizen/src/bench/decode.js';
 import {
   DECODE_PAGE_IDS,
   buildDecodePages,
-  buildDecodeStandin,
   decodePageFile,
   pngColorType,
 } from '../../apps/tizen/scripts/bench-decode.mjs';
@@ -86,14 +85,16 @@ import type {
   RenderBenchRecord,
 } from '../../packages/shell/src/telemetry/index.js';
 import {
+  DRAW_CALL_BUDGET,
   HEAP_BUDGET,
+  RENDER_P95_BUDGET_MS,
   nextPowerOfTwo,
   pooledRenderTargetBytes,
   renderBenchViolations,
   renderGroupViolations,
   tvBenchViolations,
 } from './render-harness/bench-gates.js';
-import { WARMUP_TICKS, standinBenchViolations, standinEnemyCopies } from './render-harness/load.js';
+import { WARMUP_TICKS, zoneSweepViolations } from './render-harness/load.js';
 import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
 
 // Re-exported so the budgets are still readable from this file, where the docs name them.
@@ -172,6 +173,28 @@ function load(overrides: Partial<RenderBenchOptions> = {}): RenderBenchOptions {
     ...overrides,
   };
 }
+
+/**
+ * The campaign's zone stages, in run order, read off the shipped campaign file (plan
+ * **R5-10.T7**): the bench's **real-zone sweep** flies one scenario per zone — the remastered
+ * stage itself, its art drawn from the shipped atlas's group pages. The list is read, not typed,
+ * so a future tenth zone joins the sweep without an edit here, and the fail-loud guard means the
+ * sweep can never silently shrink.
+ */
+const CAMPAIGN_ZONES: readonly string[] = (() => {
+  const file = fileURLToPath(new URL('../../content/campaign/main.campaign.json', import.meta.url));
+  const campaign = JSON.parse(readFileSync(file, 'utf8')) as { zones?: { stage?: unknown }[] };
+  const stages = (campaign.zones ?? []).map((zone) =>
+    typeof zone.stage === 'string' ? zone.stage : '',
+  );
+  if (stages.length !== 9 || stages.some((stage) => stage === '')) {
+    throw new Error(
+      `zone sweep: expected nine campaign zones with a stage each in ${file}, got ` +
+        `[${stages.join(', ')}]`,
+    );
+  }
+  return stages;
+})();
 
 /** The scenarios, in the order they are printed. */
 const SCENARIOS: readonly Scenario[] = [
@@ -267,6 +290,18 @@ const SCENARIOS: readonly Scenario[] = [
       );
     },
   },
+  // The real-zone sweep (plan R5-10.T7): the scripted worst-case load over each campaign zone's
+  // own remastered art, drawn from the shipped atlas's group pages — every arm through the same
+  // gates, budgets untouched. R3-04.M4b's stand-in zone, measured when no zone was remastered,
+  // retires; the sweep replaces it and the final test below prints its figures for the docs.
+  ...CAMPAIGN_ZONES.map((stage): Scenario => ({
+    id: `real ${stage}`,
+    what: "the worst-case load over the remastered zone's own art, flown from the shipped pages",
+    options: load({ stage }),
+    check: (result) => {
+      expect(zoneSweepViolations(stage, result)).toEqual([]);
+    },
+  })),
 ];
 
 /** MIME types the static server needs. */
@@ -516,6 +551,37 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
     );
   });
 
+  it('the zone sweep flew every campaign zone and prints its figures (R5-10.T7)', () => {
+    // The table `docs/dev/render-performance-review.md` quotes: one row per real zone, the same
+    // numbers the per-scenario gates saw. Every gate ran inside the scenario itself — this test
+    // is the completeness pass (all nine results present) and the report.
+    const rows: RenderBenchResult[] = [];
+    for (const stage of CAMPAIGN_ZONES) {
+      const result = results.get(`real ${stage}`);
+      expect(result, `the ${stage} sweep scenario must have run`).toBeDefined();
+      if (result !== undefined) rows.push(result);
+    }
+    console.info('[bench] zone sweep (R5-10.T7), worst-case load per campaign zone:');
+    CAMPAIGN_ZONES.forEach((stage, i) => {
+      const r = rows[i];
+      if (r === undefined) return;
+      console.info(
+        `[bench]   ${stage}: p95 ${r.renderP95Ms.toFixed(2)} ms (median ` +
+          `${r.renderMedianMs.toFixed(2)}, max ${r.renderMaxMs.toFixed(2)}), ${r.drawCalls} draw ` +
+          `calls, ${(r.renderTargetBytes / 1024).toFixed(0)} KB pooled, heap ` +
+          `${(r.heapDeltaBytes / 1024).toFixed(0)} KB, floors ${r.bullets}/${r.points}/` +
+          `${r.particles}, camera x ${r.cameraX}, ${r.worldStatus}`,
+      );
+    });
+    const busiest = Math.max(...rows.map((r) => r.drawCalls));
+    const slowest = Math.max(...rows.map((r) => r.renderP95Ms));
+    console.info(
+      `[bench] zone sweep worst of the nine: ${busiest} draw calls, p95 ${slowest.toFixed(2)} ms ` +
+        `(gates: budgets of ${DRAW_CALL_BUDGET} draw calls and ${RENDER_P95_BUDGET_MS} ms — each ` +
+        'scenario was gated on them above, never raised)',
+    );
+  });
+
   it('the heap gate fails on a deliberately leaky frame', async () => {
     const options = load({ frames: 200, warmupFrames: 20, leakPerFrame: LEAK_PER_FRAME });
     const result = await runScenario(options);
@@ -689,34 +755,6 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       built.map((page) => (pngColorType(page.png) === 3 ? 'png8' : 'rgba')),
     );
     expect(decode.imageBitmap).toBe(true);
-  }, 300_000);
-
-  it('standin-zone — draws one frame of the zone from those pages (R3-04.M4b)', async () => {
-    const outcome = await runTvScenario(tvUrl, STANDIN_SCENARIO_ID);
-    expect(outcome.error).toBeNull();
-    const record = outcome.record as RenderBenchRecord;
-    // The scene's expectation: the same pruned manifest the bench build baked into the page
-    // (`apps/tizen/scripts/bench-atlas.mjs`, plan R3-04.M4a), read here in Node. The tiles are the
-    // frame's tile columns twice over (a ceiling row and a floor row), as `scene.ts` places them.
-    const standin = buildDecodeStandin();
-    const expected = {
-      scenario: STANDIN_SCENARIO_ID,
-      index: STANDIN_SCENARIO_INDEX,
-      width: BENCH_V2_SIZE.width,
-      height: BENCH_V2_SIZE.height,
-      atlasPages: standin.manifest.pages.length,
-      textureBytes: standin.manifest.pages.reduce((bytes, page) => bytes + page.w * page.h * 4, 0),
-      enemies: standinEnemyCopies(Object.keys(standin.manifest.sprites)),
-      tiles: (Math.ceil(BENCH_V2_SIZE.width / TILE_SIZE) + 1) * 2,
-    };
-    console.info(
-      `[bench] tv ${STANDIN_SCENARIO_ID}: render ${record.renderMs[1].toFixed(2)} ms, synced ` +
-        `${record.syncedMs[1].toFixed(2)} ms (SwiftShader — not the M7), ${record.drawCalls} ` +
-        `draw calls, ${(record.textureBytes / 1024).toFixed(0)} KB atlas in ${record.atlasPages} ` +
-        `page(s), ${record.load.enemies} enemies + ${record.load.tiles} tiles, heap ` +
-        `${(record.heapDeltaBytes / 1024).toFixed(0)} KB [WebGL ${record.webGLVersion}]`,
-    );
-    expect(standinBenchViolations(record, expected)).toEqual([]);
   }, 300_000);
 
   it('reports every size with the atlas page count of its density', () => {
