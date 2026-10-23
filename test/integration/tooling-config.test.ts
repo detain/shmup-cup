@@ -320,12 +320,12 @@ describe('tooling: the release version (M2-18, R0-01)', () => {
    * v2 in development on `master` (plan_resolution.md §3.2, step R0-01): a pre-release of
    * 2.0.0. v1 is released as 1.0.0 and maintained on the `v1.x` branch.
    */
-  const RELEASE = '2.0.0-alpha.1';
+  const RELEASE = '2.0.0-beta.1';
 
   it('gives the root and every workspace project the same release version', () => {
     expect(root.version).toBe(RELEASE);
     expect(semver.valid(root.version)).toBe(RELEASE);
-    expect(semver.prerelease(root.version ?? '')).toEqual(['alpha', 1]);
+    expect(semver.prerelease(root.version ?? '')).toEqual(['beta', 1]);
     for (const project of projects) {
       expect(readJson<{ version: string }>(`${project}/package.json`).version, project).toBe(
         RELEASE,
