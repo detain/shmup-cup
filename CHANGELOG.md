@@ -591,6 +591,52 @@ before the owner). The art is the R5-D6 stand-in kit until `R5-08.S3` drops the 
   positions relocated, name set equal, pixels byte-identical); fingerprints 117 / 13 / 3, 5 plates;
   post-push **10,733 / 892 files** zero red, the weld's e2e batch 100 + 73 under the lock.
 
+### ABYSSAL THRONE — zone I remastered (R5-09, the last zone LAND)
+
+These change what the game shows and does: zone I is rebuilt to `docs/v2-run/designs/zone-i.md` and
+landed at `2d35a7a5`, the ninth remaster of nine — the run's last zone LAND. The art is the R5-D6
+stand-in kit until `R5-09.S3` drops the real art (R5-D7).
+
+- **The rebuilt stage**: 20,400 px of a **dive** — the camera sinks under the shelf lip (rows 26–27,
+  x 156 to 12,300) and runs the full two playfields: the ceiling passage, the mine drift where the
+  four coral punch columns and the two basalt buttresses frame the hermit's antechamber, the carved
+  undertow at the run's fastest key, then past 12,300 the void-column ascent — the camera climbs the
+  full 312 px to the surface while the ascent's `lines` raster shines the ARK's light down. 77
+  events on six camera keys with three holds, past six checkpoints; `terrain-abyss-v2` (v1's twenty
+  tiles verbatim + coral + `abyss-glow`), the 320-px parallax joins — deepwall, vents, fore flakes
+  (the S2 template law adjudicated over the design's 640, the zone-D precedent), sixteen vent-glow
+  decor, and the R5-P.P7 palette `cycles` frozen, byte-identical.
+- **The roster and bosses**: three new types — the **abyss crawler** walking the trench floor and
+  fanning when it stops, the **stinger** flying the hook's own homing ballistics as the ARK's escort,
+  the **deep tender** carrying capsules over open water — eight new-by-sprite at the v2 band's
+  ceiling; **TH-11 THE TRENCH HERMIT**, the zone's first captain, a hermit crab on the ORBIT
+  WARDEN's kit with **no WARNING and no time limit** (P14's skip law holds — the skip lands on the
+  ARK's warning at 19,650 alone); the **ABYSS ARK** grown from eleven to **fourteen parts** — the
+  720-px five-section keel, three-over-three turret rows with heading frames, the new deck pods
+  (box → circle adjudicated — boxes never turn), the heart 130 → 105 hp for the 90-s budget, the
+  intro 240 → 180, the raid sweep widened −190 → +10 → −190 over the longer body; **THE HOLLOW
+  KING** at **eleven parts** (was nine) — the new fin armour, the maw 96 → 80, the lure 30 → 24,
+  phase thresholds 54/24, the phase lists themselves byte-identical.
+- **The rulings that rode the land**: R5-D13 — the contract's global band ceiling widened to 420 s
+  on the owner's option 2, the god run measuring **369.3 s** inside [240, 420], the 240-s floor
+  untouched; and R5-09.FIX2 — the checkpoints re-seated at 2,880 and 6,240 where the clear-spawn
+  law collided with the lip and the dive floor (the law stood; the law-weakening option was
+  rejected priced).
+- **It plays**: the 4-way god bot clears in **369.3 s** (boss 51.4 s, 0 deaths, score 146,250, live
+  enemies 15 of 51, peak boss parts 14 / 11); the no-god case records three deaths (contact 2,983,
+  terrain 6,000, bullet 19,846) and its replay-hash identity is asserted (the O1 law reports, never
+  promises). The skip golden fights the ARK's two phases and the king's three; the escape golden
+  stands as the time-limit flag case (5,970 ticks, 4,500 points).
+- **The weld**: the first leg STOPped on gate evidence (B-1, the checkpoint law) and restarted
+  audit-first — 8 legs to one zone LAND, delta identity across them; four files re-blessed
+  (`--only zone-i`) digit-for-digit **identical across the weld's two trees**, drift 0.0 s — the
+  bless-identity proof, since the FIX2 re-seat moved respawn data only, never a scroll path; the
+  disclosed folds are the interim digest `da5879b4… → 611190ef…` (471 scale-1 positions relocated,
+  name set equal, added 0, removed 0) and the two kit-census admits; groups +10/−1, fingerprints
+  117 / 10 / 3, 6 plates; post-push **10,755 / 890 files** zero red, e2e 100 + 73, the campaign
+  audit 68/68 held with its [180, 360] tripwire untripped, and the v1-port `zone-i` rows drop under
+  the remastered condition, disclosed.
+
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
 - **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and

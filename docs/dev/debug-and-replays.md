@@ -564,12 +564,12 @@ and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
 | `zone-g-boss.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 1,981 ticks, 47,540 points, 4 lives, no deaths |
 | `zone-g-bot.replay.json` (M2-13 tests; re-blessed by R5-07) | 4-way bot, no god mode (seed 91) | three deaths in the labyrinth, `gameOver` before FACET MONARCH — the recording is the promise under the identity law below | `gameOver` after 9,358 ticks (deaths at 4,548 / 7,935 / 9,265) |
 | `zone-h-god.replay.json` (M2-14; re-blessed by R5-08) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the fortress gate's plate slabs and sentries, the parade of four earlier bosses in reduced form, the piston hall, the core run, IRON SOVEREIGN's four phases | `stageClear` after 19,470 ticks, 130,390 points, 5 lives, no deaths |
-| `zone-i-god.replay.json` (M2-14; re-blessed by its test round's `boss.ark` fix) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 19,310 ticks, 143,110 points, 5 lives, no deaths |
+| `zone-i-god.replay.json` (M2-14; re-blessed by R5-09) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the dive under the shelf lip, the ceiling passage, the mine drift with TH-11 THE TRENCH HERMIT in its buttressed antechamber, the undertow, the 312-px ascent, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 22,155 ticks (369.25 s — inside the R5-D13 [240, 420] band), 146,250 points, 5 lives, no deaths |
 | `zone-h-boss.replay.json` (M2-14 tests; re-blessed by R5-P.P14 `6345f07`, again by R5-08) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands at IRON SOVEREIGN's own warning (re-blessed by R5-P.P14, `6345f07`; the remaster moved the throne's warning to 19,500): the parade and the core run are skipped past, the sovereign's four phases stand | `stageClear` after 2,223 ticks, 71,550 points, 4 lives, no deaths |
 | `zone-h-arcade.replay.json` (M2-14 tests; re-blessed by R5-08) | 4-way bot, Arcade difficulty, no god mode (seed 91) | IRON CITADEL against the rank-scaled fire: the two lives go in the parade and before it, the throne stands — the recording is the promise under the identity law, extended to a difficulty rank at this land | `gameOver` after 5,632 ticks (deaths at 4,113 / 5,539), 3,130 points |
 | `zone-h-deaths.replay.json` (M2-14 tests; re-blessed by R5-08) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls and the gate — the weaver never passes the gate checkpoint — every restart back at the start, game over | `gameOver` after 4,438 ticks (deaths at 665 / 1,749 / 2,503 / 3,587 / 4,345) |
-| `zone-i-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 4,511 ticks, 136,640 points, 5 lives, no deaths |
-| `zone-i-escape.replay.json` (M2-14 tests) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 6,038 ticks, 3,200 points, 3 lives, no deaths, no boss killed |
+| `zone-i-boss.replay.json` (M2-14 tests; re-blessed by R5-09) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands ≈ 214 px before the ARK's warning at 19,650 — TH-11 carries no warning, so the ARK's is the stage's last, and the dive is skipped past (re-blessed by R5-09): the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 5,362 ticks, 140,470 points, 5 lives, no deaths |
+| `zone-i-escape.replay.json` (M2-14 tests; re-blessed by R5-09) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 5,970 ticks, 4,500 points, 3 lives, no deaths, no boss killed |
 | `zone-a-manta-toggle.replay.json` (M2-16 tests) | `fireButtonBot('tap')` (the 4-way bot tapping `Shot` every 150 ticks), god mode, full loadout, the MANTA, `remoteMode: false`, `autofireMode: 'toggle'`, `stageSkip: 'boss'` (seed 61) | the Direct-mode volleys switched off and on by the taps (the `firing` switch hashed in this mode), HALCYON BULWARK shot down | `stageClear` after 942 ticks, 39,000 points, 4 lives, no deaths |
 | `zone-a-hold.replay.json` (M2-16 tests) | `fireButtonBot('burst')` (`Shot` / `Sub` held for 45 of every 90 ticks), god mode, full loadout, `remoteMode: false`, `autofireMode: 'hold'`, `autofireInterval: 2`, `stageSkip: 'boss'` (seed 62) | shots only while the buttons are held, HALCYON BULWARK shot down | `stageClear` after 1,922 ticks, 39,090 points, 4 lives, no deaths |
 
@@ -750,6 +750,20 @@ shell 3 — the id-shift class); `R5-10.T3`'s dimension art (`90a20a3a`) moved *
 sim field changed — but its five new sprite id-shifted the fingerprints again (content-DB 14,
 presentation 232, shell 6 rows). The old → new digits ride `git show a2d94928` and
 `git show cea1b20d`.
+
+**Wave 13's zone I LAND** continued the chain: `R5-09` re-blessed zone I's four files at
+`2d35a7a5` (`--only zone-i`) — `zone-i-god` `46871372 → 2490693452`, `zone-i-boss` `2920641436 →
+1288749321`, `zone-i-escape` `3347605274 → 2353493228` and the attract demo `3902439478 →
+2234731965` — the god run 22,155 ticks (369.25 s) inside the R5-D13 [240, 420] band. The digits
+were re-proven **twice**: the weld's pre-STOP table and the post-`FIX2` restart measured them
+identical, because the checkpoint re-seat (2,880 / 6,240) moves respawn data only, never a scroll
+path — drift 0.0 s, digit-for-digit across the two trees, the law green on the cure's geometry.
+One disclosed fold rode the land: the interim scale-1 atlas digest `da5879b4… → 611190ef…` (471
+frame positions relocated by the zone-I grouping, name set equal, added 0 / removed 0, the
+pre-regroup build reproducing the retired digest, no page cap moved — the MF12 protocol) beside
+the two kit-census admits at sources (`tilesetFramesAt`'s `terrain-abyss-v2` carve-out, the
+`foreStages` `'zone-i'` row); the three new sprite names re-pinned the fingerprints (presentation
+117, content-DB 10, shell 3 rows). The old → new digits ride `git show 2d35a7a5`.
 
 The same review round ruled the **identity law** for the no-god outcome cases (its G7 decision,
 with zone E's file as its twin): `golden-zone-e.test.ts` and `golden-zone-g.test.ts` assert the

@@ -207,7 +207,10 @@ archive in a browser before you publish it.
   plate-slab and sentry names, the iron banner, and the rebuilt IS-08's rig — crest and prow,
   gate-plate skirts, vents, the sovereign-hatch and sovereign-plate art the four echoes ride —
   and so did the dimension corridor's v2 scenery from R5-10.T3, the rift and strands bands, the
-  two decor shard names and the glow cue.
+  two decor shard names and the glow cue. Zone I's abyss set joined at its wave-13 land: the
+  `terrain-abyss-v2` sheet (v1's twenty tiles verbatim + coral + `abyss-glow`), the three new
+  roster names, and the rebuilt ARK's and KING's part names the stand-in kit draws — all standing
+  in at R5-D6 shapes until the round above drops the real art.
   Each zone's own art round waits on one owner decision first — the FLUX serving-model ruling,
   [`art-provenance.md`](../dev/art-provenance.md) §8 — before candidates are generated.
 - **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
@@ -215,16 +218,16 @@ archive in a browser before you publish it.
   (`5c35219b…44b3`), the v2 azure set draws the art-scale build. After a v2.0.x release the owner
   schedules the clean-up that deletes the v1 sources and the pin's reason to exist — until then
   nothing waits on it and both builds stay green.
-- **The campaign remaster's last zone.** Zone H landed its remaster in wave 12 (`a2d94928`) — the
-  citadel is the shipped stage on master now, and the zone's owner parts are the §1.1 hardware
-  sign-off and its art round in the queue above. Zone I's band wall was **ruled on 2026-10-23**:
-  the owner took option 2 (decision R5-D13) and the god-mode run band's ceiling widened globally
-  360 → 420 s (4-to-7 min), so the measured 369.25 s sits inside the new band — what remains is
-  the I-LAND itself (the run's `RESUME.md` holds the legs; the six zone-I goldens re-bless last,
-  on settled numbers). Nothing here ships-blocked: v1's abyss still flies on master beside H's
-  shipped citadel. Two R5-10 steps wait
-  behind the I-LAND: the ending's escape-sequence art (T2) and the grouped atlas pages that
-  re-derive after it (T8).
+- **The campaign remaster's last zone.** Both finales have landed: zone H in wave 12 (`a2d94928`)
+  and zone I in wave 13 (`2d35a7a5`) — the remastered abyss is the shipped stage on master now, and
+  the run's last zone LAND is behind it; the zones' owner parts are the §1.1 hardware sign-off and
+  their art rounds in the queue above. Zone I's band wall was **ruled on 2026-10-23**: the owner
+  took option 2 (decision R5-D13), the god-mode run band's ceiling widened globally 360 → 420 s
+  (4-to-7 min), and the LAND rode that ruling — the god run measured 369.25 s inside [240, 420],
+  and zone I's four recordings re-blessed **last**, on settled numbers, as the wall's record
+  demanded. Nothing here ships-blocked. Two R5-10 steps no longer wait behind the I-LAND: the
+  ending's escape-sequence art (T2) and the grouped atlas pages (T8) stand **open in their own
+  right** — neither has landed.
 - **Fight-pacing taste rows — disclosed, not tuned.** The wave-11 reviews measured the landed
   remasters' boss clocks under the bot, and four sit under their design bands: SANDGRAVE WIDOW
   21.9 s, CINDER BASTION 14.0 s, SQUALL STEED 26.9 s (against the design's 40–50 s estimate — the
@@ -281,7 +284,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | The v2 TV-bench run on the M7 — stand-in scenario, lazy-load and context-loss timings (plan_resolution.md R0-03, W5-15 / W5-19) | Nothing — it produces the measured zone-load verdict R3-04 waits on | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
 | Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |
-| The seven wave-11 / wave-12 remasters played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
-| Zone I's remaster — the owner's four-option menu, with R5-10's T2 escape art and T8 grouped pages waiting behind it | Nothing — v1's abyss still ships, H's citadel now ships remastered | the run's `RESUME.md` / plan_resolution.md §17 |
+| The seven wave-11 / wave-12 remasters **and zone I's** played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
+| Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); the owner parts that remain: the `R5-09.S3` real-art drop (behind the FLUX ruling) and the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |
 | Boss-fight pacing bands (C, D, E, G), zone G's gallery mouth, zone H's arcade pacing | Nothing — disclosed by the goldens, not tuned | [§3](#3-polish--blocks-nothing) |
 | The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |

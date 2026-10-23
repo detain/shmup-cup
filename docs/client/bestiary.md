@@ -406,7 +406,9 @@ the frozen release audit could not finish that boss, and four held the design's 
 > THE FLAGSHIP OF THE DEEP. STRIKE AT ITS HEART.
 
 The other ending. There is no fortress here — only water, and the thing the fortress was built to
-serve.
+serve. The v2 remaster turned it into a **dive**: the camera sinks below a shelf lip to the floor
+of the trench, walks the dark for a playfield, and climbs back to the light just as the ARK's
+picket closes in.
 
 | | Enemy | What it does |
 |---|---|---|
@@ -415,8 +417,22 @@ serve.
 | ![](../images/enemies/trench-eel.png) | **TRENCH EEL**<br>2 HP · 150 pts | Buried in the trench wall until you are near, then it bursts out in an arc and falls back. The abyss's answer to the dune worm. |
 | ![](../images/enemies/gulper.png) | **GULPER**<br>6 HP · 600 pts | A deep-water mouth that takes a post at the top or bottom of the trench, holds for 340 ticks firing patterns, and swims away. |
 | ![](../images/enemies/abyss-turret.png) | **ABYSS TURRET**<br>4 HP · 300 pts | The depth mines' gun cover, aiming every 180 ticks from floor and ceiling. |
+| ![](../images/enemies/abyss-crawler.png) | **ABYSS CRAWLER**<br>4 HP · 300 pts | New in the remaster: an armoured thing that walks the trench floor and stops every 30 ticks to let go of a wide fan across the room. It never leaves the ground; it never needs to. |
+| ![](../images/enemies/stinger.png) | **STINGER**<br>2 HP · 200 pts | New in the remaster: the ARK's home escort, flying the hook's own ballistics — 20 ticks of drift, then over a second of turning after you at 1.8 px a tick. The stage launches them where the ARK launches hooks. |
+| ![](../images/enemies/deep-tender.png) | **DEEP TENDER**<br>3 HP · 200 pts | New in the remaster: the glowing eel-tender of the deep bands, crossing the open water with a capsule. On the run's last long stretches it is nearly your only supply — shoot it in, not after. |
 | ![](../images/enemies/ark-hook.png) | **ARK HOOK**<br>2 HP · 200 pts | A boarding hook fired from the ARK, turning after you for over a second before it commits. |
 | ![](../images/enemies/lumen-mote.png) | **KING SPAWN**<br>1 HP · 100 pts | What the King makes while you fight it. One hit point each, and it never stops making them. |
+
+### THE TRENCH HERMIT · TH-11
+
+![THE TRENCH HERMIT](../images/bosses/trench-hermit.png)
+
+**3,000 pts.** New in the remaster — and the abyss's **first mid-boss** (v1's finale flew none): a
+hermit crab that has dragged a glowing swarm-reactor down for a shell and sidesteps it along the
+basalt buttresses, ringing caustic ovals outward every 84 ticks. **No WARNING** — it is the ORBIT
+WARDEN's kit under a new name, and it teaches the same lesson the Brine Herald does: not every big
+thing gets a siren. The two claws are never vulnerable — shots find only the 30 HP core under the
+shell. It keeps no clock — escapes belong to the ARK alone.
 
 ### ABYSS ARK · AA-09
 
@@ -426,6 +442,12 @@ serve.
 camera follows, with turrets along its hull and a heart deep inside it. You have **90 seconds**.
 Fail to break the heart in time and the ARK turns, dives, and takes its master with it: the run
 ends on THE FLAGSHIP SLIPS AWAY, and THE HOLLOW KING never wakes.
+The remaster counts them: fourteen parts, up from eleven. The keel is five 144-px sections long —
+720 px, three quarters of a screen wider than before — with two turret rows of three riding its
+flanks, three above the keel line and three below, each turning to face you. The new deck pods
+(16 HP, 900 pts) flanking the superstructure are the two guns that grow the fire; the heart sits
+amidships, always vulnerable, 105 HP for the run's time budget. The camera sweeps a wider circle
+over the longer body — in the remaster you really do circle it.
 
 ### THE HOLLOW KING · HK-10
 
@@ -434,6 +456,12 @@ ends on THE FLAGSHIP SLIPS AWAY, and THE HOLLOW KING never wakes.
 **60,000 pts.** Inside the ARK, in the dark, with a lure hanging in front of its own jaws. It is
 the last thing in the game and it fights like it: jaws that close on the whole playfield, a lure
 that is not the weak point, and spawn after spawn while you look for the one that is.
+The remaster counts them: eleven parts, up from nine. The maw (80 HP, 10,000 of it) is the core
+and it is open only when it is about to bite; the bulk, both jaws, the three-segment stalk and the
+two new fins are armour that shots clink off. The lure is the only other shootable thing on him
+(24 HP, 3,000 pts, and it carries the needles) — kill it and the spawn stops. Each of the three
+phases shuts the gape shorter, opens the fan wider, and adds a ring; the last one gapes at
+five-way speed.
 
 ---
 
