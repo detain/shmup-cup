@@ -1768,7 +1768,7 @@ of a clock:
 |---|---|---|
 | **Hull** | The iron hull with its glowing vents, behind the core | Nothing, ever (a small spark bounces back) |
 | **Shield arms** | Four round segments on a bar through the core, **turning** | Nothing — they are armour; they sweep in front of the core |
-| **Core** | The glowing magma core | 80 hits in all — whenever no arm is in front of it. Destroying it destroys the boss (35,000 points) |
+| **Core** | The glowing magma core | 80 hits in all — whenever no arm is in front of it. Destroying it destroys the boss (40,000 points) |
 | **Laser emitters** | Two emitters, above and below the front of the hull | 18 hits each, 1,000 points — each one destroyed means fewer lasers |
 
 **How it fights.** The emitters take turns firing a **lane laser** straight to the left along their
