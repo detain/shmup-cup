@@ -40,9 +40,10 @@ describe('webos/vite.config (M3-03)', () => {
     });
   });
 
-  it('prepends the Tizen app’s globalThis polyfill — the two TVs share the one file', () => {
+  it('prepends the Tizen app’s polyfill pair — the two TVs share the same files', () => {
     const output = config.build?.rolldownOptions?.output as { postBanner: string };
     expect(output.postBanner).toMatch(/^\/\* Shmup Cup — globalThis polyfill/);
+    expect(output.postBanner).toContain('/* Shmup Cup — matchAll polyfill');
   });
 
   it('rewrites Vite’s module script into a deferred classic script', () => {

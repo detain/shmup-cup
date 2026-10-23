@@ -9,8 +9,9 @@
  *    lowered too and the bundle parses as ES2018 — verified by scripts/check-bundle.mjs);
  *  - no `<script type="module">` (Samsung lists ES modules as only partially supported),
  *    no code splitting, no module-preload polyfill;
- *  - a tiny hand-written globalThis polyfill is prepended after minification
- *    (`postBanner`), so it runs before any bundled code, including PixiJS.
+ *  - the two hand-written ES5 polyfills in `polyfills/` (globalThis, and String.prototype
+ *    matchAll for PixiJS 8.22's sampler parse) are prepended after minification
+ *    (`postBanner`), so they run before any bundled code, including PixiJS.
  * `shmupBuildInfo()` defines `__SHMUP_DEV__` — `false` for `vite build` (the release bundle, no
  * debug tools), `true` for `--mode development` (`build:dev`: the tools behind the remote's Pause,
  * Ch+, Ch+, Ch+) and `--mode test` (`build:test`, what `pnpm test:e2e` opens) — and
@@ -35,6 +36,12 @@ import { applyConfigVariant, variantFromEnv, variantName } from './scripts/confi
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
   fileURLToPath(new URL('./polyfills/global-this.js', import.meta.url)),
+  'utf8',
+);
+
+/** Source of `polyfills/string-match-all.js`, prepended right after the globalThis one. */
+const matchAllPolyfill = readFileSync(
+  fileURLToPath(new URL('./polyfills/string-match-all.js', import.meta.url)),
   'utf8',
 );
 
@@ -149,7 +156,7 @@ export default defineConfig({
         codeSplitting: false,
         entryFileNames: 'app.js',
         assetFileNames: 'assets/[name][extname]',
-        postBanner: globalThisPolyfill,
+        postBanner: globalThisPolyfill + matchAllPolyfill,
       },
     },
   },

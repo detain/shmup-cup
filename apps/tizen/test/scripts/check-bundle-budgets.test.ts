@@ -24,7 +24,10 @@ import {
   pngSize,
 } from '../../scripts/check-bundle.mjs';
 
-const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+// The banner pair real bundles start with (rule 4, w14) — a fixture needs both.
+const polyfill =
+  readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8') +
+  readFileSync(new URL('../../polyfills/string-match-all.js', import.meta.url), 'utf8');
 /** The shipped (default-variant) config.xml — the bundle check validates it (M2-17). */
 const CONFIG_XML = readFileSync(new URL('../../public/config.xml', import.meta.url), 'utf8');
 const GOOD_HTML =

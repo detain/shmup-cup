@@ -8,7 +8,7 @@
  *
  * The rules are the Tizen build's, for the same reasons and one more: webOS 5 runs Chromium 68,
  * one release *older* than Tizen 5.5's 69, so the same `chrome69` + `es2018` target and the same
- * `globalThis` polyfill cover both. The target list is a set of constraints and the **lowest**
+ * polyfill pair (`globalThis`, `String.prototype.matchAll`) cover both. The target list is a set of constraints and the **lowest**
  * wins, so what is emitted is **ES2018** — every ES2018 feature shipped in Chrome 60–64, well
  * inside 68, and Chrome 69 added no syntax at all (only `Array.prototype.flat` / `flatMap`). What
  * the target cannot do is conjure those two methods onto an older engine, and `.browserslistrc`'s
@@ -21,10 +21,10 @@
  * `shmupBuildInfo()` defines `__SHMUP_DEV__` (`false` for `vite build`, `true` for `--mode
  * development` / `--mode test`) and `__SHMUP_BUILD__` (the git SHA).
  *
- * This config and `scripts/check-bundle.mjs` read two files out of `apps/tizen` on purpose — the
- * `globalThis` polyfill and the bundle budgets — so the two TV builds cannot drift apart. Both are
- * listed in `turbo.json`'s `globalDependencies`, so a change to either invalidates this app's
- * build cache.
+ * This config and `scripts/check-bundle.mjs` read files out of `apps/tizen` on purpose — the
+ * prepended polyfills and the bundle budgets — so the two TV builds cannot drift apart. They
+ * are listed in `turbo.json`'s `globalDependencies` (`apps/tizen/polyfills/**` and the check),
+ * so a change to either invalidates this app's build cache.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -38,6 +38,15 @@ import { clientConditions, shmupAssets, shmupBuildInfo, shmupContent } from '../
  */
 const globalThisPolyfill = readFileSync(
   fileURLToPath(new URL('../tizen/polyfills/global-this.js', import.meta.url)),
+  'utf8',
+);
+
+/**
+ * Source of the Tizen app's `matchAll` polyfill, prepended right after the globalThis one —
+ * PixiJS 8.22 calls the method in the shader sampler parse, and Chrome added it in 73.
+ */
+const matchAllPolyfill = readFileSync(
+  fileURLToPath(new URL('../tizen/polyfills/string-match-all.js', import.meta.url)),
   'utf8',
 );
 
@@ -101,7 +110,7 @@ export default defineConfig({
         codeSplitting: false,
         entryFileNames: 'app.js',
         assetFileNames: 'assets/[name][extname]',
-        postBanner: globalThisPolyfill,
+        postBanner: globalThisPolyfill + matchAllPolyfill,
       },
     },
   },

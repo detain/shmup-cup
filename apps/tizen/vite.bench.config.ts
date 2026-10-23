@@ -10,7 +10,8 @@
  *
  * **The Tizen build contract, unchanged:** `chrome69` + `es2018` (so the emitted syntax is ES2018 —
  * inside webOS 5's Chromium 68 too), one IIFE with no code splitting and no module preload, the
- * hand-written `globalThis` polyfill as the post-minify banner and a classic deferred script tag
+ * hand-written ES5 polyfills (`globalThis`, `String.prototype.matchAll`) as the post-minify banner
+ * and a classic deferred script tag
  * (`classicScriptTag()` from the game's config). `scripts/check-bundle.mjs dist-bench` checks the
  * output exactly like the game's, budgets included, and its rule 9 keeps the two apart.
  *
@@ -35,6 +36,12 @@ const appDir = fileURLToPath(new URL('.', import.meta.url));
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
   fileURLToPath(new URL('./polyfills/global-this.js', import.meta.url)),
+  'utf8',
+);
+
+/** Source of `polyfills/string-match-all.js`, prepended right after the globalThis one. */
+const matchAllPolyfill = readFileSync(
+  fileURLToPath(new URL('./polyfills/string-match-all.js', import.meta.url)),
   'utf8',
 );
 
@@ -109,7 +116,7 @@ export default defineConfig({
         codeSplitting: false,
         entryFileNames: 'app.js',
         assetFileNames: 'assets/[name][extname]',
-        postBanner: globalThisPolyfill,
+        postBanner: globalThisPolyfill + matchAllPolyfill,
       },
     },
   },

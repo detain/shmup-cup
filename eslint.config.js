@@ -107,7 +107,10 @@ export default defineConfig([
     settings: {
       browsers: ['chrome >= 69'],
       lintAllEsApis: true,
-      // Provided by apps/tizen/polyfills/ (prepended to the Tizen bundle).
+      // Provided by apps/tizen/polyfills/ (prepended to the Tizen bundle). Only globalThis is
+      // listed: matchAll is polyfilled there too — for PixiJS 8.22's sampler parse (w14) — but
+      // first-party code must keep hand-rolling it, so the lint still flags `.matchAll(`
+      // (asserted by test/integration/eslint-rules.test.ts).
       polyfills: ['globalThis'],
     },
     rules: {
@@ -162,7 +165,17 @@ export default defineConfig([
   {
     // Hand-written ES5 polyfills prepended to the Tizen bundle as a classic script.
     files: ['apps/tizen/polyfills/**/*.js'],
-    languageOptions: { ecmaVersion: 5, sourceType: 'script', globals: { ...globals.browser } },
+    languageOptions: {
+      ecmaVersion: 5,
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
+        // ES5 syntax on engines that carry the ES2015 library: the matchAll polyfill (w14)
+        // feature-detects `Symbol` (`typeof Symbol === 'function'`) — Chrome 49 gave both
+        // TVs the global; `Symbol.matchAll` (Chrome 73) is the half they lack.
+        Symbol: 'readonly',
+      },
+    },
   },
   {
     // The web dev app is served as an ES module by Vite and may use import.meta.env.

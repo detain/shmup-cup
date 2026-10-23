@@ -26,10 +26,16 @@ const APPINFO = readFileSync(
   fileURLToPath(new URL('../../public/appinfo.json', import.meta.url)),
   'utf8',
 );
-const polyfill = readFileSync(
-  fileURLToPath(new URL('../../../tizen/polyfills/global-this.js', import.meta.url)),
-  'utf8',
-);
+// The banner pair real bundles start with (rule 4, w14) — the fixtures need both.
+const polyfill =
+  readFileSync(
+    fileURLToPath(new URL('../../../tizen/polyfills/global-this.js', import.meta.url)),
+    'utf8',
+  ) +
+  readFileSync(
+    fileURLToPath(new URL('../../../tizen/polyfills/string-match-all.js', import.meta.url)),
+    'utf8',
+  );
 
 /** A 1x1 PNG. */
 const PNG = Buffer.from(

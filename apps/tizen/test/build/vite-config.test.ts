@@ -1,6 +1,7 @@
 /**
  * Unit tests for apps/tizen/vite.config.ts (the Chromium 69 build settings and the
- * classic-script rewrite plugin) and for the hand-written globalThis polyfill.
+ * classic-script rewrite plugin) and for the hand-written TV polyfills (globalThis,
+ * and matchAll since w14 — its own file is match-all-polyfill.test.ts).
  */
 import { readFileSync } from 'node:fs';
 import { createContext, runInContext } from 'node:vm';
@@ -11,6 +12,10 @@ import viteConfig from '../../vite.config.js';
 
 const config: UserConfig = viteConfig;
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+const matchAllPolyfill = readFileSync(
+  new URL('../../polyfills/string-match-all.js', import.meta.url),
+  'utf8',
+);
 
 /** @returns The `transformIndexHtml` handler of the classic-script plugin. */
 function classicScriptHandler(): (html: string) => string {
@@ -78,9 +83,9 @@ describe('tizen/vite.config build settings (Tizen 5.5 = Chromium 69)', () => {
     expect(single.entryFileNames).toBe('app.js');
   });
 
-  it('prepends the globalThis polyfill verbatim as the post-minification banner', () => {
+  it('prepends both polyfill files verbatim, globalThis first (w14)', () => {
     const output = build.rolldownOptions?.output as Record<string, unknown>;
-    expect(output.postBanner).toBe(polyfill);
+    expect(output.postBanner).toBe(polyfill + matchAllPolyfill);
   });
 
   it('uses a relative base so the packaged widget loads from any install path', () => {

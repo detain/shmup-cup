@@ -19,6 +19,7 @@ import {
   APP_JS_GZIP_BUDGET,
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
+  MATCH_ALL_BANNER,
   POLYFILL_BANNER,
   WIDGET_FILES,
   checkTizenBundle,
@@ -26,11 +27,15 @@ import {
 } from '../../scripts/check-bundle.mjs';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+const matchAllPolyfill = readFileSync(
+  new URL('../../polyfills/string-match-all.js', import.meta.url),
+  'utf8',
+);
 /** The shipped (default-variant) config.xml — the bundle check validates it (M2-17). */
 const CONFIG_XML = readFileSync(new URL('../../public/config.xml', import.meta.url), 'utf8');
 const GOOD_HTML =
   '<!doctype html><html><head><script defer src="./app.js"></script></head><body><canvas id="game"></canvas></body></html>';
-const GOOD_APP = `${polyfill}\n(function () {\n  'use strict';\n  var x = { a: 1 };\n  var y = Object.assign({}, x, { b: 2 });\n  async function f() { for await (const v of []) { void v; } }\n  void f; void y;\n})();\n`;
+const GOOD_APP = `${polyfill}${matchAllPolyfill}\n(function () {\n  'use strict';\n  var x = { a: 1 };\n  var y = Object.assign({}, x, { b: 2 });\n  async function f() { for await (const v of []) { void v; } }\n  void f; void y;\n})();\n`;
 
 let dir = '';
 
@@ -160,8 +165,9 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect([...WIDGET_FILES].sort()).toEqual(['app.js', 'config.xml', 'icon.png', 'index.html']);
   });
 
-  it('the polyfill banner constant matches the first line of polyfills/global-this.js', () => {
+  it('the polyfill banner constants match the first lines of the polyfill files', () => {
     expect(polyfill.startsWith(POLYFILL_BANNER)).toBe(true);
+    expect(matchAllPolyfill.startsWith(MATCH_ALL_BANNER)).toBe(true);
   });
 
   it.each([
@@ -175,7 +181,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     ['import.meta', 'var u = import.meta.url;'],
     ['ES module syntax', 'export var a = 1;'],
   ])('rejects %s', (_label, snippet) => {
-    put('app.js', `${polyfill}\n${snippet}\n`);
+    put('app.js', `${polyfill}${matchAllPolyfill}\n${snippet}\n`);
     const { problems } = checkTizenBundle(dir);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatch(/app\.js is not a valid ES2018 script/);
@@ -186,6 +192,14 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     put('app.js', '(function () {})();\n' + polyfill);
     expect(checkTizenBundle(dir).problems).toEqual([
       'app.js does not start with the globalThis polyfill banner',
+      'app.js does not contain the matchAll polyfill banner',
+    ]);
+  });
+
+  it('rejects a bundle that does not hold the matchAll polyfill (PixiJS 8.22, w14)', () => {
+    put('app.js', `${polyfill}\n(function () {})();\n`);
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'app.js does not contain the matchAll polyfill banner',
     ]);
   });
 

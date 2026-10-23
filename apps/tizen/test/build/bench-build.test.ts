@@ -65,7 +65,8 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
     expect(output.codeSplitting).toBe(false);
     expect(output.entryFileNames).toBe('app.js');
     expect(output.postBanner).toBe(
-      readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8') +
+        readFileSync(new URL('../../polyfills/string-match-all.js', import.meta.url), 'utf8'),
     );
     expect(settings.outDir).toBe(join(appDir, BENCH_OUT_DIR));
     expect(BENCH_OUT_DIR).toBe('dist-bench');

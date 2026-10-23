@@ -6,7 +6,8 @@
  *  2. index.html loads it with a classic `<script defer src="./app.js">` — no `type="module"`.
  *  3. app.js parses with acorn as an ES2018 *script* (this also rejects `import`/`export`,
  *     `import()`, `import.meta`, `?.`, `??`, class fields and optional catch binding).
- *  4. app.js starts with the globalThis polyfill banner (webOS 5 = Chromium 68, no `globalThis`).
+ *  4. app.js starts with the globalThis polyfill banner (webOS 5 = Chromium 68, no `globalThis`)
+ *     and holds the matchAll polyfill banner that follows it (the two prepended ES5 files, w14).
  *  5. `appinfo.json`, `icon.png` and `largeIcon.png` were copied from public/, and `appinfo.json`
  *     validates (`scripts/appinfo.mjs`).
  *  6. Every other file is a non-script asset under dist/assets/ — anything else would be packaged
@@ -39,6 +40,7 @@ import {
   APP_JS_GZIP_BUDGET,
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
+  MATCH_ALL_BANNER,
   POLYFILL_BANNER,
   TV_BENCH_MARKER,
   checkAtlasManifest,
@@ -154,6 +156,9 @@ export function checkWebosBundle(distDir) {
   // 4. the globalThis polyfill banner.
   if (code !== '' && !code.startsWith(POLYFILL_BANNER)) {
     problems.push('app.js does not start with the globalThis polyfill banner');
+  }
+  if (code !== '' && !code.includes(MATCH_ALL_BANNER)) {
+    problems.push('app.js does not contain the matchAll polyfill banner');
   }
 
   // 5. the app files, and a valid appinfo.json.

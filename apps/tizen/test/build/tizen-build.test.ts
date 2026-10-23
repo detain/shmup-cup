@@ -2,7 +2,7 @@
  * Build-output integration test: runs the real Vite build of the Tizen app into a
  * temporary folder and checks what would be packaged into the .wgt — one classic IIFE
  * script that parses as ES2018 (Tizen 5.5 = Chromium 69), a deferred classic script tag,
- * the globalThis polyfill running first, and the widget files from public/.
+ * the globalThis and matchAll polyfills running first, and the widget files from public/.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,12 @@ import { createContext, runInContext } from 'node:vm';
 import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { POLYFILL_BANNER, TV_BENCH_MARKER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import {
+  MATCH_ALL_BANNER,
+  POLYFILL_BANNER,
+  TV_BENCH_MARKER,
+  checkTizenBundle,
+} from '../../scripts/check-bundle.mjs';
 import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 
@@ -84,9 +89,9 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(types).not.toContain('ExportDefaultDeclaration');
   });
 
-  it('app.js is a pair of IIFEs (polyfill, then the app) that leak no top-level bindings', () => {
+  it('app.js is a trio of IIFEs (globalThis, matchAll, then the app) leaking no top-level bindings', () => {
     const program = parse(code, { ecmaVersion: 2018, sourceType: 'script' });
-    expect(program.body).toHaveLength(2);
+    expect(program.body).toHaveLength(3);
     for (const statement of program.body) {
       expect(statement.type).toBe('ExpressionStatement');
       if (statement.type === 'ExpressionStatement') {
@@ -95,8 +100,11 @@ describe('tizen build output (vite build → dist/)', () => {
     }
   });
 
-  it('starts with the globalThis polyfill banner', () => {
+  it('starts with the globalThis polyfill banner, then the matchAll polyfill banner', () => {
     expect(code.trimStart().startsWith(POLYFILL_BANNER)).toBe(true);
+    expect(code.trimStart().indexOf(MATCH_ALL_BANNER)).toBeGreaterThan(
+      code.trimStart().indexOf(POLYFILL_BANNER),
+    );
   });
 
   it('leaves the dev-build debug tools out of the release bundle (plan M1-19)', () => {

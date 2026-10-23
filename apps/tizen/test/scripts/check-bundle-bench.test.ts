@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TV_BENCH_MARKER, applicationIdOf, checkTizenBundle } from '../../scripts/check-bundle.mjs';
 import { BENCH_APP_ID, benchConfigXml } from '../../scripts/config-xml.mjs';
 
-const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+// The banner pair real bundles start with (rule 4, w14) — a fixture needs both.
+const polyfill =
+  readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8') +
+  readFileSync(new URL('../../polyfills/string-match-all.js', import.meta.url), 'utf8');
 const GAME_XML = readFileSync(new URL('../../public/config.xml', import.meta.url), 'utf8');
 const HTML =
   '<!doctype html><html><head><script defer src="./app.js"></script></head><body></body></html>';

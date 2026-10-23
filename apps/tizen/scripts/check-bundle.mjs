@@ -8,7 +8,8 @@
  *  3. app.js parses with acorn as an ES2018 *script* (Chromium 69 supports ES2018;
  *     this also rejects `import`/`export`, `import()`, `import.meta`, `?.`, `??`,
  *     class fields and optional catch binding that would slip through).
- *  4. app.js starts with the globalThis polyfill banner.
+ *  4. app.js starts with the globalThis polyfill banner and holds the matchAll polyfill banner
+ *     that follows it (the two prepended ES5 files, w14).
  *  5. config.xml and icon.png were copied from public/, and config.xml — whichever variant was
  *     built (default, game mode, gamepad check — `config-xml.mjs`, M2-17) — validates.
  *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
@@ -35,6 +36,7 @@
  * fixture folders.
  *
  * **Public API.** {@link checkTizenBundle}, {@link WIDGET_FILES}, {@link POLYFILL_BANNER},
+ * {@link MATCH_ALL_BANNER},
  * {@link APP_JS_GZIP_BUDGET}, {@link ATLAS_PAGE_MAX_SIZE}, {@link DIST_BUDGET}, {@link pngSize},
  * {@link TV_BENCH_MARKER}, {@link applicationIdOf}, {@link checkAtlasManifest},
  * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES}.
@@ -57,6 +59,13 @@ export const WIDGET_FILES = ['app.js', 'config.xml', 'icon.png', 'index.html'];
 
 /** First characters of the globalThis polyfill banner that must open app.js. */
 export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
+
+/**
+ * First characters of the matchAll polyfill banner, the first line of the file that must open
+ * app.js right after the globalThis one — PixiJS 8.22 calls `String.prototype.matchAll`
+ * (Chrome 73) during renderer init, and the TVs stop at Chromium 68/69 (w14).
+ */
+export const MATCH_ALL_BANNER = '/* Shmup Cup — matchAll polyfill';
 
 /**
  * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
@@ -380,6 +389,9 @@ export function checkTizenBundle(distDir) {
     // 4. Polyfill first.
     if (!code.trimStart().startsWith(POLYFILL_BANNER)) {
       problems.push('app.js does not start with the globalThis polyfill banner');
+    }
+    if (!code.includes(MATCH_ALL_BANNER)) {
+      problems.push('app.js does not contain the matchAll polyfill banner');
     }
   }
 

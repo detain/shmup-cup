@@ -6,7 +6,8 @@
  * (`apps/tizen/src/bench`, which detect the webOS host: Back 461, `webOS.platformBack()`) and the
  * same density atlases (`apps/tizen/scripts/bench-atlas.mjs`) — packaged the webOS way:
  * `dist-bench/` holds `index.html`, ONE classic IIFE `app.js` (`chrome69` + `es2018`, the shared
- * `globalThis` polyfill as the banner), the game's icons and an `appinfo.json` rewritten to the
+ * `globalThis` and `String.prototype.matchAll` polyfills as the banner), the game's icons and an
+ * `appinfo.json` rewritten to the
  * bench's own id `dev.shmupcup.renderbench` (`scripts/appinfo.mjs` `benchAppInfo`), so it would
  * install next to the game. `scripts/check-bundle.mjs dist-bench` checks it like the game's
  * build, budgets included. `bench:package` / `bench:install` (`scripts/webos-bench.mjs`) drive the
@@ -26,11 +27,17 @@ import { benchAppInfo } from './scripts/appinfo.mjs';
 const appDir = fileURLToPath(new URL('.', import.meta.url));
 
 /**
- * Source of the Tizen app's `globalThis` polyfill — one hand-written ES5 file for both TVs (see
+ * Source of the Tizen app's `globalThis` polyfill — one hand-written ES5 pair for both TVs (see
  * `vite.config.ts`).
  */
 const globalThisPolyfill = readFileSync(
   fileURLToPath(new URL('../tizen/polyfills/global-this.js', import.meta.url)),
+  'utf8',
+);
+
+/** Source of the Tizen app's `matchAll` polyfill, prepended right after the globalThis one. */
+const matchAllPolyfill = readFileSync(
+  fileURLToPath(new URL('../tizen/polyfills/string-match-all.js', import.meta.url)),
   'utf8',
 );
 
@@ -92,7 +99,7 @@ export default defineConfig({
         codeSplitting: false,
         entryFileNames: 'app.js',
         assetFileNames: 'assets/[name][extname]',
-        postBanner: globalThisPolyfill,
+        postBanner: globalThisPolyfill + matchAllPolyfill,
       },
     },
   },

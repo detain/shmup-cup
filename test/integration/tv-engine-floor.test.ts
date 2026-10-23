@@ -2,7 +2,8 @@
  * The engine floor the two TV builds share (plan M3-03).
  *
  * Tizen 5.5 is Chromium **69**; webOS 5 is Chromium **68**, one release older. Both builds are
- * emitted with the same `chrome69` + `es2018` target and the same `globalThis` polyfill, which is
+ * emitted with the same `chrome69` + `es2018` target and the same two prepended ES5 polyfills
+ * (`globalThis`, and `String.prototype.matchAll` since w14), which is
  * only safe while **no shipped source uses an API Chrome 68 lacks** — and the lint cannot say so,
  * because its browserslist floor is `chrome >= 69`: `[].flat()` and `[].flatMap()` are Chrome 69
  * APIs, so ESLint *accepts* them (`test/integration/eslint-rules.test.ts` asserts exactly that)
@@ -21,6 +22,7 @@ import {
   APP_JS_GZIP_BUDGET,
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
+  MATCH_ALL_BANNER,
   POLYFILL_BANNER,
 } from '../../apps/tizen/scripts/check-bundle.mjs';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../apps/webos/scripts/check-bundle.mjs';
@@ -258,10 +260,25 @@ describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03
     expect(POLYFILL_BANNER).toBe('/* Shmup Cup — globalThis polyfill');
     expect(read('apps/tizen/polyfills/global-this.js').startsWith(POLYFILL_BANNER)).toBe(true);
   });
+
+  it('polyfills the one Chrome 73 method PixiJS calls — one file, grep-clean', () => {
+    // PixiJS 8.22's sampler-precision parse calls String.prototype.matchAll (Chrome 73) on both
+    // TVs (w14). The fix is the second prepended file, and the built-bundle floor audit is a
+    // plain name grep, so the polyfill may define the method only through defineProperty: its
+    // text — comments and strings included, it is prepended verbatim — spells none of the shapes.
+    const file = read('apps/tizen/polyfills/string-match-all.js');
+    expect(MATCH_ALL_BANNER).toBe('/* Shmup Cup — matchAll polyfill');
+    expect(file.startsWith(MATCH_ALL_BANNER)).toBe(true);
+    // The ES5-only requirement is enforced (with an acorn parse) in
+    // apps/tizen/test/build/match-all-polyfill.test.ts; here the grep shape is what matters.
+    for (const [needle, what] of TOO_NEW) {
+      expect(file, `the polyfill ${what}`).not.toContain(needle);
+    }
+  });
 });
 
 describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
-  it('emit the same target and prepend the same polyfill file', () => {
+  it('emit the same target and prepend the same polyfill files', () => {
     const tizen = read('apps/tizen/vite.config.ts');
     const webos = read('apps/webos/vite.config.ts');
     for (const [path, source] of [
@@ -269,25 +286,36 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
       ['apps/webos/vite.config.ts', webos],
     ] as const) {
       expect(source, path).toContain("target: ['chrome69', 'es2018']");
-      expect(source, path).toContain('postBanner: globalThisPolyfill');
+      expect(source, path).toContain('postBanner: globalThisPolyfill + matchAllPolyfill');
     }
-    // webOS reads the Tizen app's file rather than keeping a copy: one polyfill, two hosts.
+    // webOS reads the Tizen app's files rather than keeping copies: one pair of polyfills,
+    // two hosts.
     expect(webos).toContain("'../tizen/polyfills/global-this.js'");
     expect(tizen).toContain("'./polyfills/global-this.js'");
+    expect(webos).toContain("'../tizen/polyfills/string-match-all.js'");
+    expect(tizen).toContain("'./polyfills/string-match-all.js'");
   });
 
   it('build the TV render bench under the same contract (plan R0-02)', () => {
     // The bench widgets ship to the same two engines, so they keep the game's target, banner and
     // classic script tag — and their code lives in `apps/tizen/src/bench`, inside the scan above.
     const benches = [
-      ['apps/tizen/vite.bench.config.ts', "'./polyfills/global-this.js'"],
-      ['apps/webos/vite.bench.config.ts', "'../tizen/polyfills/global-this.js'"],
+      [
+        'apps/tizen/vite.bench.config.ts',
+        "'./polyfills/global-this.js'",
+        "'./polyfills/string-match-all.js'",
+      ],
+      [
+        'apps/webos/vite.bench.config.ts',
+        "'../tizen/polyfills/global-this.js'",
+        "'../tizen/polyfills/string-match-all.js'",
+      ],
     ] as const;
-    for (const [path, polyfill] of benches) {
+    for (const [path, ...polyfills] of benches) {
       const source = read(path);
       expect(source, path).toContain("target: ['chrome69', 'es2018']");
-      expect(source, path).toContain('postBanner: globalThisPolyfill');
-      expect(source, path).toContain(polyfill);
+      expect(source, path).toContain('postBanner: globalThisPolyfill + matchAllPolyfill');
+      for (const polyfill of polyfills) expect(source, path).toContain(polyfill);
       expect(source, path).toContain('classicScriptTag()');
       expect(source, path).toContain("format: 'iife'");
       expect(source, path).toContain('codeSplitting: false');
@@ -366,6 +394,7 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
       'APP_JS_GZIP_BUDGET',
       'ATLAS_PAGE_MAX_SIZE',
       'DIST_BUDGET',
+      'MATCH_ALL_BANNER',
       'POLYFILL_BANNER',
     ]) {
       expect(check, name).toContain(name);
@@ -392,13 +421,16 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
       'index.html',
       'largeIcon.png',
     ]);
-    // Both checks name the same banner rule in the same words.
+    // Both checks name the same banner rules in the same words.
     for (const path of [
       'apps/tizen/scripts/check-bundle.mjs',
       'apps/webos/scripts/check-bundle.mjs',
     ]) {
       expect(read(path), path).toContain(
         "problems.push('app.js does not start with the globalThis polyfill banner')",
+      );
+      expect(read(path), path).toContain(
+        "problems.push('app.js does not contain the matchAll polyfill banner')",
       );
     }
   });

@@ -72,9 +72,12 @@ function manifestJson(): string {
   });
 }
 
+/** The ES5 banner pair real bundles start with (rule 4, w14) — the fixtures' stand-in. */
+const BANNER_PAIR = '/* Shmup Cup — globalThis polyfill */\n/* Shmup Cup — matchAll polyfill */\n';
+
 /** Writes a complete, valid fixture bundle. */
 function goodBundle(): void {
-  put('app.js', '/* Shmup Cup — globalThis polyfill */\nvar x = 1;\n');
+  put('app.js', `${BANNER_PAIR}var x = 1;\n`);
   put('index.html', '<!doctype html><script defer src="./app.js"></script>');
   put('appinfo.json', APPINFO);
   put('icon.png', PNG);
@@ -166,7 +169,7 @@ describe('webos check-bundle (M3-03)', () => {
   it('rule 10 (R1-05): rejects an app.js that carries the manifest inlined', () => {
     goodBundle();
     const names = FRAMES.slice(0, MAX_INLINED_FRAME_NAMES + 1).map((name) => `'${name}'`);
-    put('app.js', `/* Shmup Cup — globalThis polyfill */\nvar f = [${names.join(',')}];\n`);
+    put('app.js', `${BANNER_PAIR}var f = [${names.join(',')}];\n`);
     const { problems } = checkWebosBundle(dir);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatch(
@@ -180,7 +183,7 @@ describe('webos check-bundle (M3-03)', () => {
     goodBundle();
     rmSync(join(dir, 'assets', 'atlas', 'main.json'));
     put('appinfo.json', benchAppInfo(APPINFO));
-    put('app.js', `/* Shmup Cup — globalThis polyfill */\nvar m = '${TV_BENCH_MARKER}';\n`);
+    put('app.js', `${BANNER_PAIR}var m = '${TV_BENCH_MARKER}';\n`);
     expect(BENCH_APPINFO_ID).not.toBe((JSON.parse(APPINFO) as { id: string }).id);
     expect(checkWebosBundle(dir).problems).toEqual([]);
   });

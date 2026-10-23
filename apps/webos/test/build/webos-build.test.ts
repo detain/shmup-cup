@@ -2,7 +2,8 @@
  * Build-output integration test for the LG webOS app (plan M3-03): runs the real Vite build into a
  * temporary folder and checks what would be packaged into the `.ipk` — one classic IIFE script
  * that parses as ES2018 (webOS 5 = Chromium 68), a deferred classic script tag, the shared
- * `globalThis` polyfill running first, and the manifest and icons from `public/`.
+ * `globalThis` and `matchAll` polyfills running first (w14), and the manifest and icons from
+ * `public/`.
  *
  * This is the closest anything here gets to packaging: `ares-package` has never been run, and the
  * `appinfo.json` validator is what stands in for it.
@@ -16,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { POLYFILL_BANNER } from '../../../tizen/scripts/check-bundle.mjs';
+import { MATCH_ALL_BANNER, POLYFILL_BANNER } from '../../../tizen/scripts/check-bundle.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../scripts/check-bundle.mjs';
 import { validateAppInfo } from '../../scripts/appinfo.mjs';
@@ -84,9 +85,10 @@ describe('webos build output (vite build → dist/) — M3-03', () => {
     }
   });
 
-  it('app.js parses as an ES2018 classic script and starts with the polyfill', () => {
+  it('app.js parses as an ES2018 classic script and starts with the polyfills', () => {
     parse(code, { ecmaVersion: 2018, sourceType: 'script' });
     expect(code.startsWith(POLYFILL_BANNER)).toBe(true);
+    expect(code).toContain(MATCH_ALL_BANNER);
     expect(code).not.toMatch(/\bimport\.meta\b/);
   });
 
