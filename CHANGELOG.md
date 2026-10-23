@@ -785,6 +785,44 @@ These change what can be measured and record proposals — no shipped number mov
   dead weight as shipped; the boss-rush rests keep T4's re-timed grid. Propose-never-apply: wave
   14's `B3a … B3i`, `B4` and `B5` land what the owner's play-session read does not overrule.
 
+### The numbers land, and the TVs boot again (R6-01.B3 … B5, wave 14)
+
+These move shipped numbers — the balance report applied as proposed, the owner having delegated the landing
+to the wave and sent no overrides — and one boot hotfix rode the same span:
+
+- **SQUALL STEED 35,000 → 40,000** (`9e42a19e`, the `B3e` LAND): the report's one zone-score change, and the
+  whole span's only one. The two zone-e goldens re-blessed with the reason in the body — 75,730 → 80,730 and
+  75,170 → 80,170, the +5,000 landing in the final window alone; the attract demo byte-stayed (its 2,400-tick
+  window ends before the boss dies). The other eight zones closed as **zero-commit disk audits** — every KEEP
+  cell re-checked against the shipped files (claim tables of 24 / 17 / 21 / 18 / 18 / — / 21 / 21 numbered
+  rows), every verdict NO-CHANGE CONFIRMED; their pacing notes are recorded observation, not proposal.
+- **The milking cap, `repeatKills` 40 → 100** (`b38a55a0`, `B4`): the rules file and core's
+  `DEFAULT_REPEAT_KILLS` in one commit, the extends ladder, presets and every other scoring constant kept
+  byte-identical. One recording moved, and the mechanism is code-verified: the cap counts **child kills**
+  only — enemies a script or a boss spawned — never stage-timeline spawns, so only the one captain-brood
+  farm ever hit 40: `captain-range-god` re-blessed 20,950 → 28,780, its post-cap kills restored from ten
+  percent to full pay. The other 61 goldens and all ten demos byte-stayed; the release audit's capsule
+  window and all nine zone-recovery suites held over the new cap.
+- **The caravan clock, 3 → 4 min** (`9a34473c`, `B5`): `CARAVAN_TICKS` 10,800 → **14,400** — decision
+  R6-D1 applied amended, "unless the numbers say otherwise" and none of the 162 rows could finish inside
+  180 s — with the hint reworded to FOUR MINUTES in the built-in table and the en / es / ja string files.
+  No golden moved: the caravan golden carries its own frozen stage time limit, decoupled by design. The
+  presentation fingerprint moved exactly four rows, every one a sighting of that hint in the two EXTRA-menu
+  walks, plus one `core.uiStrings` content-DB row; the boss-rush rest grid KEEP-proven byte-identical. One
+  disclosed deviation: a same-class literal pin quoting the hint string followed it outside the block's file
+  list, adjudicated a justified pin at review.
+- **Reviews at zero:** `B3e-RV`, `B4-RV`, `B5-RV` and the umbrella `R6-01-RV` all APPROVE without a critical
+  or major finding — the umbrella proved the span rule-1-exact against the report and re-ran the full battery
+  at the tip green, skip census baseline-identical, twice byte-equal.
+- **The TVs boot again** (`2987d225`): the dependency security update `b42d34f2` took pixi.js to 8.22.0
+  through the catalog caret, and 8.22 parses its GLSL sampler-precision strings with the `matchAll` string
+  method — Chrome 73, beyond both TVs' engines (Chromium 69 / 68) — so every TV build answered WEBGL IS
+  NOT AVAILABLE at boot. The cure is a hand-written ES5 spec shim prepended after the globalThis polyfill in
+  **all four** TV builds, game and bench, both vendors (webOS reads the Tizen file), with a new bundle-check
+  rule watching it while the ESLint floor still flags the call in shipped source. It costs 2.2 KB gzipped a
+  bundle; both land at ≈ 405 KB of the 512 KB budget, headroom intact, and the built bundles grep to only
+  Pixi's own two uses. `RT-GLFIX` APPROVE at zero; the suite census is identical to before the fix.
+
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
 - **`OUTPUT` and `RENDERER`, saves format 4** (`9f7ea14` … `6ee8174`): a GRAPHICS page sits between GAME and
