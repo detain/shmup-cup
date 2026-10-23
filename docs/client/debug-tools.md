@@ -17,9 +17,9 @@ program on your desktop, with an on-screen list telling you where to fly: see
 [the guided capture](#the-guided-capture-preferred). Reading the panel by hand still works and is
 what to do when no desktop is reachable.
 
-The current build is version **1.0.0**, released on 2026-10-16 and kept on the `v1.x` branch;
-builds of `master` since then are **2.0.0-beta.1** (shown as **2.0.0** on the monitor), the start of
-v2, the 640 × 360 remaster, with the same tools. The v1.0 checklist for the monitors — written for
+The current build is version **2.0.0**, released on 2026-10-24 from `master` — v2, the 640 × 360
+remaster (shown as **2.0.0** on the monitor), with the same tools. The older version **1.0.0**,
+released on 2026-10-16, is kept on the `v1.x` branch. The v1.0 checklist for the monitors — written for
 its release candidate, 1.0.0-rc.1, still open, and using these tools — is in
 [release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors).
 

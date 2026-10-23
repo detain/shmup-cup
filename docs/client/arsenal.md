@@ -74,7 +74,7 @@ a type on the weapon select, or choose **EDIT** and build your own out of any we
 | ![](../images/shots/basic.png) | **SHOT** | The main gun, always on. Two on screen at a time. Everything else is extra. |
 | ![](../images/shots/missile.png) | **MISSILE** | Drops to the floor and slides along it, following every slope until a wall stops it. The answer to ground turrets. |
 | ![](../images/shots/double.png) | **DOUBLE** | Adds a second shot climbing at 45°. |
-| ![](../images/shots/laser.png) | **LASER** | A piercing beam that grows to 64 px and follows the ship up and down. Hurts each enemy at most every sixth tick, so it is not simply "more damage" — it is damage through a *line* of enemies. |
+| ![](../images/shots/laser.png) | **LASER** | A piercing beam that grows to 96 px and follows the ship up and down. Hurts each enemy at most every sixth tick, so it is not simply "more damage" — it is damage through a *line* of enemies. |
 
 ### Type B — the demolition set
 
@@ -98,7 +98,7 @@ a type on the weapon select, or choose **EDIT** and build your own out of any we
 |---|---|---|
 | ![](../images/shots/torpedo.png) | **PHOTON TORPEDO** | Falls to the ground, slides fast — and **flies on through anything it destroys**. It is stopped by a survivor, by armour and by boss parts. |
 | ![](../images/shots/free.png) | **FREE WAY** | A forward shot plus one in the last direction you were *holding*. Let go of the stick and it keeps that angle: you aim by flying. |
-| ![](../images/shots/twin.png) | **TWIN LASER** | Two short beams 8 px apart that follow your row. Four beams on screen — two pairs — and every Option fires its own. |
+| ![](../images/shots/twin.png) | **TWIN LASER** | Two short beams 12 px apart that follow your row. Four beams on screen — two pairs — and every Option fires its own. |
 
 ### EXTRA EDIT
 
@@ -122,9 +122,9 @@ How they fly is a choice on the weapon select:
 | Type | Behaviour |
 |---|---|
 | **TRAIL** | The classic: each Option repeats the path you flew, twelve records behind the one in front. They bunch up when you idle and string out when you move. |
-| **SNAKE** | A pulled chain: each link hangs 16 px from the one ahead and only ever moves when it is pulled. Stop, and the shape you made stays exactly where it is. |
+| **SNAKE** | A pulled chain: each link hangs 24 px from the one ahead and only ever moves when it is pulled. Stop, and the shape you made stays exactly where it is. |
 | **FORMATION** | Fixed offsets: a tight `>` behind you, opening into a wide `V` when you spread them. |
-| **ROTATE** | A ring orbiting your ship, one turn every 1.4 seconds, widening from 20 px to 40 px when you extend them. |
+| **ROTATE** | A ring orbiting your ship, one turn every 1.4 seconds, widening from 30 px to 60 px when you extend them. |
 
 **Spread and retract** (FORMATION and ROTATE): tap **Special** — Channel-up on the remote, **V**
 on a keyboard, **Y** on a pad — to toggle, or simply *hold* the power-up button for a quarter of a
@@ -141,7 +141,7 @@ None of them protect you from the rock. Terrain is always lethal.
 | ![](../images/shields/force-field.png) | **FORCE FIELD** | A bubble around the whole ship that takes **five** hits from bullets, lasers or rammed enemies. It visibly wears down, and gives you a few invulnerable frames per hit. |
 | ![](../images/shields/pod.png) | **SHIELD** | Two pods hanging ahead of you, 14 hits each, wearing independently. They stop what touches *them* — a bullet is used up, a body costs a hit and flies on. |
 | ![](../images/shields/pod.png) | **FREE SHIELD** | The same pods, but a pair appears centred on the direction you are last holding, up to four pods in all. Take another and it replaces the most worn pair. |
-| ![](../images/shields/pod.png) | **ROTATE SHIELD** | Two pods orbiting 16 px out, turning all the time. Nowhere is safe for long, and nowhere is unguarded for long either. |
+| ![](../images/shields/pod.png) | **ROTATE SHIELD** | Two pods orbiting 24 px out, turning all the time. Nowhere is safe for long, and nowhere is unguarded for long either. |
 | ![](../images/shields/reduce.png) | **REDUCE** | No shield at all — your ship's hitbox **shrinks** in two steps, shown by a dotted shimmer. Two hits' worth. It is the choice for players who would rather not be hit than survive being hit. |
 
 ## The `!` slot — five panic buttons

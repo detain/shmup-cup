@@ -166,13 +166,14 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **1.0.0**, released on 2026-10-16 (tag `v1.0.0`) and kept on the `v1.x`
-branch, which takes fixes only. Builds of the `master` branch since then are **2.0.0-beta.1** (the
-monitor shows **2.0.0**): the start of v2, the 640 × 360 remaster with more detailed art and longer
-zones. Its first steps have already landed there — those builds draw at 640 × 360 with every world
-distance at 1½× v1's, part of the art is already redrawn at the new density, and a replay recorded
-on a 1.0.0 build will not play on them; the rules, the zones and the sound are still 1.0.0's until
-the later steps change them. Version 1.0.0 is the **release
+This build is version **2.0.0**, released on 2026-10-24 (tag `v2.0.0`) from `master`: v2, the
+640 × 360 remaster with more detailed art and longer zones. Every step has landed — those builds
+draw at 640 × 360 with every world distance at 1½× v1's, the art is redrawn at the new density and
+all nine zones carry their remasters; a replay recorded on a 1.0.0 build will not play on them,
+while the rules, the ticks and the sound carry over from 1.0.0 at the bigger scale. The older
+game, version **1.0.0**, released on 2026-10-16 (tag `v1.0.0`), is kept on the `v1.x` branch,
+which takes security and crash fixes for a year after the 2.0.0 release and then retires.
+Version 1.0.0 is the **release
 candidate** 1.0.0-rc.1, checked from end to end ([release-candidate.md](release-candidate.md)), plus
 the third milestone ([What changed lately](#what-changed-lately)); the candidate was built on
 version 0.1.0, the end of the first milestone, and the steps of the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
@@ -958,13 +959,13 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**Released: version 1.0.0 (2026-10-16), and v2 begins.** Nothing changed in the game: 1.0.0 is the
-build this page describes, tagged `v1.0.0` and kept on the `v1.x` branch, whose builds since then
-are **1.0.1-dev** (the monitor shows **1.0.1**) and take fixes only. Builds of `master` are
-**2.0.0-beta.1** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster — its first steps have
-landed, so those builds draw at 640 × 360 with every world distance at 1½× v1's (the rules, the
-zones and the sound are unchanged until the later steps land; replays recorded on 1.0.0 builds
-are refused). A monitor with a 2.0.0 build installed may refuse a
+**Released: version 2.0.0 (2026-10-24) — v2, the 640 × 360 remaster.** The current `master` build
+is version **2.0.0** (the monitor shows **2.0.0**): v2 draws at 640 × 360 with every world distance
+at 1½× v1's, the art is redrawn at the new density and all nine zones carry their remasters (the
+rules, the ticks and the sound carry over from 1.0.0, whose record is what the rest of this page
+describes; replays recorded on 1.0.0 builds are refused). The older game is tagged `v1.0.0` and
+kept on the `v1.x` branch, whose builds are **1.0.1-dev** (the monitor shows **1.0.1**) and take
+security and crash fixes for a year after the 2.0.0 release, then retire. A monitor with a 2.0.0 build installed may refuse a
 1.0.N build of the same app — remove Shmup Cup first
 ([install-on-tv.md](install-on-tv.md#removing-an-app)).
 

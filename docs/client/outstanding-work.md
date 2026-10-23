@@ -3,10 +3,12 @@
 > **The code is finished. The product is not.**
 >
 > All 45 steps of [`shmup_plan.md`](../old/shmup_plan.md) are built, reviewed, tested and
-> documented. Everything still open needs something no agent in this repository has: **a monitor or
-> a TV in your hands, a developer or store account, or a human with an eye or an ear** (a native
-> speaker, a pixel artist, a musician). Nothing below is blocked on code; a few items will *produce*
-> code once they are done, and those say so.
+> documented — and so is every step of v2's plan, [`plan_resolution.md`](../plan_resolution.md):
+> the 640×360 remaster is released as version **2.0.0** (2026-10-24). Everything still open needs
+> something no agent in this repository has: **a monitor or a TV in your hands, a developer or store
+> account, or a human with an eye or an ear** (a native speaker, a pixel artist, a musician).
+> Nothing below is blocked on code; a few items will *produce* code once they are done, and those
+> say so.
 
 This page is the single list. It gathers what used to be spread over plan §8.2, §8.4 … §8.9 and
 half a dozen client pages, and it says of each item **what it blocks**. The detailed recipes stay
@@ -22,7 +24,8 @@ thing they describe.
 | [**Polish — blocks nothing**](#3-polish--blocks-nothing) | Worth doing, safe to defer. The game ships without any of it. |
 
 A fourth thing is worth stating once, because it colours everything below: **the art, the music and
-the two new translations are placeholders.** They are original, deliberate and complete — every
+the Spanish and Japanese translations are placeholders.** They are original, deliberate and complete
+— every
 sprite, every sound and all 365 strings in three languages exist — but they were generated or
 written by an agent, not made by an artist, a composer or a native speaker. See
 [what "placeholder" means here](#what-placeholder-means-here).
@@ -32,8 +35,9 @@ written by an agent, not made by an artist, a composer or a native speaker. See
 ## 1. Blocks a release on the Samsung monitors
 
 The Samsung Smart Monitor M7 (Tizen 5.5) is what this game was written for, and the only hardware
-the project has ever touched — and even there, only the **input probe** has run on it
-([results](../dev/input-probe-results.md), 2026-09-15). **The game itself has never been installed
+the project has ever touched — and even there, only the **input probe** (2026-09-15,
+[results](../dev/input-probe-results.md)) and the **TV render bench** (15 sessions on monitor
+10.0.0.224, 2026-10-19, read in §3) have run on it. **The game itself has never been installed
 on a monitor.**
 
 ### 1.1 Play it on the monitors (plan §8.4, §8.5)
@@ -47,20 +51,26 @@ Everything else on this page can wait behind this one. Set up per
   a remote-only clear proves on hardware — Back / Home / exit behaviour,
   audio, saves across a relaunch and an update install, 15 minutes without a hitch, gamepad and
   keyboard. Guide: [`debug-tools.md`](debug-tools.md#the-m1-release-check).
-- **The seven wave-11 / wave-12 zone sign-offs** — zones B (`1d3fd600`), C (`247e39fb`),
+- **The eight remaster sign-offs (waves 11–13)** — zones B (`1d3fd600`), C (`247e39fb`),
   D (`927b137f`), E (`fe4cdae3`), F (`5319d732`) and G (`66122e87`) each landed their remaster
-  with recorded god-mode clears, and zone H joined them in wave 12 (`a2d94928`); none of the
-  seven has been played on a monitor since. The owner's part per zone:
+  with recorded god-mode clears, zone H joined them in wave 12 (`a2d94928`) and zone I closed the
+  set in wave 13 (`2d35a7a5`); none of the eight has been played on a monitor since. The owner's
+  part per zone:
   a `build:dev` install on the M7, fly the stage, sign it off — the WARNING-to-boss stretch in
   particular, where each remaster's new set pieces arrive (the dive, the dune-surf, the chase,
-  the shutters, and in zone H the gate with its swinging plate slabs and the shadow they throw
-  across the checkpoint's ship rows).
+  the shutters, in zone H the gate with its swinging plate slabs and the shadow they throw
+  across the checkpoint's ship rows, and in zone I the trench and the ARK raid's 90 seconds).
 - **M2 / v1.0 checks** — plan [§8.5](../old/shmup_plan.md#85-m2-on-device-checks-both-monitors):
   co-op, three routes to both endings, the attract loop, rebinding, the 30-minute soak, the update
   and uninstall save rules, live reload. Guide:
   [`release-candidate.md`](release-candidate.md#the-v10-checklist-both-monitors).
 - **The M3-02b block inside §8.4** (the tuning the probe's findings produced): the overlay's `TPF`
   counters while flying, Home during play, the INPUT TEST's three-press exit.
+- **The 2.0.0 release session** (plan_resolution.md R6-03): a `build:dev` install of the release
+  line on an M7, the §8.4 checks at 640×360, the guided render capture (`rp-` — §3; it carries the
+  boot ≤ 10 s and whole-process memory figures R6-02.P3 could not measure), and one complete route
+  on a human's remote. The render budgets are already met on firmware (R6-02.P3, §3); the game's
+  own frame on the monitors is the one number no bench can supply.
 
 Results go into the checklists themselves and anything surprising into
 [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md).
@@ -106,8 +116,12 @@ owner's part of plan_resolution.md R2-01: install a current v2 build on an M7 an
 (`virtual:shmup-assets-inline` inlines the manifest again) and the bundle check's rule 10 relaxed
 in the same change — the recipe is in
 [`build-test-deploy.md`](../dev/build-test-deploy.md#troubleshooting) and
-[`rendering-and-shell.md`](../dev/rendering-and-shell.md#the-boot-sequence). This gates the v2 TV
-release like §1.1: v1.0.0 shipped with the manifest inlined, so only v2 builds take this path.
+[`rendering-and-shell.md`](../dev/rendering-and-shell.md#the-boot-sequence). The same install now
+also confirms the **`String.prototype.matchAll` polyfill**: PixiJS 8.22 needs it and neither TV's
+Chromium (69 / 68) has it, so both builds prepend it beside the globalThis file (landed 2026-10-20,
+`2987d225`) — a boot to the title clears both at once. This gates the v2 TV release like §1.1:
+v1.0.0 shipped with the manifest inlined, so only v2 builds take this path, and the 2.0.0 release
+session (§1.1) is where both are proven.
 
 ---
 
@@ -117,7 +131,10 @@ release like §1.1: v1.0.0 shipped with the manifest inlined, so only v2 builds 
 
 Recipe and the on-device checklist: [`webos.md`](webos.md). **`apps/webos` has never run on
 hardware**: no LG TV, no LG developer account, no webOS SDK, and `ares-package` / `ares-install` /
-`ares-launch` have never been executed. Treat the first run as untested code, not as a regression.
+`ares-launch` have never been executed. Treat the first run as untested code, not as a regression;
+the boot itself rides the same polyfill pair the Tizen build carries (globalThis plus the
+`String.prototype.matchAll` file PixiJS 8.22 needs, `2987d225`) — Chromium 68 has no `matchAll`, so
+a title screen on the set is the proof.
 
 Needed: a webOS **5.0 or newer** set, the webOS TV SDK, an LG developer account and Developer Mode
 on the TV. Then build → package → install → run, and work the checklist — especially **Back (461)**
@@ -155,24 +172,35 @@ archive in a browser before you publish it.
   game's ship reacting to a press. It measures; it changes nothing by itself.
 - **Two gamepads at once on a monitor** (plan §8.2, §8.4). Co-op with two pads is tested in the
   suite and was played with a remote plus one pad; two pads on the TV has never been tried.
-- **The M3-02f render-profile capture** (plan §8.4). The guided on-screen checklist plus the log
-  server fill [`input-probe-results.md` §11](../dev/input-probe-results.md). Since M3-02e the
-  headless bench already gates the render work, so this is confirmation on real silicon, not a
-  gate. Owner's recipe: [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred).
-- **The v2 TV-bench run on the M7** (plan_resolution.md R0-03, decisions W5-15 / W5-19). The
-  2026-10-19 sessions ran R0-02's 18-scenario matrix and the synthetic decode pages; since then the
-  matrix grew to **172 rows** (fifteen resolutions × two art densities + knob rows), R3-04.M4a
-  rebuilt the decode load around the **stand-in zone pages** (real band PNG-8 pages, not synthetic
-  sheets) and appended a last load, **`standin-zone`**, that draws a 640×360 frame from what it just
-  decoded. That run *is* the measurement for decision **W5-19** — ≤ 2 s per zone load on the M7 —
-  which today has only the headless-ratio projection (**≈ 0.5 s** against the 2 s gate, ~4×
-  headroom; [render-performance-review.md § 7.6](../dev/render-performance-review.md#76-hard-limits-to-check-before-committing-to-b)).
-  It also reads the **lazy residency's** timings on firmware (since R3-04.M3e pages fetch, decode
-  and upload at the stage change — `data-shmup-atlas-load-ms` on the canvas covers the whole load),
-  and while the TV is up: a WebGL context loss on the real device (the recovery re-fetches the
-  resident pages — R3-04.M3d; `WEBGL_lose_context` in the remote Web Inspector does it on demand),
-  and the two play confirmations the wave asks the owner to make — **W5-2** (the ship's spawn row is
-  the frame centre) and **W5-15** (the lazy memory policy is the right one on a real set). Recipe:
+- **The M3-02f render-profile capture** (plan §8.4) — the one owner measurement the release leaves
+  open. The guided on-screen checklist plus the log server fill
+  [`input-probe-results.md` §11](../dev/input-probe-results.md); R6-02.P2 built the wave-13 kit and
+  put its checklist in [`install-on-tv.md`](install-on-tv.md), and no `rp-` session has run since.
+  Since M3-02e the headless bench already gates the render work, so this is confirmation on real
+  silicon, not a gate — but the release's **boot ≤ 10 s** and **whole-process memory** figures ride
+  on it (R6-02.P3 read them *not measured, not missed*), as does a fresh zone-load re-measure — the
+  2026-10-19 numbers were taken on builds that pre-date the final art. Owner's recipe:
+  [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred).
+- **The v2 TV-bench run on the M7** (plan_resolution.md R0-03, decisions W5-15 / W5-19) — **run and
+  read: 2026-10-19, monitor 10.0.0.224, 15 committed sessions** (R0-02's 18-scenario matrix grown
+  to **172 rows** — fifteen resolutions × two art densities + knob rows — plus the resolution
+  sweeps; the tables and verdicts are in
+  [`render-performance-review.md`](../dev/render-performance-review.md) and the
+  [`input-probe-results.md`](../dev/input-probe-results.md) log record). Against the budgets
+  (R6-02.P3): **zone load ≤ 2 s MET on firmware** — cold first atlas 1.48–1.59 s, zone change
+  0.73–0.77 s — so W5-19's verdict is in (the ≈ 0.5 s headless projection was optimistic; the gate
+  holds); **TPF 1 met** at the shipped Auto output (≥ 98 % of frames in the normal-play rows); the
+  absolute render-ms reading misses the 8 ms budget **as a panel floor** — v1's own baseline shares
+  it — while the scene-attributable reading is inside budget and the headless gate is green (worst
+  p95 1.60 ms of 16 ms); **memory met** on every counted component (JS heap ≤ 30.8 MiB, atlas
+  textures 8 MiB, counted total ≤ 21 MiB GPU, draw calls 11–16 against feat §22's 20–50). So **no
+  TV mitigation ships**: P4a (parallax cap), P4b (half-res far layers), P4c (CRT off on the TV) and
+  P4d (WebGL 2 by default) are recorded **not needed** — a mitigation ships only if the numbers miss
+  a budget, and they do not. What the run leaves open for the rows above: the **second M7**
+  (10.0.0.8 has only the 2026-09-15 probe sessions), the **WebGL context-loss** recovery on
+  firmware (R3-04.M3d; `WEBGL_lose_context` in the remote Web Inspector does it on demand) and the
+  lazy residency read on a set (**W5-15**, with **W5-2** — the ship's spawn row is the frame
+  centre). Recipe:
   [`build-test-deploy.md` § The TV render bench](../dev/build-test-deploy.md#the-tv-render-bench-r0-02);
   commit the sessions to `tools/input-probe/results/<date>-m7-bench/` and print them with
   `results/analyze-bench.mjs` (it estimates from the measured stand-in pages since R3-04.M4a).
@@ -181,17 +209,15 @@ archive in a browser before you publish it.
   only ever be a separately loaded file. The *CPU* half needs the library and a monitor. Doing it
   means writing code (a `TrackerBackend` over `chiptune3` in a dev build); the seam it plugs into
   ships today. Background: [`audio.md`](../dev/audio.md).
-- **The interim look at 640×360** (plan_resolution.md R2-01, the owner part). The flipped game runs
-  v1's art nearest-neighbour ×1.5 and the 6×8 font as a 9×12 block — interim by design until R4
-  replaces it, but the owner should look: text readability of the interim build (`pnpm dev`, or a
-  `build:dev` bundle on the M7), the es front end on a TV, and a `V1 REPLAY` row (an old
-  `replay.last` kept by a v2 build, shown delete-only —
-  [`extra-modes-and-replays.md`](extra-modes-and-replays.md)). R2-04's play session continues the
-  look: zones A, D and I on the M7 with the overlay's `TPF` and `RENDER` — and zone A again after
-  R5-01's remaster: the rebuilt 21,000 px of it has never been seen on a TV. Wave 11 rewrote that
-  last clause six times and wave 12 makes it seven: the remasters of zones B, C, D, E, F and G —
-  and of zone H, the 20,250 px from the outer walls to the throne (`a2d94928`) — each replace its
-  v1 entry here; none of them has ever drawn a frame on a TV either.
+- **The v2 look on the M7** (plan_resolution.md R2-01 / R2-04, the owner part). The interim era is
+  over — the shipped build draws v2's own art and the native 9×12 font — so what remains is the
+  look during play: text readability on a TV (`build:dev` on the M7), the es / ja front end on a
+  set, and a `V1 REPLAY` row (an old `replay.last` kept by a v2 build, shown delete-only —
+  [`extra-modes-and-replays.md`](extra-modes-and-replays.md)). R2-04's play session asks for zones
+  A, D and I on the M7 with the overlay's `TPF` and `RENDER` — and wave 11 wrote the last clause
+  six times for zones B … G, wave 12 added H's 20,250 px (`a2d94928`) and wave 13 I (`2d35a7a5`):
+  none of the eight remasters, and not the flipped frame itself, has ever drawn a frame on a TV.
+  Every play in §1.1 runs on hardware for the first time.
 - **Real art and music**, whenever they exist. The hand-off is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
   replaces, so nothing else has to change. R5-01's zone A joins that queue as complete
@@ -211,8 +237,13 @@ archive in a browser before you publish it.
   `terrain-abyss-v2` sheet (v1's twenty tiles verbatim + coral + `abyss-glow`), the three new
   roster names, and the rebuilt ARK's and KING's part names the stand-in kit draws — all standing
   in at R5-D6 shapes until the round above drops the real art.
-  Each zone's own art round waits on one owner decision first — the FLUX serving-model ruling,
-  [`art-provenance.md`](../dev/art-provenance.md) §8 — before candidates are generated.
+  Each zone's own real-art drop (its `R5-0n.S3` step) waits on one owner decision first — the
+  **FLUX serving-model ruling**, [`art-provenance.md`](../dev/art-provenance.md) §8 decision 1 —
+  and it is **the one hard block on the whole art queue**: 85 winners already wait, round 2 (203
+  follow-ups) plans FLUX.2-dev, and no AI image output may ship, or be disclosed as shipping, until
+  it lands. The 2.0.0 release is *not* behind it — its atlas reports zero AI sprites
+  (`node scripts/art-origins.mjs`) — so the queue follows the release, with the ingest tool and its
+  provenance records ready.
 - **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
   two art lines side by side: v1's sprites still draw the scale-1 atlas behind its digest pin
   (`5c35219b…44b3`), the v2 azure set draws the art-scale build. After a v2.0.x release the owner
@@ -288,7 +319,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 
 | Item | Blocks | Recipe |
 |---|---|---|
-| Play the game on both M7 monitors (§8.4, §8.5) | Everything — it has never run on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check), [`release-candidate.md`](release-candidate.md#the-v10-checklist-both-monitors) |
+| Play the game on both M7 monitors (§8.4, §8.5) **and the 2.0.0 release session** (plan_resolution.md R6-03, §1.1) | Everything — it has never run on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check), [`release-candidate.md`](release-candidate.md#the-v10-checklist-both-monitors) |
 | The v2 manifest boot on an M7 (plan_resolution.md R1-05 / R2-01, W3-7) | The v2 TV release — `file://` XHR never on firmware | [§1.4](#14-the-v2-manifest-boot-on-the-m7-w3-7) |
 | Seller Office account, trade dress, store assets, alpha test (§8.6, §8.9) | The Samsung release | [`store-submission.md`](store-submission.md) |
 | A native speaker over `es` and `ja` (§8.9) | Shipping those two languages | [`content/strings/README.md`](../../content/strings/README.md) |
@@ -297,11 +328,11 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | Steam partner account, app id, achievements, Cloud, SteamPipe (§8.8) | The Steam release only | [`steam.md`](steam.md) |
 | A Steam Deck (§8.8) | Deck Verified only | [`steam.md`](steam.md#steam-deck-verification-plan-88) |
 | An itch.io account (§8.9) | The web release only | [`web-release.md`](web-release.md) |
-| 240 fps latency video, two pads at once, the render capture (§8.2, §8.4) | Nothing — measurement | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
-| The v2 TV-bench run on the M7 — stand-in scenario, lazy-load and context-loss timings (plan_resolution.md R0-03, W5-15 / W5-19) | Nothing — it produces the measured zone-load verdict R3-04 waits on | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
+| 240 fps latency video, two pads at once, the `rp-` render capture (§8.2, §8.4) | Nothing — but the release's boot ≤ 10 s and whole-process memory figures ride the capture (kit built, R6-02.P2) | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
+| The v2 TV-bench run on the M7 — **run 2026-10-19 on monitor 10.0.0.224, budgets met, P4a–d not needed** (R6-02.P3); open: the second monitor, firmware context loss, W5-2 / W5-15 | Nothing — the measured zone-load verdict is in | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
-| Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |
-| The seven wave-11 / wave-12 remasters **and zone I's** played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
+| Real art and music — every zone's drop behind the owner's **FLUX licence ruling** (art-provenance.md §8 decision 1; 2.0.0 ships no AI image art — the origin report finds none) | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
+| The eight remasters of zones B … I (waves 11–13) played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
 | Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); the owner parts that remain: the `R5-09.S3` real-art drop (behind the FLUX ruling) and the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |
 | Boss-fight pacing bands (C, D, E, G), zone G's gallery mouth, zone H's arcade pacing, the R6-01 pacing-lever watch bank | Nothing — disclosed by the goldens and the balance pass, not tuned | [§3](#3-polish--blocks-nothing) |
 | The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |

@@ -14,8 +14,9 @@ find nothing serious, this is what version 1.0 will be.
 > was released as **Shmup Cup 1.0.0** on 2026-10-16 (tag `v1.0.0`; M3 is now the `[1.0.0]`
 > section of [`CHANGELOG.md`](../../CHANGELOG.md)). The checklist for the monitors below was still
 > open when it was tagged, and still is ([what is left](outstanding-work.md)). v1 is kept on the
-> `v1.x` branch — the same 384 × 216 game, fixes only, version 1.0.1-dev — and the `master` branch
-> is now v2, the 640 × 360 remaster, version **2.0.0-beta.1** (2.0.0 on the monitor). The rest of
+> `v1.x` branch — the same 384 × 216 game, version 1.0.1-dev, taking security and crash fixes for a
+> year after the 2.0.0 release and then retiring — and the `master` branch is v2, the 640 × 360
+> remaster, released as version **2.0.0** (2.0.0 on the monitor) on 2026-10-24. The rest of
 > this page is the candidate's record as it was written.
 
 > **Those checks are still open**, and the version is still `1.0.0-rc.1`. The milestone-M3 work that
@@ -41,8 +42,8 @@ A later release candidate keeps the TV's **1.0.0**, so tell builds apart by the 
 
 **Since the release (2026-10-16):** a build of the `v1.0.0` tag shows exactly the above — its
 manifests were never bumped from 1.0.0-rc.1. A build of the `v1.x` branch shows **1.0.1** on the
-monitor and **1.0.1-dev** everywhere else; a build of `master` shows **2.0.0** on the monitor and
-**2.0.0-beta.1** everywhere else. A monitor with a 2.0.0 build may refuse a 1.0.N build over it:
+monitor and **1.0.1-dev** everywhere else; a build of `master` shows **2.0.0** everywhere — the
+released v2, since 2026-10-24. A monitor with a 2.0.0 build may refuse a 1.0.N build over it:
 remove the app first ([install-on-tv.md](install-on-tv.md#removing-an-app)).
 
 ## What changed for players
@@ -158,7 +159,7 @@ submission — they could not be confirmed when the placeholders were made.
 | Problem | What to do |
 |---|---|
 | The monitor shows version **1.0.0**, not 1.0.0-rc.1 | Expected — the TV takes numbers only. Use the build id (debug build panel) to tell builds apart |
-| A build shows **1.0.1** / **1.0.1-dev**, or **2.0.0** / **2.0.0-beta.1** | Expected since the 1.0.0 release — a build of the `v1.x` maintenance branch, or of `master`, where v2 is in development |
+| A build shows **1.0.1** / **1.0.1-dev**, or **2.0.0** | Expected — a build of the `v1.x` maintenance branch, or of `master`, where 2.0.0 is the released line |
 | Installing a `v1.x` build fails on a monitor that had a `master` build | The monitor may refuse the lower version — remove Shmup Cup first ([install-on-tv.md](install-on-tv.md#removing-an-app)) |
 | The Apps panel still shows the old icon after installing | The panel may keep the old picture for a while; restart the monitor. If it persists, report it with a photo |
 | A MANTA wave makes a clink sound and keeps flying | Expected since this build — waves pass through armour now |

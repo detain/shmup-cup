@@ -106,13 +106,15 @@ Every enemy and every boss, with art and a paragraph each:
 
 ### Options and accessibility
 
-Three pages of settings, all saved, all reachable with the remote: volumes; **CONTROLS** — autofire
+Five pages of settings, all saved, all reachable with the remote: volumes; **CONTROLS** — autofire
 always / toggle / hold, fire rate, SOCD, remote debounce, **rebinding for keys and pads with
-conflict detection**, and a live input test; **DISPLAY** — four bullet palettes, **three of them
-colour-blind sets** with shape-coded centres, scale mode, screen shake off, **reduced flashing**, a
-visible hitbox, the boss HP bar, CRT and scanline filters, ultra-wide and classic 4:3 windows with
-lit side panels; and **GAME** — difficulty, lives, death penalty, Auto Power-Up, pickup magnet, and
-a **one-button preset** that turns the whole game into "hold nothing, press nothing".
+conflict detection**, a live input test and pad rumble; **DISPLAY** — four bullet palettes, **three
+of them colour-blind sets** with shape-coded centres, scale mode, screen shake off, **reduced
+flashing**, a visible hitbox, the boss HP bar and the text language; **GAME** — difficulty, lives,
+death penalty, Auto Power-Up, pickup magnet, a **one-button preset** that turns the whole game into
+"hold nothing, press nothing", and the assists; **GRAPHICS** — the canvas output and the renderer
+boot knobs, the CRT and scanline filters, and the ultra-wide and classic 4:3 windows with lit side
+panels; and **EXTRAS** — the 16-bit slowdown, graze points, the death bomb and the black-hole bomb.
 
 The game speaks **English, Español and ニホンゴ** — the Japanese in katakana, the way the arcade
 machines wrote it. (The Spanish and Japanese texts are placeholders that no native speaker has read
@@ -256,13 +258,14 @@ the [World and its tick](docs/dev/sim-world.md), [stages](docs/dev/stage-runtime
 
 ## Status
 
-Version **2.0.0-beta.1** on `master`: **v2, the 640×360 remaster** — this page describes it: the
-picture draws at 640×360 and every world distance is 1½× v1's, while the more detailed art and the
-longer zones arrive step by step ([`plan_resolution.md`](plan_resolution.md)). **v1**, the
-original 384×216 game, is released as
-[`v1.0.0`](https://github.com/detain/shmup-cup/releases/tag/v1.0.0) and maintained on the
-[`v1.x`](https://github.com/detain/shmup-cup/tree/v1.x) branch (fixes only). Everything described on
-this page is implemented, tested and playable from the title screen to the credits.
+Version **2.0.0**, released 2026-10-24 from `master`: **v2, the 640×360 remaster** — this page
+describes it. The picture draws at 640×360 and every world distance is 1½× v1's, and all nine zones
+carry their remaster's longer layouts and the more detailed art the committed pipeline draws
+([`plan_resolution.md`](plan_resolution.md)). **v1**, the original 384×216 game, is released as
+[`v1.0.0`](https://github.com/detain/shmup-cup/releases/tag/v1.0.0); its
+[`v1.x`](https://github.com/detain/shmup-cup/tree/v1.x) branch takes security and crash fixes for a
+year after this release, then retires. Everything described on this page is implemented, tested and
+playable from the title screen to the credits.
 
 What is *not* done is everything that needs hardware, an account or a person: the game has never
 been installed on the Samsung monitors it was written for, never run on an LG set, never spoken to

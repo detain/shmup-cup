@@ -39,15 +39,18 @@ work too, and every device drives both the game and the menus.
 > title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
 > START) and **SOUND TEST** box (◀ ▶ choose a tune or a sound, OK plays it) close with Back
 > ([preview-build.md](preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
-> **OPTIONS** (on the title and in the pause menu) sets the game's volumes and opens three pages:
+> **OPTIONS** (on the title and in the pause menu) sets the game's volumes and opens five pages:
 > **CONTROLS** — the control profile ([below](#control-profiles)), how the gun fires (**AUTOFIRE**
 > always / toggle / hold, in a browser) and how fast (**RATE**), **SOCD**, the remote's hiccup
 > protection (**DEBOUNCE**), **your own keys and buttons** ([Rebinding](#rebinding-keys-and-buttons))
-> and an **INPUT TEST** ([below](#the-controls-page-autofire-socd-and-the-hiccup-protection)) —,
-> **DISPLAY** — the enemy bullets' colours (standard or one of three colour-blind sets), how the
-> picture fills the screen, the screen shake, gentler flashes, a hitbox marker on your ship and the
-> boss HP bar — and **GAME** — the difficulty, lives, what losing a ship costs, Auto Power-Up, the
-> capsule magnet and **ONE BUTTON** play ([One-button play](#one-button-play))
+> and an **INPUT TEST** ([below](#the-controls-page-autofire-socd-and-the-hiccup-protection)), and pad
+> **RUMBLE** —, **DISPLAY** — the enemy bullets' colours (standard or one of three colour-blind sets),
+> how the picture fills the screen, the screen shake, gentler flashes, a hitbox marker on your ship,
+> the boss HP bar and the language the menus speak —, **GAME** — the difficulty, lives, what losing
+> a ship costs, Auto Power-Up, the capsule magnet and **ONE BUTTON** play
+> ([One-button play](#one-button-play)) —, **GRAPHICS** — the canvas **OUTPUT** and **RENDERER** boot
+> knobs (each takes effect after a restart) and the **CRT** and **ASPECT** rows — and **EXTRAS** — the
+> 16-bit slowdown, graze points, the death bomb and the black-hole bomb ([below](#the-black-hole-bomb-and-the-death-bomb))
 > ([preview-build.md](preview-build.md#the-options-screen)); the game remembers all of them.
 > **Special** (Channel up on the remote, V on a keyboard, Y on a gamepad) spreads FORMATION and
 > ROTATE Options out and back in — as does **holding** PowerUp
