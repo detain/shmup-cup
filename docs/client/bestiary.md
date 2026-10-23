@@ -253,7 +253,7 @@ the gap always on its own line. Shoot the guns, or thread the gap it leaves.
 
 ![SQUALL STEED](../images/bosses/squall-steed.png)
 
-**35,000 pts.** A vast seahorse of plate and cable that bobs on the storm. Body, head and lids are
+**40,000 pts.** A vast seahorse of plate and cable that bobs on the storm. Body, head and lids are
 armour. The **chest** opens to let the foals out — that is the only moment it can be hurt, and
 the only moment the screen is full of little homing things. The remaster gave it a mane, a crest
 and flank plates, and made its snout a 26 HP gun (1,000 pts) you can take off before it fires;

@@ -410,7 +410,7 @@ bastion's arms destructible made the eye's ring un-hittable. The parts are the n
 
 ### SQUALL STEED (SS-05)
 
-The **seahorse** archetype, rebuilt to design §8 at R5-05: **twelve parts**, 35,000 points,
+The **seahorse** archetype, rebuilt to design §8 at R5-05: **twelve parts**, 40,000 points,
 `introTicks` 150, `minion` `steed-foal`; it enters at view (520, 168). The three-phase **heat
 ladder is the design's verbatim** — every shot speed lifted off v1's ported line, so the fight
 reads hotter at the same gates.

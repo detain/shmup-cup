@@ -1818,7 +1818,7 @@ A giant seahorse on the right that **bobs gently up and down**:
 | Part | Looks like | What your shots do |
 |---|---|---|
 | **Body** and **head** | The plated trunk with its fin and curled tail, the crowned head | Nothing, ever |
-| **Chest** | A glowing hatch in the front of the body, with a **lid** above and below | Nothing while it is **shut**; while it is **open** (the lids move apart) it takes the hits: 64 in all. Destroying it destroys the boss (35,000 points) |
+| **Chest** | A glowing hatch in the front of the body, with a **lid** above and below | Nothing while it is **shut**; while it is **open** (the lids move apart) it takes the hits: 64 in all. Destroying it destroys the boss (40,000 points) |
 | **Snout** | The long tube snout on the head | 24 hits, 1,000 points — without it, no more fans or rings |
 
 **How it fights.** The chest stays shut for about two seconds and opens for about two: **that is
