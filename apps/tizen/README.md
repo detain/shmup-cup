@@ -14,9 +14,9 @@ pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to t
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
-The package version is **2.0.0-beta.1** on `master` (v2 in development; the released v1, 1.0.0, is
+The package version is **2.0.0** on `master`, the released v2 (the released v1, 1.0.0, is
 maintained on the `v1.x` branch as `1.0.1-dev`); the widget version in `public/config.xml` is
-**2.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget takes the numeric core of
+the same **2.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget takes the numeric core of
 the package's version, kept in step by a test (`test/config-xml/config-xml-consistency.test.ts`).
 Never write a pre-release tag into `config.xml`. v2 installs as an update of the same widget id, so
 its widget version stays above v1's.
@@ -31,8 +31,11 @@ placeholder art — the logo above the two ships; regenerate it after changing t
 - syntax lowered with `build.target: ['chrome69', 'es2018']`;
 - `format: 'iife'`, no code splitting, no module preload; Vite's
   `<script type="module">` is rewritten to `<script defer src="./app.js">`;
-- a hand-written ES5 **`globalThis` polyfill** (`polyfills/global-this.js`, Chrome 71+ API
-  used by PixiJS) is prepended after minification.
+- hand-written ES5 **polyfills** are prepended after minification, as the post-minification
+  banner pair: `polyfills/global-this.js` (`globalThis` arrived in Chrome 71 and PixiJS uses it)
+  first, then `polyfills/string-match-all.js` (`String.prototype.matchAll` arrived in Chrome 73
+  and PixiJS 8.22 calls it in the shader-sampler parse — the TV boot cure of the 2026-10-20
+  dependency bump).
 - the repo's **`shmupContent()`** plugin (`vite.shared.ts`) serves `virtual:shmup-content`:
   every shipped `content/**/*.json` inlined into `app.js`, because a widget on `file://`
   cannot `fetch()` local files (decision D25). No content files are copied into `dist/`.
@@ -50,7 +53,8 @@ placeholder art — the logo above the two ships; regenerate it after changing t
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
-the polyfill, `config.xml` / `icon.png` are present, every other file lives under
+the polyfill banner pair (the globalThis file opening `app.js`, the matchAll file right
+after), `config.xml` / `icon.png` are present, every other file lives under
 `dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
 page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
 **budgets** hold: `app.js` ≤ 512 KB gzipped (350 KB until M2-16, 384 KB until M3-02), every atlas page a PNG of at most 2048², the whole
@@ -94,7 +98,7 @@ developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-repl
   `dist/` holds exactly the widget files plus the atlas pages, byte-identical to the
   pipeline output;
 - `test/build/vite-config.test.ts` covers the classic-script rewrite, the build target and
-  the polyfill; `test/scripts/` covers the bundle checker and the Tizen CLI wrappers (with
+  the polyfill pair; `test/scripts/` covers the bundle checker and the Tizen CLI wrappers (with
   `spawnSync` mocked — nothing is ever executed);
 - `test/boot/boot-wiring.test.ts` boots the app against a fake window, `window.tizen`,
   renderer and AudioContext; `test/boot/debug-tools.test.ts` checks the TV debug tools (number

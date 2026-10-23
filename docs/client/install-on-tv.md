@@ -78,9 +78,9 @@ pnpm --filter @shmup/tizen tizen:run
   those two commands again. (The input probe's `deploy` accepts a comma-separated list; the game scripts do not.)
 - After every new `build`, run `tizen:package` again before installing.
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
-- **Which game you build** depends on the branch. The default branch, `master`, is v2 in development
-  (version 2.0.0-beta.1 — v2 draws the bigger picture and the 1½× world; rules, ticks and scores
-  unchanged); the released game, version 1.0.0 and its fixes, is on the `v1.x` branch — `git switch`
+- **Which game you build** depends on the branch. The default branch, `master`, is v2 — the
+  released 2.0.0 of 2026-10-24 (v2 draws the bigger picture and the 1½× world; rules, ticks and scores
+  unchanged); the released v1 game, version 1.0.0 and its fixes, is on the `v1.x` branch — `git switch`
   `v1.x` before `pnpm install` to build that one. Going from a `master` build back to a `v1.x` build
   on the same monitor needs the app removed first ([Removing an app](#removing-an-app)).
 
@@ -161,8 +161,17 @@ wrong for a game played with the remote. It exists only for testing that Samsung
 The checklist the R6-02.P2 lane verified with real builds on `master` (both the debug game build
 and the bench bundles passed their checks with the address baked in). It runs the **guided render
 capture** (the debug build's telemetry, [debug-tools.md](debug-tools.md#the-guided-capture-preferred))
-on both M7 monitors, and the **TV render bench** beside it, so wave 15's analyses (plan R0-03, the
-WebGL 1-vs-2 decision) get their sessions. Package, install and run on a TV are the **owner's** —
+on both M7 monitors, and the **TV render bench** beside it, so the analyses (plan R0-03, the
+WebGL 1-vs-2 decision) get their sessions. **State since wave 15:** the 2026-10-19 bench capture
+is analysed — `R0-03.A1` wrote its tables into
+[input-probe-results.md §12](../dev/input-probe-results.md#12-resolution-benchmark-r0-03) and
+`R6-02.P3` closed R6-02's five budgets in
+[render-performance-review.md §9](../dev/render-performance-review.md), all four P4 lanes NOT
+NEEDED — and P4d stays closed-not-needed even when fresh pairs arrive, since the measured GL 2
+gain is 1080p-fill-only (§9). The kit stays **open** as the owner's step: the `rp-` guided
+capture has never run — the boot ≤ 10 s and whole-process-memory measures ride only on it — and a
+future bench campaign per monitor still goes in the GL1-vs-GL2 pair. Package, install and run on
+a TV are the **owner's** —
 `sdb`, the Tizen CLI, `tizen:package` / `tizen:install` / `bench:tv:package` / `bench:tv:install`
 are never run by a tooling agent, and no log-server address is ever committed.
 
@@ -307,15 +316,20 @@ pnpm --filter @shmup/tizen bench:run
 4. Note each unit's firmware (Settings → About). Every scenario POSTs as it finishes — the log
    server prints one summary line per scenario: that is the progress feed.
 
-**Why the GL1-vs-GL2 pair is the point of this kit:** wave 15's `R6-02.P3` decides whether
-`R6-02.P4d` runs (make the TV renderer ask for WebGL 2 first, WebGL 1 as the Mali-baseline
+**Why the GL1-vs-GL2 pair is the shape of this kit:** wave 15's `R6-02.P3` decided
+`R6-02.P4d` (make the TV renderer ask for WebGL 2 first, WebGL 1 as the Mali-baseline
 fallback) by matching the bench against plan §13's rule — *"WebGL 2 clearly better (≥ 10 % synced
 render) → the flip step"*. `analyze-bench.mjs` prints that comparison **only when one monitor's
-two WebGL sessions are given in the same call**. The old v1 evidence (the 2026-10-19 sweep behind
-decision W5-20) showed the GL2 win as a **1080p-fill win only** — mixed at 720p, within noise at
-540p — which is why R6-04 shipped `RENDERER: Auto` above a Chromium ≥ 71 floor and both TVs (68/69)
-keep WebGL 1 by default. v2 draws at a 640×360 backbuffer with the remastered renderer, so this
-v2-era pair, per monitor, is the fresh evidence P3 needs; without it P4d's call cannot be made.
+two WebGL sessions are given in the same call**. The old pre-sweep reading (decision W5-20) had
+shown the GL2 win as a **1080p-fill win only**, which is why R6-04 shipped `RENDERER: Auto` above
+a Chromium ≥ 71 floor and both TVs (68/69) keep WebGL 1 by default. v2 draws at a 640×360
+backbuffer with the remastered renderer, and the paired v2-era sweeps made on 2026-10-19 settled
+it: `R6-02.P3` recorded **P4d NOT NEEDED** — the GL 2 gain beyond noise exists only at the 1080p
+window `Auto` keeps the TVs out of; mixed at the shipped 720p output, within noise at 540p
+([render-performance-review.md §9](../dev/render-performance-review.md), the comparisons in
+§12.3 of [input-probe-results.md §12](../dev/input-probe-results.md#12-resolution-benchmark-r0-03)).
+A fresh pair per monitor is still the kit's design for any later campaign; it reopens the GL
+question only if a budget first misses in a way a renderer floor could fix.
 
 ### Step 6 — where the logs land and what to copy where
 
@@ -331,15 +345,17 @@ monitors' files in the same folder, as in `results/2026-09-15-m7/`:
 
 (Desktop preview of the tables is fine but not required:
 `node results/analyze-render.mjs logs/rp-<session>.jsonl`,
-`node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl` — the real analysis is wave 15's
-`R0-03.A1` / `R6-02.P3`.)
+`node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl` — wave 15 ran exactly these:
+`R0-03.A1` / `R6-02.P3` analysed the committed October corpus with them, into the §12 / §9 tables
+cited above; the real analysis of a fresh capture belongs to the lane that receives its logs.)
 
 ### Step 7 — what to send back
 
 - The two folders as recorded: `results/<date>-m7/` (all `rp-….jsonl`, one per monitor-launch)
   and `results/<date>-m7-bench/` (all `rb-….jsonl`). **Commit them** on `master` (plain
   `docs:`-style commit) **or** drop the raw files from `logs/` into
-  `/home/sites/shmup-cup-run/owner-logs/` — lane `R0-03.A1` (wave 15) copies them in as sent.
+  `/home/sites/shmup-cup-run/owner-logs/` — that is how the October logs reached the tree
+  (wave 15's `R0-03.A1` took them in as sent).
 - The per-unit note: which `rb-`/`rp-` session belongs to which monitor IP, and each unit's
   firmware build.
 - The **M8** 240 fps latency videos (they never ride the log server).
@@ -385,7 +401,7 @@ Device Manager in Tizen Studio. Installing a newer build over an existing one do
 unless it was signed with a *different* author certificate (see below). Removing the game preview also deletes its
 saved settings and high scores.
 
-**Going back from v2 to v1.** A build of `master` is v2's 2.0.0 beta and installs as version
+**Going back from v2 to v1.** A build of `master` is v2 — the released 2.0.0 — and installs as version
 **2.0.0** of the same app (`ShmpCupGam.ShmupCup`). A monitor that has it may refuse to install a
 build of the `v1.x` branch (version 1.0.N) over it, because that version is lower — remove Shmup Cup
 from the monitor first, then install. That deletes the saved settings and high scores too.

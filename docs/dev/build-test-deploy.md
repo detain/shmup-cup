@@ -120,7 +120,7 @@ A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo ru
 | `apps/web` | `apps/web/dist/` (+ `assets/atlas/main.json` and its pages `main.png` …) | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
 | `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.json` + `main.png` … `main-9.png` (15 files since R1-05) | Chromium 69 contract below; packaging adds a `.wgt` next to them. `build:test` / `build:dev` write the **same folder** — the last build wins, so rebuild with `build` before packaging a release |
 | repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. Since R1-05 ten pages — `main.png` = `common`, `main-1.png` … `main-9.png` = zones A–I. The app builds copy the pages **and the manifest** (until R1-05 the manifest was inlined into `app.js`) |
-| `apps/webos` | `apps/webos/dist/`: `index.html`, `app.js`, `appinfo.json`, `icon.png`, `largeIcon.png`, `assets/atlas/main.json` and its pages | M3-03: the Tizen contract below, for webOS 5+ (Chromium 68 — one release older, so the same target and polyfill cover both). `scripts/check-bundle.mjs` imports the Tizen budgets. Packaging writes an `.ipk` into `release/`; **nothing here has been packaged or run on a device** |
+| `apps/webos` | `apps/webos/dist/`: `index.html`, `app.js`, `appinfo.json`, `icon.png`, `largeIcon.png`, `assets/atlas/main.json` and its pages | M3-03: the Tizen contract below, for webOS 5+ (Chromium 68 — one release older, so the same target and polyfill pair cover both). `scripts/check-bundle.mjs` imports the Tizen budgets. Packaging writes an `.ipk` into `release/`; **nothing here has been packaged or run on a device** |
 | `apps/electron` | `dist/main/*.js`, `dist/preload/preload.cjs`, `dist/renderer/` (copy of `apps/web/dist`) | Needs `@shmup/web` built first (Turborepo does it) |
 | `apps/tizen`, `apps/webos` (bench) | `dist-bench/`: `index.html`, `app.js`, `config.xml` / `appinfo.json`, icons, `assets/atlas/` (the density atlases upscaled from the ungrouped source atlas — eight densities ×1 … ×2.67 since the owner's R0-03 matrix follow-up — and, since R1-05, the decode scenario's `decode-<id>.png` pages: the stand-in zone A group plus the shipped `common` and zone A pages since R3-04.M4a) | R0-02: the TV render bench widget, never the game; git- and Prettier-ignored; `pnpm clean` removes it. `bench:tv:package` writes `ShmupCupBench.wgt` there |
 
@@ -748,28 +748,31 @@ Two lines are built, tested and released independently (plan_resolution.md §3.2
 
 | | `v1.x` | `master` |
 |---|---|---|
-| What it is | v1, released as tag `v1.0.0` (2026-10-16) | v2, the 640×360 remaster ([plan_resolution.md](../../plan_resolution.md)) |
-| Resolution | 384×216, forever | 384×216 until plan step R2-01, then 640×360 |
-| Versions | `1.0.1`, `1.0.2`, … (tags `v1.0.N`) | `2.0.0-alpha.N` → `2.0.0-beta.N` → `2.0.0`; today `2.0.0-beta.1` |
-| What goes in | bug fixes, fixes from the first hardware runs, store-submission changes, translation corrections | everything in the v2 plan |
+| What it is | v1, released as tag `v1.0.0` (2026-10-16) | v2, the 640×360 remaster ([plan_resolution.md](../../plan_resolution.md)), released as `2.0.0` (2026-10-24) |
+| Resolution | 384×216, forever | 640×360 (384×216 until plan step R2-01 landed) |
+| Versions | `1.0.1`, `1.0.2`, … (tags `v1.0.N`) while the line lives | `2.0.0-alpha.N` → `2.0.0-beta.N` → `2.0.0`; released, today `2.0.0` |
+| What goes in | bug fixes, fixes from the first hardware runs, store-submission changes, translation corrections — since the `2.0.0` release: **security and crash fixes only, for one year after it, then end of life** (owner, Q-12; below) | everything in the v2 plan |
 | What never goes in | resolution, art, level or balance changes | — |
 | Releases | GitHub releases from tags on `v1.x` | GitHub releases from tags on `master` |
+
+**`v1.x`'s future (owner decision Q-12, 2026-10-18).** After `2.0.0` the maintenance branch takes
+security and crash fixes only — for one year after the release, then end of life. A fix that
+applies to both lines still lands there first and reaches `master` by `git cherry-pick -x`.
 
 Every `package.json` (the root, `packages/*`, `apps/*`) carries the line's semver version, and
 `tooling-config.test.ts` checks that they agree. The TV manifests take numbers only, so the Tizen
 `config.xml` widget version and the webOS `appinfo.json` version are its numeric core (`2.0.0` for
-`2.0.0-beta.1`; `config-xml-consistency.test.ts`, `appinfo.test.ts`). v2 ships as an update of
+`2.0.0-beta.1` through development, and the identical `2.0.0` now the version is whole;
+`config-xml-consistency.test.ts`, `appinfo.test.ts`). v2 ships as an update of
 the same apps — the same Tizen id `ShmpCupGam.ShmupCup`, webOS id `dev.shmupcup.game` and desktop
 app — so its TV version must stay above v1's. CI runs on every push to either branch.
 
 How a fix moves between the lines:
 
 - A fix that applies to both lines lands on **`v1.x` first**.
-- **Until R2-01 lands**, merge `v1.x` into `master` (`git merge v1.x`) whenever it moves — the trees
-  are still nearly identical.
-- **From R2-01 on**, content, art and frame constants differ everywhere: cherry-pick code fixes
-  with `git cherry-pick -x <sha>` and port content fixes by hand. Never merge `v1.x` into `master`
-  again.
+- **Since R2-01 landed** (`72b18a1`), content, art and frame constants differ everywhere:
+  cherry-pick code fixes with `git cherry-pick -x <sha>` and port content fixes by hand. Never
+  merge `v1.x` into `master` again.
 - A v2-only change never goes back to `v1.x`.
 
 **A `v1.x` commit that only `v1.x` needs** — its own version lines, text that describes the

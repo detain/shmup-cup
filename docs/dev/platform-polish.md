@@ -424,8 +424,12 @@ recorded audio as one natural play-through **6,002,830 B** (the 24 music tracks 
 rate `real-assets.md` prescribes). Sum **11,066,371 B ≈ 10.55 MiB**, a margin of **5,710,845 B
 (≈ 5.45 MiB)**. The audio term and the code term count the same music **twice, on purpose**:
 `app.js` carries the inlined chip-song JSONs until R5 replaces them with recordings, so until then
-the budget carries both costs (W5-16). Three ceilings sit around the projection and R6-02
-adjudicates them with evidence — a budget moves to a new measurement, never to quiet a check: art at
+the budget carries both costs (W5-16). Three ceilings sit around the projection; R6-02 adjudicated
+them with evidence and nothing moved — P3 closed the five budgets on the owner's M7 logs (met or
+open as stated), all four P4 lanes came back NOT NEEDED, **no cap was raised** (§9 of
+[render-performance-review.md](render-performance-review.md), the tables in
+[input-probe-results.md §12](input-probe-results.md#12-resolution-benchmark-r0-03)); a budget
+moves to a new measurement, never to quiet a check. The ceilings stand as weighed: art at
 the RR-7 band's top (the atlas byte caps below stand 2,298,562 B above the measured stand-in), code
 at its gzip ceiling (≈ 1.93 MB raw at today's compression), longer v2 tracks (the audio term is
 ≈ 7.1 KB a natural second, ≈ 57 kbit/s mono). The corrected sum exceeds the old 8 MiB by
@@ -629,14 +633,15 @@ Three things are worth knowing beyond the table:
 - **The engine floor is shared — and it is 68, not 69.** webOS 5 runs Chromium **68**
   (LG's published [web engine table](https://webostv.developer.lge.com/develop/specifications/web-api-and-web-engine),
   re-checked 2026-09-16), one release *older* than Tizen 5.5's 69, so the webOS build uses the same
-  `chrome69` + `es2018` target, the same `.browserslistrc` and the **same** `globalThis` polyfill —
-  read straight out of `apps/tizen/polyfills/`, so the two cannot drift. webOS 4 (Chromium 53) is
+  `chrome69` + `es2018` target, the same `.browserslistrc` and the **same polyfill pair** —
+  `global-this.js` and, since the PixiJS 8.22 boot cure, `string-match-all.js` — read straight out
+  of `apps/tizen/polyfills/`, so the two cannot drift. webOS 4 (Chromium 53) is
   not a target. The subtlety worth carrying away: the target list lowers **syntax** and its
   `es2018` entry is what makes the output safe on 68 (Chrome 69 added no syntax, only
   `Array.prototype.flat` / `flatMap`), while **runtime APIs** are nobody's job but yours — and
   because the lint's browserslist floor is `chrome >= 69`, `[].flat()` *passes the lint* and would
   throw on an LG set. `test/integration/tv-engine-floor.test.ts` scans the shipped sources for that
-  gap and pins the shared target, polyfill and budgets;
+  gap and pins the shared target, polyfill pair and budgets;
   [conventions.md § Two TVs, two engines](conventions.md#two-tvs-two-engines) says exactly what it
   covers and what it does not.
 - **The budgets are shared too.** `apps/webos/scripts/check-bundle.mjs` imports
@@ -757,8 +762,8 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
   folders; the budgets really are the Tizen ones), `scripts/webos-cli.test.ts` (the command lines
   the `ares-*` wrappers would build — they are never run), `build/vite-config.test.ts`,
   `build/webos-build.test.ts` (a **real** Vite build into a temp folder, then the bundle check, the
-  file set, a valid `appinfo.json`, byte-identical atlas pages, ES2018 with the polyfill first, a
-  classic script tag, and no debug code — the closest anything here gets to packaging).
+  file set, a valid `appinfo.json`, byte-identical atlas pages, ES2018 with the polyfill pair
+  first, a classic script tag, and no debug code — the closest anything here gets to packaging).
 - Steam (`apps/electron/test/main/steam.test.ts`, M3-03 — every one against a fake binding): the
   app id and its placeholder, an inert service with no loader / a `null` loader / a throwing
   loader, idempotent unlocks, unknown ids, a binding that throws, shutdown, the eleven achievement
@@ -798,7 +803,7 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **M2-18** (done) — the icon set (electron-builder's icons, the Tizen icon), store-listing
   placeholders, Tizen certification self-checks (Back / exit, visibility, resume), the 30-minute soak
   with the heap stable, and version `1.0.0-rc.1` — released as 1.0.0 on 2026-10-16; `master` carries
-  `2.0.0-beta.1` since ([release-hardening.md](release-hardening.md#the-version)).
+  the released `2.0.0` since R6-03.D1 ([release-hardening.md](release-hardening.md#the-version)).
 - **§8.5 on device** — the `use.game.mode` A/B latency test (keep the better variant), the heap
   baseline against DevTools (correct `HEAP_BASELINE_BYTES` if it is off), the device line and the
   save export, and whether live reload keeps the widget's APIs.
