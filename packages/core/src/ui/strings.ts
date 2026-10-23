@@ -340,7 +340,7 @@ const STATIC_UI_TEXT = {
   extraArcade: 'ARCADE',
   extraReplays: 'REPLAYS',
   extraBossRushHint: 'EVERY ZONE BOSS IN A ROW',
-  extraCaravanHint: 'SCORE ATTACK: THREE MINUTES',
+  extraCaravanHint: 'SCORE ATTACK: FOUR MINUTES',
   extraArcadeHint: 'THE CAMPAIGN LOOPS, EACH LOOP HARDER',
   extraReplaysHint: 'WATCH, KEEP AND SHARE YOUR RUNS',
   loopFormat: 'LOOP {0}',

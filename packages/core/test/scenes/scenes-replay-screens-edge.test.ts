@@ -386,7 +386,7 @@ describe('core/scenes ExtraScene edges (M3-01)', () => {
     const s = new ScreenSession();
     s.openExtra();
     s.focusExtra(ExtraItem.Caravan);
-    expect(s.uiTexts()).toContain('SCORE ATTACK: THREE MINUTES');
+    expect(s.uiTexts()).toContain('SCORE ATTACK: FOUR MINUTES');
     expect(s.flow.extra.zone.index).toBe(0);
     s.focusExtra(ExtraItem.Arcade);
     expect(s.uiTexts()).toContain('THE CAMPAIGN LOOPS, EACH LOOP HARDER');

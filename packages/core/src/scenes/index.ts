@@ -1287,8 +1287,8 @@ export const ExtraItem = {
  */
 export const BOSS_RUSH_STAGE = 'boss-rush';
 
-/** The CARAVAN's clock: three minutes (M3-01 — `GameConfig.timeLimit`). */
-export const CARAVAN_TICKS = 180 * 60;
+/** The CARAVAN's clock: four minutes (M3-01 — `GameConfig.timeLimit`). */
+export const CARAVAN_TICKS = 240 * 60;
 
 /** Ships a game starts with after the title's EXTRA SHIPS code (M3-01; shmup_feat.md §15). */
 export const SECRET_SHIPS = 7;

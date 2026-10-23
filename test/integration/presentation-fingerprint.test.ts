@@ -1720,7 +1720,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'options.extras': '98ebcf5d ddb53aa9 c005afe6 8a90b305',
     soundTest: 'ef32664d ddb53aa9 608569b2 b02f3ee5',
     practice: 'feab69c5 843dc42d 9ebd5109 88a2cb85',
-    extra: '50132e29 0e2b37d5 84194cf5 2d0859e5',
+    extra: '6cd9c26d 0e2b37d5 84194cf5 2d0859e5',
     'replays.empty': '0b9fc475 0e2b37d5 e873ed45 a31a93e5',
   },
   game: {
@@ -1739,7 +1739,7 @@ const PINNED: Record<string, Record<string, string>> = {
     gameOver: '1a078253 90ab57a1 49ad554b 71c564ba',
     nameEntry: 'f5f13525 b1382dc9 56caab8a 70a36b85',
     'hiScore.result': '5ed19d35 3bd76f29 ac4eb872 4cf8f185',
-    'replays.lastGame': 'a0eadd6d 9a5e9019 4e025817 3f198b25',
+    'replays.lastGame': '7ce7b4bd 9a5e9019 4e025817 3f198b25',
     replay: 'd35f1133 b8d80a23 a3b74a0c 4e80eaa8',
   },
   coopDirect: {
@@ -1808,8 +1808,8 @@ const PINNED: Record<string, Record<string, string>> = {
   extraModes: {
     'extra.weaponTypes': 'db536991 02773c71 1d6d7a23 bf9340c5',
     'extra.bossRush': '8ddfd508 1e3d50c8 31e90352 e9642425',
-    'extra.caravan': '9ca74db9 c8884dad a36564b1 68aa3e85',
-    'extra.arcade': '7e90dfe4 b376c8bc 03c8aaad cfa20445',
+    'extra.caravan': '4c8c88b1 6992cf3a a36564b1 68aa3e85',
+    'extra.arcade': '22329fa8 b376c8bc 03c8aaad cfa20445',
   },
   languages: {
     'es.title': 'f2d5daad b4f60d95 fdb07ead 9e6aa4c5',
