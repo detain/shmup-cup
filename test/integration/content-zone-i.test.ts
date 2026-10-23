@@ -29,6 +29,7 @@ import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
 import { PROCEDURAL_GENERATORS } from '../../scripts/assets/procedural/index.mjs';
+import { collectSprites } from '../../scripts/assets/pipeline.mjs';
 import {
   ZONES_H_I,
   bossOf as bossOfIn,
@@ -175,6 +176,140 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     expect(root).toBeDefined();
     expect(parts[root?.parentIndex ?? core].core).toBe(false);
     expect(lure.some((p) => p.gun)).toBe(true);
+  });
+
+  it('dives two playfields deep — three pans inside holds, the calm ride at the top (R5-09.S5a)', () => {
+    const stage = stageOf('zone-i');
+    // A map of 56 rows (672 px, the playfield 336, so the deepest camera y 672 − 336 = 336);
+    // the design's dive (R5-09.S5a §2) is 168 into the trench, 312 onto the abyssal plain,
+    // and back to 0 for the ascent — each pan lives inside a hold, the calm ride through
+    // the ark fight runs at the top of the water.
+    expect(stage.tilemap?.rowsTall ?? 0).toBe(56);
+    expect(stage.length).toBe(20400);
+    const pans = stage.camera.filter((k) => k.yTo !== undefined);
+    expect(pans.map((k) => k.yTo ?? -1)).toEqual([168, 312, 0]);
+    for (const pan of pans) {
+      expect(pan.hold ?? 0).toBeGreaterThan(0);
+      expect(pan.yTicks ?? 0).toBe(pan.hold ?? 0); // the whole hold is the pan (design §2)
+    }
+    // The rise-to-0 key is the last pan and sits before the calm key and the ark's band.
+    expect(pans[pans.length - 1]?.x).toBe(12300);
+    expect(stage.camera[stage.camera.length - 1].x).toBe(18000);
+    expect(stage.camera.filter((k) => k.x > 12300 && k.yTo !== undefined && k.yTo !== 0)).toEqual(
+      [],
+    );
+  });
+
+  it('stands the coral columns and the buttresses on the plain, the gullies free of destructibles (R5-09.S5a)', () => {
+    const stage = stageOf('zone-i');
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    expect(tileset?.tiles).toHaveLength(22); // 20 frozen + the design's two appends (§10)
+    const tokenOf = (name: string): number =>
+      (tileset?.tiles.findIndex((t) => t.name === name) ?? -2) + 1;
+    const coral = tokenOf('coral');
+    const glow = tokenOf('abyss-glow');
+    expect(coral).toBe(21);
+    expect(glow).toBe(22);
+    expect(tileset?.tiles[coral - 1]?.hp ?? 0).toBe(6); // punch: six player hits (§10)
+    expect(tileset?.tiles[coral - 1]?.score ?? 0).toBe(12);
+    expect(tileset?.tiles[glow - 1]?.hp ?? 0).toBe(0); // the gas glimmer never collides
+    /** The cells of one authored RLE row (`<id>` / `<count>*<id>`, 0 empty). */
+    const cells = (row: number): number[] => {
+      const out: number[] = [];
+      for (const token of (stage.tilemap?.rle?.[row] ?? '').split(',')) {
+        const star = token.indexOf('*');
+        const n = Number(star < 0 ? 1 : token.slice(0, star));
+        const id = Number(star < 0 ? token : token.slice(star + 1));
+        for (let i = 0; i < n; i++) out.push(id);
+      }
+      return out;
+    };
+    // The shelf lip: a solid (token 1) run at map rows 26–27 from column 13 to 1,024 —
+    // x 156 to 12,300, under every banded segment (design §10).
+    for (const row of [26, 27]) {
+      const line = cells(row);
+      expect(line).toHaveLength(1025);
+      expect(line.slice(0, 13).every((c) => c === 0)).toBe(true);
+      for (let col = 13; col < 1025; col++) expect(line[col]).toBe(1);
+    }
+    // The four coral columns (design §3): 12 px thick at x 7,080 / 7,560 / 8,040 / 8,520,
+    // map rows 44–49, each with open water (≥ 24 px = two columns) on both sides.
+    for (const col of [590, 630, 670, 710]) {
+      for (let row = 44; row < 50; row++) expect(cells(row)[col]).toBe(coral);
+      for (const open of [col - 2, col - 1, col + 1, col + 2]) {
+        for (let row = 44; row < 50; row++) expect(cells(row)[open] ?? 0).toBe(0);
+      }
+    }
+    // The buttresses framing the hermit's antechamber (§3): solid pairs at columns
+    // 700–701 / 737–738 (x 8,400 / 8,844…8,868 around the design's 8,850) rows 44–53,
+    // their heads crowned by the empty-type glow at row 43.
+    for (let row = 44; row < 54; row++) {
+      for (const col of [700, 701, 737, 738]) expect(cells(row)[col]).toBe(1);
+    }
+    for (const col of [700, 701, 737, 738]) expect(cells(43)[col]).toBe(glow);
+    // The undertow's carved gullies carry NO destructibles (§3): the whole band x 9,300 →
+    // 12,300 (columns 775 → 1,024) has no brick (18), cube (19) or tissue (20) cell authored.
+    for (let row = 0; row < 56; row++) {
+      for (const cell of cells(row).slice(775, 1025)) {
+        expect(cell === 18 || cell === 19 || cell === 20).toBe(false);
+      }
+    }
+    // And past the ascent (column of x 12,300 → the map end) nothing is authored at all:
+    // the void segment (base 0) holds the open-water case's promise literally.
+    for (let row = 0; row < 56; row++)
+      expect(
+        cells(row)
+          .slice(1025)
+          .every((c) => c === 0),
+      ).toBe(true);
+  });
+
+  it('keeps the two rebuilt finale bosses within 60 % of the playfield and their cores reachable', () => {
+    const stage = stageOf('zone-i');
+    const ark = bossOf(stage);
+    if (ark === null) throw new Error('no ABYSS ARK boss event');
+    const king = db.enemies[ark.innerId ?? -1]?.boss ?? null;
+    if (king === null) throw new Error('no boss inside the ABYSS ARK');
+    // R5-09.S4b (design §8) — the plates' own assembly (scripts/doc-images.mjs): a part sits
+    // at the sum of its parent chain's offsets and its first frame spans ±floor(h / 2) there.
+    const frames = new Map<string, { height: number }>();
+    for (const sprite of collectSprites().sprites) frames.set(sprite.name, sprite.frames[0]);
+    /**
+     * The tallest vertical extent of a boss, assembled from its parts' first frames.
+     *
+     * @param boss - The compiled boss spec.
+     * @returns Pixels.
+     */
+    const assembledHeight = (boss: BossSpec): number => {
+      const anchor = new Map<string, number>();
+      let top = Number.POSITIVE_INFINITY;
+      let bottom = Number.NEGATIVE_INFINITY;
+      for (const p of boss.parts) {
+        const y = (p.parent === null ? 0 : (anchor.get(p.parent) ?? 0)) + p.y;
+        anchor.set(p.name, y);
+        const frame = p.sprite === undefined ? undefined : frames.get(p.sprite);
+        if (frame === undefined) continue;
+        const half = Math.floor(frame.height / 2);
+        top = Math.min(top, y - half);
+        bottom = Math.max(bottom, y + frame.height - half);
+      }
+      return bottom - top;
+    };
+    // 60 % of the playfield — 202 px at 640×336; the pods' ±67.5 and the fins' ±76.5 lie in it.
+    expect(assembledHeight(ark)).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    expect(assembledHeight(king)).toBeLessThanOrEqual(Math.round(0.6 * PLAYFIELD_H));
+    // Reachable cores: the heart and the maw are hittable, and nothing they `require` is a
+    // `never` part (a required armour that can never break would wall the core off for good).
+    for (const boss of [ark, king]) {
+      const core = boss.parts.find((p) => p.core);
+      if (core === undefined) throw new Error(boss.code + ' has no core');
+      expect(core.vulnerable).not.toBe('never');
+      for (const name of core.requires) {
+        const required = boss.parts.find((p) => p.name === name);
+        if (required === undefined) throw new Error(boss.code + ' requires ' + name + ': no part');
+        expect(required.vulnerable).not.toBe('never');
+      }
+    }
   });
 
   it.each(zones)('keeps every aimed bullet of $name at 2 px/tick or less', (zone) => {

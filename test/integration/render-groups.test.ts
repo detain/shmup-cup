@@ -148,6 +148,7 @@ describe('M3-02e render groups cover what the shipped game draws', () => {
       'zone-e',
       'zone-f',
       'zone-g',
+      'zone-i',
     ]);
   });
 

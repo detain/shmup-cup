@@ -28,10 +28,22 @@
  * `+ - * /` and `Math.sqrt`, randomness `hash2` (seeded from the sprite names), so the pixels are
  * identical on every engine.
  *
+ * Since R5-09.S2 the generator draws the ten **v2 stand-ins** of design
+ * `docs/v2-run/designs/zone-i.md` §14 — `enemies/abyss-crawler`, `enemies/stinger` and
+ * `enemies/deep-tender`, the two new boss parts (`bosses/ark-pod`, `bosses/king-fin`), the §9 band
+ * stack (`bg/abyss-deepwall`, `bg/abyss-vents`, `bg/abyss-flakes`), the decor glow
+ * `fx/glow-abyss-vent` and the tileset `tiles/terrain-abyss-v2` (`terrain-abyss`'s twenty tiles
+ * verbatim, then the two §10 additions `coral` and `abyss-glow`) — only at an art scale ≠ 1
+ * (decision RR-1a); the scale-1 build is the v1 set byte for byte. Every new colour keeps
+ * Chebyshev distance ≥ 3 from every shipped palette-cycle ramp (the zone-B brine route: no EXEMPT
+ * row in `test/integration/palette-cycle-scan.test.ts`).
+ *
  * **Public API.** {@link generate}, {@link ABYSS_SPRITES}, {@link ABYSS_RAMP} (the colours zone I's
  * v1 palette cycle named), {@link ABYSS_RAMP_V2} (the frozen v2 ramp zone I's cycle names since
  * R5-P.P7), {@link MURK_TILE_W} / {@link MURK_TILE_H}, {@link SPIRES_TILE_W} /
- * {@link SPIRES_TILE_H} (the bands' tile sizes, their parallax `spacing`).
+ * {@link SPIRES_TILE_H} (the bands' tile sizes, their parallax `spacing`); for the v2 pass,
+ * {@link ABYSS_V2_SPRITES}, {@link ABYSS_V2_TILES}, {@link ABYSS_V2_TILE_NAMES},
+ * {@link BAND_TILE_W}, {@link DEEP_H}, {@link VENTS_H}, {@link FLAKES_H}.
  *
  * @module
  */
@@ -40,6 +52,8 @@ import { scaleImage } from '../interim.mjs';
 import { hash2 } from '../rng.mjs';
 import { offRamp } from '../v2kit.mjs';
 import { DIRECTIONS_8, color, drawLine, fillEllipse, makeSprite, mix, seedOf } from './common.mjs';
+import { renderTerrainTiles, TERRAIN_PALETTES, TERRAIN_TILES, TILE_SIZE } from './terrain.mjs';
+import { FRAME_W } from '../../frame.mjs';
 
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../image.mjs').Rgba} Rgba */
@@ -102,6 +116,47 @@ export const ABYSS_SPRITES = Object.freeze([
   'bosses/king-lure',
 ]);
 
+/** The v2 stand-in names {@link generate} adds at an art scale ≠ 1, in its output order (§14). */
+export const ABYSS_V2_SPRITES = Object.freeze([
+  'enemies/abyss-crawler',
+  'enemies/stinger',
+  'enemies/deep-tender',
+  'bosses/ark-pod',
+  'bosses/king-fin',
+  'bg/abyss-deepwall',
+  'bg/abyss-vents',
+  'bg/abyss-flakes',
+  'fx/glow-abyss-vent',
+  'tiles/terrain-abyss-v2',
+]);
+
+/** The two §10 variant tiles after `terrain-abyss`'s twenty, in list order (ids 21–22). */
+export const ABYSS_V2_TILES = /** @type {const} */ (['coral', 'abyss-glow']);
+
+/** The tile names of `tiles/terrain-abyss-v2`: `terrain-abyss`'s list verbatim, then the variants. */
+export const ABYSS_V2_TILE_NAMES = /** @type {const} */ ([...TERRAIN_TILES, ...ABYSS_V2_TILES]);
+
+/**
+ * Tile width of the three §9 bands `bg/abyss-deepwall`, `bg/abyss-vents` and `bg/abyss-flakes`:
+ * half the frame, derived from `FRAME_W` — the zone-C precedent (design §14 asks full-frame bands,
+ * an atlas frame cannot exceed the 512-page scenario of `test/scripts/assets/pipeline-edge.test.ts`,
+ * and every band here is a seamless repeating tile, so these repeat at a period that fills the
+ * frame exactly twice).
+ */
+export const BAND_TILE_W = FRAME_W / 2;
+
+/**
+ * Height of the `bg/abyss-deepwall` band (zone-i.md §14: 480 = 40 tile rows, inside the same
+ * 510-px page bound that capped zone D's and G's deep bands).
+ */
+export const DEEP_H = 40 * TILE_SIZE;
+
+/** Height of the `bg/abyss-vents` band (zone-i.md §14: 168 = 14 tile rows). */
+export const VENTS_H = 14 * TILE_SIZE;
+
+/** Height of the `bg/abyss-flakes` band (zone-i.md §14: 48 = 4 tile rows). */
+export const FLAKES_H = 4 * TILE_SIZE;
+
 /** Dark outline of the deep's creatures. */
 const RIM = '#05090c';
 
@@ -124,9 +179,12 @@ const DIRECTIONS_16 = [...DIRECTIONS_8, ...DIRECTIONS_8.map(([c, s]) => [-c, -s]
 /**
  * Generates zone I's art.
  *
- * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
- *   the cycled murk band at (default 1 — the v1 ramp, byte for byte).
- * @returns {SpriteDef[]} The sprites of {@link ABYSS_SPRITES}, in that order.
+ * @param {import('./index.mjs').GeneratorOptions} [options] - The build's art scale and tile side
+ *   (the pipeline passes both; `artScale` 1 or absent draws the v1 set — the cycled murk band on
+ *   the v1 ramp — byte for byte, `tileSize` defaults to the v2 {@link TILE_SIZE}).
+ * @returns {SpriteDef[]} {@link ABYSS_SPRITES} in that order at art scale 1; the v1 set followed by
+ *   {@link ABYSS_V2_SPRITES} in theirs at any other scale (the new names all `native`, their
+ *   `@flash` siblings derived by the pipeline's flash pass).
  * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
  *   `parseArtScale`).
  */
@@ -134,7 +192,7 @@ export function generate(options = {}) {
   const artScale = options.artScale ?? 1;
   const v2 = artScale !== 1;
   const flash = { hitFlash: true };
-  return [
+  const sprites = [
     makeSprite(
       'bg/abyss-murk',
       [v2 ? scaleImage(murk(ABYSS_RAMP_V2, true), artScale) : murk()],
@@ -187,6 +245,46 @@ export function generate(options = {}) {
       animations: { glow: [0, 1] },
     }),
   ];
+  if (!v2) return sprites;
+  const size = options.tileSize ?? TILE_SIZE;
+  const native = { native: true };
+  const hit = { hitFlash: true, ...native };
+  return sprites.concat([
+    makeSprite('enemies/abyss-crawler', [0, 1, 2, 3].map(crawlerFrame), 'abyss', {
+      ...hit,
+      animations: { walk: [0, 1, 2, 3] },
+    }),
+    makeSprite('enemies/stinger', [0, 1, 2, 3].map(stingerFrame), 'abyss', {
+      ...hit,
+      animations: { dart: [0, 1, 2, 3] },
+    }),
+    makeSprite('enemies/deep-tender', [0, 1, 2, 3].map(tenderFrame), 'abyss', {
+      ...hit,
+      animations: { pulse: [0, 1, 2, 3] },
+    }),
+    makeSprite('bosses/ark-pod', [0, 1, 2, 3].map(podFrame), 'abyss', {
+      ...hit,
+      animations: { charge: [0, 1, 2, 3] },
+    }),
+    makeSprite('bosses/king-fin', [finFrame()], 'abyss', hit),
+    makeSprite('bg/abyss-deepwall', [deepWall()], 'abyss', { anchor: [0, 0], ...native }),
+    makeSprite('bg/abyss-vents', [ventsBand()], 'abyss', { anchor: [0, 0], ...native }),
+    makeSprite('bg/abyss-flakes', [flakesBand(0), flakesBand(1)], 'abyss', {
+      anchor: [0, 0],
+      ...native,
+      animations: { drift: [0, 1] },
+    }),
+    makeSprite('fx/glow-abyss-vent', [ventGlow(0), ventGlow(1)], 'abyss', {
+      anchor: [18, 12],
+      ...native,
+      animations: { pulse: [0, 1] },
+    }),
+    makeSprite('tiles/terrain-abyss-v2', abyssTilesV2(size), 'abyss', {
+      anchor: [0, 0],
+      ...native,
+      animations: Object.fromEntries(ABYSS_V2_TILE_NAMES.map((n, i) => [n, [i]])),
+    }),
+  ]);
 }
 
 /**
@@ -642,4 +740,548 @@ function lureFrame(tone) {
   const image = createImage(size, size);
   fillEllipse(image, 5.5, 5.5, 5.5, 5.5, (_u, _v, e) => (e > 0.82 ? halo : e < 0.4 ? heart : glow));
   return image;
+}
+
+// ---------------------------------------------------------------------------
+// The R5-09.S2 v2 stand-ins (design `docs/v2-run/designs/zone-i.md` §14 and §10), drawn at the
+// final v2 pixel size and only on the `artScale !== 1` path. Flat colours are at Chebyshev
+// distance ≥ 3 from every shipped palette-cycle ramp (the zone-B brine route: the scan's EXEMPT
+// list stays untouched — §9's "paint exactly" belongs to the R5-D6 real art, whose manifest note
+// carries it). The ABYSS v2 ramp itself appears only through `bg/abyss-murk`, the ramp's own
+// CYCLE_ART sprite.
+// ---------------------------------------------------------------------------
+
+/** The zone's own terrain palette — the one `terrain.mjs` paints `tiles/terrain-abyss` with. */
+const PAL = TERRAIN_PALETTES['tiles/terrain-abyss'];
+const SUR = color(PAL.surface);
+const SUBS = color(PAL.subsurface);
+const RKF = PAL.rock.map(color);
+
+const RIMC = color(RIM);
+const BONEC = color(BONE);
+const BONEDC = color(BONE_DARK);
+const RUSTC = color(RUST);
+
+const BODY = color('#16303c');
+const BODY_HI = color('#345c70');
+const BODY_LO = color('#0e1620');
+const SHELL = color('#4a7e92');
+const LEG = color('#121e2c');
+const EYE = color('#c89a4a');
+const LANT = color('#a8f0e0');
+const LANT_HOT = color('#d8ece4');
+const MEMB = color('#16283c');
+const MEMB2 = color('#24384e');
+const RAY = color('#b0c4cc');
+const CAPS = color('#66d2a8');
+const CAPS_DIM = color('#3a7868');
+
+/** The muzzle charge ramp of the ARK pods and the tender's pod: deep, dim, hot, flushed. */
+const CHARGE = [color('#2a4654'), color('#5a92a2'), color('#86d8c8'), color('#d8f4ec')];
+
+/** The deepwall's seven strata, dark basalt blue downward (§9's far wall read). */
+const STR = [
+  color('#0b1723'),
+  color('#10202e'),
+  color('#15283a'),
+  color('#1a3145'),
+  color('#20394f'),
+  color('#264258'),
+  color('#2d4d66'),
+];
+const DIKE = color('#060d15');
+const VEIN = color('#2f5666');
+const VEINLIT = color('#3c6e7e');
+const SMOKE = color('#121e2c');
+const CHIM = color('#2c4456');
+const CHIMLIT = color('#4a7288');
+const FLAKE = color('#d8e4e8');
+const FLAKE2 = color('#8aa4b0');
+const CORALC = color('#b05064');
+const CORAL_HI = color('#d88494');
+const CORAL_DK = color('#64303c');
+
+/**
+ * Paints a filled rectangle, clamped to the image.
+ *
+ * @param {Image} img - The image.
+ * @param {number} x0 - First column.
+ * @param {number} y0 - First row.
+ * @param {number} x1 - Last column (inclusive).
+ * @param {number} y1 - Last row (inclusive).
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function rect(img, x0, y0, x1, y1, rgba) {
+  for (let y = Math.max(0, y0); y <= Math.min(img.height - 1, y1); y++) {
+    for (let x = Math.max(0, x0); x <= Math.min(img.width - 1, x1); x++) {
+      setPixel(img, x, y, rgba);
+    }
+  }
+}
+
+/**
+ * Paints one pixel, skipping coordinates outside the image.
+ *
+ * @param {Image} img - The image.
+ * @param {number} x - The column.
+ * @param {number} y - The row.
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function px(img, x, y, rgba) {
+  if (x < 0 || y < 0 || x >= img.width || y >= img.height) return;
+  setPixel(img, x, y, rgba);
+}
+
+/**
+ * Paints one pixel with the column wrapped into the image (for the seamless bands).
+ *
+ * @param {Image} img - The image.
+ * @param {number} x - The column (any integer).
+ * @param {number} y - The row.
+ * @param {readonly [number, number, number, number]} rgba - The colour.
+ */
+function pxw(img, x, y, rgba) {
+  if (y < 0 || y >= img.height) return;
+  setPixel(img, ((x % img.width) + img.width) % img.width, y, rgba);
+}
+
+/**
+ * A deterministic small integer: `hash2` of two coordinates and a seed, modulo `n`.
+ *
+ * @param {number} a - First input.
+ * @param {number} b - Second input.
+ * @param {number} seed - The sprite's seed.
+ * @param {number} n - The modulus.
+ * @returns {number} 0 … n − 1.
+ */
+function pick(a, b, seed, n) {
+  return hash2(a, b, seed) % n;
+}
+
+/**
+ * `enemies/abyss-crawler` (24×15, 4 frames, hittable): the shelf-lip and trench-floor walker of
+ * §6 (`walker.floor`) — an armoured isopod facing left: a segmented dome lit along its top, four
+ * legs a side, amber eye and short antennae at the head, a tail flap behind. The four frames are
+ * the gait: legs lift in pairs while the body bobs a pixel.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function crawlerFrame(k) {
+  const img = createImage(24, 15);
+  const seed = seedOf('enemies/abyss-crawler');
+  const bob = [0, -1, 0, 1][k];
+  const bottom = 9 + bob;
+  for (let x = 2; x < 22; x++) {
+    const crest = arch(x - 2, 21);
+    const top = Math.round(bottom - 1 - 6 * crest);
+    for (let y = top; y <= bottom; y++) {
+      let c = y <= top + 1 ? SHELL : y >= bottom - 1 ? BODY_LO : BODY;
+      if ((x === 7 || x === 12 || x === 17) && y > top + 1 && y < bottom - 1) c = BODY_LO;
+      if (pick(x, y, seed, 11) === 0) c = BODY_HI;
+      px(img, x, y, c);
+    }
+    px(img, x, top - 1, RIMC);
+  }
+  rect(img, 0, 4 + bob, 2, bottom, BODY);
+  px(img, 1, 4 + bob, RIMC);
+  px(img, 1, 6 + bob, EYE);
+  drawLine(img, 2, 3 + bob, 0, 1 + bob, BODY_LO);
+  drawLine(img, 2, 4 + bob, 0, 4 + bob, BODY_LO);
+  rect(img, 21, 5 + bob, 23, 7 + bob, BODY_LO);
+  for (let i = 0; i < 4; i++) {
+    const lift = [0, 1, 2, 1][(i - k + 4) % 4];
+    const x = 4 + i * 5;
+    drawLine(img, x, bottom, x - 1, 12 + lift, LEG);
+    px(img, x - 1 + (lift === 1 ? 1 : 0), 13 + (lift === 2 ? 1 : 0), LEG);
+  }
+  return img;
+}
+
+/**
+ * `enemies/stinger` (18×10, 4 frames, hittable): the ark-approach escort of §6 (`rocket.homing`)
+ * — a lanternfish dart facing left: a slim lit-backed body, a forked tail, an angler filament
+ * with a cold spark over the head. The four frames flick the tail and fin and flare the spark.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function stingerFrame(k) {
+  const img = createImage(18, 10);
+  const seed = seedOf('enemies/stinger');
+  fillEllipse(img, 8, 5, 6.5, 2.6, (u, v, e, x, y) => {
+    if (e > 0.88) return RIMC;
+    if (u + v < -0.6) return BODY_HI;
+    if (v > 0.7) return BODY_LO;
+    return pick(x, y, seed, 7) === 0 ? BODY_HI : BODY;
+  });
+  px(img, 1, 5, BODY);
+  px(img, 0, 5, LANT);
+  const tw = [2, 3, 3, 2][k];
+  drawLine(img, 14, 5, 17, 5 - tw, BODY_LO);
+  drawLine(img, 14, 5, 17, 5 + (tw - 1), BODY_LO);
+  drawLine(img, 12, 5, 17, 5, BODY);
+  const fy = k % 2 === 0 ? 1 : 0;
+  px(img, 7, 2 - fy, BODY_LO);
+  px(img, 8, 1 - fy, BODY_LO);
+  drawLine(img, 4, 3, 3, 1, BODY_LO);
+  px(img, 3, 0, k >= 2 ? LANT_HOT : LANT);
+  px(img, 3, 4, RIMC);
+  return img;
+}
+
+/**
+ * `enemies/deep-tender` (18×12, 4 frames, hittable): the glowing capsule carrier of §6
+ * (`carrier.straight`, `drop: capsule`) — a plump `tender` sibling facing left with a glowing
+ * brood pod under its belly. The four frames charge the pod from deep blue through vent green to
+ * a hot flushed spark while the rear fin beats.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function tenderFrame(k) {
+  const img = createImage(18, 12);
+  const seed = seedOf('enemies/deep-tender');
+  fillEllipse(img, 9, 5, 7, 4, (u, v, e, x, y) => {
+    if (e > 0.88) return RIMC;
+    if (u + v < -0.7) return SHELL;
+    if (v > 0.6) return BODY_LO;
+    return pick(x, y, seed, 6) === 0 ? BODY_HI : BODY;
+  });
+  const tone = CHARGE[k];
+  rect(img, 6, 8, 12, 10, BODY_LO);
+  rect(img, 7, 9, 11, 10, tone);
+  px(img, 9, 9, k === 3 ? LANT_HOT : CAPS);
+  px(img, 6, 9, CAPS_DIM);
+  px(img, 12, 9, CAPS_DIM);
+  px(img, 4, 4, RIMC);
+  drawLine(img, 15, 4, 17, 2 + (k % 2) * 2, BODY_LO);
+  drawLine(img, 15, 6, 17, 5 + (k % 2), BODY_LO);
+  return img;
+}
+
+/**
+ * `bosses/ark-pod` (27×15, 4 frames, hittable): the ARK's gun pods of §8 (parts 12–13, the
+ * mirrored pair, `count` 2 launches from phase 2) — a bone-plated capsule with a left muzzle,
+ * rust streaks and rivet rows. The four frames charge the muzzle from deep blue to a flushed
+ * spark, halo pixels joining as it heats.
+ *
+ * @param {number} k - The frame, 0 … 3.
+ * @returns {Image} The frame.
+ */
+function podFrame(k) {
+  const img = createImage(27, 15);
+  const seed = seedOf('bosses/ark-pod');
+  rect(img, 2, 2, 24, 12, BONEC);
+  rect(img, 2, 2, 24, 3, LANT);
+  rect(img, 2, 11, 24, 12, BONEDC);
+  for (let x = 2; x < 25; x++) {
+    px(img, x, 1, RIMC);
+    px(img, x, 13, RIMC);
+  }
+  rect(img, 0, 0, 1, 1, RIMC);
+  rect(img, 0, 13, 1, 14, RIMC);
+  rect(img, 25, 0, 26, 1, RIMC);
+  rect(img, 25, 13, 26, 14, RIMC);
+  drawLine(img, 2, 2, 0, 4, RIMC);
+  drawLine(img, 2, 12, 0, 10, RIMC);
+  drawLine(img, 24, 2, 26, 4, RIMC);
+  drawLine(img, 24, 12, 26, 10, RIMC);
+  rect(img, 0, 6, 3, 8, CHARGE[k]);
+  px(img, 0, 7, k >= 2 ? LANT_HOT : CHARGE[k]);
+  if (k >= 1) px(img, 4, 6, CHARGE[k - 1]);
+  if (k >= 1) px(img, 4, 8, CHARGE[k - 1]);
+  drawLine(img, 5, 7, 24, 7, BONEDC);
+  for (let x = 8; x < 22; x += 6) px(img, x, 4, RIMC);
+  for (let x = 10; x < 22; x += 6) px(img, x, 10, RIMC);
+  for (let x = 14; x < 23; x++) {
+    if (pick(x, 0, seed, 5) === 0) px(img, x, 5 + pick(x, 1, seed, 2), RUSTC);
+    if (pick(x, 2, seed, 7) === 0) px(img, x, 9, mix(BONEC, RUSTC, 0.5));
+  }
+  return img;
+}
+
+/**
+ * `bosses/king-fin` (33×21, 1 frame, hittable): the HOLLOW KING's fins of §8 (parts 10–11, the
+ * mirrored pair) — a five-rayed pectoral fan of dark membrane facing left off its bone base at
+ * the right edge, lit along the leading edge, seeded cold dots scattered in the web.
+ *
+ * @returns {Image} The frame.
+ */
+function finFrame() {
+  const img = createImage(33, 21);
+  const seed = seedOf('bosses/king-fin');
+  const base = [
+    [31, 3, 10, 1],
+    [31, 7, 4, 2],
+    [31, 10, 2, 2],
+    [31, 13, 4, 2],
+    [31, 17, 10, 20],
+  ];
+  const rayY = (i, x) => {
+    const [, by, tx] = base[i];
+    const t = (31 - x) / (31 - tx);
+    const [, , , ty] = [0, 0, 0, [1, 4, 10, 15, 20][i]];
+    return by + (ty - by) * Math.min(1, t);
+  };
+  for (let x = 4; x <= 30; x++) {
+    for (let i = 0; i < 4; i++) {
+      const y0 = Math.round(rayY(i, x));
+      const y1 = Math.round(rayY(i + 1, x));
+      for (let y = y0; y <= y1; y++) {
+        if (y === y0 && i === 0) continue;
+        let c = MEMB;
+        if (y <= y0 + 1) c = MEMB2;
+        if (y >= y1) c = mix(MEMB, RIMC, 0.4);
+        if (y === y0 || y === y1) c = RAY;
+        if (pick(x, y, seed, 47) === 0) c = CAPS_DIM;
+        if (pick(x, y, seed + 1, 61) === 0) c = CAPS;
+        px(img, x, y, c);
+      }
+    }
+    for (let i = 0; i < 5; i++)
+      px(img, x, Math.round(rayY(i, x)), i === 0 || i === 4 ? MEMB2 : RAY);
+  }
+  rect(img, 29, 2, 32, 18, BONEDC);
+  for (let y = 2; y <= 18; y++) px(img, 29, y, RIMC);
+  px(img, 31, 5, RIMC);
+  px(img, 31, 10, EYE);
+  px(img, 31, 15, RIMC);
+  for (let i = 0; i < 5; i++) px(img, 30, [3, 7, 10, 13, 17][i], RAY);
+  return img;
+}
+
+/**
+ * `bg/abyss-deepwall` (`BAND_TILE_W`×{@link DEEP_H}, 1 frame, fully opaque): the far trench and
+ * abyss wall of §9 — seven basalt strata whose boundaries wobble on `arch` periods that divide
+ * the tile, six darker dike cracks, sparse pale veins wrapped over the seam and cold bioluminescent
+ * specks; blocky, so the page compresses, and nothing in it reads as a hazard.
+ *
+ * @returns {Image} The band.
+ */
+function deepWall() {
+  const img = createImage(BAND_TILE_W, DEEP_H);
+  const seed = seedOf('bg/abyss-deepwall');
+  const steps = STR.length;
+  const wob = (x) => Math.round(5 * arch(x, 160) + 3 * arch(x + 40, 80) + 2 * arch(x + 13, 40));
+  for (let x = 0; x < BAND_TILE_W; x++) {
+    const w = wob(x) - 5;
+    const dike = x === 37 || x === 38 || x === 150 || x === 151 || x === 242 || x === 243;
+    for (let y = 0; y < DEEP_H; y++) {
+      let s = Math.floor((y * steps) / DEEP_H);
+      const b = Math.floor(((s + 1) * DEEP_H) / steps) + w;
+      if (y === b || y === b + 1) s += 1;
+      else if (y === b - 1 || y === b - 2) s -= 1;
+      s = Math.max(0, Math.min(steps - 1, s));
+      const q = pick(Math.floor(x / 4), Math.floor(y / 4), seed, 24);
+      if (q === 0) s = Math.min(steps - 1, s + 1);
+      else if (q === 11) s = Math.max(0, s - 1);
+      setPixel(img, x, y, dike && y % 44 > 1 ? DIKE : STR[s]);
+    }
+  }
+  for (let i = 0; i < 10; i++) {
+    const cy = 20 + pick(i, 1, seed, DEEP_H - 40);
+    const cx = pick(i, 2, seed, BAND_TILE_W);
+    const len = 9 + pick(i, 3, seed, 12);
+    const mid = Math.floor(len / 2);
+    for (let m = 0; m < len; m++) {
+      pxw(img, cx + m, cy, m === mid ? VEINLIT : VEIN);
+      if (m % 2 === 0) pxw(img, cx + m, cy + 1, VEIN);
+    }
+  }
+  for (let i = 0; i < 26; i++) {
+    pxw(img, pick(i, 5, seed, BAND_TILE_W), pick(i, 6, seed, DEEP_H), CAPS_DIM);
+  }
+  return img;
+}
+
+/**
+ * `bg/abyss-vents` (`BAND_TILE_W`×{@link VENTS_H}, 1 frame, green key): the black-smoker field of
+ * §9 — a solid rock base along the abyssal plain with five chimneys, each lit down its left edge,
+ * a dark mouth under a flared lip and a straight tapered smoke column rising from it. Every
+ * column is one run solid to the base, binary alpha, and no feature touches the tile borders, so
+ * copies side by side join without a seam.
+ *
+ * @returns {Image} The band.
+ */
+function ventsBand() {
+  const img = createImage(BAND_TILE_W, VENTS_H);
+  const seed = seedOf('bg/abyss-vents');
+  const baseTop = VENTS_H - 16;
+  for (let x = 0; x < BAND_TILE_W; x++) {
+    for (let y = baseTop; y < VENTS_H; y++) {
+      const c = y === baseTop ? CHIMLIT : pick(Math.floor(x / 3), y, seed, 5) === 0 ? SMOKE : CHIM;
+      setPixel(img, x, y, c);
+    }
+  }
+  const mouths = [30, 96, 161, 226, 291];
+  for (let i = 0; i < mouths.length; i++) {
+    const cx = mouths[i] + pick(i, 1, seed, 11) - 5;
+    const topY = 10 + pick(i, 3, seed, 26);
+    const hwB = 5 + pick(i, 4, seed, 3);
+    const span = baseTop - 1 - topY;
+    for (let y = topY; y < baseTop; y++) {
+      const t = span === 0 ? 0 : (y - topY) / span;
+      const hw = Math.round(2 + (hwB - 2) * t);
+      for (let x = cx - hw; x <= cx + hw; x++) {
+        const c = x === cx - hw ? CHIMLIT : x === cx + hw ? SMOKE : y === topY ? CHIMLIT : CHIM;
+        px(img, x, y, c);
+      }
+    }
+    rect(img, cx - 1, topY + 1, cx + 1, topY + 2, DIKE);
+    for (let y = topY - 1; y >= 6; y--) {
+      const d = topY - y;
+      const hw = Math.max(1, 2 - Math.floor(d / 12));
+      for (let x = cx - hw; x <= cx + hw; x++) {
+        const c =
+          x === cx - hw || x === cx + hw ? mix(SMOKE, RIMC, 0.3) : y % 5 === 2 ? CHIM : SMOKE;
+        px(img, x, y, c);
+      }
+    }
+  }
+  return img;
+}
+
+/**
+ * `bg/abyss-flakes` (`BAND_TILE_W`×{@link FLAKES_H}, 2 frames, green key): the marine snow of
+ * §9 — sparse pale streaks and single motes drifting in front of the ship; the two frames slide
+ * the drift. Surface only: well below the density that could hide a bullet lane, every feature
+ * wrapped so the band repeats seamlessly, binary alpha.
+ *
+ * @param {number} k - The frame, 0 or 1.
+ * @returns {Image} The frame.
+ */
+function flakesBand(k) {
+  const img = createImage(BAND_TILE_W, FLAKES_H);
+  const seed = seedOf('bg/abyss-flakes');
+  for (let i = 0; i < 14; i++) {
+    const y0 = 2 + pick(i, 1, seed, FLAKES_H - 4);
+    const x0 = pick(i, 2, seed, BAND_TILE_W) + k * (4 + pick(i, 5, seed, 5));
+    const len = 2 + pick(i, 3, seed, 4);
+    const lit = pick(i, 4, seed, 3) === 0;
+    for (let m = 0; m < len; m++) {
+      pxw(img, x0 + m, y0 + m, lit && m === 1 ? FLAKE : FLAKE2);
+    }
+  }
+  for (let j = 0; j < 20; j++) {
+    const x = pick(j, 6, seed, BAND_TILE_W) + k * (3 + pick(j, 8, seed, 3));
+    const y = 1 + pick(j, 7, seed, FLAKES_H - 2);
+    pxw(img, x, y, pick(j, 9, seed, 4) === 0 ? FLAKE : FLAKE2);
+  }
+  return img;
+}
+
+/**
+ * `fx/glow-abyss-vent` (36×24, 2 frames): the additive vent glow of §9's decor note (the smoker
+ * bases, the coral column caps, the buttress heads, the stinger shoals), the `decor.mjs` glow
+ * recipe — a bright core, a body ring and a faint halo on a 3:2 ellipse; the second frame is the
+ * pulse, one step smaller. Soft alpha is the bible §5.8 glow accent (the `fx/glow-magma-vent`
+ * precedent's 204 and 110 tiers); the tones pass `offRamp`, clear of every ramp.
+ *
+ * @param {number} k - The frame, 0 or 1.
+ * @returns {Image} The frame.
+ */
+function ventGlow(k) {
+  const img = createImage(36, 24);
+  const cx = 18;
+  const cy = 12;
+  const core = color(offRamp('#86e0c8'));
+  const edge = color(offRamp('#2a6a72'));
+  const r = (k === 0 ? 11 : 9) * 2;
+  const r2 = r * r;
+  for (let y = 0; y < 24; y++) {
+    for (let x = 0; x < 36; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const d2 = dx * dx * 4 + dy * dy * 9;
+      if (d2 > r2) continue;
+      if (d2 * 9 < r2 * 2) {
+        setPixel(img, x, y, core);
+      } else if (d2 * 3 < r2 * 2) {
+        setPixel(img, x, y, [edge[0], edge[1], edge[2], 204]);
+      } else {
+        setPixel(img, x, y, [edge[0], edge[1], edge[2], 110]);
+      }
+    }
+  }
+  return img;
+}
+
+/**
+ * The twenty-two frames of `tiles/terrain-abyss-v2`: `terrain-abyss`'s whole twenty-tile list
+ * first in its order (the base list is off-limits — design §16; P13's prefix law), then the two
+ * §10 additions: `coral` (solid, the mine drift's hp-6 punch pillars) and `abyss-glow` (the empty
+ * decor of gas glimmers in the buttresses). The frame order is the list this function returns
+ * and {@link ABYSS_V2_TILE_NAMES} names.
+ *
+ * @param {number} size - The tile side (`options.tileSize`).
+ * @returns {Image[]} The frames, in list order.
+ */
+function abyssTilesV2(size) {
+  const base = renderTerrainTiles(size, 'tiles/terrain-abyss');
+  return [...base, coralTile(size), abyssGlowTile(size)];
+}
+
+/**
+ * `coral`: the solid coral punch column (§10 id 21, mask all-12) — the abyss rock ground under
+ * two branching coral stems, a pale-lit taller stem right of centre and a low mound at the right
+ * edge; fully opaque.
+ *
+ * @param {number} s - Tile side.
+ * @returns {Image} The tile.
+ */
+function coralTile(s) {
+  const img = createImage(s, s);
+  const seed = seedOf('tiles/terrain-abyss-v2/coral');
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const q = pick(x, y, seed, 4);
+      let c = q === 0 ? RKF[2] : pick(x, y, seed + 1, 2) === 0 ? RKF[1] : RKF[0];
+      if (y >= s - 2 && q === 1) c = SUBS;
+      if (y === 0 && q === 2) c = SUR;
+      setPixel(img, x, y, c);
+    }
+  }
+  rect(img, 4, 3, 5, 11, CORALC);
+  rect(img, 4, 1, 5, 2, CORAL_HI);
+  rect(img, 2, 5, 3, 5, CORAL_DK);
+  rect(img, 8, 1, 8, 11, CORALC);
+  rect(img, 8, 0, 8, 0, CORAL_HI);
+  rect(img, 9, 4, 10, 4, CORALC);
+  rect(img, 10, 2, 10, 3, CORAL_HI);
+  rect(img, 9, 8, 11, 11, CORAL_DK);
+  rect(img, 10, 8, 11, 8, CORALC);
+  px(img, 5, 6, CORAL_HI);
+  px(img, 8, 7, CORAL_DK);
+  return img;
+}
+
+/**
+ * `abyss-glow`: the empty decor tile (§10 id 22, mask all-0) — cold green gas glimmers: a few
+ * single pixels and a pair of tiny plus sparks over transparent ground, keyed binary.
+ *
+ * @param {number} s - Tile side.
+ * @returns {Image} The tile.
+ */
+function abyssGlowTile(s) {
+  const img = createImage(s, s);
+  const seed = seedOf('tiles/terrain-abyss-v2/abyss-glow');
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const q = pick(x, y, seed, 10);
+      if (q === 0) px(img, x, y, CAPS);
+      else if (q === 1) px(img, x, y, CAPS_DIM);
+    }
+  }
+  px(img, 3, 4, CAPS);
+  px(img, 2, 4, CAPS_DIM);
+  px(img, 4, 4, CAPS_DIM);
+  px(img, 3, 3, CAPS_DIM);
+  px(img, 3, 5, CAPS_DIM);
+  px(img, 8, 8, CAPS);
+  px(img, 7, 8, CAPS_DIM);
+  px(img, 9, 8, CAPS_DIM);
+  px(img, 8, 7, CAPS_DIM);
+  px(img, 8, 9, CAPS_DIM);
+  return img;
 }

@@ -4,8 +4,9 @@
  * tick counts):
  *
  * - **ABYSSAL THRONE** — `?scene=flight&stage=zone-i`: the palette-cycled murk (`bg/abyss-murk`,
- *   the four ramp colours zone I cycles) fills the top of the view; at the end the ABYSS ARK's bone
- *   plating (`bosses/ark-*`) fills the view as the raid's camera follows it;
+ *   the six ramp colours of the R5-P.P7 v2 ramp zone I cycles) fills the top of the view; at the
+ *   end the ABYSS ARK's bone plating (`bosses/ark-*`) fills the view as the raid's camera follows
+ *   it;
  * - **the ending scenes** — the web build's scene flow put on the ending of a run through the
  *   debug API: *THE FLAGSHIP SLIPS AWAY* draws the deep's scene (the sea's surface, the dawn sun of
  *   a flawless run, the ARK's silhouette sailing off to the right) and its epilogue; *THE CITADEL
@@ -80,8 +81,10 @@ test.describe('zones H and I (web build)', () => {
     }
     expect(stepped(specks, later)).toBeGreaterThan(10);
     expect((await find(page, ARK_BONE, PLAYFIELD)).count).toBe(0);
+    // The end of the stage: the WARNING (x 19,650, design §2), then the boss — the jump lands
+    // 150 px before it, the lead this spec has always kept from its own warning.
     await page.evaluate(() => {
-      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(13350);
+      (window as unknown as DebugWindow).__shmupDebug.game.world.stage?.jumpTo(19500);
     });
     const fight = await stepUntilFight(page, 60);
     expect(fight.boss).toBe('abyss-ark');

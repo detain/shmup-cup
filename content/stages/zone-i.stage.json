@@ -9,32 +9,46 @@
     "ending": "Ending",
     "credits": "Credits"
   },
-  "length": 14400,
+  "length": 20400,
   "camera": [
     {
       "x": 0,
-      "speed": 1.2,
+      "speed": 1.35,
       "ramp": 60
     },
     {
-      "x": 3300,
-      "speed": 1.05,
-      "ramp": 60
+      "x": 3000,
+      "speed": 1.35,
+      "ramp": 60,
+      "hold": 168,
+      "yTo": 168,
+      "yTicks": 168
     },
     {
-      "x": 6600,
-      "speed": 1.125,
-      "ramp": 60
+      "x": 6000,
+      "speed": 1.35,
+      "ramp": 60,
+      "hold": 144,
+      "yTo": 312,
+      "yTicks": 144
     },
     {
-      "x": 10200,
+      "x": 9300,
       "speed": 1.95,
       "ramp": 120
     },
     {
-      "x": 12600,
-      "speed": 1.125,
-      "ramp": 120
+      "x": 12300,
+      "speed": 1.6,
+      "ramp": 90,
+      "hold": 312,
+      "yTo": 0,
+      "yTicks": 312
+    },
+    {
+      "x": 18000,
+      "speed": 1.2,
+      "ramp": 60
     }
   ],
   "checkpoints": [
@@ -42,13 +56,19 @@
       "x": 0
     },
     {
-      "x": 3300
+      "x": 2880
     },
     {
-      "x": 6600
+      "x": 6240
     },
     {
-      "x": 10200
+      "x": 9300
+    },
+    {
+      "x": 12300
+    },
+    {
+      "x": 15600
     }
   ],
   "parallax": [
@@ -74,54 +94,157 @@
       "spacing": 192
     },
     {
+      "layer": "far",
+      "sprite": "bg/abyss-deepwall",
+      "factor": 0.25,
+      "yFactor": 0.25,
+      "y": 336,
+      "spacing": 320
+    },
+    {
       "layer": "mid",
       "sprite": "bg/abyss-spires",
       "factor": 0.4,
       "y": 252,
       "spacing": 192
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/abyss-vents",
+      "factor": 0.5,
+      "yFactor": 0.5,
+      "y": 504,
+      "spacing": 320
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/abyss-flakes",
+      "factor": 1.15,
+      "yFactor": 1.15,
+      "y": 96,
+      "spacing": 320,
+      "frames": 2
     }
   ],
   "tilemap": {
     "tileSize": 12,
     "tileset": "terrain-abyss",
-    "rowsTall": 28,
+    "rowsTall": 56,
+    "rle": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "13*0, 1012*1",
+      "13*0, 1012*1",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "700*0, 2*22, 35*0, 2*22",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "590*0, 21, 39*0, 21, 39*0, 21, 29*0, 2*1, 8*0, 21, 26*0, 2*1",
+      "700*0, 2*1, 35*0, 2*1",
+      "700*0, 2*1, 35*0, 2*1",
+      "700*0, 2*1, 35*0, 2*1",
+      "700*0, 2*1, 35*0, 2*1",
+      "",
+      ""
+    ],
     "generator": {
       "type": "heightfield",
       "segments": [
         {
           "from": 150,
-          "to": 3240,
+          "to": 3000,
           "floor": {
-            "base": 30,
-            "amp": 15,
-            "period": 390,
+            "base": 360,
+            "amp": 12,
+            "period": 300,
             "seed": 131
           }
         },
         {
-          "from": 3300,
-          "to": 6570,
+          "from": 3000,
+          "to": 6150,
           "floor": {
-            "base": 42,
-            "amp": 15,
-            "period": 360,
+            "base": 192,
+            "amp": 12,
+            "period": 330,
             "seed": 132
           },
           "ceiling": {
-            "base": 75,
-            "amp": 15,
-            "period": 420,
+            "base": 204,
+            "amp": 12,
+            "period": 270,
             "seed": 133
           }
         },
         {
-          "from": 10230,
-          "to": 12570,
+          "from": 6150,
+          "to": 9300,
           "floor": {
-            "base": 30,
-            "amp": 15,
-            "period": 330,
+            "base": 72,
+            "amp": 12,
+            "period": 390,
             "seed": 134
+          }
+        },
+        {
+          "from": 9300,
+          "to": 12300,
+          "floor": {
+            "base": 72,
+            "amp": 27,
+            "period": 270,
+            "seed": 135
+          }
+        },
+        {
+          "from": 12300,
+          "to": 21040,
+          "floor": {
+            "base": 0,
+            "amp": 0,
+            "period": 300,
+            "seed": 136
           }
         }
       ]
@@ -135,13 +258,14 @@
       "count": 5,
       "interval": 16,
       "y": 141,
-      "bonus": 300
+      "bonus": 300,
+      "drop": "capsule"
     },
     {
       "x": 450,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 216
+      "enemy": "deep-tender",
+      "y": 186
     },
     {
       "x": 660,
@@ -156,7 +280,8 @@
       "count": 5,
       "interval": 16,
       "y": 246,
-      "bonus": 300
+      "bonus": 300,
+      "drop": "capsule"
     },
     {
       "x": 1020,
@@ -177,8 +302,8 @@
     {
       "x": 1620,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 231
+      "enemy": "depth-mine",
+      "y": 216
     },
     {
       "x": 1800,
@@ -192,290 +317,208 @@
     {
       "x": 2010,
       "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 216
+      "enemy": "abyss-crawler"
     },
     {
-      "x": 2190,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 171
-    },
-    {
-      "x": 2400,
-      "type": "spawn",
-      "enemy": "gulper-low"
-    },
-    {
-      "x": 2640,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 14,
-      "y": 186,
-      "bonus": 400
-    },
-    {
-      "x": 2850,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 126
-    },
-    {
-      "x": 2996,
-      "type": "spawn",
-      "enemy": "abyss-turret"
-    },
-    {
-      "x": 3360,
+      "x": 2250,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 3476,
+      "x": 2520,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 96
+    },
+    {
+      "x": 2760,
+      "type": "spawn",
+      "enemy": "abyss-turret"
+    },
+    {
+      "x": 3150,
+      "type": "spawn",
+      "enemy": "deep-tender",
+      "y": 150
+    },
+    {
+      "x": 3360,
       "type": "formation",
       "enemy": "trench-eel",
       "count": 6,
       "interval": 7,
-      "bonus": 600
+      "bonus": 600,
+      "drop": "capsule"
     },
     {
-      "x": 3656,
+      "x": 3600,
       "type": "spawn",
-      "enemy": "abyss-turret-ceiling"
+      "enemy": "abyss-turret"
     },
     {
-      "x": 3870,
+      "x": 3810,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 156
+      "enemy": "depth-mine",
+      "y": 216
+    },
+    {
+      "x": 3900,
+      "type": "spawn",
+      "enemy": "gulper-low"
     },
     {
       "x": 4050,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 5,
-      "interval": 16,
+      "interval": 13,
       "y": 186,
-      "bonus": 500
+      "bonus": 350,
+      "drop": "capsule"
     },
     {
       "x": 4200,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 216
-    },
-    {
-      "x": 4346,
-      "type": "formation",
-      "enemy": "trench-eel",
-      "count": 6,
-      "interval": 7,
-      "drop": null
-    },
-    {
-      "x": 4620,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 171
-    },
-    {
-      "x": 4736,
-      "type": "spawn",
-      "enemy": "abyss-turret"
-    },
-    {
-      "x": 4946,
-      "type": "formation",
-      "enemy": "trench-eel",
-      "count": 7,
-      "interval": 7,
-      "bonus": 700
-    },
-    {
-      "x": 5220,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 5400,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 14,
-      "y": 141,
-      "drop": null
-    },
-    {
-      "x": 5546,
-      "type": "spawn",
       "enemy": "abyss-turret-ceiling"
     },
     {
-      "x": 5756,
-      "type": "formation",
-      "enemy": "trench-eel",
-      "count": 7,
-      "interval": 7,
-      "drop": null
-    },
-    {
-      "x": 6030,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 216
-    },
-    {
-      "x": 6270,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 186
-    },
-    {
-      "x": 6660,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 186
-    },
-    {
-      "x": 6810,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 126
-    },
-    {
-      "x": 6900,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 246
-    },
-    {
-      "x": 7050,
+      "x": 4350,
       "type": "spawn",
       "enemy": "tender",
       "y": 141
     },
     {
-      "x": 7230,
+      "x": 4560,
       "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 14,
-      "y": 201,
-      "bonus": 500
+      "enemy": "trench-eel",
+      "count": 7,
+      "interval": 7,
+      "bonus": 700,
+      "drop": "capsule"
     },
     {
-      "x": 7440,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 246
-    },
-    {
-      "x": 7560,
-      "type": "spawn",
-      "enemy": "gulper"
-    },
-    {
-      "x": 7740,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 186
-    },
-    {
-      "x": 7860,
+      "x": 4860,
       "type": "spawn",
       "enemy": "depth-mine",
       "y": 96
     },
     {
-      "x": 8070,
+      "x": 5040,
+      "type": "spawn",
+      "enemy": "abyss-crawler"
+    },
+    {
+      "x": 5100,
       "type": "formation",
       "enemy": "lumen-mote",
-      "count": 6,
+      "count": 5,
       "interval": 14,
-      "y": 276,
+      "y": 246,
       "drop": null
     },
     {
-      "x": 8280,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 156
-    },
-    {
-      "x": 8460,
-      "type": "spawn",
-      "enemy": "gulper-low"
-    },
-    {
-      "x": 8640,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 261
-    },
-    {
-      "x": 8730,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 141
-    },
-    {
-      "x": 8940,
+      "x": 5250,
       "type": "formation",
-      "enemy": "lumen-mote",
+      "enemy": "trench-eel",
       "count": 6,
-      "interval": 14,
-      "y": 126,
-      "bonus": 500
+      "interval": 7,
+      "bonus": 650,
+      "drop": "capsule"
     },
     {
-      "x": 9150,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 216
-    },
-    {
-      "x": 9360,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 201
-    },
-    {
-      "x": 9570,
-      "type": "spawn",
-      "enemy": "gulper"
-    },
-    {
-      "x": 9780,
-      "type": "spawn",
-      "enemy": "depth-mine",
-      "y": 111
-    },
-    {
-      "x": 10260,
+      "x": 5400,
       "type": "spawn",
       "enemy": "tender",
       "y": 186
     },
     {
-      "x": 10440,
+      "x": 5450,
+      "type": "spawn",
+      "enemy": "abyss-turret-ceiling"
+    },
+    {
+      "x": 5560,
+      "type": "spawn",
+      "enemy": "gulper"
+    },
+    {
+      "x": 5700,
+      "type": "formation",
+      "enemy": "trench-eel",
+      "count": 6,
+      "interval": 7,
+      "drop": null
+    },
+    {
+      "x": 6240,
+      "type": "spawn",
+      "enemy": "deep-tender",
+      "y": 150
+    },
+    {
+      "x": 6450,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 246
+    },
+    {
+      "x": 6480,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 126
+    },
+    {
+      "x": 6750,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 8,
       "interval": 10,
-      "y": 141,
-      "bonus": 600
+      "y": 192,
+      "bonus": 400,
+      "drop": "capsule"
     },
     {
-      "x": 10620,
+      "x": 6900,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 60
+    },
+    {
+      "x": 7050,
+      "type": "spawn",
+      "enemy": "gulper"
+    },
+    {
+      "x": 7200,
       "type": "spawn",
       "enemy": "tender",
-      "y": 231
+      "y": 186
     },
     {
-      "x": 10830,
+      "x": 7260,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 201
+    },
+    {
+      "x": 7440,
+      "type": "spawn",
+      "enemy": "abyss-crawler"
+    },
+    {
+      "x": 7800,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 264
+    },
+    {
+      "x": 7980,
+      "type": "spawn",
+      "enemy": "gulper-low"
+    },
+    {
+      "x": 8190,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 6,
@@ -484,71 +527,225 @@
       "drop": null
     },
     {
-      "x": 11040,
+      "x": 8400,
       "type": "spawn",
       "enemy": "depth-mine",
       "y": 171
     },
     {
-      "x": 11220,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 8,
-      "interval": 10,
-      "y": 246,
-      "bonus": 600
-    },
-    {
-      "x": 11400,
+      "x": 8550,
       "type": "spawn",
       "enemy": "tender",
-      "y": 141
-    },
-    {
-      "x": 11610,
-      "type": "spawn",
-      "enemy": "depth-mine",
       "y": 231
     },
     {
-      "x": 11666,
-      "type": "spawn",
-      "enemy": "abyss-turret"
+      "x": 8700,
+      "type": "boss",
+      "enemy": "trench-hermit"
     },
     {
-      "x": 11940,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 8,
-      "interval": 10,
-      "y": 186,
-      "drop": null
-    },
-    {
-      "x": 12240,
+      "x": 8950,
       "type": "spawn",
       "enemy": "depth-mine",
       "y": 126
     },
     {
-      "x": 12660,
+      "x": 9450,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 156
+      "enemy": "deep-tender",
+      "y": 150
     },
     {
-      "x": 13020,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 231
+      "x": 9750,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 7,
+      "interval": 12,
+      "y": 216,
+      "bonus": 500,
+      "drop": "capsule"
     },
     {
-      "x": 13500,
+      "x": 10050,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 96
+    },
+    {
+      "x": 10350,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 186
+    },
+    {
+      "x": 10650,
+      "type": "spawn",
+      "enemy": "abyss-crawler"
+    },
+    {
+      "x": 10950,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 12,
+      "y": 141,
+      "drop": null
+    },
+    {
+      "x": 11250,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 216
+    },
+    {
+      "x": 11550,
+      "type": "spawn",
+      "enemy": "gulper"
+    },
+    {
+      "x": 11850,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 150
+    },
+    {
+      "x": 12450,
+      "type": "spawn",
+      "enemy": "deep-tender",
+      "y": 186
+    },
+    {
+      "x": 12900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 13350,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 12,
+      "y": 168,
+      "bonus": 400,
+      "drop": "capsule"
+    },
+    {
+      "x": 13650,
+      "type": "spawn",
+      "enemy": "stinger"
+    },
+    {
+      "x": 13950,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 96
+    },
+    {
+      "x": 14250,
+      "type": "spawn",
+      "enemy": "stinger"
+    },
+    {
+      "x": 14400,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 7,
+      "interval": 12,
+      "y": 222,
+      "drop": null
+    },
+    {
+      "x": 15000,
+      "type": "spawn",
+      "enemy": "stinger"
+    },
+    {
+      "x": 15300,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 216
+    },
+    {
+      "x": 15750,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 12,
+      "y": 96,
+      "bonus": 350,
+      "drop": "capsule"
+    },
+    {
+      "x": 15900,
+      "type": "spawn",
+      "enemy": "deep-tender",
+      "y": 150
+    },
+    {
+      "x": 16200,
+      "type": "spawn",
+      "enemy": "gulper"
+    },
+    {
+      "x": 16350,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 216
+    },
+    {
+      "x": 16650,
+      "type": "spawn",
+      "enemy": "stinger"
+    },
+    {
+      "x": 16800,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 141,
+      "drop": "blueCapsule"
+    },
+    {
+      "x": 17100,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 276
+    },
+    {
+      "x": 17400,
+      "type": "spawn",
+      "enemy": "gulper-low"
+    },
+    {
+      "x": 17700,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 7,
+      "interval": 10,
+      "y": 192,
+      "drop": null
+    },
+    {
+      "x": 18450,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 141
+    },
+    {
+      "x": 19150,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 19650,
       "type": "warning",
       "enemy": "abyss-ark"
     },
     {
-      "x": 14400,
+      "x": 20400,
       "type": "end"
     }
   ],
@@ -578,7 +775,15 @@
     "green",
     "blue",
     "red",
-    "green"
+    "green",
+    "red",
+    "green",
+    "blue",
+    "octagon",
+    "red",
+    "green",
+    "blue",
+    "yellow"
   ],
   "raster": [
     {
@@ -586,7 +791,7 @@
       "kind": "wave",
       "top": 246,
       "bottom": 336,
-      "amplitude": 1.5,
+      "amplitude": 2.25,
       "wavelength": 54,
       "period": 180
     },
@@ -598,6 +803,17 @@
       "amplitude": 1.5,
       "wavelength": 90,
       "period": 240
+    },
+    {
+      "layer": "mid",
+      "kind": "lines",
+      "top": 0,
+      "bottom": 120,
+      "factorTop": 1.0,
+      "factorBottom": 0.85,
+      "period": 150,
+      "from": 12300,
+      "to": 18000
     }
   ],
   "cycles": [
@@ -607,59 +823,199 @@
       "ticks": 14
     }
   ],
+  "decor": [
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 6200,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 6500,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 6950,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 7300,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 7700,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 9100,
+      "y": 288
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 7086,
+      "y": 216
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 7566,
+      "y": 216
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 8046,
+      "y": 216
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 8526,
+      "y": 216
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 8406,
+      "y": 204
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 8856,
+      "y": 204
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 13650,
+      "y": 156
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 14250,
+      "y": 156
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 0,
+      "x": 15000,
+      "y": 156
+    },
+    {
+      "layer": "back",
+      "sprite": "fx/glow-abyss-vent",
+      "frame": 1,
+      "x": 16650,
+      "y": 156
+    }
+  ],
   "remix": [
     {
       "x": 360,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 5,
-      "interval": 16,
-      "y": 231,
+      "interval": 14,
+      "y": 141,
       "drop": null
     },
     {
-      "x": 1950,
+      "x": 1500,
+      "type": "spawn",
+      "enemy": "depth-mine",
+      "y": 231
+    },
+    {
+      "x": 3960,
+      "type": "formation",
+      "enemy": "trench-eel",
+      "count": 7,
+      "interval": 7,
+      "drop": null
+    },
+    {
+      "x": 5880,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 6,
       "interval": 14,
-      "y": 246,
+      "y": 201,
       "drop": null
     },
     {
-      "x": 5550,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 14,
-      "y": 231,
-      "drop": null
+      "x": 7500,
+      "type": "spawn",
+      "enemy": "gulper",
+      "y": 126
     },
     {
-      "x": 8220,
+      "x": 9900,
       "type": "formation",
       "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 14,
+      "count": 7,
+      "interval": 12,
       "y": 96,
       "drop": null
     },
     {
-      "x": 10980,
-      "type": "formation",
-      "enemy": "lumen-mote",
-      "count": 6,
-      "interval": 12,
-      "y": 276,
-      "drop": null
+      "x": 12750,
+      "type": "spawn",
+      "enemy": "stinger",
+      "y": 168
     },
     {
-      "x": 12090,
+      "x": 14100,
       "type": "formation",
       "enemy": "lumen-mote",
       "count": 8,
       "interval": 10,
-      "y": 186,
+      "y": 222,
+      "drop": null
+    },
+    {
+      "x": 15150,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 7,
+      "interval": 10,
+      "y": 141,
+      "drop": null
+    },
+    {
+      "x": 17850,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 12,
+      "y": 192,
       "drop": null
     }
   ]

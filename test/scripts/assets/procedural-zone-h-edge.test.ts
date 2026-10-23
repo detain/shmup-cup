@@ -165,9 +165,11 @@ describe('scripts/assets/procedural/terrain — zones H and I tilesets (M2-14 te
   it('names each zone tileset sprite in its content file, the tiles in zone A’s order', () => {
     // H's set rides `tiles/terrain-citadel-v2` since R5-08.S5a: zone A's 20 tiles first, then
     // its 4 variants — the order `citadel.mjs` draws, pinned by CITADEL_V2_TILE_NAMES.
+    // I's set rides `tiles/terrain-abyss-v2` since R5-09.S5a: the same 20, then its 2 §10
+    // additions — the order `abyss.mjs` draws, pinned by ABYSS_V2_TILE_NAMES.
     for (const [file, sprite, tileNames] of [
       ['terrain-citadel', 'tiles/terrain-citadel-v2', citadel.CITADEL_V2_TILE_NAMES],
-      ['terrain-abyss', 'tiles/terrain-abyss', terrain.TERRAIN_TILES],
+      ['terrain-abyss', 'tiles/terrain-abyss-v2', abyss.ABYSS_V2_TILE_NAMES],
     ] as const) {
       const data = content<{ id: string; sprite: string; tiles: { name: string }[] }>(
         `tilesets/${file}.tileset.json`,

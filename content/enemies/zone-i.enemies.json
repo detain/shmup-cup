@@ -217,11 +217,152 @@
       "drop": null
     },
     {
+      "id": "abyss-crawler",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 10,
+        "hh": 7
+      },
+      "script": "walker.floor",
+      "sprite": "enemies/abyss-crawler",
+      "anim": {
+        "frames": 4,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 0.75,
+        "walkTicks": 60,
+        "stopTicks": 30,
+        "bulletSpeed": 1.8,
+        "spread": 32
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "stinger",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 5
+      },
+      "script": "rocket.homing",
+      "sprite": "enemies/stinger",
+      "anim": {
+        "frames": 4,
+        "ticks": 5
+      },
+      "params": {
+        "launchTicks": 20,
+        "launchSpeed": 1.5,
+        "speed": 1.8,
+        "turnRate": 4,
+        "homeTicks": 70
+      },
+      "drop": null
+    },
+    {
+      "id": "deep-tender",
+      "hp": 3,
+      "score": 200,
+      "hurtbox": {
+        "hw": 9,
+        "hh": 6
+      },
+      "script": "carrier.straight",
+      "sprite": "enemies/deep-tender",
+      "anim": {
+        "frames": 4,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 1.05
+      },
+      "drop": "capsule",
+      "explosion": "medium"
+    },
+    {
+      "id": "trench-hermit",
+      "boss": {
+        "code": "TH-11",
+        "displayName": "THE TRENCH HERMIT",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 3000,
+        "x": 530,
+        "y": 168,
+        "parts": [
+          {
+            "name": "core",
+            "hp": 30,
+            "radius": 12,
+            "spin": 6,
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "explosion": "large"
+          },
+          {
+            "name": "claw-l",
+            "parent": "core",
+            "x": -21,
+            "y": -24,
+            "hp": 8,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            },
+            "score": 250
+          },
+          {
+            "name": "claw-r",
+            "parent": "core",
+            "x": -21,
+            "y": 24,
+            "hp": 8,
+            "radius": 9,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            },
+            "score": 250
+          }
+        ],
+        "phases": [
+          {
+            "script": "captain.crab",
+            "params": {
+              "stepTicks": 70,
+              "minX": 407,
+              "maxX": 574,
+              "minY": 96,
+              "maxY": 264,
+              "ringTicks": 84,
+              "ring": 10,
+              "bulletSpeed": 1.5,
+              "turn": 16
+            }
+          }
+        ]
+      }
+    },
+    {
       "id": "abyss-ark",
       "boss": {
         "code": "AA-09",
         "displayName": "ABYSS ARK",
-        "introTicks": 240,
+        "introTicks": 180,
         "score": 50000,
         "x": 200,
         "y": 168,
@@ -231,7 +372,7 @@
         "raid": {
           "segments": [
             {
-              "x": -150,
+              "x": -190,
               "y": -150,
               "ticks": 150,
               "hold": 180
@@ -243,7 +384,7 @@
               "hold": 180
             },
             {
-              "x": -30,
+              "x": 10,
               "y": -150,
               "ticks": 210,
               "hold": 240
@@ -255,7 +396,7 @@
               "hold": 180
             },
             {
-              "x": -150,
+              "x": -190,
               "y": -150,
               "ticks": 210,
               "hold": 150
@@ -280,16 +421,22 @@
             "sprite": "bosses/ark-hull"
           },
           {
-            "name": "stern",
+            "name": "hull-4",
             "parent": "bow",
             "x": 432,
+            "sprite": "bosses/ark-hull"
+          },
+          {
+            "name": "stern",
+            "parent": "bow",
+            "x": 576,
             "sprite": "bosses/ark-stern"
           },
           {
             "name": "turret-t1",
             "parent": "bow",
             "x": 54,
-            "y": -33,
+            "y": -36,
             "hp": 12,
             "radius": 10.5,
             "angle": 768,
@@ -301,7 +448,7 @@
           {
             "name": "turret-t2",
             "parent": "bow",
-            "x": 198,
+            "x": 270,
             "y": -36,
             "hp": 12,
             "radius": 10.5,
@@ -314,7 +461,7 @@
           {
             "name": "turret-t3",
             "parent": "bow",
-            "x": 342,
+            "x": 486,
             "y": -36,
             "hp": 12,
             "radius": 10.5,
@@ -327,8 +474,8 @@
           {
             "name": "turret-b1",
             "parent": "bow",
-            "x": 126,
-            "y": 33,
+            "x": 162,
+            "y": 36,
             "hp": 12,
             "radius": 10.5,
             "angle": 256,
@@ -340,7 +487,7 @@
           {
             "name": "turret-b2",
             "parent": "bow",
-            "x": 270,
+            "x": 378,
             "y": 36,
             "hp": 12,
             "radius": 10.5,
@@ -353,8 +500,8 @@
           {
             "name": "turret-b3",
             "parent": "bow",
-            "x": 414,
-            "y": 33,
+            "x": 594,
+            "y": 36,
             "hp": 12,
             "radius": 10.5,
             "angle": 256,
@@ -364,11 +511,35 @@
             "score": 800
           },
           {
+            "name": "pod-l",
+            "parent": "bow",
+            "x": 216,
+            "y": -60,
+            "hp": 16,
+            "radius": 7.5,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/ark-pod",
+            "score": 900
+          },
+          {
+            "name": "pod-r",
+            "parent": "bow",
+            "x": 504,
+            "y": 60,
+            "hp": 16,
+            "radius": 7.5,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/ark-pod",
+            "score": 900
+          },
+          {
             "name": "heart",
             "parent": "bow",
-            "x": 234,
+            "x": 288,
             "y": 3,
-            "hp": 130,
+            "hp": 105,
             "radius": 13.5,
             "core": true,
             "sprite": "bosses/ark-heart",
@@ -384,26 +555,26 @@
           {
             "script": "boss.ark",
             "params": {
-              "fireTicks": 90,
+              "fireTicks": 84,
               "bulletSpeed": 1.65,
-              "launchTicks": 220,
+              "launchTicks": 200,
               "count": 1
             },
             "until": {
-              "hpBelow": 70
+              "hpBelow": 55
             }
           },
           {
             "script": "boss.ark",
             "params": {
-              "fireTicks": 72,
+              "fireTicks": 66,
               "ways": 3,
               "spread": 40,
               "bulletSpeed": 1.875,
-              "launchTicks": 170,
+              "launchTicks": 160,
               "count": 2,
               "ring": 8,
-              "ringTicks": 220,
+              "ringTicks": 200,
               "ringSpeed": 1.425
             }
           }
@@ -415,7 +586,7 @@
       "boss": {
         "code": "HK-10",
         "displayName": "THE HOLLOW KING",
-        "introTicks": 150,
+        "introTicks": 120,
         "score": 60000,
         "x": 508,
         "y": 168,
@@ -440,7 +611,7 @@
             "name": "maw",
             "x": 9,
             "y": 3,
-            "hp": 96,
+            "hp": 80,
             "hurtbox": {
               "hw": 9,
               "hh": 9
@@ -508,7 +679,7 @@
             "name": "lure",
             "parent": "stalk-3",
             "x": -13.5,
-            "hp": 30,
+            "hp": 24,
             "radius": 7.5,
             "gun": true,
             "sprite": "bosses/king-lure",
@@ -518,6 +689,30 @@
             },
             "score": 3000,
             "explosion": "medium"
+          },
+          {
+            "name": "fin-top",
+            "parent": "body",
+            "x": 21,
+            "y": -66,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 16,
+              "hh": 10
+            },
+            "sprite": "bosses/king-fin"
+          },
+          {
+            "name": "fin-bottom",
+            "parent": "body",
+            "x": 21,
+            "y": 66,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 16,
+              "hh": 10
+            },
+            "sprite": "bosses/king-fin"
           }
         ],
         "phases": [
@@ -536,7 +731,7 @@
               "gunTicks": 100
             },
             "until": {
-              "hpBelow": 66
+              "hpBelow": 54
             }
           },
           {
@@ -558,7 +753,7 @@
               "count": 1
             },
             "until": {
-              "hpBelow": 30
+              "hpBelow": 24
             }
           },
           {

@@ -12,13 +12,12 @@ import { describe, expect, it } from 'vitest';
 import { BossState, EndingFlag } from '@shmup/core';
 import { shippedContent } from '../playtest/harness.js';
 import { follow, GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
-import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone I (M2-14)', () => {
-  it('covers zone I of M2-14: cleared in 3–7 minutes, the ARK and THE HOLLOW KING shot down', () => {
+  it('covers zone I of M2-14: cleared in 4–7 minutes, the ARK and THE HOLLOW KING shot down', () => {
     const { file, replay } = readGolden('zone-i-god');
     expect(replay.header.stageId).toBe('zone-i');
     expect(replay.header.assisted).toBe(true);
@@ -27,7 +26,10 @@ describe.skipIf(updating)('golden replays — zone I (M2-14)', () => {
       bossDefeated: true,
       deathTicks: [],
     });
-    expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    // The R5-09 stage (design §12's window, the ceiling widened to 420 s by decision
+    // R5-D13): the re-recorded golden must clear 4 minutes on the 20,400-px route. Red
+    // until the zone's LAND re-blesses `zone-i-god`.
+    expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
     expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
     // The ARK did not escape: its final blast revealed THE HOLLOW KING, who fell too.
     const throne = playGolden(readGolden('zone-i-god').replay).world;
@@ -43,8 +45,11 @@ describe.skipIf(updating)('golden replays — zone I (M2-14)', () => {
     // The skip to the ABYSS ARK: the raid in both phases, then the king in his three.
     const i = follow('zone-i-boss');
     expect(i.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true, deathTicks: [] });
-    expect(i.first).toBeGreaterThan(v1x(8800)); // skipped to the WARNING at v1x(9,000) — the ported
-    // bounds (R2-02's ×1.5); the recorded skip lands at 13,357.125
+    // Skipped to the WARNING at x 19,650 (design §2, R5-09.S5b — the stage skip keeps the
+    // warning target, R5-P.P14): the recorded v2 skip lands ~214 px before it (the lead
+    // ported from v1's 143 px); the window is the calm key's 360 px before the warning.
+    expect(i.first).toBeGreaterThan(19_290);
+    expect(i.first).toBeLessThan(19_650); // red until the zone's LAND re-blesses `zone-i-boss`
     expect([...i.phases].sort()).toEqual([
       'abyss-ark:0',
       'abyss-ark:1',

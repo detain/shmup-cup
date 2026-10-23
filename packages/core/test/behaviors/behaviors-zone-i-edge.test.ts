@@ -10,17 +10,22 @@
  *   caps the turn of a volley; the ring comes from the on-screen core, turned half a gap each time;
  * - `boss.angler`: an open mouth shorter than the first spread's 12 ticks fires nothing; `gape` 0
  *   keeps the jaws at rest, a fractional one is floored; the ring as it opens, turned half a gap
- *   each time; every phase starts with the mouth shut.
+ *   each time; every phase starts with the mouth shut;
+ * - `rocket.homing` (R5-09.S4a): `turnRate` 0 holds the launch's diagonal — the rocket never
+ *   turns towards the ship;
+ * - `captain.crab` (R5-09.S4a): a reversed box still holds its steps inside the same shelves
+ *   (the bounds swap), `ring` 0.6 fires one bullet, `turn` 16.7 floors to 16-unit steps.
  *
  * The emitter and the sovereign are in `behaviors-zone-h-edge.test.ts`; the `drone` entry the ark
  * casts rides both files (R5-P.P5a2).
  */
 import { describe, expect, it } from 'vitest';
-import { BossHit } from '../../src/bosses/index.js';
+import { BossHit, BossMotion, BossState } from '../../src/bosses/index.js';
 import { BulletKind } from '../../src/bullets/index.js';
 import { PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
+import { ANGLE_UNITS } from '../../src/math/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped } from '../helpers/shipped.js';
@@ -34,6 +39,14 @@ const ROSTER = [
   // The drone the ark below casts (the sovereign launches it too — the entry rides both H and
   // I edge files, R5-P.P5a2).
   enemy('drone', 'drifter.sine', {}),
+  // R5-09.S4a — the stinger as a rocket that never homes (`turnRate` 0).
+  enemy('stinger-flat', 'rocket.homing', {
+    launchTicks: 20,
+    launchSpeed: 1.5,
+    speed: 1.8,
+    turnRate: 0,
+    homeTicks: 70,
+  }),
   {
     id: 'arkt',
     boss: {
@@ -136,6 +149,40 @@ const ROSTER = [
         {
           script: 'boss.angler',
           params: { trackSpeed: 0, closedTicks: 10, openTicks: 40, gape: 4.7, ring: 6 },
+        },
+      ],
+    },
+  },
+  // R5-09.S4a — THE TRENCH HERMIT's shell with its bounds reversed and its ring / turn below 1
+  // and fractional (a hand entry: this file's roster carries no sprites).
+  {
+    id: 'crabflip',
+    boss: {
+      code: 'CF-99',
+      displayName: 'TEST CRAB',
+      introTicks: 0,
+      score: 100,
+      x: 480,
+      y: 180,
+      parts: [
+        { name: 'hub', hp: 40, radius: 12, core: true, spin: 6 },
+        { name: 'claw-l', parent: 'hub', x: -21, y: -24, radius: 9, vulnerable: 'never' },
+        { name: 'claw-r', parent: 'hub', x: -21, y: 24, radius: 9, vulnerable: 'never' },
+      ],
+      phases: [
+        {
+          script: 'captain.crab',
+          params: {
+            stepTicks: 40,
+            minX: 574,
+            maxX: 407,
+            minY: 264,
+            maxY: 96,
+            ringTicks: 40,
+            ring: 0.6,
+            bulletSpeed: 1.5,
+            turn: 16.7,
+          },
         },
       ],
     },
@@ -362,6 +409,58 @@ describe('core/behaviors — zone I, edge cases (M2-14 tests)', () => {
       expect(rings[0]).toHaveLength(6);
       expect(rings[1]).toHaveLength(6);
       expect(rings[1][0] - rings[0][0]).toBe(half);
+    });
+  });
+
+  describe('rocket.homing', () => {
+    it('with turnRate 0 it holds the launch diagonal — it never turns towards the ship', () => {
+      const w = freeFlight();
+      const rocket = spawn(w, 'stinger-flat', 300, 40); // above the middle row
+      run(w, 22); // past the 20 launch ticks, before the homing ones end
+      expect(rocket.mover).toBe(MoverKind.Homing);
+      expect(rocket.vx).toBeLessThan(0);
+      expect(rocket.vy).toBeLessThan(0); // still up-left — the ship sits below-left of it
+      expect(Math.hypot(rocket.vx, rocket.vy)).toBeCloseTo(1.8, 4); // its speed, normalised
+      const vx = rocket.vx;
+      const vy = rocket.vy;
+      run(w, 80); // past the launch + 70 home ticks: the heading still holds
+      expect(rocket.vx).toBeCloseTo(vx, 9);
+      expect(rocket.vy).toBeCloseTo(vy, 9);
+    });
+  });
+
+  describe('captain.crab', () => {
+    it('a reversed box holds its steps on the same shelves; ring 0.6 fires one; turn floors', () => {
+      const w = fighting('crabflip');
+      const boss = w.bosses.boss;
+      const volleys: number[][] = [];
+      let stepped = 0;
+      for (let t = 0; t < 200 && volleys.length < 3; t++) {
+        run(w, 1);
+        if (boss.motion === BossMotion.MoveTo) {
+          // The flipped bounds are swapped, not broken: the same 407…574 / 96…264 shelves.
+          expect(boss.moveToX).toBeGreaterThanOrEqual(407);
+          expect(boss.moveToX).toBeLessThanOrEqual(574);
+          expect(boss.moveToY).toBeGreaterThanOrEqual(96);
+          expect(boss.moveToY).toBeLessThanOrEqual(264);
+          stepped++;
+        }
+        const fresh: number[] = [];
+        const f = w.bullets.pool.fields;
+        for (let i = 0; i < w.bullets.pool.count; i++) {
+          if (f.kind[i] === BulletKind.OvalRed && f.age[i] <= 1) {
+            fresh.push(((Math.round(f.angle[i]) % 1024) + 1024) % 1024);
+          }
+        }
+        if (fresh.length > 0) volleys.push(fresh);
+      }
+      expect(stepped).toBeGreaterThan(0); // stepTicks 40: it sidesteps through the fight
+      expect(volleys.length).toBeGreaterThanOrEqual(2);
+      for (const ring of volleys) expect(ring).toHaveLength(1); // ring 0.6 → the floor of one
+      // turn 16.7 floors to 16: each single bullet leaves 16 units further than the last.
+      expect((volleys[1][0] - volleys[0][0] + ANGLE_UNITS) % ANGLE_UNITS).toBe(16);
+      expect((volleys[2][0] - volleys[1][0] + ANGLE_UNITS) % ANGLE_UNITS).toBe(16);
+      expect(boss.state).toBe(BossState.Fight);
     });
   });
 });

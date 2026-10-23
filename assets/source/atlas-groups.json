@@ -193,26 +193,35 @@
       "tiles/terrain-citadel-v2"
     ],
     "zone-i": [
+      "bg/abyss-deepwall",
+      "bg/abyss-flakes",
       "bg/abyss-murk",
       "bg/abyss-spires",
+      "bg/abyss-vents",
       "bosses/ark-bow",
       "bosses/ark-heart",
       "bosses/ark-hull",
+      "bosses/ark-pod",
       "bosses/ark-stern",
       "bosses/ark-turret",
       "bosses/king-body",
+      "bosses/king-fin",
       "bosses/king-jaw-bottom",
       "bosses/king-jaw-top",
       "bosses/king-lure",
       "bosses/king-maw",
       "bosses/king-stalk",
+      "enemies/abyss-crawler",
       "enemies/abyss-turret",
       "enemies/ark-hook",
+      "enemies/deep-tender",
       "enemies/depth-mine",
       "enemies/gulper",
       "enemies/lumen-mote",
+      "enemies/stinger",
       "enemies/trench-eel",
-      "tiles/terrain-abyss"
+      "fx/glow-abyss-vent",
+      "tiles/terrain-abyss-v2"
     ]
   }
 }

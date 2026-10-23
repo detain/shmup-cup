@@ -16,9 +16,16 @@
  * zone H and I content names in the atlas, the tileset name files, the citadel and abyss sets
  * against zone A) stayed with the earlier zone in `procedural-zone-h-edge.test.ts`.
  *
+ * Since R5-09.S2 the file also pins the zone-I v2 stand-ins: the ten §14 names frozen, unique and
+ * kebab-pathed (the wider regex, `fx` and `tiles` included), no `@` in any generated name (the
+ * pipeline derives the `@flash` siblings), every frame of a sprite one size, every hittable
+ * clearly visible, every animation naming real frames, frames unique, and the whole set the same
+ * pixels every run.
+ *
  * @module
  */
 import { describe, expect, it } from 'vitest';
+import { WORLD_SCALE } from '../../../scripts/frame.mjs';
 import { getPixel, imagesEqual, type Image } from '../../../scripts/assets/image.mjs';
 import * as abyss from '../../../scripts/assets/procedural/abyss.mjs';
 import * as ending from '../../../scripts/assets/procedural/ending.mjs';
@@ -147,4 +154,49 @@ describe('scripts/assets/procedural/terrain — zones H and I tilesets (M2-14 te
       for (let i = 3; i < solid.data.length; i += 4) expect(solid.data[i]).toBe(255);
     },
   );
+});
+
+describe('scripts/assets/procedural/abyss — R5-09.S2 v2 stand-ins (zone-i.md §14)', () => {
+  const sprites = abyss.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE });
+  const v2 = sprites.slice(abyss.ABYSS_SPRITES.length);
+
+  it('names the §14 list frozen, unique and kebab-pathed, with no @ in sight', () => {
+    expect(Object.isFrozen(abyss.ABYSS_V2_SPRITES)).toBe(true);
+    expect(new Set(abyss.ABYSS_V2_SPRITES).size).toBe(abyss.ABYSS_V2_SPRITES.length);
+    for (const name of abyss.ABYSS_V2_SPRITES) {
+      expect(name).toMatch(/^(bg|enemies|bosses|fx|tiles)\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+    for (const sprite of sprites) expect(sprite.name).not.toContain('@');
+    expect(new Set(abyss.ABYSS_V2_TILE_NAMES).size).toBe(abyss.ABYSS_V2_TILE_NAMES.length);
+    expect(abyss.ABYSS_V2_TILE_NAMES.length).toBe(22);
+  });
+
+  it('draws v2 frames of one size, hittable sprites clearly visible, animations that animate', () => {
+    for (const sprite of v2) {
+      const [first, ...rest] = sprite.frames;
+      for (const frame of rest) {
+        expect([frame.width, frame.height], sprite.name).toEqual([first.width, first.height]);
+      }
+      if (sprite.hitFlash === true) {
+        for (const frame of sprite.frames) expect(drawn(frame), sprite.name).toBe(true);
+      }
+      const text = sprite.frames.map((f) => Buffer.from(f.data).toString('base64'));
+      if (sprite.frames.length > 1) {
+        expect(new Set(text).size, sprite.name).toBe(sprite.frames.length);
+      }
+      for (const [clip, frames] of Object.entries(sprite.animations ?? {})) {
+        expect(frames.length, `${sprite.name}.${clip}`).toBeGreaterThan(0);
+        for (const f of frames) {
+          expect(f, `${sprite.name}.${clip}`).toBeGreaterThanOrEqual(0);
+          expect(f, `${sprite.name}.${clip}`).toBeLessThan(sprite.frames.length);
+        }
+      }
+    }
+  });
+
+  it('draws the v2 set the same pixels every run', () => {
+    expect(bytes(v2)).toEqual(
+      bytes(abyss.generate({ artScale: WORLD_SCALE, tileSize: terrain.TILE_SIZE }).slice(19)),
+    );
+  });
 });

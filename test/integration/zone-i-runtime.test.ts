@@ -14,6 +14,8 @@
  */
 import {
   Action,
+  PLAYFIELD_CY,
+  TILE_SIZE,
   BossState,
   DrawOp,
   ENGINE_SPRITES,
@@ -32,8 +34,8 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
-import { v1x } from '../../packages/core/test/helpers/v1-port.js';
-import { expectCameraAt, expectInOpenSpace, steps, stepUntil } from './zones/helpers.js';
+import { BOT_X } from '../playtest/four-way-bot.js';
+import { expectInOpenSpace, steps, stepUntil } from './zones/helpers.js';
 
 /** The shipped content, validated like the shell does. */
 const DB: ContentDb = (() => {
@@ -58,15 +60,26 @@ function enemyIndex(id: string): number {
 }
 
 describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
-  const starts: [string, number, number][] = [];
+  const starts: [string, number, number, number, number][] = [];
   for (const [letter, stageId] of [['i', 'zone-i']] as const) {
     const stage = DB.stages[DB.stageIndex.get(stageId) ?? -1];
-    stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
+    // The design §2 camera at each checkpoint: the key's own scroll speed, and the y of the
+    // pan completed before it — the surface (0) at the re-seated trench-mouth checkpoint
+    // 2,880 (the k1 descent begins at 3,000, just after it), the plain (312) from 6,240
+    // east (the k2 descent finished at 6,144), and k4's rise back to 0 running inside its
+    // hold at 12,300 so the approach checkpoint and the stage's end ride the surface
+    // (R5-09.S6, from the stage's own keys; the R5-09.FIX2 re-seat moved 3,000→2,880 and
+    // 6,000→6,240 so the game respawn's box clears the §10 lip and the seg-2 dive floor).
+    const keySpeed = [1.35, 1.35, 1.35, 1.95, 1.6, 1.6];
+    const designY = [0, 0, 312, 312, 312, 0];
+    stage.checkpoints.forEach((checkpoint, i) =>
+      starts.push([letter, i, checkpoint.x, keySpeed[i] ?? 0, designY[i] ?? -1]),
+    );
   }
 
   it.each(starts)(
     'practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space',
-    (letter, checkpoint, x) => {
+    (letter, checkpoint, x, speed, y) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
       game.debug.godMode = true;
@@ -77,18 +90,51 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
       game.events.clear();
       const world = game.world;
       expect(world.stage?.stage.id).toBe('zone-' + letter);
-      expectCameraAt(world, x);
-      expect(world.camera.y).toBe(0);
-      // A while in open space: the fly-in, then the pistons swinging round the ship.
-      for (let k = 0; k < 4; k++) {
-        steps(game, 45);
+      // R5-09.S6 re-anchor (design §2): the seek lands the camera at its checkpoint and the
+      // key's own scroll carries it under two ticks of that speed — the 1.6-px steps at
+      // 12,300 and 15,600 sit exactly on the shared helper's exclusive bound, so the case
+      // reads the design's window itself. The y is the design's table above, inside one pan
+      // epsilon: each key's own hold or ramp begins the tick after arrival.
+      expect(world.camera.x).toBeGreaterThanOrEqual(x);
+      expect(world.camera.x).toBeLessThan(x + 2 * speed);
+      expect(Math.abs(world.camera.y - y)).toBeLessThan(1.5);
+      // A while in open space: the fly-in, then the ride. The design §2 pans run live
+      // from the checkpoint's own key (k1's descent starts at 3,000 while the ship is
+      // still flying in), and the shelf lip (design §10, map rows 26–27) sweeps across
+      // the fly-in line mid-dive — so the practice ship first rides the pan out (cap
+      // 400 ticks, the longest hold is 312), steering with the Down/Up a player would
+      // hold toward `camera.y + PLAYFIELD_CY + TILE_SIZE`: one tile under the screen's
+      // middle row, clear of the lip bottom in the trench's lower corridor, of the
+      // mass on the abyssal plain, and of the surface line everywhere above.
+      const ship = world.players[0];
+      // The pan's destination under this checkpoint's own key (design §2's `yTo`s in key
+      // order — 168 at the trench, 312 on the plain, back to 0 from the ascent key): the
+      // camera still pans past the arrival y when the practice starts, so the ride seeks
+      // this line before any open-space check is made.
+      const rideY = [0, 168, 312, 312, 0, 0][checkpoint] ?? 0;
+      const ride = (): void => {
+        const row = world.camera.y + PLAYFIELD_CY + TILE_SIZE;
+        const dy = ship.y - row;
+        const dx = world.camera.x + BOT_X - ship.x;
+        commitPlayerInput(
+          platform.snapshot.players[0],
+          Action.Shot |
+            (dx > 2 ? Action.Right : dx < -2 ? Action.Left : 0) |
+            (dy > 2 ? Action.Up : dy < -2 ? Action.Down : 0),
+        );
+        game.step();
+        game.events.clear();
+      };
+      for (let s = 0; s < 400 && Math.abs(world.camera.y - rideY) > 0.5; s++) ride();
+      for (let k = 0; k < 3; k++) {
+        for (let s = 0; s < 45; s++) ride();
         expectInOpenSpace(world, `zone ${letter} checkpoint ${String(checkpoint)} +${String(k)}`);
       }
     },
   );
 
-  it('checks four checkpoints per zone', () => {
-    expect(starts).toHaveLength(4);
+  it('checks six checkpoints per zone', () => {
+    expect(starts).toHaveLength(6);
   });
 
   it('skips zone I to the ABYSS ARK: the raid`s camera follows it', () => {
@@ -101,8 +147,11 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     world.debugFlags.godMode = true;
     steps(game, 90);
     expectInOpenSpace(world, 'after the skip');
-    expect(world.camera.x).toBeGreaterThan(v1x(8800));
-    expect(world.camera.x).toBeLessThan(v1x(9000));
+    // The skip lands just before the WARNING at x 19,650 (design §2, R5-09.S5b — the stage
+    // skip keeps the warning target, R5-P.P14): the 360-px window is a playfield of calm
+    // scroll at the 1.2 px/tick key, the lead ported from v1's 150 px on the 1.2 key.
+    expect(world.camera.x).toBeGreaterThan(19_290);
+    expect(world.camera.x).toBeLessThan(19_650);
     const boss = world.bosses.boss;
     stepUntil(
       game,

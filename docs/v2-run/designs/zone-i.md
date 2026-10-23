@@ -119,8 +119,16 @@ goldens stay byte-identical (P12 rule 2).
 
 Six, strictly increasing, all at camera-key x except the last:
 
-`0 (shelf) · 3,000 (the shelf break) · 6,000 (the sump lip) · 9,300 (undertow start) ·
+`0 (shelf) · 2,880 (the shelf break) · 6,240 (the sump lip) · 9,300 (undertow start) ·
 12,300 (ascent shaft foot) · 15,600 (mid-approach)`
+
+**R5-09.FIX2 (weld B-1, the R5-D10 class — repo law beats design cells):** 3,000/6,000
+re-seated to 2,880/6,240. The game respawn box (`test/integration/stage-runtime.test.ts`:
+`SPAWN_Y` below the column's settled camera top, swept from the checkpoint x to
+`ENTER_END_X`) landed inside the §10 shelf lip (map rows 26–27) at the trench pan's
+destination x 3,000, and on the seg-2 dive floor at x 6,000; 2,880 respawns at the
+surface just before the k1 descent, 6,240 over the ramped seg-3 plain. The six-checkpoint
+rule, the §2 holds, the §10 lip and the §5 recovery windows stand.
 
 The last one deliberately sits **before** the calm (18,000): its 1,350-px window
 [15,600, 16,950) is served by the approach carriers (§5), because the calm holds only the two

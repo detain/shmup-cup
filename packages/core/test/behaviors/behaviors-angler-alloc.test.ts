@@ -78,9 +78,9 @@ describe('core/behaviors boss.angler allocation (M2-14)', () => {
     const parts = boss.parts;
     const maw = parts.findIndex((p) => p.core);
     const lure = parts.findIndex((p) => p.name === 'lure');
-    // Hit twice while the mouth is open: below 75, then below 35 of 110 — its last phase.
+    // Hit twice while the mouth is open: below 54, then below 24 of 80 — its last phase.
     for (let k = 0; k < 2; k++) {
-      for (let i = 0; i < 400 && w.bosses.damagePart(maw, 40, 0) !== BossHit.Damaged; i++) {
+      for (let i = 0; i < 400 && w.bosses.damagePart(maw, 30, 0) !== BossHit.Damaged; i++) {
         stepWorld(w, input);
         w.events.clear();
       }

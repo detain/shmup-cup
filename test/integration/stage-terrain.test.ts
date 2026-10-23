@@ -36,6 +36,7 @@ import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { renderTerrainTiles, resampleMask } from '../../scripts/assets/procedural/terrain.mjs';
 import * as azure from '../../scripts/assets/procedural/azure.mjs';
+import * as abyss from '../../scripts/assets/procedural/abyss.mjs';
 import * as citadel from '../../scripts/assets/procedural/citadel.mjs';
 import * as brine from '../../scripts/assets/procedural/brine.mjs';
 import * as dune from '../../scripts/assets/procedural/dune.mjs';
@@ -108,8 +109,9 @@ function resampledTilesets(size: number): ContentFile[] {
  * `dune.mjs` since R5-03.S5a, `tiles/terrain-ridge-v2` from `tempest.mjs` since R5-05.S5a,
  * zone D's flipped tileset `tiles/terrain-magma-v2` from `magma.mjs` by the very route since
  * R5-04.S5a, `tiles/terrain-vault-v2` from `vault.mjs` since R5-06.S5a, and
- * `tiles/terrain-prism-v2` from `prism.mjs` since R5-07.S5a, and zone H's
- * `tiles/terrain-citadel-v2` through `citadel.mjs` since R5-08.S5a).
+ * `tiles/terrain-prism-v2` from `prism.mjs` since R5-07.S5a, zone H's
+ * `tiles/terrain-citadel-v2` through `citadel.mjs` since R5-08.S5a, and zone I's
+ * `tiles/terrain-abyss-v2` through `abyss.mjs` since R5-09.S5a).
  *
  * @param sprite - The tileset's sprite name.
  * @param size - The tile size to draw at.
@@ -157,6 +159,12 @@ function tilesetFramesAt(sprite: string, size: number): ReturnType<typeof render
       if (drawn.name === sprite) return drawn.frames;
     }
     throw new Error(`citadel.mjs draws no ${sprite}`);
+  }
+  if (sprite === 'tiles/terrain-abyss-v2') {
+    for (const drawn of abyss.generate({ tileSize: size, artScale: 3 / 2 })) {
+      if (drawn.name === sprite) return drawn.frames;
+    }
+    throw new Error(`abyss.mjs draws no ${sprite}`);
   }
   if (sprite !== 'tiles/terrain-azure') return renderTerrainTiles(size, sprite);
   for (const drawn of azure.generate({ tileSize: size, artScale: 3 / 2 })) {
