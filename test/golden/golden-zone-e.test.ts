@@ -15,7 +15,7 @@ import { GOLDEN_UPDATE_ENV, readGolden } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone E (M2-12)', () => {
-  it('covers zone E of M2-12: cleared in 4–6 minutes, its boss shot down', () => {
+  it('covers zone E of M2-12: cleared in 4–7 minutes, its boss shot down', () => {
     const { file, replay } = readGolden('zone-e-god');
     expect(replay.header.stageId).toBe('zone-e');
     expect(replay.header.assisted).toBe(true);
@@ -25,7 +25,7 @@ describe.skipIf(updating)('golden replays — zone E (M2-12)', () => {
       deathTicks: [],
     });
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
   });
 
   it('covers zone E without god mode (M2-12 tests): a death, a respawn in place, the clear', () => {
@@ -36,6 +36,6 @@ describe.skipIf(updating)('golden replays — zone E (M2-12)', () => {
     expect(ridge.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
     expect(ridge.file.expected.lives).toBeGreaterThanOrEqual(1);
     expect(ridge.file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(ridge.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(ridge.file.expected.ticks / 60).toBeLessThanOrEqual(420);
   });
 });

@@ -336,7 +336,7 @@ pin `boundsOf()` logic, not the flip roster. The v2 branch is the wave-5 design 
 |---|---|
 | length | 20,000–22,000 px |
 | scroll to the WARNING | 3.75–5.25 min (225–315 s) |
-| a full god-mode bot run | 4.0–6.0 min (240–360 s) |
+| a full god-mode bot run | 4.0–7.0 min (240–420 s, ceiling by decision R5-D13) |
 | checkpoints | ≥ 5 |
 | new enemy types per sprite | 6–8 |
 | capsule sources before the WARNING | 18–48 |
@@ -559,9 +559,10 @@ broken) and the rollbacks of `gimmick-range-deaths`.
 | `bot-replay-identity.test.ts` (R5-P.P12b cure, `da1d8c9`) | The early-warning net against golden-shaping bot drift: every live-bot scenario a golden or attract replay records (52 of them — the roster is 62 with the scripted pilots excluded) is re-run live and **byte-compared** to its recording's input stream, so a bot change that would silently reshape the goldens goes red here first, ~50 s at `VITEST_MAX_WORKERS=1` (RT-P12b added zone A's toggle / hold / co-op-deaths pilots after the P12 cure moved them) |
 
 R5-01 rebuilt zone A and the review reproduced the runs at the LAND tip: the bot clears the
-zone in **293.4 s** with no death in god mode (∈ the contract's [240, 360]; the spire widening
-shifted the 306.4 s of the pre-widen geometry — a disclosed pathing effect), kills the marshal
-under the ≤ 1-captain law, banks 66,030, and holds both R5-D5 peak lines (12 live enemies
+zone in **293.4 s** with no death in god mode (∈ the contract's [240, 420] since decision
+R5-D13 — 360 s was the ceiling at the measurement; the spire widening shifted the 306.4 s of
+the pre-widen geometry — a disclosed pathing effect), kills the marshal under the ≤ 1-captain
+law, banks 66,030, and holds both R5-D5 peak lines (12 live enemies
 against the 51 stop line of the 64-slot pool, 12 boss parts against the cap of 24) — so no pool
 moved; the recovery run takes 3 deaths for 68,060, and deaths stay reported, not asserted:
 

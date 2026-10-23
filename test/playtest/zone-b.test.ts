@@ -4,7 +4,7 @@
  *
  * - With **god mode** the bot plays the whole zone — the bubbles, the reef tunnel, the mid-boss
  *   SPUME HERALD, the deep current, the riptide — shoots GALVANIC MAW (GM-02) down through its
- *   three phases and reaches `stageClear` in 4 to 6 minutes (`designs/zone-b.md` §17's window,
+ *   three phases and reaches `stageClear` in 4 to 7 minutes (`designs/zone-b.md` §17's window,
  *   the R5-02.S6 retarget of the v1 §14 band), never diagonal, the ship at x ≈ 96, with the
  *   4-way design rules of `rules.ts` holding on every tick.
  * - **Without god mode** the run is recorded (its input replays to the same deaths and the same
@@ -17,7 +17,7 @@ import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone B with the 4-way bot (M2-11)', () => {
-  it('kills GALVANIC MAW and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('kills GALVANIC MAW and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     const rules = createRuleWatch();
     const phases = new Set<number>();
     let herald = false;
@@ -41,10 +41,11 @@ describe('playtest: zone B with the 4-way bot (M2-11)', () => {
     console.info('[playtest] ' + describeRun(run));
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
-    // `designs/zone-b.md` §17: the remastered zone runs 4.0 to 6.0 minutes (the R5-02.S6
-    // retarget of the v1 §14 3-to-6 band; the R5-02.S5b measured god run is 311.2 s).
+    // `designs/zone-b.md` §17 sized the zone at 4.0 to 6.0 minutes (the R5-02.S6 retarget of
+    // the v1 §14 3-to-6 band; the R5-02.S5b measured god run is 311.2 s); decision R5-D13
+    // widened the contract ceiling to 7 minutes.
     expect(run.seconds).toBeGreaterThanOrEqual(4 * 60);
-    expect(run.seconds).toBeLessThanOrEqual(6 * 60);
+    expect(run.seconds).toBeLessThanOrEqual(7 * 60);
     // The mid-boss came, and the boss went through its three phases.
     expect(herald).toBe(true);
     expect([...phases].sort()).toEqual([0, 1, 2]);

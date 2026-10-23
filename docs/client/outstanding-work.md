@@ -217,13 +217,13 @@ archive in a browser before you publish it.
   nothing waits on it and both builds stay green.
 - **The campaign remaster's last zone.** Zone H landed its remaster in wave 12 (`a2d94928`) — the
   citadel is the shipped stage on master now, and the zone's owner parts are the §1.1 hardware
-  sign-off and its art round in the queue above. Zone I's remaster is **walled on an owner
-  decision** — the run's `RESUME.md` holds the
-  four-option menu the review round left standing. Nothing here ships-blocked: v1's abyss still
-  flies on master beside H's shipped citadel. The walling fact, in one line: zone I's god-mode bot run measured
-  369.25 s against the contract's 240–360 s ceiling, and the review proved the fight-adjacent
-  cells are ±20 s RNG lotteries — the menu is an honest response, not a bug. Two R5-10 steps wait
-  behind that ruling: the ending's escape-sequence art (T2) and the grouped atlas pages that
+  sign-off and its art round in the queue above. Zone I's band wall was **ruled on 2026-10-23**:
+  the owner took option 2 (decision R5-D13) and the god-mode run band's ceiling widened globally
+  360 → 420 s (4-to-7 min), so the measured 369.25 s sits inside the new band — what remains is
+  the I-LAND itself (the run's `RESUME.md` holds the legs; the six zone-I goldens re-bless last,
+  on settled numbers). Nothing here ships-blocked: v1's abyss still flies on master beside H's
+  shipped citadel. Two R5-10 steps wait
+  behind the I-LAND: the ending's escape-sequence art (T2) and the grouped atlas pages that
   re-derive after it (T8).
 - **Fight-pacing taste rows — disclosed, not tuned.** The wave-11 reviews measured the landed
   remasters' boss clocks under the bot, and four sit under their design bands: SANDGRAVE WIDOW

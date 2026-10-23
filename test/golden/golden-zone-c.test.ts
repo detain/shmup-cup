@@ -12,7 +12,7 @@ import { GOLDEN_UPDATE_ENV, readGolden } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone C (M2-11)', () => {
-  it('covers zone C of M2-11: cleared in 4–6 minutes, its boss shot down', () => {
+  it('covers zone C of M2-11: cleared in 4–7 minutes, its boss shot down', () => {
     const { file, replay } = readGolden('zone-c-god');
     expect(replay.header.stageId).toBe('zone-c');
     expect(file.expected).toMatchObject({
@@ -20,12 +20,12 @@ describe.skipIf(updating)('golden replays — zone C (M2-11)', () => {
       bossDefeated: true,
       deathTicks: [],
     });
-    // The R5-03 stage (wave-11 rule 3's 4.0–6.0-minute window, design §15's acceptance): the
-    // re-recorded golden must clear 4 minutes on the 21,000-px route. Red until the zone's
-    // LAND re-blesses `zone-c-god` (the committed file is the R2-03 port recording of the old
-    // 14,400-px stage).
+    // The R5-03 stage (wave-11 rule 3's window — 4.0–7.0 min since decision R5-D13 widened the
+    // ceiling, design §15's acceptance): the re-recorded golden must clear 4 minutes on the
+    // 21,000-px route. Red until the zone's LAND re-blesses `zone-c-god` (the committed file is
+    // the R2-03 port recording of the old 14,400-px stage).
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
   });
 
   it('covers zone C without god mode (M2-11 tests): the Classic run dies out before the boss', () => {

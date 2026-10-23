@@ -18,7 +18,7 @@ import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
-  it('covers zone F of M2-13: cleared in 4–6 minutes, its boss shot down', () => {
+  it('covers zone F of M2-13: cleared in 4–7 minutes, its boss shot down', () => {
     const { file, replay } = readGolden('zone-f-god');
     expect(replay.header.stageId).toBe('zone-f');
     expect(replay.header.assisted).toBe(true);
@@ -27,10 +27,11 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
       bossDefeated: true,
       deathTicks: [],
     });
-    // The v2 band (design §2): 4 to 6 minutes. The LAND's `--only zone-f` re-bless raises
-    // the recording into the window (an intentional red until then).
+    // The v2 band: 4 to 7 minutes (design §2's 4 to 6, ceiling widened by decision R5-D13).
+    // The LAND's `--only zone-f` re-bless raises the recording into the window (an intentional
+    // red until then).
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
     // CELL VAULT's run shot tissue cells open on the way (breaks since the last restore).
     const vault = playGolden(readGolden('zone-f-god').replay);
     expect(vault.world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(0);

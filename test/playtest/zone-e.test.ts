@@ -6,7 +6,7 @@
  * - With **god mode** the bot plays the whole zone — the storm front, the ridge pass, the
  *   captain THE STORM EYE at the boss event at x 8,250, the thunderheads, the eye-of-the-storm
  *   dip, the gale run and the final calm — shoots SQUALL STEED (SS-05) down through its three
- *   phases and reaches `stageClear`; the run lasts within the zone contract's 4–6 minutes
+ *   phases and reaches `stageClear`; the run lasts within the zone contract's 4–7 minutes
  *   (decision R5-D2's v2 bounds), the ship stays at x ≈ 96 (`BOT_X`), and the 4-way design
  *   rules of `rules.ts` hold on every tick (no aimed enemy bullet over 3 px/tick, no two
  *   simultaneous laser lanes closer than 24 px).
@@ -25,7 +25,7 @@ import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone E with the 4-way bot (M2-12, R5-05 remaster)', () => {
-  it('plays the storm eye, kills SQUALL STEED and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('plays the storm eye, kills SQUALL STEED and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     // The contract's live bot-window (the flip is R5-05.S5b's, decision R5-D2's v2 bounds).
     const botRun = boundsOf(ZONE_CONTRACTS.e).botRunSec;
     if (botRun === null) {

@@ -19,7 +19,7 @@ import { follow, GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone H (M2-14)', () => {
-  it('covers zone H of M2-14: cleared in 4 to 6 minutes, IRON SOVEREIGN through its four phases', () => {
+  it('covers zone H of M2-14: cleared in 4 to 7 minutes, IRON SOVEREIGN through its four phases', () => {
     const { file, replay } = readGolden('zone-h-god');
     expect(replay.header.stageId).toBe('zone-h');
     expect(replay.header.assisted).toBe(true);
@@ -29,7 +29,7 @@ describe.skipIf(updating)('golden replays — zone H (M2-14)', () => {
       deathTicks: [],
     });
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240); // §17's 4 to 6 minutes…
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360); // …(R5-08.S6, §11's 335–350 s)
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420); // …; 420 s by R5-D13
     // IRON SOVEREIGN died in its last phase; the parade's four captains went before it.
     const citadel = playGolden(readGolden('zone-h-god').replay).world;
     const sovereign = citadel.bosses.slots.find(

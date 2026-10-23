@@ -76,12 +76,12 @@ describe('integration: the zone contracts (R5-P.P6)', () => {
     expect(ZONE_CONTRACTS.a.v1.checkpointsMin).toBeNull(); // its ships case pins the exact map
   });
 
-  it('the v2 branches are decision R5-D2: 20,000–22,000 px, 3.75–5.25 min of scroll, a 4.0–6.0 min bot run, ≥ 5 checkpoints, 18–48 capsules, ≥ 3 within 1,350 px of a checkpoint, ≥ 30 items, ≤ 2 blues', () => {
+  it('the v2 branches are decision R5-D2: 20,000–22,000 px, 3.75–5.25 min of scroll, a 4.0–7.0 min bot run (the 420 s ceiling by decision R5-D13), ≥ 5 checkpoints, 18–48 capsules, ≥ 3 within 1,350 px of a checkpoint, ≥ 30 items, ≤ 2 blues', () => {
     for (const letter of LETTERS) {
       const v2 = ZONE_CONTRACTS[letter].v2;
       expect(v2.lengthPx, `zone-${letter}`).toEqual([20000, 22000]);
       expect(v2.scrollSec, `zone-${letter}`).toEqual([225, 315]);
-      expect(v2.botRunSec, `zone-${letter}`).toEqual([240, 360]);
+      expect(v2.botRunSec, `zone-${letter}`).toEqual([240, 420]);
       expect(v2.checkpointsMin, `zone-${letter}`).toBe(5);
       expect(v2.capsulesBeforeWarning, `zone-${letter}`).toEqual([18, 48]);
       expect(v2.capsuleWindow, `zone-${letter}`).toEqual({ px: 1350, min: 3 });

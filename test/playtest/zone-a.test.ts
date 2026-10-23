@@ -5,7 +5,7 @@
  *
  * - With **god mode** the bot plays the whole stage, sees the captain AZURE MARSHAL at the
  *   boss event at x 10,350, shoots HALCYON BULWARK (HB-01) down through its three phases and
- *   reaches `stageClear`; the run lasts within the zone contract's 4–6 minutes (decision
+ *   reaches `stageClear`; the run lasts within the zone contract's 4–7 minutes (decision
  *   R5-D2's v2 bounds), the ship stays at x ≈ 96 (`BOT_X`), and the 4-way design rules of
  *   `rules.ts` hold on every tick (no aimed enemy bullet over 3 px/tick, no two simultaneous
  *   laser lanes closer than 24 px).
@@ -26,7 +26,7 @@ import { describeRun, replayStage, runStage, TICKS_PER_SECOND } from './harness.
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone A with the 4-way bot (M1-18, R5-01 remaster)', () => {
-  it('plays the marshal, kills HALCYON BULWARK and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('plays the marshal, kills HALCYON BULWARK and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     // The contract's live bot-window (the v2 branch carries it; the flip is R5-01.S5b's).
     const botRun = boundsOf(ZONE_CONTRACTS.a).botRunSec;
     if (botRun === null) {

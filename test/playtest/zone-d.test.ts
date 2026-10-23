@@ -4,7 +4,7 @@
  *
  * - With **god mode** the bot plays the whole zone — the erupting caldera fields, the two-step
  *   dive into the caves, the branching brick maze, the lava river — shoots CINDER BASTION (CB-04)
- *   down through its three phases and reaches `stageClear` in 4 to 6 minutes
+ *   down through its three phases and reaches `stageClear` in 4 to 7 minutes
  *   (`designs/zone-d.md` §15's window, the R5-04.S6 retarget of the v1 §14 band), never diagonal,
  *   the ship at x ≈ 96, with the 4-way design rules of `rules.ts` holding on every tick; the
  *   camera dives to the cave floor 432 px on the way.
@@ -18,7 +18,7 @@ import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone D with the 4-way bot (M2-12)', () => {
-  it('kills CINDER BASTION and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('kills CINDER BASTION and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     const rules = createRuleWatch();
     const phases = new Set<number>();
     let deepest = 0;
@@ -44,10 +44,11 @@ describe('playtest: zone D with the 4-way bot (M2-12)', () => {
     console.info('[playtest] ' + describeRun(run));
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
-    // `designs/zone-d.md` §15: the remastered zone runs 240 to 360 s (the R5-04.S6 retarget of
-    // the v1 §14 3-to-6 band; the R5-04.S4b-FIX measured god run is 318.5 s).
+    // `designs/zone-d.md` §15 sized the zone at 240 to 360 s (the R5-04.S6 retarget of
+    // the v1 §14 3-to-6 band; the R5-04.S4b-FIX measured god run is 318.5 s); decision
+    // R5-D13 widened the contract ceiling to 420 s.
     expect(run.seconds).toBeGreaterThanOrEqual(4 * 60);
-    expect(run.seconds).toBeLessThanOrEqual(6 * 60);
+    expect(run.seconds).toBeLessThanOrEqual(7 * 60);
     // The mid-boss came, and the boss went through its three phases; the camera dived to the
     // design §4's cave floor (yTo 432 — the second dive step of R5-04.S5a's redesigned dive).
     expect(captain).toBe(true);

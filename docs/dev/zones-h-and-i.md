@@ -34,8 +34,8 @@ zone G's shutters in a per-stage census, the swing pins 60 and 96), and an **arc
 reports its recorded outcome instead of promising a clear — the wave-11 no-god identity law
 extended to a rank, the R5-D12 class. The Zone H sections marked *R5-08* [below](#zone-h-iron-citadel)
 are the shipped v2 truth. **R5-09 has NOT remastered zone I** — the legs stand parked at
-`0d4057eb` on `r5/zone-i`, owner-walled ([below](#next-steps-that-build-on-this-page)); zone I's
-story here stands as what M2-14 built until the ruling lands, and v1's numbers live on in the
+`0d4057eb` on `r5/zone-i`, its band wall ruled on 2026-10-23 (decision R5-D13, [below](#next-steps-that-build-on-this-page)); zone I's
+story here stands as what M2-14 built until the I-LAND lands, and v1's numbers live on in the
 `v1.x` docs.
 
 This page is the *how and why* and the map of the step's code and content. Exact signatures are in
@@ -117,7 +117,8 @@ rim — and, since R5-08, a hanging band of banners over the parade route. Six c
 camera keys `1.2 → 1.05 → 1.35 → 0.9 → 1.2 → 1.95 → 1.35 → 1.05` px/tick (the 0.9 hangar key and
 the 1.95 core dash; design §2). Times are the bare scroll from the start to the camera x, ramps
 aside (the bot's whole run with the parade and the finale is **324.5 s** at the R5-08 LAND — the
-contract's [240, 360] band, whose floor the design tightened from v1's 180 s):
+contract's [240, 420] band (360 s ceiling at the LAND, widened by decision R5-D13), whose floor the
+design tightened from v1's 180 s):
 
 | Camera x | Time | Section |
 |---|---|---|
@@ -975,11 +976,14 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
   the banner single-rider recovery fix (design §2b's amendment note), the MF15 by-shape slab
   census admit (`cd4bb68c`), and the arcade identity law (R5-D12 class) whose owner taste row
   stands in `docs/client/outstanding-work.md`.
-- **R5-09 — zone I remaster: NOT landed, owner-walled.** The legs stand parked at `0d4057eb` on
-  `r5/zone-i`: the god run measured 369.25 s against the contract's [240, 360] band, and the I6 +
-  I7 double-STOP proved the fight-adjacent cells behave as ±20 s RNG lotteries; a four-option menu
-  (re-tune / widen / re-seed / re-scope) stands with the owner. Nothing in this page or the v2
-  record describes a remastered zone I as shipped, and the zone's sections above carry the v1
-  story until the ruling lands — its wave-12 fold is deferred to wave 13 with this disclosure.
+- **R5-09 — zone I remaster: NOT landed; the owner wall is ruled (decision R5-D13,
+  2026-10-23).** The legs stand parked at `0d4057eb` on `r5/zone-i`: the god run measured
+  369.25 s against the contract's [240, 360] band, and the I6 + I7 double-STOP proved the
+  fight-adjacent cells behave as ±20 s RNG lotteries; a four-option menu
+  (re-tune / widen / re-seed / re-scope) stood with the owner and was ruled on 2026-10-23, option 2
+  (decision R5-D13): the ceiling widened globally to 420 s and the 369.25 s run sits inside it.
+  Nothing in this page or the v2 record describes a remastered zone I as shipped, and the zone's
+  sections above carry the v1 story until the I-LAND lands — its wave-12 fold is deferred to wave
+  13 with this disclosure.
   R5-10.T2 (the escape's v2 art) and R5-10.T8 (the grouped atlas pages) wait on it: the escape
   frames the last zones' lands, and the final page grouping wants the nine zones settled.

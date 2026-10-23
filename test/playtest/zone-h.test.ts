@@ -6,7 +6,7 @@
  *   pistons and sentries, the keep's plug walls, the parade of four earlier bosses in reduced form
  *   over the void hangar, the piston hall's moving floors and ceilings and its laser emitters,
  *   the core run — shoots IRON SOVEREIGN (IS-08) down through its four phases and reaches
- *   `stageClear` in 4 to 6 minutes (`designs/zone-h.md` §17's window, the R5-08.S6 retarget of
+ *   `stageClear` in 4 to 7 minutes (`designs/zone-h.md` §17's window, the R5-08.S6 retarget of
  *   the v1 §14 band), never diagonal, the ship at x ≈ 96, with the 4-way design rules of
  *   `rules.ts` holding on every tick.
  * - **Without god mode** the run is recorded (its input replays to the same deaths and the same
@@ -19,7 +19,7 @@ import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone H with the 4-way bot (M2-14)', () => {
-  it('fights the parade, kills IRON SOVEREIGN and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('fights the parade, kills IRON SOVEREIGN and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     const rules = createRuleWatch();
     const phases = new Set<number>();
     const captains = new Set<string>();
@@ -69,10 +69,11 @@ describe('playtest: zone H with the 4-way bot (M2-14)', () => {
     );
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
-    // `designs/zone-h.md` §17: the remastered zone runs 4.0 to 6.0 minutes (the R5-08.S6 retarget
-    // of the v1 §14 3-to-6 band; §11's stress note expects the bot's run at 335–350 s).
+    // `designs/zone-h.md` §17 sized the zone at 4.0 to 6.0 minutes (the R5-08.S6 retarget
+    // of the v1 §14 3-to-6 band; §11's stress note expects the bot's run at 335–350 s);
+    // decision R5-D13 widened the contract ceiling to 7 minutes.
     expect(run.seconds).toBeGreaterThanOrEqual(4 * 60);
-    expect(run.seconds).toBeLessThanOrEqual(6 * 60);
+    expect(run.seconds).toBeLessThanOrEqual(7 * 60);
     // The finale's four phases; the whole parade; the pistons swinging, the emitters and hatches.
     expect([...phases].sort()).toEqual([0, 1, 2, 3]);
     expect([...captains].sort()).toEqual([

@@ -18,7 +18,7 @@ import { v1x } from '../../packages/core/test/helpers/v1-port.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone I (M2-14)', () => {
-  it('covers zone I of M2-14: cleared in 3–6 minutes, the ARK and THE HOLLOW KING shot down', () => {
+  it('covers zone I of M2-14: cleared in 3–7 minutes, the ARK and THE HOLLOW KING shot down', () => {
     const { file, replay } = readGolden('zone-i-god');
     expect(replay.header.stageId).toBe('zone-i');
     expect(replay.header.assisted).toBe(true);
@@ -28,7 +28,7 @@ describe.skipIf(updating)('golden replays — zone I (M2-14)', () => {
       deathTicks: [],
     });
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
     // The ARK did not escape: its final blast revealed THE HOLLOW KING, who fell too.
     const throne = playGolden(readGolden('zone-i-god').replay).world;
     expect(throne.endingFlags).toBe(0);

@@ -388,10 +388,10 @@ item against the plan's cursor.
 
 ## Playtests, the recovery rule and the harness
 
-- **`zone-b.test.ts`, `zone-c.test.ts`** — the 4-way bot with **god mode**: `stageClear` in 3–6
-  minutes, the boss's three phases (and in B the captain), never diagonal, the ship at x ≈ 96
-  (`BOT_X`), the
-  4-way rules on every tick (bullet speed ≤ 3.0, lane gaps ≥ 24). **Without god mode** the run is
+- **`zone-b.test.ts`, `zone-c.test.ts`** — the 4-way bot with **god mode**: `stageClear` inside the
+  contract's 4–7-minute run band (decision R5-D13 widened the 360 s ceiling to 420 s),
+  the boss's three phases (and in B the captain), never diagonal, the ship at x ≈ 96 (`BOT_X`),
+  the 4-way rules on every tick (bullet speed ≤ 3.0, lane gaps ≥ 24). **Without god mode** the run is
   recorded, replays to the same deaths and hash, and its deaths are **reported, not asserted**.
   Measured on the ported world (R2-03): B 237.4 s (GALVANIC MAW 36.1 s), C 230.8 s (SANDGRAVE
   WIDOW 38.8 s); without god mode B clears with one death, C now loses all its lives in the
@@ -666,9 +666,10 @@ disclosed, not buried:
   file's 84.8 s / 8,180.)
 - Both zones flipped their `test/integration/zones/zone-<letter>.contract.ts` to
   `remastered: true` inside their S5b commits, and their playtest, golden and contract run-bands
-  now read **4–6 minutes**. The v2 branch bounds every number above is judged against: length
-  20,000–22,000 px, scroll 225–315 s, run 240–360 s, ≥ 5 checkpoints, 6–8 new types, 18–48
-  capsules before the WARNING with ≥ 3 inside every 1,350-px window, ≥ 30 direct items, ≤ 2 blues.
+  now read **4–7 minutes**. The v2 branch bounds every number above is judged against: length
+  20,000–22,000 px, scroll 225–315 s, run 240–420 s (ceiling widened by decision R5-D13),
+  ≥ 5 checkpoints, 6–8 new types, 18–48 capsules before the WARNING with ≥ 3 inside every
+  1,350-px window, ≥ 30 direct items, ≤ 2 blues.
 
 ### The shared-kit and atlas footprints
 

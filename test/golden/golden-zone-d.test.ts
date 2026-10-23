@@ -5,8 +5,9 @@
  * CINDER BASTION down. The file plays back (every state hash) stays in `golden.test.ts`; this
  * file reads only zone D's own goldens.
  *
- * The outcome bands are the R5-04.S6 retarget to `designs/zone-d.md` §15: the god run 240 to
- * 360 s, the no-god run up to two trench/river deaths in 180 to 380 s, the skip entering at
+ * The outcome bands are the R5-04.S6 retarget to `designs/zone-d.md` §15, its god-run ceiling
+ * widened to 420 s by decision R5-D13: the god run 240 to 420 s, the no-god run up to two
+ * trench/river deaths in 180 to 380 s, the skip entering at
  * the zone boss's WARNING (R5-P.P14 — the captain has none) and every cave expectation at the
  * redesign's floor, 432 px.
  *
@@ -19,7 +20,7 @@ import { GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone D (M2-12)', () => {
-  it('covers zone D of M2-12: cleared in 4–6 minutes, its boss shot down, the dive into the deep caves', () => {
+  it('covers zone D of M2-12: cleared in 4–7 minutes, its boss shot down, the dive into the deep caves', () => {
     const { file, replay } = readGolden('zone-d-god');
     expect(replay.header.stageId).toBe('zone-d');
     expect(replay.header.assisted).toBe(true);
@@ -28,9 +29,10 @@ describe.skipIf(updating)('golden replays — zone D (M2-12)', () => {
       bossDefeated: true,
       deathTicks: [],
     });
-    // Design §15: the remastered god run is 240 to 360 s (the 4-to-6-minute window).
+    // Design §15 sized the god run at 240 to 360 s; decision R5-D13 widened the ceiling to
+    // 420 s (the 4-to-7-minute window).
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
     // MAGMA DEEP's run went down into the deep caves: its World ends at the cave floor — the
     // design §4's second dive step (R5-04.S5a's redesigned dive replaces v1's single 300 px pan).
     const { world } = playGolden(readGolden('zone-d-god').replay);

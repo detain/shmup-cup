@@ -837,8 +837,8 @@ harder.)
 ## Playtests and the recovery rule
 
 - **`zone-f.test.ts`, `zone-g.test.ts`** — the 4-way bot with **god mode**: `stageClear` in the
-  contract band (240–360 s), the boss's three phases, never diagonal, the 4-way rules on
-  every tick; in F the shots break tissue and the claws lunge, in G the rush stacks cubes into the
+  contract band (240–420 s, the ceiling widened by decision R5-D13), the boss's three phases,
+  never diagonal, the 4-way rules on every tick; in F the shots break tissue and the claws lunge, in G the rush stacks cubes into the
   terrain and the drills open the seal band. The blessed banks: **F 331.1 s / 19,866 ticks**
   (MANTLE REGENT 35.6 s, 71,476 points, 9 capsules, equips 2/1/0/0/1/0/0, one captain seen, phases
   [0, 1, 2], peak 17 live enemies and 19 boss parts), **G 315.4 s / 18,924 ticks** (FACET MONARCH
@@ -1066,13 +1066,15 @@ console.info(describeRun(run)); // zone-f four-way (remote) (god mode): stageCle
   parked at `e2078776` on `r5/zone-h`; wave 12 continues it. This page's frozen-name law is already
   load-bearing there: the `regent-*` and `facet-*` art names are add-only precisely because the
   citadel's parade echoes wear them.
-- **R5-09 — zone I remaster: NOT landed, owner-walled.** The legs stand parked at `0d4057eb` on
+- **R5-09 — zone I remaster: NOT landed; the owner wall is ruled (decision R5-D13,
+  2026-10-23).** The legs stand parked at `0d4057eb` on
   `r5/zone-i`: the god run measured 369.25 s against the contract's [240, 360] band, and the I6 +
   I7 double-STOP proved the fight-adjacent cells behave as ±20 s RNG lotteries; a four-option menu
-  (re-tune / widen / re-seed / re-scope) stands with the owner. Nothing in this page or the v2
-  record describes a remastered zone I as shipped, and the zone's own page
-  ([zones-h-and-i.md](zones-h-and-i.md)) carries its v1 story until the ruling lands — its
-  wave-11 fold is deferred to wave 12 with this disclosure.
+  (re-tune / widen / re-seed / re-scope) stood with the owner and was ruled on 2026-10-23, option 2
+  (decision R5-D13): the ceiling widened globally to 420 s and the 369.25 s run sits inside it.
+  Nothing in this page or the v2 record describes a remastered zone I as shipped, and the zone's
+  own page ([zones-h-and-i.md](zones-h-and-i.md)) carries its v1 story until the I-LAND lands —
+  its wave-11 fold is deferred to wave 12 with this disclosure.
 - **Real-art round (R5-D6 / the art wave) owes these rebuilds:** FACET MONARCH's four-frame core
   pulse (the generator serves two until the strip is redrawn — the widow precedent), the 640-px
   parallax-band spacing both designs print (320 is this round's frame width, per the wave-10 law),

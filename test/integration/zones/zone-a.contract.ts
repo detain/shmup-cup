@@ -31,7 +31,7 @@ export const zoneAContract: ZoneContract = {
   v2: {
     lengthPx: [20000, 22000],
     scrollSec: [225, 315], // 3.75–5.25 min
-    botRunSec: [240, 360], // 4.0–6.0 min (the zone lanes' whole-run playtests read this)
+    botRunSec: [240, 420], // 4.0–7.0 min (the zone lanes' whole-run playtests read this)
     checkpointsMin: 5, // R5-D2's floor for every zone; the ships case keeps its exact-map
     // gate until R5-P.D-A rewrites the section layout — this field stays advisory for zone A.
     newTypesBySprite: null, // still no earlier zone after the port

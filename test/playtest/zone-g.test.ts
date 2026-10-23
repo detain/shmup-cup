@@ -8,7 +8,7 @@
  *   the slide to the deep band, the cube rush stacked on its stub pillars, the refraction hall
  *   of moving crystal blocks, the heart ring and the geyser run and the final calm — shoots
  *   FACET MONARCH (FM-07) down through its three phases and reaches `stageClear`; the run lasts
- *   within the zone contract's 4–6 minutes (decision R5-D2's v2 bounds), the ship stays at
+ *   within the zone contract's 4–7 minutes (decision R5-D2's v2 bounds), the ship stays at
  *   x ≈ 96 (`BOT_X`), and the 4-way design rules of `rules.ts` hold on every tick (no aimed
  *   enemy bullet over 3 px/tick, no two simultaneous laser lanes closer than 24 px).
  * - The peak simultaneous live enemies and the biggest live boss part tree stay within the
@@ -28,7 +28,7 @@ import { describeRun, replayStage, runStage, shippedContent } from './harness.js
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone G with the 4-way bot (M2-13, R5-07 remaster)', () => {
-  it('plays the prism sentinel, kills FACET MONARCH and reaches stage clear in god mode, in 4 to 6 minutes', () => {
+  it('plays the prism sentinel, kills FACET MONARCH and reaches stage clear in god mode, in 4 to 7 minutes', () => {
     // The contract's live bot-window (the flip is R5-07.S5b's, decision R5-D2's v2 bounds).
     const botRun = boundsOf(ZONE_CONTRACTS.g).botRunSec;
     if (botRun === null) {

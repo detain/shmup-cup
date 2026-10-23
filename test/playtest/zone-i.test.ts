@@ -5,8 +5,9 @@
  * - With **god mode** the bot plays the whole zone — the descent with its gulpers and depth mines,
  *   the trench's eels, the mine field, the undertow — flies round the ABYSS ARK (AA-09, a raid: the
  *   camera follows it) through its two phases, shoots down THE HOLLOW KING (HK-10) its final blast
- *   reveals through three phases (a boss inside a boss) and reaches `stageClear` in 3 to 6 minutes
- *   (shmup_feat.md §14), never diagonal, the ship at x ≈ 64, the 4-way design rules holding.
+ *   reveals through three phases (a boss inside a boss) and reaches `stageClear` in 3 to 7 minutes
+ *   (shmup_feat.md §14's floor; the 420 s ceiling by decision R5-D13), never diagonal, the ship at
+ *   x ≈ 64, the 4-way design rules holding.
  * - **Without god mode** the run is recorded (its input replays to the same deaths and the same
  *   final `hashWorld`) and its deaths are reported — not asserted.
  */
@@ -18,7 +19,7 @@ import { describeRun, replayStage, runStage } from './harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from './rules.js';
 
 describe('playtest: zone I with the 4-way bot (M2-14)', () => {
-  it('raids the ABYSS ARK, kills THE HOLLOW KING inside it and reaches stage clear in god mode, in 3 to 6 minutes', () => {
+  it('raids the ABYSS ARK, kills THE HOLLOW KING inside it and reaches stage clear in god mode, in 3 to 7 minutes', () => {
     const rules = createRuleWatch();
     const phases = new Set<string>();
     let followed = 0;
@@ -49,7 +50,7 @@ describe('playtest: zone I with the 4-way bot (M2-14)', () => {
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
     expect(run.seconds).toBeGreaterThanOrEqual(3 * 60);
-    expect(run.seconds).toBeLessThanOrEqual(6 * 60);
+    expect(run.seconds).toBeLessThanOrEqual(7 * 60);
     // The raid (the camera following the ARK) in its two phases, then the king in its three.
     expect([...phases].sort()).toEqual([
       'abyss-ark:0',

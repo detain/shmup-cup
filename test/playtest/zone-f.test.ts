@@ -5,7 +5,7 @@
  * - With **god mode** the bot plays the whole zone — the membrane with its chasing and dividing
  *   cells, the tissue passage between the regenerating walls, the tentacle garden where the warden
  *   circles, the chase through the three regrowing walls, the pulse run — shoots MANTLE REGENT
- *   (MR-06) down through its three phases and reaches `stageClear` in 4 to 6 minutes (design §2's
+ *   (MR-06) down through its three phases and reaches `stageClear` in 4 to 7 minutes (design §2's
  *   bot window, shmup_feat.md §14), never diagonal, the ship at x ≈ 96, with the 4-way design
  *   rules of `rules.ts` holding on every tick; on the way its shots break tissue cells and the
  *   grabbing tentacles lunge at it.

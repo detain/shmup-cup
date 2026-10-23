@@ -28,7 +28,7 @@ import { GOLDEN_UPDATE_ENV, playGolden, readGolden } from './golden.js';
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
 describe.skipIf(updating)('golden replays — zone G (M2-13)', () => {
-  it('covers zone G of M2-13: cleared in 4–6 minutes, its captain seen, its boss shot down, the cache', () => {
+  it('covers zone G of M2-13: cleared in 4–7 minutes, its captain seen, its boss shot down, the cache', () => {
     const { file, replay } = readGolden('zone-g-god');
     expect(replay.header.stageId).toBe('zone-g');
     expect(replay.header.assisted).toBe(true);
@@ -41,7 +41,7 @@ describe.skipIf(updating)('golden replays — zone G (M2-13)', () => {
     // the re-recorded golden must clear 4 minutes on the 21,300-px route. Red until the zone's
     // LAND re-blesses `zone-g-god`.
     expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(240);
-    expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(file.expected.ticks / 60).toBeLessThanOrEqual(420);
     // Design §15: the god run FIRES the captain event — PRISM SENTINEL fought at 8,040 (§7)
     // before the MONARCH. (The v1 recording has no sentinel: red until the LAND re-record.)
     const captains = new Set<string>();

@@ -663,8 +663,8 @@ and in-line. No spawn-x or density change was proposed, and the wave applied non
 ## Playtests and the recovery rule
 
 - **`zone-d.test.ts`, `zone-e.test.ts`** — the 4-way bot with **god mode**: `stageClear` inside
-  the contract's bot window [240, 360] s (decision R5-D2), the boss's three phases, never
-  diagonal, the ship at x ≈ 96 (`BOT_X`), the 4-way rules on every tick; zone D's camera reaches
+  the contract's bot window [240, 420] s (decision R5-D2, ceiling widened by R5-D13), the boss's
+  three phases, never diagonal, the ship at x ≈ 96 (`BOT_X`), the 4-way rules on every tick; zone D's camera reaches
   y 432. **Without god mode** the run is recorded, replays to the same deaths and hash, and its
   deaths are **reported** (they measure balance; the golden outcome file asserts what the
   recording itself says, [below](#determinism-hashing-and-golden-replays)). Banked at the two
@@ -707,7 +707,7 @@ and the 4-way design rules (M2-11 … M2-13)"**; zone D's file carries its row o
 with D and E and the two new columns, and D and E's shape bounds live in
 `test/integration/zones/zone-d.contract.ts` / `zone-e.contract.ts` — **`remastered: true` on
 both** since the S5b stage commits, so the v2 branch is the live one: length [20,000, 22,000] px,
-scroll [225, 315] s, the bot window [240, 360] s, ≥ 5 checkpoints, 6–8 new types by sprite,
+scroll [225, 315] s, the bot window [240, 420] s, ≥ 5 checkpoints, 6–8 new types by sprite,
 capsules [18, 48] before the WARNING with the 1,350 px / ≥ 3 window, ≥ 30 `directItems`
 (the [per-zone contracts](zone-a-and-playtest.md#the-per-zone-contracts-r5-d2-r5-pp6) explain both
 branches; every number below that predates the flip is the v1 branch through the contract scale):
@@ -876,8 +876,10 @@ console.info(describeRun(run)); // zone-e four-way (remote) (god mode): stageCle
 - **Zone H is remastered only in its first half** — the S4a..S5b stages shipped on the branch
   `r5/zone-h` (at `e2078776` when this page was written) and §17 of `plan_resolution.md` reads
   *in progress*; wave 12 continues it.
-- **Zone I's remaster is deferred, and the reason is the owner's gate, not a code failure**: its
-  banked god-mode run sits at 369.25 s against the contract window [240, 360], with the I6/I7
-  ±20-second RNG lotteries behind it, and the four-option menu for that call is standing with the
-  owner. Both unfinished lines are disclosed here so a reader of the nine-zone story is not told
-  the campaign remaster is complete when it is not.
+- **Zone I's remaster is deferred, and the reason was the owner's gate, not a code failure**: its
+  banked god-mode run sits at 369.25 s against the contract window [240, 360] of the time, with
+  the I6/I7 ±20-second RNG lotteries behind it, and the four-option menu for that call stood with
+  the owner until it was ruled on 2026-10-23, option 2 (decision R5-D13): the ceiling widened
+  globally to 420 s and the 369.25 s run sits inside it — what remains is the I-LAND's own work.
+  Both unfinished lines are disclosed here so a reader of the nine-zone story is not told the
+  campaign remaster is complete when it is not.

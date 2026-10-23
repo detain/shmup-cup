@@ -29,7 +29,7 @@ export const zoneEContract: ZoneContract = {
   v2: {
     lengthPx: [20000, 22000],
     scrollSec: [225, 315], // 3.75–5.25 min
-    botRunSec: [240, 360], // 4.0–6.0 min (the zone lanes' whole-run playtests read this)
+    botRunSec: [240, 420], // 4.0–7.0 min (the zone lanes' whole-run playtests read this)
     checkpointsMin: 5,
     newTypesBySprite: [6, 8],
     behaviours: null,
