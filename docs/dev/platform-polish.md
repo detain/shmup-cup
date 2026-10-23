@@ -467,11 +467,14 @@ own pages — the default since MF10 `66e54bcb`, what the shipped lazy residency
 the estimator) or, explicitly, `all` (every page's image — the charge of the eager
 `atlasPages: 'eager'` option, what the whole-atlas and hand-comparison rows pass) or `none` (no
 image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
-stage can ask for). Every campaign zone passes, the figures pinned at R1-05's v1-era atlas:
-A–G ≈ 64.7 MiB, H ≈ 71.7, I ≈ 72.5 at 384×216 (2.1–2.25 MiB of GPU pages — `common` plus the
-zone's page — and 3.5 MiB of images, 0.76 MiB SFX,
-9.2–16.9 MiB music, 25.05 MiB targets, 24 MiB heap); at 640×360 the targets add 3.56 MiB (≈ 68.2 /
-75.3 / 76.0 MiB). Since R2-01's interim ×1.5 art the `common` page is 1024² where these rows had
+stage can ask for). Every campaign zone passes: R6-02.P1's real-zone probe over the final shipped
+content at 640×360 (grouped, art-scale-3/2 manifest) measures per-stage totals of 75.1–84.2 MiB
+against the 100 MiB budget — PASS ×9 — with the atlas charge at 9.44–10.49 MiB on the estimator's
+`'none'` policy and 18.87–20.97 MiB on `'resident'` (what the shipped lazy residency reports)
+against the frame's 23 MiB texture budget — every zone inside both. The totals carry the 24 MiB
+audio reservation, the 24 MiB heap baseline and the fixed 1080p render targets; the rise over the
+old 384×216-era figures is that targets term, not the art — the texture charge fell from the
+interim. Since R2-01's interim ×1.5 art the `common` page is 1024² where the R1-05 rows had
 1024×512, so its GPU and image terms grew — the hand calculation below recomputes every sum from
 the manifest on each run, so the gate stays honest though the quoted figures drift.
 
@@ -795,7 +798,7 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **M2-18** (done) — the icon set (electron-builder's icons, the Tizen icon), store-listing
   placeholders, Tizen certification self-checks (Back / exit, visibility, resume), the 30-minute soak
   with the heap stable, and version `1.0.0-rc.1` — released as 1.0.0 on 2026-10-16; `master` carries
-  `2.0.0-alpha.1` since ([release-hardening.md](release-hardening.md#the-version)).
+  `2.0.0-beta.1` since ([release-hardening.md](release-hardening.md#the-version)).
 - **§8.5 on device** — the `use.game.mode` A/B latency test (keep the better variant), the heap
   baseline against DevTools (correct `HEAP_BASELINE_BYTES` if it is off), the device line and the
   save export, and whether live reload keeps the widget's APIs.

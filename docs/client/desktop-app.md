@@ -112,7 +112,7 @@ on **macOS** a `.dmg`. Build each on its own operating system. The installers ar
 they carry the game's placeholder icon — the logo over the two ships, drawn from the game's own
 pixel art. They take the package's version: **1.0.0-rc.1** when built from the `v1.0.0` tag (whose
 manifests were never bumped), **1.0.1-dev** from the `v1.x` branch since the 1.0.0 release, and
-**2.0.0-alpha.1** from `master`, where v2 is in development. Nothing is uploaded anywhere.
+**2.0.0-beta.1** from `master`, where v2 is in development. Nothing is uploaded anywhere.
 
 ## Troubleshooting
 
