@@ -204,7 +204,7 @@
         "code": "SS-05",
         "displayName": "SQUALL STEED",
         "introTicks": 150,
-        "score": 35000,
+        "score": 40000,
         "x": 520,
         "y": 168,
         "minion": "steed-foal",

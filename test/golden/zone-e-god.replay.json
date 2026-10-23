@@ -103,12 +103,12 @@
     3553704086,
     2083461889
   ],
-  "finalHash": 4064933591,
+  "finalHash": 1016924382,
   "description": "TEMPEST RIDGE start to stage clear with god mode (R5-05 remaster): the 4-way bot through the storm front and the ridge pass, the captain THE STORM EYE, the thunderheads, the eye-of-the-storm dip and the gale run, then SQUALL STEED shot down",
   "expected": {
     "status": "stageClear",
     "ticks": 18710,
-    "score": 75730,
+    "score": 80730,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

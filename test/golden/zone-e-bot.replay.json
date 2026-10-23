@@ -106,12 +106,12 @@
     2915424026,
     2350013033
   ],
-  "finalHash": 3610953754,
+  "finalHash": 733300675,
   "description": "TEMPEST RIDGE without god mode (R5-05 remaster): the 4-way bot from the start, Classic penalty, the rear attackers overtaking a ship that can die — a death and a respawn in place — to SQUALL STEED",
   "expected": {
     "status": "stageClear",
     "ticks": 20483,
-    "score": 75170,
+    "score": 80170,
     "lives": 2,
     "deathTicks": [
       12323,
