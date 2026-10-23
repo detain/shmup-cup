@@ -24,6 +24,10 @@
  * - `?stage=zone-b` boots with exactly the `common` and `zone-b` pages resident — fewer than all;
  * - a stage change (`__shmupDebug.atlas.prepare('zone-c')`) swaps zone B's page for zone C's, in
  *   real WebGL, and the game keeps drawing without an error;
+ * - a **linked** stage (R5-10.T8): `?stage=escape` — the campaign stage zones H and I both
+ *   escape to — boots with exactly the `common`, zone H and zone I pages (fewer than all), and
+ *   entering it from zone I uploads zone H's pages only: the escape's pages are a superset, so
+ *   nothing unloads and nothing already resident comes back;
  * - the attract demo, which never emits `PrepareStage`, still brings its zone's pages: the shell's
  *   World-change trigger (W3-9), stepped in exact ticks under frame advance;
  * - what the GPU **really** holds, read from WebGL itself (an init script hooks `texImage2D` /
@@ -111,6 +115,31 @@ function zonePages(
   };
   const pages = manifest.pages.flatMap((page, p) =>
     page.group === 'common' || page.group === zone ? [p] : [],
+  );
+  return {
+    pages,
+    files: pages.map((p) => manifest.pages[p].file).sort(),
+    total: manifest.pages.length,
+  };
+}
+
+/**
+ * The pages a **linked** stage must keep (R5-10.T8): the `common` group and its linking zones —
+ * the escape sequences share their zones' pages instead of needing every page.
+ *
+ * @param file - The manifest file.
+ * @param zones - The linking zones' groups.
+ * @returns The page indices, ascending; the file names, sorted; and the page count.
+ */
+function linkedStagePages(
+  file: string,
+  zones: string[],
+): { pages: number[]; files: string[]; total: number } {
+  const manifest = JSON.parse(readFileSync(file, 'utf8')) as {
+    pages: ReadonlyArray<{ group?: string; file: string }>;
+  };
+  const pages = manifest.pages.flatMap((page, p) =>
+    page.group === 'common' || zones.indexOf(page.group ?? '') >= 0 ? [p] : [],
   );
   return {
     pages,
@@ -463,6 +492,73 @@ test.describe('atlas residency (R1-05)', () => {
         }),
     );
     await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    expect(
+      log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
+    ).toEqual([]);
+  });
+
+  test('the escape boots with the common pages and the two final zones’ — not every page (R5-10.T8)', async ({
+    page,
+  }) => {
+    const log = watch(page);
+    await page.goto('./?stage=escape');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
+    await freezeSim(page); // the stage ends quickly; the marks must not move under the check
+    const want = linkedStagePages(WEB_MANIFEST, ['zone-h', 'zone-i']);
+    expect(want.pages.length).toBeGreaterThan(0);
+    expect(want.pages.length).toBeLessThan(want.total);
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', want.pages.join(','));
+    expect(
+      log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
+    ).toEqual([]);
+  });
+
+  test('entering the escape from zone I uploads only zone H’s pages (R5-10.T8)', async ({
+    page,
+  }) => {
+    const log = watch(page);
+    await page.goto('./?stage=zone-i');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
+    await freezeSim(page);
+    const zoneI = zonePages(WEB_MANIFEST, 'zone-i');
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneI.pages.join(','));
+    const want = linkedStagePages(WEB_MANIFEST, ['zone-h', 'zone-i']);
+    const swapped = await page.evaluate(() => {
+      const atlas = (window as unknown as DebugWindow).__shmupDebug.atlas;
+      if (atlas === null) return false;
+      atlas.prepare('escape');
+      return true;
+    });
+    expect(swapped).toBe(true);
+    // The escape needs a superset of what zone I keeps: nothing leaves, only zone H's pages
+    // come up — no re-upload of what is already resident (the acceptance of the step).
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', want.pages.join(','));
+    const residencyView = await page.evaluate(() => {
+      const atlas = (window as unknown as DebugWindow).__shmupDebug.atlas;
+      return {
+        unloads: atlas?.unloads ?? -1,
+        uploads: atlas?.uploads ?? -1,
+        resident: [...(atlas?.resident ?? [])],
+      };
+    });
+    expect(residencyView.unloads).toBe(0);
+    expect(residencyView.resident.flatMap((on, p) => (on ? [p] : []))).toEqual(want.pages);
+    const ownH = want.files.filter((file) => zoneI.files.indexOf(file) < 0);
+    expect(ownH.length).toBeGreaterThan(0);
+    // The per-page row of the change: onChange writes it with the resident mark (one prepare
+    // that moved pages), so once the marks read `want`, the row names exactly the pages zone H
+    // owns — the global pages and zone I's are already resident and upload nothing.
+    const changed = (await canvas.getAttribute('data-shmup-atlas-page-ms')) ?? '';
+    expect(changed.split(';').map((entry) => entry.split(':')[0])).toEqual(ownH);
+    for (const entry of changed.split(';')) {
+      expect(entry).toMatch(PAGE_MS_ENTRY);
+    }
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
     ).toEqual([]);

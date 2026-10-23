@@ -304,6 +304,7 @@ describe('shell/memory engine, UI and scene-view sprites stay global (R1-05)', (
     const sets: StageSpriteSets = {
       byStage: [new Set([0, 1]), new Set<number>()],
       global: new Set<number>(),
+      linkedBy: [null, null],
     };
     const pageNeeds = atlasPageNeeds(twoPages([name]), names, sets);
     expect(pageNeeds.global).toEqual([false, true]);
@@ -316,6 +317,7 @@ describe('shell/memory engine, UI and scene-view sprites stay global (R1-05)', (
     const sets: StageSpriteSets = {
       byStage: [new Set([0]), new Set([1])],
       global: new Set<number>(),
+      linkedBy: [null, null],
     };
     const pageNeeds = atlasPageNeeds(twoPages(['zone/other']), names, sets);
     expect(pageNeeds.global).toEqual([false, false]);

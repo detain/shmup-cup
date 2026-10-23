@@ -1,6 +1,7 @@
 /**
  * The atlas's zone split (R1-05): `assets/source/atlas-groups.json` is **derived from the
- * content**, and with it each campaign zone needs exactly the `common` pages plus its own.
+ * content**, and with it each campaign zone needs exactly the `common` pages plus its own —
+ * and every stage a zone links needs the `common` pages plus its linking zones' (R5-10.T8).
  *
  * **The derivation** (one rule, here and nowhere else): for each campaign zone, the sprites
  * its stage names — the shell's `stageSpriteSets`, which follows the stage's enemies, their
@@ -9,20 +10,28 @@
  * of two or more zones, sprites no zone names (ships, shots, items, dev ranges), and the
  * sprites the engine draws in every zone whatever the stage says — the World's
  * `ENGINE_SPRITES` (bullets, lasers, items, the UI kit's `UI_SPRITES`) and the scene view's
- * starfield (`SCENE_VIEW_SPRITES`). The font is always `common` (the pipeline's rule), and
- * so is any atlas sprite the content does not name (fx particles, `ui/pixel`). Siblings
- * (`@flash`, `@p2`, the colour-blind palettes) follow their sprite in the pipeline.
+ * starfield (`SCENE_VIEW_SPRITES`). Since R5-10.T8 the walk's linked stages count too: the
+ * art of a stage a zone links — its `escape` sequence, its bonus stages — joins those zones'
+ * clusters, so art no zone itself names lands in `common` with them (the escape's terrain is
+ * `common`, not zone A's page), and art a linked stage shares with exactly one of its
+ * linking zones stays on that zone's page — the link gives the linked stage the page, so the
+ * zone's own art never leaks out of its group. The font is always `common` (the pipeline's
+ * rule), and so is any atlas sprite the content does not name (fx particles, `ui/pixel`).
+ * Siblings (`@flash`, `@p2`, the colour-blind palettes) follow their sprite in the pipeline.
  *
  * **Keeping it current.** The committed file must equal the derivation. After a content
- * change that moves a sprite between zones (a new enemy, a sprite reused by a second zone),
- * re-derive it: `SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration
- * test/integration/atlas-groups.test.ts`, then `pnpm assets`. Sprite names, their order and
- * frame names never depend on the file, so the goldens and fingerprints are unaffected.
+ * change that moves a sprite between zones (a new enemy, a sprite reused by a second zone, a
+ * zone gaining an escape stage), re-derive it: `SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest
+ * run --project integration test/integration/atlas-groups.test.ts`, then `pnpm assets`.
+ * Sprite names, their order and frame names never depend on the file, so the goldens and
+ * fingerprints are unaffected.
  *
- * **The acceptance** (plan R1-05): on the atlas the pipeline builds (`buildAtlas()`, in
- * memory — CI's test job never runs `pnpm assets`), `stagePages(atlasPageNeeds(…), zone)` is
- * the `common` pages plus that zone's pages for every campaign zone: no other zone's page is
- * needed, no zone page is global, every common page is, and every page fits the 2048² limit.
+ * **The acceptance** (plan R1-05, and R5-10.T8 for the linked stages): on the atlas the
+ * pipeline builds (`buildAtlas()`, in memory — CI's test job never runs `pnpm assets`),
+ * `stagePages(atlasPageNeeds(…), zone)` is the `common` pages plus that zone's pages for every
+ * campaign zone, and the `common` pages plus its linking zones' pages for every linked stage:
+ * no other zone's page is needed, no zone page is global, every common page is, and every page
+ * fits the 2048² limit.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { ENGINE_SPRITES, UI_SPRITES, type ContentDb } from '@shmup/core';
@@ -95,6 +104,28 @@ function deriveGroups(db: ContentDb, atlasNames: ReadonlySet<string>): Record<st
       const list = owners.get(id);
       if (list === undefined) owners.set(id, [zone.group]);
       else if (list.indexOf(zone.group) < 0) list.push(zone.group);
+    }
+  }
+  // Linked stages (R5-10.T8): the art of a stage a campaign zone links joins that zone's
+  // cluster — unless the zone already names it alone, keeping the page private (the escape
+  // draws zone I's boss on zone I's page; its own layers fall to common with all of them).
+  const groupOfStage = new Map<number, string>();
+  for (const zone of campaignZones(db)) groupOfStage.set(zone.stageIndex, zone.group);
+  for (let stage = 0; stage < sets.byStage.length; stage++) {
+    const via = sets.linkedBy[stage];
+    const set = sets.byStage[stage];
+    if (via === null || set === null) continue;
+    const groups: string[] = [];
+    for (const zone of via) {
+      const group = groupOfStage.get(zone);
+      if (group !== undefined && groups.indexOf(group) < 0) groups.push(group);
+    }
+    for (const id of set) {
+      const list = owners.get(id);
+      if (list === undefined) owners.set(id, [...groups]);
+      else if (!groups.some((group) => list.indexOf(group) >= 0)) {
+        for (const group of groups) if (list.indexOf(group) < 0) list.push(group);
+      }
     }
   }
   const groups = new Map<string, string[]>();
@@ -190,6 +221,31 @@ describe('the zone-split atlas (R1-05 acceptance)', () => {
     manifest.pages.forEach((page, p) => {
       expect(needs.global[p], `${page.file} (${page.group})`).toBe(groupOf(p) === COMMON_GROUP);
     });
+  });
+
+  it('needs the common pages and its linking zones’ for every linked stage (R5-10.T8)', () => {
+    // The escape sequences and bonus stages a campaign zone links: their pages are the global
+    // (common) ones plus the pages of the zones that link them — never the whole atlas. The
+    // zones are read from the campaign walk itself, not from a hardcoded list.
+    const common = manifest.pages.flatMap((page, p) => (page.group === COMMON_GROUP ? [p] : []));
+    const groupOfStage = new Map<number, string>();
+    for (const zone of campaignZones(db)) groupOfStage.set(zone.stageIndex, zone.group);
+    const linked: number[] = [];
+    sets.linkedBy.forEach((via, stage) => {
+      if (via !== null && sets.byStage[stage] !== null) linked.push(stage);
+    });
+    // Today: the escape (linked by H and I) and the two campaign bonus stages.
+    expect(linked.length).toBeGreaterThanOrEqual(3);
+    for (const stage of linked) {
+      const groups = (sets.linkedBy[stage] ?? []).map((zone) => groupOfStage.get(zone) ?? '');
+      const own = manifest.pages.flatMap((page, p) => (groups.indexOf(page.group) >= 0 ? [p] : []));
+      expect(stagePages(needs, stage), db.stages[stage].id).toEqual(
+        [...new Set([...common, ...own])].sort((a, b) => a - b),
+      );
+    }
+    // A dev range is no one's link: still every page (the test below), and the linked stages
+    // never reach the whole atlas while it is split.
+    expect(manifest.pages.length).toBeGreaterThan(2);
   });
 
   it('still needs every page outside the campaign (dev ranges, boss rush) and in menus', () => {

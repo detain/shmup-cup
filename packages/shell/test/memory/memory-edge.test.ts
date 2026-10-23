@@ -2,6 +2,7 @@
  * Edge cases of the TV memory budget (plan M2-17, `memory` module) on small synthetic content and
  * manifests: the zone walk follows every enemy / tileset / stage reference (cycles, out-of-range
  * and negative ids, typed arrays), zones named twice or out of range, content without a campaign;
+ * the linked stages of R5-10.T8 (a zone's `escape`, reached bonus stages) and their page aliasing;
  * the page needs of fonts, loose frames, engine sprites and `@` siblings; the residency's
  * bookkeeping and unregistering; the song, SFX and track sizes of odd inputs; and the estimate's
  * exact budget edge.
@@ -48,9 +49,10 @@ const NAMES = [
  * A synthetic content db (only the fields the walk reads).
  *
  * @param zones - Campaign zones' stage indices, or `null` for no campaign.
+ * @param escapes - Optional per-zone-stage `escape` links: zone stage index → escape stage index.
  * @returns The content.
  */
-function content(zones: number[] | null): ContentDb {
+function content(zones: number[] | null, escapes?: Record<number, number>): ContentDb {
   const enemies = [
     // 0: names itself (a cycle) and, through a spawn list, its child.
     { id: 'drone', spriteId: 1, childId: 0, spawns: [{ childId: 1 }] },
@@ -80,7 +82,15 @@ function content(zones: number[] | null): ContentDb {
     stages,
     enemies,
     tilesets,
-    campaign: zones === null ? null : { zones: zones.map((stageId) => ({ stageId })) },
+    campaign:
+      zones === null
+        ? null
+        : {
+            zones: zones.map((stageId) => ({
+              stageId,
+              escapeId: escapes === undefined ? -1 : (escapes[stageId] ?? -1),
+            })),
+          },
     sprites: { names: NAMES },
   } as unknown as ContentDb;
 }
@@ -95,21 +105,52 @@ describe('shell/memory zone walk edges', () => {
     // Zone Y: loop-a ↔ loop-b (a cycle) and loop-b's inner core; its linked bonus stage, which
     // links back to zone Y.
     expect([...(sets.byStage[1] ?? [])].sort()).toEqual([3, 5, 6, 7]);
-    // Outside the campaign: the dev range and the bonus stage (reached only through zone Y).
+    // Outside the campaign: the dev range. The bonus stage is **linked** (R5-10.T8): zone Y's
+    // walk reached it, so it has a set of its own and records zone Y as its linker. The back
+    // link to zone Y does not link a zone (a zone is never a linked stage).
     expect(sets.byStage[2]).toBeNull();
-    expect(sets.byStage[3]).toBeNull();
+    expect([...(sets.byStage[3] ?? [])].sort()).toEqual([3, 5, 6, 7]);
+    expect(sets.linkedBy[0]).toBeNull();
+    expect(sets.linkedBy[1]).toBeNull();
+    expect(sets.linkedBy[2]).toBeNull();
+    expect(sets.linkedBy[3]).toEqual([1]);
     expect([...sets.global].sort()).toEqual([0, 8]);
+  });
+
+  it('links a campaign zone’s escape stage without a walk reaching it', () => {
+    // Only the campaign's `escape` links zone X and stage 2 (the dev range used as an escape
+    // sequence — the fake's shortcut for what T2 makes of the real escape stage).
+    const sets = stageSpriteSets(content([0], { 0: 2 }));
+    expect([...(sets.byStage[0] ?? [])].sort()).toEqual([1, 2, 3, 4]);
+    expect([...(sets.byStage[2] ?? [])].sort()).toEqual([8]);
+    expect(sets.linkedBy[2]).toEqual([0]);
+    // The escape's sprite is named now — no longer global (zone Y is not a campaign zone here,
+    // so its loop sprites stay global with the ships).
+    expect([...sets.global].sort()).toEqual([0, 5, 6, 7]);
+  });
+
+  it('links one stage from two zones, and walks a chain of reaches', () => {
+    // Both zones escape to stage 2; stage 2's walk reaches nothing further (no stageId ref).
+    const sets = stageSpriteSets(content([0, 1], { 0: 2, 1: 2 }));
+    expect(sets.linkedBy[2]).toEqual([0, 1]);
+    expect([...(sets.byStage[2] ?? [])].sort()).toEqual([8]);
+    // Bonus (3) still reached through zone Y's event, and the same two zones link it through
+    // their escape only for stage 2 — the chain rule shows through the zone-x-as-escape fake:
+    // zone X links 2, and a fake where 2 reached 3 would link 3 for X too.
+    expect(sets.linkedBy[3]).toEqual([1]);
   });
 
   it('walks a zone named twice once, and skips zones outside the stage list', () => {
     const sets = stageSpriteSets(content([0, 0, -1, 42]));
     expect(sets.byStage.map((set) => set !== null)).toEqual([true, false, false, false]);
+    expect(sets.linkedBy).toEqual([null, null, null, null]);
     expect([...sets.global].sort()).toEqual([0, 5, 6, 7, 8]);
   });
 
   it('makes every sprite global without a campaign', () => {
     const sets = stageSpriteSets(content(null));
     expect(sets.byStage).toEqual([null, null, null, null]);
+    expect(sets.linkedBy).toEqual([null, null, null, null]);
     expect(sets.global.size).toBe(NAMES.length);
   });
 });
@@ -142,13 +183,16 @@ describe('shell/memory atlas page needs edges', () => {
     } as unknown as AtlasManifest;
     const needs = atlasPageNeeds(manifest, NAMES, sets);
     // Page 0: a glyph; page 4: an engine sprite and a loose frame. Pages 1–2: zone X's drone
-    // (and its player-2 sibling), page 3: zone Y's loop-a.
+    // (and its player-2 sibling), page 3: zone Y's loop-a — and, through the link, the bonus
+    // stage's too (R5-10.T8): its walk reached the same loop sprites.
     expect(needs.global).toEqual([true, false, false, false, true]);
-    expect(needs.stages.map((set) => [...set])).toEqual([[], [0], [0], [1], []]);
-    expect(needs.campaign).toEqual([true, true, false, false]);
+    expect(needs.stages.map((set) => [...set])).toEqual([[], [0], [0], [1, 3], []]);
+    expect(needs.campaign).toEqual([true, true, false, true]);
     expect(stagePages(needs, 0)).toEqual([0, 1, 2, 4]);
     expect(stagePages(needs, 1)).toEqual([0, 3, 4]);
     expect(stagePages(needs, 2)).toEqual([0, 1, 2, 3, 4]);
+    // The linked bonus stage needs its linker's pages, not the whole atlas.
+    expect(stagePages(needs, 3)).toEqual([0, 3, 4]);
     // An index past the stages is "outside the campaign" too.
     expect(stagePages(needs, 99)).toEqual([0, 1, 2, 3, 4]);
   });
@@ -164,7 +208,49 @@ describe('shell/memory atlas page needs edges', () => {
     } as unknown as AtlasManifest;
     const needs = atlasPageNeeds(manifest, NAMES, sets);
     expect(needs.global).toEqual([false]);
-    expect([...needs.stages[0]].sort()).toEqual([0, 1]);
+    // Zones X and Y both name the core (Y through its walk, which the bonus links share) — and
+    // the bonus stage rides along through zone Y's link (R5-10.T8).
+    expect([...needs.stages[0]].sort()).toEqual([0, 1, 3]);
+  });
+
+  it('gives a linked stage alone on a page the linker’s cluster, and shared art the common pages', () => {
+    // Stage 2 (a dev range used as zone X's only escape): its art is not named by X's own walk,
+    // so the lone-linker rule gives its page to X — and X's link widens X's own page to 2.
+    const linked = stageSpriteSets(content([0], { 0: 2 }));
+    const manifest = {
+      formatVersion: 1,
+      pages: [
+        { file: 'p0.png', w: 8, h: 8 },
+        { file: 'p2.png', w: 8, h: 8 },
+      ],
+      frames: {
+        'enemies/range#0': frame(1),
+        'enemies/drone#0': frame(0),
+      },
+      sprites: {
+        'enemies/range': { frames: ['enemies/range#0'], flash: null },
+        'enemies/drone': { frames: ['enemies/drone#0'], flash: null },
+      },
+      animations: {},
+      fonts: {},
+    } as unknown as AtlasManifest;
+    const needs = atlasPageNeeds(manifest, NAMES, linked);
+    expect(needs.global).toEqual([false, false]);
+    expect(needs.stages.map((set) => [...set].sort())).toEqual([
+      [0, 2],
+      [0, 2],
+    ]);
+    expect(stagePages(needs, 2)).toEqual([0, 1]);
+    expect(stagePages(needs, 0)).toEqual([0, 1]);
+    // Two zones link the same escape: its own art is global (it rides the common pages, which
+    // every stage keeps), and the escape reaches every linker's pages through its links.
+    const dual = stageSpriteSets(content([0, 1], { 0: 2, 1: 2 }));
+    const dualNeeds = atlasPageNeeds(manifest, NAMES, dual);
+    expect(dualNeeds.global).toEqual([false, true]);
+    expect(dualNeeds.stages.map((set) => [...set].sort())).toEqual([[0, 2], []]);
+    expect(stagePages(dualNeeds, 2)).toEqual([0, 1]);
+    expect(stagePages(dualNeeds, 0)).toEqual([0, 1]);
+    expect(stagePages(dualNeeds, 1)).toEqual([1]);
   });
 });
 

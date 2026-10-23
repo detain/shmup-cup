@@ -37,10 +37,16 @@
  * - **Residency** ({@link stageSpriteSets}, {@link atlasPageNeeds}, {@link createAtlasResidency}).
  *   Which sprites a campaign zone uses is found by walking its stage spec and everything it names
  *   (enemies — children, bosses, inner / double bosses, minions —, tilesets and linked stages such
- *   as a bonus stage): every `sprite…Id` reached. A sprite no campaign zone names (ships, shots,
- *   bullets, items, particles, the UI, dev ranges' enemies) is **global**. An atlas page is needed
- *   by a zone when it holds a global sprite, a font glyph, a frame of no sprite, or one of the
- *   zone's own sprites (their `@flash` / `@p2` / palette siblings included). The engine's, the UI
+ *   as a bonus stage): every `sprite…Id` reached. A sprite no walked stage names (ships, shots,
+ *   bullets, items, particles, the UI, dev ranges' enemies) is **global**. Since R5-10.T8 the walk
+ *   also reaches each stage a zone **links** — the zone's `escape` sequence and the bonus stages
+ *   its stage references — and a linked stage does not need every page: its pages are the global
+ *   ones plus its linking zones' (the escape shares zones H and I's, a bonus stage its zone's).
+ *   Art only a linked stage names (no zone claims it) is global with the rest, so the `common`
+ *   pages stay exactly the global ones; art a linked stage shares with a zone keeps that zone's
+ *   page. An atlas page is needed by a zone when it holds a global sprite, a font glyph, a frame
+ *   of no sprite, or one of the zone's own sprites (their `@flash` / `@p2` / palette siblings
+ *   included). The engine's, the UI
  *   kit's and the scene view's sprites (`ENGINE_SPRITES`, `UI_SPRITES`, {@link SCENE_VIEW_SPRITES})
  *   are global even when a zone names one (R1-05): the renderer draws them in every zone, and the
  *   packer keeps them in the `common` group. Between zones — on the
@@ -531,12 +537,19 @@ export function stageMusicTracks(
   return tracks;
 }
 
-/** The sprites each campaign zone names, and the ones none does. */
+/** The sprites each campaign zone names, the ones none does, and the stages a zone links. */
 export interface StageSpriteSets {
   /** Per stage (`content.stages` index): its sprite ids, or `null` outside the campaign. */
   readonly byStage: readonly (ReadonlySet<number> | null)[];
-  /** Sprite ids no campaign zone names (always resident). */
+  /** Sprite ids no walked stage names (always resident). */
   readonly global: ReadonlySet<number>;
+  /**
+   * Per stage: the campaign-zone stage indices that link it — a zone's stage reaching a bonus
+   * stage through a `stageId` reference, or the zone's `escape` sequence (R5-10.T8) — or `null`
+   * for a zone's own stage and for every stage no campaign zone reaches. A linked stage's sprites
+   * are its linking zones' pages, not the whole atlas: {@link atlasPageNeeds} gives it their pages.
+   */
+  readonly linkedBy: readonly (readonly number[] | null)[];
 }
 
 /** Fields that name an enemy (`content.enemies` index). */
@@ -558,9 +571,15 @@ const SPRITE_REF_KEY = /^sprite\w*Id$/;
  *
  * @param content - The content.
  * @param stageIndex - The stage.
+ * @param onStage - Called with every stage index the walk reaches through a `stageId`
+ *   reference (R5-10.T8: the caller records bonus-stage links).
  * @returns Sprite ids.
  */
-function walkStage(content: ContentDb, stageIndex: number): Set<number> {
+function walkStage(
+  content: ContentDb,
+  stageIndex: number,
+  onStage?: (stageIndex: number) => void,
+): Set<number> {
   const sprites = new Set<number>();
   const seen = new Set<object>();
   const pending: unknown[] = [content.stages[stageIndex]];
@@ -598,7 +617,17 @@ function walkStage(content: ContentDb, stageIndex: number): Set<number> {
       } else if (key === 'tilesetId') {
         follow(content.tilesets, field);
       } else if (key === 'stageId') {
-        follow(content.stages, field);
+        // A stage's music cue table carries numeric `stageId`/`bossId` too — MUSIC track indices,
+        // not references (a collision that has always slipped into the walk's enemy side; keep
+        // the walk's names as the zones drew them, but never let a cue number masquerade as a
+        // linked stage). Only the music table pairs `stageId` with `bossId`; a real bonus-stage
+        // or escape reference carries one or neither.
+        if (record.bossId === undefined) {
+          if (field >= 0 && field < content.stages.length && onStage !== undefined) {
+            onStage(field);
+          }
+          follow(content.stages, field);
+        }
       }
     }
   }
@@ -606,29 +635,70 @@ function walkStage(content: ContentDb, stageIndex: number): Set<number> {
 }
 
 /**
- * The sprites of every campaign zone (see the module docs): a zone's stage and what it names.
+ * The sprites of every campaign zone and of every stage a zone links (see the module docs):
+ * a zone's stage and what it names, and (R5-10.T8) the same walk for each linked stage — the
+ * `escape` sequence a zone's card names and the bonus stages its stage reaches — recorded in
+ * {@link StageSpriteSets.linkedBy} as the walk finds them.
  *
  * @remarks
  * Load time (walks the specs once). Without a campaign every stage is "outside" and every sprite
  * global. The sets follow the data only: an engine, UI or scene-view sprite a zone names is in that
- * zone's set here, and {@link atlasPageNeeds} makes it global.
+ * zone's set here, and {@link atlasPageNeeds} makes it global. A linked stage's own set feeds only
+ * the page marking — {@link stagePages} never narrows by it the way a zone's does, because the
+ * alias rule in {@link atlasPageNeeds} hands the linked stage its linking zones' pages.
  *
  * @param content - The content.
- * @returns Per-stage sets and the global set.
+ * @returns Per-stage sets, the global set, and the per-stage linking zones.
  */
 export function stageSpriteSets(content: ContentDb): StageSpriteSets {
   const byStage: (Set<number> | null)[] = content.stages.map(() => null);
+  const linkedBy: (number[] | null)[] = content.stages.map(() => null);
+  /** Stage indices that are a campaign zone's own stage — a zone is never a linked stage. */
+  const zoneStages = new Set<number>();
+  for (const zone of content.campaign?.zones ?? []) {
+    if (zone.stageId >= 0 && zone.stageId < byStage.length) zoneStages.add(zone.stageId);
+  }
   const named = new Set<number>();
+  /** Queues a link for the walk below (zones never link a zone). */
+  const link = (target: number, via: number): void => {
+    if (target < 0 || target >= byStage.length || zoneStages.has(target)) return;
+    const list = linkedBy[target];
+    if (list === null) linkedBy[target] = [via];
+    else if (list.indexOf(via) < 0) list.push(via);
+  };
+  const pending: number[] = [];
+  /** Notes a reached stage: records the link, and queues it for the walk below (never a zone). */
+  const reach = (reached: number, via: number): void => {
+    link(reached, via);
+    if (!zoneStages.has(reached) && byStage[reached] === null && pending.indexOf(reached) < 0) {
+      pending.push(reached);
+    }
+  };
   for (const zone of content.campaign?.zones ?? []) {
     const index = zone.stageId;
     if (index < 0 || index >= byStage.length || byStage[index] !== null) continue;
-    const set = walkStage(content, index);
+    const set = walkStage(content, index, (reached) => reach(reached, index));
+    byStage[index] = set;
+    for (const id of set) named.add(id);
+    if (zone.escapeId >= 0) reach(zone.escapeId, index);
+  }
+  // Linked stages walk to a fixed point: a stage linked while the queue runs joins it (bonus
+  // chains, an escape reaching further stages). `byStage[link]` is complete by the time its
+  // linker walks, so a re-link only extends `linkedBy`, never a missed set.
+  for (let q = 0; q < pending.length; q++) {
+    const index = pending[q];
+    if (index === undefined || byStage[index] !== null) continue;
+    const via = linkedBy[index];
+    if (via === null) continue;
+    const set = walkStage(content, index, (reached) => {
+      for (const zone of via) reach(reached, zone);
+    });
     byStage[index] = set;
     for (const id of set) named.add(id);
   }
   const global = new Set<number>();
   for (let id = 0; id < content.sprites.names.length; id++) if (!named.has(id)) global.add(id);
-  return { byStage, global };
+  return { byStage, global, linkedBy };
 }
 
 /**
@@ -660,7 +730,13 @@ export interface AtlasPageNeeds {
  * font glyphs and frames of no sprite make their pages global — and so do the engine's, the UI
  * kit's and the scene view's own sprites (`ENGINE_SPRITES`, `UI_SPRITES`,
  * {@link SCENE_VIEW_SPRITES}) even when a zone names one (R1-05): the renderer draws them in every
- * zone. Load time.
+ * zone. A page a **linked** stage owns with no zone sharing it is global too (R5-10.T8): it holds
+ * only art no zone names (the escape's own layers), so the {@link stagePages} alias below gives it
+ * to the linking zones by their link, never by an owner the page can carry — and every `common`
+ * group page stays a global page. Otherwise a page lists the stages whose sets own its sprites,
+ * each zone widened to the stages it links: a linked stage needs the global pages and its
+ * linking zones' pages, not every page (a dev stage — no set at all — still gets every one).
+ * Load time.
  *
  * @param manifest - The atlas manifest.
  * @param spriteNames - `content.sprites.names`.
@@ -679,8 +755,51 @@ export function atlasPageNeeds(
     global.push(false);
     stages.push(new Set<number>());
   }
+  /** A campaign zone's own stage: it has a set and is not itself a linked stage. */
+  const isZoneStage = (stage: number): boolean =>
+    sets.byStage[stage] !== null && sets.linkedBy[stage] === null;
+  /** Per zone stage: the stages it links (directly or through a reached stage). */
+  const linkedOf: number[][] = sets.byStage.map(() => []);
+  for (let s = 0; s < sets.linkedBy.length; s++) {
+    const via = sets.linkedBy[s];
+    if (via === null) continue;
+    for (const zone of via) {
+      if (zone >= 0 && zone < linkedOf.length && linkedOf[zone].indexOf(s) < 0) {
+        linkedOf[zone].push(s);
+      }
+    }
+  }
+  /**
+   * Widens a stage list to the page owners it implies (R5-10.T8): every zone names the stages
+   * that link to it. A list of no zone is the linked stages' own art: global when their linkers
+   * span more than one zone (the `common` pages the derivation packs it onto are the global
+   * ones), or the linking zone's — widened the same way — when they span exactly one.
+   *
+   * @param list - The stages whose sets hold the sprite.
+   * @returns The owner list, or `null` for global.
+   */
+  const ownersOf = (list: readonly number[]): readonly number[] | null => {
+    const out: number[] = [];
+    const loneZones: number[] = [];
+    let hasZone = false;
+    for (const s of list) {
+      out.push(s);
+      if (isZoneStage(s)) {
+        hasZone = true;
+        for (const linked of linkedOf[s]) if (out.indexOf(linked) < 0) out.push(linked);
+      } else
+        for (const zone of sets.linkedBy[s] ?? [])
+          if (loneZones.indexOf(zone) < 0) loneZones.push(zone);
+    }
+    if (hasZone) return out;
+    if (loneZones.length !== 1) return null;
+    const zone = loneZones[0];
+    if (zone === undefined || out.indexOf(zone) < 0) out.push(zone);
+    for (const linked of linkedOf[zone] ?? []) if (out.indexOf(linked) < 0) out.push(linked);
+    return out;
+  };
   /** Owners of each content sprite name: `null` = global, else the stages naming it. */
-  const owners = new Map<string, number[] | null>();
+  const owners = new Map<string, readonly number[] | null>();
   for (let id = 0; id < spriteNames.length; id++) {
     if (sets.global.has(id) || ALWAYS_GLOBAL_SPRITES.has(spriteNames[id])) {
       owners.set(spriteNames[id], null);
@@ -690,7 +809,7 @@ export function atlasPageNeeds(
     sets.byStage.forEach((set, stage) => {
       if (set !== null && set.has(id)) list.push(stage);
     });
-    owners.set(spriteNames[id], list);
+    owners.set(spriteNames[id], ownersOf(list));
   }
   /**
    * Marks a frame's page.

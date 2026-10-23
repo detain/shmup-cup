@@ -266,6 +266,38 @@ describe('shell/memory zone sprite sets and atlas pages', () => {
     if (bossSprite >= 0) expect(sets.byStage[zoneA]?.has(bossSprite)).toBe(true);
   });
 
+  it('links the escape to H and I and the bonus stages to their zones (R5-10.T8)', () => {
+    // The campaign's linked stages: the escape sequence both final zones link, and each zone's
+    // bonus stage. They are walked, they name their sprites, and their pages are their linking
+    // zones' — never the whole atlas a dev range still needs.
+    const all = manifest.pages.map((_, p) => p);
+    const byId = (id: string): number => db.stageIndex.get(id) ?? -1;
+    const escape = byId('escape');
+    const zoneH = byId('zone-h');
+    const zoneI = byId('zone-i');
+    expect(escape, 'escape').toBeGreaterThanOrEqual(0);
+    expect(sets.linkedBy[escape]).toEqual([zoneH, zoneI].sort((a, b) => a - b));
+    expect(sets.byStage[escape] !== null).toBe(true);
+    const needs = atlasPageNeeds(manifest, db.sprites.names, sets);
+    const want = [...new Set([...stagePages(needs, zoneH), ...stagePages(needs, zoneI)])].sort(
+      (a, b) => a - b,
+    );
+    expect(stagePages(needs, escape)).toEqual(want);
+    expect(want.length).toBeLessThan(all.length);
+    // Each campaign bonus stage shares exactly its zone's pages.
+    for (const [bonus, zone] of [
+      ['brine-grotto', 'zone-b'],
+      ['glimmer-cache', 'zone-g'],
+    ] as const) {
+      const b = byId(bonus);
+      expect(sets.linkedBy[b], bonus).toEqual([byId(zone)]);
+      expect(stagePages(needs, b), bonus).toEqual(stagePages(needs, byId(zone)));
+    }
+    // A dev range is no one's link and needs every page.
+    expect(sets.linkedBy[byId('test-range')]).toBeNull();
+    expect(stagePages(needs, byId('test-range'))).toEqual(all);
+  });
+
   it('needs the global pages plus its own for each zone, and unloads iff there are several', () => {
     // The shipped atlas (zone-split since R1-05): each zone needs the global pages and the pages
     // of its own sprites; pages unload between zones only when the atlas has more than one.
