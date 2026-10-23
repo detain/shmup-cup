@@ -159,12 +159,55 @@ so the port could not move them, and measurement confirms it: every encounter op
 v1↔v2, in the same order (A→I), at both scales. The rush's non-god run (seed 1, full loadout) ends
 `stageClear` at **19322 t = 322.0 s, 0 deaths, 0 hits** (`DEFAULT_MAX_TICKS` 36000 never
 approached). The rush entries' `delay` values — [360, 150×8] — are a tick value, never scaled: the
-owner knob if the breathing room should change. The nine loop-2 `remix` arrays measured the same
+owner knob if the breathing room should change (superseded in wave 13: R5-10.T4 turned the knob by
+measurement — the section below). The nine loop-2 `remix` arrays measured the same
 way (52 remix events, each identified 6-of-6 or 4-of-4 by its merged-timeline index; the arrays are
 [6,6,6,6,6,4,6,6,6] — zone F the 4 — at both the base and the blessed tip): no section opens
 noticeably easier, so the `MAX_STAGE_REMIX` 64 cap and the remix data rules went untouched. The
 bonus stages' own table is in
 [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#r2-04-the-bonus-stages-at-the-new-scale).
+
+## R5-10.T4: the boss rush re-timed for the rebuilt bosses
+
+The zones' remasters (R5-01 … R5-09, waves 10–12) rebuilt all nine boss trees; the rush list in
+`content/stages/boss-rush.stage.json` already named them in zone order A→I, so the step's live work
+was the entries' `delay` retime the R2-04 section above left as the owner knob. It shipped in
+`7e9f622c`: **[360, 210×8]**, was [360, 150×8].
+
+**The measured basis.** The 4-way bot's god-mode fight spans (fight → dying, seed 1, full
+loadout) over the rebuilt trees measure **15,425 ticks** against the v1-baseline record's
+**11,283** — an aggregate **1.37×**. The uniform inter-encounter rest scales with that:
+150 × 1.37 ≈ 205, rounded to the half-second grid → **210**. The 360-tick opening precedes the
+first WARNING and measures no fight, so it stays; the openings themselves are tick-only and
+unchanged through the rebuild — warn→fight is still 330/360 (`introTicks` 180) and the dying spans
+still 185.
+
+| boss | v1 fight (t) | v2 fight (t) | × |
+|---|---|---|---|
+| halcyon-bulwark | 263 | 601 | 2.29 |
+| galvanic-maw | 1145 | 1926 | 1.68 |
+| sandgrave-widow | 1471 | 2532 | 1.72 |
+| cinder-bastion | 887 | 1648 | 1.86 |
+| squall-steed | 1550 | 1067 | 0.69 |
+| mantle-regent | 923 | 1851 | 2.01 |
+| facet-monarch | 1075 | 1151 | 1.07 |
+| iron-sovereign | 1698 | 2361 | 1.39 |
+| hollow-king | 2271 | 2288 | 1.01 |
+
+**The re-timed run.** God mode clears at **350.0 s (21,000 t)** and the non-god replay-identical
+run at **351.1 s** — 0 deaths, 0 diagonal ticks, 0 remote violations — inside v1's envelope, the
+harness's 600 s tick cap never approached, the Vitest timeout untouched (measured wall ≈ 1.3 s).
+R6-01.B2's balance report later corroborated the fight shape from the campaign side (per-zone boss
+means 7–44 s, 162 rows) and proposed no second move.
+
+**Fingerprints — and one correction.** The commit moved exactly two files: the stage content and
+the content-DB fingerprint's `core.stages` digest (`f1ef091da6441c02` → `3db00a5794b476ba`). The
+presentation fingerprint did **not** move, and correctly so: its `extra.bossRush` walk plays 400
+ticks, while the first re-timed gap lands near tick 1,400 (the 360-t opening plus the first
+fight), long after the walk ends — so its `PINNED` entry needed no re-pin and `7e9f622c` carries
+no diff in that file (the commit body's "the fingerprints re-pin inside this commit" sentence
+names the `extra.bossRush` entry among them; the disk truth is that only the content-DB row
+moved). The shell frame fingerprint is unchanged, and no golden or demo plays the rush.
 
 ## Extra Edit weapons (`content/weapons/types-extra.weapons.json`)
 

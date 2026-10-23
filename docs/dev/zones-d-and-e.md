@@ -589,8 +589,14 @@ when the MANTA plays (M2-05). The remasters authored new plans to the designs' �
 contract that `pnpm content:check` reads now checks each plan's balance — D's shape is 3 octagons
 with ≤ 2 rare entries per recovery window (its one **blue capsule** rides the maze's `take` branch
 at x 15,300, so the branch pays the risk it asks for), E's is 1 octagon and ≤ 1 rare per window. Each zone
-also ships a `remix` list for the loop-1 remixes (10 rows for D, 12 for E) that drops nothing —
-every remix row carries `drop: null` so a looped run hands out the base plan alone.
+also ships a `remix` list for the loop-2 remixes that drops nothing — every remix row carries
+`drop: null` so a looped run hands out the base plan alone. R5-04 and R5-05's ZFIX1 lanes (wave 13)
+extended both tails to **16 rows each** (D: 10 → 16, six aerial formations over 15,300…18,900
+answering its base events in the zone's existing voice; E: 12 → 16, two formations over
+16,860/17,760 and two spawns over 18,240/18,560), so the remix now **spans** the expanded stages —
+the last row passes the last checkpoint (D 18,900 > 16,200, E 18,560 > 17,550; the T5 span check
+prints `d 21150 16 480 18900 16200 spans` and `e 21000 16 360 18560 17550 spans`) and no tail of
+either zone plays un-remixed on loop 2.
 `zone-d-direct.test.ts` and `zone-e-direct.test.ts` (R5-P.P5e's split of `zones-de-direct.test.ts`) fly both zones with
 the MANTA (the 4-way bot, god mode): the items that appear on a tick are exactly the plan's entries
 between the cursors, and the MANTA's weapons shoot both bosses down.

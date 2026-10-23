@@ -45,11 +45,12 @@ On the title press **OK**, then ▼ to **EXTRA** (between SOUND TEST and EXIT) a
 ### BOSS RUSH
 
 The nine zone bosses — HALCYON BULWARK, GALVANIC MAW, SANDGRAVE WIDOW, CINDER BASTION, SQUALL STEED,
-MANTLE REGENT, FACET MONARCH, IRON SOVEREIGN and THE HOLLOW KING — come one after another, each
-after its WARNING, with a short pause between them. There are no zones in between, so choose the
-weapons you like best before you start. Beating the last boss shows **STAGE CLEAR** (then the
-title); losing your last ship shows GAME OVER as usual. Either way the score goes into the BOSS
-RUSH table. A full rush takes about six minutes.
+MANTLE REGENT, FACET MONARCH, IRON SOVEREIGN and THE HOLLOW KING — come one after another in the
+same order, each rebuilt for the remastered zones, each after its WARNING, with about 3½ seconds of
+rest between them (the rush re-timed those pauses for the rebuilt bosses' longer fights). There are
+no zones in between, so choose the weapons you like best before you start. Beating the last boss
+shows **STAGE CLEAR** (then the title); losing your last ship shows GAME OVER as usual. Either way
+the score goes into the BOSS RUSH table. A full rush takes about six minutes.
 
 ### CARAVAN (score attack)
 

@@ -496,6 +496,19 @@ and several of them are the reason a section is hard.
 The title screen's **EXTRA** menu ([`extra-modes-and-replays.md`](extra-modes-and-replays.md))
 opens the boss rush and the practice ranges, where the fights that never got a zone live.
 
+### The rush — the nine zone bosses in one row
+
+The BOSS RUSH brings back everything the campaign taught you, in the order a run meets it, with
+nothing in between but its WARNING: **HALCYON BULWARK** (AZURE VERGE) ·
+**GALVANIC MAW** (BRINE NEBULA) · **SANDGRAVE WIDOW** (DUNE EXPANSE) ·
+**CINDER BASTION** (MAGMA DEEP) · **SQUALL STEED** (TEMPEST RIDGE) ·
+**MANTLE REGENT** (CELL VAULT) · **FACET MONARCH** (PRISM LABYRINTH) ·
+**IRON SOVEREIGN** (IRON CITADEL) · **THE HOLLOW KING** (ABYSSAL THRONE). Each is the rebuilt
+v2 boss — the same parts, phases and points as in its own zone above. When the remasters made the
+fights longer (they measured 1.37× bigger), the rush re-timed its rest: the pause after each boss
+went from 2½ to **3½ seconds** — the six-second opening before the first WARNING stays — and a
+full rush takes about six minutes.
+
 ### Captains
 
 Mid-bosses: small, fast, and gone in under a minute. **3,000 pts each.**

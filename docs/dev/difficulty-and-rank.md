@@ -415,6 +415,37 @@ ship's.
   (each resume allocates a small result object — D29), not a per-tick allocation; fractional
   bullet speeds alone barely change the bytes.
 
+## The balance harness (`test/bench/balance.perf.ts`, R6-01.B1)
+
+The campaign's answer to "is this fair?" — and the only bench in `test/bench/` that does not run
+by default: the suite is gated on `SHMUP_BALANCE=1`, so `pnpm bench` and CI's Benchmark job skip
+its eight cases in about three seconds unless you ask for it. It plays **every campaign route** of
+the shipped 9-zone diamond with the 4-way playtest bot **without** god mode — both ships (KESTREL,
+MANTA) × the four presets (easy / normal / hard / arcade) = 8 cases — and writes one row per zone
+reached: the cumulative score, the clear time, deaths, extends earned, rank, the tally's kill %,
+and the boss fight time. The walk mirrors `test/playtest/campaign.ts`'s fork rule through the
+exported `playRunZone` / `cloneRun` primitives (a cleared non-final zone fans over its exits;
+anything else ends the route), the seed is fixed (`SEED = 1`), and no row carries a timestamp or a
+path, so two runs are byte-comparable. One full run takes ≈ 7 minutes; a case flies up to 31 zone
+runs, so it carries its own 1-hour timeout.
+
+```sh
+# the whole harness (~7 min; it takes the e2e lock elsewhere, so run it alone):
+SHMUP_BALANCE=1 pnpm exec vitest run --config test/bench/vitest.config.ts balance.perf.ts
+# where the tables land (balance.json + balance.md; default is the OS temp folder):
+SHMUP_BALANCE=1 SHMUP_BALANCE_OUT=/tmp/balance pnpm exec vitest run --config test/bench/vitest.config.ts balance.perf.ts
+# the skip is the contract — without the variable, CI and `pnpm bench` never pay the 7 minutes:
+pnpm exec vitest run --config test/bench/vitest.config.ts balance.perf.ts   # 8 skipped in ~3 s
+```
+
+The final raster prints its census — `162 rows, 10 gaps` — and **names every gap**: a zone has no
+row when no route of that case ever played it (without god mode a route stops at its first zone
+that does not clear). Read the output with the harness's own premise: the 4-way bot with no human
+evasion is a difficulty *floor*-test, not a human proxy — the load-bearing signals are relative
+(which depth ends runs, how the two ships diverge, which boss fight dominates the clock), the
+absolute clear rates read low by design. The wave-13 `R6-01.B2` lane read these rows into its
+balance report.
+
 ## Extending it
 
 | To add… | Do this |

@@ -545,9 +545,12 @@ GPU misses vsync).
 >   now a real band page, not the synthetic 2048² sheet it was, decisions RR-8 / W5-17) plus the
 >   shipped `common` and zone A pages, and the run's **last page load, `standin-zone`**, draws one
 >   640×360 frame from the pages just decoded through the real bindings. The headless twin
->   (`?scenario=standin-zone`, R3-04.M4b) is gated in `pnpm bench` and runs fast.
+>   (`?scenario=standin-zone`, R3-04.M4b) was gated in `pnpm bench` and ran fast — R5-10.T7
+>   retired it as a headless proxy: the bench now flies the nine real zones (§8),
+>   and the page load survives only where it always also lived, the TV widget's 174th, the R0-03 carrier.
 > - **The status of the 2 s verdict**: *projected on the TV, unmeasured on the TV*. What exists is
->   the ratio estimate R3-04.M4b carried: the headless stand-in page load measures **62.3 ms**
+>   the ratio estimate R3-04.M4b carried (its proxy is retired, §8; the numbers stand as the
+>   2026-10-20 record): the headless stand-in page load measured **62.3 ms**
 >   File→GPU p50 (fetch 5.8 + decode 26.4 + upload 30.1 for the ≈ 340 KB page), and the same
 >   pipeline's shipped `common` page ran **26.1 ms** headless against **196.7 ms** on the M7
 >   (three sessions) — a ×7.5 TV factor on the size-correct sample; applied to the stand-in page
@@ -559,3 +562,106 @@ GPU misses vsync).
 >   (two synthetic 2048² pages — a heavier set than any v2 zone ships), and every real v2 zone page
 >   sits inside the RR-7 band the stand-in models. Closing the verdict is the owner's **R0-03**
 >   bench run on the monitors with the stand-in scenario (`docs/client/outstanding-work.md`).
+
+## 8. The final-content headless re-measure (R5-10.T7's bench, R6-02.P1's run, 2026-10-23)
+
+Two things landed since §7.6's update, and together they retire the last live stand-in figure this
+file quoted on the headless side:
+
+- **R5-10.T7** (`a70a933a`) replaced the render bench's single `standin-zone` scenario with the
+  **nine real campaign zones**. The stage list is read from `content/campaign/main.campaign.json`
+  (the bench throws unless exactly nine staged zones name themselves), and each zone is gated by
+  the ordinary budgets — `DRAW_CALL_BUDGET` 20, `RENDER_P95_BUDGET_MS` 16 ms, `HEAP_BUDGET` 1 MiB,
+  `MIN_LIVE_LOAD` 400, all byte-untouched by the step — plus a new `zoneSweepViolations` state
+  gate: the camera must have flown (`cameraX > 0`) and the status must still be `playing` — a
+  `stageClear`, `gameOver` or `bossWarning` names the zone and fails the sweep, because the arms
+  measure a zone's opening section. The TV widget's matrix is unchanged at 172 scenarios + decode
+  + stand-in = **174 page loads**; its 174th is now the only place the stand-in page load still
+  runs, and it stays the owner's R0-03 carrier.
+- **R6-02.P1** then re-measured everything headless on the final content (all nine zone remasters
+  in), serialized under the e2e lock at that tip. Every gate **passed; no budget was raised and no
+  gate file moved.** The tables below are its report's, verbatim.
+
+One law over the whole section: the millisecond columns are headless Playwright Chromium on
+**SwiftShader — a software rasteriser, not the M7.** They are the same statistics the TV bench
+takes but not a comparable magnitude to a monitor's; what the headless run proves is the
+machine-independent counts — draw calls, pooled render-target bytes, heap deltas, live load — and
+that they clear the budgets with margin.
+
+**Simulation stress** (`stress.perf.ts`, 20,000 ticks): median **0.104 ms/tick** against the 1.0
+budget (10 % of it), heap growth −1066.7 KB (a net release) against 512 KiB, average load
+511 bullets / 64 enemies / 9 shots / 4.0 lasers — every floor (> 460 / > 57 / > 5 / > 1) holds.
+
+**Per-zone stress** (`zones.perf.ts`, every zone flown to stage clear by the 4-way bot, bullets
+topped to 512): worst median **0.392 ms/tick** (39 % of budget), worst retained **630.2 KB**
+against 1 MiB — **9/9 PASS**, no zone near either gate.
+
+**Render bench** (`render.perf.ts`) — **196/196 passed, EXIT 0, 1285.51 s**, the shipped grouped
+atlas at art scale 3/2 over the shipped content. Suite 1, the scripted scenarios:
+
+| scenario | draw calls | p95 / med / max ms | pooled RT KB (+ frame KB) | heap KB /600 f | scene rebuilds (group rebuilds) |
+|---|---|---|---|---|---|
+| worst-case, CRT off (zone-a raster load) | 10 | 1.30 / 0.80 / 3.20 | 0 (+900) | 340 | 0/660 (1590) |
+| worst-case, CRT light | 10 | 1.20 / 0.70 / 1.90 | 0 (+900) | 340 | 0/660 (1590) |
+| worst-case, CRT full | 10 | 1.40 / 0.80 / 2.20 | 0 (+900) | 343 | 0/660 (1590) |
+| layer effects (raster-range) | 10 | 1.10 / 0.70 / 6.30 | 2048 (+900) | 461 | 0/660 (1535) |
+| Mode-7 floor (dimension) | 14 | 1.10 / 0.80 / 1.80 | 0 (+900) | 304 | 0/660 (1538) |
+| decor range (decor-range) | 14 | 1.50 / 0.90 / 2.10 | 0 (+900) | 346 | 0/660 (1605) |
+| one render group (A/B arm) | 2 | 1.40 / 1.00 / 2.40 | 0 (+900) | 383 | 658/660 (658) |
+| 1280×720 internal (raster-range) | 10 | 1.20 / 0.80 / 4.40 | 3600 (+3600) | 462 | 0/660 (1535) |
+| leak fixture (200 frames) | 8 | 1.50 / 1.00 / 3.60 | 0 (+900) | 19 718 | 0/220 (535) |
+
+The summary lines print as they did in wave 5 (`decor vs baseline: 14 vs 10 draw calls, p95
+1.15x`; `CRT p95 ratio: light 0.92x, full 1.08x of off`; `render group A/B: 0 vs 658 scene
+rebuilds, 1590 vs 658 group rebuilds, 10 vs 2 draw calls, p95 0.93x`), and the live-load floors
+(512 bullets, ~488–492 points, 493 particles) held everywhere.
+
+**The real-zone sweep** — T7's arms, now on the final remastered zones. The zone-a arm is
+numerically the baseline `worst-case, CRT off` scenario (10 calls, 340 KB heap, camera 935 in both
+runs): the baseline *is* remastered zone A. Zones B–I carry the 2048 KB pooled raster target — the
+same filtered pass `raster-range` shows.
+
+| zone | draw calls | p95 / med / max ms | pooled RT KB (+ 900 KB frame) | heap KB | floors b/pts/p | camera x, status | verdict |
+|---|---|---|---|---|---|---|---|
+| zone-a | 10 | 1.10 / 0.80 / 1.70 | 0 | 340 | 512/492/493 | 935, playing | **PASS** |
+| zone-b | 14 | 1.30 / 0.90 / 2.20 | 2048 | 472 | 512/488/493 | 1069, playing | **PASS** |
+| zone-c | 14 | 1.60 / 1.10 / 2.20 | 2048 | 504 | 512/490/493 | 1069, playing | **PASS** |
+| zone-d | 15 | 1.50 / 1.00 / 2.50 | 2048 | 479 | 512/489/493 | 1069, playing | **PASS** |
+| zone-e | 15 | 1.40 / 1.00 / 2.20 | 2048 | 445 | 512/492/493 | 1069, playing | **PASS** |
+| zone-f | 13 | 1.30 / 0.90 / 2.30 | 2048 | 519 | 512/491/493 | 1069, playing | **PASS** |
+| zone-g | 14 | 1.60 / 1.10 / 2.60 | 2048 | 477 | 512/490/493 | 1069, playing | **PASS** |
+| zone-h | 13 | 1.60 / 1.00 / 3.30 | 2048 | 459 | 512/492/493 | 1069, playing | **PASS** |
+| zone-i | 14 | 1.50 / 1.00 / 2.30 | 2048 | 442 | 512/490/493 | 1202, playing | **PASS** |
+
+> `[bench] zone sweep worst of the nine: 15 draw calls, p95 1.60 ms (gates: budgets of 20 draw
+> calls and 16 ms — each scenario was gated on them above, never raised)`
+
+The review lane re-ran the same bench at the same tip and the deterministic fields (calls, pooled
+KB, floors, camera, status) matched field for field; the ±0.1–0.3 ms differences are SwiftShader
+load noise.
+
+**TV bench headless** (suite 2 — 172 scenario tests + decode + report, counts only, every
+millisecond *not the M7*): the worst arms are the 1080p `worst` scenes — `1920x1080n-worst`
+15 calls / p95 11.50 ms / 16 384 KB pooled, and the `-out720` / `-interp` twins at 15 calls /
+11.00 / 10.60 ms. The 1080p filter arms pool up to 16 384 KB of render targets — the biggest RT
+footprint the matrix shows, counted, never raised. The draw-call maxima per scene kind match
+suite 1 exactly (busy 11, filter 14, mode7 13, crt 11, worst 15). The decode rows:
+
+```
+[bench] tv decode standin-zone-a 2048x1024 png8 344 KB: fetch 5.8 ms, decode 26.2 ms, upload 30.9 ms, bitmap 11.4 / 7.8 ms
+[bench] tv decode common 2048x1024 rgba 245 KB: fetch 3.5 ms, decode 23 ms, upload 28.4 ms, bitmap 16.8 / 7.3 ms
+[bench] tv decode zone-a 512x512 png8 8 KB: fetch 2.1 ms, decode 2.8 ms, upload 3.2 ms, bitmap 1.5 / 1 ms
+```
+
+**§7.6's 2 s verdict stays where it was** — *projected on the TV, unmeasured on the TV*. Nothing
+here closes it; the owner's R0-03 run of the capture kit
+([install-on-tv.md § The owner's capture kit](../client/install-on-tv.md#the-owners-capture-kit-render-telemetry-and-the-tv-bench))
+is what will.
+
+**And the stand-in gate in one line** (P1's coverage verdict): `standin-budget.test.ts` still gates
+R3-04's **synthetic** page set — each row charges 16 MiB `'none'` / 32 MiB `'resident'`, a
+conservative over-shape of the real per-zone charge, never a measurement of it. The shipped
+grouped atlas charges the real zones 9.44–10.49 MiB `'none'` / 18.87–20.97 MiB `'resident'` —
+every one inside the 23 MiB texture share on both policies, with the `'resident'` overshoot of the
+stand-in rows absent from the shipped art. The per-zone memory table belongs to
+[platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory), not to this file.

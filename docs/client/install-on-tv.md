@@ -79,7 +79,7 @@ pnpm --filter @shmup/tizen tizen:run
 - After every new `build`, run `tizen:package` again before installing.
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
 - **Which game you build** depends on the branch. The default branch, `master`, is v2 in development
-  (version 2.0.0-alpha.1 — v2 draws the bigger picture and the 1½× world; rules, ticks and scores
+  (version 2.0.0-beta.1 — v2 draws the bigger picture and the 1½× world; rules, ticks and scores
   unchanged); the released game, version 1.0.0 and its fixes, is on the `v1.x` branch — `git switch`
   `v1.x` before `pnpm install` to build that one. Going from a `master` build back to a `v1.x` build
   on the same monitor needs the app removed first ([Removing an app](#removing-an-app)).
@@ -156,6 +156,197 @@ or every later build asks for Game Mode too.
 a gamepad when it starts — the TV then shows a popup whenever no gamepad is connected, which is
 wrong for a game played with the remote. It exists only for testing that Samsung feature.
 
+## The owner's capture kit (render telemetry and the TV bench)
+
+The checklist the R6-02.P2 lane verified with real builds on `master` (both the debug game build
+and the bench bundles passed their checks with the address baked in). It runs the **guided render
+capture** (the debug build's telemetry, [debug-tools.md](debug-tools.md#the-guided-capture-preferred))
+on both M7 monitors, and the **TV render bench** beside it, so wave 15's analyses (plan R0-03, the
+WebGL 1-vs-2 decision) get their sessions. Package, install and run on a TV are the **owner's** —
+`sdb`, the Tizen CLI, `tizen:package` / `tizen:install` / `bench:tv:package` / `bench:tv:install`
+are never run by a tooling agent, and no log-server address is ever committed.
+
+Prerequisite: the desktop and both monitors are on the same network; a checkout of `master`;
+Node 24 and `pnpm install` done at the repo root; in `tools/input-probe/` run `npm install`
+once (the log server itself is zero-dependency, so it runs without it too).
+On Windows, allow Node through the firewall on the **private** network when first prompted —
+or the monitors cannot reach the server.
+
+### Step 1 — start the log server (desktop)
+
+```sh
+cd tools/input-probe
+npm run log-server
+```
+
+It prints (exact shape from `server/log-server.mjs`):
+
+```
+input-probe log server listening on http://0.0.0.0:8787  (logs → <repo>/tools/input-probe/logs)
+Receives the input probe (ip-… sessions), the game's render telemetry (rp-…) and the TV render bench (rb-…).
+Build the probe — or the game's Tizen dev bundle, or the TV render bench — with one of:
+  VITE_REPORT_URL=http://<desktop-ip-1>:8787
+  VITE_REPORT_URL=http://<desktop-ip-2>:8787
+```
+
+Use one of the printed `http://<ip>:8787` addresses as `<LOGSERVER>` below (the one the monitors'
+network, e.g. `10.0.0.x`). Defaults: `PORT=8787`, `HOST=0.0.0.0`, `LOG_DIR=tools/input-probe/logs`
+(all overridable via env). Keep the window open for the whole session; every payload prints a one-
+line summary.
+
+### Step 2 — rebuild the debug game build with that address (desktop, repo root)
+
+The variable must be set for the build only; it is baked into the bundle, committed nowhere.
+The builds are env-driven: the wrapper scripts set everything else (`TIZEN_DIST_DIR` /
+`TIZEN_APP_ID`) themselves — **cmd.exe has no inline `VAR=value cmd`, so `set` it first.**
+
+Linux / macOS / Git-Bash:
+
+```sh
+VITE_REPORT_URL=http://<LOGSERVER>:8787 pnpm --filter @shmup/tizen build:dev
+```
+
+Windows cmd:
+
+```bat
+set VITE_REPORT_URL=http://<LOGSERVER>:8787
+pnpm --filter @shmup/tizen build:dev
+```
+
+PowerShell:
+
+```powershell
+$env:VITE_REPORT_URL = "http://<LOGSERVER>:8787"; pnpm --filter @shmup/tizen build:dev
+```
+
+Install and run are the **owner's** (sdb / Tizen CLI — never run by an agent):
+
+```bat
+set TIZEN_PROFILE=<your profile>
+set TV_IP=<the monitor's IP>
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+Repeat the last three lines with the other monitor's `TV_IP`. (Quick sanity check before walking
+to the monitors: the same variable with `pnpm dev` in a desktop browser proves the receiver is
+reachable at all.)
+
+### Step 3 — the guided render capture, on each monitor
+
+Open the tools: **Play/Pause, then Ch ▲, Ch ▲, Ch ▲** (within ~3 s). A checklist appears in the
+**top-right corner**; the panel also comes up — press **1 to hide the panel before you start** (the
+panel inflates `REB` with its own redraws; the corner list costs nothing). Use **god mode (2)**
+throughout; keep outlines (3) and slow motion (6) off — both change what is drawn. Play what each
+line asks; a line ticks itself when enough is recorded:
+
+| Line | What to do |
+|---|---|
+| **M1** | 30 s on the title, then 30 s of a busy scene (key **8** jumps to the boss) — panel hidden |
+| **M2** | OPTIONS → DISPLAY → **CRT OFF / LIGHT / FULL**, 20 s of the same piece of stage each |
+| **M3** | Fly 10 s in three different stages — include the Mode-7 one and the water / heat-haze one |
+| **M4** | A very dense pattern now, and the same again after a checkpoint restart (key **7**) |
+| **M5** | A minute in one stage |
+| **M6** | Two different zones, each with CRT on and with CRT off |
+| **M7** | Press **Home**, wait ten seconds, come back |
+| **M8** | The 240 fps latency video — manual, shows `[-]`, never ticks |
+
+The list's last line shows the sending (`sent #12 · queued 0 · fails 0`). If `queued` climbs and
+`fails` rises, the monitor cannot reach the desktop — fix the address/firewall and restart the
+run. Run the whole list on **each** monitor; **each launch writes its own `rp-….jsonl` file.**
+Reachability check: the first payload's summary line must appear in the server window within ~2
+minutes of opening the tools — otherwise fix the firewall before flying the list.
+
+### Step 4 — rebuild the TV bench with the same address (desktop, repo root)
+
+Linux / macOS / Git-Bash:
+
+```sh
+VITE_REPORT_URL=http://<LOGSERVER>:8787 pnpm bench:tv
+```
+
+Windows cmd:
+
+```bat
+set VITE_REPORT_URL=http://<LOGSERVER>:8787
+pnpm bench:tv
+```
+
+PowerShell:
+
+```powershell
+$env:VITE_REPORT_URL = "http://<LOGSERVER>:8787"; pnpm bench:tv
+```
+
+This builds both bench widgets (`apps/tizen/dist-bench/`, `apps/webos/dist-bench/`) and runs their
+bundle checks. Package / install / run the bench are the **owner's** (`bench:tv:package`,
+`bench:tv:install`, `sdb`, the Tizen CLI — agents never run them; the webOS side is build-only,
+never installed):
+
+```bat
+set TIZEN_PROFILE=<your profile>
+pnpm bench:tv:package        (→ apps/tizen/dist-bench/ShmupCupBench.wgt)
+set TV_IP=<the monitor's IP>
+pnpm bench:tv:install
+pnpm --filter @shmup/tizen bench:run
+```
+
+### Step 5 — run the bench on each M7, TWICE per monitor (WebGL 1 then WebGL 2)
+
+1. Press **Enter** on the bench page ("172 scenarios + decode + stand-in", ~90 min; per scenario
+   10 s warm-up, 14 s free-running, 6 s with `gl.finish()`, page reloads between). **Red** re-runs
+   the current scenario; **Back** exits. The run ends with the decode page loads and the stand-in
+   frame.
+2. Then run it **again on WebGL 2**: in the remote Web Inspector (app id
+   `ShmpCupBnc.RenderBench`) set `localStorage['shmup-cup:gl'] = '2'` and relaunch; clear it (or set
+   `'1'`) to go back. The shipped default is WebGL 1 — run that pass first.
+3. The pass on each monitor is therefore the **pair**: one `rb-….jsonl` on WebGL 1 + one on
+   WebGL 2 (each also carries the decode + stand-in payloads). Optional but welcome: a repeat of
+   the 640×360 WebGL-1 pass on one unit as the run-to-run stability check (plan R0-03 step 3).
+4. Note each unit's firmware (Settings → About). Every scenario POSTs as it finishes — the log
+   server prints one summary line per scenario: that is the progress feed.
+
+**Why the GL1-vs-GL2 pair is the point of this kit:** wave 15's `R6-02.P3` decides whether
+`R6-02.P4d` runs (make the TV renderer ask for WebGL 2 first, WebGL 1 as the Mali-baseline
+fallback) by matching the bench against plan §13's rule — *"WebGL 2 clearly better (≥ 10 % synced
+render) → the flip step"*. `analyze-bench.mjs` prints that comparison **only when one monitor's
+two WebGL sessions are given in the same call**. The old v1 evidence (the 2026-10-19 sweep behind
+decision W5-20) showed the GL2 win as a **1080p-fill win only** — mixed at 720p, within noise at
+540p — which is why R6-04 shipped `RENDERER: Auto` above a Chromium ≥ 71 floor and both TVs (68/69)
+keep WebGL 1 by default. v2 draws at a 640×360 backbuffer with the remastered renderer, so this
+v2-era pair, per monitor, is the fresh evidence P3 needs; without it P4d's call cannot be made.
+
+### Step 6 — where the logs land and what to copy where
+
+Everything the server receives is appended to `tools/input-probe/logs/` on the desktop — a
+**git-ignored** folder; that is its scratch space, never commit it. Copy (never move, never edit)
+the session files into the results folders, `<date>` = the capture date `YYYY-MM-DD`, both
+monitors' files in the same folder, as in `results/2026-09-15-m7/`:
+
+| Sessions | From | To |
+|---|---|---|
+| `rp-….jsonl` (guided capture, one per launch) | `tools/input-probe/logs/` | `tools/input-probe/results/<date>-m7/` |
+| `rb-….jsonl` (TV bench, one per session — 4 expected: 2 monitors × GL1/GL2) | `tools/input-probe/logs/` | `tools/input-probe/results/<date>-m7-bench/` |
+
+(Desktop preview of the tables is fine but not required:
+`node results/analyze-render.mjs logs/rp-<session>.jsonl`,
+`node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl` — the real analysis is wave 15's
+`R0-03.A1` / `R6-02.P3`.)
+
+### Step 7 — what to send back
+
+- The two folders as recorded: `results/<date>-m7/` (all `rp-….jsonl`, one per monitor-launch)
+  and `results/<date>-m7-bench/` (all `rb-….jsonl`). **Commit them** on `master` (plain
+  `docs:`-style commit) **or** drop the raw files from `logs/` into
+  `/home/sites/shmup-cup-run/owner-logs/` — lane `R0-03.A1` (wave 15) copies them in as sent.
+- The per-unit note: which `rb-`/`rp-` session belongs to which monitor IP, and each unit's
+  firmware build.
+- The **M8** 240 fps latency videos (they never ride the log server).
+- Fallback photographs — only if a session's payload never reached the server (check `fails`
+  during the run and the file count **before resetting the TVs**): a photo of the bench results
+  table and of the `DECODE (R1-05)` table, and of any panel reading the capture missed.
+
 ## Live reload while developing (`tizen:watch`)
 
 For quick iteration a developer can let the TV pick up every change automatically, without
@@ -194,7 +385,7 @@ Device Manager in Tizen Studio. Installing a newer build over an existing one do
 unless it was signed with a *different* author certificate (see below). Removing the game preview also deletes its
 saved settings and high scores.
 
-**Going back from v2 to v1.** A build of `master` is v2's 2.0.0 alpha and installs as version
+**Going back from v2 to v1.** A build of `master` is v2's 2.0.0 beta and installs as version
 **2.0.0** of the same app (`ShmpCupGam.ShmupCup`). A monitor that has it may refuse to install a
 build of the `v1.x` branch (version 1.0.N) over it, because that version is lower — remove Shmup Cup
 from the monitor first, then install. That deletes the saved settings and high scores too.
