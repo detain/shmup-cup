@@ -1,6 +1,6 @@
 {
   "name": "@shmup/web",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0",
   "private": true,
   "description": "Browser dev target: Vite dev server with HMR, keyboard + gamepad, localStorage. Also the renderer loaded by apps/electron.",
   "license": "MPL-2.0",

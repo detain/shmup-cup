@@ -6,21 +6,35 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 [`shmup_progress.md`](docs/old/shmup_progress.md); v2 follows
 [`plan_resolution.md`](plan_resolution.md), whose §17 tracks its progress.
 
-## [Unreleased] — v2
+## [2.0.0] — 2026-10-24
 
-Version **2.0.0-beta.1**: v2, the **640×360 remaster**, in development on `master`, step by step
-in [`plan_resolution.md`](plan_resolution.md). v1 is released as **1.0.0** (below) and maintained
-on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `master` by merging
-`v1.x` until plan step R2-01, by `git cherry-pick -x` after it
+**Shmup Cup 2.0.0** — the **640×360 remaster**: the same game as v1 re-based on the new
+frame with every world quantity ×1.5, 12-px tiles and a 9×12 font cell; all nine campaign zones
+remastered and expanded, AZURE VERGE through ABYSSAL THRONE; the extra modes re-timed to the
+rebuilt fights and the balance pass landed — SQUALL STEED 40,000, the milking cap 100, the
+four-minute caravan; and the `matchAll` hotfix that keeps both TVs' engines (Chromium 69 / 68)
+booting after the dependency bumps. The step record is
+[`plan_resolution.md`](plan_resolution.md), its §17 the ledger.
+
+**The art status, honestly:** the game ships v2's own art as the committed pipeline draws it —
+the R4 native redraws and the R5 zones' stand-in kit, every sprite at the new density — **not**
+the AI round's candidates. The real-art drops (`R5-0n.S3`) stay the owner-gated step that awaits
+the FLUX licence decision, with the ingest tool and its provenance records ready for them
+([art-provenance.md](docs/dev/art-provenance.md), [real-assets.md](docs/dev/real-assets.md)).
+What still waits on an account, a device or a human is collected in
+[`docs/client/outstanding-work.md`](docs/client/outstanding-work.md). v1 is released as **1.0.0**
+(below) and its **`v1.x`** branch takes security and crash fixes only — for one year after this
+release (owner, Q-12), then end of life; a fix lands there first and reaches `master` by
+`git cherry-pick -x`
 ([build-test-deploy.md](docs/dev/build-test-deploy.md#release-lines)).
 
 ### Project
 
 - **Version lines** (R0-01; `2.0.0-alpha.1` since `R2-04.REL` `5aad58e`, `2.0.0-beta.1` since
-  `R5-10.T9` `f7d2a8d9`): every package manifest says the
-  current pre-release; the TV manifests, which
-  take numbers only, say `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs
-  as an update of the same apps. CI runs on every push to `master` and to `v1.x`.
+  `R5-10.T9` `f7d2a8d9`, `2.0.0` with this release since `R6-03.D1`): every package manifest
+  says the release version, and the TV manifests, which take numbers only, say the same
+  `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs as an update of
+  the same apps. CI runs on every push to `master` and to `v1.x`.
 - **The maintenance line** (R0-01): `v1.x` carries `1.0.1-dev` (`1.0.1` on the TVs) and names the
   tagged section `[1.0.0]` in its own CHANGELOG. Its commits that only it needs — those versions,
   its notes about the maintenance branch — reached `master` as `git merge -s ours` merges, which
@@ -832,6 +846,49 @@ to the wave and sent no overrides — and one boot hotfix rode the same span:
   from DISPLAY and still apply live, the new rows apply at restart. `SAVE_VERSION` is **4** (a v3 save
   migrates with both choices `auto`). No simulated state moved: the goldens and demos are untouched, and the
   presentation and content-DB fingerprints re-pinned once, at `6ee8174`, with the reason.
+
+### The TV reads its own logs (R0-03.A1, R6-02.P3 — wave 15)
+
+These change nothing in the game: the owner's committed M7 bench logs were analysed, and every
+mitigation R6-02 listed was adjudicated not needed.
+
+- **The analysis** (`R0-03.A1-report.md`, `R6-02.P3-report.md`, nothing committed): all fifteen
+  `rb-*.jsonl` sessions of `tools/input-probe/results/2026-10-19-m7-bench/` and
+  `…-bench-resolutions/` (with its `out720/` and `out540/` sweeps) — four campaigns, the WebGL
+  pairing settled per session, all on the one M7 unit plan R0-03 step 3 designs (the second is
+  identical and runs only on a firmware difference) — read with `analyze-bench.mjs`, one call per
+  campaign with both GL sessions together; the probe's `npm run verify` green.
+- **The budgets:** TPF reads 1 at the shipped `Auto` output (≥ 98 % of frames in every normal-play
+  row; the synthetic `worst` stress row disclosed); zone load 1.48–1.59 s cold against the 2 s cap;
+  counted memory ≤ 21 MiB of GPU plus ≤ 30.8 MiB of heap against 100 MiB, draw calls 11–16; and
+  the absolute render milliseconds sit on the panel's pacing floor — this same-session 384×216
+  baseline misses 8 ms too — where the plan's §13 relative reading is the TV measure, and there
+  640×360 costs ≤ ±1.7 pts two-tick beyond v1. The boot and process-wide figures ride the `rp-`
+  guided capture, which the owner has not run: a missing measurement, no budget contradicted; the
+  capture stays open as the owner instrument it is.
+- **P4a–P4d: not needed** (wave rule 2 — no scene-attributable miss): no parallax cap, no
+  half-resolution far layers, no CRT default flip, no WebGL 2 default — R6-04's `OUTPUT` row is
+  the measured lever, and its `Auto` already keeps the TVs out of the only mode where GL 2 wins
+  (the 1080p-fill sweep rows: 21 better / 0 worse there, within noise at the shipped outputs).
+  The tables and verdicts go to `docs/dev/input-probe-results.md` §12 with `W15.DOCS-C`.
+
+### The `2.0.0` release line (R6-03.D1)
+
+These change only the version numbers, mirroring R5-10.T9, and turn this file's development
+heading into the release section above.
+
+- **Ten manifests**: root, the five packages, the four apps — `2.0.0-beta.1` → **`2.0.0`**.
+  The TV manifests take numbers only and never left `2.0.0` (the `config.xml`, the
+  `appinfo.json`); `pnpm-lock.yaml` byte-identical (no lockfile line holds a workspace version).
+  The pins that quote the line — tooling-config's `RELEASE` and its now-plain prerelease check,
+  the config-xml consistency title, the store-assets comment — moved in the same commit as the
+  CHANGELOG heading, per decision R6-D2, with the `CLAUDE.md` version sentence.
+- **The `[2.0.0]` date is the expected one** — `R6-03.D7.DOCS` amends it if the owner's OK comes
+  on another day. The `v2.0.0` tag and the GitHub release are `R6-03.D7`'s alone, after the
+  wave's one full suite (`D6`) and the owner's explicit OK (decision R6-D3).
+- **The RR-1 clean-up is deferred**, not dropped: deleting the v1 art sources the scale-1 build
+  still reads waits for a v2.0.x step after the release, with its five points recorded in R6-03's
+  As built in [`plan_resolution.md`](plan_resolution.md).
 
 ### Engine and tooling
 
@@ -1920,7 +1977,7 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   [`debug-and-replays.md`](docs/dev/debug-and-replays.md) for the M1-19 tooling, and the
   [API reference](docs/dev/api-reference.md).
 
-[Unreleased]: https://github.com/detain/shmup-cup/commits/master
+[2.0.0]: https://github.com/detain/shmup-cup/releases/tag/v2.0.0
 [1.0.0]: https://github.com/detain/shmup-cup/releases/tag/v1.0.0
 [1.0.0-rc.1]: https://github.com/detain/shmup-cup/tree/master
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master

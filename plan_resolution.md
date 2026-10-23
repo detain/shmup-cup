@@ -1,8 +1,10 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16; updated 2026-10-18 — **10 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
-> R1-05, R3-01, R3-02, R3-05 — owner parts pending for R0-01, R0-02, R1-05, R3-01, R3-02 and R3-05), 2 in progress
-> (R0-04; R2-01 — its docs pass is §18's wave 1). The `v1.x`
+> **Status:** drafted 2026-10-16; updated 2026-10-23 (`W15.DOCS-A`, `R6-03.D1`) — **35 of the 38 §17 steps done**
+> (their rows name their pending owner parts — the M7 plays and sign-offs, the store work, the `R5-0n.S3`
+> real-art drops); **R6-03 is in progress** — this release (the version line and the CHANGELOG's `[2.0.0]`
+> with this push, the one full suite `D6` and the owner-approved tag `D7` to come); R6-04's page landed, its
+> default audit closed inside R6-02; R0-04 waits on the owner (only its committed-winners step remains). The `v1.x`
 > maintenance branch exists (created from the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything
 > below happens on `master`, which from now on is the **v2** line.
 >
@@ -634,6 +636,14 @@ at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.
   record, and the 640×360 repeat pass (a second unit's run only if made — then its firmware note
   too); §13's decision table has been applied and its outcome written down; nothing else in the
   plan waits for it.
+- **As built** (the owner's campaigns 2026-10-19, recorded 2026-10-20; the agent part wave 15):
+  the sessions are committed exactly as sent — `tools/input-probe/results/2026-10-19-m7-bench/`
+  (the R0 matrix, GL 1 × 2 + GL 2 × 1) and `…-bench-resolutions/` (the 1080p sweep with the
+  `out720/` and `out540/` output campaigns — twelve sessions); fifteen `rb-*.jsonl` in all, on
+  the one M7 unit this step's design calls for. `R0-03.A1` paired the WebGL sessions per
+  campaign, ran `analyze-bench.mjs` over each pairing and wrote the tables, the §13 verdict per
+  size, the GL 1-vs-2 comparison and the decode section into `R0-03.A1-report.md`; this wave's
+  `W15.DOCS-C` writes them into `docs/dev/input-probe-results.md` §12 "Resolution benchmark".
 
 ### R0-04 — The early art round: generate, pick, follow up
 
@@ -3793,6 +3803,22 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
     step on, so P4c ships as a default there.
 - **Acceptance:** numbers recorded in `docs/dev/input-probe-results.md` §12; every budget met or a mitigation
   shipped and documented.
+- **As built** (2026-10-23; wave 15, `P1` / `P2` / `P3`): the headless re-measure (`P1`,
+  `a70a933a`, report-only — the stand-in budget table closed by direct probe, zero gates moved,
+  `R6-02.P1-report.md`); the owner's capture kit (`P2`, wave 13's `W13.DOCS-B` checklist); the
+  analysis (`P3`, report-only): the committed `rb-` logs — fifteen sessions, four campaigns, one
+  M7 — give per budget (wave rule 2): TPF 1 at the shipped `Auto` output ≥ 98 % of frames, zone
+  load 1.48–1.59 s of the 2 s cap, counted memory ≤ 21 MiB GPU + ≤ 30.8 MiB heap of 100, draw
+  calls 11–16; the absolute render ms sit on the panel's pacing floor, shared with the
+  same-session 384×216 baseline (the §13 relative reading: ≤ ±1.7 pts two-tick for 640×360); the
+  headless gate holds outright (worst p95 1.60 ms). So **P4a–P4d are recorded not needed** — no
+  parallax cap, no half-resolution far layers, no CRT default flip, no WebGL 2 default or
+  `Auto`-floor retune (the GL 2 win is 1080p-fill-only, and R6-04's `Auto` keeps the TVs out of
+  that mode — its default audit closes here, unflipped). The `rp-` guided capture was never run:
+  boot and process-wide memory are *not measured*, not missed — the capture stays the open owner
+  instrument it is, with the final-art re-decode riding it too. The tables and verdicts go to
+  `docs/dev/input-probe-results.md` §12's subsection "v2 on the TV (R6-02)" with this wave's
+  `W15.DOCS-C`; nothing was edited, no budget raised, every figure read off the committed logs.
 
 ### R6-03 — Docs, store refresh and the v2.0.0 release
 
@@ -3805,6 +3831,38 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
   - **v1.x's future:** write down what happens to `v1.x` now — security and crash fixes only for one year after
     v2.0.0 (owner, Q-12), then end of life.
 - **Acceptance:** the full definition-of-done suite green; the release published.
+- **As built** (2026-10-23; wave 15, `D1`): the version line and the `[2.0.0]` CHANGELOG go in
+  one push (decision R6-D2) — ten manifests `2.0.0-beta.1` → **`2.0.0`**, the TV manifests taking
+  numbers only and already at `2.0.0`, `pnpm-lock.yaml` byte-identical, and the pins that quote
+  the line (tooling-config `RELEASE` + its now-plain prerelease check, the config-xml consistency
+  title, the store-assets comment) moved together. The `[2.0.0]` heading carries the expected
+  release date, matched as a pattern so `R6-03.D7.DOCS` can amend just the date. The `v2.0.0` tag
+  and GitHub release are `D7`'s alone, after the wave's one full suite (`D6`) and the owner's
+  explicit OK (decision R6-D3); `D2` / `D5` are the player-facing and developer docs lanes running
+  beside this one. **`R6-03` is not done until the release is published** (`D7.DOCS` writes the
+  §17 row); `R0-03` / `R0-04` / `R6-02` take their real states at the release from the §17 rules.
+  - **Deferred RR-1 clean-up — a v2.0.x follow-up after the release** (recorded here so it
+    survives any deletion of `docs/v2-run/`). No wave-15 subtask does any of it; it touches the
+    whole asset pipeline right before the one full suite and nothing in the release plays scale 1.
+    The v2.0.x step must:
+    1. Delete each v1 pixel map under `assets/source/sprites/` that has a `<path>.v2.sprite.json`
+       sibling, and rename each `<path>.v2.sprite.json` to `<path>.sprite.json` (RR-1, the
+       two-scale sources of `R4-P.P3`'s pipeline).
+    2. Delete the v1 font `assets/source/fonts/pixel6x8.font.json`, so the `"native": true` v2
+       font is the only source of its name.
+    3. Delete the generators' v1 paths: the `options.artScale === 1` branches in
+       `scripts/assets/procedural/*.mjs`.
+    4. Retire the scale-1 consumers (`buildAtlas({ artScale: 1 })` / `collectSprites({ artScale:
+       1 })`): the digest pin of `test/scripts/assets/interim-pipeline.test.ts`; the M3-03 CJK
+       figures of `test/integration/cjk-budget.test.ts` (re-measured at the default scale, with the
+       documents that quote them); the TV bench atlas `apps/tizen/scripts/bench-atlas.mjs` with
+       `apps/tizen/test/scripts/bench-atlas.test.ts` and `apps/tizen/test/bench/shipped-atlas.ts`;
+       the v1 anchors of `test/scripts/assets/pipeline-edge.test.ts` and the scale-1 case of
+       `test/scripts/assets/pipeline.test.ts`.
+    5. Drop the pipeline's now-unused two-scale rules (`scripts/assets/sprite-source.mjs`,
+       `scripts/assets/font.mjs`, `scripts/assets/pipeline.mjs`) and update `docs/dev/asset-pipeline.md`,
+       with its own targeted tests, a review loop to zero, and one full suite (the atlas moves:
+       the derived files re-derived with their reason).
 
 ### R6-04 — Graphics options: output resolution, renderer, and the recommended defaults
 
@@ -4060,8 +4118,8 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | R1 exit gate: every golden, demo and the v1 baseline (268 passed) plus master CI with all e2e shards, on `56f9ced` | **done** (2026-10-17) |
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | done — 2026-10-17 (owner parts: the M7 runs, R0-03, landed 2026-10-20) |
-| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | done — 2026-10-20 (three campaigns, twelve sessions: the 1080p / 720p / 540p sweep in `tools/input-probe/results/2026-10-19-m7-bench-resolutions/`; the output size is the lever — a 720p backbuffer clears 640×360 on the M7, the WebGL 2 step only matters at 1080p, the decode page loads ≤ 1.56 s / ≤ 0.77 s; R2-03 sets its budgets from it) |
-| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated and reviewed by the owner, every request done (animation frames made in code); waiting for the owner's last review, then winners to `art-prompts/v2/winners/`; see `art-prompts/v2/STATUS.md` |
+| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | done — 2026-10-20 (three campaigns, twelve sessions: the 1080p / 720p / 540p sweep in `tools/input-probe/results/2026-10-19-m7-bench-resolutions/`; the output size is the lever — a 720p backbuffer clears 640×360 on the M7, the WebGL 2 step only matters at 1080p, the decode page loads ≤ 1.56 s / ≤ 0.77 s; R2-03 sets its budgets from it; wave 15's `R0-03.A1` analysed the full fifteen sessions — the R0 matrix's three with them, the WebGL pairing settled per campaign, one M7 by step 3's design (`R0-03.A1-report.md`) — and this wave's `W15.DOCS-C` writes §12 "Resolution benchmark" from the report) |
+| R0-04 | The early art round: generate, pick, follow up | waiting on owner — the round is generated, picked and reviewed: round 1 picked (91 image sets, 33 video sets), round 2 generated, the owner's review done (2026-10-17 evening; the code-made `edit-2` frames picked 2026-10-18), the GPU work finished (`server.sh verify` OK); what its *Manual* still lists: the winners and followups to `art-prompts/v2/winners/<id>/`, "deciding whether committed winners — clips included — go into Git LFS if they turn out large", and "the licence reading of R3-05 before any of this art ships" (the FLUX.2-dev / FLUX.1-dev hold, `docs/dev/art-provenance.md`); see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
@@ -4093,8 +4151,8 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R5-09 | Zone I remaster: ABYSSAL THRONE | done (owner parts pending: the `R5-09.S3` real-art drop after the FLUX decision, the M7 play of the descent and sign-off, TH-11's no-warning placement and the bot's three no-god deaths as taste rows — decision R5-D7) — 2026-10-23 (the LAND `2d35a7a5`: zone I rebuilt to `docs/v2-run/designs/zone-i.md` — 20,400 px over 56 rows, six camera keys with three holds and the 312-px ascent, the shelf lip at rows 26–27 (x 156 → 12,300), the four coral punch columns and the two basalt buttresses, the void segment to base 0 past 12,300, `terrain-abyss-v2` (v1's twenty verbatim + coral + `abyss-glow`), the 320-px parallax joins (deepwall, vents, fore flakes — the S2 template law adjudicated over the design's 640, the D precedent), sixteen vent-glow decor, the ascent's `lines` raster, the R5-P.P7 six-colour `cycles` byte-identical (frozen), 77 events in six bands, 34 `directItems` (the v1 26 verbatim + an eight-colour boss-prep tail), remix 10; `abyss-crawler`, `stinger`, `deep-tender` new — eight new-by-sprite types at the v2 band's [6, 8] ceiling; **TH-11 THE TRENCH HERMIT**, the zone's first captain, on the ORBIT WARDEN's kit, no WARNING and no time limit (P14 keeps the skip law — the skip lands on the ARK's 19,650 warning alone); the **ABYSS ARK** at fourteen parts (was eleven) — the 720-px five-section keel, turret rows three-over-three with heading frames, the new deck pods (box → circle adjudication, the boxes-never-turn law), the heart 130 → 105 hp, intro 240 → 180, the raid widened −190 → +10 → −190; **THE HOLLOW KING** at eleven parts (was nine) — the new fin armour (16×10 hurtboxes), the maw 96 → 80, the lure 30 → 24, phase thresholds 54/24, the phase lists byte-identical, `angler-alloc`'s SETUP 40 → 30 disclosed; R5-D13's global 420-s ceiling rode the land: the god run measures **369.3 s** inside [240, 420], the 240-s floor untouched; the R5-09.FIX2 checkpoint re-seat 2,880 / 6,240 (the clear-spawn law collided with the lip and the dive floor — the law stood, the law-weakening option rejected priced) and the bless identity re-proven: four files digit-for-digit identical across the weld's two trees, drift 0.0 s; the boss skip run 51.4 s, 140,470 points, both ARK phases and all three king phases; the escape recording stands at 5,970 ticks, 4,500 points, the flag case; the no-god run records three deaths (contact 2,983 / terrain 6,000 / bullet 19,846), identity green — reported, not promised; four recordings re-blessed (god 46871372 → 2490693452, boss 2920641436 → 1288749321, escape 3347605274 → 2353493228, the demo 3902439478 → 2234731965), groups +10/−1, the wave's disclosed fold — interim digest `da5879b4… → 611190ef…` (471 relocated, name set equal, added 0, removed 0) — beside the two kit-census admits (`tilesetFramesAt`, `foreStages`), fingerprints 117/10/3, plates 6, post-push FULL 10,755 passed / 890 files zero-red, e2e chromium 100 + firefox 73, the campaign audit 68/68 held (its [180, 360] tripwire untripped), the v1-port `zone-i` rows drop under the remastered condition, disclosed; the art is stand-in per R5-D6 until `S3`) |
 | R5-10 | Bonus stages, boss rush, loops, escape, dimension, ranges (→ `v2.0.0-beta.1`) | done (owner parts pending) — 2026-10-23 (part 1, wave 12 — `T1` `cea1b20d` the bonus stages re-laid (grotto/cache 5,400 px, vault 4,200, the single 1.5 key forced by the live loop caps, every outcome law authored from the layouts, three goldens blessed, `bonus-range` the verified check case; its two weld STOPs became MF13 and MF14), `T3` `90a20a3a` the dimension's six natives + five new names, parallax 1 → 3, mode7 rows held (RT-T3's floor Major cured as MF12), `T6` report-only (dev ranges resolve clean, add-never-retire held); part 2, wave 13 — `T4` `7e9f622c` the rush's eight gaps 150 → 210 ticks on the rebuilt fights' ≈ 1.37× evidence, the god run clears at 350.0 s, caps untouched (its body's `extra.bossRush` re-pin claim is an erratum — the row moved at `T2`, and the As built carries the correction; RT-R510 / RT-T4); `T8` `3ded2e88` linked stages share their linking zones' pages (the escape boots common + H + I; the music-cue `stageId` collision guard; groups a byte-identical no-op); `T2` `19575596` the escape's six v2-only names, parallax 4 → 7, eight decor flares, two raster passes, the `--only zone-i` re-bless byte-identical — presentation-only machine-proved; the disclosed id-shift re-pin among them `extra.bossRush`; the fore census gained `escape`; `T5` zero-commit — its span audit found D + E's un-remixed loop-2 tails (`w13-T5-report.md`), fixed as zone LANDs `R5-04.ZFIX1` `d5aeda48` / `R5-05.ZFIX1` `6f85c004` (both print `spans`, loop-1 byte-identical, only `core.stages` moved, both reviews at zero); `T7` `a70a933a` the headless render bench flies the nine real zones (worst 15 of 20 calls, p95 1.70 ms, 519 KB heap — no budget moved; the TV widget keeps its stand-in page load by decision); `T9` `f7d2a8d9` the version line — ten manifests at `2.0.0-beta.1`, the TV numbers stay `2.0.0`, the lockfile unchanged; the umbrella `R5-10.RV` APPROVE with the one body-text Minor on record; owner parts: the M7 plays and sign-offs of the rush grid, the bonus pair, the dimension and the escape, and the `R5-0n.S3` real-art drops these looks wait on; the `v2.0.0-beta.1` tag is the wave's last action (rule 4)) |
 | R6-01 | Balance and difficulty | done (owner parts pending) — 2026-10-23 (`B1` `33e1bad2` the balance harness: eight cases, four presets × two ships, fly **every campaign route without god mode** through the read-only route kit and write deterministic per-zone tables behind `SHMUP_BALANCE=1` — two runs byte-identical by `diff -r`, `pnpm bench` and CI skip it in seconds; `B2` the report, reviewed at zero and committed verbatim at `161e84e0` as `docs/v2-run/balance-report.md`: eleven sections, 162 rows, every proposal citing its row — the extends ladder 20,000 / 70,000 keeps, rank, lives, continues, penalties and bullet speed keep; the one zone-score change SQUALL STEED 35,000 → 40,000; the one rule change `repeatKills` 40 → 100 (seven zones carry a natural kind above 40 instances); the caravan clock 3 → 4 min against decision R6-D1 — the numbers said otherwise; the rush rests keep `T4`'s grid; the ten arcade gaps accepted, the owner's named lever (rankBase 6 → 4) left unapplied on bot-only evidence; propose-never-apply, and the one superlative cure at `d569c532` scoped zone E's longest-zone claims to the mid zones at three sites in both copies, byte-identity kept by `cmp` (`w13-B2MIC-report.md`); landed as proposed in wave 14, no owner overrides sent — `B3e` `9e42a19e` the steed 35,000 → 40,000 (two zone-e goldens re-blessed +5,000 in the final window alone, the attract demo byte-stayed), the eight other zones closed as zero-commit KEEP audits (per-cell claim tables 24/17/21/18/18/–/21/21 rows, all NO-CHANGE CONFIRMED), `B4` `b38a55a0` `repeatKills` 40 → 100 — the cap counts child kills only, so the sole moved recording is captain-range-god 20,950 → 28,780, the other 61 goldens and all 10 demos byte-stayed, `B5` `9a34473c` the caravan clock 10,800 → 14,400 ticks with the FOUR-MINUTES hints in en/es/ja (R6-D1 applied amended; zero goldens moved — the golden's own frozen time limit is decoupled; four presentation rows plus one `core.uiStrings` cdb row, the disclosed same-class edge-pin adjudicated justified), and the in-wave TV boot hotfix `2987d225` (Pixi 8.22's `matchAll` over the Chromium 69/68 floor — hand-written ES5 polyfill in all four TV builds, new bundle rule 4b; root cause the security bump `b42d34f2`); `B3e-RV`, `B4-RV`, `B5-RV` and the umbrella `R6-01-RV` all APPROVE at zero findings — the umbrella span audit rule-1-exact against the report and the full battery green at the tip (892 files, 10,791 tests, 0 failed, skip census baseline-identical, twice byte-equal); owner parts pending — the `Manual` play sessions over every route × both ships have not run) |
-| R6-02 | Performance and memory on the TV with the final art | in progress — 2026-10-23 (`P1` the headless re-measure on the final content at `a70a933a`, report-only, zero gates moved (`R6-02.P1-report.md`): stress median 0.104 ms/tick against the 1.0 budget, zones 9/9 with worst retained 630.2 KB under 1 MiB, the T7 real-zone sweep 196/196 with worst 15 draw calls and p95 1.60 ms, the TV widget's 172 scenario arms + decode all inside the counted gates, both bundles green; the stand-in budget table reported **not** to cover the real zones — its own trap, the gap closed by direct probe, never a rewrite; `P2` the owner's capture kit reported (both builds green against a TEST-NET-1 sample URL, no secret committed; the step-by-step checklist into `docs/client/install-on-tv.md`, `W13.DOCS-B`); `P3` / `P4` the M7 measures and any mitigation ride wave 15 with the owner's logs; the R6-04 default audit closes in the same chain) |
-| R6-03 | Docs, store refresh and the v2.0.0 release | not started |
+| R6-02 | Performance and memory on the TV with the final art | done — 2026-10-23 (`P1` the headless re-measure on the final content at `a70a933a`, report-only, zero gates moved (`R6-02.P1-report.md`): stress median 0.104 ms/tick against the 1.0 budget, zones 9/9 with worst retained 630.2 KB under 1 MiB, the T7 real-zone sweep 196/196 with worst 15 draw calls and p95 1.60 ms, the TV widget's 172 scenario arms + decode all inside the counted gates, both bundles green; the stand-in budget table reported **not** to cover the real zones — its own trap, the gap closed by direct probe, never a rewrite; `P2` the owner's capture kit reported (both builds green against a TEST-NET-1 sample URL, no secret committed; the step-by-step checklist into `docs/client/install-on-tv.md`, `W13.DOCS-B`); `P3` the owner's committed logs analysed (`R6-02.P3-report.md`, nothing edited, no budget raised): fifteen `rb-` sessions, four campaigns, one M7 — TPF reads 1 at the shipped `Auto` output (≥ 98 % of every normal-play row's frames; the synthetic `worst` stress row disclosed), zone load 1.48–1.59 s of the 2 s cap, counted memory ≤ 21 MiB of GPU plus ≤ 30.8 MiB of heap against 100 MiB, draw calls 11–16; the absolute render ms sit on the panel's pacing floor — the same-session 384×216 baseline misses 8 ms too — where the §13 relative reading is the TV measure, and there 640×360 costs ≤ ±1.7 pts two-tick beyond v1; `P4a`–`P4d` recorded **not needed** (wave rule 2 — no scene-attributable miss; R6-04's `OUTPUT` row is the lever that measures, and its `Auto` keeps the TVs out of the 1080p-fill mode where GL 2 alone wins, so the R6-04 default audit closes here with no default moved); the `rp-` guided capture has not been run — boot and process-wide memory are *not measured*, not missed, and the capture stays the open owner instrument it is, the final-art re-decode riding it; the tables and verdicts go to `docs/dev/input-probe-results.md` §12's subsection "v2 on the TV (R6-02)" with this wave's `W15.DOCS-C`) |
+| R6-03 | Docs, store refresh and the v2.0.0 release | in progress — 2026-10-23 (`D1` = `W15.DOCS-A`, this push: the version line — ten manifests `2.0.0-beta.1` → `2.0.0`, the TV manifests at their never-moved `2.0.0`, the lockfile byte-identical, the release-version pins moved with the CHANGELOG's `[2.0.0]` section in one commit (decision R6-D2) — plus the §17 rows, the `CLAUDE.md` sentence, and the As-built records, R6-03's holding the deferred RR-1 clean-up as a v2.0.x follow-up with its five points; `D2` / `D5` are this wave's docs lanes (`W15.DOCS-B` / `C`), `D3` / `D4` the store icons and the doc images ride lanes 4–5; `D6` is the run's one full suite, alone, its fixes reviewed to zero; `D7` publishes the `v2.0.0` tag and release **only on the owner's explicit OK** (decision R6-D3), and `R6-03.D7.DOCS` writes this row `done`) |
 | R6-04 | Graphics options: output resolution, renderer, and the recommended defaults (added 2026-10-20, decision W5-20; the page rides wave 9, the final-default audit rides R6-02's W13–W15 chain) | page landed — 2026-10-21 (decision W5-20, wave 9: the GRAPHICS options page, save format 4 and the boot knobs — `9f7ea14`…`46b722c` with cures `634e913`/`7d60515`/`8006dd0`, `RT-R604B` at zero; §11 and the CHANGELOG carry the record; the audit line rides wave 15's R6-02 chain) |
 
 ---

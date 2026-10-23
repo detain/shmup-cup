@@ -317,15 +317,15 @@ describe('tooling: test concurrency', () => {
 
 describe('tooling: the release version (M2-18, R0-01)', () => {
   /**
-   * v2 in development on `master` (plan_resolution.md §3.2, step R0-01): a pre-release of
-   * 2.0.0. v1 is released as 1.0.0 and maintained on the `v1.x` branch.
+   * v2 is released as 2.0.0 on `master` (plan_resolution.md §3.2, steps R0-01 and R6-03).
+   * v1 is released as 1.0.0 and maintained on the `v1.x` branch.
    */
-  const RELEASE = '2.0.0-beta.1';
+  const RELEASE = '2.0.0';
 
   it('gives the root and every workspace project the same release version', () => {
     expect(root.version).toBe(RELEASE);
     expect(semver.valid(root.version)).toBe(RELEASE);
-    expect(semver.prerelease(root.version ?? '')).toEqual(['beta', 1]);
+    expect(semver.prerelease(root.version ?? '')).toBeNull();
     for (const project of projects) {
       expect(readJson<{ version: string }>(`${project}/package.json`).version, project).toBe(
         RELEASE,
@@ -334,14 +334,14 @@ describe('tooling: the release version (M2-18, R0-01)', () => {
   });
 
   it('has a CHANGELOG section for it, above the released v1', () => {
-    // A development version has no section of its own: its changes collect under
-    // "[Unreleased] — v2", the first section, until a 2.0.0 pre-release is tagged (R0-01).
+    // The 2.0.0 release section is the first (R6-03.D1); its date rides the owner's OK, so
+    // it is matched as a pattern — R6-03.D7.DOCS amends it in CHANGELOG.md alone (R0-01).
     const changelog = read('CHANGELOG.md');
-    const unreleased = `## [Unreleased] — v${semver.major(RELEASE)}`;
+    const heading = /^## \[2\.0\.0\] — \d{4}-\d{2}-\d{2}$/m.exec(changelog);
+    expect(heading, 'the [2.0.0] section heading with its date').not.toBeNull();
     const released = '## [1.0.0] — 2026-10-16';
-    expect(changelog).toContain(unreleased);
-    expect(changelog.indexOf(unreleased)).toBe(changelog.indexOf('\n## ') + 1);
-    expect(changelog.indexOf(released)).toBeGreaterThan(changelog.indexOf(unreleased));
+    expect(changelog.indexOf(heading?.[0] ?? '')).toBe(changelog.indexOf('\n## ') + 1);
+    expect(changelog.indexOf(released)).toBeGreaterThan(changelog.indexOf(heading?.[0] ?? ''));
     expect(changelog.indexOf('## [1.0.0-rc.1]')).toBeGreaterThan(changelog.indexOf(released));
   });
 

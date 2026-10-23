@@ -29,7 +29,7 @@ describe('tizen/public/config.xml consistency', () => {
     expect(APP_ID.startsWith(`${attr('tizen:application', 'package') ?? '?'}.`)).toBe(true);
   });
 
-  it('carries the release version of the package manifests (2.0.0-beta.1 = 2.0.0 on the TV)', () => {
+  it('carries the release version of the package manifests (2.0.0 = 2.0.0 on the TV)', () => {
     const pkg = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };

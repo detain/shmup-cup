@@ -1,6 +1,6 @@
 {
   "name": "@shmup/webos",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0",
   "private": true,
   "description": "LG webOS TV app (.ipk), webOS 5+ / Chromium 68+: one classic IIFE script, remote-first input (Back = 461), webOS lifecycle.",
   "license": "MPL-2.0",

@@ -179,7 +179,8 @@ describe('scripts/store-assets — the listing agrees with the repository (M2-18
     const version = /<widget\b[^>]*\bversion="([^"]+)"/.exec(xml)?.[1];
     expect(version).toBe('2.0.0');
     expect(STORE_LISTING.version).toBe(version);
-    // The numeric core of the manifests' semver (2.0.0-beta.1 → 2.0.0, R0-01).
+    // The numeric core of the manifests' semver (2.0.0 → 2.0.0; a pre-release strips its
+    // suffix, the release has none — R0-01).
     const root = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')) as {
       version: string;
     };
