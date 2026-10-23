@@ -881,6 +881,36 @@
       "x": 16650,
       "type": "spawn",
       "enemy": "lightbird"
+    },
+    {
+      "x": 16860,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 8,
+      "interval": 10,
+      "y": 156,
+      "drop": null
+    },
+    {
+      "x": 17760,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 6,
+      "interval": 12,
+      "y": 201,
+      "drop": null,
+      "path": "kite-overtake-low",
+      "screenX": -36
+    },
+    {
+      "x": 18240,
+      "type": "spawn",
+      "enemy": "ice-slab"
+    },
+    {
+      "x": 18560,
+      "type": "spawn",
+      "enemy": "lightbird"
     }
   ]
 }
