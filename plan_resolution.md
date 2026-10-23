@@ -3254,6 +3254,15 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
     merge site, a docs-fold row for `zones-d-and-e.md`); integration 2,630/97/0, post-push 10,671/99,
     `content:check` 106, v2-port 27 + 50 skips. The art is the R5-D6 stand-in kit until `R5-04.S3` drops
     the real art.
+  - **The wave-13 loop-2 span fix** (`R5-04.ZFIX1`, `d5aeda48`): `R5-10.T5`'s read-only audit found the
+    remix port had scaled v1's event positions but added nothing across the expansion's tail — the last
+    loop-2 row sat at 14,640 of 21,150, behind the final checkpoint at 16,200, so loop 2 played this
+    zone's loop-1 layout verbatim through the boss approach. Six loop-2 rows on the shipped ids fill
+    the 6,510-px tail (ember-wisp trails at 15,300 / 16,400 / 16,900 / 18,900, the cinder-bat at
+    17,800, the slag-mine at 18,300 — `drop: null`, `bonus: 0`, the remix law's shape); the span check
+    now prints `spans` (`d 21150 16 480 18900 16200`), every loop-1 golden and demo is byte-identical,
+    and the content-DB `core.stages` entry is the only derived move (`0e68fe78… → a07b774b…`); review
+    `w13-RT-ZD` at zero.
 - **Manual (owner) still pending:** zone D's **real art** — generate, pick, hand-clean (decision R5-D6;
   the drop rides later as `R5-04.S3`); the M7 play of the dive and the readability / feel sign-off (the
   trench sections under MF7's reach law); the 2 `docs/images` plates; the row stays
@@ -3303,6 +3312,15 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
     moved, `storm-eye`, `ice-slab`, `lightbird` new); integration 2,624/93 zero-red, e2e 99 + 73,
     post-push 10,650/95, build 10/10. The art is the R5-D6 stand-in kit until `R5-05.S3` drops the real
     art.
+  - **The wave-13 loop-2 span fix** (`R5-05.ZFIX1`, `6f85c004`): the same audit — E's remix stopped at
+    16,650 of 21,000, behind the final checkpoint at 17,550 (the head condition passed; the expanded
+    tail was the artifact, as D's). Four loop-2 rows on shipped ids fill the 4,350-px tail: the
+    hail-drifter eight at interval 10 (y 156) at 16,860, the gale-kite six at interval 12 (y 201) on
+    the `kite-overtake-low` loop at 17,760 — past the final checkpoint —, the ice-slab at 18,240, the
+    lightbird at 18,560, 1,540 px clear of the steed's warning at 20,100 so the remix never stacks
+    on it; the span check
+    prints `spans` (`e 21000 16 360 18560 17550`), loop-1 byte-identical, and the content-DB
+    `core.stages` entry the only derived move (`a07b774b… → 3d7915b8…`); review `w13-RT-ZE` at zero.
 - **Manual (owner) still pending:** zone E's **real art** — generate, pick, hand-clean (decision R5-D6;
   the drop rides later as `R5-05.S3`); the M7 play and the readability / feel sign-off; the steed's
   landed heat against the design's 40–50 s window as an owner-taste row; the 4 `docs/images` plates; the
@@ -3562,7 +3580,9 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
   uses the new bosses. The test and dev ranges (`test-range`, `weapon-range`, `gimmick-range`, `raster-range`, …)
   get ported art only.
 - **As built** (part 1, wave 12; 2026-10-22 — the §11 wave-12 block carries the cure ledger MF12–MF15 and the
-  carried-state record; part 2 (`T4`, `T5`, `T7`, `T9`) rides wave 13 by schedule):
+  carried-state record; part 2, wave 13; 2026-10-23 — the carried `T2` and `T8`, the rush retime `T4`, the span
+  audit `T5` with the two zone fixes it routed, the bench `T7`, the version line `T9`; ranges: `T6`'s dev-range
+  audit stands, no range art moved):
   - **`R5-10.T1` — the bonus stages laid out for v2** (`cea1b20d`): `brine-grotto` and `glimmer-cache` doubled
     from 2,700 to **5,400 px**, `bonus-vault` from 2,400 to **4,200 px** — terrain-reef, terrain-prism and
     terrain-a tables untouched, the B and G looks (parallax, raster, palette cycles) byte-identical; the
@@ -3612,6 +3632,87 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
     stage files the zone-I branch rewrites, so it waits the I-LAND) and `R5-10.T8` (linked stages sharing
     their zones' pages — it waits T2 and I); every `R5-0n.S3` real-art drop stays owner-gated (the FLUX
     decision, fresh choices.json sets, reviewed stamps) — none dropped in wave 12.
+  - **`R5-10.T2` — the escape sequence's v2 layers** (`19575596` — the carry that repaints the stage
+    files the zone-I branch rewrote): `escape.mjs`
+    (new) draws the six v2-only names — `bg/escape-skyline` 320×90 ×2f, `bg/escape-girders` 320×60 ×2f,
+    the fore `bg/escape-streaks` 320×30 ×2f (frame 1 the quarter-period drift), the decor flares
+    `decor/escape-flare-a` 18×30 and `-b` 12×42, the 32² `fx/glow-escape-flare` — all `native`, all
+    empty at scale 1 (RR-1a: no v1 art stands beside the escape; band widths half-frames, the skyline
+    stands on the playfield floor). The stage goes parallax 4 → 7 bands (the star bands keep their
+    places — the index law), eight back-layer flares along the 6,300 px (three with glows), two raster
+    passes (far haze 216–336 amp 3; terrain wave amp 2.25 from x 1,800 — the camera ramp); `terrain-a`
+    kept (R5-D3's Q-13), no `cycles` list (a new stage cycle list reserves a ramp project-wide — the
+    scan law, adjudicated out); camera, checkpoints, tilemap, events and music lines byte-identical,
+    pure additions. The presentation-only claim is the bless itself: `--only escape` refuses (the
+    escape owns no recording), so the LAND re-recorded `--only zone-i` and every golden and demo came
+    back **byte-identical**; the six names shift every later sprite id, so T3's disclosed id-shift
+    class re-pinned the fingerprints (presentation — among them `extra.bossRush`, `7cfb1958… →
+    8ddfd508…` —, content-DB `core.stages` `3db00a57… → 0e68fe78…`, shell flight rows);
+    `render-groups`' `foreStages` census gained `escape` (the 59d14ed8 law — the step that moves a
+    fore band adjudicates it); the credits line names `escape.mjs`; `Changed plates:` none.
+  - **`R5-10.T4` — the boss rush with the rebuilt bosses** (`7e9f622c`, part 2's first landing, before
+    the escape's): the `rush` order holds A → I (no boss renamed); HALCYON BULWARK keeps the 360-tick
+    opening (it precedes the first WARNING) and the other eight gaps move 150 → **210 ticks** on the
+    half-second grid — the rebuilt fights run ≈ 1.37× v1's aggregate (15,425 against 11,283 god-mode
+    ticks), so v1's 150-tick rest expired before the dying boss's clear; the re-timed god run clears
+    the nine in **350.0 game-seconds** inside the untouched 600-s harness tick cap, the Vitest
+    `60_000` kept (measured wall 0.9 s). No golden or demo plays the rush; the commit's only derived
+    move is the content-DB `core.stages` entry (`f1ef091d… → 3db00a57…`), the shell file unchanged.
+    **Erratum, on record** (the umbrella `R5-10.RV`'s one 🟡 Minor — `w13-RT-R510-report.md`,
+    `w13-RT-T4-report.md`): the commit body also claims the presentation fingerprint's
+    `extra.bossRush` entry re-pinned here — it did not: the walk plays 400 ticks and the first
+    re-timed gap fires near tick 1,400 (opening 360, warn-to-fight 330, the fight, its death), so the
+    pin is byte-identical across `7e9f622c` (`7cfb1958 e6f43c78 805c4cb2 e9642425` — RT-T4 verified
+    before/after on disk, `fps-t4` re-ran both suites green-as-committed); the row moved later under
+    `T2`'s new-names id-shift class, where a re-pin is honest. A pushed body is unamendable — the
+    correction lives here and in the CHANGELOG.
+  - **`R5-10.T5` — the loops and the caravan** (zero-commit, `w13-T5-report.md`): `loops-runtime` and
+    the whole golden set green as committed (the 4 skips are the comparison-kit suites, by design);
+    the named loop goldens `zone-a-loop2-boss` / `zone-a-loop2-god` and `zone-a-caravan` verified
+    unchanged; the caravan holds (the golden reproduces every hash). The block's read-only span check
+    — first remix event before a quarter of the stage, last past its final checkpoint — printed
+    `spans` for seven zones and **DOES NOT SPAN** for D and E: their `S5b` remixes scaled v1's event
+    positions but added nothing across the remasters' expanded tails (D: last remix 14,640 of 21,150,
+    last checkpoint 16,200; E: 16,650 of 21,000, 17,550), so loop 2 played the loop-1 layout verbatim
+    through the boss approach — and the `v1.0.0` control prints `spans` for all nine, an expansion
+    artifact not a legacy shape (nothing on master covered the tail: the suite checks events *inside*
+    the stage, never the span, exactly as the block anticipated). Routed per wave 13's rule 1 as two
+    zone LANDs, `R5-04.ZFIX1` `d5aeda48` and `R5-05.ZFIX1` `6f85c004` (the As-built lines rode their
+    zone steps); both reviews zero (`w13-RT-ZD`, `w13-RT-ZE`).
+  - **`R5-10.T7` — the render bench draws the real zones** (`a70a933a`): R3-04's stand-in scenario is
+    gone from the headless bench — `render.perf.ts` reads the nine campaign stages from
+    `content/campaign/main.campaign.json` (fail-loud unless exactly nine), plays each real world
+    under the stress load with the camera flown in, over the shipped grouped atlas at the served art
+    scale; `load.ts`'s `zoneSweepViolations` gates draw calls, render ms, pooled targets, heap and
+    live load per zone and a final test prints the figures. Measured worst **15 of 20 draw calls**,
+    p95 **1.70 ms** against 16 ms, worst heap **519 KB** against 1 MiB; zones B–I each carry the
+    2,048 KB raster pooled target (zone A's opening carries none) — no budget moved. The TV widget
+    keeps its `standin-zone-a` page load by decision: the owner's R0-03 campaign and the decode row
+    measure against it; `bench-gates.ts` unmoved; the integration pins moved with the swap
+    (`render-bench.test.ts`'s sweep gate + campaign-content pin, `tv-render-bench.test.ts`'s driver
+    guard); bench 196/196 EXIT 0, `apps/tizen/test/bench` green.
+  - **`R5-10.T8` — linked stages share their zones' pages** (`3ded2e88`): `stageSpriteSets` walks the
+    links — a zone's `escapeId`, the campaign's zone-walk `stageId`s — to a fixed point, and
+    `atlasPageNeeds` attributes a linked stage's art to the cluster of the **linking** zones (art no
+    zone claims stays global common): the escape boots common + zone H + zone I, and entering from
+    zone I uploads only zone H's pages too; the e2e residency spec gained the two linked checks. A
+    collision rode the fix: the loader's music-cue `stageId` branch read the escape's track 14 as
+    raster-range's stage index — a false link that would have moved `drifter` between clusters and
+    shifted the scale-1 v1 digest pin (RR-1); the branch now requires the id to name a stage. Nothing
+    derived moved — no golden, no fingerprint; `SHMUP_ATLAS_GROUPS_UPDATE=1` re-derivation a
+    byte-identical no-op (the escape's art rides common under this rule; a real-art drop that owns it
+    to a zone flips the group then).
+  - **`R5-10.T9` — the `2.0.0-beta.1` version line** (`f7d2a8d9`): the ten workspace manifests (root,
+    five packages, four apps) move `2.0.0-alpha.1` → `2.0.0-beta.1` mirroring R2-04.REL `5aad58e`; the
+    TV manifests take numbers only and stay `2.0.0`; `pnpm-lock.yaml` byte-identical; the pins quoting
+    the line moved in the same commit (tooling-config's `RELEASE` + prerelease tuple, the config-xml
+    consistency title, the store-assets comment), the docs' version sentences rode the wave's docs
+    lanes (`W13.DOCS-A/B/C`).
+- **Manual (owner) still pending:** the M7 play and sign-off of this step's screens — the re-timed
+  boss rush (the 210-tick rest grid is bot-evidence, the half-second taste the owner's), the doubled
+  bonus stages, the dimension's gallop, the escape's run — and the `R5-0n.S3` real-art drops whose
+  zones these screens borrow their looks from (the FLUX decision; none had dropped through wave 13);
+  the row stays `done (owner parts pending)` per decision R5-D7's shape.
 - **After R5-10:** tag **`v2.0.0-beta.1`** — a pre-release, wave 13's last action: cut after its targeted exit and its
   docs item, on `origin/master` (wave 13's rule 4); the milestone's full suite runs with the run's one full suite in
   wave 15 (§18, RUN-1).
@@ -3945,9 +4046,9 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R5-07 | Zone G remaster: PRISM LABYRINTH | done (owner parts pending: the `R5-07.S3` real-art drop after the FLUX decision (with it the core's pulse and the bands' 640 widths), the M7 play and sign-off, the §15 gallery windows and the mouth's volley difficulty as taste rows (wave 12) — decision R5-D7) — 2026-10-22 (the LAND `66122e87` on the MF11 `29137363` base: zone G rebuilt to `docs/v2-run/designs/zone-g.md` — 21,300 px over 56 rows, three diving keys, the four dy-96 crystal shutters by-shape-admitted (MF11; a premise pin — the god run clears over them), the two pinch seal bands MF5-open and band 2 drilled, the 1-based RLE cure `b61c63a0` (30 rows remapped, capsules 6 → 12), the §10 lining ≥ 48 px everywhere, `terrain-prism-v2` + four variants, 81 events, 33 capsule sources, the 37-entry item plan, deliberately no paths file and the patterns file byte-identical; the prism-shard / prism-glint / prisma new, the geode's child moved by the freeze law; the PRISM SENTINEL fought at 8,040 without a warning (P14 holds); FACET MONARCH's 20 parts, the emitters' 14×14 boxes, height 147 ≤ 202, the core proven reachable, 20-of-24 disclosed; the god bot clears in 315.4 s; the w11-G7 O1 ruling — the no-god case reports (gameOver 156.0 s, deaths at the gallery mouth), the identity law asserts, the §15 windows the owner's comment; 5 recordings re-blessed bit-identical across the two weld attempts, groups 11+/2−, `main-7` grows to 512×512 with no page added, the digest `20a7b109… → 7e6fc0e9…` (moved 410), plates 4; the art is stand-in per R5-D6 until `S3`) |
 | R5-08 | Zone H remaster: IRON CITADEL | done (owner parts pending: the `R5-08.S3` real-art drop after the FLUX decision, the M7 play and sign-off, the Arcade recording's honest gameOver outcome and the bot's Arcade survival as taste rows — decision R5-D7) — 2026-10-22 (the LAND `a2d94928` on the MF15 `cd4bb68c` base: zone H rebuilt to `docs/v2-run/designs/zone-h.md` — 20,250 px, six sections (the gate's six plate slabs + plug doors, the void parade hall, the ten-piston hall, the ceilingless core run, the breathing throne), 103 events, eight keys, six checkpoints, `terrain-citadel-v2` with §9's four appended tiles, the fifth banner parallax band; the gate-sentry pair + iron-banner, seven new-by-sprite types inside rule 3's band; IRON SOVEREIGN at 18 parts, design §7's six-pod ring out-voted by the frozen release-audit law (R5-D10 class; option A, pods at four, height 168 ≤ 202, destroyables unmoved); the four parade echoes re-rigged from landed boss trees under the machine-asserted match law (8/5/5/14 parts, `echo-maw` byte-identical disclosed); the S6 capsule-window cure FIX1 (four in-window banner rows → spawn rows, each window §4's exact 3 — the literal option-1 engine-impossible, row `drop: null` suppresses only completion drops); the arcade golden asserts its RECORDED replay (FIX3, the F/G twin law; gameOver 5,632 t, deaths [4,113, 5,539], the rebalance cure rejected); the god bot clears in 324.5 s, score 130,390 (the FIX1 re-measure — the record line); weld STOP-1 cured law-side (MF15 + FIX3), restart-2 blessed 5 files digit-for-digit, groups +5/−1, the wave's one disclosed fold — interim digest `7e6fc0e9… → da5879b4…` (808 relocated, name set equal), fingerprints 117/13/3, plates 5, post-push 10,733 zero-red; the art is stand-in per R5-D6 until `S3`) |
 | R5-09 | Zone I remaster: ABYSSAL THRONE | done (owner parts pending: the `R5-09.S3` real-art drop after the FLUX decision, the M7 play of the descent and sign-off, TH-11's no-warning placement and the bot's three no-god deaths as taste rows — decision R5-D7) — 2026-10-23 (the LAND `2d35a7a5`: zone I rebuilt to `docs/v2-run/designs/zone-i.md` — 20,400 px over 56 rows, six camera keys with three holds and the 312-px ascent, the shelf lip at rows 26–27 (x 156 → 12,300), the four coral punch columns and the two basalt buttresses, the void segment to base 0 past 12,300, `terrain-abyss-v2` (v1's twenty verbatim + coral + `abyss-glow`), the 320-px parallax joins (deepwall, vents, fore flakes — the S2 template law adjudicated over the design's 640, the D precedent), sixteen vent-glow decor, the ascent's `lines` raster, the R5-P.P7 six-colour `cycles` byte-identical (frozen), 77 events in six bands, 34 `directItems` (the v1 26 verbatim + an eight-colour boss-prep tail), remix 10; `abyss-crawler`, `stinger`, `deep-tender` new — eight new-by-sprite types at the v2 band's [6, 8] ceiling; **TH-11 THE TRENCH HERMIT**, the zone's first captain, on the ORBIT WARDEN's kit, no WARNING and no time limit (P14 keeps the skip law — the skip lands on the ARK's 19,650 warning alone); the **ABYSS ARK** at fourteen parts (was eleven) — the 720-px five-section keel, turret rows three-over-three with heading frames, the new deck pods (box → circle adjudication, the boxes-never-turn law), the heart 130 → 105 hp, intro 240 → 180, the raid widened −190 → +10 → −190; **THE HOLLOW KING** at eleven parts (was nine) — the new fin armour (16×10 hurtboxes), the maw 96 → 80, the lure 30 → 24, phase thresholds 54/24, the phase lists byte-identical, `angler-alloc`'s SETUP 40 → 30 disclosed; R5-D13's global 420-s ceiling rode the land: the god run measures **369.3 s** inside [240, 420], the 240-s floor untouched; the R5-09.FIX2 checkpoint re-seat 2,880 / 6,240 (the clear-spawn law collided with the lip and the dive floor — the law stood, the law-weakening option rejected priced) and the bless identity re-proven: four files digit-for-digit identical across the weld's two trees, drift 0.0 s; the boss skip run 51.4 s, 140,470 points, both ARK phases and all three king phases; the escape recording stands at 5,970 ticks, 4,500 points, the flag case; the no-god run records three deaths (contact 2,983 / terrain 6,000 / bullet 19,846), identity green — reported, not promised; four recordings re-blessed (god 46871372 → 2490693452, boss 2920641436 → 1288749321, escape 3347605274 → 2353493228, the demo 3902439478 → 2234731965), groups +10/−1, the wave's disclosed fold — interim digest `da5879b4… → 611190ef…` (471 relocated, name set equal, added 0, removed 0) — beside the two kit-census admits (`tilesetFramesAt`, `foreStages`), fingerprints 117/10/3, plates 6, post-push FULL 10,755 passed / 890 files zero-red, e2e chromium 100 + firefox 73, the campaign audit 68/68 held (its [180, 360] tripwire untripped), the v1-port `zone-i` rows drop under the remastered condition, disclosed; the art is stand-in per R5-D6 until `S3`) |
-| R5-10 | Bonus stages, boss rush, loops, escape, dimension, ranges (→ `v2.0.0-beta.1`) | in progress — 2026-10-22 (wave 12's part 1 landed: `R5-10.T1` `cea1b20d` — the bonus stages re-laid, grotto and cache 2,700 → 5,400 px, the vault 2,400 → 4,200 px, the single 1.5 key forced by the live loop caps, every outcome law authored from the layouts (seconds 59–67 s, the cache's `lifeDelta ∈ [0, 1]`), 3 goldens blessed with the bonus-range pair byte-identical, `bonus-range` itself the verified check case, first `--only` list owning zero demo stages + first re-authored non-zone v1-baseline stage (→ MF13's bless guard and `REAUTHORED_STAGES` carve); `T3` `90a20a3a` — the dimension's six stand-ins native + five new names, parallax 1 → 3 bands (sky still index 0), decor + glows, mode7 rows held unedited, no sim field moved, 4 plates, RT-T3's floor Major cured as MF12 `c86ad478`; `T6` report-only (`w12-T6-report.md`) — dev ranges clean at the H tip, 118/118 art fields resolve, zero golden moved, add-never-retire held; the census cure MF14 `59d14ed8` rode the wave (master rode red through four SHAs — a layer-moving step now owes the shared-kit censuses); `T2` (the escape) and `T8` (linked pages) wait the zone-I wall and CARRY to wave 13 with part 2 (`T4`, `T5`, `T7`, `T9`); the S3 real-art drops all owner-gated, none landed; wave 13's docs agent sets it done (owner parts pending) and the `v2.0.0-beta.1` tag follows) |
-| R6-01 | Balance and difficulty | not started |
-| R6-02 | Performance and memory on the TV with the final art | not started |
+| R5-10 | Bonus stages, boss rush, loops, escape, dimension, ranges (→ `v2.0.0-beta.1`) | done (owner parts pending) — 2026-10-23 (part 1, wave 12 — `T1` `cea1b20d` the bonus stages re-laid (grotto/cache 5,400 px, vault 4,200, the single 1.5 key forced by the live loop caps, every outcome law authored from the layouts, three goldens blessed, `bonus-range` the verified check case; its two weld STOPs became MF13 and MF14), `T3` `90a20a3a` the dimension's six natives + five new names, parallax 1 → 3, mode7 rows held (RT-T3's floor Major cured as MF12), `T6` report-only (dev ranges resolve clean, add-never-retire held); part 2, wave 13 — `T4` `7e9f622c` the rush's eight gaps 150 → 210 ticks on the rebuilt fights' ≈ 1.37× evidence, the god run clears at 350.0 s, caps untouched (its body's `extra.bossRush` re-pin claim is an erratum — the row moved at `T2`, and the As built carries the correction; RT-R510 / RT-T4); `T8` `3ded2e88` linked stages share their linking zones' pages (the escape boots common + H + I; the music-cue `stageId` collision guard; groups a byte-identical no-op); `T2` `19575596` the escape's six v2-only names, parallax 4 → 7, eight decor flares, two raster passes, the `--only zone-i` re-bless byte-identical — presentation-only machine-proved; the disclosed id-shift re-pin among them `extra.bossRush`; the fore census gained `escape`; `T5` zero-commit — its span audit found D + E's un-remixed loop-2 tails (`w13-T5-report.md`), fixed as zone LANDs `R5-04.ZFIX1` `d5aeda48` / `R5-05.ZFIX1` `6f85c004` (both print `spans`, loop-1 byte-identical, only `core.stages` moved, both reviews at zero); `T7` `a70a933a` the headless render bench flies the nine real zones (worst 15 of 20 calls, p95 1.70 ms, 519 KB heap — no budget moved; the TV widget keeps its stand-in page load by decision); `T9` `f7d2a8d9` the version line — ten manifests at `2.0.0-beta.1`, the TV numbers stay `2.0.0`, the lockfile unchanged; the umbrella `R5-10.RV` APPROVE with the one body-text Minor on record; owner parts: the M7 plays and sign-offs of the rush grid, the bonus pair, the dimension and the escape, and the `R5-0n.S3` real-art drops these looks wait on; the `v2.0.0-beta.1` tag is the wave's last action (rule 4)) |
+| R6-01 | Balance and difficulty | in progress — 2026-10-23 (`B1` `33e1bad2` the balance harness: eight cases, four presets × two ships, fly **every campaign route without god mode** through the read-only route kit and write deterministic per-zone tables behind `SHMUP_BALANCE=1` — two runs byte-identical by `diff -r`, `pnpm bench` and CI skip it in seconds; `B2` the report, reviewed at zero and committed verbatim at `161e84e0` as `docs/v2-run/balance-report.md`: eleven sections, 162 rows, every proposal citing its row — the extends ladder 20,000 / 70,000 keeps, rank, lives, continues, penalties and bullet speed keep; the one zone-score change SQUALL STEED 35,000 → 40,000; the one rule change `repeatKills` 40 → 100 (seven zones carry a natural kind above 40 instances); the caravan clock 3 → 4 min against decision R6-D1 — the numbers said otherwise; the rush rests keep `T4`'s grid; the ten arcade gaps accepted, the owner's named lever (rankBase 6 → 4) left unapplied on bot-only evidence; propose-never-apply — `B3a … B3i`, `B4` and `B5` land wave 14's numbers under the owner's `Manual` read) |
+| R6-02 | Performance and memory on the TV with the final art | in progress — 2026-10-23 (`P1` the headless re-measure on the final content at `a70a933a`, report-only, zero gates moved (`R6-02.P1-report.md`): stress median 0.104 ms/tick against the 1.0 budget, zones 9/9 with worst retained 630.2 KB under 1 MiB, the T7 real-zone sweep 196/196 with worst 15 draw calls and p95 1.60 ms, the TV widget's 172 scenario arms + decode all inside the counted gates, both bundles green; the stand-in budget table reported **not** to cover the real zones — its own trap, the gap closed by direct probe, never a rewrite; `P2` the owner's capture kit reported (both builds green against a TEST-NET-1 sample URL, no secret committed; the step-by-step checklist into `docs/client/install-on-tv.md`, `W13.DOCS-B`); `P3` / `P4` the M7 measures and any mitigation ride wave 15 with the owner's logs; the R6-04 default audit closes in the same chain) |
 | R6-03 | Docs, store refresh and the v2.0.0 release | not started |
 | R6-04 | Graphics options: output resolution, renderer, and the recommended defaults (added 2026-10-20, decision W5-20; the page rides wave 9, the final-default audit rides R6-02's W13–W15 chain) | page landed — 2026-10-21 (decision W5-20, wave 9: the GRAPHICS options page, save format 4 and the boot knobs — `9f7ea14`…`46b722c` with cures `634e913`/`7d60515`/`8006dd0`, `RT-R604B` at zero; §11 and the CHANGELOG carry the record; the audit line rides wave 15's R6-02 chain) |
 

@@ -8,7 +8,7 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 
 ## [Unreleased] — v2
 
-Version **2.0.0-alpha.1**: v2, the **640×360 remaster**, in development on `master`, step by step
+Version **2.0.0-beta.1**: v2, the **640×360 remaster**, in development on `master`, step by step
 in [`plan_resolution.md`](plan_resolution.md). v1 is released as **1.0.0** (below) and maintained
 on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `master` by merging
 `v1.x` until plan step R2-01, by `git cherry-pick -x` after it
@@ -16,7 +16,8 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
 
 ### Project
 
-- **Version lines** (R0-01; `2.0.0-alpha.1` since `R2-04.REL` `5aad58e`): every package manifest says the
+- **Version lines** (R0-01; `2.0.0-alpha.1` since `R2-04.REL` `5aad58e`, `2.0.0-beta.1` since
+  `R5-10.T9` `f7d2a8d9`): every package manifest says the
   current pre-release; the TV manifests, which
   take numbers only, say `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs
   as an update of the same apps. CI runs on every push to `master` and to `v1.x`.
@@ -636,6 +637,151 @@ stand-in kit until `R5-09.S3` drops the real art (R5-D7).
   117 / 10 / 3, 6 plates; post-push **10,755 / 890 files** zero red, e2e 100 + 73, the campaign
   audit 68/68 held with its [180, 360] tripwire untripped, and the v1-port `zone-i` rows drop under
   the remastered condition, disclosed.
+
+### The escape sequence's v2 layers (R5-10.T2)
+
+These change what the game shows on the run's last screen, never what it simulates: wave 12's
+carried item landed at `19575596`, once the zone-I LAND freed the stage files it rewires (its
+companion carry, the linked-pages rule, had already landed below).
+
+- **Six names, v2-only**: `escape.mjs` draws `bg/escape-skyline` (320×90, ×2f), `bg/escape-girders`
+  (320×60, ×2f) and the fore `bg/escape-streaks` (320×30, ×2f — its frame 1 the quarter-period
+  drift), the decor flares `-a` 18×30 and `-b` 12×42 and the 32² `fx/glow-escape-flare` — every one
+  `native`, every one empty at scale 1 (RR-1a: the escape has no v1 art to stand beside). The band
+  widths are half-frames; the skyline stands on the playfield floor.
+- **The stage gains three parallax bands (4 → 7 — the star bands keep their places, the runtime
+  index law), eight back decor flares along the 6,300-px length (three with glows) and two raster
+  passes** (far haze 216–336 amp 3; the terrain wave from x 1,800, the camera ramp). Pure
+  additions: camera keys, checkpoints, tilemap, events and music lines byte-identical, and
+  `terrain-a` stays (R5-D3's Q-13 answer). No `cycles` list — a new stage cycle list would reserve
+  a palette ramp project-wide (the scan law), adjudicated out.
+- **Presentation-only, machine-proved**: `golden:update --only escape` refuses (the escape owns no
+  recording), so the LAND re-recorded `--only zone-i` — every golden and demo came back
+  **byte-identical**. The six new names shift every later sprite id, so the three fingerprint files
+  and the content-DB pin re-pinned in T3's disclosed id-shift class (among them the presentation's
+  `extra.bossRush` entry, `7cfb1958… → 8ddfd508…`); the `render-groups` fore census gained `escape`
+  (a stage gaining a fore band is adjudicated by the step that moves it, the 59d14ed8 law); the
+  campaign's credits line now names `escape.mjs`; `Changed plates:` none.
+
+### The boss rush re-timed for the rebuilt bosses (R5-10.T4)
+
+These change the pacing of one extra mode, nothing else: the rush still fights A → I in the ids'
+own order, but the rests between the rebuilt fights grew, at `7e9f622c` — the first landing of
+part 2, before the escape's.
+
+- **Eight gaps 150 → 210 ticks** (2.5 → 3.5 s, the half-second grid); HALCYON BULWARK's 360-tick
+  opening stays — it precedes the first WARNING by design. v1's 150-tick rests expired before the
+  remastered fights ended: the rebuilt bosses run ≈ 1.37× v1's bot aggregate (15,425 against 11,283
+  god-mode ticks across the nine).
+- **It clears**: the re-timed god run finishes the nine fights in **350.0 game-seconds**, inside the
+  harness's 600-s tick cap — untouched — and the test's `60_000` ms Vitest timeout stands (measured
+  wall 0.9 s). No golden or demo plays the rush, so nothing re-blessed; the only derived move is
+  the content-DB fingerprint's `core.stages` entry (`f1ef091d… → 3db00a57…`), and the shell frame
+  fingerprint is unchanged.
+- **Erratum, on record** (the umbrella `R5-10.RV` review's one Minor): the commit **body** also
+  claimed the presentation fingerprint's `extra.bossRush` row re-pinned here. It did not, and could
+  not: the walk plays 400 ticks and the first re-timed gap fires near tick 1,400, so the pin is
+  byte-identical across `7e9f622c` (`7cfb1958 e6f43c78 805c4cb2 e9642425`). The row moved later the
+  way it legitimately does — at the escape landing above, under the new-names id-shift class. A
+  pushed body is unamendable; the plan's R5-10 As built carries the correction.
+
+### The loop-2 span audit — and the two tails it found (R5-10.T5 → R5-04.ZFIX1, R5-05.ZFIX1)
+
+These change what loop 2 plays in two zones: the audit committed nothing; its findings landed as
+zone fixes under wave 13's rule 1.
+
+- **The audit** (`w13-T5-report.md`): `loops-runtime` and the whole golden set green as committed,
+  the named loop goldens (`zone-a-loop2-boss` / `-god`, `zone-a-caravan`) verified unchanged. The
+  block's read-only span check — first remix event before a quarter of the stage, last past its
+  final checkpoint — printed `spans` for seven zones and **DOES NOT SPAN** for D and E: their `S5b`
+  remixes scaled v1's event positions but added nothing across the remasters' expanded tails (D
+  stopped at 14,640 of 21,150 with its last checkpoint at 16,200; E at 16,650 of 21,000 with
+  17,550), so loop 2 played the loop-1 layout verbatim through the boss approach. The `v1.0.0`
+  control prints `spans` for all nine — an expansion artifact, not a legacy shape.
+- **Zone D** (`d5aeda48`): six remix rows fill the 6,510-px tail (10 → 16 rows) — ember-wisp trails
+  at 15,300 / 16,400 / 16,900 / 18,900, the cinder-bat at 17,800, the slag-mine at 18,300 — ids the
+  zone already ships, the remix law's shape intact (`drop: null`, `bonus: 0`); the span check prints
+  `spans`; every loop-1 golden and demo byte-identical (loop-2 data moves no loop-1 hash); the only
+  derived move is the content-DB `core.stages` entry (`0e68fe78… → a07b774b…`).
+- **Zone E** (`6f85c004`): four rows (12 → 16) — the hail-drifter at 16,860, the gale-kite at 17,760
+  on the low overtake loop past the checkpoint, the ice-slab at 18,240, the lightbird at 18,560
+  (1,540 px clear of the steed's warning at 20,100, so the remix never stacks on it); same proofs,
+  same single-entry re-pin (`a07b774b… → 3d7915b8…`), and both reviews (`w13-RT-ZD`, `w13-RT-ZE`)
+  closed at zero.
+
+### The render bench draws the real zones (R5-10.T7)
+
+These change what the benches measure, never what the game shows: R3-04's stand-in scenario gave
+way to the nine remasters in the headless bench, at `a70a933a`.
+
+- **Headless, the real thing**: `render.perf.ts` reads the nine campaign stages from
+  `content/campaign/main.campaign.json` (fail-loud unless it names exactly nine), plays each real
+  world under the stress load with the camera flown in, over the shipped grouped atlas at the served
+  art scale; `load.ts`'s `zoneSweepViolations` gates draw calls, render ms, pooled render targets,
+  heap and live load per zone, and a final test prints the per-zone table. Measured: worst **15 of
+  the 20 draw calls**, p95 **1.70 ms** against the 16 ms budget, worst heap **519 KB** against
+  1 MiB; zones B–I each carry a 2,048 KB raster pooled target (zone A's opening carries none). No
+  budget moved. The milliseconds are the SwiftShader machine-relative column; the M7 rows come
+  with wave 15's captures.
+- **The TV widget keeps its stand-in page load** on purpose: the shipped bench's 18-scenario matrix
+  still loads `standin-zone-a` as its density carrier — the owner's R0-03 campaign measures against
+  it, and the decode row rides the stand-in pages. `bench-gates.ts` unmoved; the two integration
+  pins moved with the swap (`render-bench.test.ts`'s stand-in gate became the sweep gate with a
+  campaign-content pin; `tv-render-bench.test.ts`'s driver guard, its record-shape tests kept); the
+  bench 196/196 EXIT 0 and `apps/tizen/test/bench` green.
+
+### The linked stages share their zones' atlas pages (R5-10.T8)
+
+These change which atlas pages a boot uploads, never what is drawn: the packer learned that a
+linked stage's art belongs to the zones that link to it, at `3ded2e88`.
+
+- **The rule**: `stageSpriteSets` walks the links — a zone's `escapeId`, the campaign's zone-walk
+  `stageId`s — to a fixed point, and `atlasPageNeeds` attributes a linked stage's sprites to the
+  cluster of the **linking** zones (art no zone claims stays in the global common). The escape boots
+  the common page plus zones H's and I's pages, since only they link to it; entering it from zone I
+  uploads only zone H's pages as well. The browser residency spec gained the two linked checks.
+- **The guard a collision taught**: the loader's music-cue `stageId` branch read the escape's track
+  14 as raster-range's stage index — a false link that would have moved `drifter` between clusters
+  and shifted the scale-1 v1 digest pin (RR-1); the branch now requires the id to name a stage.
+  Nothing derived moved: no golden, no fingerprint row, and the re-derivation under
+  `SHMUP_ATLAS_GROUPS_UPDATE=1` is a byte-identical no-op — the escape's stand-in art rides common
+  under this rule; if a real-art drop owns it to a zone, the group flips then.
+
+### The `2.0.0-beta.1` version line (R5-10.T9)
+
+These change only the version numbers, mirroring R2-04.REL, at `f7d2a8d9`.
+
+- **Ten manifests**: root, the five packages, the four apps — `2.0.0-alpha.1` → **`2.0.0-beta.1`**.
+  The TV manifests take numbers only and stay `2.0.0` (the `config.xml`, the `appinfo.json`), so v2
+  installs as an update of the same apps; `pnpm-lock.yaml` byte-identical (no lockfile line holds a
+  workspace version). The pins that quote the line — tooling-config's `RELEASE` and prerelease
+  tuple, the config-xml consistency title, the store-assets comment — moved in the same commit; the
+  docs' version sentences are the wave's docs item (this file's line above, README, `CLAUDE.md`,
+  the client pages).
+- **The `v2.0.0-beta.1` pre-release tag** is the wave's last action (rule 4): the orchestrator cuts
+  it after the docs item and the wave's exit checks, on the `origin/master` tip of that moment.
+
+### The balance harness and its report (R6-01.B1, R6-01.B2)
+
+These change what can be measured and record proposals — no shipped number moved: R6-01 opened.
+
+- **The harness** (`33e1bad2`): `test/bench/balance.perf.ts` — eight cases (four presets × two
+  ships) fly **every campaign route without god mode** through the read-only route kit, recording
+  per zone the score curve, deaths, extends earned, rank and the boss fight times; two runs write
+  byte-identical tables (determinism by `diff -r`, not averaging), the suite hides behind
+  `SHMUP_BALANCE=1` so `pnpm bench` and CI skip it in seconds, and it is not part of `pnpm test`.
+- **The report** (reviewed at zero; committed verbatim at `161e84e0` as
+  `docs/v2-run/balance-report.md`): eleven sections — the nine zones, Global, Extra modes — every
+  proposal citing its table row: 162 rows, 10 named arcade gaps accepted. The extends ladder
+  20,000 / every 70,000 keeps, as do rank base and growth, lives, continues, death penalties and
+  bullet speed; the zone scores keep everywhere but one — **SQUALL STEED 35,000 → 40,000** (the
+  depth-2/3 majors' row is 40,000, and the steed holds the mid zones' longest mean clear and fight
+  at the lower pay); the one rule proposal is the milking cap, **`repeatKills` 40 → 100** (seven
+  zones carry a natural kind above 40 instances — at 40 an honest playthrough is silently shaved);
+  the caravan clock proposes **3 → 4 min** against decision R6-D1 — "unless the numbers say
+  otherwise", and at v2 lengths none of the 162 rows can finish inside 180 s, so the time bonus is
+  dead weight as shipped; the boss-rush rests keep T4's re-timed grid. Propose-never-apply: wave
+  14's `B3a … B3i`, `B4` and `B5` land what the owner's play-session read does not overrule.
 
 ### The GRAPHICS options page (R6-04, decision W5-20)
 
