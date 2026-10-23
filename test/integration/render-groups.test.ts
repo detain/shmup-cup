@@ -135,6 +135,9 @@ describe('M3-02e render groups cover what the shipped game draws', () => {
     // only one of the four stages this walk plays that carries a `fore` band, so the set above
     // moves only when this list does. A shipped stage gaining or losing a fore band is a
     // decision taken here, not a red the next weld inherits (the examples are not in the DB).
+    // R5-10.T2 took that decision for the escape sequence: its fore band `bg/escape-streaks`
+    // (factor 1.5, `layer: "fore"`) rides in this list, and because the escape is not one of the
+    // four stages the walk plays, the layer set above stays exactly the walk's own.
     const foreStages = DB.stages
       .filter((stage) => stage.parallax.some((band) => band.layer === 'fore'))
       .map((stage) => stage.id)
@@ -142,6 +145,7 @@ describe('M3-02e render groups cover what the shipped game draws', () => {
     expect(foreStages).toEqual([
       'decor-range',
       'dimension',
+      'escape',
       'zone-b',
       'zone-c',
       'zone-d',

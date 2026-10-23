@@ -48,6 +48,24 @@
       "spacing": 192
     },
     {
+      "layer": "far",
+      "sprite": "bg/escape-skyline",
+      "factor": 0.3,
+      "y": 246,
+      "spacing": 320,
+      "frames": 2,
+      "frameTicks": 120
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/escape-girders",
+      "factor": 0.55,
+      "y": 0,
+      "spacing": 320,
+      "frames": 2,
+      "frameTicks": 48
+    },
+    {
       "layer": "mid",
       "sprite": "bg/stars-mid",
       "factor": 0.6,
@@ -60,6 +78,97 @@
       "factor": 0.6,
       "y": 192,
       "spacing": 192
+    },
+    {
+      "layer": "fore",
+      "sprite": "bg/escape-streaks",
+      "factor": 1.5,
+      "y": 0,
+      "spacing": 320,
+      "frames": 2,
+      "frameTicks": 24
+    }
+  ],
+  "decor": [
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-a",
+      "frame": 0,
+      "x": 900,
+      "y": 48,
+      "glow": "fx/glow-escape-flare"
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-b",
+      "frame": 0,
+      "x": 1500,
+      "y": 252
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-a",
+      "frame": 0,
+      "x": 2400,
+      "y": 48
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-b",
+      "frame": 0,
+      "x": 3000,
+      "y": 252,
+      "glow": "fx/glow-escape-flare"
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-a",
+      "frame": 0,
+      "x": 3900,
+      "y": 48
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-b",
+      "frame": 0,
+      "x": 4500,
+      "y": 252
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-a",
+      "frame": 0,
+      "x": 5400,
+      "y": 48,
+      "glow": "fx/glow-escape-flare"
+    },
+    {
+      "layer": "back",
+      "sprite": "decor/escape-flare-b",
+      "frame": 0,
+      "x": 6000,
+      "y": 252
+    }
+  ],
+  "raster": [
+    {
+      "layer": "far",
+      "kind": "haze",
+      "top": 216,
+      "bottom": 336,
+      "amplitude": 3,
+      "wavelength": 24,
+      "period": 60
+    },
+    {
+      "layer": "terrain",
+      "kind": "wave",
+      "top": 0,
+      "bottom": 336,
+      "amplitude": 2.25,
+      "wavelength": 36,
+      "period": 96,
+      "from": 1800
     }
   ],
   "tilemap": {

@@ -30,6 +30,7 @@ import * as directItems from './direct-items.mjs';
 import * as direct from './direct.mjs';
 import * as dune from './dune.mjs';
 import * as ending from './ending.mjs';
+import * as escape from './escape.mjs';
 import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
 import * as items from './items.mjs';
@@ -84,6 +85,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'direct-items', generate: directItems.generate },
   { id: 'dune', generate: dune.generate },
   { id: 'ending', generate: ending.generate },
+  { id: 'escape', generate: escape.generate },
   { id: 'explosions', generate: explosions.generate },
   { id: 'hud', generate: hud.generate },
   { id: 'items', generate: items.generate },
