@@ -2,7 +2,7 @@
 
 How plan step **M3-01** added the game's replayability extras. The title gained **EXTRA**, a menu
 with three new modes — **BOSS RUSH** (every zone's boss in a row), **CARAVAN** (one zone against a
-three-minute clock) and **ARCADE** (the campaign looping on, each loop harder: remixed layouts,
+four-minute clock) and **ARCADE** (the campaign looping on, each loop harder: remixed layouts,
 faster bullets, revenge bullets from every kill) — and **REPLAYS**, a browser of whole-run replays
 with playback at ×1 / ×2 / ×4, KEEP, SHARE and DELETE. The step also adds the **Extra Edit**
 weapons (seven new weapons behind an unlock), four original **secret input codes**, a
@@ -95,7 +95,8 @@ loadout (≈ 5.8 minutes).
 
 ## CARAVAN — the clock (`GameConfig.timeLimit`, `core/world`)
 
-A caravan is one campaign zone from its start against `CARAVAN_TICKS` (180 × 60 — three minutes).
+A caravan is one campaign zone from its start against `CARAVAN_TICKS` (240 × 60 — four minutes;
+180 × 60 until R6-01).
 `GameConfig.timeLimit` (0 = none, at most `MAX_TIME_LIMIT` 216,000 ticks — an hour) becomes
 `World.timeLeft` at creation (-1 without a limit). `updateClock`, part of phase 9 in a World with a
 limit:
@@ -269,7 +270,9 @@ as run-replay actions (`RunAction.FullPower` / `SelfDestruct`).
 
 `content/rules/scoring.rules.json` gained `repeatKills` 40 and `repeatPercent` 10 (the defaults
 `DEFAULT_REPEAT_KILLS` / `DEFAULT_REPEAT_PERCENT`; `repeatKills` 0–`MAX_REPEAT_KILLS` 1000, 0 = no
-cap). Only enemies spawned **by a script or a boss** count — a spawner's brood, a boss's minions,
+cap). R6-01's balance pass raised the shipped default to `repeatKills` **100** — content and
+built-in move together, `repeatPercent` unchanged — and the re-blessed `captain-range-god` golden
+records the wider headroom. Only enemies spawned **by a script or a boss** count — a spawner's brood, a boss's minions,
 split bubbles, thrown rocks: the sources a player could farm (`Enemy.child`, set by `spawnEnemy`'s
 `child` argument — default `fromScript` — and by `EnemySystem.spawn`); the stage timeline's spawns
 never do. Per spec and World, the first `repeatKills` player kills score in full, every later one

@@ -288,11 +288,16 @@ things are involved, and confusing them is the trap:
   Chrome 69+ API nobody thought of passes, and so would `arr['flat']()` or any other
   indirect call. Add the name to `TOO_NEW` when you learn of one.
 - **Only first-party source.** Dependencies are not scanned. PixiJS and everything else in
-  the bundle are the build's problem, and today they are clean — a `grep` over the built
-  `apps/tizen/dist/app.js` finds no `.flat(`, `.flatMap(`, `.at(`, `Object.fromEntries`,
-  `matchAll`, `replaceAll`, `structuredClone`, `queueMicrotask` or `Promise.allSettled` at
-  all (2026-09-16). A dependency upgrade can change that silently, so re-run that grep when
-  one lands.
+  the bundle are the build's problem — and the problem arrived exactly as this paragraph
+  predicted: the 2026-10-20 dependency bump (`b42d34f2`, PixiJS 8.20.1 → 8.22.0) silently broke
+  the TV boot because 8.22's shader-sampler parse (`ensureSamplerPrecision`) calls
+  `String.prototype.matchAll` (Chrome 73 — on neither TV) twice in renderer init, where the
+  2026-09-16 grep over the built `apps/tizen/dist/app.js` had found no `.flat(`, `.flatMap(`,
+  `.at(`, `Object.fromEntries`, `matchAll`, `replaceAll`, `structuredClone`, `queueMicrotask`
+  or `Promise.allSettled` at all; `apps/tizen/polyfills/string-match-all.js` is now prepended
+  in both TV builds right after the globalThis file, and the 2026-10-23 audit of a fresh build
+  finds only Pixi's two call sites and every other name absent. A dependency upgrade can
+  change that silently — six weeks was enough — so re-run that grep when one lands.
 - **Only JavaScript.** DOM, CSS, WebGL and Web Audio surfaces between 68 and 69 are not
   checked by anything; WebGL1 is the baseline for a different reason (the Mali driver), and
   CSS in `index.html` is a hand-review item.

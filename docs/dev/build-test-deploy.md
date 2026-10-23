@@ -136,11 +136,14 @@ Tizen 5.5 runs web apps in **Chromium 69** (`shmup_tech.md` §2.1). `apps/tizen/
 - a `transformIndexHtml` plugin rewrites Vite's `<script type="module" crossorigin>` into
   `<script defer src="./app.js">`;
 - `polyfills/global-this.js` (plain ES5; `globalThis` arrived in Chrome 71 and PixiJS
-  uses it) is prepended to `app.js` as the post-minification banner.
+  uses it) is prepended to `app.js` as the post-minification banner, and
+  `polyfills/string-match-all.js` (plain ES5; `matchAll` arrived in Chrome 73 and PixiJS
+  8.22 calls it in the shader-sampler parse) right after it.
 
 `scripts/check-bundle.mjs` runs after every Tizen build and fails it unless dist/ has
 exactly one script `app.js`, `index.html` loads it as a deferred classic script, `app.js`
-**parses with acorn as an ES2018 script** and starts with the polyfill banner,
+**parses with acorn as an ES2018 script** and starts with the polyfill banner pair (the
+globalThis one opening the file, the matchAll one right after — rule 4 checks both),
 `config.xml` / `icon.png` are present, every other file lives under `dist/assets/`
 (the atlas pages — anything else would be packaged into the `.wgt` by accident), and at
 least one atlas page exists under `dist/assets/atlas/` (without it the widget can only show
@@ -203,8 +206,9 @@ refuses to upload the atlas page; the TV serves the widget's files as same-origi
 
 `apps/webos` builds the same way and on purpose shares the Tizen contract rather than
 restating it: the same `target: ['chrome69', 'es2018']`, the same IIFE / classic-script
-rules, and **the same polyfill file** — `apps/webos/vite.config.ts` reads
-`../tizen/polyfills/global-this.js` instead of keeping a copy, so the two cannot drift.
+rules, and **the same polyfill files** — `apps/webos/vite.config.ts` reads
+`../tizen/polyfills/global-this.js` and `../tizen/polyfills/string-match-all.js` instead of
+keeping copies, so the two cannot drift.
 `apps/webos/scripts/check-bundle.mjs` **imports** `APP_JS_GZIP_BUDGET`,
 `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET` and `POLYFILL_BANNER` from the Tizen check and adds
 only what differs: its own file set (`app.js`, `appinfo.json`, `icon.png`, `index.html`,
@@ -338,7 +342,7 @@ the 16,384.0 KB at `7baeb4d`.
 | Tizen app id | `ShmpCupGam.ShmupCup` | `ShmpCupBnc.RenderBench` (`config-xml.mjs` `benchConfigXml` rewrites the game's `config.xml`) |
 | webOS id | `dev.shmupcup.game` | `dev.shmupcup.renderbench` (the same page, built by `apps/webos/vite.bench.config.ts`) |
 
-Both follow the Tizen build contract (one classic ES2018 IIFE, the `globalThis` banner, a classic
+Both follow the Tizen build contract (one classic ES2018 IIFE, the polyfill banner pair, a classic
 script tag) and pass the same bundle check, run on the folder (`check-bundle.mjs dist-bench`); its
 **rule 9** keeps them apart — a widget with the bench's app id must hold the bench marker in its
 `app.js`, the game must not. The CLI wrappers take `TIZEN_DIST_DIR` / `TIZEN_APP_ID` (webOS:

@@ -1,7 +1,7 @@
 # Extra modes, replays and assists
 
 Once you know the game, the title's new **EXTRA** menu has more ways to play it: a **BOSS RUSH**
-(every zone's boss in a row), the **CARAVAN** (one zone against a three-minute clock) and
+(every zone's boss in a row), the **CARAVAN** (one zone against a four-minute clock) and
 **ARCADE** (the whole run again and again, each loop harder). **REPLAYS** lets you watch your last
 game — fast-forwarded if you like — keep your best runs and, in a browser, share them. Reaching an
 ending unlocks the **Extra Edit** weapons and the ARCADE mode's **LOOP 2**, four **secret codes**
@@ -29,7 +29,7 @@ On the title press **OK**, then ▼ to **EXTRA** (between SOUND TEST and EXIT) a
 | Entry | What it does | ◀ ▶ |
 |---|---|---|
 | **BOSS RUSH** | Fights every zone's boss, AZURE VERGE's to ABYSSAL THRONE's, one after another | — |
-| **CARAVAN** | A score attack: one zone from its start, with three minutes on the clock | choose the zone |
+| **CARAVAN** | A score attack: one zone from its start, with four minutes on the clock | choose the zone |
 | **ARCADE** | The run across the zone map — and after its ending the next **loop**, harder, from zone A again, until the game is over | **LOOP 1**, or **LOOP 2** once unlocked |
 | **REPLAYS** | Watch, keep, share and delete recorded games ([Replays](#replays)) | — |
 | **BACK** | Returns to the title menu (Back does the same) | — |
@@ -54,7 +54,7 @@ the score goes into the BOSS RUSH table. A full rush takes about six minutes.
 
 ### CARAVAN (score attack)
 
-Choose a zone with ◀ ▶, then play it from its start with **three minutes** on the clock. The clock
+Choose a zone with ◀ ▶, then play it from its start with **four minutes** on the clock. The clock
 stands in the top bar where player 2's score normally is (`TIME 180`), turning red for the last ten
 seconds.
 
@@ -244,7 +244,7 @@ The Options screen's **GAME** page gained three lines, the **CONTROLS** page one
 ## Fewer points for farming
 
 Some enemies keep coming as long as you let them — a boss's minions, the drones a spawner keeps
-releasing, bubbles that split. From this build, the first **40** of each such kind you shoot down in
+releasing, bubbles that split. From this build, the first **100** of each such kind you shoot down in
 a zone score in full, and every one after that scores only **10 %** of its points. Enemies of the
 zone's own waves always score in full. (It changes almost nothing for normal play — it stops a
 player from waiting at a spawner for points.)

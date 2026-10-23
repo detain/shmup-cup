@@ -246,6 +246,23 @@ archive in a browser before you publish it.
   ([debug-and-replays.md](../dev/debug-and-replays.md)) and CI is green; whether the mouth reads
   as too mean for human hands is the owner's taste call on a `build:dev` fly-through, and the
   same measurement law keeps it honest either way.
+- **The pacing-lever watch bank (the R6-01 balance pass).** The eight zone reports of the pass
+  closed with pacing notes; they are collected here verbatim, as **observations from the R6-01
+  balance pass, NOT proposals** — the pass moved no content parameter for a measurement (the
+  identity law), and its one shipped data change was the milking cap (`repeatKills` 40 → 100).
+  A future zone lane reads this table as its watch list; the report file named per row is the
+  record. Zone E carries no row: its report left no lever.
+
+  | Zone | The note | Report |
+  |---|---|---|
+  | AZURE VERGE (A) | the kestrel's slow-start boss clock 36.6 s against the manta's ~10 s — "a pacing lever if A is ever touched"; A's kill% mean 61, the wide cheap swarm opening | w14-B3A-report.md |
+  | BRINE NEBULA (B) | "gill-dart 45 is the first timeline kind above the 40-kill milking cap"; the levers are the instance count (the 154/45 density fact) and, only through the cap, the pay | w14-B3B-report.md |
+  | DUNE EXPANSE (C) | "if wave 14 wants the depth-1 pair symmetric, the lever is instance count (and a check that easy AC's 5-death collapse at 104.8 s is a corridor/pattern question, not a pay question)" | w14-B3C-report.md |
+  | MAGMA DEEP (D) | "the 2–7 s major fights read as an HP-vs-DPS fact for B3d pacing taste, not a score fact" — the fastest-melting major is manta × normal × ABD at 2.6 s; "ember-wisp 92 is the highest single-kind count in the shipped timelines" | w14-B3D-report.md |
+  | CELL VAULT (F) | "cleared F plays average 3.0 deaths; soften in the patterns/timeline, not in the pay cells"; the economy "demonstrably funds the F/G wall"; "Speed is not the binding constraint anywhere in the 162 rows; density is." | w14-B3F-report.md |
+  | PRISM LABYRINTH (G) | "G is the set's strongest single tuning signal — 9 of 24 plays end here and cleared plays burn 4–7 lives; wave 14 should fix the corridor/pattern density (the 4-way-clearable rule and checkpoints), and if it lifts kill% the gain gap closes by itself" | w14-B3G-report.md |
+  | IRON CITADEL (H) | "H's low deaths with the top per-boss-count pay makes it the least tense deep stage; if wave 14 touches H at all, spend it on the parade's bullet pressure, not on pay." | w14-B3H-report.md |
+  | ABYSSAL THRONE (I) | "the nine caps are a pacing observation (a 4-way bot with no evasion cannot close the king at rank 16 within ten minutes on some route histories); that is a human-pacing check for the zone lane, not a point-value case" | w14-B3I-report.md |
 
 ---
 
@@ -286,5 +303,5 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | Real art and music | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md) |
 | The seven wave-11 / wave-12 remasters **and zone I's** played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
 | Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); the owner parts that remain: the `R5-09.S3` real-art drop (behind the FLUX ruling) and the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |
-| Boss-fight pacing bands (C, D, E, G), zone G's gallery mouth, zone H's arcade pacing | Nothing — disclosed by the goldens, not tuned | [§3](#3-polish--blocks-nothing) |
+| Boss-fight pacing bands (C, D, E, G), zone G's gallery mouth, zone H's arcade pacing, the R6-01 pacing-lever watch bank | Nothing — disclosed by the goldens and the balance pass, not tuned | [§3](#3-polish--blocks-nothing) |
 | The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |

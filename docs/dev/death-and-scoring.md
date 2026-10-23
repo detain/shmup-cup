@@ -474,7 +474,8 @@ Three of M3-02's mechanic extras touch this page's code but are documented in
   through `addScore` (a boss's death, a Mega Crash); the player's death keeps `CancelMode.Sparkle`
   ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
 - **M3-01** (done) — the score-milking cap (`ScoringRules.repeatKills` / `repeatPercent`: enemies a
-  script or a boss spawned score 10 % after 40 kills of a kind in a World), the invincibility assist
+  script or a boss spawned score 10 % after 40 kills of a kind in a World — 100 since R6-01), the
+  invincibility assist
   (`PlayerShip.invincible` — `playerHit` ignores every hit), option recovery (the Options a death
   penalty takes drop as Free Option items), assisted hi-score rows, the caravan's time bonus and
   gamepad rumble ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
