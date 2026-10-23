@@ -249,7 +249,7 @@ archive in a browser before you publish it.
 - **The pacing-lever watch bank (the R6-01 balance pass).** The eight zone reports of the pass
   closed with pacing notes; they are collected here verbatim, as **observations from the R6-01
   balance pass, NOT proposals** — the pass moved no content parameter for a measurement (the
-  identity law), and its one shipped data change was the milking cap (`repeatKills` 40 → 100).
+  identity law); its shipped data changes were the milking cap (`repeatKills` 40 → 100), zone E's steed score and the en / es / ja caravan hints.
   A future zone lane reads this table as its watch list; the report file named per row is the
   record. Zone E carries no row: its report left no lever.
 

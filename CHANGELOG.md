@@ -807,8 +807,8 @@ to the wave and sent no overrides — and one boot hotfix rode the same span:
   R6-D1 applied amended, "unless the numbers say otherwise" and none of the 162 rows could finish inside
   180 s — with the hint reworded to FOUR MINUTES in the built-in table and the en / es / ja string files.
   No golden moved: the caravan golden carries its own frozen stage time limit, decoupled by design. The
-  presentation fingerprint moved exactly four rows, every one a sighting of that hint in the two EXTRA-menu
-  walks, plus one `core.uiStrings` content-DB row; the boss-rush rest grid KEEP-proven byte-identical. One
+  presentation fingerprint moved exactly four rows — the caravan hint sighted across three
+  walks that open the EXTRA menu (front-end, game, EXTRA-modes) — plus one `core.uiStrings` content-DB row; the boss-rush rest grid KEEP-proven byte-identical. One
   disclosed deviation: a same-class literal pin quoting the hint string followed it outside the block's file
   list, adjudicated a justified pin at review.
 - **Reviews at zero:** `B3e-RV`, `B4-RV`, `B5-RV` and the umbrella `R6-01-RV` all APPROVE without a critical

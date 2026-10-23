@@ -3758,7 +3758,7 @@ owner and `T2`/`T8` ride the wall — all disclosed at the block's end):
     built-in table and the en / es / ja string files. **No golden moved** — the caravan golden keeps its own
     frozen stage time limit, decoupled from the mode clock by design (the STOP law honoured: never
     re-blessed). The presentation fingerprint moved exactly four rows, each a proven caravan-hint sighting
-    (both walks begin in the EXTRA menu focused on CARAVAN), plus one `core.uiStrings` content-DB row; the
+    (the EXTRA menu opens on BOSS RUSH; each walk sights the hint traversing down to CARAVAN), plus one `core.uiStrings` content-DB row; the
     shell fingerprint and every world/screen hash unmoved. The boss-rush rest grid KEEP-proven byte-identical.
     One **disclosed deviation**: a same-class literal pin in a core edge test that quotes the hint string
     followed it though the file sat outside the block's list (CI would go red without it); the review

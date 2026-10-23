@@ -55,7 +55,7 @@ the score goes into the BOSS RUSH table. A full rush takes about six minutes.
 ### CARAVAN (score attack)
 
 Choose a zone with ◀ ▶, then play it from its start with **four minutes** on the clock. The clock
-stands in the top bar where player 2's score normally is (`TIME 180`), turning red for the last ten
+stands in the top bar where player 2's score normally is (`TIME 240`), turning red for the last ten
 seconds.
 
 - When the time runs out, the zone ends at once: the enemy bullets vanish, **TIME UP** appears and
