@@ -665,3 +665,78 @@ grouped atlas charges the real zones 9.44–10.49 MiB `'none'` / 18.87–20.97 M
 every one inside the 23 MiB texture share on both policies, with the `'resident'` overshoot of the
 stand-in rows absent from the shipped art. The per-zone memory table belongs to
 [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory), not to this file.
+
+## 9. The M7 logs close it — R6-02's budgets on the panel (R0-03's sweeps, 2026-10)
+
+§8 ended with *§7.6's 2 s verdict stays where it was — projected on the TV, unmeasured on the TV*.
+That was the truth at its writing; the owner's R0-03 campaigns have since landed. Fifteen
+`rb-*.jsonl` sessions on monitor 10.0.0.224 (the second unit shares model and firmware, so plan
+R0-03's step 3 skipped it by design) sit committed in
+[tools/input-probe/results/2026-10-19-m7-bench/](../../tools/input-probe/results/2026-10-19-m7-bench/)
+and
+[.../2026-10-19-m7-bench-resolutions/](../../tools/input-probe/results/2026-10-19-m7-bench-resolutions/),
+R6-02.P3 adjudicated the five R6-02 budgets against them, and the full tables — the pairing, the
+§13 verdicts per size, the three WebGL comparisons, the cross-output matrix, the decode split and
+the budget rows — are
+[input-probe-results.md §12](input-probe-results.md#12-resolution-benchmark-r0-03).
+This section carries the render-side close rows, and changes no number anywhere else.
+
+**640×360 on the 1080p window is §13's performance-step class — and the plan honoured it.** All six
+variants at both GLs cost beyond the +2–10 pts band over each session's own 384×216 row (the 172-row
+sweep: Δ two-tick busy +7.2 / +6.2 to worst +23.5 / +20.8 pts). The performance step that class
+opens ran as R5's render work and §8's headless bench, and the shipped answer the same corpus
+produced is R6-04's `OUTPUT = Auto`: at the shipped 1280×720 backbuffer every normal-play variant
+reads **≤ ±1.7 pts** over its own baseline — crt-full at −1.7 / −0.8 pts, inside §13's *tv-profile*
+band — and only the synthetic `worst` row (+9.1 / +12.6 pts) crosses the tier. The plan's 960×540
+clause stands unchanged: viable on the M7 as an after-v2 desktop-HD row, still no whole-number scale
+on a 720p TV, nothing in v2 moves.
+
+**The ms column is the panel's.** Synced render p95 runs 11–18 ms at every output and every size in
+the corpus — including the shipped v1 rows at 384×216 (10.4–16.4 ms render), on a panel whose idle
+rAF p95 is ≈ 30 ms ([input-probe-results.md §8](input-probe-results.md#8-frame-timing-requestanimationframe)).
+No scene content reaches over or under that floor by a consistent margin, so the TV reading of the
+render budget is §13's relative one (two-tick share against the same run's baseline), and the
+absolute 8 ms of feat §22 stays exactly where it was — the headless bench's gate, held outright in
+§8: the real-zone sweep's worst p95 is **1.60 ms** of 16 ms. **No cap moved in this close**: §8's
+20-call / 16 ms gates and the 2 s / 10 s / 100 MiB budgets all stand as written.
+
+**§7.6's 2 s projection is now TV-measured — and met.** Zone load on the M7: cold first-atlas
+**1484–1592 ms**, zone-change **730–766 ms**, **15 of 15 sessions** under R6-02's 2 s — the most
+reproducible number in the corpus, GL-independent. The decode split that buys it (2048² pages,
+§12.5): file→GPU **780.0–813.3 ms RGBA vs 338.1–389.5 ms PNG-8 — ≈ 2.2×**, R1-05's indexed pages at
+**38.1–40.4 ms/Mpx**. Two caveats ride with the figures, from the logs themselves: these builds
+pre-date R5's final art and ran the synthetic pre-R3-04 page shape (both campaign READMEs say so),
+and the ≤ 1 + 2-pages-per-zone atlas budget keeps the estimate valid for v2.0's art — the next owner
+capture re-measures.
+
+**F8's `preferWebGLVersion: 1` is confirmed — on better grounds than it was chosen.** The paired
+sweeps settle the comparison the original campaign could only refuse: GL 2 is beyond noise **only at
+the 1080p window** (21 better / 0 worse / 151 within, −2.2 pts on a 1.7 pts band — and there almost
+entirely the native-art rows, 1280×720n-busy 64.9 → 38.0; at the game's own 640×360 busy the delta
+is inside noise), **mixed at 720p** (the two metrics disagree beyond noise: 2t −0.6 within a 1.8 pts
+band, synced 0.98× beyond a 2 % band — no verdict), **within noise at 540p** (−0.1 pts on a 0.4 pts
+band). The original GL1 ×2 + GL2 ×1 campaign carries no verdict and correctly stays verdictless. The
+whole WebGL 2 gain lives in the 1080p-fill mode R6-04's `Auto` keeps the TVs out of (OUTPUT 720p +
+the RENDERER floor of Chromium ≥ 71 with the probe — decision W5-20), so **P4d ships nothing**, not
+even a retune of the Auto floor; the escape rows expose the choice to anyone who selects into that
+window.
+
+**The P4 dispositions (R6-02's rule 2: ship only on a scene-attributable miss — the P3 misses are
+panel pacing and open instruments).** **P4a** (parallax ≤ 4 on TV) **NOT NEEDED** — no normal-play
+row misses TPF-1 at the shipped output (busy 1.7 / 0.5 % two-tick down to crt 0.2–0.3 %, ≥ 98 % of
+frames at 1 tick; only the synthetic `worst` row reaches 11.0 / 13.8 %, disclosed), and the fill a
+cap would trade lives in the 1080p window the default already avoids. **P4b** (half-res far
+backdrop) **NOT NEEDED** — the far-layer fill is inside the tv-profile band's deltas at shipped
+output, and the sweep's CRT/filter pressure is the CRT pass plus window scale, not backdrop
+resolution. **P4c** (CRT off by default on TV) **NOT NEEDED** — F2's expensive CRT is the 1080p
+window's 42 %; at shipped `Auto` the 640×360 crt-full rows read 0.2–0.3 % two-tick and −1.7 / −0.8 Δ
+pts, and that window is now the user's explicit choice, not the default (R6-04's scope kept a P4c
+default flip out of R6-02 anyway). Boot ≤ 10 s and the Chromium-process figure behind Tizen's 120 MB
+install cap stay **not measured** — they ride §11's `rp-` guided render-profile capture, the owner's
+step, an open instrument and not a miss; nothing in the logs contradicts either. Every measured
+component of memory reads inside budget (heap ≤ 30.8 MiB, counted GPU ≈ ≤ 21 MiB at the v2 rows; the
+final-art estimator's 75.1–84.2 MiB stage totals under 100; draw calls 11–16 against feat §22's
+20–50).
+
+Every figure on this page is read off the committed logs — nothing was edited to pass, no gate was
+raised, and the only numbers that move here are the ones the M7 itself printed.

@@ -321,3 +321,290 @@ Four things it settles without the hardware:
   now models it — M3-02d.)
 - **F6's wasted pass was real.** The Mode-7 floor pooled a 512 KB target and ran a filter pass whose
   input its shader never read; as a mesh it is one draw call and no target.
+
+## 12. Resolution benchmark (R0-03)
+
+R0-03 is the plan's resolution benchmark: the owner's TV runs of the render bench at 384×216 (shipped
+v1, the per-session baseline), 640×360 (v2's frame) and 960×540, adjudicated by R0-03.A1's report into
+the §17 row's "three campaigns, twelve sessions" — the 1080p/720p/540p sweep of
+[tools/input-probe/results/2026-10-19-m7-bench-resolutions/](../../tools/input-probe/results/2026-10-19-m7-bench-resolutions/)
+— plus the original three-run campaign that shaped the analyzer, in
+[tools/input-probe/results/2026-10-19-m7-bench/](../../tools/input-probe/results/2026-10-19-m7-bench/).
+Fifteen `rb-*.jsonl` sessions in all, every table below printed by the kit's
+`tools/input-probe/results/analyze-bench.mjs`; each campaign's README travels with its logs.
+
+**Reading the numbers (plan §13).** Every scenario is measured **against its own 384×216 row in the
+same run** — v1's frame, the same session, the same panel — on two metrics: the **two-tick share**
+(the per-cent of frames the vsync-locked loop needed two or more sim ticks for; the stable metric,
+the one the analyzer decides on) and the **synced render p95** (ms of `renderFrame()` plus the GL
+finish). Plan §13's tiers for the cost of 640×360 over its own baseline: within **+2 pts** and
+**≤ 8 ms** is *proceed as planned* (the headroom recorded as the R3-04 / R6-02 budget); **+2–10 pts
+or 8–12 ms** is *proceed on the TV profile from the start* (R3-06 and R5: parallax capped at 4 on
+Tizen, the far backdrop at half resolution, CRT off by default on TV); worse is *proceed and open a
+performance step before R5, then re-measure*. On this panel the ms column is mostly the display's —
+even v1's own rows sit on the same floor (§12.6) — so the two-tick share carries the scene verdict.
+
+### 12.1 The fifteen sessions — one monitor, paired by design
+
+| Campaign (folder)                    | Session              | GL | Monitor      | Output (backbuffer/window) | Rows | Build             |
+|--------------------------------------|----------------------|----|--------------|-----------------------------|------|-------------------|
+| `2026-10-19-m7-bench` (R0-03 original)| rb-mvfn8l6d-i1rw     | 1  | 10.0.0.224   | 1920×1080 window            | 18/18 | 2a82316           |
+|                                      | rb-mvfnv78l-pqzh     | 2  | 10.0.0.224   | 1920×1080 window            | 18/18 | 2a82316           |
+|                                      | rb-mvfo9erp-57tj     | 1  | 10.0.0.224   | 1920×1080 window            | 18/18 | 2a82316           |
+| `2026-10-19-m7-bench-resolutions` (1080p sweep) | rb-mvfrt2du-7tz7 | 1 | 10.0.0.224 | 1920×1080 window | 172+1 | 9c7a594+ |
+|                                      | rb-mvfv806x-tj7z     | 2  | 10.0.0.224   | 1920×1080 window            | 172+1 | 9c7a594+          |
+|                                      | rb-mvfyep4t-59zy     | 1  | 10.0.0.224   | 1920×1080 window            | 172+1 | 9c7a594+          |
+|                                      | rb-mvg1le8z-xz93     | 2  | 10.0.0.224   | 1920×1080 window            | 172+1 | 9c7a594+          |
+| `out720`                             | rb-mvg4tafk-yli8     | 1  | 10.0.0.224   | 1280×720 backbuffer         | 150  | f496802@1280x720  |
+|                                      | rb-mvg7l9vw-bp11     | 2  | 10.0.0.224   | 1280×720                    | 150  | f496802           |
+|                                      | rb-mvgadjmz-uozj     | 1  | 10.0.0.224   | 1280×720                    | 150  | f496802           |
+|                                      | rb-mvgd5rof-fuwz     | 2  | 10.0.0.224   | 1280×720                    | 150  | f496802           |
+| `out540`                             | rb-mvgfz6le-6f1y     | 1  | 10.0.0.224   | 960×540 backbuffer          | 90   | 8ba0e7c@960x540   |
+|                                      | rb-mvghnikx-kmh4     | 2  | 10.0.0.224   | 960×540                     | 90   | 8ba0e7c           |
+|                                      | rb-mvgjbup4-0p8h     | 1  | 10.0.0.224   | 960×540                     | 90   | 8ba0e7c           |
+|                                      | rb-mvgl07um-qm3i     | 2  | 10.0.0.224   | 960×540                     | 90   | 8ba0e7c           |
+
+All fifteen ran on **one monitor — 10.0.0.224**, the Samsung M7 (LS43AM702UNXZA, Tizen 5.5,
+Chromium 69.0.3497.106 kernel, UA `…69.0.3497.128…`, display 1920×1080 @ dpr 1). The plan step
+named both monitors; the honest record is one, **by design**: R0-03's step 3 skips the second unit
+of the same model unless the firmware differs, and both campaign READMEs record the identical unit
+(`1920×1080`, firmware `M-KSU23MWWC-2750.0`). **10.0.0.8 has no October bench sessions** — its
+`results/` entries are the 2026-09-15 `ip-*` input-probe captures above, which predate the bench
+kit. The original campaign's README records two discarded runs (inspector attached; resumed after
+pause) and one loose observation — a screen blanking on the heavy rows, whose working hypothesis,
+a filter attached every frame, is what M3-02e later removed.
+
+The pairing decides which verdicts the analyzer may print: the original campaign is GL 1 × 2 + GL 2 × 1
+and **refuses** any WebGL verdict ("No verdict: needs ≥ 2 runs of each") — the R0-03 lesson enforced
+in code, since the pre-sweep single-run "GL 2 clearly better" reading was an artifact of the
+pessimistic run 1 (§12.2). Each of the three sweeps is GL 1 × 2 + GL 2 × 2 on one output and one
+unit: full verdicts, printed per campaign below.
+
+### 12.2 The original campaign — 640×360 opens the performance step (18 scenarios, 1080p window)
+
+Two-tick share % (frames that needed ≥ 2 ticks) and synced render p95 ms, medians of the runs:
+
+| Size × variant | 2t GL1 (×2 runs) | sync p95 GL1 | 2t GL2 (1 run) | sync p95 GL2 |
+|---|---|---|---|---|
+| 384×216 busy      |  0.3 | 11.3 |  0.5 | 12.2 |
+| 384×216 filter    |  1.9 | 14.6 |  0.4 | 13.4 |
+| 384×216 mode7     |  2.4 | 12.7 |  0.2 | 11.4 |
+| 384×216 crt-light |  0.2 | 12.3 |  2.9 | 16.5 |
+| 384×216 crt-full  | 30.6 | 12.3 | 28.6 | 11.8 |
+| 384×216 worst     | 36.9 | 18.5 | 35.3 | 14.6 |
+| 640×360 busy      | 10.3 | 14.0 |  6.8 | 12.8 |
+| 640×360 filter    | 23.9 | 17.2 | 21.6 | 15.3 |
+| 640×360 mode7     | 12.3 | 15.4 | 10.3 | 13.6 |
+| 640×360 crt-light | 10.8 | 15.3 |  8.5 | 17.6 |
+| 640×360 crt-full  | 43.7 | 13.0 | 42.0 | 11.0 |
+| 640×360 worst     | 62.4 | 16.1 | 59.2 | 17.6 |
+| 960×540 busy      | 38.6 | 13.2 | 35.0 | 13.0 |
+| 960×540 filter    | 63.6 | 18.7 | 60.3 | 20.7 |
+| 960×540 mode7     | 44.9 | 14.0 | 41.6 | 12.4 |
+| 960×540 crt-light | 38.8 | 15.0 | 36.0 | 17.5 |
+| 960×540 crt-full  | 69.4 | 12.8 | 67.2 | 13.0 |
+| 960×540 worst     | 98.9 | 17.4 | 96.7 | 19.2 |
+
+**§13 at 640×360 (GL 1, medians of its two runs, against each run's own 384×216 row):
+performance-step for all six variants** — Δ two-tick busy +10.0, filter +22.0, mode7 +9.9,
+crt-light +10.5, crt-full +13.1, worst +25.6 pts; synced 12.95–17.15 ms. GL 2's single run reads the
+same way (Δ +5.5 … +23.9). The plan honoured the class: the performance step before R5 ran as the
+R5 render work and the headless bench of [render-performance-review.md](render-performance-review.md)
+§8, and §12.6 closes its budgets. **WebGL comparison: none recorded** — the ×2 + ×1 refusal above, and
+the campaign's own README says not to open "make WebGL 2 the TV default" on this evidence. The CRT
+`full` and `worst` rows are pressure points at *every* size and GL — 384×216 crt-full already reads
+30.6 % two-tick — so they are v1-era costs, not a v2 regression.
+
+**960×540.** Its `busy` row lands in the same §13 tier as 640×360 on both GLs, so the analyzer prints
+the plan's note: *960×540 is viable on the M7 for after v2* (a desktop HD mode / v3), *still no
+whole-number scale on 720p TVs* — read only with the owner's saturation caveat: `worst` is
+96.7–98.9 % two-tick at every size and GL here, and this window fills 1920×1080 without scaling, so
+the size at this output measures the panel, not the game. Nothing in the plan moves.
+
+**The corpus's noise floor (its own ruler).** The two GL 1 repeats of this campaign put the
+run-to-run drift at **median 3.9 pts / p90 6.1 pts** on the two-tick share and **13 % / 30 %** on the
+synced p95 — a GL1-vs-GL1 spread reaching **1.51×**, larger than the "GL 2 is 0.90×" effect the
+single-run reading called a win: that is the retraction's reason. Run 1 — straight after a fresh
+install — is the systematically pessimistic one; the analyzer keeps the median of runs 1 and 3. Every
+WebGL verdict below is printed against a drift band measured this way.
+
+### 12.3 The three resolution sweeps (one output, GL 1 × 2 + GL 2 × 2, per campaign)
+
+#### The 1080p window (172 scenarios — the campaign that decided R6-04's OUTPUT default)
+
+§13 at 640×360, GL 1 (Δ two-tick pts vs the same run's 384×216 row; synced p95 ms): busy **+7.2**/15.4,
+filter **+18.8**/17.1, mode7 **+11.5**/13.3, crt-light **+6.6**/13.7, crt-full **+13.8**/15.0, worst
+**+23.5**/16.1 — **all six performance-step**. GL 2: +6.2/12.2, +17.6/15.9, +9.9/12.6, +7.2/14.0,
++12.9/12.3, +20.8/15.2 — **all six performance-step** as well. At this window even the shipped
+384×216 baseline sits at synced ≈ 11–17 ms: the panel paces the ms; the two-tick deltas are the
+scene's verdict, and they cross the band.
+
+**WebGL 1 vs 2 (paired ×2 / ×2).** Two-tick: **21 better / 0 worse / 151 within**, overall **−2.2 pts**
+against a **1.7 pts** drift band — beyond noise. Synced p95: 7 / 1 / 164, **0.90×** against a 7 %
+band — beyond. The analyzer's verdict line: *"WebGL 2 is better beyond the noise floor (two-tick
+share): §13 — a step to make WebGL 2 the TV default with a WebGL 1 fallback."* Read it where it comes
+from: the wins are almost entirely the **native-art** rows (1280×720n-busy 64.9 → 38.0, 800×600n-busy
+17.9 → 4.9, 1024×768n-filter 78.1 → 50.8); at the game's own 640×360 busy the delta is −2.4 pts,
+inside noise. Noise: 344 pairs, 2t median 2.7 / p90 11.6 pts, synced 9 % / 26 %, drift 1.7 pts / 7 %.
+The 960×540 rows saturate this window (`worst` 94.7–96.5 % two-tick) — §12.4 is what makes the size
+legible.
+
+#### The 1280×720 backbuffer (150 scenarios — the shipped `OUTPUT = Auto` on a TV since R6-04)
+
+GL 1 two-tick % at 640×360: busy 1.7, filter 0.2, mode7 0.6, crt-light 0.4, crt-full 0.3, worst 11.0;
+GL 2: 0.5 / 0.4 / 0.3 / 1.2 / 0.2 / 13.8. **§13 GL 1:** busy +0.5/12.40, filter −1.6/13.85,
+mode7 −0.5/14.10, crt-light −1.1/12.90, crt-full **−1.7/11.65 → tv-profile**, worst +9.1/15.90 —
+five performance-step, one tv-profile. **GL 2:** busy 0.0/11.70 **tv-profile**, filter 0.0/15.10
+performance-step, mode7 −0.9/11.65 **tv-profile**, crt-light +1.0/13.30 performance-step, crt-full
+−0.8/11.60 **tv-profile**, worst +12.6/16.40 performance-step. The two-tick deltas are **≤ ±1.7 pts**
+outside the synthetic `worst` row; the remaining performance-step readings are pinned by the
+synced-ms half of the tier — the same 11–16 ms floor the baseline itself sits on, not by lost frames.
+The 960×540 rows at this output (busy 7.4–8.8 % two-tick) land in 640×360's tier: the "viable" note
+stands, with the README reading — busy at this output is fine, `worst` is not (§12.4).
+
+**WebGL 1 vs 2.** Two-tick 6 / 0 / 144, overall −0.6 pts against a 1.8 pts band — within; synced
+1 / 4 / 145 at 0.98× against a 2 % band. The analyzer: *"mixed — the two metrics disagree beyond
+noise: no verdict; WebGL 1 stays the default."* Noise: 2t 2.2 / 7.1 pts, synced 8 % / 24 %, drift
+1.8 pts / 2 %.
+
+#### The 960×540 backbuffer (90 scenarios — the `OUTPUT = 960×540` escape row)
+
+GL 1 two-tick % at 640×360: busy 3.9, filter 0.7, mode7 1.6, crt-light 0.5, crt-full 2.5, worst 0.6;
+GL 2: 1.1 / 3.2 / 0.5 / 0.7 / 0.3 / 3.1. **§13 GL 1:** crt-light −0.2/12.00 **tv-profile**; busy
++3.7/12.05, filter +0.2/15.45, mode7 +1.0/12.90, crt-full +2.1/12.65, worst −0.2/13.95
+performance-step — every two-tick Δ is ≤ +3.7 pts and the tier is pinned again on the panel-floor ms.
+**GL 2:** crt-light −0.1/11.05 **tv-profile**, the rest performance-step (Δ ≤ +2.0). The analyzer's
+size line flips direction from §12.2 here: *960×540-busy is tv-profile where 640×360 is
+performance-step* — a tier note only: 960×540 changes nothing in the plan, it is the after-v2 note.
+Noise: 2t 1.5 / 6.4 pts, synced 9 % / 23 %, drift 0.4 pts / 4 %. **WebGL 1 vs 2:** 3 / 1 / 86
+two-tick (−0.1 pts against a 0.4 pts band — within), synced 0.97× within. The analyzer: *"within
+noise — no verdict: WebGL 1 (the shipped default) stays."*
+
+### 12.4 Cross-output — the table behind R6-04's `OUTPUT = Auto`
+
+Pooled GLs; `*` marks a row that beats the 1080p window beyond its noise band. Two-tick % at
+640×360, by output:
+
+| 640×360 row | 1080p window | 1280×720 out | 960×540 out |
+|---|---|---|---|
+| busy      |  7.5 |  0.8* | 1.1  |
+| filter    | 22.6 |  0.2* | 0.7* |
+| mode7     | 10.4 |  0.3  | 0.7  |
+| crt-light |  8.8 |  0.4  | 0.5  |
+| crt-full  | 42.3 |  0.2* | 1.1* |
+| worst     | 59.5 | 11.3* | 1.8* |
+| **960×540 busy** | 37.5 |  8.8* | 0.3* |
+| **960×540 worst**| 95.3 | 53.5* | 38.8* |
+
+(960×540 rows are the same *scene content* rendered at the larger internal size.) The plan records
+this as R6-04's evidence line: at 720p output every 640×360 variant but the stress row collapses to
+≤ 0.8 % — busy 7.5 → 0.8, filter 22.6 → 0.2, mode7 10.4 → 0.3, crt-light 8.8 → 0.4, crt-full
+42.3 → 0.2, reaching §13's tv-profile band at 720p for crt-full on both GLs and for busy and mode7
+on GL 2; `worst` runs 59.5 → 11.3 → 1.8 % across the three outputs; native art is dead from
+1280×720n up at any setting and fine to 640×360n; 540p only helps the heaviest rows — a few light
+native rows read 1–4 pts worse there. The synced p95 barely moves between outputs (11–18 ms
+everywhere, the 384×216 baseline included): **the ms is the panel's; the two-tick share is what
+output scaling buys.**
+
+### 12.5 Decode and upload
+
+The kit's `decode` records — the "Decode and upload" section of `analyze-bench.mjs`. The page set on
+these builds is the synthetic `rgba-2048` / `png8-2048` shape of the pre-R3-04 stand-ins (the shipped
+atlas differs; both campaign READMEs flag it), and the load estimate they drive proved the **most
+reproducible number in the corpus**:
+
+- **Zone load, every session, cold / zone-change: 1484–1592 / 730–766 ms** — 15 of 15 inside
+  R3-04's 2 s estimate target, GL-independent.
+- 2048×2048 page, GL 1 medians (original campaign / 1080p pair): fetch 36.8–52.3 ms; decode
+  **361.8 / 169.3 → 365.1 / 203.6 ms**; upload 387.4–473.3 (png8 145.5–172.0); file→GPU RGBA
+  **780.0–813.3** vs PNG-8 **338.1–389.5** — R1-05's indexed pages land **≈ 2.2× cheaper**, at
+  **38.1–40.4 ms/Mpx**.
+- The common 1024² page (RGBA): file→GPU 199.6–248.0 ms; the tiny 256² zone page: 56.8–110.8 ms —
+  decode-dominated.
+
+### 12.6 v2 on the TV (R6-02)
+
+R6-02's five budgets — render ≤ 8 ms (feat §22), TPF reading 1 with the vsync-locked loop, zone load
+≤ 2 s, boot ≤ 10 s, memory < 100 MiB — adjudicated by R6-02.P3 against these fifteen sessions, every
+figure on the device line of §12.1. The guided render-profile capture — §11's `rp-` kit — has
+**not run**: no `rp-*.jsonl` exists anywhere, so §11's open tables stay the owner's step, and boot
+and the process-wide memory figure are reported here *not measured*, not guessed. R6-02.P1's
+headless bench (§8 of [render-performance-review.md](render-performance-review.md)) is quoted beside
+these rows for **counted quantities only**: its milliseconds are CPU time under SwiftShader and the
+panel-paced milliseconds of this section are not even the same statistic, let alone a comparable
+magnitude; each number stays in its own column.
+
+**1. Render ≤ 8 ms — missed as an absolute TV-ms reading; the miss is the panel's, not the game's.**
+At 640×360, the sweep campaigns, `renderMs` p95 / `syncedMs` p95 ms (GL 1 / GL 2 medians):
+
+| Output           | busy          | filter        | mode7         | crt-light     | crt-full      | worst         |
+|------------------|---------------|---------------|---------------|---------------|---------------|---------------|
+| 1080p window     | 14.8 / 14.5   | 17.4 / 19.0   | 15.6 / 14.7   | 14.8 / 15.5   | 15.9 / 13.8   | 18.1 / 16.4   |
+| 1280×720 (Auto)  | 13.8 / 11.9   | 13.9 / 14.2   | 13.7 / 11.9   | 12.8 / 14.4   | 11.3 / 11.1   | 15.5 / 17.5   |
+| 960×540          | 15.2 / 14.2   | 14.8 / 17.8   | 14.8 / 12.6   | 13.5 / 12.0   | 15.3 / 10.6   | 14.3 / 16.3   |
+
+(sleeping ms/tick at 640×360: synced p95 12.0–17.2 ms.) The **same metric on the shipped-v1 rows —
+384×216, this panel, these very sessions — reads 10.4–16.4 render / 9.7–16.5 ms**, and the panel's
+idle rAF histogram is p95 ≈ 30 ms (§8 above): even the old frame misses 8 ms on the TV. The ms
+column here is a compositor/panel pacing floor no scene content reaches over or under by a
+consistent margin; the scene-attributable reading is §13's relative one, and there 640×360 costs
+**≤ ±1.7 pts two-tick beyond its own baseline at the shipped Auto output** (only the synthetic
+`worst` row adds +9.1 / +12.6 pts). Headless the budget holds outright — P1's real-zone sweep worst
+p95 **1.60 ms** of the 16 ms gate — so **the absolute 8 ms stays as the headless bench's gate** and
+the TV-side reading of the budget is the relative one above; this records the tier, **it is not a cap
+raise** — no budget moved. P4a/P4b/P4c act on scene fill, and fill at the output a TV boots into is
+already at the floor (`worst` moves 59.5 → 11.3 → 1.8 % two-tick on **output alone**, §12.4; the
+baseline itself sits above 8 ms): their expected gain against this miss is ≈ 0 ms — they cannot move
+a floor the v1 game shares. The shipped lever that moves the fill-attributable part is the OUTPUT row
+R6-04 already shipped.
+
+**2. TPF reading 1 with the vsync-locked loop — met at the shipped default output; stress row
+disclosed.** The bench's instrument for it is the two-tick share itself. At 640×360 on the shipped
+`Auto` = 1280×720, GL 1 / GL 2 medians: busy 1.7 / 0.5 %, filter 0.2 / 0.4 %, mode7 0.6 / 0.3 %,
+crt-light 0.4 / 1.2 %, crt-full 0.3 / 0.2 % — the loop reads 1 tick per frame on **≥ 98 % of frames
+in every normal-play row**. The synthetic `worst` row (maxed pools and every effect on — not a
+shipped scene) reads 11.0 / 13.8 % there, 0.6 / 3.1 % at `OUTPUT = 960×540`; on the non-default
+1080p window the same rows run 6.4–8.8 % (busy) to ≈ 59 % (`worst`, crt-full) — the fill cost that
+motivated R6-04's Auto default. Met; no mitigation needed.
+
+**3. Zone load ≤ 2 s — met.** §12.5: cold 1484–1592 ms, zone-change 730–766 ms, 15 of 15 — the
+corpus's most reproducible number, GL-independent, 24.8–25.8 % under the cap. The decode split
+(2048² pages): PNG-8 file→GPU 338.1–409.7 ms (decode 169.3–226.3) vs RGBA 778.0–836.3 — ≈ 2.2×,
+≈ 38–40 ms/Mpx, exactly the R1-05 indexed-page choice paying off on the TV. Caveat carried with the
+data: these builds pre-date R5's final art and ran the synthetic page shape; the ≤ 1 + 2 pages per
+zone atlas budget keeps the estimate valid for v2.0's art, and the next owner capture re-measures it.
+
+**4. Boot ≤ 10 s — not measured; the instrument is still open.** `bootMs` rides only on `rp-`
+guided-capture records and none were taken (§11). That is a **missing measurement, not a missed
+budget**: no figure to report, no mitigation trigger; the verdict waits on the owner's run of the
+capture kit ([install-on-tv.md](../client/install-on-tv.md)), and nothing in the bench logs
+contradicts it.
+
+**5. Memory < 100 MiB — met on every measured component; the process-wide figure stays with the
+same open capture.** From the bench records (JS heap through `performance.memory`, coarse on the
+TV): JS heap end **16.3–30.8 MiB**; atlas textures uploaded **4.0 MiB** at the baseline density,
+**8.0** at the 640×360 (×1.5 art) rows, **16.0** at the 2.25-density rows; filter-arm render
+targets ≤ **4.0 MiB** (2.0 at 640×360); the upscaled frame target ≤ **1.98 MiB** (0.88 at 640×360).
+The v2 rows sum to **≈ ≤ 21 MiB of counted GPU plus ≤ 31 MiB of heap** — far inside 100. The
+headless estimator with the final art at 640×360 corroborates: stage totals **75.1–84.2 MiB**
+(28.6 MiB of fixed render targets driving it) — under 100. The TV rows count **11–16 draw calls**
+against feat §22's 20–50. The Chromium-process figure that Tizen's 120 MB install cap binds against
+is not carried by `rb-` records — it rides the same open owner capture as boot.
+
+**The P4 dispositions** (R6-02's rule 2: ship a mitigation only on a P3 miss — and the misses above
+are panel pacing and instrument gaps, none scene-attributable): **P4a** (parallax capped at 4 on
+Tizen) **NOT NEEDED** — no normal-play row misses TPF-1 at the shipped output and the fill cost lives
+in the 1080p window the default avoids; **P4b** (half-resolution far backdrop) **NOT NEEDED** — the
+far-layer fill is inside the tv-profile band's deltas, and the CRT/filter pressure is the CRT pass
+plus the window scale, not the backdrop's resolution; **P4c** (CRT off by default on TV) **NOT
+NEEDED** — crt-full at 640×360 on the shipped Auto output measures 0.2–0.3 % two-tick (Δ −1.7 /
+−0.8 pts), and the window that makes CRT expensive (42 %) is now the user's explicit choice, not the
+default (R6-04's own scope kept a P4c default flip out of R6-02); **P4d** (WebGL 2 as the TV default)
+**NOT NEEDED** — the §12.3 pairings are complete: GL 2 is beyond noise only at the 1080p window
+(21 / 0 / 151, and there almost entirely on native-art rows), mixed at 720p, within noise at 540p —
+the gain is **1080p-fill-only**, exactly the mode R6-04's `Auto` (OUTPUT 720p + the RENDERER floor of
+Chromium ≥ 71 with the probe — decision W5-20) keeps the TVs out of; no budget misses at the shipped
+output in a way a floor retune would fix, so the Auto floor is not retuned. The original campaign's
+×2 + ×1 pairing carries no verdict and correctly stays verdictless. webOS 5 (Chromium 68) remains
+unmeasured on hardware throughout. No cap was raised and nothing was edited: every figure above is
+read off the committed logs of `2026-10-19-m7-bench`, `-resolutions`, `out720` and `out540`.
