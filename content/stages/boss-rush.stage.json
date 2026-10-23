@@ -61,42 +61,42 @@
     },
     {
       "enemy": "galvanic-maw",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "sandgrave-widow",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "cinder-bastion",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "squall-steed",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "mantle-regent",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "facet-monarch",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "iron-sovereign",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     },
     {
       "enemy": "hollow-king",
-      "delay": 150,
+      "delay": 210,
       "warning": true
     }
   ]
