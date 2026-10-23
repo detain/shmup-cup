@@ -771,7 +771,9 @@ These change what can be measured and record proposals — no shipped number mov
   byte-identical tables (determinism by `diff -r`, not averaging), the suite hides behind
   `SHMUP_BALANCE=1` so `pnpm bench` and CI skip it in seconds, and it is not part of `pnpm test`.
 - **The report** (reviewed at zero; committed verbatim at `161e84e0` as
-  `docs/v2-run/balance-report.md`): eleven sections — the nine zones, Global, Extra modes — every
+  `docs/v2-run/balance-report.md`, its one superlative cure following at `d569c532` — zone E's
+  longest-zone claims scoped to the mid zones at three sites in both copies, byte-identity kept
+  by `cmp`): eleven sections — the nine zones, Global, Extra modes — every
   proposal citing its table row: 162 rows, 10 named arcade gaps accepted. The extends ladder
   20,000 / every 70,000 keeps, as do rank base and growth, lives, continues, death penalties and
   bullet speed; the zone scores keep everywhere but one — **SQUALL STEED 35,000 → 40,000** (the
