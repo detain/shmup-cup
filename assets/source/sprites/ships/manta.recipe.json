@@ -1,0 +1,87 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "ships/manta",
+  "category": "ship",
+  "frame": {
+    "width": 24,
+    "height": 15
+  },
+  "frameCount": 5,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/craft/manta/in-game-sheet/winner.png",
+      "frames": [
+        [
+          633,
+          104,
+          262,
+          119
+        ],
+        [
+          350,
+          104,
+          266,
+          119
+        ],
+        [
+          88,
+          71,
+          228,
+          214
+        ],
+        [
+          925,
+          103,
+          260,
+          121
+        ],
+        [
+          1230,
+          81,
+          241,
+          204
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    12,
+    7
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.S3 cross-zone pass (player crafts): the five banking frames of the MANTA are the top-row cells of the owner-picked in-game sheet in the same level/slight/steep mapping as the KESTREL (cells verified pairwise-distinct, zero foreign pixels). The bottom-row plume states stay unused - the MANTA's wing-root nozzles make the flame inseparable from the hull by numbers alone. The design carries its own 1-px near-black green outline, so the outline pass is off."
+  },
+  "p2": {
+    "#374624": "#244637",
+    "#3a7d21": "#217d3a",
+    "#405333": "#335340",
+    "#4f633c": "#3c634f",
+    "#53aa20": "#20aa53",
+    "#5b6c4e": "#4e6c5b",
+    "#5c6539": "#39655c",
+    "#627a51": "#517a62",
+    "#6b815e": "#5e816b",
+    "#719188": "#889171",
+    "#798b58": "#588b79",
+    "#799164": "#649179",
+    "#7d8155": "#55817d",
+    "#845916": "#165984",
+    "#849871": "#719884",
+    "#8ca084": "#84a08c",
+    "#8dc841": "#41c88d",
+    "#9aab84": "#84ab9a",
+    "#9e7c22": "#227c9e",
+    "#9fb59b": "#9bb59f",
+    "#acbe9f": "#9fbeac",
+    "#bacaab": "#abcaba",
+    "#c6d6b7": "#b7d6c6",
+    "#d1dec3": "#c3ded1"
+  }
+}

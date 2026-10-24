@@ -26,10 +26,10 @@ const TIZEN_INDEX = pathToFileURL(
 const SHOT_RIM = [0x1e, 0x5a, 0x9a] as const;
 /** `shots/laser` body colour (palette `c`, #9fe8ff). */
 const LASER_BODY = [0x9f, 0xe8, 0xff] as const;
-/** `options/orb` body colour (palette `r`, #e83838). */
-const OPTION_BODY = [0xe8, 0x38, 0x38] as const;
-/** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0). */
-const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+/** `options/orb` body colour (R6-03.S3 real art, #ec2301). */
+const OPTION_BODY = [0xec, 0x23, 0x01] as const;
+/** KESTREL hull colour (`ships/kestrel` real art, #343154). */
+const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
 
 /** Frame pixels of one colour in the playfield. */
 interface ColourPixels {

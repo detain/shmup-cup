@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "fx/explosion-small",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/fx/explosion/winner.png",
+      "sha256": "6b49717140b1e9fc5009bac192f942b0888d5ec86addb467cd26114dda9d6fc6",
+      "format": "png",
+      "width": 1152,
+      "height": 896,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": "art-prompts/images/60-items-fx/items-and-fx.json",
+        "entry": "explosion-ramp-v1",
+        "text": "Retro 16-bit video game explosion sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly twelve frames laid out as three rows with exactly four frames in each row, evenly spaced on a regular grid with even green gutters, each frame centered in its own cell, read left to right and top to bottom as one blast played forward, the blast growing and then fading from frame to frame.\nTop row, frames one to four: frame one a tiny tight spark of white-hot lemon light with four short radial spike lines; frame two a small bright pale-gold sphere with a crisp dark outline and short spikes; frame three the fireball doubled in size, a hot cream core wrapped in rolling outlined petals of amber flame; frame four larger again, tangerine flame lobes curling outward and the first dark smoke puffs crowning the top.\nMiddle row, frames five to eight: the fireball at full size with a cream core and orange petals throwing short spark arms to the sides; then the core cooling to burnt orange; then the flame lobes shredding into separate rust-red and brown-grey smoke clouds that still keep a round shape; then smoke dominating with ember sparks streaming outward on straight lines.\nBottom row, frames nine to twelve: a wide slow cloud of dark ember-grey smoke veined with the last dim red cracks of inner light; the cloud breaking into separate hard-edged puffs; a few thinning puffs with lone orange embers drifting clear; finally just two or three faint grey wisps and one gold point-spark.\nPalette strictly the explosion ramp: white-hot cream to lemon gold to amber to rust orange to deep ember red over smoke grey. Bold dark outlines on every flame lobe and smoke puff, flat saturated fills with three-step shading lit from the top left, hard pixel edges, no soft glow halo onto the background, no shadows, no cell borders, no grid lines, no text, no labels, no numbers.",
+        "negative": "photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, cell borders, frames merging, different explosions each frame, green tint on the smoke, soft glow halo, watermark, blurry"
+      },
+      "seed": 1987367111,
+      "size": "1152x896",
+      "steps": 50,
+      "guidance": 4,
+      "generatedAt": "2026-10-17T00:50:32.091Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/fx/explosion/winner.json",
+        "sidecarSha256": "a564b649888f221cdc8cac9dab9f51ce641be99b805ec7441d4157badfdaa3bc",
+        "id": "fx/explosion",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/fx/explosion-small.recipe.json",
+    "sha256": "bae5a6d17869cc0ca717654dd690afdd27fc8e74fa48b48555c14780660280c9"
+  },
+  "edit": null,
+  "output": {
+    "png": "explosion-small.png",
+    "sha256": "1276515094731c13cc3ed988a714e7f9a869580f93b77e5e7af43089cf0c185d",
+    "sidecar": "explosion-small.json",
+    "sidecarSha256": "6898ca29492fceddac28c9a09f2868a84854dd27a7a1323977c997ca1317d4fe",
+    "frames": 12,
+    "frameWidth": 24,
+    "frameHeight": 24,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.S3 cross-zone pass (items and fx): the twelve burst frames of the small explosion are the twelve cells of the owner-picked explosion sheet in reading order - ignition spikes, bloom, breakdown, death (all cells adjacent-XOR 33.7-76.9%, the story's size curve confirmed: 112 to 275 to 175 px). One shared 294x260 crop box centred on each cell's subject keeps that curve: a per-cell fit would inflate the ignition dot to full size. Four cells take at most 128 gutter-glow pixels of the same blast, verified free of other cells' bodies. The design carries its own 1-px near-black outline, so the outline pass is off."
+}

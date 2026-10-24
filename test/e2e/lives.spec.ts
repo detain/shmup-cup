@@ -17,8 +17,10 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy, uiPx } from './frame-pixels.js';
 import { BOOT_TIMEOUT_MS, SHIP_ENTER_TICKS, waitTicks } from './ticks.js';
 
-/** KESTREL hull colour (`ships/kestrel` and `hud/life` palette `h`, #c8d0e0). */
-const HULL = [0xc8, 0xd0, 0xe0] as const;
+/** KESTREL hull colour in the playfield (R6-03.S3 real art, #343154) — only the ship uses it. */
+const HULL = [0x34, 0x31, 0x54] as const;
+/** The stock-icon grey (`hud/life` palette `h`, #c8d0e0 — interim art, shared with the old hull). */
+const LIFE_ICON = [0xc8, 0xd0, 0xe0] as const;
 /** `GAME OVER`'s colour in the flight HUD (0xf85858) — nothing else in the top bar uses it. */
 const GAME_OVER_RED = [0xf8, 0x58, 0x58] as const;
 /**
@@ -68,7 +70,7 @@ async function captureLives(page: Page): Promise<LifeCapture> {
     let found = false;
     for (let fy = LIVES_Y; fy < LIVES_Y + LIFE_ROWS && !found; fy++) {
       const x0 = LIFE.x + icon * LIFE.step;
-      for (let fx = x0; fx < x0 + LIFE.w && !found; fx++) found = is(fx, fy, HULL);
+      for (let fx = x0; fx < x0 + LIFE.w && !found; fx++) found = is(fx, fy, LIFE_ICON);
     }
     if (found) stock++;
   }

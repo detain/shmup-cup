@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "ships/manta",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/craft/manta/in-game-sheet/winner.png",
+      "sha256": "d1e779bb3745eb626a898d78cd57fed3df7345c4242e929f20ac0c1be4256f7f",
+      "format": "png",
+      "width": 1536,
+      "height": 640,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": "art-prompts/images/20-player-crafts/sprite-sheets.json",
+        "entry": "manta-sprite-sheet-v1",
+        "text": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+        "negative": "overlapping sprites, drop shadows, background gradient, real manta ray, animal texture, visible fish eye, perspective distortion, anti-aliasing, text, labels, numbers, cell borders, green tint on the hull, blurry, photorealistic, 3d render, watermark"
+      },
+      "seed": 11302,
+      "size": "1536x640",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T17:09:39.959Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/craft/manta/winner.png",
+          "from": "art-prompts/v2/candidates/a/craft/manta.png",
+          "sha256": "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306",
+          "sidecar": "art-prompts/v2/winners/craft/manta/winner.json",
+          "sidecarSha256": "c25aeca3ee30ed2447b86d3b155502bf67da6c13151e25890e37ad992970f083",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/craft/manta/in-game-sheet/winner.json",
+        "sidecarSha256": "1d6c9b8a861aa631d99e50bcfda6198accf8b9b8e3888c04b4202089e1c34870",
+        "id": "craft/manta/in-game-sheet",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/ships/manta.recipe.json",
+    "sha256": "084f5f11362ad6e2dee3e22e378676719d39b730646509792a45f1bb43a96447"
+  },
+  "edit": null,
+  "output": {
+    "png": "manta.png",
+    "sha256": "23326546cdfc3b9dc807981b6b1a78ec282294c8bb8eeb701e1fc72e17415fbb",
+    "sidecar": "manta.json",
+    "sidecarSha256": "1fefd9554f3c3aa0975190019db3ac49a6e6c97518f2c6da059b3da862635a17",
+    "frames": 5,
+    "frameWidth": 24,
+    "frameHeight": 15,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.S3 cross-zone pass (player crafts): the five banking frames of the MANTA are the top-row cells of the owner-picked in-game sheet in the same level/slight/steep mapping as the KESTREL (cells verified pairwise-distinct, zero foreign pixels). The bottom-row plume states stay unused - the MANTA's wing-root nozzles make the flame inseparable from the hull by numbers alone. The design carries its own 1-px near-black green outline, so the outline pass is off."
+}

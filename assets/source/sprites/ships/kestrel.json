@@ -1,0 +1,175 @@
+{
+  "frames": [
+    {
+      "filename": "ships/kestrel 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/kestrel 1",
+      "frame": {
+        "x": 24,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/kestrel 2",
+      "frame": {
+        "x": 48,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/kestrel 3",
+      "frame": {
+        "x": 72,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/kestrel 4",
+      "frame": {
+        "x": 96,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "kestrel.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 120,
+      "h": 14
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 14
+            },
+            "pivot": {
+              "x": 12,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ],
+    "shmup": {
+      "p2": {
+        "#0b79ed": "#ed790b",
+        "#15aed2": "#d2ae15",
+        "#1756d3": "#d35617",
+        "#1a81ae": "#ae811a",
+        "#26253c": "#3c2526",
+        "#27e4f2": "#f2e427",
+        "#2b5297": "#97522b",
+        "#2c388b": "#8b382c",
+        "#343154": "#543134",
+        "#3c3766": "#66373c",
+        "#4b4872": "#72484b",
+        "#53c5d9": "#d9c553",
+        "#595684": "#845659",
+        "#645f8e": "#8e5f64",
+        "#6865a1": "#a16568",
+        "#71f2f4": "#f4f271",
+        "#775a51": "#515a77",
+        "#7979b4": "#b47979",
+        "#928fc7": "#c78f92",
+        "#98cbd4": "#d4cb98",
+        "#b05a15": "#155ab0",
+        "#e67d02": "#027de6",
+        "#e9c97d": "#7dc9e9",
+        "#f89a1a": "#1a9af8"
+      }
+    }
+  }
+}

@@ -9,6 +9,10 @@
  * so `buildAtlas({ artScale: 1 })` still holds the v1 maps — three frames, the scale-1 digest pin
  * in `interim-pipeline.test.ts` stays byte-identical (RR-1b: `bankFrames` 2 and the thruster's
  * `& 3` index frames the scale-1 build never draws, because it never flies a ship).
+ * Since R6-03.S3 the two crafts ship as real-art PNG overrides (winners `craft/kestrel` /
+ * `craft/manta`): at the shipped scale the frames are the overrides' pixels and their `@p2`
+ * siblings derive from the overrides' sidecar maps, while the `.v2.sprite.json` ramps stay the
+ * scale-1 art and the thrusters stay interim (their flame separation is on the generation queue).
  *
  * The ships carry no `@flash` (the game never flashes a ship — `syncWorldView` only hides it),
  * and their `@p2` siblings (rule 11: R3-03.V2a demands a `p2` map from every `ships/*`) change
@@ -18,7 +22,7 @@
  * scale-1 build, never pasted. Test files hold literal sizes by convention (`docs/dev/
  * conventions.md` § Frame numbers: the scans do not read `test/`).
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createImage, getPixel, type Image } from '../../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
@@ -82,7 +86,7 @@ function rgb(hex: string): [number, number, number] {
 }
 
 /**
- * The `p2` map a v2 source declares, parsed.
+ * The `p2` map a v2 source file declares, parsed.
  *
  * @param file - The source file below `assets/source/sprites/ships/`.
  * @returns Source RGB → target RGB, keyed by the packed source colour.
@@ -94,6 +98,34 @@ function p2MapOf(file: string): Map<number, [number, number, number]> {
   const map = new Map<number, [number, number, number]>();
   for (const [from, to] of Object.entries(json.p2)) map.set(keyOf(...rgb(from)), rgb(to));
   return map;
+}
+
+/**
+ * The `p2` map that produces the shipped `@p2` sibling of one ship name. R6-03.S3: where a
+ * real-art PNG override ships the name, the pipeline takes the map from the override's
+ * sidecar (`meta.shmup.p2`), not from the interim map — the interim ramp still serves scale 1,
+ * and the flip test below audits it from its file directly.
+ *
+ * @param name - The sprite name (`ships/kestrel` …).
+ * @param file - The interim source file below `assets/source/sprites/ships/`.
+ * @returns Source RGB → target RGB, keyed by the packed source colour.
+ */
+function shippedP2MapOf(name: string, file: string): Map<number, [number, number, number]> {
+  const base = name.slice('ships/'.length);
+  const png = new URL(`../../../assets/source/sprites/ships/${base}.png`, import.meta.url);
+  if (existsSync(png)) {
+    const json = JSON.parse(
+      readFileSync(
+        new URL(`../../../assets/source/sprites/ships/${base}.json`, import.meta.url),
+        'utf8',
+      ),
+    ) as { meta?: { shmup?: { p2?: Record<string, string> } } };
+    const map = new Map<number, [number, number, number]>();
+    for (const [from, to] of Object.entries(json.meta?.shmup?.p2 ?? {}))
+      map.set(keyOf(...rgb(from)), rgb(to));
+    return map;
+  }
+  return p2MapOf(file);
 }
 
 /** Key of a packed colour for map lookups. */
@@ -171,7 +203,7 @@ describe('ships v2 (R4-01.A1a + A1b) — the bible sizes, anchors and five bank 
       'ships/manta-thruster': 'manta-thruster.v2.sprite.json',
     };
     for (const [name, file] of Object.entries(files)) {
-      const map = p2MapOf(file);
+      const map = shippedP2MapOf(name, file);
       let changed = 0;
       let seen = 0;
       for (const [i, frame] of v2.manifest.sprites[name].frames.entries()) {

@@ -28,8 +28,8 @@ const TITLE_YELLOW = [0xf8, 0xd0, 0x30] as const;
 /** HUD bar fill of the free-flight scene and the showcase (0x1d2a5c). */
 const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
 
-/** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — only the ship uses it. */
-const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+/** KESTREL hull colour (`ships/kestrel` real art, #343154) — only the ship uses it. */
+const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
 
 /** Bottom colour of the title logo's gradient (`ui/logo`, #e04828). */
 const LOGO_RED = [0xe0, 0x48, 0x28] as const;

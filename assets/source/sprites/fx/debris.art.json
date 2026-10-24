@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "fx/debris",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/fx/explosion/particles/winner.png",
+      "sha256": "a377cd8a309b20a4d40d0430ad21efee652cbc83b4c01cd024dd779e6f79894d",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of Explosion. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twenty-four equal cells in four rows of six with even gutters, read left to right and top to bottom, every cell showing the same family of small explosion particles from the established explosion design, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: row one six frames of a tumbling metal debris chip, row two six frames of a white-gold spark fading, row three six frames of an expanding thin pickup ring, row four six frames of a small smoke puff dissolving. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Each row holds only its own particle in all six cells: six flat steel plating chips turning in row one, six white-gold sparks shrinking to a dot in row two, six thin pale rings growing wider in row three (rings only, all six), six smoke puffs thinning to wisps in row four. There are no fireballs or big explosions anywhere on this sheet; every particle is small.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 65111,
+      "size": "1248x832",
+      "steps": 50,
+      "guidance": 4,
+      "generatedAt": "2026-10-17T17:31:31.859Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/fx/explosion/winner.png",
+          "from": "art-prompts/v2/candidates/a/fx/explosion.png",
+          "sha256": "6b49717140b1e9fc5009bac192f942b0888d5ec86addb467cd26114dda9d6fc6",
+          "sidecar": "art-prompts/v2/winners/fx/explosion/winner.json",
+          "sidecarSha256": "a564b649888f221cdc8cac9dab9f51ce641be99b805ec7441d4157badfdaa3bc",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/fx/explosion/particles/winner.json",
+        "sidecarSha256": "6539ca397798d18241d2fd8e73b011d571e08bcce0b0f1fdbe07e0c03ffd7d07",
+        "id": "fx/explosion/particles",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of Explosion. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twenty-four equal cells in four rows of six with even gutters, read left to right and top to bottom, every cell showing the same family of small explosion particles from the established explosion design, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: row one six frames of a tumbling metal debris chip, row two six frames of a white-gold spark fading, row three six frames of an expanding thin pickup ring, row four six frames of a small smoke puff dissolving. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Each row holds only its own particle in all six cells: six flat steel plating chips turning in row one, six white-gold sparks shrinking to a dot in row two, six thin pale rings growing wider in row three (rings only, all six), six smoke puffs thinning to wisps in row four. There are no fireballs or big explosions anywhere on this sheet; every particle is small."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/fx/debris.recipe.json",
+    "sha256": "e30ae229feef7e6116a3c467c9b7b69b5c6c254da75b606c38d86ecb35f6249f"
+  },
+  "edit": null,
+  "output": {
+    "png": "debris.png",
+    "sha256": "f67ecd7780f8af71d2e138dd093d3142f882ebb0442e6c35745babb684617114",
+    "sidecar": "debris.json",
+    "sidecarSha256": "e6aecf084e7940ed8b223a718906ee99ec3b29add9344513b49b43a2e5991d7c",
+    "frames": 4,
+    "frameWidth": 9,
+    "frameHeight": 9,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.S3 cross-zone pass (items and fx): the four tumble frames of the debris chip are the first four cells of the owner-picked particles sheet's debris row (the six-frame tumble's claim, cells 5-6 unused until a six-frame slot names it; the flip at cell 4 confirms rotation). A shared 140x140 crop box keeps the chip's size through the tumble. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

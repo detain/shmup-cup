@@ -24,8 +24,8 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — nothing else uses it. */
-const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+/** KESTREL hull colour (`ships/kestrel` real art, #343154) — nothing else uses it. */
+const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
 
 /** Where the KESTREL's hull colour is on screen, in frame pixels ({@link shipCentre}). */
 interface HullView {
@@ -165,10 +165,13 @@ test.describe('free flight (web build)', () => {
     expect(right.top).toBe(idle.top);
 
     // 20 ticks = 30 px up. The top row: the banking-up frame redraws only the lower half.
+    // The R6-03.S3 bank frames foreshorten the hull: the steep-climb frame's tail reaches
+    // 2 px further left than the level frame's (f2 x 4, f0 x 2 of the 24-px cell), and held
+    // 20 ticks at one bank step a tick the ship rests on the steep frame — a 2-px delta.
     await holdTicks(page, 'ArrowUp', 20);
     const up = await shipCentre(page);
     expect(up.top - right.top).toBeLessThan(-12);
-    expect(Math.abs(up.left - right.left)).toBeLessThan(2);
+    expect(Math.abs(up.left - right.left)).toBeLessThan(3);
 
     expect(errors).toEqual([]);
   });
@@ -203,8 +206,8 @@ test.describe('free flight (web build)', () => {
     // Up: from mid-playfield to the 6 px top margin at 1.5 px/tick (≈ 108 ticks from the 168 of
     // 640×360, ≈ 63 from the 100 of 384×216); hold 160.
     await holdTicks(page, 'ArrowUp', 160);
-    // Rows 0 … HUD_BOTTOM_Y − 1: the top HUD bar included, the bottom bar's stock icons (same
-    // hull colour) left out.
+    // Rows 0 … HUD_BOTTOM_Y − 1: the top HUD bar included, the bottom bar left out (until
+    // R6-03.S3's real art its stock icons shared the hull colour; the row choice stays).
     const top = await shipCentre(page, [0, HUD_BOTTOM_Y]);
     await holdTicks(page, 'ArrowUp', 30);
     const stillTop = await shipCentre(page, [0, HUD_BOTTOM_Y]);

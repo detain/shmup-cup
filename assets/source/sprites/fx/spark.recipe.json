@@ -1,0 +1,55 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "fx/spark",
+  "category": "fx",
+  "frame": {
+    "width": 7,
+    "height": 7
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/fx/explosion/particles/winner.png",
+      "frames": [
+        [
+          82,
+          265,
+          120,
+          120
+        ],
+        [
+          466,
+          265,
+          120,
+          120
+        ],
+        [
+          852,
+          265,
+          120,
+          120
+        ],
+        [
+          1049,
+          263,
+          120,
+          120
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    3,
+    3
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.S3 cross-zone pass (items and fx): the four fade frames of the spark are cells 1, 3, 5 and 6 of the owner-picked particles sheet's spark row (the fading flickers and the final near-spent ember - the row's six fade states thinned to four, disclosed; interim cycle was a smooth shrink, the design's own fade reads as flicker-then-ember). A shared 120x120 crop box keeps the ember small inside the frame. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

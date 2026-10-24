@@ -1,0 +1,103 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "fx/explosion-small",
+  "category": "fx",
+  "frame": {
+    "width": 24,
+    "height": 24
+  },
+  "frameCount": 12,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/fx/explosion/winner.png",
+      "frames": [
+        [
+          6,
+          37,
+          294,
+          260
+        ],
+        [
+          285,
+          38,
+          294,
+          260
+        ],
+        [
+          566,
+          16,
+          294,
+          260
+        ],
+        [
+          857,
+          16,
+          294,
+          260
+        ],
+        [
+          4,
+          322,
+          294,
+          260
+        ],
+        [
+          287,
+          322,
+          294,
+          260
+        ],
+        [
+          569,
+          319,
+          294,
+          260
+        ],
+        [
+          852,
+          332,
+          294,
+          260
+        ],
+        [
+          2,
+          613,
+          294,
+          260
+        ],
+        [
+          289,
+          621,
+          294,
+          260
+        ],
+        [
+          568,
+          619,
+          294,
+          260
+        ],
+        [
+          843,
+          620,
+          294,
+          260
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    12,
+    12
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.S3 cross-zone pass (items and fx): the twelve burst frames of the small explosion are the twelve cells of the owner-picked explosion sheet in reading order - ignition spikes, bloom, breakdown, death (all cells adjacent-XOR 33.7-76.9%, the story's size curve confirmed: 112 to 275 to 175 px). One shared 294x260 crop box centred on each cell's subject keeps that curve: a per-cell fit would inflate the ignition dot to full size. Four cells take at most 128 gutter-glow pixels of the same blast, verified free of other cells' bodies. The design carries its own 1-px near-black outline, so the outline pass is off."
+  }
+}

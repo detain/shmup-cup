@@ -1,0 +1,55 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "options/stolen",
+  "category": "option",
+  "frame": {
+    "width": 12,
+    "height": 12
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/craft/option/frames/winner.png",
+      "frames": [
+        [
+          88,
+          401,
+          262,
+          254
+        ],
+        [
+          432,
+          401,
+          262,
+          254
+        ],
+        [
+          773,
+          401,
+          262,
+          254
+        ],
+        [
+          1113,
+          401,
+          262,
+          254
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    6,
+    6
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.S3 cross-zone pass (player crafts): the four frames of the STOLEN option are the bottom-row cells of the owner-picked OPTION frames sheet - the same roll drained to a cold gray, as the sheet's claim and the achromatic census (white 10.7%, no warm bins) confirm. The top warm row feeds options/orb. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

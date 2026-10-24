@@ -31,8 +31,8 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — only the ship uses it. */
-const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+/** KESTREL hull colour (`ships/kestrel` real art, #343154) — only the ship uses it. */
+const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
 
 /** The Ripple ring's middle colour (`shots/ripple`, #58d8f8). */
 const RIPPLE_CYAN = [0x58, 0xd8, 0xf8] as const;

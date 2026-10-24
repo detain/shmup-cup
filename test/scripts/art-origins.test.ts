@@ -300,7 +300,10 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     expect(kinds.flash).toBe(
       sprites.filter((s) => s.origin.startsWith('flash:') && baseIsProcedural(s.origin)).length,
     );
-    expect(kinds.p2).toBe(sprites.filter((s) => s.name.endsWith('@p2')).length);
+    // Likewise the @p2 of a recorded base (R6-03.S3: the crafts' @p2 ride their overrides).
+    expect(kinds.p2).toBe(
+      sprites.filter((s) => s.origin.startsWith('p2:') && baseIsProcedural(s.origin)).length,
+    );
     expect(kinds.palette ?? 0).toBe(sprites.filter((s) => s.origin.startsWith('palette:')).length);
   });
 
@@ -380,11 +383,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       if (base.status === 'failure') expect(sibling.status).toBe('failure');
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
-    // The five fixture records plus zone A's two, zone B's four, zone C's three, zone D's
-    // The five fixture records plus zone A's two, zone B's four, zone C's three, zone D's
-    // two, zone F's two, zone E's five and zone G's one real overrides (the copy holds
-    // assets/source).
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(24);
+    // The five fixture records this test ships as overrides, over the live tree's twenty-
+    // seven: zone A's two (drifter, vane), zone B's four, zone C's three, zone D's two,
+    // zone E's five, zone F's two, zone G's one and the S3 cross-zone pass's eight (the
+    // copy holds assets/source).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(32);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -396,13 +399,17 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
-      // drone and fixture-glow, plus zone A's vane and drifter, zone B's froth, brood-bubble,
+      // The fixture copy's two FLUX.2 sprites plus the live tree's forty-seven — its
+      // twenty-seven overrides: zone A's vane and drifter, zone B's froth, brood-bubble,
       // urchin and maw-rocket, zone C's dune-worm, dust-devil and husk-crawler, zone D's
-      // ember-wisp and magma-cone, zone F's vault-claw and polyp-turret, zone E's
-      // thunderhead, steed-foal, steed-chest, steed-snout and steed-tail and zone G's
-      // glint-mote — nineteen overrides, eighteen of them with a derived @flash sprite
-      // (the interim tail has none).
-      sprites: 39,
+      // ember-wisp and magma-cone, zone E's thunderhead, steed-foal, steed-chest,
+      // steed-snout and steed-tail, zone F's vault-claw and polyp-turret, zone G's
+      // glint-mote and the S3 cross-zone pass's kestrel, manta, pod, orb, stolen,
+      // explosion-small, debris and spark — with eighteen derived @flash sprites (the
+      // interim tail has none, and the S3 drops are player/option/item/fx art that never
+      // flashes) and the two crafts' derived @p2 sprites: forty-seven live sprites,
+      // forty-nine with the fixture pair.
+      sprites: 49,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

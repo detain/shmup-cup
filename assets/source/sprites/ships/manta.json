@@ -1,0 +1,175 @@
+{
+  "frames": [
+    {
+      "filename": "ships/manta 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta 1",
+      "frame": {
+        "x": 24,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta 2",
+      "frame": {
+        "x": 48,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta 3",
+      "frame": {
+        "x": 72,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta 4",
+      "frame": {
+        "x": 96,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 15
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "manta.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 120,
+      "h": 15
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 15
+            },
+            "pivot": {
+              "x": 12,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ],
+    "shmup": {
+      "p2": {
+        "#374624": "#244637",
+        "#3a7d21": "#217d3a",
+        "#405333": "#335340",
+        "#4f633c": "#3c634f",
+        "#53aa20": "#20aa53",
+        "#5b6c4e": "#4e6c5b",
+        "#5c6539": "#39655c",
+        "#627a51": "#517a62",
+        "#6b815e": "#5e816b",
+        "#719188": "#889171",
+        "#798b58": "#588b79",
+        "#799164": "#649179",
+        "#7d8155": "#55817d",
+        "#845916": "#165984",
+        "#849871": "#719884",
+        "#8ca084": "#84a08c",
+        "#8dc841": "#41c88d",
+        "#9aab84": "#84ab9a",
+        "#9e7c22": "#227c9e",
+        "#9fb59b": "#9bb59f",
+        "#acbe9f": "#9fbeac",
+        "#bacaab": "#abcaba",
+        "#c6d6b7": "#b7d6c6",
+        "#d1dec3": "#c3ded1"
+      }
+    }
+  }
+}

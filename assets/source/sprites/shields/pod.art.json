@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shields/pod",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/craft/shield-pod/frames/winner.png",
+      "sha256": "dcab12ce2b5bf0613adc10439acc714035d9ae26690366b603ed0182dae02e8f",
+      "format": "png",
+      "width": 1456,
+      "height": 720,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of Shield pod. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same gold diamond shield pod, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the pod turning on its vertical axis so the bronze band slides across; bottom row, intact, scuffed with dark chips, cracked with a glowing seam, and nearly spent with one corner broken off. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The top row is a quarter-turn spin: full front view, then turned so the pod looks a little narrower with the highlight on the right facet, then edge-on as a slim diamond, then turned back the other way with the highlight on the left facet. The eight pods sit on one continuous green background with wide empty margins, no white or dark lines between them.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 18232,
+      "size": "1456x720",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T17:40:48.102Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/craft/shield-pod/winner.png",
+          "from": "art-prompts/v2/candidates/a/craft/shield-pod.png",
+          "sha256": "877d0fefc6e1958c299f948b8f5011d94c55acfab3a3b81681f299b8f5e61537",
+          "sidecar": "art-prompts/v2/winners/craft/shield-pod/winner.json",
+          "sidecarSha256": "6ef0bf5a1d93ead9205c443660960de31ab9d907dcb3e65f830121d37f2f4ea7",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/craft/shield-pod/frames/winner.json",
+        "sidecarSha256": "3fd4fc056159573845de6e27aeefdabfddc0a7b92f23d6c915c6f6d8247c61c7",
+        "id": "craft/shield-pod/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of Shield pod. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same gold diamond shield pod, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the pod turning on its vertical axis so the bronze band slides across; bottom row, intact, scuffed with dark chips, cracked with a glowing seam, and nearly spent with one corner broken off. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The top row is a quarter-turn spin: full front view, then turned so the pod looks a little narrower with the highlight on the right facet, then edge-on as a slim diamond, then turned back the other way with the highlight on the left facet. The eight pods sit on one continuous green background with wide empty margins, no white or dark lines between them."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shields/pod.recipe.json",
+    "sha256": "6077dd406df0ebed3fd78cf43f720216b67524f77d222711a32385694d77b7fd"
+  },
+  "edit": null,
+  "output": {
+    "png": "pod.png",
+    "sha256": "eda47d03c8db8a698331e35d7adfa93949c44fb50b01d7971be93852cbf49339",
+    "sidecar": "pod.json",
+    "sidecarSha256": "a43bcfa4c246e8abf51c28be0149cfdf0de078524d4404ca1514aeecc0ba2d11",
+    "frames": 4,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.S3 cross-zone pass (player crafts): the four wear states fresh, worn, damaged, critical of the shield pod are the bottom-row cells of the owner-picked frames sheet (intact, scuffed with dark chips, cracked with a glowing seam, nearly spent with one corner broken off - the progression verified by 35-42% cell XOR and the spent cell's smaller subject). One shared 220x290 crop box per cell keeps the relative sizes: the spent pod reads smaller, as designed. The quarter-turn top row stays unused until a spin slot names it. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

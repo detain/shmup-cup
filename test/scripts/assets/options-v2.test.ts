@@ -6,21 +6,25 @@
  * in `interim-pipeline.test.ts` stays byte-identical — frames 2–3 missing at scale 1 is what
  * decision RR-1b allows: only the TV bench draws `options/orb` there, and it draws frame 0.
  *
- * The v2 maps keep the v1 palettes colour for colour, so the browser specs' census of the orb's
- * red body (`weapons.spec.ts`) and the stolen orb's light grey (`option-hunter.spec.ts`) holds.
- * Every pixel is fully opaque or fully transparent (binary alpha); the colour census of each
- * frame stays inside its own palette.
+ * R6-03.S3 shipped real-art PNG overrides of both names (winner `craft/option`): at the shipped
+ * scale the frames are the override's pixels — its body red `#ec2301` and drained grey `#b5afb4`
+ * are what the browser specs' census counts now (`weapons.spec.ts`, `option-hunter.spec.ts`,
+ * re-pointed honestly and pinned below). The interim maps stay untouched and still serve scale 1
+ * (RR-1), so they keep the v1 palettes colour for colour and the flare-frame pulse shape.
+ * Every shipped pixel stays fully opaque or fully transparent (binary alpha); the colour census
+ * of each frame stays inside its own art's palette — the override's own colours where one ships.
  *
  * Sizes, anchors and frame counts are the bible's (§ 5); the frame count is core's
  * `OPTION_FRAMES` through the barrel (the same value the sync masks with). Test files hold
  * literal sizes by convention (`docs/dev/conventions.md` § Frame numbers: scans do not read
  * `test/`).
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { OPTION_FRAMES } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { createImage, getPixel, type Image } from '../../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
+import { decodePng } from '../../../scripts/assets/png.mjs';
 
 /** A built atlas. */
 type Atlas = ReturnType<typeof buildAtlas>;
@@ -59,6 +63,20 @@ function sourceOf(name: string, v2Source: boolean): SourceFile {
       'utf8',
     ),
   ) as SourceFile;
+}
+
+/**
+ * The shipped override PNG of an option name (R6-03.S3 real art), when one exists.
+ *
+ * @param name - The sprite name (`options/orb` …).
+ * @returns The decoded PNG, or `null` when the name ships from the interim map.
+ */
+function overrideOf(name: string): Image | null {
+  const file = new URL(
+    `../../../assets/source/sprites/options/${name.slice('options/'.length)}.png`,
+    import.meta.url,
+  );
+  return existsSync(file) ? decodePng(readFileSync(file)) : null;
 }
 
 /**
@@ -126,12 +144,23 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
     });
 
     it(`draws ${name} with binary alpha and only its palette's colours`, () => {
-      const file = sourceOf(name, true);
+      // R6-03.S3: an override PNG is the shipped art, and the colours it uses are its palette;
+      // the interim map's declared palette governs only where no override ships.
+      const override = overrideOf(name);
       const colours = new Map<number, string>();
-      for (const hex of Object.values(file.palette)) {
-        if (hex !== null) {
-          const [r, g, b] = rgb(hex);
-          colours.set((r << 16) | (g << 8) | b, hex);
+      if (override !== null) {
+        for (let y = 0; y < override.height; y++) {
+          for (let x = 0; x < override.width; x++) {
+            const [r, g, b, a] = getPixel(override, x, y);
+            if (a !== 0) colours.set((r << 16) | (g << 8) | b, `${name}#${x},${y}`);
+          }
+        }
+      } else {
+        for (const hex of Object.values(sourceOf(name, true).palette)) {
+          if (hex !== null) {
+            const [r, g, b] = rgb(hex);
+            colours.set((r << 16) | (g << 8) | b, hex);
+          }
         }
       }
       for (const frame of v2.manifest.sprites[name].frames) {
@@ -171,7 +200,11 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
   }
 
   it('holds the orb red body in every dark pulse frame (weapons.spec threshold)', () => {
-    const [r, g, b] = rgb('#e83838');
+    // R6-03.S3: the shipped orb is the override, whose bright body `#ec2301` pulses on every
+    // frame (9–11 px). The interim map's amber-only flare frame 2 governs only where no
+    // override ships — that art still serves scale 1, audited by the file tests above.
+    const override = overrideOf('options/orb');
+    const [r, g, b] = rgb(override === null ? '#e83838' : '#ec2301');
     for (const frame of v2.manifest.sprites['options/orb'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;
@@ -183,13 +216,16 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
       }
       // The pulse's flare frame (index 2) burns amber-only like the v1 bright frame; the
       // others carry the red body well past the browser spec's threshold of 8.
-      const flare = Number(frame.slice(frame.lastIndexOf('#') + 1)) === 2;
+      const flare = override === null && Number(frame.slice(frame.lastIndexOf('#') + 1)) === 2;
       expect(count, frame).toBeGreaterThanOrEqual(flare ? 0 : 8);
     }
   });
 
   it('holds the stolen light grey in every frame (option-hunter.spec census)', () => {
-    const [r, g, b] = rgb('#a8a8b4');
+    // R6-03.S3: the shipped stolen orb is the override's drained grey `#b5afb4` (7–8 px a
+    // frame); the interim `#a8a8b4` governs only where no override ships.
+    const override = overrideOf('options/stolen');
+    const [r, g, b] = rgb(override === null ? '#a8a8b4' : '#b5afb4');
     for (const frame of v2.manifest.sprites['options/stolen'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;

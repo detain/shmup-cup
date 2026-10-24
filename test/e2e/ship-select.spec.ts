@@ -36,8 +36,8 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** The MANTA's canopy colour (`ships/manta` palette `g`, #40d070) — only its sprite uses it. */
-const MANTA_CANOPY = [0x40, 0xd0, 0x70] as const;
+/** The MANTA's light hull (R6-03.S3 real art, #acbe9f) — only its sprite uses it. */
+const MANTA_CANOPY = [0xac, 0xbe, 0x9f] as const;
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface DirectView {

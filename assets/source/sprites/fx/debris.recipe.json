@@ -1,0 +1,55 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "fx/debris",
+  "category": "fx",
+  "frame": {
+    "width": 9,
+    "height": 9
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/fx/explosion/particles/winner.png",
+      "frames": [
+        [
+          68,
+          50,
+          140,
+          140
+        ],
+        [
+          262,
+          48,
+          140,
+          140
+        ],
+        [
+          450,
+          48,
+          140,
+          140
+        ],
+        [
+          653,
+          46,
+          140,
+          140
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    4,
+    4
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.S3 cross-zone pass (items and fx): the four tumble frames of the debris chip are the first four cells of the owner-picked particles sheet's debris row (the six-frame tumble's claim, cells 5-6 unused until a six-frame slot names it; the flip at cell 4 confirms rotation). A shared 140x140 crop box keeps the chip's size through the tumble. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}
