@@ -1,0 +1,46 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/drifter",
+  "category": "enemy",
+  "frame": { "width": 18, "height": 18 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/skeet/frames/winner.png",
+      "frames": [
+        [59, 81, 464, 309],
+        [569, 81, 453, 309]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "palette": {
+    "colors": [
+      "#28152b",
+      "#2a77ce",
+      "#344d80",
+      "#3d2940",
+      "#513d52",
+      "#5b79b5",
+      "#604862",
+      "#645e76",
+      "#64a3dd",
+      "#8d807e",
+      "#92417a",
+      "#956b81",
+      "#a298a8",
+      "#d76bac",
+      "#e23bb2"
+    ]
+  },
+  "outline": false,
+  "anchor": [9, 9],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone A pilot (R5-01.S3): the sprite of the roster enemy SKEET (its interim slot is enemies/drifter, the v1 name). The two 18x18 frames of the flap loop are the top-row cells of the owner-picked SKEET animation sheet (hatches closed, hatches cracking open), cropped from the committed winner with a 6-px key border; the open-hatches cell that carries a released bullet orb and the damaged cell stay unused (the orb is procedural, the damage is hit-state art). The design carries its own 1-px near-black navy outline, so the outline pass is off. The palette is fixed to the sheet's fifteen design colours: an adaptive sixteen admits three key-blend rim pixels as a yellow-green, so the fixed list keeps the cap clear and sends the rim to its nearest design colour."
+  }
+}

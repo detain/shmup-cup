@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/drifter",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/skeet/frames/winner.png",
+      "sha256": "174dac9a8c2d5151d6986560431c6cbbb6b426d932cf8f0dc6178654a9a275a8",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of SKEET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same SKEET enemy — a small seed-shaped armored drone pod with a matte gunmetal shell, rust-violet panel seams, folding petal hatches closed along its flanks, two short stabilizer fins and a single glowing magenta eye-slit at the front, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: hatches closed, hatches cracking open, hatches fully open releasing a pink bullet orb with a bright core and dark rim, and damaged with one fin sheared off. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n In every cell the pod keeps its whole seed-shaped hull, magenta eye-slit and blue panels from the reference; the hatches are the blue panels on its back, opening a little in the second cell and wide in the third, where the pink orb leaves from the open back. Only empty green space between the cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 38243,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T17:53:23.739Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/skeet/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/skeet.png",
+          "sha256": "6996058cfb86a1874d0b8daf7b4a4b823c866fd1cdaeaf29ed76139c959e0cd0",
+          "sidecar": "art-prompts/v2/winners/enemy/skeet/winner.json",
+          "sidecarSha256": "e5ad9e980043f17f078d797734cee02dd2245184f02ed586f1c860811aef27e3",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/skeet/frames/winner.json",
+        "sidecarSha256": "280f9681f1464d13bba459d33a29494cd2fbc31b299cc15c979ee29578374f29",
+        "id": "enemy/skeet/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of SKEET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same SKEET enemy — a small seed-shaped armored drone pod with a matte gunmetal shell, rust-violet panel seams, folding petal hatches closed along its flanks, two short stabilizer fins and a single glowing magenta eye-slit at the front, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: hatches closed, hatches cracking open, hatches fully open releasing a pink bullet orb with a bright core and dark rim, and damaged with one fin sheared off. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n In every cell the pod keeps its whole seed-shaped hull, magenta eye-slit and blue panels from the reference; the hatches are the blue panels on its back, opening a little in the second cell and wide in the third, where the pink orb leaves from the open back. Only empty green space between the cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/drifter.recipe.json",
+    "sha256": "731b65f03108b7b50e8f038524b302294f94d234d9b27d5409b2813085f37a1a"
+  },
+  "edit": null,
+  "output": {
+    "png": "drifter.png",
+    "sha256": "d949522309e000809d9effefa0cac93461206a3e6f3c627c9ba17b964787c14d",
+    "sidecar": "drifter.json",
+    "sidecarSha256": "56a6bede4aaa1b2f10db3cffa485f1fa5d7798ac975ea401cc11cf2ccdfb24dc",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 18,
+    "colors": 15,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone A pilot (R5-01.S3): the sprite of the roster enemy SKEET (its interim slot is enemies/drifter, the v1 name). The two 18x18 frames of the flap loop are the top-row cells of the owner-picked SKEET animation sheet (hatches closed, hatches cracking open), cropped from the committed winner with a 6-px key border; the open-hatches cell that carries a released bullet orb and the damaged cell stay unused (the orb is procedural, the damage is hit-state art). The design carries its own 1-px near-black navy outline, so the outline pass is off. The palette is fixed to the sheet's fifteen design colours: an adaptive sixteen admits three key-blend rim pixels as a yellow-green, so the fixed list keeps the cap clear and sends the rim to its nearest design colour."
+}

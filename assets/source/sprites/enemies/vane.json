@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/vane 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/vane 1",
+      "frame": {
+        "x": 18,
+        "y": 0,
+        "w": 18,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 15
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "vane.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 15
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 18,
+              "h": 15
+            },
+            "pivot": {
+              "x": 9,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
