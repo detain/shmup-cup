@@ -384,10 +384,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
     // The five fixture records this test ships as overrides, over the live tree's twenty-
-    // seven: zone A's two (drifter, vane), zone B's four, zone C's three, zone D's two,
-    // zone E's five, zone F's two, zone G's one and the S3 cross-zone pass's eight (the
-    // copy holds assets/source).
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(32);
+    // nine: zone A's two (drifter, vane), zone B's four, zone C's three, zone D's two,
+    // zone E's five, zone F's two, zone G's one, zone I's two (depth-mine, gulper) and
+    // the S3 cross-zone pass's eight (the copy holds assets/source).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(34);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -399,17 +399,17 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
-      // The fixture copy's two FLUX.2 sprites plus the live tree's forty-seven — its
-      // twenty-seven overrides: zone A's vane and drifter, zone B's froth, brood-bubble,
+      // The fixture copy's two FLUX.2 sprites plus the live tree's fifty-one — its
+      // twenty-nine overrides: zone A's vane and drifter, zone B's froth, brood-bubble,
       // urchin and maw-rocket, zone C's dune-worm, dust-devil and husk-crawler, zone D's
       // ember-wisp and magma-cone, zone E's thunderhead, steed-foal, steed-chest,
       // steed-snout and steed-tail, zone F's vault-claw and polyp-turret, zone G's
-      // glint-mote and the S3 cross-zone pass's kestrel, manta, pod, orb, stolen,
-      // explosion-small, debris and spark — with eighteen derived @flash sprites (the
-      // interim tail has none, and the S3 drops are player/option/item/fx art that never
-      // flashes) and the two crafts' derived @p2 sprites: forty-seven live sprites,
-      // forty-nine with the fixture pair.
-      sprites: 49,
+      // glint-mote, zone I's depth-mine and gulper, and the S3 cross-zone pass's
+      // kestrel, manta, pod, orb, stolen, explosion-small, debris and spark — with
+      // twenty derived @flash sprites (the interim tail has none, the S3 drops are
+      // player/option/item/fx art that never flashes) and the two crafts' derived
+      // @p2 sprites: fifty-one live sprites, fifty-three with the fixture pair.
+      sprites: 53,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

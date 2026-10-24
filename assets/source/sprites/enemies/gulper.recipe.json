@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/gulper",
+  "category": "enemy",
+  "frame": { "width": 27, "height": 18 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/gulper/frames/winner.png",
+      "frames": [
+        [34, 106, 363, 224],
+        [841, 106, 364, 224]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [13, 9],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone I (R5-09.S3): the two 27x18 frames of the gulper's working jaw are the top-row cells 1 and 3 (cruising jaw half-open, jaw shut) of the owner-picked GULPER animation sheet (six jaw states in two rows of three), cropped from the committed frames winner with a 6-px key border around each subject box; all six cells measured uniform 351-371 x 211-226 silhouettes and the chosen pair a 29.9/35.5% pixel change between neighbours (the jaw really moves). The lunge cell (row 2, brightest, lure flaring) and the damaged cell stay unused until an animation rework names them. The manifest label reads ZONE I (abyssal-throne sheet, ~27x18 px = the slot grid exactly), matching the only content that consumes this sprite (content/enemies/zone-i.enemies.json, gulper + gulper-low). The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}
