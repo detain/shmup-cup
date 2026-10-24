@@ -1,0 +1,23 @@
+{
+  "id": "tiles/abyssal-throne",
+  "slot": "b",
+  "prompt": "Chunky pixel art game texture with big visible square pixels, low resolution 16-bit console style, a flat 2D seamless repeating texture of deep-sea black basalt rock seen exactly head-on like a scanned sheet, with no depth and no viewing angle; the picture is a tight crop from the middle of a huge rock wall that continues far beyond every side, so rock is cut off by the top, bottom, left and right edges. Rough angular black-blue basalt chunks of mixed sizes with thin dark seams, smeared with ink-blue and deep teal water stains, dotted all over with tiny glowing cyan bioluminescent specks, a few specks in small clusters. Across the upper quarter runs a horizontal crust of tangled dark green-black weed roots clinging to the stone from the left edge to the right edge, and above and behind those roots more basalt continues to the top edge; below them the basalt continues to the bottom edge. Three-to-four step flat shading ramps lit from the top-left, hard-edged pixels, saturated limited palette of near-black navy, ink blue, deep teal, dark green and bright cyan, evenly lit, uniform all-over pattern with no focal point.",
+  "negative": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, eyes, photorealistic, 3d render, isometric, scene, underwater scene, seabed, fish, bubbles, light rays, water surface, plants growing upward, kelp forest, brushstrokes, smooth painting, blurry, soft focus, vignette, dark edges",
+  "model": "sd35",
+  "seed": 3750183291,
+  "width": 1024,
+  "height": 1024,
+  "steps": 32,
+  "guidance": 5,
+  "generatedAt": "2026-10-17T01:52:57.612Z",
+  "seconds": 13.3,
+  "label": "ABYSSAL THRONE terrain material swatch — zone I rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/abyssal-throne.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, eyes, photorealistic, 3d render, isometric, scene, underwater scene, seabed, fish, bubbles, light rays, water surface, plants growing upward, kelp forest, brushstrokes, smooth painting, blurry, soft focus, vignette, dark edges",
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "enemy/halo-crystal/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of HALO CRYSTAL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same HALO CRYSTAL enemy — a big faceted violet gem with lilac edge-glints at the center of a ring of six smaller satellite crystals (six, exactly as in the reference, on the corners of a hexagon), front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring of six satellites turns clockwise around the identical, unmoving central gem, ten degrees further in each cell, so the loop closes after the sixth cell. Cell 1 is exactly the reference: satellites at 12, 2, 4, 6, 8 and 10 o'clock. Cells 2 and 3 are turned a little further clockwise. Cell 4 is turned half a step: satellites at 1, 3, 5, 7, 9 and 11 o'clock, so one sits straight right and one straight left of the gem. Cells 5 and 6 turn further toward the starting pattern. Each satellite keeps pointing outward from the core. Six satellites in every cell, never more. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no scenery, no stars, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 7280,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T23:47:19.118Z",
+  "seconds": 69.4,
+  "label": "HALO CRYSTAL animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/halo-crystal/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/halo-crystal.png"
+  ],
+  "editFromSha256": [
+    "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of HALO CRYSTAL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same HALO CRYSTAL enemy — a big faceted violet gem with lilac edge-glints at the center of a ring of six smaller satellite crystals (six, exactly as in the reference, on the corners of a hexagon), front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring of six satellites turns clockwise around the identical, unmoving central gem, ten degrees further in each cell, so the loop closes after the sixth cell. Cell 1 is exactly the reference: satellites at 12, 2, 4, 6, 8 and 10 o'clock. Cells 2 and 3 are turned a little further clockwise. Cell 4 is turned half a step: satellites at 1, 3, 5, 7, 9 and 11 o'clock, so one sits straight right and one straight left of the gem. Cells 5 and 6 turn further toward the starting pattern. Each satellite keeps pointing outward from the core. Six satellites in every cell, never more. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no scenery, no stars, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F116",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:23:33.855Z",
+    "parentId": "enemy/halo-crystal"
+  }
+}

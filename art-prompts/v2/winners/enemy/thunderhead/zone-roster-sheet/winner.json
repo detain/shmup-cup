@@ -1,0 +1,42 @@
+{
+  "id": "enemy/thunderhead/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen THUNDERHEAD, image 2 shows the chosen STEED FOAL, image 3 shows the chosen BOLT DRONE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a THUNDERHEAD storm cell in five states: a small boiling charcoal cloud puff with a barely open lilac eye, the same cell swelling to full anvil shape, eye blazing wide, belly arcs of violet-white electricity branching out, and a collapsing dissipating puff with two fading sparks. Middle band — a STEED FOAL, a small riveted steel-plate seahorse with curled tail and amber face-lamp, in six swim frames: tail coiled, tail uncoiling mid-thrust, fins braced with static ticks, a banking lean, a nose-down stoop, and a level glide, all facing left. Bottom band — BOLT DRONES and shared effects: a round-bodied one-prop drone spitting a short violet arc between two prong tips in four firing states, single arc-bolt pixels, pink and lilac round shots with bright cores and dark rims, three diagonal rain-stroke overlays, and a four-frame tiny orange-white explosion. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 15521,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:25:07.724Z",
+  "seconds": 158.4,
+  "label": "Zone E roster sheet — every library enemy of TEMPEST RIDGE together (follows all zone E enemy winners)",
+  "source": "images/40-enemies/zone-e-tempest-ridge.json#tempest-ridge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/thunderhead/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/thunderhead.png",
+    "art-prompts/v2/candidates/a/enemy/steed-foal.png",
+    "art-prompts/v2/candidates/a/enemy/bolt-drone.png"
+  ],
+  "editFromSha256": [
+    "b6ecd5c4466f74232715f77f2f373702fee2ac218572486550b52baa0152e44b",
+    "341796dd61ae57b448e4e9749ffd693e03f904c98fb0dc244572073b06d8a15d",
+    "bc875491e60e343d6592d330f09356f32881f804621853e882d30492d4ea4161"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen THUNDERHEAD, image 2 shows the chosen STEED FOAL, image 3 shows the chosen BOLT DRONE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a THUNDERHEAD storm cell in five states: a small boiling charcoal cloud puff with a barely open lilac eye, the same cell swelling to full anvil shape, eye blazing wide, belly arcs of violet-white electricity branching out, and a collapsing dissipating puff with two fading sparks. Middle band — a STEED FOAL, a small riveted steel-plate seahorse with curled tail and amber face-lamp, in six swim frames: tail coiled, tail uncoiling mid-thrust, fins braced with static ticks, a banking lean, a nose-down stoop, and a level glide, all facing left. Bottom band — BOLT DRONES and shared effects: a round-bodied one-prop drone spitting a short violet arc between two prong tips in four firing states, single arc-bolt pixels, pink and lilac round shots with bright cores and dark rims, three diagonal rain-stroke overlays, and a four-frame tiny orange-white explosion. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F107",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:39.382Z",
+    "parentId": "enemy/thunderhead"
+  }
+}

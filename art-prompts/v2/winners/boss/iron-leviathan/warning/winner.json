@@ -1,0 +1,40 @@
+{
+  "id": "boss/iron-leviathan/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON LEVIATHAN. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a playfield over deep-navy space where an enormous shadow slides across the star field from right to left, long, narrow and eel-straight, occluding stars section by section as it passes. Only the shadow is visible plus a single racing line of amber running lights igniting along its length and one pink-hot glow at the beak-prow entering from the edge. A tiny steel-blue player dart with cyan canopy and orange engine flare holds position center-left beneath the darkness. Composition: the diagonal of shadow dominates, the ship small and defiant. Deep-navy palette, never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny in the same side view and direction as reference 2, its nose pointing right and its orange flame trailing left, never seen from behind or above. No dark vignette at the picture edges. The shadow faces left like the reference, moving left: its beak head with the pink glow leads on the left, its tail trails off to the right. The star field runs to every edge of the picture with no black border, no screen bezel and no rounded corners.",
+  "negative": "text, letters, watermark, photorealistic, 3d render, blurry, fat rounded shadow, pure black background",
+  "model": "flux2",
+  "seed": 15103,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:40:56.162Z",
+  "seconds": 105.2,
+  "label": "IRON LEVIATHAN WARNING silhouette frame",
+  "source": "images/30-bosses/11-iron-leviathan.json#ilv-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/iron-leviathan/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-leviathan.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "fc950e2d0fad601712acd6133329986c124bf4e429de74039a35e188c3ff4e78",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON LEVIATHAN. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a playfield over deep-navy space where an enormous shadow slides across the star field from right to left, long, narrow and eel-straight, occluding stars section by section as it passes. Only the shadow is visible plus a single racing line of amber running lights igniting along its length and one pink-hot glow at the beak-prow entering from the edge. A tiny steel-blue player dart with cyan canopy and orange engine flare holds position center-left beneath the darkness. Composition: the diagonal of shadow dominates, the ship small and defiant. Deep-navy palette, never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny in the same side view and direction as reference 2, its nose pointing right and its orange flame trailing left, never seen from behind or above. No dark vignette at the picture edges. The shadow faces left like the reference, moving left: its beak head with the pink glow leads on the left, its tail trails off to the right. The star field runs to every edge of the picture with no black border, no screen bezel and no rounded corners.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F053",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-leviathan"
+  }
+}

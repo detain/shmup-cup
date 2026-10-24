@@ -1,0 +1,23 @@
+{
+  "id": "stage/azure-verge",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, a deep-navy space background that is never pure black. The scene is built as clean horizontal parallax bands stacked from top to bottom. Top band: lifted deep-navy near-space with a dense field of small hard white and pale-blue stars and one faint cyan nebula wisp. Second band: the enormous curved rim of a blue planet sweeping gently across the whole width, deep ocean blue under a glowing thin cyan atmosphere line, its edge bright where a sun hides off-frame to the left. Third band: flat outlined shelves of white and pale-blue cloud drifting over the planet surface in two staggered rows. Fourth band: rolling green-teal continents seen from high above, terraced mint plateaus, dark teal forest canopies and thin silver rivers glinting. Bottom band: a near ridge of pale mint and teal rock pinnacles with dark outlines, a crisp silhouette edge that could tile left to right. At the far right, tiny against the planet, a long dark angular fortress-ship silhouette hangs in orbit with a single pinprick of red underlight. Calm, blue, patient mood before an invasion. No characters, no ships in the foreground, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, oversaturated neon, spaceship cockpit, human figures, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 2847193021,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:20:02.679Z",
+  "seconds": 56.3,
+  "label": "AZURE VERGE — zone A stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-a-azure-verge.json#azure-verge-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/azure-verge.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

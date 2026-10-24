@@ -1,0 +1,42 @@
+{
+  "id": "enemy/sentinel-walker/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen SENTINEL WALKER, image 2 shows the chosen TRENCH EEL, image 3 shows the chosen GYRE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in six frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 15821,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:21:50.583Z",
+  "seconds": 233.5,
+  "label": "Zone H roster sheet — every library enemy of IRON CITADEL together (follows all zone H enemy winners)",
+  "source": "images/40-enemies/zone-h-iron-citadel.json#iron-citadel-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/sentinel-walker/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/sentinel-walker.png",
+    "art-prompts/v2/candidates/a/enemy/trench-eel.png",
+    "art-prompts/v2/candidates/a/enemy/gyre.png"
+  ],
+  "editFromSha256": [
+    "3930585100299f9f254e0db0ba39b7165d4a1e1c5b0cf540882954aff8fb6698",
+    "550bbd45a4ce6cab508cb4f4b817b65c59521877d126f69a0ba403f2ba65bcae",
+    "1c6e27fd71623b2781e561b7f38d19dc0341bc7cf0277cb567613dc84bc558b5"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen SENTINEL WALKER, image 2 shows the chosen TRENCH EEL, image 3 shows the chosen GYRE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in six frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F119",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/sentinel-walker"
+  }
+}

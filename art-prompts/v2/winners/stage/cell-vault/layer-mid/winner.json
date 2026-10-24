@@ -1,0 +1,38 @@
+{
+  "id": "stage/cell-vault/layer-mid",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen CELL VAULT stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): CELL VAULT mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established CELL VAULT stage art exactly: membrane arches of green cell-mesh with amber pores, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Use the reference's dark moss-green and deep teal for the mesh, clearly darker and bluer than the bright key green, with dark navy outlines. The band runs off both the left and the right edge of the picture with no end caps; its top is an irregular outline of arch tops against the green key, with no rails, no outline box and no straight lines. The amber pores are small, flat-shaded and set into the mesh.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 59566,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:21:45.908Z",
+  "seconds": 77,
+  "label": "CELL VAULT parallax layer 3/4 (mid, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/cell-vault/layer-mid.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/cell-vault.png"
+  ],
+  "editFromSha256": [
+    "4d3c14c6ad6a92712578951c4c3fff1925d8a33e44d7b6ed3dbebe3483d11d8c"
+  ],
+  "instruction": "Reference image 1 shows the chosen CELL VAULT stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): CELL VAULT mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established CELL VAULT stage art exactly: membrane arches of green cell-mesh with amber pores, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Use the reference's dark moss-green and deep teal for the mesh, clearly darker and bluer than the bright key green, with dark navy outlines. The band runs off both the left and the right edge of the picture with no end caps; its top is an irregular outline of arch tops against the green key, with no rails, no outline box and no straight lines. The amber pores are small, flat-shaded and set into the mesh.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F175",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:59.384Z",
+    "parentId": "stage/cell-vault"
+  }
+}

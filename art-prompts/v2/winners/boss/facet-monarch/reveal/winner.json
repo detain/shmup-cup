@@ -1,0 +1,40 @@
+{
+  "id": "boss/facet-monarch/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Geometric majesty boss reveal inside a cathedral-sized crystal corridor, the FACET MONARCH arriving as a slow-motion assembly, seven huge wedge-shaped crystal segments of deep violet with glowing lilac edges sliding through the air from off-frame to close into a floating crown ring, and at the exact center of the ring igniting a single small blinding core of white-pink light that throws sharp triangular caustics across every surface, the corridor walls faceted like the inside of a geode, mirror planes angling the crown's reflection into an endless multiplied halo, loose shard motes drifting upward as if gravity reversed, the light ramp cool violet to pale lilac with one hot pink-white heart, at the bottom edge of the frame a tiny steel-blue dart fighter with cyan canopy banks into the corridor mouth, dwarfed and deliberate, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter: draw it tiny near the bottom left in the same side view as reference 2, flying with its nose pointing right and its flame on its left end, never seen from the front or behind.",
+  "negative": "organic boss, tentacles, metal gears, photorealistic, 3d render, text, watermark, rainbow palette, muddy colors, pure black background",
+  "model": "flux2",
+  "seed": 13701,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T18:40:56.939Z",
+  "seconds": 195.6,
+  "label": "FACET MONARCH (FM-07) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/07-facet-monarch.json#fm07-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/facet-monarch/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/facet-monarch.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "cbd2c0cb80917aa8874b276b42f1ce94197c31a1cd6965cf2c417f67f1ad1036",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Geometric majesty boss reveal inside a cathedral-sized crystal corridor, the FACET MONARCH arriving as a slow-motion assembly, seven huge wedge-shaped crystal segments of deep violet with glowing lilac edges sliding through the air from off-frame to close into a floating crown ring, and at the exact center of the ring igniting a single small blinding core of white-pink light that throws sharp triangular caustics across every surface, the corridor walls faceted like the inside of a geode, mirror planes angling the crown's reflection into an endless multiplied halo, loose shard motes drifting upward as if gravity reversed, the light ramp cool violet to pale lilac with one hot pink-white heart, at the bottom edge of the frame a tiny steel-blue dart fighter with cyan canopy banks into the corridor mouth, dwarfed and deliberate, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter: draw it tiny near the bottom left in the same side view as reference 2, flying with its nose pointing right and its flame on its left end, never seen from the front or behind.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F031",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/facet-monarch"
+  }
+}

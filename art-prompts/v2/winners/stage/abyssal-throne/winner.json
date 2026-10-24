@@ -1,0 +1,23 @@
+{
+  "id": "stage/abyssal-throne",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, a lifted deep-navy base that is never pure black. The floor of an abyssal ocean trench seen side-on like a flooded night city, built from horizontal parallax bands. Water: a gradient of ink-blue and deep teal, full of drifting marine snow, tiny pale flecks suspended mid-descent. Upper band: a vast rock shelf overhanging the trench from the top right, its underside studded with tiny lantern-like lights like an upside-down starfield, one long stream of glowing cyan sediment pouring off its lip in a luminous silt waterfall that dims as it falls. Far band: faint blue silhouettes of distant rock spires. Middle band: a skyline of colossal black-blue rock spires of every height, thin needles next to stubby towers and a couple of broken stumps, faint sediment banding on their lit sides, constellations of cold cyan bioluminescent pinpricks crawling along their ridges and crowning their tips like beacons, soft teal glow smears clinging to ledges. Near band: at the left and right edges, tall ribbon-weed fronds swaying on one shared diagonal current, each a flat banded green-black blade with a thin cyan glow-line down its seam, rising from a dark rubble floor. No sunlight; all light belongs to living things. No characters, no creatures in the foreground, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 1857364029,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:47:38.032Z",
+  "seconds": 52.4,
+  "label": "ABYSSAL THRONE — zone I stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-i-abyssal-throne.json#abyssal-throne-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/abyssal-throne.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

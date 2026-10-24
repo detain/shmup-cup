@@ -1,0 +1,23 @@
+{
+  "id": "moment/ending-citadel-falls-silent",
+  "slot": "a",
+  "prompt": "Painterly 16-bit pixel art inspired arcade ending illustration, wide cinematic side-scrolling composition, bold dark outlines, saturated limited palette, glowing accent colors, soft CRT scanline texture, emotional and quiet, never pure black. Sunrise after the war. The sky is a warm dawn gradient: deep navy only at the very top edge, melting through dusky violet and rose into bright peach and pale gold at the horizon. On the right, the sun is a huge pale-gold semicircle, exactly half of it hidden below the flat far horizon line, rising, pouring a broad lane of soft amber light across the scene. Layered flat cloud shelves of rose-grey and warm cream with brightly gilded undersides float in horizontal bands across the sky. Below, half lost in golden morning haze, lies a long range of dead fortress wreckage: angular black-blue hull ridges, broken towers and drooping gun masts, dark and silent, turned into mountains. In the lower left, tiny in the frame, a lone steel-blue dart-shaped fighter with a glowing cyan canopy and a soft orange engine glow flies toward the left edge of the picture, nose pointing left, heading home, trailing one thin pale contrail ribbon back toward the ruins and the sun. Wide, warm, mercifully empty. Palette of pale gold, peach, cream and rose-grey dawn light over lifted deep-navy shadow on the land. No text, no letters, no user interface, no other ships.",
+  "negative": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
+  "model": "flux2",
+  "seed": 3604721958,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:57:51.883Z",
+  "seconds": 36.3,
+  "label": "Ending \"The Citadel Falls Silent\" — dawn flight home under a pale-gold half-sun",
+  "source": "images/70-key-moments/endings.json#ending-citadel-falls-silent-v1",
+  "file": "art-prompts/v2/candidates/a/moment/ending-citadel-falls-silent.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "moment/escape-run",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering, a widescreen side-scrolling arcade shooter escape sequence, pure forward momentum, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows, never pure black. A small steel-blue dart-shaped fighter with a bold blue fuselage stripe, a glowing cyan bubble canopy and long screaming orange engine flames flies from left to right at full speed through the lower third of the frame, streaked with horizontal speed lines, skimming low over the floor of a collapsing rock corridor. Behind it, filling the whole left quarter of the image, a rolling wall of brown-grey dust and shattered boulders chases the ship, glowing inside with bursts of furnace-orange fire, giant wall slabs tumbling inside the cloud, a shimmer of heat haze stretching ahead of it. The corridor fails in sequence toward the right: near the dust wall both walls are already sheared away; in the middle, cracked ceiling slabs tilt down across the flight path; around the ship the corridor is still standing but the floor plates buck upward along a fresh fissure that races alongside the fighter. Ahead, more corridor bends gently to the right toward a thin slice of open deep-navy sky at the far right edge. Small rocks and dust stream past the ship, and a few short bright tracer shots fly forward from its nose. Earth golds and rusts, furnace oranges, dusty browns, one bright blue ship. No text, no letters, no numbers, no timer, no user interface.",
+  "negative": "photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry",
+  "model": "flux2",
+  "seed": 1473920581,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:54:26.370Z",
+  "seconds": 55.9,
+  "label": "Escape run — the corridor collapsing behind a sprinting fighter",
+  "source": "images/70-key-moments/boss-moments.json#escape-run-v1",
+  "file": "art-prompts/v2/candidates/a/moment/escape-run.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

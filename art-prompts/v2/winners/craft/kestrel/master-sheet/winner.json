@@ -1,0 +1,38 @@
+{
+  "id": "craft/kestrel/master-sheet",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of KESTREL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: High-resolution master sprite sheet for a horizontal arcade shooter, twelve large clean renderings of the KESTREL steel-blue dart fighter with bold blue stripe, cyan canopy and orange afterglow laid out on a wide perfectly flat solid pure bright green chroma-key background in a tidy 4-by-3 grid of equal cells with equal gutters, top row four progressively hotter exhaust states from idle ember to full burn trail, second row the hull from exact side, three-quarter low, three-quarter high and true rear views, third row damage tiers from light scuffs to smoking armor cracks to a critical state with flickering shield sparks, all cells using identical lighting direction from above, bold dark outlines, flat saturated arcade fills with subtle pixel-cluster texture accents on the highlights only, precise consistent scale between cells, no shadows cast on the background, no text, no numbers, no borders around cells, documentation quality. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Count carefully: the top row has exactly four fighters, the second row exactly four, the third row exactly four, twelve in total and nothing else; every flame stays inside its own cell and the fighters in the first and third rows are all side views with the nose to the right. No lines between the cells, only empty green space.",
+  "negative": "overlapping sprites, uneven sprite sizes, shadows on background, gradient background, cell borders, labels, numbers, perspective skew, blurry, text, photorealistic, 3d render, watermark, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 13311,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T16:57:34.382Z",
+  "seconds": 146.1,
+  "label": "Hi-res master sheet: exhaust states, side / three-quarter / rear views, damage tiers",
+  "source": "images/20-player-crafts/sprite-sheets.json#kestrel-sprite-sheet-v2",
+  "file": "art-prompts/v2/candidates/a/craft/kestrel/master-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of KESTREL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: High-resolution master sprite sheet for a horizontal arcade shooter, twelve large clean renderings of the KESTREL steel-blue dart fighter with bold blue stripe, cyan canopy and orange afterglow laid out on a wide perfectly flat solid pure bright green chroma-key background in a tidy 4-by-3 grid of equal cells with equal gutters, top row four progressively hotter exhaust states from idle ember to full burn trail, second row the hull from exact side, three-quarter low, three-quarter high and true rear views, third row damage tiers from light scuffs to smoking armor cracks to a critical state with flickering shield sparks, all cells using identical lighting direction from above, bold dark outlines, flat saturated arcade fills with subtle pixel-cluster texture accents on the highlights only, precise consistent scale between cells, no shadows cast on the background, no text, no numbers, no borders around cells, documentation quality. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Count carefully: the top row has exactly four fighters, the second row exactly four, the third row exactly four, twelve in total and nothing else; every flame stays inside its own cell and the fighters in the first and third rows are all side views with the nose to the right. No lines between the cells, only empty green space.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F071",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/kestrel"
+  }
+}

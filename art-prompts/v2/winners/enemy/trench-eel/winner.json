@@ -1,0 +1,23 @@
+{
+  "id": "enemy/trench-eel",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single TRENCH EEL enemy of the Iron Tide, a long armored mechanical eel that lunges out of a fortress floor hatch, isolated. At the bottom right a short square steel deck hatch frame with amber hazard lights and a dark open hole. Out of it the eel rears up in a tall S-curve, its body made of a chain of overlapping gunmetal ring-plate segments that shrink toward the hatch, each plate with a steel highlight on the top-left and a darker iron underside, and a thin glowing violet seam running along its belly. At the top the head bends forward to face left: a blunt armored wedge snout with a jagged ridge of steel teeth along the jaw, a narrow slit eye glowing amber, and two small swept-back fin spikes behind the head. Long, sinuous, clearly segmented silhouette. Side view facing left, the whole eel and hatch centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shapes that stay readable at small size, no anti-aliasing, no floor, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 2411084419,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:50:25.801Z",
+  "seconds": 48.5,
+  "label": "TRENCH EEL — zone H (IRON CITADEL) long segmented eel (head ~15 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-h-iron-citadel.json#iron-citadel-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/trench-eel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/grasping-bloom/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: a grasping bloom anchored at the right edge to a thicket of riveted steel vines, its heavy metal petals peeled wide around a pulsing suction center. The petals are armored scoops — dark green-blue plate with brass hinge-ribs and pink warning paint on the inner faces — and each one flexes on visible piston fingers. The flower's throat is a soft violet funnel with spiral muscle-folds that glow inward, and loose debris, spent bullets and dust motes stream toward it along curved suction paths. Cool teal ambient light from the left, sickly magenta bioluminescence from the throat. Deep-navy background never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The streaming debris is rock chips, dust and a few small round glowing bullet orbs; no brass shell casings or cartridges anywhere.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, pure black background",
+  "model": "flux2",
+  "seed": 14301,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:01:22.765Z",
+  "seconds": 65.9,
+  "label": "GRASPING BLOOM reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/13-grasping-bloom.json#glb-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/grasping-bloom/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/grasping-bloom.png"
+  ],
+  "editFromSha256": [
+    "1028de4a7d3f1202821ab4a7547793bdb0aa183ff19d9877bff56fefd436e2e6"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: a grasping bloom anchored at the right edge to a thicket of riveted steel vines, its heavy metal petals peeled wide around a pulsing suction center. The petals are armored scoops — dark green-blue plate with brass hinge-ribs and pink warning paint on the inner faces — and each one flexes on visible piston fingers. The flower's throat is a soft violet funnel with spiral muscle-folds that glow inward, and loose debris, spent bullets and dust motes stream toward it along curved suction paths. Cool teal ambient light from the left, sickly magenta bioluminescence from the throat. Deep-navy background never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The streaming debris is rock chips, dust and a few small round glowing bullet orbs; no brass shell casings or cartridges anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F059",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/grasping-bloom"
+  }
+}

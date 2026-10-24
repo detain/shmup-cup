@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-talon/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON TALON. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON TALON boss parts taken from the established design — one finger with its knuckle drum, the palm winch plate and the pink grip-amp pads, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the claw were taken apart, never the whole claw: the top row only one single curved steel finger with its brass knuckle drums and pink knuckle light; the middle row only the round hazard-striped yellow-and-black palm winch plate with its pink centre; the bottom row only one small round pink grip-amp pad in its dark steel socket. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 33751,
+  "width": 1184,
+  "height": 880,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:23:40.065Z",
+  "seconds": 65.9,
+  "label": "IRON TALON parts sheet: one finger with its knuckle drum, the palm winch plate and the pink grip-amp pads, 4 frames each",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/iron-talon/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-talon.png"
+  ],
+  "editFromSha256": [
+    "1ce959103aa0d3080547cf814f05383939c1ed3c7c024b9c8a6e07ec04842fdf"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON TALON. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON TALON boss parts taken from the established design — one finger with its knuckle drum, the palm winch plate and the pink grip-amp pads, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the claw were taken apart, never the whole claw: the top row only one single curved steel finger with its brass knuckle drums and pink knuckle light; the middle row only the round hazard-striped yellow-and-black palm winch plate with its pink centre; the bottom row only one small round pink grip-amp pad in its dark steel socket. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F066",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-talon"
+  }
+}

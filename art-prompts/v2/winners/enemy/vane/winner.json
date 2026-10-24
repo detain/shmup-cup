@@ -1,0 +1,23 @@
+{
+  "id": "enemy/vane",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single VANE enemy of the Iron Tide, a small bladed interceptor like a spinning pinwheel shuriken. A compact round steel hub with a dark navy sensor dot in its center, ringed by exactly three curved crescent mirror-blades fanned evenly at 120-degree intervals, all sweeping the same way like a turbine. Each blade is polished silver-steel with a sharp bright lilac glint along its leading edge and a darker blue-steel trailing edge reflecting the azure sky. Seen from the side as it spins toward the left, flat and graphic, a crisp three-pointed silhouette. Centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at tiny size, no anti-aliasing, no motion blur, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 3438311348,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:20:35.975Z",
+  "seconds": 30.1,
+  "label": "VANE — zone A (AZURE VERGE) small bladed flier (~18×15 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-a-azure-verge.json#azure-verge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/vane.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

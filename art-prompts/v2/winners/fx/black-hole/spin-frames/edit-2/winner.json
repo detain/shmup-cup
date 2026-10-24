@@ -1,0 +1,61 @@
+{
+  "id": "fx/black-hole/spin-frames",
+  "slot": "a",
+  "prompt": "No model and no prompt: made in code from the winner candidates/a/fx/black-hole.png. Eight frames: the three-armed vortex turns clockwise, 45 degrees further in each frame (one full turn over the sheet, so frame 8 runs on into frame 1); the dark core and its lilac rim stay fixed in the centre while the arms and the crackle turn.",
+  "negative": null,
+  "model": "code",
+  "origin": "derived in code from the owner's winner: no AI model, no GPU, no server",
+  "seed": null,
+  "width": 1440,
+  "height": 720,
+  "steps": null,
+  "guidance": null,
+  "generatedAt": "2026-10-18T01:01:16.282Z",
+  "seconds": 4.1,
+  "label": "Black-hole spin sheet, 8 frames, on the black key",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/fx/black-hole/spin-frames/edit-2.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": null,
+  "endpoint": null,
+  "negativeSent": null,
+  "mode": "code",
+  "derivedFrom": "candidates/a/fx/black-hole.png",
+  "derivedFromSha256": "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/black-hole.png"
+  ],
+  "editFromSha256": [
+    "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62"
+  ],
+  "instruction": null,
+  "transform": {
+    "frames": 8,
+    "layout": "2 rows x 4, read left to right then the bottom row",
+    "cell": "360x360",
+    "gutters": "none drawn; one continuous black canvas",
+    "background": "exact black 0,0,0 like the winner (pixels whose max channel is <= 4 after scaling are set to 0)",
+    "spin": "clockwise about the dark core's centre (y 510.65, x 508.20 in the winner), frame k at (k-1) x 45 degrees = 360/8; the three arms are different colours (violet, indigo, steel blue), so only a full turn loops: a 120/8 = 15 degree step would swap the arm colours at frame 8 -> 1",
+    "core": "the disc r <= 123 px of the winner (dark core r ~96, lilac rim peak r 110) is not rotated: identical in every frame; the crackle and the arms outside it turn",
+    "resampling": "bilinear rotation at the winner's resolution onto a 1053 px canvas, area-averaged (Pillow BOX) to the cell, scale 0.3419"
+  },
+  "script": "/tmp/claude-1000/-home-sites-shmup-cup/637d1767-c0eb-45a8-9dbd-64db6b595458/scratchpad/code-frames/make_frames.py",
+  "scriptSha256": "6d8d7d4706aeb080f01834626ea52c1c035f1d00718d1e59f65aea5d6aabecdb",
+  "command": "python3 -I /tmp/claude-1000/-home-sites-shmup-cup/637d1767-c0eb-45a8-9dbd-64db6b595458/scratchpad/code-frames/make_frames.py --halo-out /home/sites/shmup-cup/art-prompts/v2/candidates/a/enemy/halo-crystal/frames/edit-2.png --hole-out /home/sites/shmup-cup/art-prompts/v2/candidates/a/fx/black-hole/spin-frames/edit-2.png --sidecars",
+  "outputSize": "1440x720",
+  "meta": {
+    "job": "code-2",
+    "kind": "comment-edit",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:36:22.889Z",
+    "parentId": "fx/black-hole/spin-frames",
+    "comments": [
+      {
+        "key": "fx/black-hole/spin-frames",
+        "comment": "there seems to be no difference in images they should each visually be different showing progression of a spinning spiral",
+        "updatedAt": "2026-10-17T23:36:22.889Z"
+      }
+    ]
+  }
+}

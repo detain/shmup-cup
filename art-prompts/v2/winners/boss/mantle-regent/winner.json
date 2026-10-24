@@ -1,0 +1,23 @@
+{
+  "id": "boss/mantle-regent",
+  "slot": "a",
+  "prompt": "A single giant one-eyed tentacled tyrant boss for a retro 16-bit side-scrolling space shooter, a menacing biomechanical squid-like monster seen almost head-on in a slight three-quarter view turned toward the left, centered with a generous empty margin on all four sides, the whole creature visible with every tentacle tip inside the frame and nothing cut off. On top, a tall swept-back armored mantle hood of ridged dark bottle-green chitin scales braced by riveted gunmetal ribs and streaked with glowing violet veins, crowned by two long tattered maroon hood-fins that stream up and back like torn banners. Beneath the hood, in the middle of the body, a single enormous ivory eye as wide as a gun turret, veined with thin violet lines, with a narrow vertical violet slit pupil, the obvious weak point. Eight thick muscular tentacles of dark maroon and plum flesh banded with steel armor rings sweep forward and curve upward in front of the body, framing the eye on both sides in a protective arch like the ribs of a half-open cage, their tips curling inward above it, their inner sides lined with round suction rings glowing pale mint. Two long fleshy feeding tendrils hang straight down below the arch, each ending in a curved steel hook. Small pink and red bullet ports with bright cores and dark rims are set into the tentacle roots. Menacing, alien, regal, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark bottle green, deep olive, gunmetal steel, maroon, plum, ivory, violet and pale mint accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no cell walls, no tissue, no loose bullets, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, human face, many eyes, wet organic gloss, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 3115124684,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:36:58.137Z",
+  "seconds": 82.2,
+  "label": "MANTLE REGENT (MR-06) — zone F boss, the one-eyed tentacle tyrant; full body on key green",
+  "source": "images/30-bosses/hi-res.json#mr06-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/mantle-regent.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

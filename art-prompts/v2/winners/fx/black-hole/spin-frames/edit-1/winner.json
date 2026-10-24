@@ -1,0 +1,40 @@
+{
+  "id": "fx/black-hole/spin-frames",
+  "slot": "a",
+  "prompt": "Reference image 1 is the chosen black-hole spin sheet; reference image 2 is the chosen single black-hole design. Edit the sheet so its eight frames show the vortex spinning, every frame visibly different from the others. Keep the vortex design, palette and size, the absolute-dark core with its thin lilac rim and crackle, and the same eight cells in two rows of four on one unbroken flat solid pure black canvas. Change only the rotation: in each cell the three spiral arms are turned 45 degrees further clockwise than in the cell before, read left to right along the top row, then left to right along the bottom row. The broad outer end of the bright violet arm sits: in cell 1 at the top, cell 2 at the top-right, cell 3 at the right, cell 4 at the bottom-right, cell 5 at the bottom, cell 6 at the bottom-left, cell 7 at the left, cell 8 at the top-left. The pale steel-blue arm always sits on the opposite side of the core from the violet arm, and the deep indigo arm between them, so the whole pinwheel turns as one piece and cell 8 leads back into cell 1. No two cells look alike. Crisp pixel clusters, no stars, no nebula, no white lines, gutters, frames or cell borders, no text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 90546,
+  "width": 1456,
+  "height": 720,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-18T00:16:28.161Z",
+  "seconds": 109.4,
+  "label": "Black-hole spin sheet, 8 frames, on the black key",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/fx/black-hole/spin-frames/edit-1.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/black-hole/spin-frames.png",
+    "art-prompts/v2/candidates/a/fx/black-hole.png"
+  ],
+  "editFromSha256": [
+    "21dcbef7b79954e6f9e7a74f28559c2f6e907aed52b1eddcb56466a4e09ab104",
+    "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62"
+  ],
+  "instruction": "Reference image 1 is the chosen black-hole spin sheet; reference image 2 is the chosen single black-hole design. Edit the sheet so its eight frames show the vortex spinning, every frame visibly different from the others. Keep the vortex design, palette and size, the absolute-dark core with its thin lilac rim and crackle, and the same eight cells in two rows of four on one unbroken flat solid pure black canvas. Change only the rotation: in each cell the three spiral arms are turned 45 degrees further clockwise than in the cell before, read left to right along the top row, then left to right along the bottom row. The broad outer end of the bright violet arm sits: in cell 1 at the top, cell 2 at the top-right, cell 3 at the right, cell 4 at the bottom-right, cell 5 at the bottom, cell 6 at the bottom-left, cell 7 at the left, cell 8 at the top-left. The pale steel-blue arm always sits on the opposite side of the core from the violet arm, and the deep indigo arm between them, so the whole pinwheel turns as one piece and cell 8 leads back into cell 1. No two cells look alike. Crisp pixel clusters, no stars, no nebula, no white lines, gutters, frames or cell borders, no text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1456x720",
+  "meta": {
+    "job": "E001",
+    "kind": "comment-edit",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:36:22.889Z",
+    "parentId": "fx/black-hole/spin-frames"
+  }
+}

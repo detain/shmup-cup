@@ -1,0 +1,23 @@
+{
+  "id": "enemy/husk-crawler",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single HUSK CRAWLER enemy of the Iron Tide, a broad low beetle-shaped walker drone that scuttles along desert ground. A wide domed carapace of four overlapping slate-charcoal armor plates like a shield-backed beetle, each plate with a pale sandy-cream dust highlight along its top edge and worn bronze rivets. The front shell lip juts forward over the head on the left, and beneath it glows a thin horizontal dim red eye-bar in a dark slot. Six stubby jointed mechanical legs, three visible on the near side, splayed in a walking stance, ending in small hooked feet, plus two short antenna prongs at the front. Wide, low, flat-bottomed silhouette that clearly reads as an armored bug. Side view facing left, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no ground, no sand, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 518974081,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:31:42.198Z",
+  "seconds": 48.6,
+  "label": "HUSK CRAWLER — zone C (DUNE EXPANSE) medium beetle walker (~24×15 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-c-dune-expanse.json#dune-expanse-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/husk-crawler.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

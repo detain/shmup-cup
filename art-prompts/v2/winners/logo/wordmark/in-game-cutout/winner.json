@@ -1,0 +1,38 @@
+{
+  "id": "logo/wordmark/in-game-cutout",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen design of SHMUP CUP wordmark. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): The exact text \"SHMUP CUP\" as an arcade game logo, reproducing the established wordmark exactly — the same heavy chunky block capital letters, the same vertical gradient from pale lemon yellow through tangerine to flame red, the same thick dark-navy outline and hard offset navy drop shadow — centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background, flat and frontal, no stars, no glow, no planet, no scanlines, no extra words, crisp hard edges so the logo can be cut out cleanly. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No other text anywhere besides the exact words \"SHMUP CUP\".",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 89260,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:32:02.210Z",
+  "seconds": 68.8,
+  "label": "Winning wordmark alone on key green, for the 640×360 title screen (~320 px wide in game)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/logo/wordmark/in-game-cutout.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/logo/wordmark.png"
+  ],
+  "editFromSha256": [
+    "293fed8839192a6dcacda1313276a93537a8d623648641ecc674da3744b6ef25"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SHMUP CUP wordmark. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): The exact text \"SHMUP CUP\" as an arcade game logo, reproducing the established wordmark exactly — the same heavy chunky block capital letters, the same vertical gradient from pale lemon yellow through tangerine to flame red, the same thick dark-navy outline and hard offset navy drop shadow — centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background, flat and frontal, no stars, no glow, no planet, no scanlines, no extra words, crisp hard edges so the logo can be cut out cleanly. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No other text anywhere besides the exact words \"SHMUP CUP\".",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F067",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:57:49.460Z",
+    "parentId": "logo/wordmark"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "stage/brine-nebula/layer-mid",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: coral-shaped reef towers of sand-stone tan and pale rose, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The layer holds only the reef towers: no orbs, bullets or glowing dots anywhere. Paint the tan and rose stone in dim dusk shades, clearly darker and greyer than the reference, with only small highlights on the upper-left edges.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 3929,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:50:01.044Z",
+  "seconds": 127.9,
+  "label": "BRINE NEBULA parallax layer 3/4 (mid, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/brine-nebula/layer-mid.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/brine-nebula.png"
+  ],
+  "editFromSha256": [
+    "2afb6f431e3c3cb0ee21b6aeb0039721f8daa62be6cbfd29052f2c57bb362cb3"
+  ],
+  "instruction": "Reference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: coral-shaped reef towers of sand-stone tan and pale rose, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The layer holds only the reef towers: no orbs, bullets or glowing dots anywhere. Paint the tan and rose stone in dim dusk shades, clearly darker and greyer than the reference, with only small highlights on the upper-left edges.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F151",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:29.471Z",
+    "parentId": "stage/brine-nebula"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "tiles/prism-labyrinth",
+  "slot": "a",
+  "prompt": "Full-frame seamless tileable texture of faceted violet crystal for a 16-bit side-scrolling arcade shooter, viewed perfectly flat and straight-on, the crystal surface touches all four edges of the square with no border, no margin and no background. Chunky pixel-art texture sized for 12-pixel tiles: an irregular low-poly mosaic of flat triangular crystal facets of many sizes and angles fitted together like cut gemstone, each facet a single flat fill in a deep indigo, violet or light amethyst tone, bright pale lilac glint lines on the upper-left edges, thin dark indigo seams, a few tiny pale gold sparkle points evenly scattered. Near the top, a row of larger upward-pointing facet tips with lilac highlights stands out in front of a recessed wall of darker indigo crystal facets that continues up to the top edge, so there is crystal behind and between the tips all the way to the border. Three-to-four step shading ramps lit from the top-left, crisp one-pixel dark navy outlines, saturated limited palette, uniform density with no focal point so it repeats cleanly left to right, no perspective, no horizon, no sky, no white, no objects, no characters, no text.",
+  "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
+  "model": "flux2",
+  "seed": 1418820537,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:44:09.150Z",
+  "seconds": 98.3,
+  "label": "PRISM LABYRINTH terrain material swatch — zone G rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/tiles/prism-labyrinth.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

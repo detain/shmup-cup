@@ -1,0 +1,23 @@
+{
+  "id": "tiles/cell-vault",
+  "slot": "a",
+  "prompt": "Seamless tileable texture of living organic tissue for a 16-bit side-scrolling arcade shooter, viewed perfectly flat and straight-on like a scanned texture sheet, the material fills one hundred percent of the square and runs off all four borders. Chunky pixel-art texture sized for 12-pixel tiles: a dense packed wall of rounded green cells of slightly different sizes, each cell shaded in a moss-to-jade ramp with a small pale glowing nucleus, thin dark near-black green membranes between the cells, a scatter of small amber-orange pores and thin warm amber veins threading through the gaps, evenly spread. The top band touching the top border is a soft rolled membrane fold of lighter jade tissue with a glossy highlight, cut by the border. Three-to-four step shading ramps lit from the top-left, crisp one-pixel dark green outlines, saturated limited palette, uniform density with no focal point so it repeats cleanly left to right, no perspective, no horizon, no sky, no eyes, no faces, no objects, no characters, no text.",
+  "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
+  "model": "flux2",
+  "seed": 2093657184,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:38:38.576Z",
+  "seconds": 54.2,
+  "label": "CELL VAULT terrain material swatch — zone F rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/tiles/cell-vault.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

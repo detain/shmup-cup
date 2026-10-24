@@ -1,0 +1,23 @@
+{
+  "id": "stage/magma-deep",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, shadows in lifted deep navy-maroon, never pure black. The inside of a colossal volcanic cavern laid out as horizontal parallax bands. Top band: a jagged cave ceiling of dark basalt stalactites, its underside rimmed orange, fading into thick amber smog. Far band: a row of erupting volcanic peaks along the back wall, throwing bright lava fountains in long arcing parabolas against a smoky amber sky. Middle band: a crude arched bridge of warm terracotta brick spanning a chasm, and small rusty industrial gantries and catwalks bolted to the cavern wall, strung with dull red warning lamps, little ash motes drifting through slanting orange light shafts. Lower band: a lava lake crossing the frame, its surface a ramp from dark cooled umber crust to glowing tangerine to molten yellow-white at the vents, with drifting rafts of black basalt and bubbling blisters. Bottom band: a near ledge of black basalt and orange-brown cave brick with glowing cracks, every rock silhouette rimmed orange on its belly from the heat below. The planet's furnace room, industrially occupied. No characters, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, blue sky, snow, ocean, people, castle, pure black background, blurry, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 3398471205,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:29:09.691Z",
+  "seconds": 54.2,
+  "label": "MAGMA DEEP — zone D stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-d-magma-deep.json#magma-deep-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/magma-deep.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

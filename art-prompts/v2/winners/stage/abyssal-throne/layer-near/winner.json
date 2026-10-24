@@ -1,0 +1,38 @@
+{
+  "id": "stage/abyssal-throne/layer-near",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): ABYSSAL THRONE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established ABYSSAL THRONE stage art exactly: drifting weed fronds and rising bubbles, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces on the green key: tall dark teal-olive weed fronds with thin cyan glowing ribs rising from small rock clumps along the bottom, and loose trails of small outlined bubbles drifting up between them, with green key everywhere between the fronds and bubbles. No water, no spires, no filled strip, no outline box and no straight lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 14719,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:28:06.860Z",
+  "seconds": 76.6,
+  "label": "ABYSSAL THRONE parallax layer 4/4 (near, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/abyssal-throne/layer-near.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/abyssal-throne.png"
+  ],
+  "editFromSha256": [
+    "48b349448bb11280281fe7fae58facde3c3fdb9fdd4e7778c1cea0cfb7a3d68b"
+  ],
+  "instruction": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): ABYSSAL THRONE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established ABYSSAL THRONE stage art exactly: drifting weed fronds and rising bubbles, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces on the green key: tall dark teal-olive weed fronds with thin cyan glowing ribs rising from small rock clumps along the bottom, and loose trails of small outlined bubbles drifting up between them, with green key everywhere between the fronds and bubbles. No water, no spires, no filled strip, no outline box and no straight lines.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F194",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:29.380Z",
+    "parentId": "stage/abyssal-throne"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "moment/game-over",
+  "slot": "b",
+  "prompt": "A game-over screen illustration for a retro arcade space shooter, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, a still and quiet composition. In the lower middle of a dark deep-navy void, the wreck of a small stylized sci-fi starfighter drifts slowly in side profile, tilted nose-down: a compact, chunky steel-blue dart-shaped spacecraft with short swept wings and a rounded bubble canopy, clearly a video game spaceship and not a real-world jet, its engines dead and dark, its bubble canopy cracked and dim, its blue fuselage stripe scorched, a single thin curl of ember-grey smoke rising from one wingtip and a short ribbon of pale vapor bleeding sideways from a gash in its belly. All around it hangs the unfinished battle, frozen in place: curved streams of small perfectly round glowing bullet orbs, pink, red and violet, each a simple circle with a bright white core and a dark rim, dozens of them, still arcing toward a target that is gone, some passing right through the wreck's drift line. Far off at the right edge, half out of frame and dim in shadow, the long low flat silhouette of a huge armored battleship hull lying horizontally like a distant mountain ridge of riveted plates, no head, no spikes, no creature features, with a single calm narrow red sensor slit glowing in its side. Across the upper middle, centered and perfectly straight-on, the words \"GAME OVER\" in enormous heavy blocky arcade capital letters, warning-red faces with white-gold inner bevels and a thick dark navy outline, slightly over-bright so their red glow falls on the wreck below. Sparse cold star dust, lifted deep-navy base, never pure black. The only text in the image is \"GAME OVER\": no other words, letters, numbers, score digits, watermark or signature anywhere.",
+  "negative": "photorealistic, 3d render, fireball explosion, ship burning, debris field, pilot ejecting, lowercase letters, script font, misspelled text, extra words, numbers, score digits, continue countdown, watermark, blurry, letters in perspective, green skull imagery",
+  "model": "flux2",
+  "seed": 997555909,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:31:27.420Z",
+  "seconds": 82.1,
+  "label": "GAME OVER card — frozen bullet storm around a drifting wreck",
+  "source": "images/70-key-moments/warning-gameover.json#game-over-screen-v1",
+  "file": "art-prompts/v2/candidates/b/moment/game-over.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

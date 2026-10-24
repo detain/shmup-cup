@@ -1,0 +1,38 @@
+{
+  "id": "enemy/urchin/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of URCHIN. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same URCHIN enemy — a squat reef turret, a charcoal barnacle dome plated in overlapping slate scales, crowned with a fan of purple crystal spines and a single glowing magenta aiming lens, sitting on a small reef-rock base, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: lens aimed left, lens aimed up-left, lens aimed down-left, and destroyed with broken spines and a cracked shell. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 48954,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:33:59.937Z",
+  "seconds": 66.7,
+  "label": "URCHIN animation sheet, four frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/urchin/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/urchin.png"
+  ],
+  "editFromSha256": [
+    "647529b187d8e33a0e1d781e4bcfbce4e4bb3cf23bbebb57f24af2bea93b23f8"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of URCHIN. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same URCHIN enemy — a squat reef turret, a charcoal barnacle dome plated in overlapping slate scales, crowned with a fan of purple crystal spines and a single glowing magenta aiming lens, sitting on a small reef-rock base, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: lens aimed left, lens aimed up-left, lens aimed down-left, and destroyed with broken spines and a cracked shell. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F095",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:19.377Z",
+    "parentId": "enemy/urchin"
+  }
+}

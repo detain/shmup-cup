@@ -1,0 +1,23 @@
+{
+  "id": "logo/black-hole-crest",
+  "slot": "a",
+  "prompt": "Powerful relic emblem, a square deep-navy enamel plaque with softly bevelled corners and a thin polished gold border with a small gold rivet at each corner, centered on a slightly darker midnight-navy background with an even margin, never pure black. In the middle of the plaque, a spinning vortex shaped like a three-bladed propeller seen head-on, its blades curved into a clockwise spiral: one blade starts at the top, one at the lower right and one at the lower left, so the whole shape forms a curved Y with three-fold symmetry. The top blade is bright violet, the lower-right blade is deep indigo-blue, the lower-left blade is saturated steel blue; each blade is a broad sickle of light at its outer tip, thinning to a fine thread as it curls into a perfectly circular pitch-dark core at the center. Wide clean navy gaps separate the three blades. A thin glowing lilac ring hugs the edge of the dark core. Tiny round pink and gold bullet sparks ride along the blades, stretched into short streaks as they spiral inward. Faint fine radial scratch lines engraved into the plaque suggest an implosion. Bold dark outlines on every blade, saturated limited palette of violet, indigo, steel blue, lilac, pink and gold over navy, clean vector shapes with crisp pixel-art texture accents and three-step shading, iconic arcade power-up emblem, perfectly centered. No text, no letters, no numbers.",
+  "negative": "text, photorealistic, 3d render, real galaxy, astronomy photo, nebula photo, watermark, blurry, four arms, two arms, pure black background",
+  "model": "flux2",
+  "seed": 3081204709,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:25:58.662Z",
+  "seconds": 59.7,
+  "label": "Black-hole bomb crest — three-armed vortex relic emblem on a navy plaque",
+  "source": "images/10-logo-title/alt-emblems.json#alt-emblem-v3",
+  "file": "art-prompts/v2/candidates/a/logo/black-hole-crest.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/hollow-king/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of THE HOLLOW KING (HK-10). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format with clean vector shapes and pixel-art texture accents. The final boss of a horizontal arcade shoot-em-up revealed inside the hollowed hull-cathedral of a dead mechanical whale battleship: THE HOLLOW KING, an abyssal anglerfish fortress the size of a cathedral nave. Its body is fused machine and pale blind fish — slack, vast jaws rimmed with rows of riveted steel teeth each as long as a fighter craft, palate plated with dented armor and weeping amber coolant. From a crane-like spine of segmented black iron rises its single lure: a swollen biological lamp glowing pale ghost-green, the one light source, swinging on a cable-taut filament and throwing long tooth-shadows across the ribcage walls. Behind it, the ark's interior vanishes into a black-blue dark so complete the player's own ship-light would be swallowed; a few stray enemy bullets drift like plankton, pink and violet with bright cores and dark rims. Deep-water blues and bone-whites only, palette lifted from #05070f to #0c1a3c, never pure black; the lure's glow is the entire color story. Widescreen 16:9 side-scrolling arcade composition, boss filling the right two thirds and brooding, subtle CRT scanline glow. No text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The dark whale-ribbed interior continues smoothly across the whole picture from edge to edge, with no straight vertical seam or split. The drifting bullets are lone round glowing balls, with no sticks, tails or trails.",
+  "negative": "photorealistic, 3d render, text, watermark, pure black background, blurry, vibrant rainbow palette, cute, chibi",
+  "model": "flux2",
+  "seed": 14001,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T20:08:42.386Z",
+  "seconds": 138.8,
+  "label": "THE HOLLOW KING (HK-10) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/10-hollow-king.json#hk10-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/hollow-king/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/hollow-king.png"
+  ],
+  "editFromSha256": [
+    "bb04c66646dd23f048b363e3f4b7db019fa89eb8484460ecb20e253382165409"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of THE HOLLOW KING (HK-10). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format with clean vector shapes and pixel-art texture accents. The final boss of a horizontal arcade shoot-em-up revealed inside the hollowed hull-cathedral of a dead mechanical whale battleship: THE HOLLOW KING, an abyssal anglerfish fortress the size of a cathedral nave. Its body is fused machine and pale blind fish — slack, vast jaws rimmed with rows of riveted steel teeth each as long as a fighter craft, palate plated with dented armor and weeping amber coolant. From a crane-like spine of segmented black iron rises its single lure: a swollen biological lamp glowing pale ghost-green, the one light source, swinging on a cable-taut filament and throwing long tooth-shadows across the ribcage walls. Behind it, the ark's interior vanishes into a black-blue dark so complete the player's own ship-light would be swallowed; a few stray enemy bullets drift like plankton, pink and violet with bright cores and dark rims. Deep-water blues and bone-whites only, palette lifted from #05070f to #0c1a3c, never pure black; the lure's glow is the entire color story. Widescreen 16:9 side-scrolling arcade composition, boss filling the right two thirds and brooding, subtle CRT scanline glow. No text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The dark whale-ribbed interior continues smoothly across the whole picture from edge to edge, with no straight vertical seam or split. The drifting bullets are lone round glowing balls, with no sticks, tails or trails.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F046",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/hollow-king"
+  }
+}

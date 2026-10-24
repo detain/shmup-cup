@@ -1,0 +1,38 @@
+{
+  "id": "boss/facet-monarch/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Dazzling macro weak-point shot inside the rotating crown of the FACET MONARCH, camera threaded between two enormous violet crystal segments whose polished walls fill the left and right of the frame like canyon cliffs, straight ahead the exposed heart core floating untethered, a fist-sized knot of screaming white-pink light wrapped in slow-spinning rings of lilac fracture energy, hairline cracks pulsing outward from the core into the nearest segment and lighting them from within like struck flint, tiny pink and purple bullets with bright cores and dark rims orbiting the core defensively in lazy spiral lanes, one gold capsule grazing past the frame edge, refractions splitting the core light into clean pink and violet beams across the crystal canyon walls, composition funneled by hard perspective lines directly at the glowing center, bold dark outlines, saturated limited palette of violet, lilac and incandescent pink, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Every bullet is a small perfectly round glowing ball like a tiny pink or purple sun, never a cylinder, capsule, pill or cartridge, and none is gold. The core sits inside the reference's grey armoured sphere with its glowing slit visor, ringed by the violet crystal spikes; it is a round light, never heart-shaped. No gold object anywhere.",
+  "negative": "soft focus, dreamy haze, gemstone jewelry photo, photorealistic, 3d render, text, watermark, green tones, pure black background",
+  "model": "flux2",
+  "seed": 14702,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T18:46:06.939Z",
+  "seconds": 105.6,
+  "label": "FACET MONARCH (FM-07) weak-point close-up",
+  "source": "images/30-bosses/07-facet-monarch.json#fm07-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/facet-monarch/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/facet-monarch.png"
+  ],
+  "editFromSha256": [
+    "cbd2c0cb80917aa8874b276b42f1ce94197c31a1cd6965cf2c417f67f1ad1036"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Dazzling macro weak-point shot inside the rotating crown of the FACET MONARCH, camera threaded between two enormous violet crystal segments whose polished walls fill the left and right of the frame like canyon cliffs, straight ahead the exposed heart core floating untethered, a fist-sized knot of screaming white-pink light wrapped in slow-spinning rings of lilac fracture energy, hairline cracks pulsing outward from the core into the nearest segment and lighting them from within like struck flint, tiny pink and purple bullets with bright cores and dark rims orbiting the core defensively in lazy spiral lanes, one gold capsule grazing past the frame edge, refractions splitting the core light into clean pink and violet beams across the crystal canyon walls, composition funneled by hard perspective lines directly at the glowing center, bold dark outlines, saturated limited palette of violet, lilac and incandescent pink, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Every bullet is a small perfectly round glowing ball like a tiny pink or purple sun, never a cylinder, capsule, pill or cartridge, and none is gold. The core sits inside the reference's grey armoured sphere with its glowing slit visor, ringed by the violet crystal spikes; it is a round light, never heart-shaped. No gold object anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F032",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/facet-monarch"
+  }
+}

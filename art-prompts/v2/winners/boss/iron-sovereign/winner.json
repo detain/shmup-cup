@@ -1,0 +1,23 @@
+{
+  "id": "boss/iron-sovereign",
+  "slot": "a",
+  "prompt": "A single colossal fortress boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view facing the left edge of the picture, centered with a wide empty margin above, below and on both sides, the whole machine about three quarters of the picture height and nothing cut off by the frame. A monolithic wide rectangular slab of riveted dark gunmetal steel, wider than it is tall, like a great wall section torn out of a citadel, with heavy bevelled edges, vertical buttress ribs, short exhaust stacks and a low crenellated top. Dead center, a large round furnace aperture blazing red with a round white-hot center, the obvious weak point. Around the aperture, exactly six thick armored shield plates, each a curved trapezoid with a riveted rim, sit on rotating turntables arranged in a ring like a rotary cylinder; they are caught mid-turn in a messy asymmetric pose: three plates bunched together and overlapping on the upper right, two spread apart on the lower left, one tilted sideways, so the red core glows through one wide gap and two narrow slits and the rotation reads as frozen motion. On the left face of the slab, above and below the core, two armored gun pods with twin barrels aimed left, and two small emitter prongs glowing cyan. Recessed channels along the top and bottom edges hold strips of warm amber running lights casting warm highlights across the rivets. Small hatches with pink and red gun ports with bright cores and dark rims dot the face. Monumental, oppressive, menacing, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark gunmetal, steel grey, rust brown, amber, furnace red, white-hot yellow, cyan and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no heat haze, no smoke, no walls, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, rounded ship body, organic, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 101241274,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:44:44.286Z",
+  "seconds": 57.1,
+  "label": "IRON SOVEREIGN (IS-08) — zone H boss, the steel slab with rotating shield plates; full body on key green",
+  "source": "images/30-bosses/hi-res.json#is08-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/iron-sovereign.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

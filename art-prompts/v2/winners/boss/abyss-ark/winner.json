@@ -1,0 +1,23 @@
+{
+  "id": "boss/abyss-ark",
+  "slot": "a",
+  "prompt": "A single enormous whale-shaped flagship battleship boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view, broadside, its blunt snout pointing to the left edge of the picture and its tail fluke at the right, the entire length visible from snout to tail with a clear empty margin at both ends and above and below, nothing cut off by the frame. The hull is built from thirteen distinct articulated armored sections of riveted blue-black steel, each segment separated by a visible dark joint, tapering from the huge rounded whale head through a long body to a narrow tail stock and a great horizontal tail fluke made of fanned armor plates. Along the back, turret batteries and command towers rise in staggered rows like a dark city skyline, with a tall blowhole tower and its antenna mast just behind the head. A long line of warm amber portholes glows along the flank, crusty barnacle-like armor plates cluster low on the belly, small teal bioluminescent running lights pulse along the seams, and near the snout a single large lit watch-window glows pale cyan like the eye of the ark. Small pink and red gun ports with bright cores and dark rims dot the turret decks. Vast, ancient, menacing, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of blue-black steel, deep teal, slate grey, amber, pale cyan and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no bubbles, no wake, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic whale skin, fins like a shark, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1994108251,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:45:49.923Z",
+  "seconds": 50.4,
+  "label": "ABYSS ARK (AA-09) — zone I boss, the thirteen-section whale flagship; full body on key green",
+  "source": "images/30-bosses/hi-res.json#aa09-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/abyss-ark.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "promo/wide-banner",
+  "slot": "a",
+  "prompt": "Extreme widescreen full-bleed marketing banner for a side-scrolling arcade shooter, SNES-era 16-bit pixel art inspired rendering with bold dark outlines, a saturated limited palette, clean vector shapes with pixel-art texture accents and a subtle CRT scanline glow. The artwork fills the entire canvas from the top edge to the bottom edge and from the left edge to the right edge, with no borders, no frames and no letterbox bars. It is one continuous panoramic landscape that gradually morphs through nine worlds from left to right, each world dissolving softly into the next through mist, light and shared horizon lines, never separated by vertical seams or panels, deep navy in every shadow, never pure black. From the left edge: a blue planet rim over green-teal highland hills under star dust; a wavy teal and violet gas sea with a stone reef arch sinking into sand-gold fog; long desert dunes under two suns, a big pale cream sun and a small orange one, in heat haze; jagged black volcanic peaks erupting over a glowing molten lava lake; saw-tooth snowy ridges under a roiling storm deck split by one violet lightning bolt; the curved walls of a living vault of pulsing green cells; a corridor of violet crystal facets with glowing cubes stacked in mid-air; a riveted steel fortress interior with amber running lights and converging pipes; and at the right edge a black-blue abyss of deep-water rock spires dotted with cold cyan lights. One small steel-blue dart fighter with a cyan canopy flies to the right through the fortress world near the right end of the picture, nose pointing right, and behind it, trailing back out of its engine, a single long thin perfectly straight orange contrail stretches level all the way back to the left edge of the image, passing through every one of the worlds behind the ship. Nothing lies ahead of the ship's nose but open space. The contrail is the only perfectly straight line in the picture. No text, no letters, no logo, no UI.",
+  "negative": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+  "model": "flux2",
+  "seed": 675397603,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:53:51.280Z",
+  "seconds": 52.8,
+  "label": "Panorama banner — the Verge's nine worlds as one scrolling horizon (21:9)",
+  "source": "images/80-promo/website-and-banners.json#wide-banner-21x9-v1",
+  "file": "art-prompts/v2/candidates/a/promo/wide-banner.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

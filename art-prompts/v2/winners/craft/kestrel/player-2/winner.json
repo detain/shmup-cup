@@ -1,0 +1,38 @@
+{
+  "id": "craft/kestrel/player-2",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of KESTREL. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a perfectly flat solid pure bright green chroma-key background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 11211,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:01:03.681Z",
+  "seconds": 113.6,
+  "label": "Player-2 colour swap of the winning KESTREL (red-orange stripe, gold canopy, blue glow) on key green",
+  "source": "images/20-player-crafts/combat-and-p2.json#p2-palette-swap-v1",
+  "file": "art-prompts/v2/candidates/a/craft/kestrel/player-2.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of KESTREL. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a perfectly flat solid pure bright green chroma-key background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F073",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/kestrel"
+  }
+}

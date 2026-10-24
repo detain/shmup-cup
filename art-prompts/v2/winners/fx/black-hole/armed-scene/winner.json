@@ -1,0 +1,38 @@
+{
+  "id": "fx/black-hole/armed-scene",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Black-hole bomb. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; signature weapon effect concept art, ultra-detailed. Dead center of a dark navy battlefield, an artificial black hole hangs open: a perfect absolute-dark core ringed by a blazing thin lilac rim of light, and wrapped around the core the reference's three great spiral arms — exactly three clean, smooth, curved bands of glowing energy, one bright violet, one deep indigo-blue, one steel blue — winding clockwise into the center like a galactic pinwheel, each band wide at the outside and thinning as it spirals inward, built from fine streaked pixel-light filaments, with clear dark navy gaps between the three bands. About twenty enemy energy orbs are caught in the pull. Each one is a lone round glowing orb: a small crisp ball of hot pink or violet light with a white-hot centre and clean round edges, every orb on its own with dark space around it. The orbs sit along the three spiral arms, resting on the glowing bands at every distance from the core: the outermost orbs are the largest and brightest, and the orbs get smaller and dimmer the closer they are to the core, the innermost ones tiny faint dots of pink light right at the lilac rim, as if shrinking as they sink in. Light itself bends near the rim: the star field behind the bomb smears into a faint circular halo, and a thin accretion flicker crackles just outside the lilac ring. The outer corners of the frame stay calm and empty, only dark navy dotted with undisturbed stars, so the viewer reads the event horizon's radius. Deep blues and violets with a confetti of captured pink, lifted deep-navy background, the core itself the only near-black element by design. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, logo, signature, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms, pure black background",
+  "model": "flux2",
+  "seed": 23051,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:55:08.317Z",
+  "seconds": 84.9,
+  "label": "Black hole mid-suction with bullets streaming in (scene)",
+  "source": "images/60-items-fx/items-and-fx.json#black-hole-bomb-armed-v1",
+  "file": "art-prompts/v2/candidates/a/fx/black-hole/armed-scene.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/black-hole.png"
+  ],
+  "editFromSha256": [
+    "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Black-hole bomb. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; signature weapon effect concept art, ultra-detailed. Dead center of a dark navy battlefield, an artificial black hole hangs open: a perfect absolute-dark core ringed by a blazing thin lilac rim of light, and wrapped around the core the reference's three great spiral arms — exactly three clean, smooth, curved bands of glowing energy, one bright violet, one deep indigo-blue, one steel blue — winding clockwise into the center like a galactic pinwheel, each band wide at the outside and thinning as it spirals inward, built from fine streaked pixel-light filaments, with clear dark navy gaps between the three bands. About twenty enemy energy orbs are caught in the pull. Each one is a lone round glowing orb: a small crisp ball of hot pink or violet light with a white-hot centre and clean round edges, every orb on its own with dark space around it. The orbs sit along the three spiral arms, resting on the glowing bands at every distance from the core: the outermost orbs are the largest and brightest, and the orbs get smaller and dimmer the closer they are to the core, the innermost ones tiny faint dots of pink light right at the lilac rim, as if shrinking as they sink in. Light itself bends near the rim: the star field behind the bomb smears into a faint circular halo, and a thin accretion flicker crackles just outside the lilac ring. The outer corners of the frame stay calm and empty, only dark navy dotted with undisturbed stars, so the viewer reads the event horizon's radius. Deep blues and violets with a confetti of captured pink, lifted deep-navy background, the core itself the only near-black element by design. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, logo, signature, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F127",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:19.377Z",
+    "parentId": "fx/black-hole"
+  }
+}

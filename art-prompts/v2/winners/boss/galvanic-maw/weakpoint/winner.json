@@ -1,0 +1,38 @@
+{
+  "id": "boss/galvanic-maw/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GALVANIC MAW (GM-02). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Terrifying first-person boss weak point composition, looking straight into the gaping open mechanical jaw of the GALVANIC MAW filling the entire frame, two curved rows of rectangular steel fang segments like breakwater teeth framing a dark circular throat, deep inside the throat a pulsing violet-black energy core hangs in a cage of rotating magnetic rings trailing pink electric filaments, the inner jaw walls lined with amber running lights diminishing into the darkness creating strong depth perspective, small captured bullet sparks spiraling toward the core like debris falling into a drain, warm rim light on the fang edges against cold violet depths, claustrophobic centered symmetrical framing, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering at ultra-detailed large-format quality, clean vector shapes with pixel-cluster texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "organic throat, tongue, teeth enamel, blood, gore, real fish, photorealistic, 3d render, text, watermark, pure black background",
+  "model": "flux2",
+  "seed": 12202,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:05:28.271Z",
+  "seconds": 91.6,
+  "label": "GALVANIC MAW (GM-02) weak-point close-up",
+  "source": "images/30-bosses/02-galvanic-maw.json#gm02-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/galvanic-maw/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/galvanic-maw.png"
+  ],
+  "editFromSha256": [
+    "586d478131d453fef492e54e01f6da417c9debeff9bc9517aa9ddfeea8c5df4c"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GALVANIC MAW (GM-02). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Terrifying first-person boss weak point composition, looking straight into the gaping open mechanical jaw of the GALVANIC MAW filling the entire frame, two curved rows of rectangular steel fang segments like breakwater teeth framing a dark circular throat, deep inside the throat a pulsing violet-black energy core hangs in a cage of rotating magnetic rings trailing pink electric filaments, the inner jaw walls lined with amber running lights diminishing into the darkness creating strong depth perspective, small captured bullet sparks spiraling toward the core like debris falling into a drain, warm rim light on the fang edges against cold violet depths, claustrophobic centered symmetrical framing, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering at ultra-detailed large-format quality, clean vector shapes with pixel-cluster texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F007",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/galvanic-maw"
+  }
+}

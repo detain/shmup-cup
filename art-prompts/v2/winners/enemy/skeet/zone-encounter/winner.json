@@ -1,0 +1,44 @@
+{
+  "id": "enemy/skeet/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen SKEET, image 2 shows the chosen VANE, image 3 shows the chosen TENDER. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A horizontal shoot-'em-up encounter over the rim of a blue planet: a cluster of SKEET pods drifts in from the right — small armored seed-shaped drone pods with a single magenta eye-slit and stubby fin pairs, matte gunmetal shells with rust-violet panel seams — escorted by VANE bladed fliers, crescent-mirror wingblades spinning around a compact steel chassis, each throwing a thin colored glint as it rotates. Below them the planet's limb curves across the frame, green-teal terrain shelves and ice caps under a thin atmosphere haze, deep navy space above lifting from near-black blue to midnight blue with sparse pixel stars. The two prototype fighters, a sleek steel-blue dart with a bold blue hull stripe, cyan canopy and orange engine glow, enter from the left edge trailing bright cyan tracer fire. Enemy bullets are pink and red orbs with bright cores and dark rims. Lifted deep-navy background, never pure black. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the player fighter entering from the left is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small in the frame, nose pointing right and orange flame trailing left.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, pure black background, human figures, ten wings, morphed silhouettes",
+  "model": "flux2",
+  "seed": 16111,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:13:26.634Z",
+  "seconds": 281.7,
+  "label": "Zone A encounter concept — the AZURE VERGE enemies in situ (follows all zone A enemy winners)",
+  "source": "images/40-enemies/zone-a-azure-verge.json#skeet-vane-swarm-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/skeet/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/skeet.png",
+    "art-prompts/v2/candidates/a/enemy/vane.png",
+    "art-prompts/v2/candidates/a/enemy/tender.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "6996058cfb86a1874d0b8daf7b4a4b823c866fd1cdaeaf29ed76139c959e0cd0",
+    "1ab23adf60ee374d75317acf22dfc2134892cd0265d84210be9de15939cb0d60",
+    "8574828ae2033917ce7751597a40b3c0bf51057fb3252a71e16181005ded8f47",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen SKEET, image 2 shows the chosen VANE, image 3 shows the chosen TENDER. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A horizontal shoot-'em-up encounter over the rim of a blue planet: a cluster of SKEET pods drifts in from the right — small armored seed-shaped drone pods with a single magenta eye-slit and stubby fin pairs, matte gunmetal shells with rust-violet panel seams — escorted by VANE bladed fliers, crescent-mirror wingblades spinning around a compact steel chassis, each throwing a thin colored glint as it rotates. Below them the planet's limb curves across the frame, green-teal terrain shelves and ice caps under a thin atmosphere haze, deep navy space above lifting from near-black blue to midnight blue with sparse pixel stars. The two prototype fighters, a sleek steel-blue dart with a bold blue hull stripe, cyan canopy and orange engine glow, enter from the left edge trailing bright cyan tracer fire. Enemy bullets are pink and red orbs with bright cores and dark rims. Lifted deep-navy background, never pure black. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the player fighter entering from the left is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small in the frame, nose pointing right and orange flame trailing left.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F088",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "enemy/skeet"
+  }
+}

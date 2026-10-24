@@ -1,0 +1,23 @@
+{
+  "id": "item/shield-gem",
+  "slot": "a",
+  "prompt": "Retro 16-bit video game item concept sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly three shield gems standing upright side by side in one horizontal row, evenly spaced with wide green gutters, all the same size, the same cut and centered on the same line, reading left to right as a charge progression. Each gem is the same faceted teardrop-cut jewel: a round-shouldered top narrowing to a sharp point at the bottom, built from broad flat facets separated by hard dark seams like a low-poly pixel-art jewel, a thick near-black navy outline around the whole gem and a crisp white highlight slash on the upper-left facet.\nLeft gem, spent: dull amber-bronze facets, no inner light, a thin cold grey-blue rim on its edge, almost matte and lifeless.\nMiddle gem, charged: clean saturated orange-gold facets with a single hot yellow facet glowing at its heart and a warm inner rim just inside the outline.\nRight gem, overcharged: blazing pale gold and white at the core, bright light leaking out through the facet seams like a furnace behind a grille, and two or three tiny hard-edged diamond sparks lifting off its shoulders.\nCrisp pixel art with flat saturated fills and three-step shading ramps lit from the top left, warm palette from bronze to orange to pale gold, arcade jewel finish, all light kept inside the outlines. No glow halo onto the background, no shadows, no cell borders, no text, no letters, no numbers, no symbols on the gems.",
+  "negative": "photorealistic, 3d render, emerald, diamond, sapphire, blue gem, heart shape, ring setting, jewelry chain, text, watermark, blurry, gems melting, rounded blob shape, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 3714014779,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:44:51.206Z",
+  "seconds": 37.3,
+  "label": "Shield gem — faceted orange-gold gem at three charge states, on key green",
+  "source": "images/60-items-fx/items-and-fx.json#shield-gems-v1",
+  "file": "art-prompts/v2/candidates/a/item/shield-gem.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

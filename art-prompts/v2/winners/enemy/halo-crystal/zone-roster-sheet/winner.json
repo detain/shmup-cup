@@ -1,0 +1,43 @@
+{
+  "id": "enemy/halo-crystal/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen HALO CRYSTAL, image 2 shows the chosen OPTION HUNTER, image 3 shows the chosen GLINT MOTE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in six frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals (six, on the corners of a hexagon, exactly as in the reference) turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere. Row two has exactly six HALO CRYSTAL frames, the ring shown only by where its six satellites sit: no arrows, no motion lines, no circles or trails anywhere. Row three is the GLINT MOTE exactly as image 3 in every frame — the same four-pointed violet star crystal with a white-hot centre and its three small diamond flecks — never an octagon or round gem; the burst frame is a small star-puff of lilac sparks, not a cloud. Every OPTION HUNTER view faces left like image 2.",
+  "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, organic coral shapes, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 16721,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T23:57:19.762Z",
+  "seconds": 159,
+  "label": "Zone G roster sheet — every library enemy of PRISM LABYRINTH together (follows all zone G enemy winners)",
+  "source": "images/40-enemies/zone-g-prism-labyrinth.json#prism-labyrinth-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/halo-crystal/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/halo-crystal.png",
+    "art-prompts/v2/candidates/a/enemy/option-hunter.png",
+    "art-prompts/v2/candidates/a/enemy/glint-mote.png"
+  ],
+  "editFromSha256": [
+    "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784",
+    "49e1cd2cf1868cee4d6cc5027c3bdfc8bbc9512001c6509d4f5d3c880011d531",
+    "0495b887d8b80dac5266dfbc6de8e6ecc9743168632026978b74b2b929f5283d"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen HALO CRYSTAL, image 2 shows the chosen OPTION HUNTER, image 3 shows the chosen GLINT MOTE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in six frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals (six, on the corners of a hexagon, exactly as in the reference) turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere. Row two has exactly six HALO CRYSTAL frames, the ring shown only by where its six satellites sit: no arrows, no motion lines, no circles or trails anywhere. Row three is the GLINT MOTE exactly as image 3 in every frame — the same four-pointed violet star crystal with a white-hot centre and its three small diamond flecks — never an octagon or round gem; the burst frame is a small star-puff of lilac sparks, not a cloud. Every OPTION HUNTER view faces left like image 2.",
+  "outputSize": "1152x896",
+  "replaced": "art-prompts/v2/candidates/history/2026-10-17/a/enemy/halo-crystal/zone-roster-sheet.png",
+  "meta": {
+    "job": "F117",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:23:33.855Z",
+    "parentId": "enemy/halo-crystal"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "enemy/froth",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single FROTH enemy of the Iron Tide, a medium splitting foam bubble from a teal-violet nebula sea. One plump, slightly wobbly sphere of pink-white sea foam, its surface lumpy with a few smaller bulging bubble domes, a darker rose-pink rim, a soft milky inner core glowing brighter in the middle, and one curved white specular sheen at the top-left. A thin dark pinched seam line runs vertically across its middle where it is about to split into two halves, with a faint violet shadow tint inside the seam. Two or three tiny loose bubbles cling to its outline. Side view facing left, one round chunky silhouette, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no transparency showing the background, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 1624839885,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:23:40.713Z",
+  "seconds": 82,
+  "label": "FROTH — zone B (BRINE NEBULA) medium splitting bubble (~27 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-b-brine-nebula.json#brine-nebula-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/froth.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

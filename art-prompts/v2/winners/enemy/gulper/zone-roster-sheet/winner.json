@@ -1,0 +1,40 @@
+{
+  "id": "enemy/gulper/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen GULPER, image 2 shows the chosen DEPTH MINE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 15921,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:54:35.608Z",
+  "seconds": 115.7,
+  "label": "Zone I roster sheet — every library enemy of ABYSSAL THRONE together (follows all zone I enemy winners)",
+  "source": "images/40-enemies/zone-i-abyssal-throne.json#abyssal-throne-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/gulper/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/gulper.png",
+    "art-prompts/v2/candidates/a/enemy/depth-mine.png"
+  ],
+  "editFromSha256": [
+    "d59eadaabcba2edf55250bb7eddcc93461708389621c8cd385dd03890cb3e7a7",
+    "51dc070aec5d5c83cd3cc86acd05c1ff4cae7e00c9310816d4c18b3648468301"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen GULPER, image 2 shows the chosen DEPTH MINE. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F124",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/gulper"
+  }
+}

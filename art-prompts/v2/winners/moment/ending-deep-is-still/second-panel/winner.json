@@ -1,0 +1,38 @@
+{
+  "id": "moment/ending-deep-is-still/second-panel",
+  "slot": "c",
+  "prompt": "Reference image 1 shows the chosen design of Ending \"The Deep Is Still\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, post-storm stillness, ultra-detailed large-format art with pixel-art texture accents. A split-frame world: the upper half is an ocean laid flat under a sunrise so pale it is almost a color idea — long thin rose-gold cloud bars strung across a cream-to-navy sky, the small half-sun just risen, everything lit gently. On the water sits a flat ray-winged manta fighter, pale mint hull scuffed and steaming faintly where black water beads off it, canopy open with the cockpit a small square of shadow, twin engine rings dark, riding the swell exactly level as though the sea were a parking pad at the end of the universe; around it, the last rings of its surfacing spread outward in two slow concentric outlines, and a scatter of silver droplets still hangs airborne at the waterline, frozen mid-fall, each one holding a pinpoint of sunrise. The lower half of the frame is the water seen from just at its surface, and down there: a deepening wall from teal to true midnight, faintly, far below, the suggestion of what the ship escaped — the dimest hint of a vast sunken angular shadow, a drowned citadel outline, unlit, still, smaller than it should be, dissolving into the blue-black. Light belongs entirely to the top world now. Palette of cream, pale gold and rose above, committed teal-to-midnight blues below, thick dark outlines at the waterline seam, lifted deep-navy depths, never pure black. No text, no letters, no UI. No text anywhere.  Unlike the reference, this picture is a wide panorama: the sky, the sea and the depths run all the way to the left, right, top and bottom edges of the canvas, with no black frame, no border, no side bars and no rounded screen edge.",
+  "negative": "photorealistic, 3d render, rough seas, whitecap waves, boat ship vessel, sea monsters visible, submarine, coral reef, birds flock, sunset fire sky, text, watermark, blurry, ship flying, canopy closed bright",
+  "model": "flux2",
+  "seed": 21062,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:38:22.053Z",
+  "seconds": 90.8,
+  "label": "Ending \"The Deep Is Still\" — second panel (closer / later moment)",
+  "source": "images/70-key-moments/endings.json#ending-deep-is-still-surface-v2",
+  "file": "art-prompts/v2/candidates/c/moment/ending-deep-is-still/second-panel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/c/moment/ending-deep-is-still.png"
+  ],
+  "editFromSha256": [
+    "9d0510a896c7336cef4224735267453a05d92430e1c5f5ae46664bdc0a770445"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Ending \"The Deep Is Still\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, post-storm stillness, ultra-detailed large-format art with pixel-art texture accents. A split-frame world: the upper half is an ocean laid flat under a sunrise so pale it is almost a color idea — long thin rose-gold cloud bars strung across a cream-to-navy sky, the small half-sun just risen, everything lit gently. On the water sits a flat ray-winged manta fighter, pale mint hull scuffed and steaming faintly where black water beads off it, canopy open with the cockpit a small square of shadow, twin engine rings dark, riding the swell exactly level as though the sea were a parking pad at the end of the universe; around it, the last rings of its surfacing spread outward in two slow concentric outlines, and a scatter of silver droplets still hangs airborne at the waterline, frozen mid-fall, each one holding a pinpoint of sunrise. The lower half of the frame is the water seen from just at its surface, and down there: a deepening wall from teal to true midnight, faintly, far below, the suggestion of what the ship escaped — the dimest hint of a vast sunken angular shadow, a drowned citadel outline, unlit, still, smaller than it should be, dissolving into the blue-black. Light belongs entirely to the top world now. Palette of cream, pale gold and rose above, committed teal-to-midnight blues below, thick dark outlines at the waterline seam, lifted deep-navy depths, never pure black. No text, no letters, no UI. No text anywhere.  Unlike the reference, this picture is a wide panorama: the sky, the sea and the depths run all the way to the left, right, top and bottom edges of the canvas, with no black frame, no border, no side bars and no rounded screen edge.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F139",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:03:29.378Z",
+    "parentId": "moment/ending-deep-is-still"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "boss/iron-talon/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: the playfield darkening as the shadow of an iron talon arrives before the claw itself — three long finger-shadows sliding across the star field from the top of frame, converging, the gaps between them narrowing toward a pinch point where a tiny steel-blue player dart with cyan canopy and orange engine flare hangs in the last strip of light. High in the dark cloud ceiling at the top edge, two hot pink amp-glows kindle like eyes opening, and the first steam hiss is drawn as a pale arc of mist at the frame's corner. Deep-navy palette never pure black, everything reads by silhouette and rim-light. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: copy it exactly as it appears there, lying horizontal in profile, and draw it tiny in the last strip of light, its long body level with the bottom edge of the picture, its pointed nose toward the right edge and its small orange flame toward the left edge. It never points up the screen. The two pink glows are small round amp lights on the shadowed claw's knuckles; there is no face or eyes in the clouds.",
+  "negative": "text, letters, watermark, photorealistic, 3d render, blurry, visible claw body, pure black background",
+  "model": "flux2",
+  "seed": 15403,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:20:54.463Z",
+  "seconds": 106.6,
+  "label": "IRON TALON WARNING silhouette frame",
+  "source": "images/30-bosses/14-iron-talon.json#itl-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/iron-talon/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-talon.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "1ce959103aa0d3080547cf814f05383939c1ed3c7c024b9c8a6e07ec04842fdf",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: the playfield darkening as the shadow of an iron talon arrives before the claw itself — three long finger-shadows sliding across the star field from the top of frame, converging, the gaps between them narrowing toward a pinch point where a tiny steel-blue player dart with cyan canopy and orange engine flare hangs in the last strip of light. High in the dark cloud ceiling at the top edge, two hot pink amp-glows kindle like eyes opening, and the first steam hiss is drawn as a pale arc of mist at the frame's corner. Deep-navy palette never pure black, everything reads by silhouette and rim-light. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: copy it exactly as it appears there, lying horizontal in profile, and draw it tiny in the last strip of light, its long body level with the bottom edge of the picture, its pointed nose toward the right edge and its small orange flame toward the left edge. It never points up the screen. The two pink glows are small round amp lights on the shadowed claw's knuckles; there is no face or eyes in the clouds.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F065",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-talon"
+  }
+}

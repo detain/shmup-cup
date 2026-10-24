@@ -1,0 +1,23 @@
+{
+  "id": "logo/iron-tide-sigil",
+  "slot": "a",
+  "prompt": "Menacing enemy faction sigil emblem, flat arcade vector design with pixel-art texture accents, centered on a deep midnight-navy background with a faint violet haze, never pure black. The sigil is a tall pointed heraldic shield of deep violet-navy enamel crossed by a subtle raster of thin wavy teal lines like a rolling tide, framed by a thick gunmetal border with small rivet heads and a notched, saw-toothed lower point. Mounted on the shield, a front-facing stylized mechanical fish skull built from clean geometric armor plates in gunmetal blue-grey: two hollow angular eye sockets glowing faint pink, overlapping gill plates fanning out to each side like armored fins, a crown of three thin gun barrels rising straight up from the top of the skull like antennae, and a hinged lower jaw of jagged interlocking teeth segments opened wide into a dark circular throat void. Deep inside the throat a sinister pink-red furnace glow lights the inner edges of the teeth from below. Two crossed anchor-chain links hang beneath the jaw. Every plate has a heavy near-black navy outline, tiny rivet dots and three-step shading lit from the top left, bold readable silhouette, limited saturated palette of gunmetal, violet-navy, teal and hot pink-red, ominous and regal, perfectly symmetrical, centered with an even margin. No text, no letters, no banner words.",
+  "negative": "text, letters, photorealistic, 3d render, gore, real fish, blood, watermark, blurry, cute cartoon, googly eyes, pure black background",
+  "model": "flux2",
+  "seed": 3274241731,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:21:35.851Z",
+  "seconds": 61.1,
+  "label": "IRON TIDE faction sigil — mechanical fish-skull emblem of the enemy armada",
+  "source": "images/10-logo-title/alt-emblems.json#alt-emblem-v2",
+  "file": "art-prompts/v2/candidates/a/logo/iron-tide-sigil.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

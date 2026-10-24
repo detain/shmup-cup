@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-sovereign/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON SOVEREIGN (IS-08) boss parts taken from the established design — the red furnace aperture core and one rotating shield plate, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites with four sprites in each row, twelve in all, and never the whole slab. The top row: the round red furnace aperture core alone in its rust-brown ring. The middle row: one single brass-rimmed grey shield plate alone, lying flat. The bottom row: the same single shield plate turned on its hinge at different angles. Plain flat green everywhere around the sprites, no lines between cells.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 51903,
+  "width": 1184,
+  "height": 880,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:19:01.237Z",
+  "seconds": 115.1,
+  "label": "IRON SOVEREIGN (IS-08) parts sheet: the red furnace aperture core and one rotating shield plate, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/iron-sovereign/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-sovereign.png"
+  ],
+  "editFromSha256": [
+    "2fe1a940a8588b2b2654780d9432103146a9b71cfb9bc93028f220afa4c967f8"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON SOVEREIGN (IS-08) boss parts taken from the established design — the red furnace aperture core and one rotating shield plate, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites with four sprites in each row, twelve in all, and never the whole slab. The top row: the round red furnace aperture core alone in its rust-brown ring. The middle row: one single brass-rimmed grey shield plate alone, lying flat. The bottom row: the same single shield plate turned on its hinge at different angles. Plain flat green everywhere around the sprites, no lines between cells.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F039",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/iron-sovereign"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "moment/hi-score-entry",
+  "slot": "b",
+  "prompt": "A retro arcade hi-score entry screen seen straight-on through the slightly curved glass of an old CRT tube, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, heavy CRT scanline glow, centered symmetrical composition. The ranking board fills the entire image from edge to edge: a lifted deep-navy screen, never pure black anywhere, not even in the corners, framed just inside the image edges by a thin double border of glowing cyan and magenta neon tubing, with a dark navy-blue cabinet bezel visible only as a narrow rim at the very corners. Across the top, centered, the words \"HIGH SCORE\" in bright gold heavy blocky arcade capital letters with a thick dark navy outline and an orange under-glow. Below it, a ranking table of seven horizontal rows separated by thin deep-violet pixel rules. The top row is freshly earned and burns brighter than everything else: three chunky square letter tiles side by side, each tile showing the letter \"A\" so the row reads \"AAA\", glowing warm gold as if just stamped, framed by two blinking cyan selection brackets, with a tiny steel-blue dart-shaped fighter icon resting at the left end of the row, its nose pointing to the right toward the letters. The six lower rows contain no letters at all, only thin dim lilac-grey dotted placeholder lines, each row clearly fainter than the one above it, so that the bottom row has almost faded into the navy board. Across the glass, a soft diagonal reflection of magenta and cyan cabinet neon and a few specks of dust catch the light, and the corners of the tube curve gently into deep navy shadow. The only text in the image is \"HIGH SCORE\" at the top and \"AAA\" in the lit row: no other words, letters, numbers, scores, watermark or signature anywhere.",
+  "negative": "photorealistic photo, 3d render, modern UI, keyboard, mouse cursor, browser window, long names, readable extra words, numbers scores, slot machine, casino, misspelled text, garbled letters, watermark, blurry, more than two text strings",
+  "model": "flux2",
+  "seed": 3966587276,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:34:46.105Z",
+  "seconds": 79.6,
+  "label": "Hi-score entry — neon ranking board with the three-letter slot lit",
+  "source": "images/70-key-moments/warning-gameover.json#hi-score-entry-v1",
+  "file": "art-prompts/v2/candidates/b/moment/hi-score-entry.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

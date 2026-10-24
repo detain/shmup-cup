@@ -1,0 +1,40 @@
+{
+  "id": "boss/grasping-bloom/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: at the right margin of a deep-navy playfield a huge steel bud stands shut like a clenched fist of overlapping dark plates, and the warning is the unfurling beginning — outer petals prying apart one hinge at a time, each opening cracking out a blade of magenta throat-light that slashes across the star field, and the first faint stream of dust and bullet debris starting to curve toward the emerging gap. The tiny steel-blue player dart with cyan canopy at left drifts almost imperceptibly rightward, engine flare straining against the invisible pull. Cold starlight versus the growing warm wound of pink light. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny at the left in the same side view and direction as reference 2, nose pointing right toward the bud and its orange flame trailing left. Any bullets are lone small round glowing orbs with nothing attached; the debris is dust and rock chips.",
+  "negative": "text, letters, watermark, photorealistic, 3d render, blurry, fully open flower, pure black background",
+  "model": "flux2",
+  "seed": 14303,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:06:11.880Z",
+  "seconds": 106.8,
+  "label": "GRASPING BLOOM WARNING silhouette frame",
+  "source": "images/30-bosses/13-grasping-bloom.json#glb-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/grasping-bloom/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/grasping-bloom.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "1028de4a7d3f1202821ab4a7547793bdb0aa183ff19d9877bff56fefd436e2e6",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: at the right margin of a deep-navy playfield a huge steel bud stands shut like a clenched fist of overlapping dark plates, and the warning is the unfurling beginning — outer petals prying apart one hinge at a time, each opening cracking out a blade of magenta throat-light that slashes across the star field, and the first faint stream of dust and bullet debris starting to curve toward the emerging gap. The tiny steel-blue player dart with cyan canopy at left drifts almost imperceptibly rightward, engine flare straining against the invisible pull. Cold starlight versus the growing warm wound of pink light. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny at the left in the same side view and direction as reference 2, nose pointing right toward the bud and its orange flame trailing left. Any bullets are lone small round glowing orbs with nothing attached; the debris is dust and rock chips.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F061",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/grasping-bloom"
+  }
+}

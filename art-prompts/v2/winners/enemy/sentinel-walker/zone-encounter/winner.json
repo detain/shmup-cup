@@ -1,0 +1,44 @@
+{
+  "id": "enemy/sentinel-walker/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen SENTINEL WALKER, image 2 shows the chosen TRENCH EEL, image 3 shows the chosen GYRE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside the machine-gut of a riveted steel fortress: layered girders overhead, fat pipes sweating condensation, and a gallery of amber running lights that fades from dark rust-amber near the floor to bright furnace-amber overhead. In the middle distance a SENTINEL WALKER strides left along a girder catwalk — a squat twin-legged guard machine, heavy barrel torso bristling with rivets, two thick reverse-jointed legs with clawed feet clamped on the beam, a single red sensor eye sweeping a thin amber searchlight cone across the pipes, shoulder-mounted short cannons tracking. Below it, erupting out of an open maintenance trench in the deck plating, a TRENCH EEL — a long segmented steel serpent with ring-plate segments, a blunt snout lined with filing-tooth ridges, violet core-light leaking between its joints, its body thrown into a hard S-curve as it whips up toward the KESTREL. The KESTREL is banking between two pipe stacks in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy, orange engine glow flaring as it cuts thrust, blue bullets sparking harmlessly off the walker's riveted chest plate. Deep-navy shadow behind the girder layers, never pure black. No text, no UI elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL, drawn exactly as in image 4: pointed nose at its RIGHT end, engine flame at its LEFT end. Place it in the lower LEFT of the picture, flying toward the right. The SENTINEL WALKER stands on the catwalk at the upper RIGHT with its cannons and red eye turned LEFT toward the fighter, exactly as image 1 faces; the TRENCH EEL rears up from the trench in the middle.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, four-legged walker, eel coming from the ceiling, open space background",
+  "model": "flux2",
+  "seed": 17811,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:35:50.385Z",
+  "seconds": 281.5,
+  "label": "Zone H encounter concept — the IRON CITADEL enemies in situ (follows all zone H enemy winners)",
+  "source": "images/40-enemies/zone-h-iron-citadel.json#sentinel-walker-trench-eel-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/sentinel-walker/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/sentinel-walker.png",
+    "art-prompts/v2/candidates/a/enemy/trench-eel.png",
+    "art-prompts/v2/candidates/a/enemy/gyre.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "3930585100299f9f254e0db0ba39b7165d4a1e1c5b0cf540882954aff8fb6698",
+    "550bbd45a4ce6cab508cb4f4b817b65c59521877d126f69a0ba403f2ba65bcae",
+    "1c6e27fd71623b2781e561b7f38d19dc0341bc7cf0277cb567613dc84bc558b5",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen SENTINEL WALKER, image 2 shows the chosen TRENCH EEL, image 3 shows the chosen GYRE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside the machine-gut of a riveted steel fortress: layered girders overhead, fat pipes sweating condensation, and a gallery of amber running lights that fades from dark rust-amber near the floor to bright furnace-amber overhead. In the middle distance a SENTINEL WALKER strides left along a girder catwalk — a squat twin-legged guard machine, heavy barrel torso bristling with rivets, two thick reverse-jointed legs with clawed feet clamped on the beam, a single red sensor eye sweeping a thin amber searchlight cone across the pipes, shoulder-mounted short cannons tracking. Below it, erupting out of an open maintenance trench in the deck plating, a TRENCH EEL — a long segmented steel serpent with ring-plate segments, a blunt snout lined with filing-tooth ridges, violet core-light leaking between its joints, its body thrown into a hard S-curve as it whips up toward the KESTREL. The KESTREL is banking between two pipe stacks in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy, orange engine glow flaring as it cuts thrust, blue bullets sparking harmlessly off the walker's riveted chest plate. Deep-navy shadow behind the girder layers, never pure black. No text, no UI elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL, drawn exactly as in image 4: pointed nose at its RIGHT end, engine flame at its LEFT end. Place it in the lower LEFT of the picture, flying toward the right. The SENTINEL WALKER stands on the catwalk at the upper RIGHT with its cannons and red eye turned LEFT toward the fighter, exactly as image 1 faces; the TRENCH EEL rears up from the trench in the middle.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F120",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/sentinel-walker"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "logo/wordmark/champion-crest",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen design of SHMUP CUP wordmark. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ceremonial arcade champion crest illustration, at its heart a golden trophy-shaped shield bearing a tiny steel-blue dart fighter emblem in relief, flanked by two spread mechanical wings made of layered gunmetal armor feathers with amber rivet lights, below the shield a curved golden ribbon banner displaying the exact words \"SHMUP CUP\" in clean navy block capitals, small pink and violet gem bullets set like decorative studs along the wing joints, deep midnight navy background with a soft upward spotlight of pale gold, subtle scanline shimmer, saturated limited palette, bold dark outlines, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel-art texture accents, symmetrical heraldic composition, no text other than the ribbon. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No other text anywhere besides the exact words \"SHMUP CUP\".",
+  "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, organic bird wings",
+  "model": "flux2",
+  "seed": 10034,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:41:08.822Z",
+  "seconds": 73.7,
+  "label": "Champion crest badge — trophy shield with the wordmark on a ribbon (uses the winning lettering)",
+  "source": "images/10-logo-title/alt-emblems.json#alt-emblem-v4",
+  "file": "art-prompts/v2/candidates/b/logo/wordmark/champion-crest.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/logo/wordmark.png"
+  ],
+  "editFromSha256": [
+    "293fed8839192a6dcacda1313276a93537a8d623648641ecc674da3744b6ef25"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SHMUP CUP wordmark. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ceremonial arcade champion crest illustration, at its heart a golden trophy-shaped shield bearing a tiny steel-blue dart fighter emblem in relief, flanked by two spread mechanical wings made of layered gunmetal armor feathers with amber rivet lights, below the shield a curved golden ribbon banner displaying the exact words \"SHMUP CUP\" in clean navy block capitals, small pink and violet gem bullets set like decorative studs along the wing joints, deep midnight navy background with a soft upward spotlight of pale gold, subtle scanline shimmer, saturated limited palette, bold dark outlines, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel-art texture accents, symmetrical heraldic composition, no text other than the ribbon. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No other text anywhere besides the exact words \"SHMUP CUP\".",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F068",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:57:49.460Z",
+    "parentId": "logo/wordmark"
+  }
+}

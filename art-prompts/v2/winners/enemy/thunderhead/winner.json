@@ -1,0 +1,23 @@
+{
+  "id": "enemy/thunderhead",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single THUNDERHEAD enemy of the Iron Tide, a living storm cell creature, isolated. A chunky round cloud body, wider than tall, with a low flat anvil crown and lumpy boiling billows built from stacked rounded cloud puffs in charcoal gray, slate blue-gray and pale storm-gray highlights on the top-left. In the front of the cloud on the left side a single large almond-shaped glowing lilac eye with a white spark stares forward. Along its dark flat belly, crawling violet-white electric arcs zigzag between the puffs, and two short jagged lightning forks dangle just beneath it, drawn as hard-edged pixel bolts. Heavy, rounded, menacing silhouette floating alone in empty space. Side view facing left, the single cloud creature centered with a generous empty margin on all four sides on a perfectly flat solid pure bright green chroma-key background that fills the entire image edge to edge. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no ground, no mountains, no landscape, no rain, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 1115524090,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:36:57.424Z",
+  "seconds": 50.8,
+  "label": "THUNDERHEAD — zone E (TEMPEST RIDGE) medium storm cell (~33×21 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-e-tempest-ridge.json#tempest-ridge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/thunderhead.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

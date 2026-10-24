@@ -1,0 +1,40 @@
+{
+  "id": "boss/ember-frost-twins/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a deep-navy playfield splitting into thermal halves before the boss arrives — the upper air shimmers with descending ribbons of ember-orange heat distortion while frost crystals grow upward across the lower air in pale blue needles, the two fronts converging on a diagonal seam of swirling steam across the middle. At the right margin two dark head silhouettes press into frame, jaws slightly open, one breath of fire and one breath of vapor just beginning. A tiny steel-blue player dart with cyan canopy threads the seam center, engine flare orange against the cold. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny in the same side view and direction as reference 2, nose pointing right toward the heads and its orange flame trailing left, never seen from behind. The two head silhouettes are the reference's horned dragon heads, one fire and one frost, not wolves. The picture runs to every edge with no black border, no screen bezel and no rounded corners.",
+  "negative": "text, letters, watermark, photorealistic, 3d render, blurry, uniform temperature, pure black background",
+  "model": "flux2",
+  "seed": 14203,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:54:04.108Z",
+  "seconds": 147.8,
+  "label": "EMBER & FROST TWINS WARNING silhouette frame",
+  "source": "images/30-bosses/12-ember-frost-twins.json#eft-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/ember-frost-twins/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/ember-frost-twins.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "56109e9bd874e390c35f4380166b4fec3dba26576ede0b12f3ff7527a10c7839",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a deep-navy playfield splitting into thermal halves before the boss arrives — the upper air shimmers with descending ribbons of ember-orange heat distortion while frost crystals grow upward across the lower air in pale blue needles, the two fronts converging on a diagonal seam of swirling steam across the middle. At the right margin two dark head silhouettes press into frame, jaws slightly open, one breath of fire and one breath of vapor just beginning. A tiny steel-blue player dart with cyan canopy threads the seam center, engine flare orange against the cold. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it tiny in the same side view and direction as reference 2, nose pointing right toward the heads and its orange flame trailing left, never seen from behind. The two head silhouettes are the reference's horned dragon heads, one fire and one frost, not wolves. The picture runs to every edge with no black border, no screen bezel and no rounded corners.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F057",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/ember-frost-twins"
+  }
+}

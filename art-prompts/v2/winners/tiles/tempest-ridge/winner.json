@@ -1,0 +1,23 @@
+{
+  "id": "tiles/tempest-ridge",
+  "slot": "b",
+  "prompt": "Chunky pixel art game texture with big visible square pixels, low resolution 16-bit console style, a flat 2D seamless repeating texture of frost-bitten slate rock seen exactly head-on like a scanned sheet, with no depth and no viewing angle; the picture is a tight crop from the middle of a huge rock wall, so dark slate touches the very top row of pixels, the bottom row, the left column and the right column. Dark blue-grey slate broken into angular faceted chunks of mixed sizes, the upper faces of the facets catching pale ice-blue light, the cracks between the chunks packed with white snow. One horizontal band of packed snow cap with hard white wind-carved facets lies across the slate a little below the top edge, and above and behind that band the dark slate continues to the top edge; below it the slate continues to the bottom edge. Three-to-four step flat shading ramps lit from the top-left, hard-edged pixels, cold saturated limited palette of slate grey, steel blue, ice blue and white, evenly lit, uniform all-over pattern with no focal point.",
+  "negative": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, brushstrokes, smooth painting, ground, floor, foreground, mountains, peaks, snowfield, clouds, rain, icicles, dark edges, light blue strip, white strip at the bottom, snow ground, pale band at the edge, photograph, realistic texture, ice crystal detail, glossy",
+  "model": "sd35",
+  "seed": 617847059,
+  "width": 1024,
+  "height": 1024,
+  "steps": 32,
+  "guidance": 5,
+  "generatedAt": "2026-10-17T01:49:11.786Z",
+  "seconds": 13.3,
+  "label": "TEMPEST RIDGE terrain material swatch — zone E rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/tempest-ridge.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, brushstrokes, smooth painting, ground, floor, foreground, mountains, peaks, snowfield, clouds, rain, icicles, dark edges, light blue strip, white strip at the bottom, snow ground, pale band at the edge, photograph, realistic texture, ice crystal detail, glossy",
+  "mode": "generate"
+}

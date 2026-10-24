@@ -1,0 +1,38 @@
+{
+  "id": "craft/kestrel/in-game-sheet",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of KESTREL. Redraw the referenced subject as this sheet, keeping its exact design, palette and rendering in every cell: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same small steel-blue dart-shaped fighter with a blue fuselage stripe, cyan canopy and orange engine glow in a strict side view facing right with only a thin sliver of the top of the hull visible, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose tilted up and the upper wing foreshortened, slight climb, level flight, slight dive, steep dive with the nose tilted down and the lower wing foreshortened. Bottom row, the level-flight hull: the first four cells are a smoothly looping four-frame engine thruster animation from left to right (short flame, medium flame, long two-tone orange flame, medium flickering flame that loops back to the first), and the fifth cell is a full-boost reference with a long white-hot core streak. Every sprite drawn as crisp pixel art with a 1-pixel near-black navy outline at its native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. Flat pure green key background, no shadow or spill. No text anywhere.\n All ten cells show the complete fighter hull with its nose pointing right (the climb and dive frames only tilt the nose up or down); in the bottom row the hull is identical in all five cells and only the flame behind its engine changes, ending in a white-hot boost streak trailing left from the engine in the fifth cell. The cells are separated only by empty green space: no grid lines, dividers or borders.",
+  "negative": "overlapping sprites, drop shadows, background gradient, perspective distortion, anti-aliasing, photo background, text, labels, numbers, cell borders, inconsistent ship sizes, different ships, green tint on the ship, blurry, photorealistic, 3d render, watermark",
+  "model": "flux2",
+  "seed": 13301,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:50:40.032Z",
+  "seconds": 120,
+  "label": "In-game pose sheet: 5 bank frames + a 4-frame thruster loop + a boost reference (v2: 24×14 ship, hand-pixelled from this)",
+  "source": "images/20-player-crafts/sprite-sheets.json#kestrel-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/craft/kestrel/in-game-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of KESTREL. Redraw the referenced subject as this sheet, keeping its exact design, palette and rendering in every cell: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same small steel-blue dart-shaped fighter with a blue fuselage stripe, cyan canopy and orange engine glow in a strict side view facing right with only a thin sliver of the top of the hull visible, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose tilted up and the upper wing foreshortened, slight climb, level flight, slight dive, steep dive with the nose tilted down and the lower wing foreshortened. Bottom row, the level-flight hull: the first four cells are a smoothly looping four-frame engine thruster animation from left to right (short flame, medium flame, long two-tone orange flame, medium flickering flame that loops back to the first), and the fifth cell is a full-boost reference with a long white-hot core streak. Every sprite drawn as crisp pixel art with a 1-pixel near-black navy outline at its native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. Flat pure green key background, no shadow or spill. No text anywhere.\n All ten cells show the complete fighter hull with its nose pointing right (the climb and dive frames only tilt the nose up or down); in the bottom row the hull is identical in all five cells and only the flame behind its engine changes, ending in a white-hot boost streak trailing left from the engine in the fifth cell. The cells are separated only by empty green space: no grid lines, dividers or borders.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F070",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/kestrel"
+  }
+}

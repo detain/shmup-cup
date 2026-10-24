@@ -1,0 +1,23 @@
+{
+  "id": "moment/ending-flagship-slips-away",
+  "slot": "a",
+  "prompt": "Painterly 16-bit pixel art inspired arcade ending illustration, wide cinematic composition, bold dark outlines, saturated limited palette over a deep-navy base, glowing accent colors, soft CRT scanline texture, dread preserved, never pure black. The one that got away. Pre-dawn over an open black ocean: a bruised sky of deep navy and ash-rose, a calm dark sea with long low swells. In the middle-right of the frame, a colossal whale-bodied armored ark is diving: a long arcing hull made of many overlapping segments of dark armored plate, curving down into the black water like a whale sounding, the front half already gone under, its great mechanical tail fluke still raised above the surface mid-stroke. Every plate seam and row of portholes glows with a faint ring of cold bioluminescent teal, a procession of lights marking its descent, the segments nearest the water winking out one by one as they sink. The displaced water rises in carved walls and collapsing shelves of grey foam around it, backlit by the last light. In the bottom-left foreground, tiny and level on the swells, a single small steel-blue dart-shaped fighter hovers with one engine idling, a thin cyan glint on its canopy, not pursuing, only watching. More than a third of the frame is the dark water swallowing the ark. Palette of ash-navy dawn, teal glow accents and foam greys. No text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
+  "model": "flux2",
+  "seed": 2893104657,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:59:33.109Z",
+  "seconds": 36.2,
+  "label": "Ending \"The Flagship Slips Away\" — the Abyss Ark diving free into the dark",
+  "source": "images/70-key-moments/endings.json#ending-flagship-slips-away-v1",
+  "file": "art-prompts/v2/candidates/a/moment/ending-flagship-slips-away.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

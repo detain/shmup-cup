@@ -1,0 +1,38 @@
+{
+  "id": "stage/tempest-ridge/layer-far",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 56076,
+  "width": 1360,
+  "height": 768,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:33:08.984Z",
+  "seconds": 354.3,
+  "label": "TEMPEST RIDGE parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/tempest-ridge/layer-far.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/tempest-ridge.png"
+  ],
+  "editFromSha256": [
+    "e23be7500255a5f1f6cb6d171b35bc6849baf1accd68ad2ccb28bab176bf95e7"
+  ],
+  "instruction": "Reference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.",
+  "outputSize": "1360x768",
+  "meta": {
+    "job": "F167",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:59.384Z",
+    "parentId": "stage/tempest-ridge"
+  }
+}

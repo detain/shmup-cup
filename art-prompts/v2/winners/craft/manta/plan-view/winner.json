@@ -1,0 +1,38 @@
+{
+  "id": "craft/manta/plan-view",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Top-down technical draft of a retro arcade starfighter rendered as glowing thin mint-green vector lines on a deep navy gridded field, the MANTA shown in perfect plan view, its wide ray-wing geometry laid out symmetrically with dashed inner-rib construction lines, twin amber engine circles marked at the wing roots, a small green canopy ellipse near the nose, faint measurement tick marks along an implied baseline but absolutely no numbers or letters, corner registration crosses, one thin orange exhaust axis line running out the tail, subtle pixel-cluster texture on the stroke edges, mood of a hangar-floor reference sheet, clean geometric line art, saturated limited palette, widescreen composition, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Draw no dimension lines and no written values at all: the picture holds only the craft's line art, the faint grid, the four corner crosses and the exhaust axis line.",
+  "negative": "text, letters, numbers, dimension labels, photorealistic, 3d render, watermark, crumpled paper, blueprint smudges, pure black background",
+  "model": "flux2",
+  "seed": 13102,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:21:59.916Z",
+  "seconds": 72.4,
+  "label": "Top-down plan-view technical draft (mint lines on navy grid)",
+  "source": "images/20-player-crafts/manta.json#manta-showroom-v2",
+  "file": "art-prompts/v2/candidates/a/craft/manta/plan-view.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/manta.png"
+  ],
+  "editFromSha256": [
+    "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Top-down technical draft of a retro arcade starfighter rendered as glowing thin mint-green vector lines on a deep navy gridded field, the MANTA shown in perfect plan view, its wide ray-wing geometry laid out symmetrically with dashed inner-rib construction lines, twin amber engine circles marked at the wing roots, a small green canopy ellipse near the nose, faint measurement tick marks along an implied baseline but absolutely no numbers or letters, corner registration crosses, one thin orange exhaust axis line running out the tail, subtle pixel-cluster texture on the stroke edges, mood of a hangar-floor reference sheet, clean geometric line art, saturated limited palette, widescreen composition, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Draw no dimension lines and no written values at all: the picture holds only the craft's line art, the faint grid, the four corner crosses and the exhaust axis line.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F079",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/manta"
+  }
+}

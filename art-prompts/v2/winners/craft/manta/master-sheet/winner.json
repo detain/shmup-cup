@@ -1,0 +1,38 @@
+{
+  "id": "craft/manta/master-sheet",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: High-resolution master sprite sheet for a horizontal arcade shooter, twelve large renderings of the MANTA flat ray-winged fighter in pale mint with a green canopy and amber twin thrusters laid out on a wide perfectly flat solid pure bright green chroma-key background in a tidy 4-by-3 grid of equal cells with equal gutters, top row the hull from exact side, front-on with wings spread wide, rear-on showing both nozzles, and a top-down plan view showing the full ray silhouette, middle row four banking sequences from neutral to hard left roll with the wing geometry compressing correctly, bottom row damage tiers from clean plating to scuffed edges to cracked wingtips venting amber sparks to a critical smoking state, identical top-lighting in every cell, bold dark outlines, flat saturated arcade shading with pixel-cluster texture accents on highlights only, precise uniform scale, no cast shadows, no text, no numbers, no cell borders, documentation quality. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n The first cell's exact side view has its nose on the right and its tail spike on the left, and the fourth cell of the top row is seen from directly above, showing the whole flat ray outline from wingtip to wingtip with the nose pointing right. The cells are separated only by empty green space, with no white or dark lines between them.",
+  "negative": "overlapping sprites, uneven sizes, shadows, gradient background, cell borders, labels, numbers, animal anatomy, motion blur, text, photorealistic, 3d render, watermark, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 12312,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:17:12.561Z",
+  "seconds": 106.4,
+  "label": "Hi-res master sheet: side / front / rear / plan views, banking, damage tiers",
+  "source": "images/20-player-crafts/sprite-sheets.json#manta-sprite-sheet-v2",
+  "file": "art-prompts/v2/candidates/a/craft/manta/master-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/manta.png"
+  ],
+  "editFromSha256": [
+    "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: High-resolution master sprite sheet for a horizontal arcade shooter, twelve large renderings of the MANTA flat ray-winged fighter in pale mint with a green canopy and amber twin thrusters laid out on a wide perfectly flat solid pure bright green chroma-key background in a tidy 4-by-3 grid of equal cells with equal gutters, top row the hull from exact side, front-on with wings spread wide, rear-on showing both nozzles, and a top-down plan view showing the full ray silhouette, middle row four banking sequences from neutral to hard left roll with the wing geometry compressing correctly, bottom row damage tiers from clean plating to scuffed edges to cracked wingtips venting amber sparks to a critical smoking state, identical top-lighting in every cell, bold dark outlines, flat saturated arcade shading with pixel-cluster texture accents on highlights only, precise uniform scale, no cast shadows, no text, no numbers, no cell borders, documentation quality. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n The first cell's exact side view has its nose on the right and its tail spike on the left, and the fourth cell of the top row is seen from directly above, showing the whole flat ray outline from wingtip to wingtip with the nose pointing right. The cells are separated only by empty green space, with no white or dark lines between them.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F078",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/manta"
+  }
+}

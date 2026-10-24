@@ -1,0 +1,44 @@
+{
+  "id": "enemy/thunderhead/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen THUNDERHEAD, image 2 shows the chosen STEED FOAL, image 3 shows the chosen BOLT DRONE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Above a roiling sea of storm clouds under a lifted deep-navy sky crossed with slanting cold rain, jagged saw-tooth snow ridges pierce the cloud floor in the far distance. Center-right, a THUNDERHEAD — a hostile storm cell of the IRON TIDE: a dense round-anvil cloud mass in slate and charcoal grays with a single glowing lilac eye at its heart, arcs of violet-white electricity crawling along its underbelly like cable-work, its rim boiling outward. From that boiling rim, mid-calving, comes a STEED FOAL — a small homing seahorse of riveted steel plates and tense cables, curled tail, arched neck, a warm amber lamp-light behind its faceplate, static sparks jumping between its fins — still trailing a wisp of cloud-stuff from its birth. Lower left, a sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow dives between the pair, thrusters flaring, leaving a white vapor line in the rain, while pink and red round shots with bright cores and dark rims string out of the thunderhead toward it. One violet lightning fork connects cloud to ridge behind them, orange-white explosion bloom dotting a spur of rock. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the fighter in the lower left is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small, nose pointing right and slightly down, orange flame trailing left.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, sunny sky, calm clouds, wings on the seahorse",
+  "model": "flux2",
+  "seed": 16511,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:34:58.309Z",
+  "seconds": 348.3,
+  "label": "Zone E encounter concept — the TEMPEST RIDGE enemies in situ (follows all zone E enemy winners)",
+  "source": "images/40-enemies/zone-e-tempest-ridge.json#thunderhead-steed-foal-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/thunderhead/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/thunderhead.png",
+    "art-prompts/v2/candidates/a/enemy/steed-foal.png",
+    "art-prompts/v2/candidates/a/enemy/bolt-drone.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "b6ecd5c4466f74232715f77f2f373702fee2ac218572486550b52baa0152e44b",
+    "341796dd61ae57b448e4e9749ffd693e03f904c98fb0dc244572073b06d8a15d",
+    "bc875491e60e343d6592d330f09356f32881f804621853e882d30492d4ea4161",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen THUNDERHEAD, image 2 shows the chosen STEED FOAL, image 3 shows the chosen BOLT DRONE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Above a roiling sea of storm clouds under a lifted deep-navy sky crossed with slanting cold rain, jagged saw-tooth snow ridges pierce the cloud floor in the far distance. Center-right, a THUNDERHEAD — a hostile storm cell of the IRON TIDE: a dense round-anvil cloud mass in slate and charcoal grays with a single glowing lilac eye at its heart, arcs of violet-white electricity crawling along its underbelly like cable-work, its rim boiling outward. From that boiling rim, mid-calving, comes a STEED FOAL — a small homing seahorse of riveted steel plates and tense cables, curled tail, arched neck, a warm amber lamp-light behind its faceplate, static sparks jumping between its fins — still trailing a wisp of cloud-stuff from its birth. Lower left, a sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow dives between the pair, thrusters flaring, leaving a white vapor line in the rain, while pink and red round shots with bright cores and dark rims string out of the thunderhead toward it. One violet lightning fork connects cloud to ridge behind them, orange-white explosion bloom dotting a spur of rock. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the fighter in the lower left is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small, nose pointing right and slightly down, orange flame trailing left.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F108",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:39.382Z",
+    "parentId": "enemy/thunderhead"
+  }
+}

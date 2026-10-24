@@ -1,0 +1,44 @@
+{
+  "id": "enemy/froth/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen FROTH, image 2 shows the chosen BROOD BUBBLE, image 3 shows the chosen URCHIN, image 4 shows the chosen MAW ROCKET. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside a coral-reef tunnel at the heart of a teal-and-violet nebula sea: a BROOD BUBBLE floats center-frame — a translucent wobbling sphere of membranous jelly with a tiny mechanical fish curled asleep inside, its dark spine visible through the shimmering film — while along the sand-stone reef walls a row of URCHIN reef turrets bristle: squat barnacle-domes armored in overlapping charcoal plates, each crowned with a fan of purple spines and a single rotating magenta lens. The MANTA fighter, a flat ray-winged hull of pale mint with a green canopy and amber twin thrusters, banks through the gap on the left, its wake scattering glowing plankton motes. Fired urchin shots leave curling pink trails; the tunnel mouth ahead glows with pale aqua light. Background is a lifted deep-navy to teal gradient, never pure black, layered with drifting wave-like gas rasters. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sea creatures with eyes, cartoon smile, bubbles everywhere",
+  "model": "flux2",
+  "seed": 15211,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:29:34.274Z",
+  "seconds": 337.8,
+  "label": "Zone B encounter concept — the BRINE NEBULA enemies in situ (follows all zone B enemy winners)",
+  "source": "images/40-enemies/zone-b-brine-nebula.json#brood-urchin-reef-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/froth/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/froth.png",
+    "art-prompts/v2/candidates/a/enemy/brood-bubble.png",
+    "art-prompts/v2/candidates/a/enemy/urchin.png",
+    "art-prompts/v2/candidates/a/enemy/maw-rocket.png"
+  ],
+  "editFromSha256": [
+    "f14dbabf54c514bd4e272dd76223fb3e4ebef1f32ef7323e303f3d8a40fcac83",
+    "3d9fe9ee855f359612b7342f93355dff8b8c84c2f495f8cbaa6e4a3a222ebe74",
+    "647529b187d8e33a0e1d781e4bcfbce4e4bb3cf23bbebb57f24af2bea93b23f8",
+    "a22b791e0e674c902827d7fcac2dfea33a9879ce5635b09ec5f3e28613ae5ca7"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen FROTH, image 2 shows the chosen BROOD BUBBLE, image 3 shows the chosen URCHIN, image 4 shows the chosen MAW ROCKET. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside a coral-reef tunnel at the heart of a teal-and-violet nebula sea: a BROOD BUBBLE floats center-frame — a translucent wobbling sphere of membranous jelly with a tiny mechanical fish curled asleep inside, its dark spine visible through the shimmering film — while along the sand-stone reef walls a row of URCHIN reef turrets bristle: squat barnacle-domes armored in overlapping charcoal plates, each crowned with a fan of purple spines and a single rotating magenta lens. The MANTA fighter, a flat ray-winged hull of pale mint with a green canopy and amber twin thrusters, banks through the gap on the left, its wake scattering glowing plankton motes. Fired urchin shots leave curling pink trails; the tunnel mouth ahead glows with pale aqua light. Background is a lifted deep-navy to teal gradient, never pure black, layered with drifting wave-like gas rasters. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F093",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:19.377Z",
+    "parentId": "enemy/froth"
+  }
+}

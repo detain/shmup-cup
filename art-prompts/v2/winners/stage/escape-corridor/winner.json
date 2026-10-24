@@ -1,0 +1,23 @@
+{
+  "id": "stage/escape-corridor",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows, never pure black. A long horizontal rock corridor seen from the side in the act of self-destruction, a ceiling of rock across the top and a floor of rock across the bottom. The corridor walls are cross-sections of banded geology, layered strata of sandstone cream, dark basalt seams and veins of pale mineral. On the far left of the frame the collapse has arrived: a rolling wall of brown-grey dust and tumbling boulders, glowing from inside with several bursts of furnace-orange fire, its leading edge a boiling cauliflower cloud, a fan of glowing orange sparks, embers and ash flying out ahead of it toward the right. Through the middle of the frame the ceiling is failing, huge rock slabs tilting and dropping out of it, deep dark zigzag fissures splitting the floor and racing ahead of the collapse, thin jets of white steam hissing up from the fresh cracks. On the right side the ceiling and floor are still solid and the open lane between them narrows toward the far right, a thin glimpse of deep-navy darkness beyond. All debris and dust stream diagonally to the right on one shared vector. Earth golds and rusts torn by furnace orange and brown-grey dust. No chains, no electricity, no characters, no ships, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, earthquake city, buildings, modern structures, volcano lava flow, explosion mushroom cloud nuclear, fire spreading forward past debris, pure black background, watermark, text, blurry, safe corridor fully intact, calm scene, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 3862049117,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:52:08.165Z",
+  "seconds": 54.1,
+  "label": "ESCAPE CORRIDOR — the final-zone collapse run, wide wallpaper",
+  "source": "images/50-stages/escape-corridor.json#escape-corridor-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/escape-corridor.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "moment/ending-throne-is-broken",
+  "slot": "a",
+  "prompt": "Painterly 16-bit pixel art inspired arcade ending illustration, bold dark outlines, saturated limited palette over a deep-navy base, glowing accent colors, soft CRT scanline texture, a wounded ascent, never pure black. Deep underwater at the bottom of an abyssal trench, seen as a tall upward climb. In the lower right, the broken throne of the deep: a shattered crown of black-blue reef crystal and drowned fortress wreckage, with one enormous cracked ring of violet crystal split in two and tilted where the tyrant's seat used to be, its edges shedding a slow rain of lilac shards. The cyan bioluminescent specks that dust the trench cliffs are going dark section by section from the bottom up. Rising diagonally from the lower left toward the upper center, a badly damaged steel-blue dart-shaped fighter climbs: its blue hull stripe scorched away in a ragged band, one wingtip chipped off, its cyan canopy cracked into a frost of fine fractures, one engine burning as a single long orange flare while the other sputters a broken amber ribbon, a small light blinking through a gash in its side. Far above, at the top of the image, a gap between the dark trench walls lets in one clean slanted shaft of pale gold sunlight, full of glittering drifting marine snow, a soft diagonal beam of light whose lower end falls exactly where the ship is pointing. Abyssal blues and violets fading out below, a warm gold shaft above, one orange engine flame in between. No stairs, no steps, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
+  "model": "flux2",
+  "seed": 1650938274,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T01:01:13.842Z",
+  "seconds": 38.5,
+  "label": "Ending \"The Throne Is Broken\" — a battered fighter climbing out of the abyss trench",
+  "source": "images/70-key-moments/endings.json#ending-throne-is-broken-v1",
+  "file": "art-prompts/v2/candidates/a/moment/ending-throne-is-broken.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

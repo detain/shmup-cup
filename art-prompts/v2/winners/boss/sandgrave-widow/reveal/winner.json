@@ -1,0 +1,38 @@
+{
+  "id": "boss/sandgrave-widow/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Cinematic arcade boss descent, the SANDGRAVE WIDOW, a colossal mechanical spider fortress lowering itself from the high sky on multiple gleaming silk cables that catch the light like harp strings, its bulbous abdomen a patchwork of sand-dark bronze armor plates with a cracked glass window revealing a churning violet furnace inside, eight long jointed legs each built from segmented struts with hydraulic pistons kicking up puffs of sand as they touch, front limbs ending in huge curved hydraulic fangs dripping fine steel-thread, a spinneret cannon cluster under the head humming with pink charge light, the vast spider hanging above a sea of dark dune silhouettes while a big pale cream sun and a smaller orange sun sink low behind it rim-lighting the silk lines, heat haze shimmer along the horizon, a tiny steel-blue fighter with an orange exhaust streak banking at the bottom left, deep navy shadows, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, watermark, real spider, fur, insect eyes cluster, gore, bugs crawling, pure black background",
+  "model": "flux2",
+  "seed": 12301,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:15:52.860Z",
+  "seconds": 103,
+  "label": "SANDGRAVE WIDOW (SW-03) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/03-sandgrave-widow.json#sw03-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/sandgrave-widow/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/sandgrave-widow.png"
+  ],
+  "editFromSha256": [
+    "10873747d454fdd172512cc20eba641ea755247b436f962a022b60018d52f851"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Cinematic arcade boss descent, the SANDGRAVE WIDOW, a colossal mechanical spider fortress lowering itself from the high sky on multiple gleaming silk cables that catch the light like harp strings, its bulbous abdomen a patchwork of sand-dark bronze armor plates with a cracked glass window revealing a churning violet furnace inside, eight long jointed legs each built from segmented struts with hydraulic pistons kicking up puffs of sand as they touch, front limbs ending in huge curved hydraulic fangs dripping fine steel-thread, a spinneret cannon cluster under the head humming with pink charge light, the vast spider hanging above a sea of dark dune silhouettes while a big pale cream sun and a smaller orange sun sink low behind it rim-lighting the silk lines, heat haze shimmer along the horizon, a tiny steel-blue fighter with an orange exhaust streak banking at the bottom left, deep navy shadows, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F011",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/sandgrave-widow"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/sandgrave-widow/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Apocalyptic minimal arcade poster, under a darkening twin-sunset sky the entire dune sea is thrown into shadow by the SANDGRAVE WIDOW seen only as a black silhouette hanging high in the upper frame, round abdomen and eight splayed legs cut out perfectly against the dying orange and cream light, silk lines drawn as straight dark needles from the corners of the sky down to her body, her eight eye-lamps lit as a tight cluster of pink coals too small to count, across the dunes below long leg-shadows race toward the tiny running silhouette of a dart-shaped fighter leaving a thin blue contrail of engine light at the bottom center, the whole palette reduced to orange, cream, deep navy and one pink accent, dread through negative space, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, letters, photorealistic, 3d render, real spider detail, hairy legs, multiple suns flare artifacts, pure black background, cluttered horizon, watermark",
+  "model": "flux2",
+  "seed": 12303,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:20:56.312Z",
+  "seconds": 68.4,
+  "label": "SANDGRAVE WIDOW (SW-03) WARNING silhouette frame",
+  "source": "images/30-bosses/03-sandgrave-widow.json#sw03-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/sandgrave-widow/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/sandgrave-widow.png"
+  ],
+  "editFromSha256": [
+    "10873747d454fdd172512cc20eba641ea755247b436f962a022b60018d52f851"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Apocalyptic minimal arcade poster, under a darkening twin-sunset sky the entire dune sea is thrown into shadow by the SANDGRAVE WIDOW seen only as a black silhouette hanging high in the upper frame, round abdomen and eight splayed legs cut out perfectly against the dying orange and cream light, silk lines drawn as straight dark needles from the corners of the sky down to her body, her eight eye-lamps lit as a tight cluster of pink coals too small to count, across the dunes below long leg-shadows race toward the tiny running silhouette of a dart-shaped fighter leaving a thin blue contrail of engine light at the bottom center, the whole palette reduced to orange, cream, deep navy and one pink accent, dread through negative space, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "896x1152",
+  "meta": {
+    "job": "F013",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/sandgrave-widow"
+  }
+}

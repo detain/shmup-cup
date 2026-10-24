@@ -1,0 +1,23 @@
+{
+  "id": "tiles/azure-verge",
+  "slot": "c",
+  "prompt": "Retro 16-bit pixel-art texture swatch of green-teal alien planet rock, a tight crop from the middle of a huge wall of this rock, cut off by the top, bottom, left and right edges, seen exactly head-on like a scanned sheet, the rock fills the whole square edge to edge. The rock is a soft sea-green and teal, layered in gently wavy horizontal strata of darker deep teal, with chunky rounded stone clusters and scattered pale mint mineral flecks and small glinting crystal chips. A band of grassy pale-mint moss crust with tufted blades runs across the image a little below the top edge, with more green-teal rock behind and above it. Crisp retro 16-bit pixel art with chunky hard-edged pixel clusters sized for 12-pixel tiles, three-to-four step shading ramps lit from the top-left, saturated limited palette, the pattern repeats evenly and seamlessly with no single focal point, so the left edge continues into the right edge, completely flat and orthographic with no depth and no vanishing point, no faces, no text, no frame, no border.",
+  "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
+  "model": "flux1",
+  "seed": 3770572056,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T01:57:21.564Z",
+  "seconds": 13.3,
+  "label": "AZURE VERGE terrain material swatch — zone A rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/c/tiles/azure-verge.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

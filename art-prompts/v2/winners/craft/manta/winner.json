@@ -1,0 +1,23 @@
+{
+  "id": "craft/manta",
+  "slot": "a",
+  "prompt": "Video game spacecraft concept art showroom plate in SNES-era 16-bit pixel art inspired style: a single wide flat retro-futuristic fighter, the MANTA, gliding toward the right, seen from slightly above at a three-quarter angle so the broad top surface of its wings is visible. The craft sits small and exactly centered with a wide band of empty background on all four sides; nothing touches the edges of the picture. Its hull is shaped like a manta ray: two broad swept ray-wings with gently curled wingtips, two short rounded head fins flanking the blunt nose, and a thin whip-like tail spine trailing behind to the left ending in a small fin. Pale mint body panels with soft sage-green under-shading and a faint hexagon texture on the wing skins, a small bright green glowing canopy set forward of center like a jewel, a row of tiny cyan running lights along each wing's leading edge, and two amber thruster nozzles embedded in the wing roots, each holding a small compact amber glow with no exhaust trail. Every edge drawn with a heavy near-black green outline, flat saturated fills with three-step shading ramps lit from the top left, crisp specular highlights on the wing ridges, chunky pixel-cluster texture accents, organic yet engineered, calm and elegant. Isolated on a perfectly flat solid pure bright green chroma-key background, no gradient, no grid line, no floor, no cast shadow, no glow spilling onto the background, no stars, no scenery, no text, no annotations.",
+  "negative": "text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1567453653,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:32:32.429Z",
+  "seconds": 81.4,
+  "label": "MANTA — the Direct-mode ship (pale-mint ray-wing), three-quarter view from slightly above on key green",
+  "source": "images/20-player-crafts/manta.json#manta-showroom-v1",
+  "file": "art-prompts/v2/candidates/a/craft/manta.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

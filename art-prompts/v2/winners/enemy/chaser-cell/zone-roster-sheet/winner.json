@@ -1,0 +1,42 @@
+{
+  "id": "enemy/chaser-cell/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen CHASER CELL, image 2 shows the chosen VAULT CLAW, image 3 shows the chosen POLYP TURRET. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — the CHASER CELL mitosis cycle in six frames: a round translucent green membrane sphere with a pale nucleus, nucleus stretching, sphere waisting into a dumbbell, filament spindle bridge at full stretch, the pinch snapping to two touching daughters, and the pair separating into two independent cells facing left. Middle band — a VAULT CLAW in five states: fully sheathed socket bump in green tissue, first bone-white link emerging, half-extended four-link arc, full eight-link extended hook with joints beaded, and the recoil snap with a spray of fluid dots. Bottom band — POLYP TURRETS and shared effects: a fleshy green wall-polyp in four firing states (closed bud, swelling bud, blooming mouth, discharged puff), floating violet spore pixels, pink and magenta round shots with bright cores and dark rims, and a small green rupture-burst effect in two frames. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Every CHASER CELL frame is the reference's dark-green spiky cell with its big red eye, even while dividing. The middle band shows five separate VAULT CLAW sprites side by side, each the reference's brown tissue mound with bone-white bead links and a curved claw tip: no links, two links, four links, eight links fully extended, and snapping back.",
+  "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, red blood, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 16621,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:48:20.549Z",
+  "seconds": 158.6,
+  "label": "Zone F roster sheet — every library enemy of CELL VAULT together (follows all zone F enemy winners)",
+  "source": "images/40-enemies/zone-f-cell-vault.json#cell-vault-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/chaser-cell/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/chaser-cell.png",
+    "art-prompts/v2/candidates/a/enemy/vault-claw.png",
+    "art-prompts/v2/candidates/a/enemy/polyp-turret.png"
+  ],
+  "editFromSha256": [
+    "17126bf3623f9401adc044c6e2d9613e2e088ed7991c5c3ecbe34b4889b93dfe",
+    "aafbed75c9cf609314243fe3537d0346a2439e71a8c371b4bb706a57d80d2e99",
+    "e5a48c9065bce12e18965dbe4a22d2011bbd7b65d9836df26d996028f8f8985d"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen CHASER CELL, image 2 shows the chosen VAULT CLAW, image 3 shows the chosen POLYP TURRET. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — the CHASER CELL mitosis cycle in six frames: a round translucent green membrane sphere with a pale nucleus, nucleus stretching, sphere waisting into a dumbbell, filament spindle bridge at full stretch, the pinch snapping to two touching daughters, and the pair separating into two independent cells facing left. Middle band — a VAULT CLAW in five states: fully sheathed socket bump in green tissue, first bone-white link emerging, half-extended four-link arc, full eight-link extended hook with joints beaded, and the recoil snap with a spray of fluid dots. Bottom band — POLYP TURRETS and shared effects: a fleshy green wall-polyp in four firing states (closed bud, swelling bud, blooming mouth, discharged puff), floating violet spore pixels, pink and magenta round shots with bright cores and dark rims, and a small green rupture-burst effect in two frames. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Every CHASER CELL frame is the reference's dark-green spiky cell with its big red eye, even while dividing. The middle band shows five separate VAULT CLAW sprites side by side, each the reference's brown tissue mound with bone-white bead links and a curved claw tip: no links, two links, four links, eight links fully extended, and snapping back.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F112",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:39.382Z",
+    "parentId": "enemy/chaser-cell"
+  }
+}

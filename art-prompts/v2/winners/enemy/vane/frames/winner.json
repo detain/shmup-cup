@@ -1,0 +1,38 @@
+{
+  "id": "enemy/vane/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of VANE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same VANE enemy — a small bladed interceptor, a compact steel core ringed by three crescent mirror-blades with polished lilac edges fanned evenly around it, a small dark sensor dot at the hub, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the three blades rotated 0, 30, 60 and 90 degrees around the identical core so the spin loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: the tip of the uppermost blade points to twelve o'clock in the first cell, one o'clock in the second, two o'clock in the third and three o'clock in the fourth. Only empty green space between the cells, no lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 94603,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:16:29.152Z",
+  "seconds": 67,
+  "label": "VANE animation sheet, four frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/vane/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/vane.png"
+  ],
+  "editFromSha256": [
+    "1ab23adf60ee374d75317acf22dfc2134892cd0265d84210be9de15939cb0d60"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of VANE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same VANE enemy — a small bladed interceptor, a compact steel core ringed by three crescent mirror-blades with polished lilac edges fanned evenly around it, a small dark sensor dot at the hub, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the three blades rotated 0, 30, 60 and 90 degrees around the identical core so the spin loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: the tip of the uppermost blade points to twelve o'clock in the first cell, one o'clock in the second, two o'clock in the third and three o'clock in the fourth. Only empty green space between the cells, no lines.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F089",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:19.377Z",
+    "parentId": "enemy/vane"
+  }
+}

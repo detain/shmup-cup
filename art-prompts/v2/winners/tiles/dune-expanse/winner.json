@@ -1,0 +1,23 @@
+{
+  "id": "tiles/dune-expanse",
+  "slot": "b",
+  "prompt": "Pixelated low-resolution 16-bit pixel art, a flat 2D seamless repeating texture of packed desert sandstone seen exactly head-on like a scanned sheet, with no depth, no floor and no viewing angle; the stone fills the whole picture edge to edge and continues off all four sides. Irregular natural sediment layers, wavy and uneven, run across from left to right in rust orange, sand gold and dark umber, crumbly rounded rock clusters of different sizes, small round pebbles embedded here and there, thin dark brown fissures that wander between them. A wavy horizontal band of wind-rippled pale sand, little crescent ripples of cream and gold, crosses the upper quarter of the picture, and the same layered sandstone lies behind it and continues above it to the top edge and below it to the bottom edge. Three-to-four step shading ramps lit from the top-left, hard-edged pixels, warm saturated limited palette of rust orange, sand gold, cream and umber, uniform all-over pattern with no focal point.",
+  "negative": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, bricks, masonry, mortar, brushstrokes, smooth painting, dunes, desert landscape, sun, grid, regular blocks, straight vertical lines, floor, ground plane, receding rows, tiles, red",
+  "model": "sd35",
+  "seed": 4239488225,
+  "width": 1024,
+  "height": 1024,
+  "steps": 32,
+  "guidance": 5,
+  "generatedAt": "2026-10-17T01:45:56.687Z",
+  "seconds": 13.1,
+  "label": "DUNE EXPANSE terrain material swatch — zone C rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/dune-expanse.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, bricks, masonry, mortar, brushstrokes, smooth painting, dunes, desert landscape, sun, grid, regular blocks, straight vertical lines, floor, ground plane, receding rows, tiles, red",
+  "mode": "generate"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "enemy/sentinel-walker",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single SENTINEL WALKER enemy of the Iron Tide, a small stubborn guard machine that patrols a steel fortress floor, isolated. A heavy riveted barrel-shaped torso of dark gunmetal and iron gray, banded with two thick hoops studded with glowing amber rivets, a hunched armored hood on top with a single round red sensor eye peering left out of a dark slot. Two short stubby shoulder cannons stick forward to the left, one above the other, with dark bores. Below, two thick reverse-jointed bird-like legs with hydraulic pistons in brass and steel, bent in a sturdy mid-stride stance, ending in three-toed clawed feet. Squat, top-heavy, tough little silhouette, slightly taller than wide. Side view facing left, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, warm amber running-light accents, bold simple shape that stays readable at small size, no anti-aliasing, no floor, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 374522489,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:49:25.653Z",
+  "seconds": 46.1,
+  "label": "SENTINEL WALKER — zone H (IRON CITADEL) small guard walker (~18×21 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-h-iron-citadel.json#iron-citadel-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/sentinel-walker.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "stage/prism-labyrinth",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows, never pure black. A vast underground crystal labyrinth seen side-on as a long horizontal corridor built from parallax bands. Ceiling band: a jagged roof of giant triangular facets of deep violet crystal, every facet a different flat angle, edges glinting pale lilac, with downward-pointing prism spikes. Far band: the corridor recedes into a dark amethyst passage at the center, studded with single bright star-like glints, the maze going on forever. Middle band: enormous floating cubes of translucent violet crystal hanging in mid-air in a staggered row, some split apart mid-rearrangement, casting sharp rhomboid shadows, and a few diagonal beams of refracted light crossing the hall, splitting into thin pink and cyan fans as they pass through a floating shard. Lower band: clusters of tall six-sided crystal prisms rising from the floor like organ pipes, lilac-glowing edges and a soft violet pulse in their cores. Floor band: a mosaic of polished triangular facet plates reflecting the prism clusters upside-down. Palette of deep violets and indigo with lilac highlight edges and small glints of pale gold. No characters, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, round pebbles, gravel, ice texture, snow, pure black background, watermark, text, blurry, muddy colors, soft gradients everywhere, single giant crystal only, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 3517290846,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:39:49.115Z",
+  "seconds": 57.5,
+  "label": "PRISM LABYRINTH — zone G stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-g-prism-labyrinth.json#prism-labyrinth-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/prism-labyrinth.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

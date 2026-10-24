@@ -1,0 +1,23 @@
+{
+  "id": "stage/iron-citadel",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows, never pure black. The interior of a colossal fortress-ship, a long industrial hall seen side-on and built from horizontal parallax bands. Ceiling band: three parallel runs of pipes of different diameters with regular flange rings, bending into elbows and diving into the walls, and a travelling crane rail with a hanging hook block fading into shadow. Far band: the end wall is dominated by a giant circular pressure hatch of concentric locking rings with a single small amber viewport glowing at its center, flanked by blast doors as wide as houses. Wall band: colossal riveted gunmetal plates with regular rows of rivet heads and seam welds, banded with dark outlines, steam bleeding in slow white ribbons from two big valve wheels. Gantry band: walkway gratings and cantilevered catwalks crossing at two levels with sturdy vertical stanchions and hazard-striped edges, long rows of small amber running lamps along their edges, each throwing a cone of warm orange light onto the steel and linking into a receding chain of glow, deep blue-black shadow between the pools of light. Floor band: heavy steel deck plating with grilles and floor-edge lamps. Gunmetal greys and dark steel blues with committed warm amber lighting. No characters, no text, no letters, no numbers, no signs, no user interface.",
+  "negative": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 4120985367,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:45:26.425Z",
+  "seconds": 64,
+  "label": "IRON CITADEL — zone H stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-h-iron-citadel.json#iron-citadel-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/iron-citadel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

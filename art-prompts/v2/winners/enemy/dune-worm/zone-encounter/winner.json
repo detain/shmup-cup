@@ -1,0 +1,44 @@
+{
+  "id": "enemy/dune-worm/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen DUNE WORM, image 2 shows the chosen DUST DEVIL, image 3 shows the chosen HUSK CRAWLER. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Beneath twin suns — a huge pale cream disc low on the horizon and a smaller orange disc riding above it — an endless sea of layered dune silhouettes in sand-gold and burnt amber. A DUNE WORM erupts from the crest at center: a segmented mechanical boring-worm of brass ring-plates, a drill-bit maw of spiral teeth, and a geyser of sand fountaining around its emergence hole. To the right a DUST DEVIL twists upward, a whirling column of rust-colored vapor and grit with visible horizontal shear bands and a hollow dark core, pebbles orbiting its funnel. The KESTREL fighter, a sleek steel-blue dart with bold blue hull stripe, cyan canopy and orange engine glow, arcs between the two threats, tracers streaking. Heat haze wobbles the horizon in thin raster lines. Sky gradient from pale gold at the horizon to deep warm navy above, lifted and never pure black, sparse first stars. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the fighter is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small, nose pointing right and orange flame trailing left; the worm's body is a chain of separate brass rings behind a silver drill as in image 1.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, one single sun, organic snake scales, tornado debris house",
+  "model": "flux2",
+  "seed": 16311,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:54:43.346Z",
+  "seconds": 334.7,
+  "label": "Zone C encounter concept — the DUNE EXPANSE enemies in situ (follows all zone C enemy winners)",
+  "source": "images/40-enemies/zone-c-dune-expanse.json#dune-worm-dust-devil-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/dune-worm/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/dune-worm.png",
+    "art-prompts/v2/candidates/a/enemy/dust-devil.png",
+    "art-prompts/v2/candidates/a/enemy/husk-crawler.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "f6c38fdc51a99067b869b6a4b49be90fb558f88d67e2aeab386e0cc0956a7cbf",
+    "c957d096137ddebffd8e96ad79f4cabf4606e994fbf448aa8125801ec75c75e8",
+    "b55f108e50cf7a981890f9cf1fd0c1a84505ea0bf940513c544024ccead60626",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen DUNE WORM, image 2 shows the chosen DUST DEVIL, image 3 shows the chosen HUSK CRAWLER. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Beneath twin suns — a huge pale cream disc low on the horizon and a smaller orange disc riding above it — an endless sea of layered dune silhouettes in sand-gold and burnt amber. A DUNE WORM erupts from the crest at center: a segmented mechanical boring-worm of brass ring-plates, a drill-bit maw of spiral teeth, and a geyser of sand fountaining around its emergence hole. To the right a DUST DEVIL twists upward, a whirling column of rust-colored vapor and grit with visible horizontal shear bands and a hollow dark core, pebbles orbiting its funnel. The KESTREL fighter, a sleek steel-blue dart with bold blue hull stripe, cyan canopy and orange engine glow, arcs between the two threats, tracers streaking. Heat haze wobbles the horizon in thin raster lines. Sky gradient from pale gold at the horizon to deep warm navy above, lifted and never pure black, sparse first stars. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n Image 4 shows the KESTREL: the fighter is exactly that KESTREL (single engine, tall tail fin, blue stripe, cyan canopy), small, nose pointing right and orange flame trailing left; the worm's body is a chain of separate brass rings behind a silver drill as in image 1.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F099",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:29.379Z",
+    "parentId": "enemy/dune-worm"
+  }
+}

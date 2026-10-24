@@ -1,0 +1,42 @@
+{
+  "id": "enemy/dune-worm/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen DUNE WORM, image 2 shows the chosen DUST DEVIL, image 3 shows the chosen HUSK CRAWLER. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: DUNE WORM segments and head — four frames of a brass ring-plated boring worm head with a spiral drill maw, rising from a sand collar, mouth closed, mouth revving, mouth fired-open with a pink orb, and a dented damaged frame; beside them two loose body-ring segments for stacking the worm's length. Row two: DUST DEVILS — four frames of a twisting rust-colored vapor funnel with a hollow dark core and orbiting pebble specks, each frame rotating the shear bands a quarter turn so the spiral advances upward. Row three: HUSK CRAWLERS — four frames of a beetle-shaped walker drone, overlapping charcoal carapace plates, six stubby legs in a walk cycle, a dim red eye-bar under the shell lip, one frame with the shell flipped open showing a vulnerable violet core. Chunky crisp pixels, dithered brass highlights, side view facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, real insects, feathers, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 47693,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:44:54.382Z",
+  "seconds": 230.7,
+  "label": "Zone C roster sheet — every library enemy of DUNE EXPANSE together (follows all zone C enemy winners)",
+  "source": "images/40-enemies/zone-c-dune-expanse.json#dune-expanse-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/dune-worm/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/dune-worm.png",
+    "art-prompts/v2/candidates/a/enemy/dust-devil.png",
+    "art-prompts/v2/candidates/a/enemy/husk-crawler.png"
+  ],
+  "editFromSha256": [
+    "f6c38fdc51a99067b869b6a4b49be90fb558f88d67e2aeab386e0cc0956a7cbf",
+    "c957d096137ddebffd8e96ad79f4cabf4606e994fbf448aa8125801ec75c75e8",
+    "b55f108e50cf7a981890f9cf1fd0c1a84505ea0bf940513c544024ccead60626"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen DUNE WORM, image 2 shows the chosen DUST DEVIL, image 3 shows the chosen HUSK CRAWLER. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: DUNE WORM segments and head — four frames of a brass ring-plated boring worm head with a spiral drill maw, rising from a sand collar, mouth closed, mouth revving, mouth fired-open with a pink orb, and a dented damaged frame; beside them two loose body-ring segments for stacking the worm's length. Row two: DUST DEVILS — four frames of a twisting rust-colored vapor funnel with a hollow dark core and orbiting pebble specks, each frame rotating the shear bands a quarter turn so the spiral advances upward. Row three: HUSK CRAWLERS — four frames of a beetle-shaped walker drone, overlapping charcoal carapace plates, six stubby legs in a walk cycle, a dim red eye-bar under the shell lip, one frame with the shell flipped open showing a vulnerable violet core. Chunky crisp pixels, dithered brass highlights, side view facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F098",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:29.379Z",
+    "parentId": "enemy/dune-worm"
+  }
+}

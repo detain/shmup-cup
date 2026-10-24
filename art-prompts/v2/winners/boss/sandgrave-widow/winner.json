@@ -1,0 +1,23 @@
+{
+  "id": "boss/sandgrave-widow",
+  "slot": "a",
+  "prompt": "A single giant mechanical spider fortress boss for a retro 16-bit side-scrolling space shooter, seen from slightly above in a three-quarter side view with its head toward the left, centered with a generous empty margin on the left, right and bottom, the whole machine fully visible with nothing cut off by the frame. All eight long jointed legs radiate outward around the body in a wide star-like spread, four reaching forward-left and four reaching back-right, each leg rising to a high sharp knee above the carapace and then plunging down to a needle-sharp steel tip, like a huge hunting spider poised to pounce. It hangs from exactly three thick glowing pale-gold silk cables that run straight up from its back to the top edge of the picture. A round domed carapace of sand-beige armor plate with dark gunmetal seams, rivets and orange hazard chevrons, and a big round armored abdomen behind it with spinneret vents trailing pale glowing threads. At the front a head with a cluster of eight glowing red sensor eyes and two large curved bronze fangs dripping pale glowing web, the obvious weak point. Menacing, sharp, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of sand beige, pale cream, gunmetal grey, bronze, burnt orange and red accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no sand, no dunes, no scenery, no sky, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic spider hair, six legs, cropped legs, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 99265627,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:27:06.237Z",
+  "seconds": 80.5,
+  "label": "SANDGRAVE WIDOW (SW-03) — zone C boss, the silk-hung spider fortress; full body on key green",
+  "source": "images/30-bosses/hi-res.json#sw03-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/sandgrave-widow.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

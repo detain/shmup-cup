@@ -1,0 +1,23 @@
+{
+  "id": "moment/ending-citadel-falls",
+  "slot": "a",
+  "prompt": "Painterly 16-bit pixel art inspired arcade ending illustration, wide cinematic composition, bold dark outlines, saturated limited palette over a deep-navy base, glowing accent colors, soft CRT scanline texture, maximum inferno, never pure black. The right two-thirds of the frame is filled by a colossal alien sky-fortress, a floating mountain of dark angular armor shaped like a jagged iron crown, clustered needle spires, ribbed domes and fin-like vanes, organic-mechanical and clearly not a naval ship, coming down in flames above a sea of clouds far below. Dozens of simultaneous breaches erupt along its length, cream-white cores blooming into amber petals and rust-red smoke, linking into one glowing fault line across the hull. Armor peels back like bark from a burning tree, exposing dark girders bending inward as the mass tilts and sinks toward the cloud deck, towers of ember smoke leaning sideways. In the left third, a small steel-blue dart-shaped fighter flies directly at the viewer: we see its pointed nose and glowing cyan bubble canopy from the front, swept wings level and steady, the firelight glinting turquoise-gold along its canopy edges, two small orange engine glows peeking out behind its wings. The left sky is smoky gold, the right horizon swallowed by fire. Embers drift across the entire frame. Palette of explosion cream, amber and rust over deep navy smoke-shadow. No text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, nuclear mushroom cloud, city skyline burning, buildings, forest fire, ship chasing the viewer, ship on the right, dark unreadable hull, text, watermark, blurry, single small explosion",
+  "model": "flux2",
+  "seed": 701384529,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:56:11.382Z",
+  "seconds": 35.9,
+  "label": "Ending \"The Citadel Falls\" — the fortress burning behind a fighter flying hard toward camera",
+  "source": "images/70-key-moments/endings.json#ending-citadel-falls-v1",
+  "file": "art-prompts/v2/candidates/a/moment/ending-citadel-falls.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "logo/title-screen/textless-backdrop",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen design of Title screen. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): The established arcade title illustration reproduced exactly but with the title lettering removed and its area left as calm deep-navy starfield with a faint teal nebula wash: a small steel-blue dart fighter with a cyan canopy and an orange engine trail on the left facing right toward a colossal mechanical fish-shaped fortress silhouette with rows of dim amber lights on the right, widescreen 16:9, bold dark outlines, saturated limited palette, lifted deep-navy that never falls to pure black, no text, no letters, no logo. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 27966,
+  "width": 1536,
+  "height": 864,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:44:15.272Z",
+  "seconds": 171.6,
+  "label": "The winning title painting with no lettering, as the 640×360 title-scene backdrop (logo composited in game)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/logo/title-screen/textless-backdrop.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/logo/title-screen.png"
+  ],
+  "editFromSha256": [
+    "550bac5c98f25482e975042fbb8f997b65955bbde4f61d168fab0f28402935be"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Title screen. Edit the reference image: keep everything about it — the exact design, silhouette, proportions, colour palette, materials, lighting direction, outline weight, rendering style, framing and camera distance — and change only what the description below changes (pose, state, colours, lettering or background as stated): The established arcade title illustration reproduced exactly but with the title lettering removed and its area left as calm deep-navy starfield with a faint teal nebula wash: a small steel-blue dart fighter with a cyan canopy and an orange engine trail on the left facing right toward a colossal mechanical fish-shaped fortress silhouette with rows of dim amber lights on the right, widescreen 16:9, bold dark outlines, saturated limited palette, lifted deep-navy that never falls to pure black, no text, no letters, no logo. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1536x864",
+  "meta": {
+    "job": "F069",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:09.377Z",
+    "parentId": "logo/title-screen"
+  }
+}

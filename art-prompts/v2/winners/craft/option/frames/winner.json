@@ -1,0 +1,38 @@
+{
+  "id": "craft/option/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of OPTION. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same OPTION plasma orb drone, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the orange-red orb's energy shell rolling a quarter turn each with the core pulsing; bottom row, the same four frames drained to a cold grey \"stolen\" state with the core dimmed. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Animation, clearly visible: the flickering flame crest that sits at twelve o'clock on the orb in the first cell of each row sits at three o'clock in the second cell, at six o'clock in the third and at nine o'clock in the fourth, as if the whole orb rolls clockwise. Only empty green space between the cells, no white or dark lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 84538,
+  "width": 1456,
+  "height": 720,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:35:28.013Z",
+  "seconds": 77.8,
+  "label": "Option frames: 4-frame energy loop + the grey \"stolen\" state (in an OPTION HUNTER's grip)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/craft/option/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/option.png"
+  ],
+  "editFromSha256": [
+    "4a801248b5455ab4751e8778855c2b830e5e23b13684512833915bea320e097a"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of OPTION. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same OPTION plasma orb drone, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the orange-red orb's energy shell rolling a quarter turn each with the core pulsing; bottom row, the same four frames drained to a cold grey \"stolen\" state with the core dimmed. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Animation, clearly visible: the flickering flame crest that sits at twelve o'clock on the orb in the first cell of each row sits at three o'clock in the second cell, at six o'clock in the third and at nine o'clock in the fourth, as if the whole orb rolls clockwise. Only empty green space between the cells, no white or dark lines.",
+  "outputSize": "1456x720",
+  "meta": {
+    "job": "F083",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/option"
+  }
+}

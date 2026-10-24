@@ -1,0 +1,38 @@
+{
+  "id": "fx/explosion/kill-chain",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Explosion. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; peak satisfaction gameplay moment, ultra-detailed. A machine-gun of destruction marching left to right along a dense formation of angular mechanical swarm drones: three of the drones have just been hit and are dying in staggered sequence, forming a diagonal chain of explosions across the formation. The nearest kill, left, is already in its smoke-frame — a rust-and-ember cloud with one gold spark winking out; the middle kill is at full bloom, a screaming amber fireball with outlined flame petals and spark arms flung into its neighbors; the far kill, right, is at ignition, a tiny perfect dot of white-gold heat just punched through the drone's chassis, its outline still intact around it. Because the blasts are staggered in phase, the whole image carries a rhythm — a wave of destruction visibly traveling down the line faster than the drones can fall. Fragments of chassis, thick-outlined ring-bolts and shards of plating arc outward from the middle blast on clean ballistic curves, while one un-hit drone at the far right is already banking away, its magenta eye-slit bright with alarm. Behind it all, the deep navy field carries a faint pink haze of leftover bullet light. The explosion ramp colors — cream core, orange bloom, ember death — dominate, lifted deep-navy background, never pure black. No text, no letters, no score popups. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  \"Machine-gun\" is only a figure of speech for the rapid rhythm of the blasts: there is no person, soldier, figure or gun anywhere in the picture, only the flying drones, their explosions and the debris.",
+  "negative": "photorealistic, 3d render, explosion all same phase, three identical fireballs, mushroom shapes, nuclear, text, HUD, score numbers, watermark, blurry, drones missing, vertical formation, pure black background",
+  "model": "flux2",
+  "seed": 19072,
+  "width": 1536,
+  "height": 640,
+  "steps": 45,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:24:59.140Z",
+  "seconds": 92.8,
+  "label": "Multi-explosion kill burst down an enemy line (scene)",
+  "source": "images/60-items-fx/items-and-fx.json#explosion-kill-chain-v2",
+  "file": "art-prompts/v2/candidates/a/fx/explosion/kill-chain.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/explosion.png"
+  ],
+  "editFromSha256": [
+    "6b49717140b1e9fc5009bac192f942b0888d5ec86addb467cd26114dda9d6fc6"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Explosion. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; peak satisfaction gameplay moment, ultra-detailed. A machine-gun of destruction marching left to right along a dense formation of angular mechanical swarm drones: three of the drones have just been hit and are dying in staggered sequence, forming a diagonal chain of explosions across the formation. The nearest kill, left, is already in its smoke-frame — a rust-and-ember cloud with one gold spark winking out; the middle kill is at full bloom, a screaming amber fireball with outlined flame petals and spark arms flung into its neighbors; the far kill, right, is at ignition, a tiny perfect dot of white-gold heat just punched through the drone's chassis, its outline still intact around it. Because the blasts are staggered in phase, the whole image carries a rhythm — a wave of destruction visibly traveling down the line faster than the drones can fall. Fragments of chassis, thick-outlined ring-bolts and shards of plating arc outward from the middle blast on clean ballistic curves, while one un-hit drone at the far right is already banking away, its magenta eye-slit bright with alarm. Behind it all, the deep navy field carries a faint pink haze of leftover bullet light. The explosion ramp colors — cream core, orange bloom, ember death — dominate, lifted deep-navy background, never pure black. No text, no letters, no score popups. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  \"Machine-gun\" is only a figure of speech for the rapid rhythm of the blasts: there is no person, soldier, figure or gun anywhere in the picture, only the flying drones, their explosions and the debris.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F135",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:29.380Z",
+    "parentId": "fx/explosion"
+  }
+}

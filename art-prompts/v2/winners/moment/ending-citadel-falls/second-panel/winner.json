@@ -1,0 +1,38 @@
+{
+  "id": "moment/ending-citadel-falls/second-panel",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Ending \"The Citadel Falls\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, claustrophobic scale, ultra-detailed large-format art with pixel-art texture accents. Flying out through the guts of the burning citadel: a corridor of collapsing fortress interior fills the frame — a great gate-ring of riveted armor, forty meters of it, swinging shut on one bent hinge as the wall behind it caves, and a flat-flying steel-blue dart fighter is threading the closing gap at the exact last second, wingtip sparks spraying from both edges where its hull grazes the metal jaws. Everything behind the ship is an avalanche of the citadel's death: sheet after sheet of floor and wall peeling free in the orange back-light, furnace wind blowing ribbons of flame and black smoke forward through the gate ahead of the intruder, a rain of bolt-clusters and shattered grating tumbling end over end. Beyond the gate, in the top-left corner of the frame, there is a slice of outside — cold pre-dawn navy with a single calm star — impossibly small against all that gold violence. The ship's cyan canopy and blue stripe are the only cool colors allowed inside the hot half of the image, so the eye threads with it toward the gap. Firelight rims every falling plate. Palette of furnace ambers and ember reds inside, a wedge of deep navy-blue outside, thick dark outlines, lifted shadows, never pure black. No text, no letters, no UI. No text anywhere.",
+  "negative": "photorealistic, 3d render, sci-fi airlock clean corridor, laser gate, ship already outside, gap fully open, explosion engulfing ship, human figures, text, watermark, blurry, blue fire, green lighting",
+  "model": "flux2",
+  "seed": 20052,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:32:54.961Z",
+  "seconds": 63.9,
+  "label": "Ending \"The Citadel Falls\" — second panel (closer / later moment)",
+  "source": "images/70-key-moments/endings.json#ending-citadel-falls-debris-v2",
+  "file": "art-prompts/v2/candidates/a/moment/ending-citadel-falls/second-panel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/moment/ending-citadel-falls.png"
+  ],
+  "editFromSha256": [
+    "c0dbc046af5dc71394f1e84ac278f93be9568e96d2d6a3b53c579b6f7819db24"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Ending \"The Citadel Falls\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, claustrophobic scale, ultra-detailed large-format art with pixel-art texture accents. Flying out through the guts of the burning citadel: a corridor of collapsing fortress interior fills the frame — a great gate-ring of riveted armor, forty meters of it, swinging shut on one bent hinge as the wall behind it caves, and a flat-flying steel-blue dart fighter is threading the closing gap at the exact last second, wingtip sparks spraying from both edges where its hull grazes the metal jaws. Everything behind the ship is an avalanche of the citadel's death: sheet after sheet of floor and wall peeling free in the orange back-light, furnace wind blowing ribbons of flame and black smoke forward through the gate ahead of the intruder, a rain of bolt-clusters and shattered grating tumbling end over end. Beyond the gate, in the top-left corner of the frame, there is a slice of outside — cold pre-dawn navy with a single calm star — impossibly small against all that gold violence. The ship's cyan canopy and blue stripe are the only cool colors allowed inside the hot half of the image, so the eye threads with it toward the gap. Firelight rims every falling plate. Palette of furnace ambers and ember reds inside, a wedge of deep navy-blue outside, thick dark outlines, lifted shadows, never pure black. No text, no letters, no UI. No text anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F137",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:59.423Z",
+    "parentId": "moment/ending-citadel-falls"
+  }
+}

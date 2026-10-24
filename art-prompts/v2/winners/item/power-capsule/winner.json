@@ -1,0 +1,23 @@
+{
+  "id": "item/power-capsule",
+  "slot": "a",
+  "prompt": "Retro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.",
+  "negative": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background, green tint on the subject, green spill, background scenery, cast shadow, more than sixteen capsules, glow halo outside the outline",
+  "model": "flux2",
+  "seed": 2377726159,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:41:45.099Z",
+  "seconds": 37.8,
+  "label": "Power capsules — red / blue / gold / green weapon capsules × 4 glint frames, sheet on key green (v2: 18×12)",
+  "source": "images/60-items-fx/items-and-fx.json#power-capsules-v1",
+  "file": "art-prompts/v2/candidates/a/item/power-capsule.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

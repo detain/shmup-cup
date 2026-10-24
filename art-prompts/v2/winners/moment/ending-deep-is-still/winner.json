@@ -1,0 +1,23 @@
+{
+  "id": "moment/ending-deep-is-still",
+  "slot": "c",
+  "prompt": "Chunky 16-bit pixel art ending illustration in a retro arcade style, bold dark outlines, saturated limited palette, subtle CRT scanline glow. A split view at the surface of a calm sea at sunrise, half underwater and half above. The bottom two-thirds of the picture is deep still water seen from below the surface, dark midnight teal near the surface fading to deep blue-navy at the bottom edge, with one long thin column of small rising silver bubbles coming straight up from the depths below. The top third is open sky at first light: a huge soft sunrise of pale gold and rose glowing along the flat sea horizon, the sun just peeking over it, deep navy in the upper corners. At the centre, right at the waterline, a battered flat ray-winged manta-shaped spaceship with a pale mint hull, broad curved wings and a dark green glass canopy has just burst up out of the water and hangs just above the surface at the top of its leap, nose on its right end, twin amber thrusters fading on its left end, sheets of glowing water pouring off its wing edges and falling droplets sparkling gold in the sunrise. The water surface is a bright rippling silver line, and a shimmering path of reflected sunlight runs across the sea toward the ship. Peaceful and sacred, nothing hostile anywhere. Teal-navy depths against gold-rose dawn, lifted shadows, never pure black. No text, no letters, no signature, no UI.",
+  "negative": "photorealistic, 3d render, underwater photo, sharks, whales, sea creatures, stormy sea, big waves, ship underwater, bubbles everywhere, sunset orange heavy, text, watermark, blurry, daytime blue sky",
+  "model": "flux1",
+  "seed": 2705709106,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T02:02:39.108Z",
+  "seconds": 13.4,
+  "label": "Ending \"The Deep Is Still\" — rising through black water into sunrise",
+  "source": "images/70-key-moments/endings.json#ending-deep-is-still-v1",
+  "file": "art-prompts/v2/candidates/c/moment/ending-deep-is-still.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

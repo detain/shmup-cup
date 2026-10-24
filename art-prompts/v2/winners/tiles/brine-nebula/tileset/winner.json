@@ -1,0 +1,38 @@
+{
+  "id": "tiles/brine-nebula/tileset",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen BRINE NEBULA terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established BRINE NEBULA material (reef sandstone of tan and pale rose with coral pores and small barnacle bumps) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a rounded coral crust, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has five columns and four rows of identical square cells, spread across the full width of the sheet, every tile the same size and drawn flat-on with no 3D sides; the decor tiles are small coral and barnacle clusters in the reef's own tan and rose, with no green plants.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 40538,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:03:23.192Z",
+  "seconds": 113.4,
+  "label": "BRINE NEBULA 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/brine-nebula/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/tiles/brine-nebula.png"
+  ],
+  "editFromSha256": [
+    "50467e9f29b4a59ce5b4e8d9d3dc65cd3670ee1ca1f831882fd5df6250f00fc9"
+  ],
+  "instruction": "Reference image 1 shows the chosen BRINE NEBULA terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established BRINE NEBULA material (reef sandstone of tan and pale rose with coral pores and small barnacle bumps) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a rounded coral crust, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has five columns and four rows of identical square cells, spread across the full width of the sheet, every tile the same size and drawn flat-on with no 3D sides; the decor tiles are small coral and barnacle clusters in the reef's own tan and rose, with no green plants.",
+  "outputSize": "1152x912",
+  "meta": {
+    "job": "F153",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:39.378Z",
+    "parentId": "tiles/brine-nebula"
+  }
+}

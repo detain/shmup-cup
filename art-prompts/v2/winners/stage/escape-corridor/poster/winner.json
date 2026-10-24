@@ -1,0 +1,38 @@
+{
+  "id": "stage/escape-corridor/poster",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen ESCAPE CORRIDOR stage art. Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The escape rendered as a vertical ascent: looking straight up inside a colossal rectangular shaft that was clearly once a corridor, its four walls of banded rock and buried fortress plating now peeling inward — great shelves of stone and steel curling off the walls and falling toward the viewer, shrinking in the distance as they drop, motion-smeared at their edges. At the very top of the shaft, the exit is a small bright rectangle of pale gold daylight, visibly narrower than it should be, framed by two slabs of the fortress that are sliding together like closing jaws; a few thin fingers of light pierce down the shaft from the gap, each one lit with floating dust. Below the closing exit, the dark of the shaft is not empty: a broad glow of furnace orange and brown smoke is rising up from the bottom of the frame — the collapse has a head here, its light staining the lowest falling debris from beneath, silhouette-ing every tumbling slab in the lower third against the fire. So the image is trapped between two squeezes: fire rising from below, daylight shutting above, and a central lane of still-open shaft where the falling rock and rising smoke refuse to meet. Palette of earth golds, fortress-plate greys, furnace orange below and pale gold above, lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements. No text anywhere.",
+  "negative": "photorealistic, 3d render, mine elevator, ladder, well, sky clouds visible, open wide exit, exit fully closed, pure black background, watermark, text, blurry, horizontal composition, viewer at ground level, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 17102,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:43:42.929Z",
+  "seconds": 63,
+  "label": "Escape corridor vertical poster (collapsing shaft)",
+  "source": "images/50-stages/escape-corridor.json#escape-corridor-poster-vertical-v2",
+  "file": "art-prompts/v2/candidates/a/stage/escape-corridor/poster.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/escape-corridor.png"
+  ],
+  "editFromSha256": [
+    "ea5c0060229675f0897c728acef3792b609e5be92792e33d6ea3848ff5a3b9a7"
+  ],
+  "instruction": "Reference image 1 shows the chosen ESCAPE CORRIDOR stage art. Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The escape rendered as a vertical ascent: looking straight up inside a colossal rectangular shaft that was clearly once a corridor, its four walls of banded rock and buried fortress plating now peeling inward — great shelves of stone and steel curling off the walls and falling toward the viewer, shrinking in the distance as they drop, motion-smeared at their edges. At the very top of the shaft, the exit is a small bright rectangle of pale gold daylight, visibly narrower than it should be, framed by two slabs of the fortress that are sliding together like closing jaws; a few thin fingers of light pierce down the shaft from the gap, each one lit with floating dust. Below the closing exit, the dark of the shaft is not empty: a broad glow of furnace orange and brown smoke is rising up from the bottom of the frame — the collapse has a head here, its light staining the lowest falling debris from beneath, silhouette-ing every tumbling slab in the lower third against the fire. So the image is trapped between two squeezes: fire rising from below, daylight shutting above, and a central lane of still-open shaft where the falling rock and rising smoke refuse to meet. Palette of earth golds, fortress-plate greys, furnace orange below and pale gold above, lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements. No text anywhere.",
+  "outputSize": "896x1152",
+  "meta": {
+    "job": "F199",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:59.406Z",
+    "parentId": "stage/escape-corridor"
+  }
+}

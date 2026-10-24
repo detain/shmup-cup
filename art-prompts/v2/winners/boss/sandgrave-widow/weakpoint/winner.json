@@ -1,0 +1,38 @@
+{
+  "id": "boss/sandgrave-widow/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Vicious mechanical close-up study, the underside head cluster of the SANDGRAVE WIDOW filling the frame, two massive crossed hydraulic fangs held open like a portcullis revealing between them the spinneret cannon, a ring of six rotating nozzles extruding a braided steel silk cord that glows white-hot at the twist and loads pink bullet spheres into a chamber drum visible behind, bronze armor plates around the cluster scoured by sandblast, small violet charge lamps blinking in a rhythm pattern, thin silk threads crossing the foreground slightly out of focus glinting like razor wire, forced perspective looking up along the fang lines, bold dark outlines, saturated limited palette of bronze, violet and hot pink, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Extreme close-up seen from below: only the head cluster, the two crossed fangs and the glowing six-nozzle spinneret between them fill the frame; the abdomen and legs are cut off by the frame edges.",
+  "negative": "organic spider anatomy, real fangs, fur, insect compound eyes, photorealistic, 3d render, text, watermark, slime, pure black background",
+  "model": "flux2",
+  "seed": 13302,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:19:29.392Z",
+  "seconds": 90,
+  "label": "SANDGRAVE WIDOW (SW-03) weak-point close-up",
+  "source": "images/30-bosses/03-sandgrave-widow.json#sw03-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/sandgrave-widow/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/sandgrave-widow.png"
+  ],
+  "editFromSha256": [
+    "10873747d454fdd172512cc20eba641ea755247b436f962a022b60018d52f851"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SANDGRAVE WIDOW (SW-03). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Vicious mechanical close-up study, the underside head cluster of the SANDGRAVE WIDOW filling the frame, two massive crossed hydraulic fangs held open like a portcullis revealing between them the spinneret cannon, a ring of six rotating nozzles extruding a braided steel silk cord that glows white-hot at the twist and loads pink bullet spheres into a chamber drum visible behind, bronze armor plates around the cluster scoured by sandblast, small violet charge lamps blinking in a rhythm pattern, thin silk threads crossing the foreground slightly out of focus glinting like razor wire, forced perspective looking up along the fang lines, bold dark outlines, saturated limited palette of bronze, violet and hot pink, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Extreme close-up seen from below: only the head cluster, the two crossed fangs and the glowing six-nozzle spinneret between them fill the frame; the abdomen and legs are cut off by the frame edges.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F012",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/sandgrave-widow"
+  }
+}

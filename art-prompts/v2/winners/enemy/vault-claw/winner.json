@@ -1,0 +1,23 @@
+{
+  "id": "enemy/vault-claw",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single VAULT CLAW enemy of the Iron Tide, a grabbing tentacle-hook that lurks in a living wall, isolated. At the bottom right sits a small domed socket bump of fleshy tissue in dark moss-green and olive with pinkish pore rings and a puckered opening, clearly darker than the background. Out of the socket rises a long chain of exactly eight round bone-white beaded links, each bead slightly smaller than the one before, with ivory highlights on the top-left and gray-violet shadows, arching up and curling over to the left in a smooth question-mark curve. The last link is a sharp curved grabbing hook claw of polished bone with a dark crimson tip, pointing down and to the left. Long reaching, clean, readable silhouette: socket, beaded arc, hook. Side view facing left, the whole claw centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a bold 1-pixel near-black navy outline around every bead at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no wall, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 1367992578,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:41:53.900Z",
+  "seconds": 41,
+  "label": "VAULT CLAW — zone F (CELL VAULT) small socket, long hook reach; single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-f-cell-vault.json#cell-vault-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/vault-claw.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

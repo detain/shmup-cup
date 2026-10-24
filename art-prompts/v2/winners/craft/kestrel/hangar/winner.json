@@ -1,0 +1,38 @@
+{
+  "id": "craft/kestrel/hangar",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of KESTREL. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Cinematic arcade concept scene, the KESTREL steel-blue dart fighter resting on a maintenance cradle inside an open hangar carved into an asteroid at the edge of a blue planet's orbit, warm work-lamps in amber glow raking across the hull stripe and throwing the long shadow of the delta silhouette onto the deck plate, the cyan canopy dim and dark like polished glass, the engine cowlings open with tiny gantry arms around them, through the hangar mouth a vast deep-navy starfield with the glowing teal rim of the Azure Verge planet rising, a couple of maintenance drone spheres hover near the tail, atmosphere of quiet preparation before the sortie against the Iron Tide, saturated limited palette, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, watermark, photorealistic, 3d render, humans, crew members, modern hangar, fighter jet, pure black background, cluttered foreground",
+  "model": "flux2",
+  "seed": 11004,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:02:55.709Z",
+  "seconds": 94,
+  "label": "Hangar-bay reveal scene at dusk",
+  "source": "images/20-player-crafts/kestrel.json#kestrel-showroom-v3",
+  "file": "art-prompts/v2/candidates/a/craft/kestrel/hangar.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of KESTREL. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Cinematic arcade concept scene, the KESTREL steel-blue dart fighter resting on a maintenance cradle inside an open hangar carved into an asteroid at the edge of a blue planet's orbit, warm work-lamps in amber glow raking across the hull stripe and throwing the long shadow of the delta silhouette onto the deck plate, the cyan canopy dim and dark like polished glass, the engine cowlings open with tiny gantry arms around them, through the hangar mouth a vast deep-navy starfield with the glowing teal rim of the Azure Verge planet rising, a couple of maintenance drone spheres hover near the tail, atmosphere of quiet preparation before the sortie against the Iron Tide, saturated limited palette, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F074",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/kestrel"
+  }
+}

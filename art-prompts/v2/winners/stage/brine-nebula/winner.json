@@ -1,0 +1,23 @@
+{
+  "id": "stage/brine-nebula",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows that are never pure black. An ocean made of nebula gas, laid out as horizontal parallax bands. Top band: a ceiling of bruised violet clouds lit from inside by soft pink lightning blooms, with faint stars peeking through gaps. Upper middle band: a distant shoal of tiny dark silhouetted mechanical fish drones swimming left in a neat arrow formation through teal haze. Middle band: a great reef wall rising from the vapor sea across the whole width, coral-shaped mineral towers and arches of tan sandstone and pale rose, hollowed with glowing turquoise windows, draped with ribbon weed streaming sideways in the current. Lower band: rolling gas waves of teal and deep violet that read like water, every wave crest drawn as a wobbling horizontal raster line of cyan highlight, a shimmering surface. Bottom band: a near foreground of dark green-teal reef rock and sandstone ledges with sea-fan silhouettes, outlined in near-black navy. Wet light everywhere, soft cyan rim highlights on every edge, dark teal shadow. No characters, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, real ocean, boats, horizon sunset, blurry, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 918273645,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:22:02.954Z",
+  "seconds": 57.9,
+  "label": "BRINE NEBULA — zone B stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-b-brine-nebula.json#brine-nebula-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/brine-nebula.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

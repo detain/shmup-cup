@@ -1,0 +1,38 @@
+{
+  "id": "stage/high-speed-dimension/sky-fog",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen HIGH-SPEED DIMENSION stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): The sky above the high-speed dimension, matching the established art: a hard glowing band of pale lilac light at the bottom third melting upward into a wall of deep violet-black fog with faint drifting scanline streaks, an opaque 16:9 backdrop that tiles seamlessly left to right, no floor, no objects, no ships, no text, lifted darks never pure black. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Only the sky: the glowing lilac horizon band runs straight across the bottom third, and below it there is only a soft lilac glow fading to deep violet down to the bottom edge; no checkerboard floor, no light lane, no streaks rushing at the viewer. Above the band the fog is a dusky violet-navy with soft billows and faint horizontal scanline streaks, never black.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 60398,
+  "width": 1360,
+  "height": 768,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:40:30.919Z",
+  "seconds": 78.6,
+  "label": "Horizon sky and fog layer above the checker plane (opaque 640×360)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/high-speed-dimension/sky-fog.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/high-speed-dimension.png"
+  ],
+  "editFromSha256": [
+    "92ae0c9ac6b5709cad77788b0b0198fe98d553c79298b85d6c9dc37103eeea50"
+  ],
+  "instruction": "Reference image 1 shows the chosen HIGH-SPEED DIMENSION stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): The sky above the high-speed dimension, matching the established art: a hard glowing band of pale lilac light at the bottom third melting upward into a wall of deep violet-black fog with faint drifting scanline streaks, an opaque 16:9 backdrop that tiles seamlessly left to right, no floor, no objects, no ships, no text, lifted darks never pure black. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Only the sky: the glowing lilac horizon band runs straight across the bottom third, and below it there is only a soft lilac glow fading to deep violet down to the bottom edge; no checkerboard floor, no light lane, no streaks rushing at the viewer. Above the band the fog is a dusky violet-navy with soft billows and faint horizontal scanline streaks, never black.",
+  "outputSize": "1360x768",
+  "meta": {
+    "job": "F198",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:49.463Z",
+    "parentId": "stage/high-speed-dimension"
+  }
+}

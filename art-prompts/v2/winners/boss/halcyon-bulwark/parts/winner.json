@@ -1,0 +1,38 @@
+{
+  "id": "boss/halcyon-bulwark/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of HALCYON BULWARK (HB-01) boss parts taken from the established design — the two wing-tip energy emitters, the faceplates and the amber eye-slit core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole ship: the top row the glowing blue emitter pod from the reference's antenna and outrigger, the middle row the gate of tall blue rounded armour faceplates, the bottom row the glowing orange eye-slit core between the plates. No lines between the cells, only plain green. All four cells of one row show the same part, painted in the reference's steel-blue riveted plating with its pink rivet lights, and every part points left.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 21895,
+  "width": 1184,
+  "height": 880,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:56:12.955Z",
+  "seconds": 95,
+  "label": "HALCYON BULWARK (HB-01) parts sheet: the two wing-tip energy emitters, the faceplates and the amber eye-slit core, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/halcyon-bulwark/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/halcyon-bulwark.png"
+  ],
+  "editFromSha256": [
+    "6af0f30a77b2a2b5e4c38db5c31c6f400ee7ac10be85ce082e273f043cde0619"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of HALCYON BULWARK (HB-01) boss parts taken from the established design — the two wing-tip energy emitters, the faceplates and the amber eye-slit core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole ship: the top row the glowing blue emitter pod from the reference's antenna and outrigger, the middle row the gate of tall blue rounded armour faceplates, the bottom row the glowing orange eye-slit core between the plates. No lines between the cells, only plain green. All four cells of one row show the same part, painted in the reference's steel-blue riveted plating with its pink rivet lights, and every part points left.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F004",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/halcyon-bulwark"
+  }
+}

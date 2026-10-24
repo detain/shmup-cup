@@ -1,0 +1,23 @@
+{
+  "id": "logo/app-icon",
+  "slot": "a",
+  "prompt": "Square app icon artwork with softly rounded corners, a deep midnight-navy tile that brightens slightly toward its center, a thin arc of a blue planet rim glowing low along the bottom of the tile and a scatter of tiny pixel star specks above it. In the middle, one sleek steel-blue dart-shaped retro space fighter flies toward the upper right, seen from the side and banking slightly toward the viewer, with a bold bright blue stripe running the length of its fuselage, a glowing cyan bubble canopy, swept-back short wings with a small notched tail fin, and a hot orange engine afterglow streaming out behind it toward the lower left as a short tapering flame. A heavy dark navy outline wraps the whole craft, crisp specular highlights along its upper spine, flat saturated 16-bit arcade game art shading with three-step ramps lit from the top left and crisp pixel-cluster texture accents. Bold, minimal, chunky shapes that stay readable at very small sizes, the ship large and filling most of the tile, saturated limited palette of steel blue, cyan, orange and navy, never pure black. No text anywhere, no letters, no frame border.",
+  "negative": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+  "model": "flux2",
+  "seed": 2637125255,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:19:15.502Z",
+  "seconds": 33,
+  "label": "App / store icon — KESTREL dart in a rounded deep-navy tile (TV, desktop and store icon source)",
+  "source": "images/10-logo-title/app-store-icon.json#app-icon-v1",
+  "file": "art-prompts/v2/candidates/a/logo/app-icon.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

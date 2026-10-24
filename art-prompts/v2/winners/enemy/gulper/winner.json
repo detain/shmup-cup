@@ -1,0 +1,23 @@
+{
+  "id": "enemy/gulper",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single GULPER enemy of the Iron Tide, a deep-sea angler machine from the black-blue abyss, isolated. A huge oversized head making up two thirds of its body, facing left, with a cavernous hinged jaw gaping open: the jaw is a cage of pale bone-white curved ribs and long needle fangs, showing a dark navy-teal throat inside. Two tiny vicious slit eyes glow pale cyan high on the head. The head and short tapering body are armored in charcoal-green and dark teal riveted plates with deep-sea teal highlights on the top-left, ending in a small ragged tail fin and two stubby pectoral fins. From the top of its head a thin jointed lure filament arches forward over the mouth, ending in a small round bulb glowing pale cyan with a white center. Big-mouthed, front-heavy, instantly readable silhouette. Side view facing left, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no bubbles, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 2018110282,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:52:38.698Z",
+  "seconds": 53.2,
+  "label": "GULPER — zone I (ABYSSAL THRONE) medium deep-sea fish (~27×18 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-i-abyssal-throne.json#abyssal-throne-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/gulper.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

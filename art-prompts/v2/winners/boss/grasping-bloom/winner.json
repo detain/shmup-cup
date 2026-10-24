@@ -1,0 +1,23 @@
+{
+  "id": "boss/grasping-bloom",
+  "slot": "a",
+  "prompt": "A single giant armored mechanical flower boss for a retro 16-bit side-scrolling space shooter, shown in a three-quarter side view with its open bloom turned toward the left edge of the picture, centered with a wide empty margin of green on all four sides, the whole construct visible with nothing cut off by the frame. The bloom sits on top of a short tangled thicket of thick riveted steel vines and pipe-like stalks with a few small thorned leaf-plates, which ends in a compact armored root clamp at the bottom, fully inside the frame. Its six heavy metal petals are peeled wide open like the scoops of a dredge, each a curved armored scoop of dark slate-blue and deep teal plate with brass hinge-ribs down the middle and hazard-pink warning paint on its inner face, each petal mounted on visible piston fingers and hydraulic rods so it can snap shut. In the heart of the bloom, a deep soft violet funnel throat with spiral muscle folds glowing brighter as they twist inward toward a dark pulsing center, the suction core, ringed by a collar of small brass intake vents. Small pink and red bullet ports with bright cores and dark rims along the petal seams. Hungry, menacing, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark slate blue, deep teal, gunmetal, brass, hot pink, violet and lilac accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no ground, no grass, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, background scenery, stars, cast shadow, green tint on the hull, player character",
+  "model": "flux2",
+  "seed": 2929866657,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:52:06.051Z",
+  "seconds": 47.4,
+  "label": "GRASPING BLOOM — extra boss, the armored suction flower; full body on key green",
+  "source": "images/30-bosses/13-grasping-bloom.json#glb-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/grasping-bloom.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

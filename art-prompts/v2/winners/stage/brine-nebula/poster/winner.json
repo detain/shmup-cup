@@ -1,0 +1,38 @@
+{
+  "id": "stage/brine-nebula/poster",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen BRINE NEBULA stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical composition looking straight down a reef tunnel. The frame is a throat of coral-like mineral architecture: two opposing walls of sand-stone reef towers, faceted and porous, lean inward and stack toward a distant glowing aperture at the bottom of the image, turquoise light pooling around it. Between the walls the brine nebula flows vertically — ribbons of teal and violet gas pulled into long streamers, scattered with luminous plankton specks, wobbling in horizontal raster bands as they fall. Wedged in a wall hollow at the upper third, the barnacled ribcage of an ancient Iron Tide hull, half-reefed-over, spilling a school of small glowing brood bubbles with dark shapes curled inside. A single pale-mint manta-winged fighter with a green canopy and twin amber thrusters drops through the middle distance, wings level, tiny against the tunnel, its thruster light smearing two short gold streaks. Mood: beautiful, pressurized, and definitely inhabited. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.  The wreck is a sci-fi warship hull of dark riveted iron plates with exposed metal ribs, not a wooden boat. The small manta fighter is seen in side profile, nose pointing to the right and its two short gold thruster streaks trailing to the left.",
+  "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, horizontal composition, real coral reef photography, scuba diver, blurry, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 17202,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:25:42.639Z",
+  "seconds": 63.2,
+  "label": "BRINE NEBULA vertical poster",
+  "source": "images/50-stages/zone-b-brine-nebula.json#brine-nebula-poster-vertical-v2",
+  "file": "art-prompts/v2/candidates/a/stage/brine-nebula/poster.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/brine-nebula.png"
+  ],
+  "editFromSha256": [
+    "2afb6f431e3c3cb0ee21b6aeb0039721f8daa62be6cbfd29052f2c57bb362cb3"
+  ],
+  "instruction": "Reference image 1 shows the chosen BRINE NEBULA stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical composition looking straight down a reef tunnel. The frame is a throat of coral-like mineral architecture: two opposing walls of sand-stone reef towers, faceted and porous, lean inward and stack toward a distant glowing aperture at the bottom of the image, turquoise light pooling around it. Between the walls the brine nebula flows vertically — ribbons of teal and violet gas pulled into long streamers, scattered with luminous plankton specks, wobbling in horizontal raster bands as they fall. Wedged in a wall hollow at the upper third, the barnacled ribcage of an ancient Iron Tide hull, half-reefed-over, spilling a school of small glowing brood bubbles with dark shapes curled inside. A single pale-mint manta-winged fighter with a green canopy and twin amber thrusters drops through the middle distance, wings level, tiny against the tunnel, its thruster light smearing two short gold streaks. Mood: beautiful, pressurized, and definitely inhabited. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.  The wreck is a sci-fi warship hull of dark riveted iron plates with exposed metal ribs, not a wooden boat. The small manta fighter is seen in side profile, nose pointing to the right and its two short gold thruster streaks trailing to the left.",
+  "outputSize": "896x1152",
+  "meta": {
+    "job": "F148",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:29.471Z",
+    "parentId": "stage/brine-nebula"
+  }
+}

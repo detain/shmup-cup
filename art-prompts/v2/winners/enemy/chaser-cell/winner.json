@@ -1,0 +1,23 @@
+{
+  "id": "enemy/chaser-cell",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single CHASER CELL enemy of the Iron Tide, a small hunting living cell from a vault of pulsing tissue, isolated. A plump round membrane sphere, slightly squashed and bulging forward to the left as if lunging, wrapped in a thick near-black navy outline. The membrane is deep moss-green and dark jade with a lighter mint rim highlight on the top-left, colors clearly darker and cooler than the background. Inside, a large pale cream-pink nucleus with a darker rose center sits toward the front like a single staring eye, surrounded by a soft inner glow and five or six tiny amber and violet organelle dots. A few short stubby cilia bumps ring the outer membrane. Round, compact, unmistakable blob silhouette. Side view facing left, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a bold 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no transparency showing the background, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 3333772210,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:41:00.140Z",
+  "seconds": 30.5,
+  "label": "CHASER CELL — zone F (CELL VAULT) small living cell (~18 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-f-cell-vault.json#cell-vault-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/chaser-cell.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-talon/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: extreme three-quarter view of the middle knuckle of a giant steel claw, the joint housing blown half-open from combat — the brass actuator drum exposed and spinning loose, throwing arcs of white electricity, bundle-cables of tendon hydraulics severed and whipping, each one spouting a ribbon of amber fluid that ignites in orange puffs. Between the cracked knuckle plates a spherical gyro-core glows red-hot, the single aiming point of the frame. Steam, sparks and flapping metal shreds radiate outward. Deep-navy background, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, intact clean joint, flesh, pure black background",
+  "model": "flux2",
+  "seed": 13402,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T21:15:30.928Z",
+  "seconds": 74.3,
+  "label": "IRON TALON weak-point close-up",
+  "source": "images/30-bosses/14-iron-talon.json#itl-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/iron-talon/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-talon.png"
+  ],
+  "editFromSha256": [
+    "1ce959103aa0d3080547cf814f05383939c1ed3c7c024b9c8a6e07ec04842fdf"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: extreme three-quarter view of the middle knuckle of a giant steel claw, the joint housing blown half-open from combat — the brass actuator drum exposed and spinning loose, throwing arcs of white electricity, bundle-cables of tendon hydraulics severed and whipping, each one spouting a ribbon of amber fluid that ignites in orange puffs. Between the cracked knuckle plates a spherical gyro-core glows red-hot, the single aiming point of the frame. Steam, sparks and flapping metal shreds radiate outward. Deep-navy background, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F064",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-talon"
+  }
+}

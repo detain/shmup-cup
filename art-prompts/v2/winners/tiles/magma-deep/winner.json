@@ -1,0 +1,23 @@
+{
+  "id": "tiles/magma-deep",
+  "slot": "b",
+  "prompt": "Pixelated low-resolution 16-bit pixel art, a flat 2D seamless repeating texture of an old cave brick wall seen exactly head-on like a scanned sheet, with no depth and no viewing angle, filling the picture edge to edge and continuing off all four sides. Rough irregular bricks of warm orange-brown baked clay mixed with chunks of black basalt, about half and half, scattered evenly; the mortar joints between all the bricks glow molten orange and yellow, an even grid of thin glowing lava cracks over the whole wall. A horizontal band of cooled charcoal-grey lava crust with tiny red ember glints covers the bricks across the upper quarter of the picture, with more brick and basalt behind it and above it up to the top edge, and below it to the bottom edge. Three-to-four step shading ramps lit from the top-left, hard-edged pixels, saturated limited palette of orange-brown, rust, charcoal, black, orange and yellow, evenly lit, uniform all-over pattern with no focal point.",
+  "negative": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, brushstrokes, smooth painting, ground, floor, foreground, lava lake, fire, flames, smoke, volcano, lava stream, lavafall, waterfall, rubble, pile of rocks, symmetric composition, columns, pillars, doorway, dark edges, darkness, shadows at the sides",
+  "model": "sd35",
+  "seed": 520967501,
+  "width": 1024,
+  "height": 1024,
+  "steps": 32,
+  "guidance": 5,
+  "generatedAt": "2026-10-17T01:47:46.048Z",
+  "seconds": 13.1,
+  "label": "MAGMA DEEP terrain material swatch — zone D rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/magma-deep.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette, brushstrokes, smooth painting, ground, floor, foreground, lava lake, fire, flames, smoke, volcano, lava stream, lavafall, waterfall, rubble, pile of rocks, symmetric composition, columns, pillars, doorway, dark edges, darkness, shadows at the sides",
+  "mode": "generate"
+}

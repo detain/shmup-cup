@@ -1,0 +1,38 @@
+{
+  "id": "boss/ember-frost-twins/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of EMBER & FROST TWINS boss parts taken from the established design — the ember head, the frost head and the yoke ring core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the boss were taken apart, never both dragons together: the top row only the black-horned lava-cracked ember dragon head, cut off at the neck; the middle row only the white crystal-spiked frost dragon head, cut off at the neck; the bottom row only the riveted iron yoke ring with its brass band and dark dome, no necks. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green. Only three rows, never a fourth: the frost head appears in the middle row only. The frost head breathes pale white frost mist, never fire. The gaps between the sprites are the same flat green, never dark lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 38028,
+  "width": 1184,
+  "height": 880,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:58:31.864Z",
+  "seconds": 71.6,
+  "label": "EMBER & FROST TWINS parts sheet: the ember head, the frost head and the yoke ring core, 4 frames each",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/ember-frost-twins/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/ember-frost-twins.png"
+  ],
+  "editFromSha256": [
+    "56109e9bd874e390c35f4380166b4fec3dba26576ede0b12f3ff7527a10c7839"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of EMBER & FROST TWINS boss parts taken from the established design — the ember head, the frost head and the yoke ring core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the boss were taken apart, never both dragons together: the top row only the black-horned lava-cracked ember dragon head, cut off at the neck; the middle row only the white crystal-spiked frost dragon head, cut off at the neck; the bottom row only the riveted iron yoke ring with its brass band and dark dome, no necks. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green. Only three rows, never a fourth: the frost head appears in the middle row only. The frost head breathes pale white frost mist, never fire. The gaps between the sprites are the same flat green, never dark lines.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F058",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/ember-frost-twins"
+  }
+}

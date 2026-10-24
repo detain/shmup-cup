@@ -1,0 +1,38 @@
+{
+  "id": "stage/abyssal-throne/poster",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, deep-sea atmosphere, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A slow vertical descent into the heart of an abyssal trench: two towering cliff walls of black basalt close in from the left and right edges of the frame, their faces columnar-jointed and crusted at the rims with fields of tiny cyan biolume dots like wet cinders, a few pale tube worms nodding from crevices. The gap between the cliffs narrows toward the bottom of the image in a clean throat of ink-blue water; the entire water column here is a curtain of drifting marine snow and rising bubble-trails falling out of the black at the top of the frame, each bubble lit briefly by the glow below. Far down at the bottom of the throat, the trench floor is just barely suggested by the largest single light source in the image: a low, wide, patient teal-cyan glow spreading across the base of the cliffs — not quite revealing what casts it, its edges dissolving into darkness — surrounded by a slow aurora of suspended spore-light that stains the nearest rock. Above, the surface the diver fell from is gone; there is only more dark downward. The composition is funnel, snow, and one unbearable beautiful light at the bottom. Black-blues, teal-cyan biolume, a touch of bone-white tube worm, lifted deep-navy base, never pure black. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, diver, sea monster visible, creature silhouette in the light, sunlight, water surface, tropical fish, pure black background, watermark, text, blurry, glow in the middle of frame, bright bottom, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 16902,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:13:35.580Z",
+  "seconds": 65,
+  "label": "ABYSSAL THRONE vertical poster",
+  "source": "images/50-stages/zone-i-abyssal-throne.json#abyssal-throne-poster-vertical-v2",
+  "file": "art-prompts/v2/candidates/a/stage/abyssal-throne/poster.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/abyssal-throne.png"
+  ],
+  "editFromSha256": [
+    "48b349448bb11280281fe7fae58facde3c3fdb9fdd4e7778c1cea0cfb7a3d68b"
+  ],
+  "instruction": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, deep-sea atmosphere, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A slow vertical descent into the heart of an abyssal trench: two towering cliff walls of black basalt close in from the left and right edges of the frame, their faces columnar-jointed and crusted at the rims with fields of tiny cyan biolume dots like wet cinders, a few pale tube worms nodding from crevices. The gap between the cliffs narrows toward the bottom of the image in a clean throat of ink-blue water; the entire water column here is a curtain of drifting marine snow and rising bubble-trails falling out of the black at the top of the frame, each bubble lit briefly by the glow below. Far down at the bottom of the throat, the trench floor is just barely suggested by the largest single light source in the image: a low, wide, patient teal-cyan glow spreading across the base of the cliffs — not quite revealing what casts it, its edges dissolving into darkness — surrounded by a slow aurora of suspended spore-light that stains the nearest rock. Above, the surface the diver fell from is gone; there is only more dark downward. The composition is funnel, snow, and one unbearable beautiful light at the bottom. Black-blues, teal-cyan biolume, a touch of bone-white tube worm, lifted deep-navy base, never pure black. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "896x1152",
+  "meta": {
+    "job": "F190",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:29.380Z",
+    "parentId": "stage/abyssal-throne"
+  }
+}

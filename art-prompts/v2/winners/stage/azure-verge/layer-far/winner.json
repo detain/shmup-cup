@@ -1,0 +1,38 @@
+{
+  "id": "stage/azure-verge/layer-far",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen AZURE VERGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): AZURE VERGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established AZURE VERGE stage art exactly: deep-navy starfield above the curved rim of a blue planet with green-teal continents and white cloud swirls, a thin glowing cyan atmosphere arc, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Leave out the reference's foreground spires, crystals and terraced land: this far layer shows only the starfield, the planet's curve with its oceans, continents and cloud swirls seen from orbit, and the atmosphere arc. Use a darker, low-contrast playfield grade: the clouds a soft grey-blue rather than bright white, the cyan arc thin and muted, the space a lifted deep navy rather than black.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 92815,
+  "width": 1360,
+  "height": 768,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:59:33.949Z",
+  "seconds": 79.2,
+  "label": "AZURE VERGE parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/azure-verge/layer-far.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/azure-verge.png"
+  ],
+  "editFromSha256": [
+    "6f99955c17f19be0b7f8f9455e85d9e1f50375b3bc03aa840e192a6a061f7ac4"
+  ],
+  "instruction": "Reference image 1 shows the chosen AZURE VERGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): AZURE VERGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established AZURE VERGE stage art exactly: deep-navy starfield above the curved rim of a blue planet with green-teal continents and white cloud swirls, a thin glowing cyan atmosphere arc, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Leave out the reference's foreground spires, crystals and terraced land: this far layer shows only the starfield, the planet's curve with its oceans, continents and cloud swirls seen from orbit, and the atmosphere arc. Use a darker, low-contrast playfield grade: the clouds a soft grey-blue rather than bright white, the cyan arc thin and muted, the space a lifted deep navy rather than black.",
+  "outputSize": "1360x768",
+  "meta": {
+    "job": "F144",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:19.379Z",
+    "parentId": "stage/azure-verge"
+  }
+}

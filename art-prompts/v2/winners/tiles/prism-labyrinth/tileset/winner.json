@@ -1,0 +1,38 @@
+{
+  "id": "tiles/prism-labyrinth/tileset",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 20461,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:49:56.247Z",
+  "seconds": 66.4,
+  "label": "PRISM LABYRINTH 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/tiles/prism-labyrinth/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/tiles/prism-labyrinth.png"
+  ],
+  "editFromSha256": [
+    "90fe17e9d13d2529d35b6fde272210b23f817a370dae99329fc64d1c1ceea5f1"
+  ],
+  "instruction": "Reference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x912",
+  "meta": {
+    "job": "F183",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:19.375Z",
+    "parentId": "tiles/prism-labyrinth"
+  }
+}

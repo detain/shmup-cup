@@ -1,0 +1,38 @@
+{
+  "id": "craft/manta/reef-hangar",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Arcade concept scene inside a coral reef hangar, the MANTA flat ray-winged fighter hovering just above a flooded launch deck, pale mint hull reflecting in the thin water sheet below, green canopy glowing softly, amber twin thrusters churning mist, walls of warm sandstone rock with carved arches and teal biolume lamps strung on cables, silhouetted maintenance gantries folded against the ceiling, an open tunnel mouth ahead spilling cool daylight and floating bubble particles toward a distant turquoise nebula sea, mood of a hidden reef base arming its second prototype, bold dark outlines, saturated limited palette of mint, sand, teal and amber, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format art with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, watermark, humans, divers, real fish, photorealistic, 3d render, pure black background, muddy colors",
+  "model": "flux2",
+  "seed": 11104,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:26:12.720Z",
+  "seconds": 133.3,
+  "label": "Reef hangar launch-prep scene",
+  "source": "images/20-player-crafts/manta.json#manta-showroom-v3",
+  "file": "art-prompts/v2/candidates/a/craft/manta/reef-hangar.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/manta.png"
+  ],
+  "editFromSha256": [
+    "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Arcade concept scene inside a coral reef hangar, the MANTA flat ray-winged fighter hovering just above a flooded launch deck, pale mint hull reflecting in the thin water sheet below, green canopy glowing softly, amber twin thrusters churning mist, walls of warm sandstone rock with carved arches and teal biolume lamps strung on cables, silhouetted maintenance gantries folded against the ceiling, an open tunnel mouth ahead spilling cool daylight and floating bubble particles toward a distant turquoise nebula sea, mood of a hidden reef base arming its second prototype, bold dark outlines, saturated limited palette of mint, sand, teal and amber, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format art with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F081",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/manta"
+  }
+}

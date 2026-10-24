@@ -1,0 +1,23 @@
+{
+  "id": "fx/force-field",
+  "slot": "a",
+  "prompt": "Gameplay effect concept art in SNES-era 16-bit pixel art inspired style, a wide horizontal plate on a flat solid pure black background with no stars and no scenery, showing the same small spaceship three times side by side in three equal panels from left to right, each ship pointing to the right and wrapped in its own protective force field, all three at the same size with clear empty black space between them and nothing touching the edges. The ship: a small steel-blue dart fighter with a bold blue fuselage stripe, a glowing cyan bubble canopy and a short orange engine glow, heavy dark navy outline.\nLeft panel, fresh field: a clean horizontal ellipse of translucent cyan light enclosing the whole ship with room to spare, drawn as three fine concentric contour rings of bright cyan pixels with a soft shimmer between them, the ship crisply visible inside. A single pink enemy bullet with a bright core and dark rim strikes the right side of the ellipse and bursts into a small bright cyan impact ring on its surface.\nMiddle panel, worn field: the same ellipse shifted from cyan toward blue-violet, its contour rings broken by dark crack lines, a few arcs of the shimmer flickered out to nothing, small frozen ripple marks where earlier fire struck. A pink bullet hits it and makes only a dull violet ripple.\nRight panel, failing field: only a sparse broken violet shell remains, wide gaps in the rim, jagged pink-white static arcing between the broken sections, sparks peeling off. A pink bullet slips straight through a gap toward the exposed ship.\nHard pixel edges, saturated limited palette progressing cyan to violet to pink, bold dark outlines on the ship, the field drawn as light. No text, no letters, no numbers, no UI bars, no panel borders.",
+  "negative": "photorealistic, 3d render, soap bubble, glass egg, round circle not ellipse, bubbles cluster, text, HUD, shield icon, watermark, blurry, ship destroyed, all three states different ships, stars, nebula, scenery",
+  "model": "flux2",
+  "seed": 2873876423,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:46:01.636Z",
+  "seconds": 57,
+  "label": "Force field — ellipse shield around the KESTREL, fresh / worn / failing, on the black key",
+  "source": "images/60-items-fx/items-and-fx.json#force-field-shimmer-v2",
+  "file": "art-prompts/v2/candidates/a/fx/force-field.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "item/direct-orbs/cluster-burst",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Direct-mode colour orbs. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; dramatic gameplay moment illustration. The instant a rare container breaks open in flight: at the center of a dark navy field, a split glass shell detonates outward into a fan of ten direct color orbs — red, orange, gold, green, teal, sky blue, deep blue, violet, magenta and pearl — each orb a small glass sphere with a bright solid core and white specular dot, all ten radiating away from the break point along distinct trajectories. Every orb trails a thin comet-line of its own hue, so the full image reads as a blooming flower of pure color opening toward the edges of the screen. Around the burst hang the debris of the container: two halves of a chrome-rimmed glass capsule curling apart, a scatter of tiny droplets of liquid light, and one lingering ring of pale shockwave vapor at the original container size. On the left of frame, a tiny steel-blue fighter with cyan canopy banks into the display, engines bright, silhouetted against the color bloom as if the explosion of spectrum was summoned for it. Star dust and faint nebula behind, everything outlined in thick dark linework, colors at maximum arcade saturation, lifted deep-navy background, never pure black. No text, no letters, no UI. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, paint splatter, confetti, fireworks, prism light rays, text, HUD, watermark, blurry, orbs static in a grid, single color burst, pure black background",
+  "model": "flux2",
+  "seed": 18022,
+  "width": 1536,
+  "height": 640,
+  "steps": 45,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:58:45.936Z",
+  "seconds": 127,
+  "label": "Burst moment: orbs scattering from a shattered container (scene)",
+  "source": "images/60-items-fx/items-and-fx.json#color-orb-cluster-v4",
+  "file": "art-prompts/v2/candidates/a/item/direct-orbs/cluster-burst.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/item/direct-orbs.png"
+  ],
+  "editFromSha256": [
+    "2d2626f99b464abbb639cebd53dfea088f350889a1c04a8f600aeed91aaaf872"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Direct-mode colour orbs. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; dramatic gameplay moment illustration. The instant a rare container breaks open in flight: at the center of a dark navy field, a split glass shell detonates outward into a fan of ten direct color orbs — red, orange, gold, green, teal, sky blue, deep blue, violet, magenta and pearl — each orb a small glass sphere with a bright solid core and white specular dot, all ten radiating away from the break point along distinct trajectories. Every orb trails a thin comet-line of its own hue, so the full image reads as a blooming flower of pure color opening toward the edges of the screen. Around the burst hang the debris of the container: two halves of a chrome-rimmed glass capsule curling apart, a scatter of tiny droplets of liquid light, and one lingering ring of pale shockwave vapor at the original container size. On the left of frame, a tiny steel-blue fighter with cyan canopy banks into the display, engines bright, silhouetted against the color bloom as if the explosion of spectrum was summoned for it. Star dust and faint nebula behind, everything outlined in thick dark linework, colors at maximum arcade saturation, lifted deep-navy background, never pure black. No text, no letters, no UI. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F130",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:09.377Z",
+    "parentId": "item/direct-orbs"
+  }
+}

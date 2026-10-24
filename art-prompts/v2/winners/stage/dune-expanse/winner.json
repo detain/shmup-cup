@@ -1,0 +1,23 @@
+{
+  "id": "stage/dune-expanse",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep-navy shadows in the darkest crevices, never pure black. An endless alien desert under twin suns, built as stacked horizontal dune bands receding toward a far horizon. Sky band: a pale cream sky warming to apricot near the horizon; a huge pale-cream sun disc sits low right of center, its bottom edge flattened and wobbling in heat haze, and a much smaller hot orange sun hangs just above the horizon to its left. Far band: faint lilac-cream mesas and the dark rounded humps of enormous half-buried fortress-ships breaking through the sand like sleeping whales, long fault cracks spreading out from them. Middle bands: dune ridges in burnt orange then rust, each crest a crisp curved silhouette with a bright rim, rippled by wind, wavy heat-shimmer columns bending their edges; a thin rust dust devil spins in the middle distance with orbiting pebbles. Near band: deep burnt-umber dunes and wind-carved sandstone ledges with sharp outlines, twin shadows cast in two directions from the two suns. Beautiful, oven-hot, hiding something enormous. No characters, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, three suns, purple sky, snow, cactus, people, camels, blurry, pure black background, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 2210984731,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:26:00.871Z",
+  "seconds": 85.9,
+  "label": "DUNE EXPANSE — zone C stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-c-dune-expanse.json#dune-expanse-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/dune-expanse.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

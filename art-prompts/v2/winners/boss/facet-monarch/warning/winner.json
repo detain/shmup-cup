@@ -1,0 +1,40 @@
+{
+  "id": "boss/facet-monarch/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ominous boss alarm beat in the prism labyrinth, the ambient glint of the crystal corridor suddenly going dark facet by facet from the far end toward the viewer as light is drained toward something forming, in the gathering dim the FACET MONARCH shows only as a flat black-violet silhouette, an open crown of seven separated wedge shapes orbiting a bare pinprick of pink light, each silhouette segment edged with one thin lilac rim line so the geometry reads like a diagram of a coming disaster, the corridor floor a mirror of dark violet planes throwing the broken crown reflection forward at the viewer, stray motes of light sliding sideways and disappearing into the pinprick core, a single tiny fighter silhouette with a cyan canopy dot parked low right, still, waiting, cold violet-and-shadow palette with exactly one bright point, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter: draw it as a tiny dark silhouette in the same side view as reference 2, hovering just above the floor, nose pointing right, with only its cyan cockpit glass lit; it is a jet fighter, never a walking robot or vehicle on legs. The boss silhouette is a solid filled black-violet shape of the reference's complete star of crystal spikes all around its sphere, not a line drawing.",
+  "negative": "text, banner, letters, photorealistic, 3d render, watermark, explosions, bright full scene, many colors, pure black background",
+  "model": "flux2",
+  "seed": 14703,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:57:47.255Z",
+  "seconds": 413.2,
+  "label": "FACET MONARCH (FM-07) WARNING silhouette frame",
+  "source": "images/30-bosses/07-facet-monarch.json#fm07-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/facet-monarch/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/facet-monarch.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "cbd2c0cb80917aa8874b276b42f1ce94197c31a1cd6965cf2c417f67f1ad1036",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ominous boss alarm beat in the prism labyrinth, the ambient glint of the crystal corridor suddenly going dark facet by facet from the far end toward the viewer as light is drained toward something forming, in the gathering dim the FACET MONARCH shows only as a flat black-violet silhouette, an open crown of seven separated wedge shapes orbiting a bare pinprick of pink light, each silhouette segment edged with one thin lilac rim line so the geometry reads like a diagram of a coming disaster, the corridor floor a mirror of dark violet planes throwing the broken crown reflection forward at the viewer, stray motes of light sliding sideways and disappearing into the pinprick core, a single tiny fighter silhouette with a cyan canopy dot parked low right, still, waiting, cold violet-and-shadow palette with exactly one bright point, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter: draw it as a tiny dark silhouette in the same side view as reference 2, hovering just above the floor, nose pointing right, with only its cyan cockpit glass lit; it is a jet fighter, never a walking robot or vehicle on legs. The boss silhouette is a solid filled black-violet shape of the reference's complete star of crystal spikes all around its sphere, not a line drawing.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F033",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/facet-monarch"
+  }
+}

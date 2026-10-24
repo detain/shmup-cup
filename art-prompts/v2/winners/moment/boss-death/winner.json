@@ -1,0 +1,23 @@
+{
+  "id": "moment/boss-death",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering, a widescreen side-scrolling arcade shooter reward moment, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, deep-navy space background that is never pure black. Across the upper two-thirds of the frame, a giant boss is dying: a long armored mechanical leviathan fortress-ship with a blunt plated head on the right, angular gunmetal and teal hull plates, finned spine and rows of dead turret sockets, its glowing core cracked open. A sequence of five explosions marches along its hull from right to left, each at a different stage of the classic arcade blast: a tiny white-gold ignition flash, a blooming amber fireball with outlined flame petals, a big orange-white burst, rust-red embers, and a dark smoke cloud, so the destruction visibly travels down its body. Hull plates along the blast line peel up in sheets, revealing dark girders and sparking conduits. Below and around it, the whole bullet storm has just turned into treasure: thousands of tiny sparkling gold point-items, small faceted chips of warm light, drift and tumble down like glittering rain across the middle of the frame. In the lower left, a small steel-blue dart-shaped fighter with a bold blue stripe, a glowing cyan bubble canopy and twin hot orange engine flames flies right into the golden shower, lit warm from above. Deep navy space, fire oranges and dying ambers above, a river of gold across the middle. No text, no letters, no numbers, no score, no user interface.",
+  "negative": "photorealistic, 3d render, coin pile, treasure chest, money, fireworks display, ship intact, single explosion, text, HUD, score numbers, watermark, blurry, gold dots arranged in grid, purple explosions",
+  "model": "flux2",
+  "seed": 2604917385,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:53:16.206Z",
+  "seconds": 52.3,
+  "label": "Boss death — chained hull explosions while every bullet turns to gold",
+  "source": "images/70-key-moments/boss-moments.json#boss-death-gold-rain-v1",
+  "file": "art-prompts/v2/candidates/a/moment/boss-death.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

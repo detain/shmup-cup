@@ -1,0 +1,38 @@
+{
+  "id": "tiles/abyssal-throne/tileset",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen ABYSSAL THRONE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established ABYSSAL THRONE material (black basalt with ink-blue water stains and tiny cyan bioluminescent specks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a crust of dark weed roots, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Five columns and four rows of equal square cells spread across the full width of the sheet, twenty tiles. The \"dark weed roots\" of the top edge are thin dark navy-violet root strands with cyan tips, not green moss: no green appears on any tile, so nothing is close to the key colour. The basalt is dark slate-blue with visible facets.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 90614,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:32:27.429Z",
+  "seconds": 68.6,
+  "label": "ABYSSAL THRONE 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/abyssal-throne/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/tiles/abyssal-throne.png"
+  ],
+  "editFromSha256": [
+    "b33e79ae345d9ed0d1bbe116b693eabea65e6d62061360b64bb2d31804d4f321"
+  ],
+  "instruction": "Reference image 1 shows the chosen ABYSSAL THRONE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established ABYSSAL THRONE material (black basalt with ink-blue water stains and tiny cyan bioluminescent specks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a crust of dark weed roots, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Five columns and four rows of equal square cells spread across the full width of the sheet, twenty tiles. The \"dark weed roots\" of the top edge are thin dark navy-violet root strands with cyan tips, not green moss: no green appears on any tile, so nothing is close to the key colour. The basalt is dark slate-blue with visible facets.",
+  "outputSize": "1152x912",
+  "meta": {
+    "job": "F195",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:39.465Z",
+    "parentId": "tiles/abyssal-throne"
+  }
+}

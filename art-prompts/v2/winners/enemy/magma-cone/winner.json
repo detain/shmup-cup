@@ -1,0 +1,23 @@
+{
+  "id": "enemy/magma-cone",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single MAGMA CONE enemy of the Iron Tide, a miniature living volcano used as a ground turret. A squat, wide, low volcano mound almost twice as wide as it is tall, built of jagged stacked black basalt plates, with no barrel and no cannon: the summit is simply an open crater, its lip slanted so the crater mouth gapes toward the upper left. Inside the crater a pool of glowing yellow-white magma, the crater rim glowing hot orange. Bright lava cracks run down the left slope between the plates in a ramp from deep ember red to orange to yellow, while the cooler right-hand plates are dormant with cold ash-gray seam lines. The base spreads out flat over a few rough brick-brown rock chunks. Angular, mound-shaped volcano silhouette. Side view facing left, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no smoke, no eruption plume, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 3509691251,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:33:53.905Z",
+  "seconds": 53.2,
+  "label": "MAGMA CONE — zone D (MAGMA DEEP) medium cone turret (~33×18 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-d-magma-deep.json#magma-deep-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/magma-cone.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

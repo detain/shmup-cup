@@ -1,0 +1,23 @@
+{
+  "id": "boss/ember-frost-twins",
+  "slot": "a",
+  "prompt": "A single twin-headed mechanical serpent boss for a retro 16-bit side-scrolling space shooter, shown in a side view facing the left edge of the picture, the whole construct small enough to sit well inside the frame with a wide empty margin of green on all four sides, including a clear strip of empty green to the right of it, nothing cut off by the frame. Right of center sits one compact shared yoke: a short rounded block of riveted dark steel, no wider than a third of the picture, mounted on a big turning brass ring bearing, ending cleanly with a rounded armored cap on its right side. From the yoke two segmented armored serpent necks made of overlapping metal plates and visible joint rings rear out to the left, one curving up and one curving down, like a split pair of mechanical dragon heads. The upper head is a fire head: a plated drake head of scorched dark iron with cooling-lava cracks glowing yellow and orange along its snout and brow, short swept horns, and a short tongue of orange-white flame at its open jaws; its neck plates shade from pale yellow through orange to deep red. The lower head is an ice head: a sleek plated serpent head of pale blue-white steel rimed with jagged ice crystals, a crest of icicle spines, and a short cone of sparkling white vapor at its open jaws; its neck plates shade from near-white through sky blue to violet ice. Each head has small fierce glowing eyes. Small pink and red bullet ports with bright cores and dark rims along the yoke seams. Fierce, balanced, menacing, readable silhouette, warm above and cold below. Crisp chunky pixel art with a clean heavy near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark iron, brass, ember orange, lava yellow, deep red, ice white, sky blue, violet and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no smoke clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, single head, matching colors, background scenery, stars, cast shadow, green tint on the hull, player character",
+  "model": "flux2",
+  "seed": 2351674810,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:51:02.314Z",
+  "seconds": 52.6,
+  "label": "EMBER & FROST TWINS — double boss, two serpent heads on one shared yoke; full body on key green",
+  "source": "images/30-bosses/12-ember-frost-twins.json#eft-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/ember-frost-twins.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

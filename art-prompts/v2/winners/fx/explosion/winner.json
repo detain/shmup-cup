@@ -1,0 +1,23 @@
+{
+  "id": "fx/explosion",
+  "slot": "a",
+  "prompt": "Retro 16-bit video game explosion sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly twelve frames laid out as three rows with exactly four frames in each row, evenly spaced on a regular grid with even green gutters, each frame centered in its own cell, read left to right and top to bottom as one blast played forward, the blast growing and then fading from frame to frame.\nTop row, frames one to four: frame one a tiny tight spark of white-hot lemon light with four short radial spike lines; frame two a small bright pale-gold sphere with a crisp dark outline and short spikes; frame three the fireball doubled in size, a hot cream core wrapped in rolling outlined petals of amber flame; frame four larger again, tangerine flame lobes curling outward and the first dark smoke puffs crowning the top.\nMiddle row, frames five to eight: the fireball at full size with a cream core and orange petals throwing short spark arms to the sides; then the core cooling to burnt orange; then the flame lobes shredding into separate rust-red and brown-grey smoke clouds that still keep a round shape; then smoke dominating with ember sparks streaming outward on straight lines.\nBottom row, frames nine to twelve: a wide slow cloud of dark ember-grey smoke veined with the last dim red cracks of inner light; the cloud breaking into separate hard-edged puffs; a few thinning puffs with lone orange embers drifting clear; finally just two or three faint grey wisps and one gold point-spark.\nPalette strictly the explosion ramp: white-hot cream to lemon gold to amber to rust orange to deep ember red over smoke grey. Bold dark outlines on every flame lobe and smoke puff, flat saturated fills with three-step shading lit from the top left, hard pixel edges, no soft glow halo onto the background, no shadows, no cell borders, no grid lines, no text, no labels, no numbers.",
+  "negative": "photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, cell borders, frames merging, different explosions each frame, green tint on the smoke, soft glow halo, watermark, blurry",
+  "model": "flux2",
+  "seed": 1987367111,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:50:32.091Z",
+  "seconds": 57.7,
+  "label": "Explosion — the canonical gold-to-ember blast as a 12-frame sheet on key green (v2: 24 / 48 / 72 px, 12–16 frames)",
+  "source": "images/60-items-fx/items-and-fx.json#explosion-ramp-v1",
+  "file": "art-prompts/v2/candidates/a/fx/explosion.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

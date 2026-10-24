@@ -1,0 +1,23 @@
+{
+  "id": "logo/wordmark",
+  "slot": "b",
+  "prompt": "A retro arcade video game logo lockup, centered and perfectly straight-on. The exact text \"SHMUP CUP\" (two words: S, H, M, U, P, then a space, then C, U, P) set on one single line in enormous heavy chunky block capital letters with squared-off, pixel-stepped corners and a slight forward italic lean, as if the word is flying to the right. Every letter is filled with a warm vertical gradient: pale lemon yellow at the top, melting through tangerine orange in the middle, to flame red at the bottom. Each letter is wrapped in a thick dark navy outline, with a hard offset deep-navy drop shadow stepping down and to the right, and a thin cream-white highlight stripe along the top edge of every letter. Behind the wordmark sits a wide, low arcade marquee plate shaped like a stretched hexagon, deep navy with a thin gold rim and a teal inner bevel. Three cyan speed streaks rush out from behind the left edge of the plate, and below the plate, never overlapping any letter, a thin hot orange engine trail runs the full width of the wordmark like an underline, ending at the right in a tiny steel-blue dart-shaped fighter with a glowing cyan bubble canopy flying right, past the end of the word. All nine letters are fully visible and unobstructed. The background is a lifted deep-navy space, never pure black, scattered with tiny pixel stars. Clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow. No other words, letters, numbers, taglines, watermark or signature anywhere in the image.",
+  "negative": "garbled text, misspelled letters, extra letters, missing letters, warped typography, letter overlap, photorealistic, 3d render, watermark, signature, blurry, pure black background",
+  "model": "flux2",
+  "seed": 3304215447,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:22:33.344Z",
+  "seconds": 73.7,
+  "label": "SHMUP CUP wordmark — the main logo lockup, chunky gradient letters on a deep-navy arcade plate",
+  "source": "images/10-logo-title/logo-lockup.json#logo-lockup-v1",
+  "file": "art-prompts/v2/candidates/b/logo/wordmark.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

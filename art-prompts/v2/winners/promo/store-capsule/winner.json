@@ -1,0 +1,23 @@
+{
+  "id": "promo/store-capsule",
+  "slot": "b",
+  "prompt": "Square store capsule key art for a retro arcade space shooter, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow, built to stay readable at a small size. Across the very top of the square, centered and perfectly straight-on, the game's title \"SHMUP CUP\" in heavy chunky block capital letters filled with a warm vertical gradient from pale yellow through orange into red, a thick dark navy outline, a white highlight along the top edge of each letter and a generous hard navy drop shadow. Filling the right two-thirds below the title: the forward part of a colossal mechanical sea-creature battleship's head facing left, built of clean riveted iron armor plates: a flared iron jaw along the bottom lined with a neat row of small dark gun turrets, and above the jaw, set into the armored brow of the head, one great round sensor eye glowing hot violet, armor plates stepping back into deep rust and navy shadow. Slicing diagonally up across the lower-left foreground, big and close in dynamic perspective, the polished steel-blue nose cone and swept wing root of a dart-shaped fighter with a bold blue stripe, its cyan canopy edge catching the violet eye-light and a long orange engine flare streaking off the bottom-left corner, the two machines on a collision course one frame before impact. Between them, a handful of small perfectly round glowing pink bullet orbs, each a simple circle with a bright white core and a dark rim, float like angry fireflies, few enough to read one by one. Clean lifted deep-navy starfield background with the faintest breath of violet nebula, never pure black. The only text in the image is \"SHMUP CUP\": no taglines, ratings, other words, numbers, watermark or signature anywhere.",
+  "negative": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+  "model": "flux2",
+  "seed": 1889816277,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:39:44.874Z",
+  "seconds": 88.4,
+  "label": "Store capsule — square key art with the \"SHMUP CUP\" title, fighter screaming past a burning hull",
+  "source": "images/80-promo/website-and-banners.json#steam-capsule-v1",
+  "file": "art-prompts/v2/candidates/b/promo/store-capsule.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

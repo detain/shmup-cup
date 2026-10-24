@@ -1,0 +1,38 @@
+{
+  "id": "enemy/glint-mote/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GLINT MOTE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GLINT MOTE enemy — a fist-sized crystal spark with bright-lilac edge-lights and tiny orbiting satellite flecks, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: five strobe frames of the edge-lights going bright to dim with the flecks at new orbit positions, then one burst frame as a harmless star-puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly six cells, three per row, nothing more. The glow fades step by step: cell one blazing white core, cell two bright, cell three medium, cell four faint, cell five a plain lilac crystal with no glow at all; the three satellite diamonds sit at different positions around the crystal in every cell; cell six is the star-puff burst.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 32511,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:14:54.460Z",
+  "seconds": 66.3,
+  "label": "GLINT MOTE animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/glint-mote/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/glint-mote.png"
+  ],
+  "editFromSha256": [
+    "0495b887d8b80dac5266dfbc6de8e6ecc9743168632026978b74b2b929f5283d"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GLINT MOTE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GLINT MOTE enemy — a fist-sized crystal spark with bright-lilac edge-lights and tiny orbiting satellite flecks, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: five strobe frames of the edge-lights going bright to dim with the flecks at new orbit positions, then one burst frame as a harmless star-puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly six cells, three per row, nothing more. The glow fades step by step: cell one blazing white core, cell two bright, cell three medium, cell four faint, cell five a plain lilac crystal with no glow at all; the three satellite diamonds sit at different positions around the crystal in every cell; cell six is the star-puff burst.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F117",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/glint-mote"
+  }
+}

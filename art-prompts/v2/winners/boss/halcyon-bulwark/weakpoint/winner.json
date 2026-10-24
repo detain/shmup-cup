@@ -1,0 +1,38 @@
+{
+  "id": "boss/halcyon-bulwark/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Extreme close-up arcade boss weak point study, filling the frame with one enormous wing-tip emitter pod of the HALCYON BULWARK warship, a layered steel funnel of concentric armor petals partly bloomed open to expose a searing violet-pink energy core with a bright white center suspended in magnetic rings, arcs of pink lightning crawling along heat-blued metal, molten orange seams glowing between the plate layers, fragments of the dark blue-black fortress hull falling away at the edges of frame with tiny bolts and torn cable ends visible, radial glow washing the surrounding void navy into violet, one or two pink bullets bursting at the rim of the exposure, hyper-detailed mechanical texture rendered in a saturated 16-bit inspired language with bold dark outlines and pixel-cluster shading accents, dramatic macro composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The pink bullets are perfectly round glowing balls like small pink suns, never cylinders, shells or cartridges.",
+  "negative": "photorealistic, 3d render, text, watermark, human faces, eyes, organic tissue, gore, blurry, pure black background",
+  "model": "flux2",
+  "seed": 13102,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:49:36.351Z",
+  "seconds": 119.3,
+  "label": "HALCYON BULWARK (HB-01) weak-point close-up",
+  "source": "images/30-bosses/01-halcyon-bulwark.json#hb01-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/halcyon-bulwark/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/halcyon-bulwark.png"
+  ],
+  "editFromSha256": [
+    "6af0f30a77b2a2b5e4c38db5c31c6f400ee7ac10be85ce082e273f043cde0619"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Extreme close-up arcade boss weak point study, filling the frame with one enormous wing-tip emitter pod of the HALCYON BULWARK warship, a layered steel funnel of concentric armor petals partly bloomed open to expose a searing violet-pink energy core with a bright white center suspended in magnetic rings, arcs of pink lightning crawling along heat-blued metal, molten orange seams glowing between the plate layers, fragments of the dark blue-black fortress hull falling away at the edges of frame with tiny bolts and torn cable ends visible, radial glow washing the surrounding void navy into violet, one or two pink bullets bursting at the rim of the exposure, hyper-detailed mechanical texture rendered in a saturated 16-bit inspired language with bold dark outlines and pixel-cluster shading accents, dramatic macro composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The pink bullets are perfectly round glowing balls like small pink suns, never cylinders, shells or cartridges.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F002",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/halcyon-bulwark"
+  }
+}

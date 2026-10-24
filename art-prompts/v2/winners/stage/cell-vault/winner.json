@@ -1,0 +1,23 @@
+{
+  "id": "stage/cell-vault",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide side-scrolling arcade shooter stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, lifted deep navy-green shadows, never pure black. The inside of a colossal living fortress that was grown rather than built, a long horizontal hall arranged as parallax bands. Far band: at the center of the back wall the hall narrows into a round archway of concentric muscle rings, half-contracted, glowing from within with a wet amber-green light. Back wall band: a honeycomb of enormous translucent green cells packed side by side, each a rounded room-sized blob with a pale glowing nucleus floating inside, rippling in a slow frozen wave. Middle band: long glistening membrane strands hanging from ceiling to floor like cables, beaded with pulsing yellow-green nodes, and thick fleshy folds of darker moss-green tissue running horizontally with clusters of star-shaped breathing pores puffing faint spore mist. Ceiling and floor bands: heavy ridged tissue walls in forest green and jade, outlined in near-black green, laced with thin warm amber veins, forming a corridor top and bottom with a raised dais of hardened pale callus plate on the floor at mid-frame. Muted forest greens, pale nucleus glows and warm amber veins. Organic and eerie but not gory. No characters, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, red gore, blood, human organs, medical anatomy, teeth, eyes staring, insect swarm, pure black background, watermark, text, blurry, slimy specular highlights, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 619304752,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:37:32.729Z",
+  "seconds": 52.7,
+  "label": "CELL VAULT — zone F stage, wide establishing wallpaper (sets the zone's look for its parallax layers)",
+  "source": "images/50-stages/zone-f-cell-vault.json#cell-vault-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/cell-vault.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

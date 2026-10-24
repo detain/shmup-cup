@@ -1,0 +1,38 @@
+{
+  "id": "enemy/husk-crawler/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of HUSK CRAWLER. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same HUSK CRAWLER enemy — a broad beetle-shaped walker drone with overlapping slate-charcoal carapace plates, six stubby jointed legs and a dim red eye-bar glowing under the shell lip, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four frames of a walk cycle, the shell flipped open showing a glowing violet weak-point core, and destroyed with the shell cracked. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The walk cycle is clearly visible: in each of the first four cells the six legs stand in a different position, alternating which three legs are lifted and stepping forward, and the body bobs up and down slightly. Only green space between the cells, no lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 35083,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:00:01.391Z",
+  "seconds": 122.4,
+  "label": "HUSK CRAWLER animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/husk-crawler/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/husk-crawler.png"
+  ],
+  "editFromSha256": [
+    "b55f108e50cf7a981890f9cf1fd0c1a84505ea0bf940513c544024ccead60626"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of HUSK CRAWLER. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same HUSK CRAWLER enemy — a broad beetle-shaped walker drone with overlapping slate-charcoal carapace plates, six stubby jointed legs and a dim red eye-bar glowing under the shell lip, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four frames of a walk cycle, the shell flipped open showing a glowing violet weak-point core, and destroyed with the shell cracked. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The walk cycle is clearly visible: in each of the first four cells the six legs stand in a different position, alternating which three legs are lifted and stepping forward, and the body bobs up and down slightly. Only green space between the cells, no lines.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F101",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:29.379Z",
+    "parentId": "enemy/husk-crawler"
+  }
+}

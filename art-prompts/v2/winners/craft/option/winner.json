@@ -1,0 +1,23 @@
+{
+  "id": "craft/option",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite concept for a horizontal arcade shoot-'em-up: a single OPTION drone, a small glowing ball of plasma energy like a tiny captive sun, shown large and centered with a generous empty margin all around. Concentric layers from the center out: a blazing white-hot core, then a bright lemon-yellow layer, then a band of hot orange, then a red-orange shell of rolling energy with flickering flame-tongue edges, then a dark crimson rim just inside a crisp 1-pixel near-black navy outline. One tiny pale-yellow specular glint sits on the upper left. Four small separate diamond-shaped orange sparks float around the orb at even distances, each with its own dark outline, not connected by any ring or line. The orb clearly emits light and looks like pure energy, not a planet: no ring, no surface texture, no craters. It reads as a loyal helper satellite of a steel-blue fighter, warm against cold space. Crisp pixel art at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top left, chunky readable silhouette that stays clear at a tiny size, no anti-aliasing. Isolated on a perfectly flat solid pure bright green chroma-key background, no gradient, no stars, no scenery, no cast shadow, no glow halo bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 3290370341,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:35:51.510Z",
+  "seconds": 86.6,
+  "label": "OPTION — the indestructible drone orb that copies the ship's fire (v2: 12×12, 4 frames), on key green",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/craft/option.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

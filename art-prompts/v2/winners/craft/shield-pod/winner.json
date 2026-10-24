@@ -1,0 +1,23 @@
+{
+  "id": "craft/shield-pod",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite concept for a horizontal arcade shoot-'em-up: a single shield pod, shown large and centered with a generous empty margin all around. A small faceted armor block shaped like a cut gemstone diamond standing on its point, built from eight broad flat facets of polished gold, each facet a different value of the gold ramp from pale cream to deep honey, with a dark bronze band wrapped around its waist set with three tiny rivet dots and a thin glowing amber seam along the band. Pale-cream bevelled edges catch the light, a hard white glint sits on the upper-left facet, and the lower-right facets fall into warm bronze shadow. It looks sturdy and protective, an armored plate built to absorb enemy bullets in front of a fighter, compact and symmetrical. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top left, chunky readable silhouette that stays clear at a tiny size, no anti-aliasing. Isolated on a perfectly flat solid pure bright green chroma-key background, no gradient, no stars, no scenery, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 1639592759,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:37:28.517Z",
+  "seconds": 85.1,
+  "label": "Shield pod — the gold diamond pod of the front / Free / Rotate shields (v2: 12×12, 4 frames), on key green",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/craft/shield-pod.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,39 @@
+{
+  "id": "tiles/azure-verge/tileset",
+  "slot": "c",
+  "prompt": "Reference image 1 shows the chosen AZURE VERGE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, twenty equal square tiles laid out as four rows of five tiles, five tiles in every row, with even strips of the green key between them, on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established AZURE VERGE material (the swatch's rounded blue-green and teal stones set in dark slate-teal rock, with pale mint mineral flecks) at the same pixel scale, front-on, flat, and every tile different. Row 1, left to right: three plain fill tiles of solid stone with no grass, a top surface edge with the swatch's grassy crust along its top, a second top surface edge with a different tuft pattern. Row 2: a bottom ceiling edge with the rock's underside along the bottom, a left edge, a right edge, the top-left outer corner, the top-right outer corner. Row 3: the bottom-left outer corner, the bottom-right outer corner, two inner corners, a 45-degree slope rising from bottom-left to top-right. Row 4: the mirrored slope falling from top-left to bottom-right, two destructible blocks with visible cracks, a decor tile with a fern tuft, a decor tile with a cluster of small cyan crystal chips. The grassy crust keeps the swatch's muted pale mint, sage and sea-green tones, never a bright pure green. The tiles are plain squares with no frames, boxes, bevels or rounded borders: only open edges get a 1-pixel dark outline, sides that join more rock have none. Slopes and cracked blocks are the same flat stone texture as the fills, never smooth bevelled slabs. Crisp pixel art, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no 3D blocks. Each tile sits directly on the key with a crisp edge and no drop shadow beside or under it. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no shadow, no green spill. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 86485,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-18T00:13:36.596Z",
+  "seconds": 66.3,
+  "label": "AZURE VERGE 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/c/tiles/azure-verge/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/c/tiles/azure-verge.png"
+  ],
+  "editFromSha256": [
+    "6efd567617212b347781e04108d894fe3c61998e099cc5abb530a082b6dd8c78"
+  ],
+  "instruction": "Reference image 1 shows the chosen AZURE VERGE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, twenty equal square tiles laid out as four rows of five tiles, five tiles in every row, with even strips of the green key between them, on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established AZURE VERGE material (the swatch's rounded blue-green and teal stones set in dark slate-teal rock, with pale mint mineral flecks) at the same pixel scale, front-on, flat, and every tile different. Row 1, left to right: three plain fill tiles of solid stone with no grass, a top surface edge with the swatch's grassy crust along its top, a second top surface edge with a different tuft pattern. Row 2: a bottom ceiling edge with the rock's underside along the bottom, a left edge, a right edge, the top-left outer corner, the top-right outer corner. Row 3: the bottom-left outer corner, the bottom-right outer corner, two inner corners, a 45-degree slope rising from bottom-left to top-right. Row 4: the mirrored slope falling from top-left to bottom-right, two destructible blocks with visible cracks, a decor tile with a fern tuft, a decor tile with a cluster of small cyan crystal chips. The grassy crust keeps the swatch's muted pale mint, sage and sea-green tones, never a bright pure green. The tiles are plain squares with no frames, boxes, bevels or rounded borders: only open edges get a 1-pixel dark outline, sides that join more rock have none. Slopes and cracked blocks are the same flat stone texture as the fills, never smooth bevelled slabs. Crisp pixel art, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no 3D blocks. Each tile sits directly on the key with a crisp edge and no drop shadow beside or under it. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no shadow, no green spill. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x912",
+  "replaced": "art-prompts/v2/candidates/history/2026-10-18/c/tiles/azure-verge/tileset-2.png",
+  "meta": {
+    "job": "F151",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T16:35:28.791Z",
+    "parentId": "tiles/azure-verge"
+  }
+}

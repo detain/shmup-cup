@@ -1,0 +1,23 @@
+{
+  "id": "boss/iron-leviathan",
+  "slot": "a",
+  "prompt": "A single very long armored raider battleship boss shaped like a mechanical eel, for a retro 16-bit side-scrolling space shooter, shown in a flat side view, broadside, its prow pointing to the left edge of the picture, the whole ship spanning only the middle four fifths of the picture width, the entire length visible from prow to tail tip with a wide empty margin of green at both the left and right ends and above and below, the tail fin fully inside the frame, nothing cut off. The hull is a long slender chain of thirteen distinct armored segments of dark gunmetal plate joined by visible hinge rings, gently undulating in a shallow S-curve like a swimming eel and tapering to a whip-like finned tail at the right. At the front, a hardened prow ram shaped like a clenched hooked beak of riveted steel with a narrow slit of red sensor light. A row of small synchronized twin-barrel gun turrets runs along the back of every segment, all aimed left. A rust-red stripe runs along the lower hull like a waterline, with a line of small amber running lights above it, and short hard-edged puffs of grey smoke pop from little exhaust vents. In the middle segment an armored hatch stands half open, revealing a glimpse of a glowing magenta mechanical heart inside. Small pink and red gun ports with bright cores and dark rims along the seams. Predatory, sleek, menacing, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark gunmetal, steel grey, rust red, amber, magenta and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, fat tub hull, wings, background scenery, stars, cast shadow, green tint on the hull, player character",
+  "model": "flux2",
+  "seed": 1384212546,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:48:55.190Z",
+  "seconds": 39.6,
+  "label": "IRON LEVIATHAN — raid boss, the eel-battleship raider (with the LEVIATHAN HEART inside); full body on key green",
+  "source": "images/30-bosses/11-iron-leviathan.json#ilv-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/iron-leviathan.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "enemy/halo-crystal/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen HALO CRYSTAL, image 2 the chosen OPTION HUNTER, image 3 the chosen GLINT MOTE, image 4 the chosen KESTREL, the player's fighter. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. A luminous crystal labyrinth corridor seen from the side, as in a side-scrolling game: a ceiling of dense violet triangle-facet crystal with lilac rim-light along the top edge, a crystal floor along the bottom edge, deep-navy depth between them, no vanishing point; a stack of larger crystal cubes leans down from the ceiling, mid-tumble. Three separate enemies, each with clear space around it, none touching another. In the upper right, the HALO CRYSTAL hovers alone, drawn exactly as image 1: the big faceted violet gem, point down, ringed by exactly six small matching crystals on the corners of a hexagon. In the lower right, facing left, the OPTION HUNTER from image 2, its grapple-claws closing around one small round glowing escort orb and dragging it toward the violet launch bay on its belly. Two small GLINT MOTEs from image 3, four-pointed lilac stars, sparkle near the ceiling. In the left half flies the KESTREL from image 4, side view, nose pointing right toward the enemies, orange engine flame on its left, firing a thin cyan laser bolt to the right; two small round glowing escort orbs, not aircraft, trail behind it. Between them drift five enemy bullets, each a lone round glowing orb: a solid bright pink ball with a white core and a dark rim, no rings. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, extra suns, single flat crystal wall with no facets, eight or more ring crystals",
+  "model": "flux2",
+  "seed": 16711,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-18T00:08:02.538Z",
+  "seconds": 290.2,
+  "label": "Zone G encounter concept — the PRISM LABYRINTH enemies in situ (follows all zone G enemy winners)",
+  "source": "images/40-enemies/zone-g-prism-labyrinth.json#halo-crystal-option-hunter-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/halo-crystal/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/halo-crystal.png",
+    "art-prompts/v2/candidates/a/enemy/option-hunter.png",
+    "art-prompts/v2/candidates/a/enemy/glint-mote.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784",
+    "49e1cd2cf1868cee4d6cc5027c3bdfc8bbc9512001c6509d4f5d3c880011d531",
+    "0495b887d8b80dac5266dfbc6de8e6ecc9743168632026978b74b2b929f5283d",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen HALO CRYSTAL, image 2 the chosen OPTION HUNTER, image 3 the chosen GLINT MOTE, image 4 the chosen KESTREL, the player's fighter. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. A luminous crystal labyrinth corridor seen from the side, as in a side-scrolling game: a ceiling of dense violet triangle-facet crystal with lilac rim-light along the top edge, a crystal floor along the bottom edge, deep-navy depth between them, no vanishing point; a stack of larger crystal cubes leans down from the ceiling, mid-tumble. Three separate enemies, each with clear space around it, none touching another. In the upper right, the HALO CRYSTAL hovers alone, drawn exactly as image 1: the big faceted violet gem, point down, ringed by exactly six small matching crystals on the corners of a hexagon. In the lower right, facing left, the OPTION HUNTER from image 2, its grapple-claws closing around one small round glowing escort orb and dragging it toward the violet launch bay on its belly. Two small GLINT MOTEs from image 3, four-pointed lilac stars, sparkle near the ceiling. In the left half flies the KESTREL from image 4, side view, nose pointing right toward the enemies, orange engine flame on its left, firing a thin cyan laser bolt to the right; two small round glowing escort orbs, not aircraft, trail behind it. Between them drift five enemy bullets, each a lone round glowing orb: a solid bright pink ball with a white core and a dark rim, no rings. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "replaced": "art-prompts/v2/candidates/history/2026-10-18/a/enemy/halo-crystal/zone-encounter.png",
+  "meta": {
+    "job": "F118",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:23:33.855Z",
+    "parentId": "enemy/halo-crystal"
+  }
+}

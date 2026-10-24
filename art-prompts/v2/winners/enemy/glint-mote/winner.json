@@ -1,0 +1,23 @@
+{
+  "id": "enemy/glint-mote",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single GLINT MOTE enemy of the Iron Tide, a tiny living crystal spark from a prism labyrinth, isolated. A small chunky four-pointed star-cut crystal, like a compact octahedron gem seen face-on with a short sharp point up, down, left and right, its facets in violet, lavender and a bright near-white lilac on the top-left faces, with bright lilac edge-lights tracing every ridge and a hot white-violet pinpoint at its center. Three tiny separate satellite flecks, each a little lilac diamond of a few pixels, orbit it at different distances on a tilted ring. Very simple, very bright, high-contrast silhouette meant to read at a dozen pixels. Front view, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no soft glow, no lens flare, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 2151157117,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:48:26.931Z",
+  "seconds": 46.6,
+  "label": "GLINT MOTE — zone G (PRISM LABYRINTH) small crystal spark (~12 px); single sprite, front view on key green",
+  "source": "images/40-enemies/zone-g-prism-labyrinth.json#prism-labyrinth-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/glint-mote.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

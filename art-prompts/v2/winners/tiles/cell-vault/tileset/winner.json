@@ -1,0 +1,38 @@
+{
+  "id": "tiles/cell-vault/tileset",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen CELL VAULT terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established CELL VAULT material (living green tissue of packed cells in a moss-to-jade ramp with pale nuclei and amber pores) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a soft membrane fold, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles, every cell filled. Every tile is a flat side-view square with no 3D cube tops or bevelled frames; the corner, inner-corner and slope tiles are real cut-out shapes whose empty part is the flat green key. Shade the tissue in dark moss and deep jade with dark navy outlines, clearly darker and bluer than the bright key green.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 93561,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:29:16.565Z",
+  "seconds": 68.2,
+  "label": "CELL VAULT 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/tiles/cell-vault/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/tiles/cell-vault.png"
+  ],
+  "editFromSha256": [
+    "01aa851941ee907b8dbfe4605b6fadaa076b3adc616cb8b40360fd58d76bf17e"
+  ],
+  "instruction": "Reference image 1 shows the chosen CELL VAULT terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established CELL VAULT material (living green tissue of packed cells in a moss-to-jade ramp with pale nuclei and amber pores) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a soft membrane fold, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles, every cell filled. Every tile is a flat side-view square with no 3D cube tops or bevelled frames; the corner, inner-corner and slope tiles are real cut-out shapes whose empty part is the flat green key. Shade the tissue in dark moss and deep jade with dark navy outlines, clearly darker and bluer than the bright key green.",
+  "outputSize": "1152x912",
+  "meta": {
+    "job": "F177",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:09.377Z",
+    "parentId": "tiles/cell-vault"
+  }
+}

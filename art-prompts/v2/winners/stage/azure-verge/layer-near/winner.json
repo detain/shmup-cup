@@ -1,0 +1,38 @@
+{
+  "id": "stage/azure-verge/layer-near",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen AZURE VERGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): AZURE VERGE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established AZURE VERGE stage art exactly: fast thin cloud streaks and small tumbling rocks, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces, each surrounded by the green key: a loose scatter of long thin white-and-pale-blue cloud streaks and small grey tumbling rocks across the middle third of the picture's height. Above and below them is plain green key with nothing marking where the band starts or ends: no outline, no edge line, no frame, no filled strip.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 85700,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:22:41.161Z",
+  "seconds": 166.2,
+  "label": "AZURE VERGE parallax layer 4/4 (near, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/azure-verge/layer-near.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/azure-verge.png"
+  ],
+  "editFromSha256": [
+    "6f99955c17f19be0b7f8f9455e85d9e1f50375b3bc03aa840e192a6a061f7ac4"
+  ],
+  "instruction": "Reference image 1 shows the chosen AZURE VERGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): AZURE VERGE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established AZURE VERGE stage art exactly: fast thin cloud streaks and small tumbling rocks, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces, each surrounded by the green key: a loose scatter of long thin white-and-pale-blue cloud streaks and small grey tumbling rocks across the middle third of the picture's height. Above and below them is plain green key with nothing marking where the band starts or ends: no outline, no edge line, no frame, no filled strip.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F147",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:19.379Z",
+    "parentId": "stage/azure-verge"
+  }
+}

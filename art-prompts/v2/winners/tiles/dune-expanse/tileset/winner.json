@@ -1,0 +1,38 @@
+{
+  "id": "tiles/dune-expanse/tileset",
+  "slot": "b",
+  "prompt": "Reference image 1 shows the chosen DUNE EXPANSE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established DUNE EXPANSE material (packed desert sandstone in stepped rust, sand-gold and umber layers with small pebbles) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a wind-rippled sand crest, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has exactly five columns and four rows, twenty tiles, each a large square seen straight from the side like a flat game tile: no inset boxes, no bevels, no top faces, no 3D depth. The slopes are clean diagonal cuts with the green key above them, and the decor tiles are pebble piles or a half-buried bleached bone in the sandstone colours, with no green plants or vines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 29743,
+  "width": 1152,
+  "height": 912,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:50:52.841Z",
+  "seconds": 66.8,
+  "label": "DUNE EXPANSE 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/dune-expanse/tileset.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/b/tiles/dune-expanse.png"
+  ],
+  "editFromSha256": [
+    "b5c14c34d0aa5622d99be19dec24f4120ec521b82687a1041afe0783483b6208"
+  ],
+  "instruction": "Reference image 1 shows the chosen DUNE EXPANSE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established DUNE EXPANSE material (packed desert sandstone in stepped rust, sand-gold and umber layers with small pebbles) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a wind-rippled sand crest, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has exactly five columns and four rows, twenty tiles, each a large square seen straight from the side like a flat game tile: no inset boxes, no bevels, no top faces, no 3D depth. The slopes are clean diagonal cuts with the green key above them, and the decor tiles are pebble piles or a half-buried bleached bone in the sandstone colours, with no green plants or vines.",
+  "outputSize": "1152x912",
+  "meta": {
+    "job": "F159",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:00:49.381Z",
+    "parentId": "tiles/dune-expanse"
+  }
+}

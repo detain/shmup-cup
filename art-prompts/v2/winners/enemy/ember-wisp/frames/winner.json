@@ -1,0 +1,38 @@
+{
+  "id": "enemy/ember-wisp/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of EMBER WISP. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same EMBER WISP enemy — a small feral flame creature with a molten-gold round core, ragged orange-red flame tongues and a thin sparking tail trailing behind it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of the flame body licking and bending differently around the identical core. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The six frames are clearly different flame poses: the flame tongues sweep up in one, down in the next, spread wide, curl tight, stretch long and flicker short, and the sparks of the tail sit in new places each time; only the core with its two dark slits stays the same. Only green space between the cells, no lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 56692,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:20:45.016Z",
+  "seconds": 66.2,
+  "label": "EMBER WISP animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/ember-wisp/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/ember-wisp.png"
+  ],
+  "editFromSha256": [
+    "ce26f914b78dc6977dee49fe0ee9336dd392936e20a65af8a05c4cd2b02c3b4c"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of EMBER WISP. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same EMBER WISP enemy — a small feral flame creature with a molten-gold round core, ragged orange-red flame tongues and a thin sparking tail trailing behind it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of the flame body licking and bending differently around the identical core. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The six frames are clearly different flame poses: the flame tongues sweep up in one, down in the next, spread wide, curl tight, stretch long and flicker short, and the sparks of the tail sit in new places each time; only the core with its two dark slits stays the same. Only green space between the cells, no lines.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F105",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:29.379Z",
+    "parentId": "enemy/ember-wisp"
+  }
+}

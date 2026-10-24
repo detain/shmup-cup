@@ -1,0 +1,44 @@
+{
+  "id": "enemy/froth/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen FROTH, image 2 shows the chosen BROOD BUBBLE, image 3 shows the chosen URCHIN, image 4 shows the chosen MAW ROCKET. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: FROTH splitting bubble enemies — four frames of a wobbling translucent pink-white foam sphere growing a seam, pinching in the middle, and separating into two smaller froth spheres. Row two: BROOD BUBBLES — four frames of a larger membranous jelly sphere containing a curled dark mechanical fish, shown intact, wobbling, cracking, and emptied with the film peeling away. Row three: URCHIN reef turrets — four frames of a squat charcoal barnacle dome plated in overlapping scales, crowned with a fan of purple spines and a single magenta lens, lens aimed left, up-left and down-left, plus one damaged frame with broken spines. Row four: MAW ROCKET missiles — four frames of a small fish-head torpedo with an open metal jaw nose and a stubby fin tail, flame nozzle flickering through four states. Chunky crisp pixels, dithered metal highlights, side view facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, realistic fish, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 5782,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:23:28.701Z",
+  "seconds": 228.4,
+  "label": "Zone B roster sheet — every library enemy of BRINE NEBULA together (follows all zone B enemy winners)",
+  "source": "images/40-enemies/zone-b-brine-nebula.json#brine-nebula-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/froth/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/froth.png",
+    "art-prompts/v2/candidates/a/enemy/brood-bubble.png",
+    "art-prompts/v2/candidates/a/enemy/urchin.png",
+    "art-prompts/v2/candidates/a/enemy/maw-rocket.png"
+  ],
+  "editFromSha256": [
+    "f14dbabf54c514bd4e272dd76223fb3e4ebef1f32ef7323e303f3d8a40fcac83",
+    "3d9fe9ee855f359612b7342f93355dff8b8c84c2f495f8cbaa6e4a3a222ebe74",
+    "647529b187d8e33a0e1d781e4bcfbce4e4bb3cf23bbebb57f24af2bea93b23f8",
+    "a22b791e0e674c902827d7fcac2dfea33a9879ce5635b09ec5f3e28613ae5ca7"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen FROTH, image 2 shows the chosen BROOD BUBBLE, image 3 shows the chosen URCHIN, image 4 shows the chosen MAW ROCKET. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: FROTH splitting bubble enemies — four frames of a wobbling translucent pink-white foam sphere growing a seam, pinching in the middle, and separating into two smaller froth spheres. Row two: BROOD BUBBLES — four frames of a larger membranous jelly sphere containing a curled dark mechanical fish, shown intact, wobbling, cracking, and emptied with the film peeling away. Row three: URCHIN reef turrets — four frames of a squat charcoal barnacle dome plated in overlapping scales, crowned with a fan of purple spines and a single magenta lens, lens aimed left, up-left and down-left, plus one damaged frame with broken spines. Row four: MAW ROCKET missiles — four frames of a small fish-head torpedo with an open metal jaw nose and a stubby fin tail, flame nozzle flickering through four states. Chunky crisp pixels, dithered metal highlights, side view facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F092",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:19.377Z",
+    "parentId": "enemy/froth"
+  }
+}

@@ -352,6 +352,25 @@ const KNOWN_HITS: readonly KnownHit[] = [
       'not a prompt) — descriptive, but also a boss name of the series; art-prompts/v2/ is the ' +
       "art round's, so the owner rewords it after round 2",
   },
+  {
+    file: 'art-prompts/v2/winners/boss/cinder-bastion/winner.json',
+    term: 'huge battleship',
+    count: 1,
+    why:
+      'the prompt sent for CINDER BASTION ("A single huge battleship boss …"), recorded in the ' +
+      "winner's committed sidecar — a phrase shmup_feat.md §26 names in its legal notes, with no " +
+      "game, studio or character named; art-prompts/v2/ is the art round's, so it is reported, " +
+      'not edited — reworded if the item is regenerated (art-provenance.md, open decision 7)',
+  },
+  {
+    file: 'art-prompts/v2/winners/boss/facet-monarch/winner.json',
+    term: 'Crystal Core',
+    count: 1,
+    why:
+      'the same FACET MONARCH picker label "the crystal core with an orbiting crown", copied into ' +
+      "the winner's committed sidecar — pinned beside its manifest.json row; the owner rewords " +
+      'both after the round (art-provenance.md, open decision 7)',
+  },
 ];
 
 /** Extensions read as text; images, clips and other binaries are never opened. */

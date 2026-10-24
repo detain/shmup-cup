@@ -1,0 +1,38 @@
+{
+  "id": "enemy/maw-rocket/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MAW ROCKET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same MAW ROCKET enemy — a small steel torpedo with a hinged open fish-jaw nose showing a dark throat, a finned steel body and an orange nozzle flame at the tail, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four flame-flicker states of the tail nozzle on the identical torpedo body. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The torpedo with its open jaw is pixel-identical in all four cells; only the tail flame changes, clearly: short, medium, long, and medium with a forked tip. Only empty green space between the cells, no lines.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 51693,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:36:39.898Z",
+  "seconds": 66.8,
+  "label": "MAW ROCKET animation sheet, four frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/maw-rocket/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/maw-rocket.png"
+  ],
+  "editFromSha256": [
+    "a22b791e0e674c902827d7fcac2dfea33a9879ce5635b09ec5f3e28613ae5ca7"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MAW ROCKET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same MAW ROCKET enemy — a small steel torpedo with a hinged open fish-jaw nose showing a dark throat, a finned steel body and an orange nozzle flame at the tail, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four flame-flicker states of the tail nozzle on the identical torpedo body. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The torpedo with its open jaw is pixel-identical in all four cells; only the tail flame changes, clearly: short, medium, long, and medium with a forked tip. Only empty green space between the cells, no lines.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F096",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:29.379Z",
+    "parentId": "enemy/maw-rocket"
+  }
+}

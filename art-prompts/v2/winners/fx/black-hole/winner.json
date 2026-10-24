@@ -1,0 +1,23 @@
+{
+  "id": "fx/black-hole",
+  "slot": "a",
+  "prompt": "Effect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.",
+  "negative": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, stars, nebula, scenery, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms",
+  "model": "flux2",
+  "seed": 657820946,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:47:02.735Z",
+  "seconds": 48.2,
+  "label": "Black-hole bomb — the MANTA's three-armed violet vortex, the effect alone on the black key (v2: 48×48, 8 frames)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/fx/black-hole.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

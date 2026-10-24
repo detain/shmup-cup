@@ -1,0 +1,38 @@
+{
+  "id": "moment/ending-throne-is-broken/second-panel",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Ending \"The Throne Is Broken\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, tight three-quarter composition, subtle CRT scanline glow; ending scene painted at hi-resolution, portrait of the survivor, ultra-detailed large-format art with pixel-texture accents. A close, angled three-quarter view of the wounded dart fighter filling most of the frame as it climbs away from camera: the cracked canopy is the hero — a thick cyan shell with one white spider-fracture at its center, a few hairline cracks branching to the rim, the glass fogged where pressure heat met cold water, and deep inside that green-lit cockpit nothing is visible but a small warm reflection of the gold shaft far above, held in the shattered glass like a promise kept on the wrong side of a window. The hull tells the last ninety seconds honestly: the bold blue stripe peeled back to bare steel along one flank, dent rows dithered in classic pixel shading, one wingtip missing a clean crescent bite, canopy rail bent, and along the seam of the belly, the dark violet residue of abyssal fluid steaming off in thin ribbons as the metal remembers heat. The twin engines burn unequal — the near one a solid orange lance, the far one stuttering to amber embers in a dotted trail. Below the climbing ship, out of focus and falling away, the broken throne trench is only a smear of extinguishing blue lights and one jagged dark crown-shape in the murk; above the ship, the frame's top edge begins to brighten, gold leaking into the corner as if the next panel of the comic is already morning. The mood: not victorious — relieved, furious, and still flying. Palette of steel blues and canopy cyans against warm gold leak and the retreating violet dark below, lifted deep-navy base, never pure black. No text, no letters, no UI, no visible pilot figure. No text anywhere.",
+  "negative": "photorealistic, 3d render, human pilot portrait, cockpit interior view, face in canopy, alien creature, ship diving, trench above ship, explosion, pristine undamaged hull, text, watermark, blurry, portrait of a person",
+  "model": "flux2",
+  "seed": 20082,
+  "width": 896,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:41:54.274Z",
+  "seconds": 97.5,
+  "label": "Ending \"The Throne Is Broken\" — second panel (closer / later moment)",
+  "source": "images/70-key-moments/endings.json#ending-throne-is-broken-near-v2",
+  "file": "art-prompts/v2/candidates/a/moment/ending-throne-is-broken/second-panel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/moment/ending-throne-is-broken.png"
+  ],
+  "editFromSha256": [
+    "c4a31087cfd099d016063a284bb76c1fa2fb63bd53afc6cc72592df78caea076"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Ending \"The Throne Is Broken\". Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, tight three-quarter composition, subtle CRT scanline glow; ending scene painted at hi-resolution, portrait of the survivor, ultra-detailed large-format art with pixel-texture accents. A close, angled three-quarter view of the wounded dart fighter filling most of the frame as it climbs away from camera: the cracked canopy is the hero — a thick cyan shell with one white spider-fracture at its center, a few hairline cracks branching to the rim, the glass fogged where pressure heat met cold water, and deep inside that green-lit cockpit nothing is visible but a small warm reflection of the gold shaft far above, held in the shattered glass like a promise kept on the wrong side of a window. The hull tells the last ninety seconds honestly: the bold blue stripe peeled back to bare steel along one flank, dent rows dithered in classic pixel shading, one wingtip missing a clean crescent bite, canopy rail bent, and along the seam of the belly, the dark violet residue of abyssal fluid steaming off in thin ribbons as the metal remembers heat. The twin engines burn unequal — the near one a solid orange lance, the far one stuttering to amber embers in a dotted trail. Below the climbing ship, out of focus and falling away, the broken throne trench is only a smear of extinguishing blue lights and one jagged dark crown-shape in the murk; above the ship, the frame's top edge begins to brighten, gold leaking into the corner as if the next panel of the comic is already morning. The mood: not victorious — relieved, furious, and still flying. Palette of steel blues and canopy cyans against warm gold leak and the retreating violet dark below, lifted deep-navy base, never pure black. No text, no letters, no UI, no visible pilot figure. No text anywhere.",
+  "outputSize": "896x1152",
+  "meta": {
+    "job": "F141",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:03:29.378Z",
+    "parentId": "moment/ending-throne-is-broken"
+  }
+}

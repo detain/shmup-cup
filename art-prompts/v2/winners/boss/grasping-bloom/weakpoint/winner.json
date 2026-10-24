@@ -1,0 +1,38 @@
+{
+  "id": "boss/grasping-bloom/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: straight into the open throat of a mechanical flower, concentric spiral folds of violet-lit metal receding toward the center where the pistil hangs — a brass spindle wrapped in a cage of bent needle-filaments, its glass bulb core sloshing with luminous green fluid and cracking with each intake pulse. Fine hairs of static discharge leap between the filaments and the throat wall. The whole frame has a pull-into-depth feeling, radial composition, dark plate rims at the edges. Deep-navy shadow palette, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro crop. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic wet interior, teeth, pure black background",
+  "model": "flux2",
+  "seed": 13302,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T21:02:49.365Z",
+  "seconds": 74.1,
+  "label": "GRASPING BLOOM weak-point close-up",
+  "source": "images/30-bosses/13-grasping-bloom.json#glb-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/grasping-bloom/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/grasping-bloom.png"
+  ],
+  "editFromSha256": [
+    "1028de4a7d3f1202821ab4a7547793bdb0aa183ff19d9877bff56fefd436e2e6"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GRASPING BLOOM. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: straight into the open throat of a mechanical flower, concentric spiral folds of violet-lit metal receding toward the center where the pistil hangs — a brass spindle wrapped in a cage of bent needle-filaments, its glass bulb core sloshing with luminous green fluid and cracking with each intake pulse. Fine hairs of static discharge leap between the filaments and the throat wall. The whole frame has a pull-into-depth feeling, radial composition, dark plate rims at the edges. Deep-navy shadow palette, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro crop. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F060",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/grasping-bloom"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/halcyon-bulwark/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Boss alarm moment in arcade style, the screen-edge darkness closing in as a siren of red light sweeps horizontally across deep navy space, the HALCYON BULWARK reduced to a massive pure silhouette blocking the glow of the blue planet behind it, only its geometry readable, broad bastion hull, swept wing spars, and two emitter points igniting like cruel pink stars at the wing tips, beneath the silhouette a tiny dart-shaped fighter with a single thin orange exhaust line drifting low at the bottom left, the whole image lit by alternating bands of dark red and black siren light, a subtle flash-frame strobe feel with duplicated faint ghost edges on the silhouette, ominous and graphic, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, high-contrast dramatic composition, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, warning banner, letters, symbols, photorealistic, 3d render, watermark, detailed ship visible, pure black background, rainbow palette",
+  "model": "flux2",
+  "seed": 12103,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T16:50:54.918Z",
+  "seconds": 63.8,
+  "label": "HALCYON BULWARK (HB-01) WARNING silhouette frame",
+  "source": "images/30-bosses/01-halcyon-bulwark.json#hb01-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/halcyon-bulwark/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/halcyon-bulwark.png"
+  ],
+  "editFromSha256": [
+    "6af0f30a77b2a2b5e4c38db5c31c6f400ee7ac10be85ce082e273f043cde0619"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of HALCYON BULWARK (HB-01). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Boss alarm moment in arcade style, the screen-edge darkness closing in as a siren of red light sweeps horizontally across deep navy space, the HALCYON BULWARK reduced to a massive pure silhouette blocking the glow of the blue planet behind it, only its geometry readable, broad bastion hull, swept wing spars, and two emitter points igniting like cruel pink stars at the wing tips, beneath the silhouette a tiny dart-shaped fighter with a single thin orange exhaust line drifting low at the bottom left, the whole image lit by alternating bands of dark red and black siren light, a subtle flash-frame strobe feel with duplicated faint ghost edges on the silhouette, ominous and graphic, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, high-contrast dramatic composition, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F003",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/halcyon-bulwark"
+  }
+}

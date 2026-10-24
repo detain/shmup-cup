@@ -1,0 +1,39 @@
+{
+  "id": "item/power-capsule/special-capsules",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen power capsule design. Use it only for the capsule's construction and rendering — a short fat glossy pill with a polished silver metal end cap and cap ring and a wide glass barrel, a thick near-black outline, a thin white top highlight, crisp pixel art — and ignore its red, blue, gold and green colours and its four-row layout. Draw a new retro 16-bit sprite sheet for a horizontal arcade shooter: exactly twelve capsules in three rows of four, side view, all the same size and shape, evenly spaced, with wide empty gaps between the rows, on a perfectly flat solid pure bright green chroma-key background. Each row is one capsule kind, the same capsule four times. Top row: four deep royal-blue screen-clearing capsules, each with a glowing white core inside the blue glass. Middle row: four pearl-white bonus capsules, each with a swirling gold core inside the white glass. Bottom row: four extra-life capsules of clear pale glass, each holding a tiny steel-blue dart-shaped fighter silhouette pointing right. Within each row the four capsules are the frames of a white glint sliding across the glass: in the first capsule the glint is at the left end of the glass, in the second just left of centre, in the third just right of centre, in the fourth at the right end. No red, green, orange or yellow capsules, no mixed kinds within a row, no fourth row. Crisp pixel art with a 1-pixel near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sparkle stars, no cast shadow, no glow on the background. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no texture, no floor, no shadow, no green spill on the capsules. No text, letters, numbers, labels, UI or watermark anywhere; nothing is written on the capsules.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 4869,
+  "width": 1440,
+  "height": 720,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-18T00:22:30.638Z",
+  "seconds": 81.5,
+  "label": "Special capsules in the winning construction: BLUE (screen clear), BONUS, 1UP — 4 glint frames each",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/item/power-capsule/special-capsules.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/item/power-capsule.png"
+  ],
+  "editFromSha256": [
+    "274ac375984fd4d1af5055425bca47f39431b1aa99fd037583e8aea0645685f5"
+  ],
+  "instruction": "Reference image 1 shows the chosen power capsule design. Use it only for the capsule's construction and rendering — a short fat glossy pill with a polished silver metal end cap and cap ring and a wide glass barrel, a thick near-black outline, a thin white top highlight, crisp pixel art — and ignore its red, blue, gold and green colours and its four-row layout. Draw a new retro 16-bit sprite sheet for a horizontal arcade shooter: exactly twelve capsules in three rows of four, side view, all the same size and shape, evenly spaced, with wide empty gaps between the rows, on a perfectly flat solid pure bright green chroma-key background. Each row is one capsule kind, the same capsule four times. Top row: four deep royal-blue screen-clearing capsules, each with a glowing white core inside the blue glass. Middle row: four pearl-white bonus capsules, each with a swirling gold core inside the white glass. Bottom row: four extra-life capsules of clear pale glass, each holding a tiny steel-blue dart-shaped fighter silhouette pointing right. Within each row the four capsules are the frames of a white glint sliding across the glass: in the first capsule the glint is at the left end of the glass, in the second just left of centre, in the third just right of centre, in the fourth at the right end. No red, green, orange or yellow capsules, no mixed kinds within a row, no fourth row. Crisp pixel art with a 1-pixel near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sparkle stars, no cast shadow, no glow on the background. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no texture, no floor, no shadow, no green spill on the capsules. No text, letters, numbers, labels, UI or watermark anywhere; nothing is written on the capsules.",
+  "outputSize": "1440x720",
+  "replaced": "art-prompts/v2/candidates/history/2026-10-18/a/item/power-capsule/special-capsules.png",
+  "meta": {
+    "job": "R001",
+    "kind": "regenerate",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T23:37:32.893Z",
+    "parentId": "item/power-capsule"
+  }
+}

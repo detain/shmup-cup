@@ -1,0 +1,38 @@
+{
+  "id": "stage/iron-citadel/layer-far",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen IRON CITADEL stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): IRON CITADEL far background layer for a 16-bit side-scrolling arcade shooter, matching the established IRON CITADEL stage art exactly: the cathedral-scale interior of a riveted steel fortress with a giant pressure hatch on the far wall, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Show only the distant far wall: tall riveted steel bulkheads and columns, the giant round pressure hatch in the middle, pipe runs high up; no walkway, railing, crane hook, steam, lamp cones or floor grating. The whole picture is lit by a dim cool ambient light: the ceiling and the base of the wall are a dusky steel-blue with visible plate and rivet detail, never black; the darkest colour anywhere is a lifted deep navy.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 96207,
+  "width": 1360,
+  "height": 768,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:59:24.782Z",
+  "seconds": 78.6,
+  "label": "IRON CITADEL parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/iron-citadel/layer-far.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/iron-citadel.png"
+  ],
+  "editFromSha256": [
+    "12f9cb9677696656ac69ea33c79cc8d66f783bc09103bf7c3cce7f5501d8d40d"
+  ],
+  "instruction": "Reference image 1 shows the chosen IRON CITADEL stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): IRON CITADEL far background layer for a 16-bit side-scrolling arcade shooter, matching the established IRON CITADEL stage art exactly: the cathedral-scale interior of a riveted steel fortress with a giant pressure hatch on the far wall, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  Show only the distant far wall: tall riveted steel bulkheads and columns, the giant round pressure hatch in the middle, pipe runs high up; no walkway, railing, crane hook, steam, lamp cones or floor grating. The whole picture is lit by a dim cool ambient light: the ceiling and the base of the wall are a dusky steel-blue with visible plate and rivet detail, never black; the darkest colour anywhere is a lifted deep navy.",
+  "outputSize": "1360x768",
+  "meta": {
+    "job": "F185",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:19.375Z",
+    "parentId": "stage/iron-citadel"
+  }
+}

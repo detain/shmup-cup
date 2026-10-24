@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-sovereign/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Brutal engineering close-up on the exposed heart of the IRON SOVEREIGN, camera pressed almost against the pivoting shield plates, two massive roof-door panels caught mid-rotation framing top and bottom of the shot with their rivet rows and scuffed brass edges, between them the red furnace core suspended in a cage of cooling pipes, the core a swollen lantern of arterial red with a darker blood-orange ring pulsing at its equator, thick cables braided around its mount flexing as the whole assembly shudders, droplets of oil frozen mid-spatter caught in the red light, behind the core a lattice of girders throwing long hard shadows, one bright pink bullet with a dark rim passing through the gap like a needle, a cyan-white spark shower erupting where a girder edge has chafed a conduit, shallow depth forced into pixel discipline with crisp outlines on every plane, bold dark outlines, saturated limited palette of gunmetal, brass and red, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The pink bullet is a lone small round glowing ball with nothing attached to it: no needle, cone, stick or shell.",
+  "negative": "reactor sci-fi clean white, human figure, organic heart, photorealistic, 3d render, text, watermark, green glow, soft blur, pure black background",
+  "model": "flux2",
+  "seed": 13802,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T19:12:14.489Z",
+  "seconds": 129.4,
+  "label": "IRON SOVEREIGN (IS-08) weak-point close-up",
+  "source": "images/30-bosses/08-iron-sovereign.json#is08-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/iron-sovereign/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-sovereign.png"
+  ],
+  "editFromSha256": [
+    "2fe1a940a8588b2b2654780d9432103146a9b71cfb9bc93028f220afa4c967f8"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Brutal engineering close-up on the exposed heart of the IRON SOVEREIGN, camera pressed almost against the pivoting shield plates, two massive roof-door panels caught mid-rotation framing top and bottom of the shot with their rivet rows and scuffed brass edges, between them the red furnace core suspended in a cage of cooling pipes, the core a swollen lantern of arterial red with a darker blood-orange ring pulsing at its equator, thick cables braided around its mount flexing as the whole assembly shudders, droplets of oil frozen mid-spatter caught in the red light, behind the core a lattice of girders throwing long hard shadows, one bright pink bullet with a dark rim passing through the gap like a needle, a cyan-white spark shower erupting where a girder edge has chafed a conduit, shallow depth forced into pixel discipline with crisp outlines on every plane, bold dark outlines, saturated limited palette of gunmetal, brass and red, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The pink bullet is a lone small round glowing ball with nothing attached to it: no needle, cone, stick or shell.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F037",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/iron-sovereign"
+  }
+}

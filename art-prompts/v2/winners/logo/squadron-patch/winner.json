@@ -1,0 +1,23 @@
+{
+  "id": "logo/squadron-patch",
+  "slot": "a",
+  "prompt": "Embroidered-style military squadron patch emblem rendered as flat retro arcade vector art, a perfect circular badge centered on a deep midnight-navy background. The badge has a thick dark navy border ring studded with eight evenly spaced small gold rivet dots, and a thin inner gold piping line. Inside the badge, a deep-navy field with a few tiny pixel stars and a sliver of a blue planet horizon curving across the bottom of the circle. At the center two tiny stylized fighters cross in an X, both climbing outward: a sleek steel-blue dart fighter with a bold blue stripe and a glowing cyan canopy crossing over a broad pale-mint manta-ray-winged craft with a small green glowing canopy. Behind each craft a long orange engine contrail sweeps diagonally to the opposite edge of the circle, so the two trails cross like ribbons and fill the badge. Above the crossing point floats a single small glossy gold capsule glinting like a star with four short sparkle rays. Bold dark outlines on every shape, saturated limited palette of steel blue, cyan, pale mint, green, orange, gold and navy, crisp 16-bit pixel-art-inspired shapes with clean vector edges, three-step shading lit from the top left, symmetrical centered composition with an even empty margin around the badge, never pure black. No text anywhere, no letters, no numbers, no banner scroll.",
+  "negative": "text, letters, numbers, photorealistic, 3d render, embroidery fabric texture, watermark, blurry, asymmetric, pure black background",
+  "model": "flux2",
+  "seed": 4150543285,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:20:22.523Z",
+  "seconds": 39.4,
+  "label": "Player squadron patch — circular badge with crossed contrails (player-side emblem)",
+  "source": "images/10-logo-title/alt-emblems.json#alt-emblem-v1",
+  "file": "art-prompts/v2/candidates/a/logo/squadron-patch.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

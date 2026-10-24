@@ -1,0 +1,23 @@
+{
+  "id": "enemy/dune-worm",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single DUNE WORM enemy of the Iron Tide, a mechanical sand-boring worm built from separate floating parts like a chain of beads. On the left, the head: a chunky brass ring-plated barrel with a conical steel spiral drill maw twisting to a sharp point aimed left, a ring of small glowing orange furnace vents around the drill base. Behind the head, with clear empty gaps between them, follow exactly three detached round brass body segments, each a short thick drum seen from the side with a pale cream rivet band and a dark joint socket, each one slightly smaller than the last, arranged along a gentle S-curve, and at the far right end a small separate rounded brass tail plug with a stubby spike. Five separate pieces in a row: head, ring, ring, ring, tail. Warm brass and bronze with pale cream highlights and burnt-orange shadows. Side view facing left, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a bold 1-pixel near-black navy outline around every piece at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sand, no dust, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 3908816231,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:29:39.830Z",
+  "seconds": 53.5,
+  "label": "DUNE WORM — zone C (DUNE EXPANSE) medium boring worm head (~24 px) + body rings; single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-c-dune-expanse.json#dune-expanse-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/dune-worm.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

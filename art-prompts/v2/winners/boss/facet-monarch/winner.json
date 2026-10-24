@@ -1,0 +1,23 @@
+{
+  "id": "boss/facet-monarch",
+  "slot": "a",
+  "prompt": "A single colossal crystal sovereign boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, the whole construct visible with nothing cut off by the frame, filling about two thirds of the picture height. At the center floats a big imposing core: a heavy armored orb of dark gunmetal steel with jagged violet crystal growths bursting through its plating, split by a narrow horizontal visor slit that opens on a blazing white pinpoint of light, the obvious weak point. Around the core, with empty space between them and no connecting band, hovers a slowly turning crown of seven enormous separate crystal shards, each a tall jagged faceted spire of deep violet amethyst with pale lilac edge highlights and a bright white glint, all pointing outward from the core like the points of a giant crown or a starburst, each shard tilted at a different angle around the circle so the spin reads in stillness, the lower-front shards slightly larger. Thin straight beams of pink, red and purple light cross between the shards and converge on the white pinpoint of the core. Majestic, cold, menacing, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of deep violet, royal purple, lilac, gunmetal, white and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no ring, no haze, no corridor, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, crown on a head, organic, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 3210447867,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:39:13.818Z",
+  "seconds": 51.9,
+  "label": "FACET MONARCH (FM-07) — zone G boss, the crystal core with an orbiting crown; full body on key green",
+  "source": "images/30-bosses/hi-res.json#fm07-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/facet-monarch.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

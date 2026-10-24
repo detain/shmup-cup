@@ -1,0 +1,23 @@
+{
+  "id": "craft/kestrel",
+  "slot": "a",
+  "prompt": "Video game spacecraft concept art showroom plate in SNES-era 16-bit pixel art inspired style: a single compact retro-futuristic space fighter, the KESTREL, nose pointing to the right, seen in three-quarter side view from slightly above and in front so both the side of the hull and the top of the near wing are visible. The whole craft is small in the frame, floating exactly in the center with a wide band of empty green on all four sides; the left and right edges of the picture are empty. Design: a narrow dart-shaped steel-blue hull with a sharp wedge nose, a bold bright blue stripe running the full length of the fuselage, a glowing cyan bubble canopy with a crisp white glint, two short swept-back blade wings with notched tips, a single raked dorsal fin, two small ventral strakes, smooth sci-fi armor panels with thin navy seam lines and small amber marker lights. At the tail, one round thruster bell holding a hot orange engine afterglow: a small compact teardrop of orange flame with a pale yellow core, no longer than the nozzle is wide, no exhaust plume and no trail. Clearly a spaceship, not a modern jet: no missiles, no landing gear, no air-force markings. Hard-edged plating with heavy dark navy outlines, flat saturated fills with three-step shading ramps lit from the top left, crisp specular highlights along the upper spine, chunky pixel-cluster texture accents. Isolated on a perfectly flat solid pure bright green chroma-key background, no gradient, no floor line, no cast shadow, no glow spilling onto the background, no stars, no scenery, no text, no markings, no annotations.",
+  "negative": "text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 672576000,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:30:53.701Z",
+  "seconds": 85.7,
+  "label": "KESTREL — player 1 ship (steel-blue dart), three-quarter side view on key green",
+  "source": "images/20-player-crafts/kestrel.json#kestrel-showroom-v1",
+  "file": "art-prompts/v2/candidates/a/craft/kestrel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

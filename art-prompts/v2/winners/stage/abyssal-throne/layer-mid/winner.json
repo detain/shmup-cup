@@ -1,0 +1,38 @@
+{
+  "id": "stage/abyssal-throne/layer-mid",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): ABYSSAL THRONE mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established ABYSSAL THRONE stage art exactly: black basalt spires with swaying dark weed, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Shade the basalt as dark slate-blue and deep navy stone, never black, with visible mid-tone facets lit cool blue from the top-left and small cyan biolume crusts on the tips; the weed is dark teal-olive with thin cyan glowing ribs as in the reference. Keep the skyline shape: an irregular top of spires and fronds directly against the green key, running off both side edges.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 95285,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:24:56.639Z",
+  "seconds": 76.6,
+  "label": "ABYSSAL THRONE parallax layer 3/4 (mid, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/abyssal-throne/layer-mid.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/abyssal-throne.png"
+  ],
+  "editFromSha256": [
+    "48b349448bb11280281fe7fae58facde3c3fdb9fdd4e7778c1cea0cfb7a3d68b"
+  ],
+  "instruction": "Reference image 1 shows the chosen ABYSSAL THRONE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): ABYSSAL THRONE mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established ABYSSAL THRONE stage art exactly: black basalt spires with swaying dark weed, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Shade the basalt as dark slate-blue and deep navy stone, never black, with visible mid-tone facets lit cool blue from the top-left and small cyan biolume crusts on the tips; the weed is dark teal-olive with thin cyan glowing ribs as in the reference. Keep the skyline shape: an irregular top of spires and fronds directly against the green key, running off both side edges.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F193",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:29.380Z",
+    "parentId": "stage/abyssal-throne"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/ember-frost-twins/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the shared yoke between a fire serpent head and an ice serpent head, camera straight down the neck junction where both coils meet a single armored drum. The drum's brass hatch stands open from heat-warped hinges, and inside spins a bicolored core — its upper half molten orange with floating ember beads, lower half crystalline blue shedding frost motes — the two halves separated by a visible seam of white steam lightning. Soot and rime creep outward along both neck rings. Deep-navy backdrop, bold dark outlines, saturated limited palette, subtle CRT scanline glow, tight square macro composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, single color core, plain flesh, pure black background",
+  "model": "flux2",
+  "seed": 13202,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T20:49:51.806Z",
+  "seconds": 110.9,
+  "label": "EMBER & FROST TWINS weak-point close-up",
+  "source": "images/30-bosses/12-ember-frost-twins.json#eft-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/ember-frost-twins/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/ember-frost-twins.png"
+  ],
+  "editFromSha256": [
+    "56109e9bd874e390c35f4380166b4fec3dba26576ede0b12f3ff7527a10c7839"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of EMBER & FROST TWINS. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the shared yoke between a fire serpent head and an ice serpent head, camera straight down the neck junction where both coils meet a single armored drum. The drum's brass hatch stands open from heat-warped hinges, and inside spins a bicolored core — its upper half molten orange with floating ember beads, lower half crystalline blue shedding frost motes — the two halves separated by a visible seam of white steam lightning. Soot and rime creep outward along both neck rings. Deep-navy backdrop, bold dark outlines, saturated limited palette, subtle CRT scanline glow, tight square macro composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F056",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/ember-frost-twins"
+  }
+}

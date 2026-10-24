@@ -1,0 +1,23 @@
+{
+  "id": "enemy/bolt-drone",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single BOLT DRONE enemy of the Iron Tide, a small storm-chasing arc drone, isolated. A plump round body like a rivet-studded steel ball in slate blue-gray with a pale highlight at the top-left and a yellow-and-charcoal hazard band around its middle. A short mast on top carries a single flat two-blade propeller seen edge-on, slightly tilted. From the front of the body two short forked copper prong antennae jut forward to the left like a tuning fork, and a short crackling violet-white electric arc jumps between their tips in a hard-edged zigzag. A small round cyan sensor eye sits under the prongs, and a little stubby tail fin at the back. Compact ball-with-prongs silhouette. Side view facing left, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no rain, no clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 939334753,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:40:15.236Z",
+  "seconds": 90.1,
+  "label": "BOLT DRONE — zone E (TEMPEST RIDGE) small arc drone (~14 px); single sprite, side view facing left on key green",
+  "source": "images/40-enemies/zone-e-tempest-ridge.json#tempest-ridge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/bolt-drone.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

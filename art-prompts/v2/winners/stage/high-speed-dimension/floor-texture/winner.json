@@ -1,0 +1,38 @@
+{
+  "id": "stage/high-speed-dimension/floor-texture",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen HIGH-SPEED DIMENSION stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): A flat top-down seamless tileable floor texture for a 16-bit Mode-7 plane, matching the established high-speed dimension art: a crisp checkerboard of violet and deep indigo squares with thin glowing lilac grout lines, viewed straight down with no perspective, pixel-art shading, saturated limited palette, no horizon, no objects, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  A perfectly regular checkerboard of exactly eight by eight equal squares filling the whole canvas edge to edge, violet and deep indigo strictly alternating in every row and column with no two squares of the same colour side by side, each square with a subtle pixel-art bevel highlight on its top-left edges.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 2974,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T22:37:19.090Z",
+  "seconds": 79.4,
+  "label": "Checker floor texture for the Mode-7 plane (flat, top-down, tileable) in the winner's colours",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/stage/high-speed-dimension/floor-texture.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/stage/high-speed-dimension.png"
+  ],
+  "editFromSha256": [
+    "92ae0c9ac6b5709cad77788b0b0198fe98d553c79298b85d6c9dc37103eeea50"
+  ],
+  "instruction": "Reference image 1 shows the chosen HIGH-SPEED DIMENSION stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): A flat top-down seamless tileable floor texture for a 16-bit Mode-7 plane, matching the established high-speed dimension art: a crisp checkerboard of violet and deep indigo squares with thin glowing lilac grout lines, viewed straight down with no perspective, pixel-art shading, saturated limited palette, no horizon, no objects, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  A perfectly regular checkerboard of exactly eight by eight equal squares filling the whole canvas edge to edge, violet and deep indigo strictly alternating in every row and column with no two squares of the same colour side by side, each square with a subtle pixel-art bevel highlight on its top-left edges.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F197",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:01:49.463Z",
+    "parentId": "stage/high-speed-dimension"
+  }
+}

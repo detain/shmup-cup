@@ -1,0 +1,23 @@
+{
+  "id": "stage/high-speed-dimension",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired concept rendering of a wide arcade shooter bonus-stage backdrop, bold dark outlines, saturated limited palette, crisp pixel-art texture accents, subtle CRT scanline glow, a lifted deep-navy base that is never pure black. An impossible neon dimension drawn as a retro pseudo-3D scaled floor plane. The lower half of the frame is a vast infinite checkerboard floor of deep violet and dark indigo squares receding in strong perspective to a high horizon, the squares near the bottom edge huge and stretched into horizontal motion smears, the squares near the horizon compressed into thin alternating stripes. A bright liquid silver-lilac ribbon of reflected light runs straight down the center of the floor from the horizon to the bottom edge. Short parallel streaks of cyan-white light skim across the tiles like racing data packets. The horizon is a hard glowing band of pale lilac light. Above it the sky is a wall of deep violet-black fog with a faint grid of horizontal scanlines drifting through, as if the dimension were a failing screen. At the far left and far right, a few huge tilted monolith slabs covered in the same checker pattern lean out of the fog, rim-lit on their near corners. Everything vibrates with forward speed. Palette locked to electric violets and indigos, lilac horizon, one cyan accent. No characters, no vehicles, no text, no letters, no user interface.",
+  "negative": "photorealistic, 3d render, race track, cars, asphalt road, sunset orange, blue sky with clouds, stars visible, pure black background, watermark, text, blurry low-res mush, curved horizon of a planet, checkers melting into stripes mid-frame, frame border, letterboxing",
+  "model": "flux2",
+  "seed": 2731590864,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:49:54.533Z",
+  "seconds": 57.7,
+  "label": "HIGH-SPEED DIMENSION — the Mode-7 checkerboard bonus dimension, wide wallpaper",
+  "source": "images/50-stages/high-speed-dimension.json#high-speed-dimension-wallpaper-v1",
+  "file": "art-prompts/v2/candidates/a/stage/high-speed-dimension.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

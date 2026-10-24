@@ -1,0 +1,23 @@
+{
+  "id": "enemy/gyre",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single GYRE enemy of the Iron Tide, a spinning ring-gun drone from a steel fortress, isolated. A thick circular gunmetal ring like a heavy riveted wheel rim, with a bright steel highlight along its top-left arc and dark iron shading on the bottom-right, studded with a circle of small glowing amber rivets. Inside the ring, four straight steel spokes cross to a round central hub with a dark armored cap and a small hot amber core light. Exactly four short stubby gun muzzles stick straight out from the outer rim at the top, bottom, left and right, each a squared barrel with a dark bore and a brass collar, making the silhouette a ringed cross. Open gaps between the spokes. Symmetric, mechanical, readable silhouette. Front view, flat and face-on, centered with a generous empty margin on all sides on a perfectly flat solid pure bright green chroma-key background that fills the whole image and shows through the gaps. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shapes that stay readable at small size, no anti-aliasing, no motion blur, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 2465091158,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:51:32.881Z",
+  "seconds": 55.3,
+  "label": "GYRE — zone H (IRON CITADEL) medium ring-gun (~21 px); single sprite, front view on key green",
+  "source": "images/40-enemies/zone-h-iron-citadel.json#iron-citadel-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/gyre.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

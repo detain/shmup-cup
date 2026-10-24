@@ -1,0 +1,42 @@
+{
+  "id": "enemy/skeet/zone-roster-sheet",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen SKEET, image 2 shows the chosen VANE, image 3 shows the chosen TENDER. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: four frames of a large TENDER carrier drone (bay closed, bay opening, bay open, bay closing), a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus four frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Never write the enemy names or any other word on the sheet: the rows carry no headings or captions at all. All four cells of row two show the reference VANE exactly, three wide curved crescent blades around the round dark-eyed hub, only rotated a further quarter turn each time; row three ends with the small escort drones.",
+  "negative": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 6859,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T18:04:33.713Z",
+  "seconds": 211.7,
+  "label": "Zone A roster sheet — every library enemy of AZURE VERGE together (follows all zone A enemy winners)",
+  "source": "images/40-enemies/zone-a-azure-verge.json#azure-verge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/skeet/zone-roster-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/skeet.png",
+    "art-prompts/v2/candidates/a/enemy/vane.png",
+    "art-prompts/v2/candidates/a/enemy/tender.png"
+  ],
+  "editFromSha256": [
+    "6996058cfb86a1874d0b8daf7b4a4b823c866fd1cdaeaf29ed76139c959e0cd0",
+    "1ab23adf60ee374d75317acf22dfc2134892cd0265d84210be9de15939cb0d60",
+    "8574828ae2033917ce7751597a40b3c0bf51057fb3252a71e16181005ded8f47"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen SKEET, image 2 shows the chosen VANE, image 3 shows the chosen TENDER. Draw every referenced subject exactly as designed — same silhouette, proportions, colour palette, materials and rendering — gathered into the sheet described below; where the description and a reference disagree on a detail of a design, follow the reference: 16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: four frames of a large TENDER carrier drone (bay closed, bay opening, bay open, bay closing), a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus four frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n Never write the enemy names or any other word on the sheet: the rows carry no headings or captions at all. All four cells of row two show the reference VANE exactly, three wide curved crescent blades around the round dark-eyed hub, only rotated a further quarter turn each time; row three ends with the small escort drones.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F087",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "enemy/skeet"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "fx/mega-crash",
+  "slot": "a",
+  "prompt": "Screen-clearing ultimate ability concept art for a horizontal side-scrolling arcade shooter, SNES-era 16-bit pixel art inspired rendering with bold dark outlines, a saturated limited palette and a subtle CRT scanline glow, ultra-detailed widescreen composition over a lifted deep-navy space background that is never pure black. Near the left edge of the frame, in the lower half, a small steel-blue dart fighter flies facing right, its nose and cyan canopy pointing to the right toward the enemies. The fighter is the exact center of a gigantic expanding circle of white light: a colossal shockwave ring so large that only its right-hand curve is visible, a single tall arc of searing white with a razor-thin gold leading edge that bulges rightward across the middle of the frame and runs off the top and bottom edges of the picture. Thin straight spokes of white lightning radiate from the fighter out to the arc. Between the fighter and the arc, space has already been wiped clean: calm empty deep navy with only faint drifting specks of dissolving pixel dust and no bullets at all. To the right of the arc, the battle still rages: dense curving streams of round pink, red and violet enemy bullets, each a bright core with a dark rim, and the riveted armored prow of a huge gunmetal enemy battleship shaped like a mechanical fish head with an open plated jaw and amber port lights, entering from the right edge, everything lit hard on its left-facing edges by the blinding white of the oncoming wave. Right on the arc, the bullets it touches are frozen mid-deletion as flat white silhouettes. Short speed lines streak ahead of the wave. Massive scale, cataclysmic yet clean, the white arc the brightest thing in the image. No text, no letters, no logo, no UI, no score.",
+  "negative": "photorealistic, 3d render, nuclear mushroom, solar flare photo, supernova, explosion fireball orange, circular lens flare, text, HUD, watermark, blurry, wave covering entire screen, enemies in front half, pure black background",
+  "model": "flux2",
+  "seed": 416079208,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:49:19.228Z",
+  "seconds": 49.8,
+  "label": "MEGA CRASH — the full-screen white shockwave that erases every bullet (scene)",
+  "source": "images/60-items-fx/items-and-fx.json#mega-crash-v1",
+  "file": "art-prompts/v2/candidates/a/fx/mega-crash.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

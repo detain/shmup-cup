@@ -1,0 +1,38 @@
+{
+  "id": "boss/cinder-bastion/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Infernal arcade boss reveal inside a vast vertical magma shaft, the CINDER BASTION, a battleship-length fortress sunk upright into the flowing lava lake like a driven nail, its hull a scorched charcoal-and-rust rampart studded with dark gun ports, across the deck four colossal articulated armored arms rotate slowly around an exposed molten core raised on a cradle, each arm built of heavy rectangular plates linked by glowing seam-hinges dripping fused slag, the central core an open crucible of white-yellow fire bleeding up through orange to deep ember red at the edges, geysers of lava throwing arc-lit spray against cave brick walls of warm clay color, drifting ember motes and heat shimmer, a tiny steel-blue dart fighter with cyan canopy and orange exhaust weaving along the left shaft wall for scale, deep navy-black shadow above the glow line, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, watermark, modern warship, aircraft carrier planes, skulls, fire human figures, pure black background, smooth plastic",
+  "model": "flux2",
+  "seed": 12401,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:34:21.149Z",
+  "seconds": 71.5,
+  "label": "CINDER BASTION (CB-04) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/04-cinder-bastion.json#cb04-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/cinder-bastion/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/cinder-bastion.png"
+  ],
+  "editFromSha256": [
+    "1910f4ebd22b84a6c96ce8177adc53a6ecaa93e387213c5d437936b10209ef43"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Infernal arcade boss reveal inside a vast vertical magma shaft, the CINDER BASTION, a battleship-length fortress sunk upright into the flowing lava lake like a driven nail, its hull a scorched charcoal-and-rust rampart studded with dark gun ports, across the deck four colossal articulated armored arms rotate slowly around an exposed molten core raised on a cradle, each arm built of heavy rectangular plates linked by glowing seam-hinges dripping fused slag, the central core an open crucible of white-yellow fire bleeding up through orange to deep ember red at the edges, geysers of lava throwing arc-lit spray against cave brick walls of warm clay color, drifting ember motes and heat shimmer, a tiny steel-blue dart fighter with cyan canopy and orange exhaust weaving along the left shaft wall for scale, deep navy-black shadow above the glow line, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F016",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:49.455Z",
+    "parentId": "boss/cinder-bastion"
+  }
+}

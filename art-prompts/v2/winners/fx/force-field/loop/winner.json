@@ -1,0 +1,38 @@
+{
+  "id": "fx/force-field/loop",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Force field. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit effect sprite sheet, a regular grid of six equal cells in two rows of three with even gutters, every cell the same established translucent cyan force-field ellipse with overlapping fine contour rings, the shimmer bands rotating a little further around the ellipse in each frame so the loop is seamless, no ship inside, on a flat solid pure black background with no stars and no scenery, crisp pixel clusters, cyan to pale violet palette, no text, no numbers, no cell borders. The background is one flat solid pure black, with no stars, nebula or scenery. No text, letters, numbers, labels, UI or watermark anywhere.\n Leave the ship, the bullet and the impact ripple out of every cell: each cell shows only the empty cyan shield bubble with its rings, empty and dark inside. One bright white shimmer arc travels clockwise around the rim: at 12 o'\\''clock in the first cell, 2 in the second, 4 in the third, 6 in the fourth, 8 in the fifth, 10 in the sixth.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 28357,
+  "width": 1248,
+  "height": 832,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:04:15.489Z",
+  "seconds": 96.7,
+  "label": "Force-field shimmer loop without the ship, 6 frames (v2: 45×36)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/fx/force-field/loop.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/force-field.png"
+  ],
+  "editFromSha256": [
+    "b0467719494dde9977ccd35de1a81c6fab3870603d0aa941570a3553b80de3f9"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Force field. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit effect sprite sheet, a regular grid of six equal cells in two rows of three with even gutters, every cell the same established translucent cyan force-field ellipse with overlapping fine contour rings, the shimmer bands rotating a little further around the ellipse in each frame so the loop is seamless, no ship inside, on a flat solid pure black background with no stars and no scenery, crisp pixel clusters, cyan to pale violet palette, no text, no numbers, no cell borders. The background is one flat solid pure black, with no stars, nebula or scenery. No text, letters, numbers, labels, UI or watermark anywhere.\n Leave the ship, the bullet and the impact ripple out of every cell: each cell shows only the empty cyan shield bubble with its rings, empty and dark inside. One bright white shimmer arc travels clockwise around the rim: at 12 o'\\''clock in the first cell, 2 in the second, 4 in the third, 6 in the fourth, 8 in the fifth, 10 in the sixth.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F131",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:19.377Z",
+    "parentId": "fx/force-field"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "logo/title-screen",
+  "slot": "b",
+  "prompt": "A complete retro arcade game title screen illustration, widescreen 16:9 side-scrolling composition, SNES-era 16-bit pixel art inspired concept rendering. Across the upper third, centered and perfectly straight-on, the exact game title \"SHMUP CUP\" in large heavy chunky block capital letters with pixel-stepped corners, filled with a warm vertical gradient from pale yellow at the top through tangerine orange to flame red at the bottom, each letter with a thick dark navy outline, a hard offset navy drop shadow and a thin cream-white highlight along its top edge. In the lower-left third, a small sleek steel-blue dart-shaped fighter with a bold blue fuselage stripe, a glowing cyan bubble canopy and a hot orange engine afterglow flies to the right, leaving a long thin contrail that curves gently across the bottom of the frame. Filling the whole right third from the bottom edge up to the title, a colossal fish-shaped fortress built entirely of machinery, far bigger than the frame can hold: an armored battleship hull in the silhouette of a fish, made of riveted steel plates, hatches, gun turrets and antenna masts instead of scales, mostly swallowed in blue-black shadow and picked out only by thin teal rim light, rows of dim amber porthole lights along its flank, its huge mechanical jaw slightly open with a faint violet glow deep inside. Scattered small round glowing bullet orbs, pink and violet, each a perfect circle with a bright white core and a dark rim, drift in from the right edge toward the tiny defiant ship. Far below, the curved rim of a blue planet glows along the bottom edge. Deep navy starfield with a faint teal nebula wash, never pure black. Bold dark outlines, saturated limited palette, subtle CRT scanline glow. The only text in the image is the title \"SHMUP CUP\": no other words, letters, numbers, menu text, watermark or signature.",
+  "negative": "garbled text, misspelled letters, extra letters, missing letters, subtitles, menu text, photorealistic, 3d render, watermark, blurry, pure black background",
+  "model": "flux2",
+  "seed": 510288027,
+  "width": 1536,
+  "height": 864,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:25:25.840Z",
+  "seconds": 78.1,
+  "label": "Title screen — \"SHMUP CUP\" over the KESTREL facing the fortress-fish, full 16:9 attract title",
+  "source": "images/10-logo-title/title-screen-hero.json#title-screen-v1",
+  "file": "art-prompts/v2/candidates/b/logo/title-screen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

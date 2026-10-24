@@ -1,0 +1,40 @@
+{
+  "id": "enemy/gulper/zone-encounter",
+  "slot": "a",
+  "prompt": "Reference images: image 1 shows the chosen GULPER, image 2 shows the chosen DEPTH MINE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. In the lightless deep of a black-blue water trench, the only illumination bioluminescent: a field of tiny glowing specks drifting from dark teal into pale cyan like an inverted star map, rock spires rising in silhouette on both sides, tall weed swaying slow left-to-right across the whole frame. Centered, a GULPER drifts right toward the viewer's ship — a huge-headed deep-sea fish, its mouth a cavernous hinged cage of pale bone ridges taking up half its body, slack-jawed and yawning wide, tiny vicious eyes above the gape, a frayed bioluminescent lure filament dangling from its crown burning pale cyan, its body tapering back into eel-quiet charcoal. Around and below it, a quiet minefield: three DEPTH MINES rest on and hover above the weed — black rounded hulls studded with short contact spikes, each with a single slow-pulsing cyan eye-light, one trailing a loose anchor chain into the dark, one drifting free with a barnacle-crusted flank. From the left edge the MANTA glides in, flat ray-wing pale mint hull dimmed by the depth, green canopy the brightest thing in the water, amber twin thrusters throwing short warm cones that catch the drifting specks — and directly ahead of its path one mine's pulse has just skipped to a faster beat. No explosions yet, pure dread of held pressure. Deep-navy gloom, never pure black. No text, no UI elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, mines with red lights, coral reef",
+  "model": "flux2",
+  "seed": 15911,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:03:31.326Z",
+  "seconds": 159.4,
+  "label": "Zone I encounter concept — the ABYSSAL THRONE enemies in situ (follows all zone I enemy winners)",
+  "source": "images/40-enemies/zone-i-abyssal-throne.json#gulper-depth-mine-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/gulper/zone-encounter.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/gulper.png",
+    "art-prompts/v2/candidates/a/enemy/depth-mine.png"
+  ],
+  "editFromSha256": [
+    "d59eadaabcba2edf55250bb7eddcc93461708389621c8cd385dd03890cb3e7a7",
+    "51dc070aec5d5c83cd3cc86acd05c1ff4cae7e00c9310816d4c18b3648468301"
+  ],
+  "instruction": "Reference images: image 1 shows the chosen GULPER, image 2 shows the chosen DEPTH MINE. Keep each referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and place them in the new composition described below (framing and background follow the description, not the references): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. In the lightless deep of a black-blue water trench, the only illumination bioluminescent: a field of tiny glowing specks drifting from dark teal into pale cyan like an inverted star map, rock spires rising in silhouette on both sides, tall weed swaying slow left-to-right across the whole frame. Centered, a GULPER drifts right toward the viewer's ship — a huge-headed deep-sea fish, its mouth a cavernous hinged cage of pale bone ridges taking up half its body, slack-jawed and yawning wide, tiny vicious eyes above the gape, a frayed bioluminescent lure filament dangling from its crown burning pale cyan, its body tapering back into eel-quiet charcoal. Around and below it, a quiet minefield: three DEPTH MINES rest on and hover above the weed — black rounded hulls studded with short contact spikes, each with a single slow-pulsing cyan eye-light, one trailing a loose anchor chain into the dark, one drifting free with a barnacle-crusted flank. From the left edge the MANTA glides in, flat ray-wing pale mint hull dimmed by the depth, green canopy the brightest thing in the water, amber twin thrusters throwing short warm cones that catch the drifting specks — and directly ahead of its path one mine's pulse has just skipped to a faster beat. No explosions yet, pure dread of held pressure. Deep-navy gloom, never pure black. No text, no UI elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F125",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/gulper"
+  }
+}

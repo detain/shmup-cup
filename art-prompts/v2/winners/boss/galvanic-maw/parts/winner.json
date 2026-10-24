@@ -1,0 +1,38 @@
+{
+  "id": "boss/galvanic-maw/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GALVANIC MAW (GM-02). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GALVANIC MAW (GM-02) boss parts taken from the established design — the throat core with its caged electric ball, the jaw halves and the fin gun batteries, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole fish: the top row the caged white-violet electric ball from the throat, the middle row the pair of toothed jaw halves, the bottom row one triple-barrel gun battery with its fin. All four cells of one row show the same part in the reference's exact gunmetal, brass and violet colours. No lines between the cells, only plain green.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 71823,
+  "width": 1184,
+  "height": 880,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:10:06.700Z",
+  "seconds": 79.2,
+  "label": "GALVANIC MAW (GM-02) parts sheet: the throat core with its caged electric ball, the jaw halves and the fin gun batteries, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/galvanic-maw/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/galvanic-maw.png"
+  ],
+  "editFromSha256": [
+    "586d478131d453fef492e54e01f6da417c9debeff9bc9517aa9ddfeea8c5df4c"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GALVANIC MAW (GM-02). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GALVANIC MAW (GM-02) boss parts taken from the established design — the throat core with its caged electric ball, the jaw halves and the fin gun batteries, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole fish: the top row the caged white-violet electric ball from the throat, the middle row the pair of toothed jaw halves, the bottom row one triple-barrel gun battery with its fin. All four cells of one row show the same part in the reference's exact gunmetal, brass and violet colours. No lines between the cells, only plain green.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F009",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:39.381Z",
+    "parentId": "boss/galvanic-maw"
+  }
+}

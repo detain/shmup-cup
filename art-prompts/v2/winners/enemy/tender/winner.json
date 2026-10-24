@@ -1,0 +1,23 @@
+{
+  "id": "enemy/tender",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single TENDER enemy of the Iron Tide, a large slow carrier drone seen broadside. A long, wide, flat-bellied hull with a clipped delta silhouette: a blunt wedge nose pointing left, a low armored back ridge with a small sensor fin, and a squared-off stern with two stubby engine nozzles glowing warm orange. Dark gunmetal hull plates with steel-blue top highlights and rust-violet seams, a row of tiny bright green running lights along the flank, each enclosed by a dark outline. The whole underside is a long closed ventral hangar bay: a ribbed segmented bay door with small porthole slots through which three seed-shaped pod drones can be seen hanging nose-down in their racks, lit by a dim magenta interior glow. Heavy, wide, readable silhouette like a flying cargo barge. Broadside side view facing left, the whole craft centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+  "model": "flux2",
+  "seed": 2039142909,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:22:05.959Z",
+  "seconds": 59.1,
+  "label": "TENDER — zone A (AZURE VERGE) large carrier (~48 px wide); single sprite, broadside side view facing left on key green",
+  "source": "images/40-enemies/zone-a-azure-verge.json#azure-verge-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/enemy/tender.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

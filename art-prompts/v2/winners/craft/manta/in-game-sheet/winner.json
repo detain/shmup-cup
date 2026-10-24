@@ -1,0 +1,38 @@
+{
+  "id": "craft/manta/in-game-sheet",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "overlapping sprites, drop shadows, background gradient, real manta ray, animal texture, visible fish eye, perspective distortion, anti-aliasing, text, labels, numbers, cell borders, green tint on the hull, blurry, photorealistic, 3d render, watermark",
+  "model": "flux2",
+  "seed": 11302,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:09:39.959Z",
+  "seconds": 110.1,
+  "label": "In-game pose sheet: 5 bank frames + 5 thruster states (v2: ~24×15 ship, hand-pixelled from this)",
+  "source": "images/20-player-crafts/sprite-sheets.json#manta-sprite-sheet-v1",
+  "file": "art-prompts/v2/candidates/a/craft/manta/in-game-sheet.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/manta.png"
+  ],
+  "editFromSha256": [
+    "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F077",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/manta"
+  }
+}

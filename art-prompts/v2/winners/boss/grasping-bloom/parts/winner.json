@@ -1,0 +1,38 @@
+{
+  "id": "boss/grasping-bloom/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GRASPING BLOOM. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GRASPING BLOOM boss parts taken from the established design — one petal on its piston, the violet throat core and a vine anchor segment, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the boss were taken apart, never the whole flower: the top row only one single dark blue-green armoured petal with its brass ribs and pink striped inner face on its small piston; the middle row only the round violet funnel throat in its grey metal collar, no petals; the bottom row only a short segment of green vines bound by a grey steel clamp. Each part is small in its cell with wide green margins. No guns. No lines, borders or frames between the cells; everything around the sprites is one flat green.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 14143,
+  "width": 1184,
+  "height": 880,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:09:20.016Z",
+  "seconds": 66.1,
+  "label": "GRASPING BLOOM parts sheet: one petal on its piston, the violet throat core and a vine anchor segment, 4 frames each",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/grasping-bloom/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/grasping-bloom.png"
+  ],
+  "editFromSha256": [
+    "1028de4a7d3f1202821ab4a7547793bdb0aa183ff19d9877bff56fefd436e2e6"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GRASPING BLOOM. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GRASPING BLOOM boss parts taken from the established design — one petal on its piston, the violet throat core and a vine anchor segment, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the boss were taken apart, never the whole flower: the top row only one single dark blue-green armoured petal with its brass ribs and pink striped inner face on its small piston; the middle row only the round violet funnel throat in its grey metal collar, no petals; the bottom row only a short segment of green vines bound by a grey steel clamp. Each part is small in its cell with wide green margins. No guns. No lines, borders or frames between the cells; everything around the sprites is one flat green.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F062",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/grasping-bloom"
+  }
+}

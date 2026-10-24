@@ -1,0 +1,38 @@
+{
+  "id": "boss/facet-monarch/parts",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of FACET MONARCH (FM-07) boss parts taken from the established design — the floating core and one of the seven crown crystal segments, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites, top, middle and bottom, with four sprites in each row, twelve sprites in all. The top row: four copies of the bare grey armoured core sphere with its glowing slit visor, without any crystals. The middle and bottom rows: one single long violet crystal segment per cell, upright in the middle row and lying on its side in the bottom row. Never draw the whole boss. Plain flat green everywhere around the sprites, no outlines of cells.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 21010,
+  "width": 1184,
+  "height": 880,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:02:48.895Z",
+  "seconds": 79.1,
+  "label": "FACET MONARCH (FM-07) parts sheet: the floating core and one of the seven crown crystal segments, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/boss/facet-monarch/parts.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/facet-monarch.png"
+  ],
+  "editFromSha256": [
+    "cbd2c0cb80917aa8874b276b42f1ce94197c31a1cd6965cf2c417f67f1ad1036"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of FACET MONARCH (FM-07). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of FACET MONARCH (FM-07) boss parts taken from the established design — the floating core and one of the seven crown crystal segments, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites, top, middle and bottom, with four sprites in each row, twelve sprites in all. The top row: four copies of the bare grey armoured core sphere with its glowing slit visor, without any crystals. The middle and bottom rows: one single long violet crystal segment per cell, upright in the middle row and lying on its side in the bottom row. Never draw the whole boss. Plain flat green everywhere around the sprites, no outlines of cells.",
+  "outputSize": "1184x880",
+  "meta": {
+    "job": "F034",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/facet-monarch"
+  }
+}

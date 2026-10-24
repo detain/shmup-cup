@@ -1,0 +1,38 @@
+{
+  "id": "boss/squall-steed/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of SQUALL STEED (SS-05). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Dramatic boss core close-up, deep inside the opened chest cavity of the SQUALL STEED, a compact furious thunderhead storm cell suspended in a rotating cage of eight curved steel ribs, the mini-cloud churning white-blue with repeated internal lightning flashes that strobe the surrounding rib surfaces between silver highlight and sapphire shadow, arcs jumping from the cage to two anchor rods above like tesla terminals, droplets of frozen rain glittering in the air inside the cavity, beyond the cage the dark tunnel of the steed's throat fading to navy, at the very edges of frame the blurred tips of pink enemy bullets arriving from off-screen and evaporating in the discharge heat, awe and danger, centered composition with strong radial energy, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, pixel-cluster shading accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic weather, 3d render, text, watermark, human figure in cloud, face in cloud, anatomy organs, gore, pure black background",
+  "model": "flux2",
+  "seed": 12502,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:52:16.415Z",
+  "seconds": 89.2,
+  "label": "SQUALL STEED (SS-05) weak-point close-up",
+  "source": "images/30-bosses/05-squall-steed.json#ss05-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/squall-steed/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/squall-steed.png"
+  ],
+  "editFromSha256": [
+    "3b2d3ac327ac9263bb52b0a375f201085a9a2e0fd44e0adf77f8e6b60d064623"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SQUALL STEED (SS-05). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Dramatic boss core close-up, deep inside the opened chest cavity of the SQUALL STEED, a compact furious thunderhead storm cell suspended in a rotating cage of eight curved steel ribs, the mini-cloud churning white-blue with repeated internal lightning flashes that strobe the surrounding rib surfaces between silver highlight and sapphire shadow, arcs jumping from the cage to two anchor rods above like tesla terminals, droplets of frozen rain glittering in the air inside the cavity, beyond the cage the dark tunnel of the steed's throat fading to navy, at the very edges of frame the blurred tips of pink enemy bullets arriving from off-screen and evaporating in the discharge heat, awe and danger, centered composition with strong radial energy, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, pixel-cluster shading accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F022",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/squall-steed"
+  }
+}

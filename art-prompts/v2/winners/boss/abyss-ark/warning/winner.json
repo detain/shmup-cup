@@ -1,0 +1,40 @@
+{
+  "id": "boss/abyss-ark/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of ABYSS ARK (AA-09). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Predator-dark alarm frame at the bottom of the Abyssal Throne trench, the water gone almost black-blue with only drifting marine snow and a few cold cyan specks of plankton, and out of that dark the ABYSS ARK announces itself in fragments before it exists, two long rows of amber porthole lamps emerging one by one along an unseen hull curve like a runway lighting a runway in the void, the faint blue-white ghost of a tail fluke silhouette sweeping across the top of frame between the dimmest stars of weed-glow, a deep subsonic shiver rendered as soft ripple distortion warping the plankton into concentric bands, from the unlit bulk one single turret silhouette drops its barrel with a rim of cold highlight, bottom right a tiny cyan canopy dot of the player fighter utterly still in the path of the lamps, dread of scale and patience rather than violence, no fire no explosion only light arriving, bold dark outlines, saturated limited palette of abyssal blue-black, cyan specks and amber lamp dots, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter, flying to the right: copy its exact direction. Draw it tiny and dark low in the frame, its pointed nose toward the right edge of the picture and its small orange flame toward the left, only its cyan cockpit glass lit. The Ark's lamps emerge further right, ahead of the fighter. No dark vignette or frame at the picture edges.",
+  "negative": "text, banner, letters, photorealistic, 3d render, watermark, full body visible, bright scene, explosions, submarine crew, pure black background",
+  "model": "flux2",
+  "seed": 14903,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T19:48:01.849Z",
+  "seconds": 127.1,
+  "label": "ABYSS ARK (AA-09) WARNING silhouette frame",
+  "source": "images/30-bosses/09-abyss-ark.json#aa09-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/abyss-ark/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/abyss-ark.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "a06ad1dcb467911770785a2a46f91d6ee09a1210532765890da99583325d25d2",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of ABYSS ARK (AA-09). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Predator-dark alarm frame at the bottom of the Abyssal Throne trench, the water gone almost black-blue with only drifting marine snow and a few cold cyan specks of plankton, and out of that dark the ABYSS ARK announces itself in fragments before it exists, two long rows of amber porthole lamps emerging one by one along an unseen hull curve like a runway lighting a runway in the void, the faint blue-white ghost of a tail fluke silhouette sweeping across the top of frame between the dimmest stars of weed-glow, a deep subsonic shiver rendered as soft ripple distortion warping the plankton into concentric bands, from the unlit bulk one single turret silhouette drops its barrel with a rim of cold highlight, bottom right a tiny cyan canopy dot of the player fighter utterly still in the path of the lamps, dread of scale and patience rather than violence, no fire no explosion only light arriving, bold dark outlines, saturated limited palette of abyssal blue-black, cyan specks and amber lamp dots, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player fighter, flying to the right: copy its exact direction. Draw it tiny and dark low in the frame, its pointed nose toward the right edge of the picture and its small orange flame toward the left, only its cyan cockpit glass lit. The Ark's lamps emerge further right, ahead of the fighter. No dark vignette or frame at the picture edges.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F043",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/abyss-ark"
+  }
+}

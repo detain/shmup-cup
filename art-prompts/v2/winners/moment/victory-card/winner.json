@@ -1,0 +1,23 @@
+{
+  "id": "moment/victory-card",
+  "slot": "b",
+  "prompt": "An ultra-wide retro arcade credits end card, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; the final quiet frame after the credits roll. The scene is a pale dawn over the curved rim of a distant planet: thin rose-pink cloud bars over a cream-gold horizon band along the bottom, a half-sun just clearing the planet rim, and above it the sky rising through soft lilac into a lifted deep navy at the very top, never pure black, with the last few stars fading. In the lower left third, a single small steel-blue dart-shaped fighter with a cyan canopy flies level and unhurried toward the left edge of the frame, a relaxed warm orange engine glow and a thin straight contrail behind it. The middle and upper middle are calm open sky, and there, centered and perfectly straight-on, the game's title \"SHMUP CUP\" in huge heavy chunky block capital letters filled with a vertical gradient from pale yellow through orange into red, each letter with a thick dark navy outline, a soft navy drop shadow and a single white highlight along its top edge. Directly below the title, centered in smaller straight-on capital letters of pale ivory with thin navy outlines, the single line \"THANK YOU FOR PLAYING\". Warm, plain-spoken and complete, like the last page of a picture book. The only text in the image is \"SHMUP CUP\" and \"THANK YOU FOR PLAYING\": no credits list, no dates, no numbers, no other words, watermark or signature anywhere.",
+  "negative": "photorealistic, 3d render, fireworks, confetti, crowd, extra text, credits list, copyright symbols, dates, numbers, garbled letters, misspelled words, tilted logo, 3d extruded letters, watermark, blurry, sunset orange overdone",
+  "model": "flux2",
+  "seed": 492520968,
+  "width": 1536,
+  "height": 640,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:36:23.117Z",
+  "seconds": 84.7,
+  "label": "Victory / credits end-card — dawn, one ship and the logo",
+  "source": "images/70-key-moments/warning-gameover.json#victory-credits-card-v1",
+  "file": "art-prompts/v2/candidates/b/moment/victory-card.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

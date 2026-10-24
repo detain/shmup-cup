@@ -1,0 +1,38 @@
+{
+  "id": "enemy/gyre/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of GYRE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GYRE enemy — a circular gunmetal ring-gun with a central hub and spokes, studded with four small muzzles around its rim, amber rivet highlights, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring rotated one sixth of a turn per frame with one muzzle flashing amber in turn so the volley loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: in cell one the four muzzles point straight up, down, left and right; in each following cell the whole ring with its muzzles and spokes is turned a further fifteen degrees clockwise, so by cell four the muzzles point diagonally; and a different muzzle flashes amber in each cell.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 91584,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T20:45:03.664Z",
+  "seconds": 66.1,
+  "label": "GYRE animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/gyre/frames.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/gyre.png"
+  ],
+  "editFromSha256": [
+    "1c6e27fd71623b2781e561b7f38d19dc0341bc7cf0277cb567613dc84bc558b5"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of GYRE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GYRE enemy — a circular gunmetal ring-gun with a central hub and spokes, studded with four small muzzles around its rim, amber rivet highlights, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring rotated one sixth of a turn per frame with one muzzle flashing amber in turn so the volley loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: in cell one the four muzzles point straight up, down, left and right; in each following cell the whole ring with its muzzles and spokes is turned a further fifteen degrees clockwise, so by cell four the muzzles point diagonally; and a different muzzle flashes amber in each cell.",
+  "outputSize": "1248x832",
+  "meta": {
+    "job": "F122",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:49.382Z",
+    "parentId": "enemy/gyre"
+  }
+}

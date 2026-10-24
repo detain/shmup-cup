@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-leviathan/weakpoint",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON LEVIATHAN. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the head of an iron leviathan raid ship filling the frame at a three-quarter angle, showing its two vulnerabilities — the pivot collar where the riveted steel beak-ram joins the neck, gapped to reveal screaming white-hot hydraulic light, and along the crest the reactor spine seam where overlapping plates fail to meet, bleeding amber glow and drifting sparks. The beak surface is scarred gunmetal with a rust-red stripe, small sensor eyes like drilled portholes glinting pink. Deep-navy star-field background, bold dark outlines, saturated limited palette, subtle CRT scanline glow. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft organic flesh, pure black background",
+  "model": "flux2",
+  "seed": 13102,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T20:34:21.384Z",
+  "seconds": 138,
+  "label": "IRON LEVIATHAN weak-point close-up",
+  "source": "images/30-bosses/11-iron-leviathan.json#ilv-weakpoint-v2",
+  "file": "art-prompts/v2/candidates/a/boss/iron-leviathan/weakpoint.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-leviathan.png"
+  ],
+  "editFromSha256": [
+    "fc950e2d0fad601712acd6133329986c124bf4e429de74039a35e188c3ff4e78"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON LEVIATHAN. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the head of an iron leviathan raid ship filling the frame at a three-quarter angle, showing its two vulnerabilities — the pivot collar where the riveted steel beak-ram joins the neck, gapped to reveal screaming white-hot hydraulic light, and along the crest the reactor spine seam where overlapping plates fail to meet, bleeding amber glow and drifting sparks. The beak surface is scarred gunmetal with a rust-red stripe, small sensor eyes like drilled portholes glinting pink. Deep-navy star-field background, bold dark outlines, saturated limited palette, subtle CRT scanline glow. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "F052",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-leviathan"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "tiles/iron-citadel",
+  "slot": "a",
+  "prompt": "Full-frame seamless tileable texture of riveted fortress armor for a 16-bit side-scrolling arcade shooter, viewed perfectly flat and straight-on like a scanned texture sheet, the steel surface touches all four edges of the square with no border, no margin and no background. Chunky pixel-art texture sized for 12-pixel tiles: dark gunmetal and steel-blue armor plates laid in a staggered grid of courses, each plate bevelled with a light top-left edge and a dark bottom-right edge, neat rows of round rivet heads along every seam, a few narrow horizontal slots glowing with warm amber running lights spaced evenly across the wall, thin dark oil streaks and rust stains dripping below some rivets. The topmost band touching the top border is a thick steel lip painted with diagonal yellow-and-black hazard stripes, running straight off both sides. Three-to-four step shading ramps lit from the top-left, crisp one-pixel dark navy outlines, saturated limited palette, uniform density with no focal point so it repeats cleanly left to right, no perspective, no horizon, no sky, no text, no numbers, no signs, no objects, no characters.",
+  "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
+  "model": "flux2",
+  "seed": 2386019455,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:46:32.218Z",
+  "seconds": 54.2,
+  "label": "IRON CITADEL terrain material swatch — zone H rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/tiles/iron-citadel.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

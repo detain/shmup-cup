@@ -1,0 +1,23 @@
+{
+  "id": "moment/warning-screen",
+  "slot": "b",
+  "prompt": "A widescreen arcade shoot-'em-up game screen, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; the boss WARNING moment, the most feared frame in the game. A side-scrolling starfield battlefield dimmed almost to silhouette: a small steel-blue dart-shaped fighter with a cyan canopy sits low on the left facing right, its engine flame shrunk to two thin orange slivers; faint pink and violet bullet streams hang in the air like glowing rails; on the right, the vast prow of an arriving fortress-ship boss, a mountain of angular armored plating almost entirely in black-blue shadow, separated from the dark only by red rim light and the glints of its gun ports. Dead center, straight-on and enormous, the single word \"WARNING!!\" (the seven letters W, A, R, N, I, N, G followed by two exclamation marks) in heavy blocky arcade capital letters, hot warning-red faces with a bright white-gold inner edge and a thick dark navy outline, glowing so strongly that red light spills onto the hull plates around it. The word sits inside a screen-wide horizontal band of darker dim-out, and thin red siren stripes, angled like hazard chevrons, pulse in from both the left and right screen edges inside that band. Deep navy world with lifted shadows, never pure black outside the silhouettes, one committed red-and-white typographic event. The only text in the image is \"WARNING!!\": no other words, letters, numbers, score, watermark or signature anywhere.",
+  "negative": "photorealistic, 3d render, lowercase letters, script font, misspelled text, extra words, subtitles, score numbers, watermark, blurry, letters floating in 3d perspective, warning triangle icon only, bright undimmed background",
+  "model": "flux2",
+  "seed": 4190045460,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:26:32.506Z",
+  "seconds": 58,
+  "label": "Boss WARNING screen — darkened field, giant red \"WARNING\" text, siren light",
+  "source": "images/70-key-moments/boss-moments.json#warning-flash-v1",
+  "file": "art-prompts/v2/candidates/b/moment/warning-screen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "boss/cinder-bastion/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ominous alarm staging in a cave system, every running light in the magma cavern dying to black for one heartbeat except a rising wall of lava glow behind which the CINDER BASTION stands revealed as a flat black silhouette, battleship profile with its crown of four raised armored arms spread like a candelabra around the burning core dot in its chest, sparks and slow ember flakes drifting between silhouette and glow, the lower half of the frame thrown into a deep sapphire shadow with the small curved highlight of a fighter cockpit, cyan, barely visible bottom-left corner, a single red siren band sweeping across the upper darkness, composition ruled by backlight, graphic hard edges, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, banner, letters, photorealistic, 3d render, watermark, detailed hull visible, lens flare abuse, pure black background, smoke clouds gray",
+  "model": "flux2",
+  "seed": 12403,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:37:34.497Z",
+  "seconds": 70.5,
+  "label": "CINDER BASTION (CB-04) WARNING silhouette frame",
+  "source": "images/30-bosses/04-cinder-bastion.json#cb04-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/cinder-bastion/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/cinder-bastion.png"
+  ],
+  "editFromSha256": [
+    "1910f4ebd22b84a6c96ce8177adc53a6ecaa93e387213c5d437936b10209ef43"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Ominous alarm staging in a cave system, every running light in the magma cavern dying to black for one heartbeat except a rising wall of lava glow behind which the CINDER BASTION stands revealed as a flat black silhouette, battleship profile with its crown of four raised armored arms spread like a candelabra around the burning core dot in its chest, sparks and slow ember flakes drifting between silhouette and glow, the lower half of the frame thrown into a deep sapphire shadow with the small curved highlight of a fighter cockpit, cyan, barely visible bottom-left corner, a single red siren band sweeping across the upper darkness, composition ruled by backlight, graphic hard edges, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F018",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:49.455Z",
+    "parentId": "boss/cinder-bastion"
+  }
+}

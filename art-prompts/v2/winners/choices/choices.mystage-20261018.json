@@ -1,0 +1,2010 @@
+{
+    "schema": "shmup-art-choices@1",
+    "updatedAt": "2026-10-18T02:24:45.973Z",
+    "items": {
+        "boss/abyss-ark": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/abyss-ark/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/abyss-ark/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/abyss-ark/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/abyss-ark/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/abyss-ark/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/cinder-bastion": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:49.455Z"
+        },
+        "boss/cinder-bastion/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/cinder-bastion/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/cinder-bastion/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/cinder-bastion/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/cinder-bastion/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/ember-frost-twins": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:09.378Z"
+        },
+        "boss/ember-frost-twins/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/ember-frost-twins/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/ember-frost-twins/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/ember-frost-twins/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/facet-monarch": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/facet-monarch/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:46.704Z"
+        },
+        "boss/facet-monarch/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:46.704Z"
+        },
+        "boss/facet-monarch/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/facet-monarch/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/facet-monarch/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/galvanic-maw": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:39.381Z"
+        },
+        "boss/galvanic-maw/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:26.710Z"
+        },
+        "boss/galvanic-maw/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:26.710Z"
+        },
+        "boss/galvanic-maw/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/galvanic-maw/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:26.710Z"
+        },
+        "boss/galvanic-maw/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:26.710Z"
+        },
+        "boss/grasping-bloom": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:09.378Z"
+        },
+        "boss/grasping-bloom/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/grasping-bloom/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/grasping-bloom/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/grasping-bloom/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/halcyon-bulwark": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:39.381Z"
+        },
+        "boss/halcyon-bulwark/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/halcyon-bulwark/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/halcyon-bulwark/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/halcyon-bulwark/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/halcyon-bulwark/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:36.706Z"
+        },
+        "boss/hollow-king": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/hollow-king/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/hollow-king/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/hollow-king/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/hollow-king/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/hollow-king/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:04.473Z"
+        },
+        "boss/iron-leviathan": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:09.378Z"
+        },
+        "boss/iron-leviathan/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/iron-leviathan/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/iron-leviathan/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/iron-leviathan/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:14.475Z"
+        },
+        "boss/iron-sovereign": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/iron-sovereign/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/iron-sovereign/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/iron-sovereign/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:46.704Z"
+        },
+        "boss/iron-sovereign/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/iron-sovereign/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:54.474Z"
+        },
+        "boss/iron-talon": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:09.378Z"
+        },
+        "boss/iron-talon/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/iron-talon/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/iron-talon/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/iron-talon/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:24.656Z"
+        },
+        "boss/mantle-regent": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/mantle-regent/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/mantle-regent/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/mantle-regent/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/mantle-regent/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/mantle-regent/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:56.697Z"
+        },
+        "boss/sandgrave-widow": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:39.381Z"
+        },
+        "boss/sandgrave-widow/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/sandgrave-widow/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/sandgrave-widow/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/sandgrave-widow/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/sandgrave-widow/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:16.888Z"
+        },
+        "boss/squall-steed": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:59.384Z"
+        },
+        "boss/squall-steed/damaged": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/squall-steed/parts": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/squall-steed/reveal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/squall-steed/warning": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "boss/squall-steed/weakpoint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:34:06.707Z"
+        },
+        "craft/kestrel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:29.452Z"
+        },
+        "craft/kestrel/blueprint": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:26.707Z"
+        },
+        "craft/kestrel/coop-duo": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:56.707Z"
+        },
+        "craft/kestrel/hangar": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:33:06.702Z"
+        },
+        "craft/kestrel/hero-key-art": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:56.707Z"
+        },
+        "craft/kestrel/in-game-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:36.714Z"
+        },
+        "craft/kestrel/master-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:36.714Z"
+        },
+        "craft/kestrel/player-2": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:26.707Z"
+        },
+        "craft/kestrel/select-lineup": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:56.707Z"
+        },
+        "craft/manta": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:29.452Z"
+        },
+        "craft/manta/hero-key-art": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/manta/in-game-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:56.707Z"
+        },
+        "craft/manta/master-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/manta/plan-view": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/manta/player-2": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/manta/reef-hangar": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/option": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:29.452Z"
+        },
+        "craft/option/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "craft/shield-pod": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:39.381Z"
+        },
+        "craft/shield-pod/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:46.630Z"
+        },
+        "enemy/bolt-drone": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/bolt-drone/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/brood-bubble": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:19.377Z"
+        },
+        "enemy/brood-bubble/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:22.893Z"
+        },
+        "enemy/chaser-cell": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/chaser-cell/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/chaser-cell/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/chaser-cell/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/depth-mine": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/depth-mine/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "enemy/dune-worm": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/dune-worm/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/dune-worm/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/dune-worm/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/dust-devil": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/dust-devil/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/ember-wisp": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/ember-wisp/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/froth": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:19.377Z"
+        },
+        "enemy/froth/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "enemy/froth/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:22.893Z"
+        },
+        "enemy/froth/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:22.893Z"
+        },
+        "enemy/glint-mote": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/glint-mote/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/gulper": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/gulper/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/gulper/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/gulper/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/gyre": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/gyre/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/halo-crystal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:23:33.855Z"
+        },
+        "enemy/halo-crystal/frames": {
+            "winner": "a",
+            "comment": "ll 6 frames look the same  they should be different somehow since this is an animation sheet .. maybe the outside crystals spinning clockwise around the large crystal while the large crystal ddoes ome type of spinning of its own  or something liek that ",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:05:17.330Z"
+        },
+        "enemy/halo-crystal/frames/edit-1": {
+            "winner": "a",
+            "comment": "only 2/6 cells have the changed frames .. the rest seem the same.. all 6 should be different from each other making it an animation",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:42:48.006Z"
+        },
+        "enemy/halo-crystal/frames/edit-2": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T02:24:45.973Z"
+        },
+        "enemy/halo-crystal/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:05:57.360Z"
+        },
+        "enemy/halo-crystal/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "ll 6 frames look the same  they should be different somehow since this is an animation sheet .. maybe the outside crystals spinning clockwise around the large crystal while the large crystal ddoes ome type of spinning of its own  or something liek that ",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:05:57.360Z"
+        },
+        "enemy/halo-crystal/zone-roster-sheet/edit-1": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:42:48.006Z"
+        },
+        "enemy/husk-crawler": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/husk-crawler/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/magma-cone": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/magma-cone/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/magma-cone/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/magma-cone/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:12.888Z"
+        },
+        "enemy/maw-rocket": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:29.379Z"
+        },
+        "enemy/maw-rocket/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:22.893Z"
+        },
+        "enemy/option-hunter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/option-hunter/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/polyp-turret": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/polyp-turret/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/sentinel-walker": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/sentinel-walker/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/sentinel-walker/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/sentinel-walker/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/skeet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:09.378Z"
+        },
+        "enemy/skeet/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:44.471Z"
+        },
+        "enemy/skeet/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "enemy/skeet/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:44.471Z"
+        },
+        "enemy/steed-foal": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/steed-foal/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/tender": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:19.377Z"
+        },
+        "enemy/tender/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "enemy/thunderhead": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/thunderhead/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/thunderhead/zone-encounter": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/thunderhead/zone-roster-sheet": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "enemy/trench-eel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:49.382Z"
+        },
+        "enemy/trench-eel/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:42.887Z"
+        },
+        "enemy/urchin": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:19.377Z"
+        },
+        "enemy/urchin/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:22.893Z"
+        },
+        "enemy/vane": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:19.377Z"
+        },
+        "enemy/vane/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "enemy/vault-claw": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:59:39.382Z"
+        },
+        "enemy/vault-claw/frames": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:52.880Z"
+        },
+        "fx/black-hole": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:19.377Z"
+        },
+        "fx/black-hole/armed-scene": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:35:58.794Z"
+        },
+        "fx/black-hole/discharge-scene": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:42.898Z"
+        },
+        "fx/black-hole/spin-frames": {
+            "winner": "a",
+            "comment": "there seems to be no difference in images they should each visually be different showing progression of a spinning spiral",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:36:22.889Z"
+        },
+        "fx/black-hole/spin-frames/edit-1": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:23:50.388Z"
+        },
+        "fx/black-hole/spin-frames/edit-2": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T02:24:35.969Z"
+        },
+        "fx/explosion": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:29.380Z"
+        },
+        "fx/explosion/kill-chain": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:32.883Z"
+        },
+        "fx/explosion/particles": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:22.875Z"
+        },
+        "fx/force-field": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:19.377Z"
+        },
+        "fx/force-field/loop": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:36:52.892Z"
+        },
+        "fx/mega-crash": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:19.377Z"
+        },
+        "fx/mega-crash/origin": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:32.883Z"
+        },
+        "item/direct-orbs": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:09.377Z"
+        },
+        "item/direct-orbs/cluster-burst": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:36:52.892Z"
+        },
+        "item/power-capsule": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:09.377Z"
+        },
+        "item/power-capsule/in-flight": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:02.882Z"
+        },
+        "item/power-capsule/special-capsules": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:23:40.398Z"
+        },
+        "item/shield-gem": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:09.377Z"
+        },
+        "logo/app-icon": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:57:59.454Z"
+        },
+        "logo/black-hole-crest": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:19.632Z"
+        },
+        "logo/iron-tide-sigil": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:19.632Z"
+        },
+        "logo/squadron-patch": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:19.632Z"
+        },
+        "logo/title-screen": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:58:09.377Z"
+        },
+        "logo/title-screen/textless-backdrop": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:36.714Z"
+        },
+        "logo/wordmark": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T02:57:49.460Z"
+        },
+        "logo/wordmark/champion-crest": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:32:36.714Z"
+        },
+        "logo/wordmark/in-game-cutout": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:35:58.794Z"
+        },
+        "moment/boss-death": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:39.453Z"
+        },
+        "moment/ending-citadel-falls": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:59.423Z"
+        },
+        "moment/ending-citadel-falls-silent": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:59.423Z"
+        },
+        "moment/ending-citadel-falls-silent/second-panel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:22.875Z"
+        },
+        "moment/ending-citadel-falls/second-panel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:22.875Z"
+        },
+        "moment/ending-deep-is-still": {
+            "winner": "c",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:29.378Z"
+        },
+        "moment/ending-deep-is-still/second-panel": {
+            "winner": "c",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:22.875Z"
+        },
+        "moment/ending-flagship-slips-away": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:29.378Z"
+        },
+        "moment/ending-flagship-slips-away/second-panel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:12.889Z"
+        },
+        "moment/ending-throne-is-broken": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:29.378Z"
+        },
+        "moment/ending-throne-is-broken/second-panel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:12.889Z"
+        },
+        "moment/escape-run": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:49.384Z"
+        },
+        "moment/game-over": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:49.384Z"
+        },
+        "moment/hi-score-entry": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:59.423Z"
+        },
+        "moment/victory-card": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:59.423Z"
+        },
+        "moment/warning-screen": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:02:29.380Z"
+        },
+        "promo/store-capsule": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:39.462Z"
+        },
+        "promo/store-capsule/no-text": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:35:12.889Z"
+        },
+        "promo/website-hero": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:29.378Z"
+        },
+        "promo/wide-banner": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:03:39.462Z"
+        },
+        "stage/abyssal-throne": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:29.380Z"
+        },
+        "stage/abyssal-throne/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/abyssal-throne/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:42.881Z"
+        },
+        "stage/abyssal-throne/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/abyssal-throne/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:42.881Z"
+        },
+        "stage/abyssal-throne/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/azure-verge": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:19.379Z"
+        },
+        "stage/azure-verge/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/azure-verge/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/azure-verge/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/azure-verge/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/azure-verge/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/brine-nebula": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:29.471Z"
+        },
+        "stage/brine-nebula/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/brine-nebula/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/brine-nebula/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/brine-nebula/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "stage/brine-nebula/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "stage/cell-vault": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:59.384Z"
+        },
+        "stage/cell-vault/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/cell-vault/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/cell-vault/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/cell-vault/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/cell-vault/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/dune-expanse": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:39.378Z"
+        },
+        "stage/dune-expanse/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/dune-expanse/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/dune-expanse/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/dune-expanse/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/dune-expanse/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/escape-corridor": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:59.406Z"
+        },
+        "stage/escape-corridor/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:32.893Z"
+        },
+        "stage/high-speed-dimension": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:49.463Z"
+        },
+        "stage/high-speed-dimension/floor-texture": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:42.881Z"
+        },
+        "stage/high-speed-dimension/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:42.881Z"
+        },
+        "stage/high-speed-dimension/sky-fog": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:32.893Z"
+        },
+        "stage/iron-citadel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:19.375Z"
+        },
+        "stage/iron-citadel/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/iron-citadel/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:39:34.472Z"
+        },
+        "stage/iron-citadel/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/iron-citadel/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/iron-citadel/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "stage/magma-deep": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:49.381Z"
+        },
+        "stage/magma-deep/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/magma-deep/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/magma-deep/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/magma-deep/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/magma-deep/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "stage/prism-labyrinth": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:09.377Z"
+        },
+        "stage/prism-labyrinth/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "stage/prism-labyrinth/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "stage/prism-labyrinth/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "stage/prism-labyrinth/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "stage/prism-labyrinth/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "stage/tempest-ridge": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:59.384Z"
+        },
+        "stage/tempest-ridge/layer-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/tempest-ridge/layer-mid": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/tempest-ridge/layer-mid-far": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/tempest-ridge/layer-near": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "stage/tempest-ridge/poster": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "tiles/abyssal-throne": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:39.465Z"
+        },
+        "tiles/abyssal-throne/tileset": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:42.881Z"
+        },
+        "tiles/azure-verge": {
+            "winner": "c",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:35:28.791Z"
+        },
+        "tiles/azure-verge/tileset": {
+            "winner": "c",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-18T00:23:10.397Z"
+        },
+        "tiles/brine-nebula": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:39.378Z"
+        },
+        "tiles/brine-nebula/tileset": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:32.889Z"
+        },
+        "tiles/cell-vault": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:09.377Z"
+        },
+        "tiles/cell-vault/tileset": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "tiles/dune-expanse": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:49.381Z"
+        },
+        "tiles/dune-expanse/tileset": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "tiles/iron-citadel": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:29.380Z"
+        },
+        "tiles/iron-citadel/tileset": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:37:52.883Z"
+        },
+        "tiles/magma-deep": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:49.381Z"
+        },
+        "tiles/magma-deep/tileset": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:22.881Z"
+        },
+        "tiles/prism-labyrinth": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:01:19.375Z"
+        },
+        "tiles/prism-labyrinth/tileset": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:02.888Z"
+        },
+        "tiles/tempest-ridge": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T03:00:59.384Z"
+        },
+        "tiles/tempest-ridge/tileset": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:38:12.888Z"
+        },
+        "video/abyss-and-nebula-drift": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:09:35.220Z"
+        },
+        "video/abyss-ark-sailing": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:22:05.243Z"
+        },
+        "video/ark-diving-abyss": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:15:45.234Z"
+        },
+        "video/blackhole-bomb-slowmo": {
+            "winner": "b",
+            "comment": "bullets are going towards and away from centter theys hould be all swirling towards center with the big explosion going outwards towards the end like it is ",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:25:03.817Z"
+        },
+        "video/blackhole-bomb-slowmo/edit-1": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T23:40:49.027Z"
+        },
+        "video/breaking-surface-sunrise": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:15:15.225Z"
+        },
+        "video/bullet-to-gold": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:18:15.157Z"
+        },
+        "video/chained-hull-explosions": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:17:25.203Z"
+        },
+        "video/checkerboard-rush": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:09:15.224Z"
+        },
+        "video/coop-two-ship": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:24:35.185Z"
+        },
+        "video/dawn-flight-home": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:08:05.219Z"
+        },
+        "video/escape-citadel-collapse": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:14:35.152Z"
+        },
+        "video/galvanic-maw-jaw": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:21:25.164Z"
+        },
+        "video/halcyon-bulwark-shield": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:21:05.235Z"
+        },
+        "video/hollow-king-lure": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:20:15.246Z"
+        },
+        "video/kestrel-bullet-weave": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:24:15.161Z"
+        },
+        "video/logo-sting": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:25:05.241Z"
+        },
+        "video/manta-blackhole-vortex": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:23:35.247Z"
+        },
+        "video/mega-crash-shockwave": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:17:05.231Z"
+        },
+        "video/sandgrave-widow-silk": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:19:15.240Z"
+        },
+        "video/social-vertical": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:14:05.238Z"
+        },
+        "video/squall-steed-storm": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:18:55.236Z"
+        },
+        "video/story-crawl-vista": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:24:45.248Z"
+        },
+        "video/title-ambient-loop": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:24:35.185Z"
+        },
+        "video/zone-abyssal-throne-glow": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:10:05.221Z"
+        },
+        "video/zone-brine-nebula-gassea": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:12:55.170Z"
+        },
+        "video/zone-dune-expanse-twinsuns": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:12:15.224Z"
+        },
+        "video/zone-iron-citadel-chase": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:10:35.155Z"
+        },
+        "video/zone-magma-deep-cone": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:08:25.143Z"
+        },
+        "video/zone-montage-a": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:13:45.233Z"
+        },
+        "video/zone-montage-b": {
+            "winner": "a",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:13:25.209Z"
+        },
+        "video/zone-neon-dimension-rush": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:08:35.141Z"
+        },
+        "video/zone-prism-labyrinth-refraction": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:08:25.143Z"
+        },
+        "video/zone-tempest-ridge-timelapse": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:11:15.237Z"
+        },
+        "video/zone-transition-parallax": {
+            "winner": "b",
+            "comment": "",
+            "regenerate": false,
+            "updatedAt": "2026-10-17T16:22:55.241Z"
+        }
+    }
+}

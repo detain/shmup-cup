@@ -1,0 +1,38 @@
+{
+  "id": "craft/manta/hero-key-art",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Large-format arcade key art of the MANTA fighter in a dramatic banking pose, one ray-wing sweeping toward the viewer and the other receding, showing the flat pale-mint upper plating with its dark green seam lines and the shadowed underbelly with twin amber thruster bells blazing, the small green canopy catching a streak of pink light from an off-screen bullet storm, the whole craft outlined in heavy near-black green strokes, behind it a wide arc of trailing golden point-sparkles like a comet wake curving across deep navy space, a broken skeet drone tumbling in the middle distance trailing orange embers, rim light of cold violet from behind, ultra-detailed, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling composition, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The amber thruster flames blaze out to the left behind the craft; nothing streams out of the front pods toward the right, and the hull keeps the reference's thin dark outline and pale mint plating.",
+  "negative": "photorealistic, 3d render, text, watermark, visible pilot, real animal, motion blur smear, pure black background, desaturated",
+  "model": "flux2",
+  "seed": 12103,
+  "width": 1152,
+  "height": 896,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:30:09.188Z",
+  "seconds": 120.3,
+  "label": "Banking sweep hero key art",
+  "source": "images/20-player-crafts/manta.json#manta-hero34-v1",
+  "file": "art-prompts/v2/candidates/a/craft/manta/hero-key-art.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/craft/manta.png"
+  ],
+  "editFromSha256": [
+    "499d69fa09eeaf2b8a045b2e5619de968c8b53a89cea5dd47a134b665a53a306"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MANTA. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Large-format arcade key art of the MANTA fighter in a dramatic banking pose, one ray-wing sweeping toward the viewer and the other receding, showing the flat pale-mint upper plating with its dark green seam lines and the shadowed underbelly with twin amber thruster bells blazing, the small green canopy catching a streak of pink light from an off-screen bullet storm, the whole craft outlined in heavy near-black green strokes, behind it a wide arc of trailing golden point-sparkles like a comet wake curving across deep navy space, a broken skeet drone tumbling in the middle distance trailing orange embers, rim light of cold violet from behind, ultra-detailed, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling composition, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n The amber thruster flames blaze out to the left behind the craft; nothing streams out of the front pods toward the right, and the hull keeps the reference's thin dark outline and pale mint plating.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F082",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:29.452Z",
+    "parentId": "craft/manta"
+  }
+}

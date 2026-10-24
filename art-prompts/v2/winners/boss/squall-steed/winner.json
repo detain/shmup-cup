@@ -1,0 +1,23 @@
+{
+  "id": "boss/squall-steed",
+  "slot": "a",
+  "prompt": "A single giant mechanical seahorse fortress boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view, upright, head and snout facing the left edge of the picture, centered with a wide empty margin above and below it, the whole body standing about three quarters of the picture height, with nothing cut off by the frame. A bulky armored war-fortress in the shape of a seahorse: a massive barrel-chested torso of riveted slate-blue armor plate with small gun turrets and lightning-rod antennae on its back, a proud arched neck of heavy overlapping plates, a long tubular snout ending in a cannon muzzle, a helmet-like head with a spiked crown crest and a single glowing yellow eye under a heavy armored lid, a mane of thin brass lightning rods down the back of the neck, and a tall dorsal sail of taut steel ribs and storm-grey canvas. Its chest stands open: exactly three great armored breastplate doors swung outward on hinges like petals around a blazing white-blue electrical heart, the obvious weak point. Below, a thick segmented steel-and-cable tail curls into a tight spiral coil with short violet sparks crackling along it. Small pink and red gun ports with bright cores and dark rims along the belly plates. Menacing, regal, heavy, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of slate blue, steel blue, storm grey, brass rivets, violet rim light and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no clouds, no rain, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, horse with legs, organic animal, closed chest, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 2420217539,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:32:02.420Z",
+  "seconds": 83.1,
+  "label": "SQUALL STEED (SS-05) — zone E boss, the storm seahorse fortress; full body on key green",
+  "source": "images/30-bosses/hi-res.json#ss05-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/squall-steed.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

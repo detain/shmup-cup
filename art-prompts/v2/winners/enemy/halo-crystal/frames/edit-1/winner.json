@@ -1,0 +1,42 @@
+{
+  "id": "enemy/halo-crystal/frames",
+  "slot": "a",
+  "prompt": "Reference image 1 is the current HALO CRYSTAL animation sheet; its first two frames are already right. Reference image 2 is the chosen single HALO CRYSTAL design. Keep frames 1 and 2 exactly as they are and change frames 3, 4, 5 and 6, so that all six frames differ from each other and together form an animation. The layout stays six frames in two rows of three, read left to right along the top row, then left to right along the bottom row, on one continuous, perfectly flat solid pure bright green chroma-key background. In every frame the big faceted violet gem stays unchanged and violet, with its ring of six small satellite crystals on the corners of a hexagon, six satellites each. Exactly one satellite per frame is painted plain white inside its dark outline, and the white satellite moves one place clockwise around the ring from each frame to the next. Frame 1, top row left: the top satellite is white — keep it. Frame 2, top row middle: the upper-right satellite is white — keep it. Frame 3, top row right: make its lower-right satellite white. Frame 4, bottom row left: make its bottom satellite white. Frame 5, bottom row middle: make its lower-left satellite white. Frame 6, bottom row right: make its upper-left satellite white. All other satellites stay violet, so every frame has exactly one white satellite and each in a different place. Crisp pixel art with 1-pixel near-black navy outlines, no anti-aliasing, no glow, halos, lines, borders, arrows, trails or motion marks, no cast shadow, no green spill. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 29280,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-18T00:42:06.024Z",
+  "seconds": 107.1,
+  "label": "HALO CRYSTAL animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/a/enemy/halo-crystal/frames/edit-1.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/enemy/halo-crystal/frames/edit-1.png",
+    "art-prompts/v2/candidates/a/enemy/halo-crystal.png"
+  ],
+  "editFromSha256": [
+    "ea9b96dcad7086ba23b3a777fe27f2358fb0468146f3e7f87cc8d8f09d9579c9",
+    "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784"
+  ],
+  "instruction": "Reference image 1 is the current HALO CRYSTAL animation sheet; its first two frames are already right. Reference image 2 is the chosen single HALO CRYSTAL design. Keep frames 1 and 2 exactly as they are and change frames 3, 4, 5 and 6, so that all six frames differ from each other and together form an animation. The layout stays six frames in two rows of three, read left to right along the top row, then left to right along the bottom row, on one continuous, perfectly flat solid pure bright green chroma-key background. In every frame the big faceted violet gem stays unchanged and violet, with its ring of six small satellite crystals on the corners of a hexagon, six satellites each. Exactly one satellite per frame is painted plain white inside its dark outline, and the white satellite moves one place clockwise around the ring from each frame to the next. Frame 1, top row left: the top satellite is white — keep it. Frame 2, top row middle: the upper-right satellite is white — keep it. Frame 3, top row right: make its lower-right satellite white. Frame 4, bottom row left: make its bottom satellite white. Frame 5, bottom row middle: make its lower-left satellite white. Frame 6, bottom row right: make its upper-left satellite white. All other satellites stay violet, so every frame has exactly one white satellite and each in a different place. Crisp pixel art with 1-pixel near-black navy outlines, no anti-aliasing, no glow, halos, lines, borders, arrows, trails or motion marks, no cast shadow, no green spill. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1248x832",
+  "replaced": "art-prompts/v2/candidates/history/2026-10-18/a/enemy/halo-crystal/frames/edit-1.png",
+  "meta": {
+    "job": "R002",
+    "kind": "regenerate",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-18T00:38:38.510Z",
+    "parentId": "enemy/halo-crystal/frames",
+    "base": "enemy/halo-crystal/frames/edit-1"
+  }
+}

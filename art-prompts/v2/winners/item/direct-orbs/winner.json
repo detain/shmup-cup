@@ -1,0 +1,23 @@
+{
+  "id": "item/direct-orbs",
+  "slot": "a",
+  "prompt": "Retro 16-bit video game item reference sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly ten small glass marbles laid out as two rows with exactly five marbles in each row, evenly spaced on a grid with wide green gutters, every marble a perfect circle of the same size.\nTop row, left to right: crimson, bright orange, golden yellow, emerald green, aquamarine.\nBottom row, left to right: sky blue, cobalt blue, violet, hot pink, pearl white.\nAll ten are identical except for the color of their core, and every core is a plain smooth round glowing ball with no symbol, no icon and no picture inside: a clear, nearly colorless glass outer shell, inside it a smaller solid luminous round bead of the marble's color glowing at the dead center with a slightly brighter heart, a ring of clear glass visible between the bead and the shell, one crisp white specular dot on the upper left of the shell, a thin rim-light crescent on the lower right, and a thick near-black navy outline binding each sphere. Crisp pixel art with flat saturated fills and three-step shading ramps lit from the top left, glossy jewel-storefront arcade finish, the glow kept strictly inside each outline. No glow halo past the outline, no shadows, no cell borders, no grid lines, no icons, no text, no letters, no numbers, no labels.",
+  "negative": "photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 942187510,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T00:43:58.848Z",
+  "seconds": 40,
+  "label": "Direct-mode colour orbs — the ten glass orbs, two rows of five on key green (v2: 15×15)",
+  "source": "images/60-items-fx/items-and-fx.json#direct-color-orbs-v3",
+  "file": "art-prompts/v2/candidates/a/item/direct-orbs.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

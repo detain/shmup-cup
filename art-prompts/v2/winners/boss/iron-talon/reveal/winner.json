@@ -1,0 +1,40 @@
+{
+  "id": "boss/iron-talon/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron talon descending from a roiling grey-violet cloud deck at the top of the frame — a sky fortress's grabbing hand, three colossal articulated fingers of riveted dark steel with brass knuckle-drums and hydraulic tendons hissing steam along their backsheets. The finger-pads glow hot pink where grip-amps charge, and a rotating winch-housing palm plate shows a hazard-striped inner face. Below the claw, cloud-turbulence fingers drag streaks of mist downward. A tiny steel-blue player dart with cyan canopy and orange engine flare dodges at the lower left between falling rivet-sized debris. Deep-navy playfield below never pure black, teal cloud highlights. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it small at the lower left in the same side view and direction as reference 2, nose pointing right and its orange flame trailing left; its canopy is the small glass cockpit bubble on its back, never a glider wing or parachute.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, human hand, flesh, five fingers, pure black background",
+  "model": "flux2",
+  "seed": 14401,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T21:14:03.323Z",
+  "seconds": 107.2,
+  "label": "IRON TALON reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/14-iron-talon.json#itl-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/iron-talon/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-talon.png",
+    "art-prompts/v2/candidates/a/craft/kestrel.png"
+  ],
+  "editFromSha256": [
+    "1ce959103aa0d3080547cf814f05383939c1ed3c7c024b9c8a6e07ec04842fdf",
+    "b46bf3058d530a4a48b2b7677f7c456b5bc0f6f62b06e02b6b1d403dea1fb9bb"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON TALON. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron talon descending from a roiling grey-violet cloud deck at the top of the frame — a sky fortress's grabbing hand, three colossal articulated fingers of riveted dark steel with brass knuckle-drums and hydraulic tendons hissing steam along their backsheets. The finger-pads glow hot pink where grip-amps charge, and a rotating winch-housing palm plate shows a hazard-striped inner face. Below the claw, cloud-turbulence fingers drag streaks of mist downward. A tiny steel-blue player dart with cyan canopy and orange engine flare dodges at the lower left between falling rivet-sized debris. Deep-navy playfield below never pure black, teal cloud highlights. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.\n Reference image 2 shows the player dart: draw it small at the lower left in the same side view and direction as reference 2, nose pointing right and its orange flame trailing left; its canopy is the small glass cockpit bubble on its back, never a glider wing or parachute.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F063",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:59:09.378Z",
+    "parentId": "boss/iron-talon"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "boss/halcyon-bulwark",
+  "slot": "a",
+  "prompt": "A single huge boss battleship for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its bow pointing to the left edge of the picture, the entire hull visible with nothing cut off by the frame. It is a squat flying fortress like a castle keep: a tall blocky deep-blue steel hull, tallest and broadest at the bow on the left, with stepped battlements and crenellated turret blocks along its top, overlapping riveted faceplates laid in grid courses, and the hull stepping down toward a short stern on the right where two small engine nozzles glow orange. Across the blunt bow stands a vertical wall of exactly four tall rectangular armored shield plates, stacked one above another, with a glowing amber reactor core peeking through the narrow gaps between them. A narrow amber eye-slit glows above the shield wall. Two long swept-back wing pylons, one rising from the top of the hull and one hanging beneath it, each ending in a bright cyan emitter lens. Small pink and red gun ports with bright cores and dark rims dot the plate seams. Menacing, heavy, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of royal blue, deep navy blue, steel grey, cyan, amber and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, cropped hull, extra ship parts, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1978159083,
+  "width": 1536,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:21:27.830Z",
+  "seconds": 64.5,
+  "label": "HALCYON BULWARK (HB-01) — zone A boss, the armored-plate fortress-ship; full body on key green",
+  "source": "images/30-bosses/hi-res.json#hb01-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/halcyon-bulwark.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

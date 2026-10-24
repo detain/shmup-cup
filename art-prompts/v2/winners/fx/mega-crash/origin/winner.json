@@ -1,0 +1,38 @@
+{
+  "id": "fx/mega-crash/origin",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of MEGA CRASH. Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; dramatic power-moment illustration, ultra-detailed. The heartbeat before the MEGA CRASH consumes the screen: on the left third of a dark navy battlefield, a lone steel-blue dart fighter with cyan canopy and orange engines hangs in profile, unharmed and tiny — and from its exact position a newborn shell of white light is inflating outward, small enough that the ship is fully inside it, its surface a blistering white dome with thin gold crackle-rings running around it like pressure bands, brightening the air for one body-length in every direction. The shell is perfectly spherical in this early instant, its inner face beading with tiny white sparks, its outer face already starting to shed a halo of pale violet mist. Around and beyond it the hostile world is mid-reflex: nearest enemy bullets near the shell have stopped, caught against the pressure, glowing hotter at their rims; a few frames further out the bullet streams still flow normally in pink, red and violet; an angular swarm hull at the right edge of frame has just begun to tilt toward the light. The ship inside the bubble has its canopy lit white on the near side, silhouette heroic, one bright point of absolute calm at the center of the biggest decision in the game. Deep blues, blinding white-gold bubble, arcade-outline everything, lifted deep-navy background, never pure black. No text, no letters, no UI. No text anywhere.  Unlike the wide reference, this picture is nearly square: the navy starfield with faint violet nebula continues above and below the action, so the top quarter and the bottom quarter of the canvas are open star-dotted navy sky reaching right to the edges, with no black bands.",
+  "negative": "photorealistic, 3d render, bubble underwater, soap foam, explosion fire, ship destroyed, ship missing, text, HUD, watermark, blurry, wave already fullscreen, shockwave off-center from ship, pure black background",
+  "model": "flux2",
+  "seed": 20062,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:21:37.219Z",
+  "seconds": 86.2,
+  "label": "Launch instant: shockwave just born around the player ship",
+  "source": "images/60-items-fx/items-and-fx.json#mega-crash-origin-v2",
+  "file": "art-prompts/v2/candidates/a/fx/mega-crash/origin.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/mega-crash.png"
+  ],
+  "editFromSha256": [
+    "c897b42d16933381937097c730c6e765604b38b03b33e927ecebf2cb4042236e"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of MEGA CRASH. Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; dramatic power-moment illustration, ultra-detailed. The heartbeat before the MEGA CRASH consumes the screen: on the left third of a dark navy battlefield, a lone steel-blue dart fighter with cyan canopy and orange engines hangs in profile, unharmed and tiny — and from its exact position a newborn shell of white light is inflating outward, small enough that the ship is fully inside it, its surface a blistering white dome with thin gold crackle-rings running around it like pressure bands, brightening the air for one body-length in every direction. The shell is perfectly spherical in this early instant, its inner face beading with tiny white sparks, its outer face already starting to shed a halo of pale violet mist. Around and beyond it the hostile world is mid-reflex: nearest enemy bullets near the shell have stopped, caught against the pressure, glowing hotter at their rims; a few frames further out the bullet streams still flow normally in pink, red and violet; an angular swarm hull at the right edge of frame has just begun to tilt toward the light. The ship inside the bubble has its canopy lit white on the near side, silhouette heroic, one bright point of absolute calm at the center of the biggest decision in the game. Deep blues, blinding white-gold bubble, arcade-outline everything, lifted deep-navy background, never pure black. No text, no letters, no UI. No text anywhere.  Unlike the wide reference, this picture is nearly square: the navy starfield with faint violet nebula continues above and below the action, so the top quarter and the bottom quarter of the canvas are open star-dotted navy sky reaching right to the edges, with no black bands.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F134",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:19.377Z",
+    "parentId": "fx/mega-crash"
+  }
+}

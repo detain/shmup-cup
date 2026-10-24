@@ -1,0 +1,23 @@
+{
+  "id": "tiles/brine-nebula",
+  "slot": "b",
+  "prompt": "Flat 2D seamless repeating texture of reef sandstone, drawn in crisp 16-bit retro pixel art with chunky visible pixels. A head-on view of a vertical wall surface, flat as a sheet of paper, with no depth and no viewing angle; the stone fills the whole picture edge to edge and continues off all four sides. Warm tan and pale rose sandstone in soft horizontal layers, pitted with small round coral pores in darker rose-brown, studded with little cream barnacle bumps, rounded chunky clusters outlined by thin dark plum cracks. A horizontal band of rounded pink coral crust, knobbly lumps and small branching nubs, crosses the upper quarter of the picture, with more tan reef sandstone behind it and above it up to the top edge. Three-to-four step shading ramps lit from the top-left, saturated limited palette, uniform all-over pattern with no focal point.",
+  "negative": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette",
+  "model": "sd35",
+  "seed": 4251391135,
+  "width": 1024,
+  "height": 1024,
+  "steps": 32,
+  "guidance": 5,
+  "generatedAt": "2026-10-17T01:44:02.276Z",
+  "seconds": 13.1,
+  "label": "BRINE NEBULA terrain material swatch — zone B rock / wall surface for the 12-px tileset",
+  "source": "v2-target",
+  "file": "art-prompts/v2/candidates/b/tiles/brine-nebula.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": "sky, horizon, empty strip, border, frame, margin, text, letters, watermark, signature, perspective, vanishing point, faces, photorealistic, 3d render, isometric, top-down view, map, scene, landscape, cliff, tree, stars, water, fish, beige background, rounded corners, painterly, blurry, soft focus, vignette",
+  "mode": "generate"
+}

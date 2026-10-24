@@ -1,0 +1,23 @@
+{
+  "id": "boss/hollow-king",
+  "slot": "a",
+  "prompt": "A single colossal abyssal anglerfish final boss for a retro 16-bit side-scrolling space shooter, shown in a side view facing the left edge of the picture, in a tall portrait frame, centered with a generous empty margin on all four sides, the whole creature visible from the tip of its lure to the end of its tail with nothing cut off by the frame. A cathedral-vast rounded body of black-blue armor plate shaped like a gothic cathedral: pointed arch ribs, buttress-like fin spines and rows of narrow lancet-window vents along its flank. Its belly is an open lantern ribcage of curved ivory bones with a cold pale cyan-green glow between them. An enormous gaping jaw under a high arched lintel of armor, lined with long recurved ivory fangs, the mouth a deep dark void. From the crown of its head a single long segmented lure-antenna arcs up and forward and curves down in front of the jaws, ending in a glowing lantern bulb shaped like a pale cyan-green star, the brightest thing in the picture, its glow kept inside a crisp dark outline. Small cold white eyes sunk deep under heavy brow plates. Tattered translucent membrane fins hang from its back and sides like rotting banners, and a short ragged tail fin trails behind. A few small pink and red bullet ports with bright cores and dark rims glint along the jaw plates. Ancient, regal, terrifying, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of black-blue, deep navy, slate, bone ivory, deep teal, pale cyan-green and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no silt, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic fish gloss, wide horizontal framing, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1086554600,
+  "width": 896,
+  "height": 1152,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:46:57.810Z",
+  "seconds": 47.2,
+  "label": "THE HOLLOW KING (HK-10) — final boss inside the Ark, the anglerfish lure-cathedral; full body on key green",
+  "source": "images/30-bosses/hi-res.json#hk10-hires-v1",
+  "file": "art-prompts/v2/candidates/a/boss/hollow-king.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

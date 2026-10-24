@@ -1,0 +1,23 @@
+{
+  "id": "boss/iron-talon",
+  "slot": "a",
+  "prompt": "A single colossal mechanical grabbing claw boss for a retro 16-bit side-scrolling space shooter, the brutal grappling hand of a sky fortress, seen from the side, its open grip reaching down and toward the left edge of the picture, the whole machine fitted inside the frame with a wide empty margin of green on all four sides, nothing cut off and no arm leaving the picture. At the upper right, a short angular armored wrist block of riveted dark steel plates with hazard-striped edges and thick hydraulic hoses, ending at its upper right in a heavy flat-cut armored joint plate, entirely inside the frame. From the wrist the hand opens wide: exactly three huge angular fingers, no more, of riveted dark gunmetal steel plate, two long fingers reaching to the left and one thick opposed thumb-talon curling up from below, each finger made of three sharp-edged segments joined by big brass knuckle drums, with exposed hydraulic pistons and tendons running along their backs, ending in long hooked steel talons like a raptor's. The inner finger pads glow hot pink where grip amplifiers charge. At the base of the fingers a round rotating winch-housing palm plate with heavy bolts, its face painted with yellow and black hazard stripes around a glowing pink winch core. Small pink and red bullet ports with bright cores and dark rims along the seams. Brutal, predatory, heavy, menacing, readable silhouette, angular and industrial. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of dark gunmetal, steel grey, brass, hazard yellow, black and hot pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no clouds, no sky, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, human hand, flesh, five fingers, background scenery, stars, cast shadow, green tint on the hull, player character",
+  "model": "flux2",
+  "seed": 3339188322,
+  "width": 1152,
+  "height": 896,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T00:54:56.458Z",
+  "seconds": 31.6,
+  "label": "IRON TALON — extra boss, the sky fortress's grabbing claw; full body on key green",
+  "source": "images/30-bosses/14-iron-talon.json#itl-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/iron-talon.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate"
+}

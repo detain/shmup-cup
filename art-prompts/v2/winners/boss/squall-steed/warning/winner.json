@@ -1,0 +1,38 @@
+{
+  "id": "boss/squall-steed/warning",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of SQUALL STEED (SS-05). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+  "model": "flux2",
+  "seed": 12503,
+  "width": 1536,
+  "height": 640,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-17T17:53:55.332Z",
+  "seconds": 84.4,
+  "label": "SQUALL STEED (SS-05) WARNING silhouette frame",
+  "source": "images/30-bosses/05-squall-steed.json#ss05-warning-v3",
+  "file": "art-prompts/v2/candidates/a/boss/squall-steed/warning.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/squall-steed.png"
+  ],
+  "editFromSha256": [
+    "3b2d3ac327ac9263bb52b0a375f201085a9a2e0fd44e0adf77f8e6b60d064623"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of SQUALL STEED (SS-05). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1536x640",
+  "meta": {
+    "job": "F023",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/squall-steed"
+  }
+}

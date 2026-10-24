@@ -1,0 +1,38 @@
+{
+  "id": "fx/black-hole/discharge-scene",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of Black-hole bomb. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; climactic weapon effect concept art, ultra-detailed. One frame after the collapse: the three-armed violet black hole is gone, and in its place the sky is conducting. From a single small hard white point at dead center, a dozen thick lightning trunks explode radially — jagged, angular, dark-outlined bolts of pure white with pale blue-violet forks splitting off each trunk like frozen river deltas, reaching in every direction almost to the frame edges. Between the main trunks, a fine web of short purple sparks drifts and secondary micro-arcs crawl along the ends of the biggest forks. Around the discharge, the ghost of the implosion remains: a broken ring of lilac vapor where the event horizon was, shattering outward into arcs of fading violet smoke, plus a scatter of the bomb's swallowed bullets being coughed back out as tiny harmless sparks caught mid-air between the bolts. A faint overexposed circle of light bleaches the very center of the image, so the eye starts at white and rides each trunk outward. The rest of the field is deep navy with shaken star dust. Palette of white-hot lightning over violet ghost-smoke on navy, arcade-electric, lifted deep-navy background, no pure black outside the far corners. No text, no letters, no UI, no characters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The released bullets are only tiny round dots of pink and violet light, like drifting embers, with nothing metallic anywhere in the picture and no other objects besides the lightning, the vapor ring and the sparks.",
+  "negative": "photorealistic, 3d render, storm clouds, lightning striking ground, Tesla coil, lightning bug shape, fractal blue plasma photo, text, watermark, blurry, rounded smooth bolts, single central beam, pure black background",
+  "model": "flux2",
+  "seed": 19052,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T17:14:33.132Z",
+  "seconds": 104.3,
+  "label": "Detonation: the vortex collapses into a white lightning discharge (scene)",
+  "source": "images/60-items-fx/items-and-fx.json#black-hole-bomb-discharge-v2",
+  "file": "art-prompts/v2/candidates/a/fx/black-hole/discharge-scene.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/fx/black-hole.png"
+  ],
+  "editFromSha256": [
+    "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of Black-hole bomb. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; climactic weapon effect concept art, ultra-detailed. One frame after the collapse: the three-armed violet black hole is gone, and in its place the sky is conducting. From a single small hard white point at dead center, a dozen thick lightning trunks explode radially — jagged, angular, dark-outlined bolts of pure white with pale blue-violet forks splitting off each trunk like frozen river deltas, reaching in every direction almost to the frame edges. Between the main trunks, a fine web of short purple sparks drifts and secondary micro-arcs crawl along the ends of the biggest forks. Around the discharge, the ghost of the implosion remains: a broken ring of lilac vapor where the event horizon was, shattering outward into arcs of fading violet smoke, plus a scatter of the bomb's swallowed bullets being coughed back out as tiny harmless sparks caught mid-air between the bolts. A faint overexposed circle of light bleaches the very center of the image, so the eye starts at white and rides each trunk outward. The rest of the field is deep navy with shaken star dust. Palette of white-hot lightning over violet ghost-smoke on navy, arcade-electric, lifted deep-navy background, no pure black outside the far corners. No text, no letters, no UI, no characters. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The released bullets are only tiny round dots of pink and violet light, like drifting embers, with nothing metallic anywhere in the picture and no other objects besides the lightning, the vapor ring and the sparks.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F133",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T03:02:19.377Z",
+    "parentId": "fx/black-hole"
+  }
+}

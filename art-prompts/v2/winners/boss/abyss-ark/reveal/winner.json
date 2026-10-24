@@ -1,0 +1,38 @@
+{
+  "id": "boss/abyss-ark/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of ABYSS ARK (AA-09). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Awe-scale boss reveal in an abyssal trench, the ABYSS ARK turning broadside out of the dark water like a moving island, a fortress-ship built as a colossal mechanical whale, its body clearly segmented into thirteen riveted hull sections from blunt plated snout to a vast rising tail fluke edged in torn coral, each section a different weathered slab of deep-steel armor with barnacle clusters and weeping seam rust, a forest of turret towers bristling along its spine rail with barrels tracking, the flank scarred with old battle gouges filled with slow-drifting bioluminescent plankton so the wounds glow pale cyan, beneath the jaw a hangar grate exuding a column of rising bubbles, the water graded from teal glow near the Ark to blue-black in the far depths, silt pouring off its fins in sheets, a lone steel-blue dart fighter with cyan canopy and orange engine glow hovering at the bottom-left corner of frame the size of a gnat against its eye, the eye itself a warm amber porthole ring of lamps, reverent and terrifying, bold dark outlines, saturated limited palette of deep blue, teal and rust, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "real whale, water spout, friendly, cartoon smile, sunlight surface, dry dock, photorealistic, 3d render, text, watermark, pure black background",
+  "model": "flux2",
+  "seed": 12901,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T19:26:26.979Z",
+  "seconds": 107.9,
+  "label": "ABYSS ARK (AA-09) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/09-abyss-ark.json#aa09-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/abyss-ark/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/abyss-ark.png"
+  ],
+  "editFromSha256": [
+    "a06ad1dcb467911770785a2a46f91d6ee09a1210532765890da99583325d25d2"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of ABYSS ARK (AA-09). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Awe-scale boss reveal in an abyssal trench, the ABYSS ARK turning broadside out of the dark water like a moving island, a fortress-ship built as a colossal mechanical whale, its body clearly segmented into thirteen riveted hull sections from blunt plated snout to a vast rising tail fluke edged in torn coral, each section a different weathered slab of deep-steel armor with barnacle clusters and weeping seam rust, a forest of turret towers bristling along its spine rail with barrels tracking, the flank scarred with old battle gouges filled with slow-drifting bioluminescent plankton so the wounds glow pale cyan, beneath the jaw a hangar grate exuding a column of rising bubbles, the water graded from teal glow near the Ark to blue-black in the far depths, silt pouring off its fins in sheets, a lone steel-blue dart fighter with cyan canopy and orange engine glow hovering at the bottom-left corner of frame the size of a gnat against its eye, the eye itself a warm amber porthole ring of lamps, reverent and terrifying, bold dark outlines, saturated limited palette of deep blue, teal and rust, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F041",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/abyss-ark"
+  }
+}

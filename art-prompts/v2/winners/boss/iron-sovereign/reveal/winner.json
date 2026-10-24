@@ -1,0 +1,38 @@
+{
+  "id": "boss/iron-sovereign/reveal",
+  "slot": "a",
+  "prompt": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Industrial dread boss reveal inside a cavernous riveted steel fortress hall, the IRON SOVEREIGN detached from the wall and rotating into view, a colossal rectangular slab of battleship hull plating taller than the frame, its face a grid of dark gunmetal panels sweat-beaded with oil, around its edges a ring of heavy shield plates pivoting on thick brass hinges like an iris of roof doors, half of them swung open to reveal the red furnace core glowing in the slab's chest, a deep arterial red light spilling between the plates and painting the girder forest amber where it crosses the running lights, steam jets coughing from relief valves along the top edge, chains of black soot stained down the plating, the floor grating vibrating with motion-blur, a pale mint manta-shaped fighter with green canopy skids into frame bottom-left under the slab's shadow for scale, the Sovereign trailing one lazy arc of pink bullets from an under-mounted gun, mood of patient machinery waking up, bold dark outlines, saturated limited palette of steel grey, brass amber and arterial red, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "negative": "creature flesh, tentacles, elegant armor, knight, photorealistic, 3d render, text, watermark, blue core, pure black background",
+  "model": "flux2",
+  "seed": 12801,
+  "width": 1152,
+  "height": 896,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-17T19:07:00.639Z",
+  "seconds": 117.6,
+  "label": "IRON SOVEREIGN (IS-08) reveal scene (in situ, navy atmosphere)",
+  "source": "images/30-bosses/08-iron-sovereign.json#is08-reveal-v1",
+  "file": "art-prompts/v2/candidates/a/boss/iron-sovereign/reveal.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/candidates/a/boss/iron-sovereign.png"
+  ],
+  "editFromSha256": [
+    "2fe1a940a8588b2b2654780d9432103146a9b71cfb9bc93028f220afa4c967f8"
+  ],
+  "instruction": "Reference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): Industrial dread boss reveal inside a cavernous riveted steel fortress hall, the IRON SOVEREIGN detached from the wall and rotating into view, a colossal rectangular slab of battleship hull plating taller than the frame, its face a grid of dark gunmetal panels sweat-beaded with oil, around its edges a ring of heavy shield plates pivoting on thick brass hinges like an iris of roof doors, half of them swung open to reveal the red furnace core glowing in the slab's chest, a deep arterial red light spilling between the plates and painting the girder forest amber where it crosses the running lights, steam jets coughing from relief valves along the top edge, chains of black soot stained down the plating, the floor grating vibrating with motion-blur, a pale mint manta-shaped fighter with green canopy skids into frame bottom-left under the slab's shadow for scale, the Sovereign trailing one lazy arc of pink bullets from an under-mounted gun, mood of patient machinery waking up, bold dark outlines, saturated limited palette of steel grey, brass amber and arterial red, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.",
+  "outputSize": "1152x896",
+  "meta": {
+    "job": "F036",
+    "kind": "followup",
+    "round": "2",
+    "choiceUpdatedAt": "2026-10-17T02:58:59.384Z",
+    "parentId": "boss/iron-sovereign"
+  }
+}
