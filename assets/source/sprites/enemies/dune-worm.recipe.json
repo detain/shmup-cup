@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/dune-worm",
+  "category": "enemy",
+  "frame": { "width": 24, "height": 24 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/dune-worm/frames/winner.png",
+      "frames": [
+        [8, 122, 182, 139],
+        [423, 126, 187, 134]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [12, 12],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone C drop (R5-03.S3): the two 24x24 writhe frames of the sand-worm plate are the brass boring-head subjects of the top-row cells of the owner-picked DUNE WORM animation sheet (mouth closed, mouth revving). In game a dune-worm instance is one plated segment of a burst chain (worm.burst, shmup_feat.md §11) whose interim art is a single plated body piece — the head plate at the design is its redraw; the fired-open cell that carries a pink orb stays unused (the orb is procedural), the dented cell is hit-state art, and the plain-ring and tail-plug cells are the chain's other two pieces, kept in reserve until an animation rework names them (the shared sprite pulses its two frames for every segment). Cropped from the committed winner — the sheet's cells show the whole worm at the same scale and position, so the head is taken as its detached leftmost component; the crop rings were probed to zero foreign pixels and the sheet's 1-px cell-border frames stay outside every crop. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

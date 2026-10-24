@@ -1,0 +1,47 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/dust-devil",
+  "category": "enemy",
+  "frame": { "width": 21, "height": 30 },
+  "frameCount": 3,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/dust-devil/frames/winner.png",
+      "frames": [
+        [102, 26, 312, 459],
+        [607, 28, 327, 464],
+        [96, 541, 321, 462]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "palette": {
+    "colors": [
+      "#180808",
+      "#580818",
+      "#881818",
+      "#a82828",
+      "#b83828",
+      "#c83828",
+      "#d84828",
+      "#f86838",
+      "#f87848",
+      "#f8a868",
+      "#f8b878",
+      "#f8c888",
+      "#f8c898",
+      "#f8d898",
+      "#f8d8a8"
+    ]
+  },
+  "outline": false,
+  "anchor": [10, 15],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone C drop (R5-03.S3): the three 21x30 spin frames of the DUST DEVIL vapor funnel are the first three cells (reading order) of the owner-picked animation sheet — the spiral bands advanced a quarter turn each cell, the pebbles at new orbit positions, so the loop closes on the fourth cell which stays unused (the slot has three frames; the roster's dust-devil animation is 3 frames at 4 ticks). Cropped from the committed winner with a 6-px key border, shrunk on two sides where the sheet's cell-border frame and stray speckles sat inside it; the crop rings were probed to zero foreign pixels. The enemy is currently placed by no shipped stage (its dune.whirl pattern is registered, the route runs none) — the sprite rides the common atlas page and this redraw only restiles it at the design. The design carries its own 1-px near-black navy outline, so the outline pass is off. The palette is fixed to the sheet's fifteen design colours (a maroon-core, red and rust-to-cream ramp): an adaptive sixteen admits key-blend rim pixels as two olive greens the design never has, so the fixed list keeps the cap clear and sends the rim to its nearest design colour."
+  }
+}

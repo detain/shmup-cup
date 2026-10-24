@@ -219,6 +219,9 @@ describe('scripts/assets/pipeline — collectSprites (edge)', () => {
     const drifter = collectSprites().sprites.find((s) => s.name === 'enemies/drifter');
     if (drifter === undefined) throw new Error('drifter missing');
     const { width, height } = drifter.frames[0];
+    // The shipped tree may carry a sidecar for this name (a real-art landing); its frame
+    // rectangles do not describe the one-frame synthetic PNG below — start from the code source.
+    rmSync(join(src, 'sprites', 'enemies', 'drifter.json'), { force: true });
     const art = createImage(width, height);
     setPixel(art, 0, 0, [10, 200, 30, 90]);
     put(join(src, 'sprites', 'enemies', 'drifter.png'), encodePng(art));

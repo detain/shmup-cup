@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/dune-worm",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/dune-worm/frames/winner.png",
+      "sha256": "7cfa88c3fc798a836fe1eaabec5840b142044c67ebfa20fd861534d5628a43db",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of DUNE WORM. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same DUNE WORM enemy — a mechanical boring worm, a brass ring-plated head with a conical spiral-tooth drill maw, followed by three trailing brass body rings in a gentle S-curve and a tail plug, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: head mouth closed, mouth revving, mouth fired open with a pink orb, dented damaged head, one plain body ring, the tail plug. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n As in the reference, the drill cone is striped silver steel and the body is a chain of separate short brass rings with small gaps, never one continuous tube. Exactly six cells, two rows of three: the top row holds the four head states' first three (closed, revving, firing the pink orb), the bottom row the dented head, one lone body ring and the lone tail plug; only green space between cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 66189,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T18:40:50.368Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/dune-worm/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/dune-worm.png",
+          "sha256": "f6c38fdc51a99067b869b6a4b49be90fb558f88d67e2aeab386e0cc0956a7cbf",
+          "sidecar": "art-prompts/v2/winners/enemy/dune-worm/winner.json",
+          "sidecarSha256": "20e38bd8cc4b1b9c6b8d311d0cf6997201c5a27589920ceeebdc5f405746457b",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/dune-worm/frames/winner.json",
+        "sidecarSha256": "7fb4d563f3cdb29a0e362f71f830b1e1afc4dbe09ed6bc801376856ade4feba2",
+        "id": "enemy/dune-worm/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of DUNE WORM. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same DUNE WORM enemy — a mechanical boring worm, a brass ring-plated head with a conical spiral-tooth drill maw, followed by three trailing brass body rings in a gentle S-curve and a tail plug, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: head mouth closed, mouth revving, mouth fired open with a pink orb, dented damaged head, one plain body ring, the tail plug. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n As in the reference, the drill cone is striped silver steel and the body is a chain of separate short brass rings with small gaps, never one continuous tube. Exactly six cells, two rows of three: the top row holds the four head states' first three (closed, revving, firing the pink orb), the bottom row the dented head, one lone body ring and the lone tail plug; only green space between cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/dune-worm.recipe.json",
+    "sha256": "ef0c3a4eb560cd7261708d5d261ee4b00424c3845b88d4a5a10a5550389fd67f"
+  },
+  "edit": null,
+  "output": {
+    "png": "dune-worm.png",
+    "sha256": "60e0acfd069ef4170d36d8f271fafc2f6191c216216f8754a15f5e0ffbb709f6",
+    "sidecar": "dune-worm.json",
+    "sidecarSha256": "945bff83de74f64bf7825b8890204931c698ee2a1984fde4ff829066f28d125b",
+    "frames": 2,
+    "frameWidth": 24,
+    "frameHeight": 24,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone C drop (R5-03.S3): the two 24x24 writhe frames of the sand-worm plate are the brass boring-head subjects of the top-row cells of the owner-picked DUNE WORM animation sheet (mouth closed, mouth revving). In game a dune-worm instance is one plated segment of a burst chain (worm.burst, shmup_feat.md §11) whose interim art is a single plated body piece — the head plate at the design is its redraw; the fired-open cell that carries a pink orb stays unused (the orb is procedural), the dented cell is hit-state art, and the plain-ring and tail-plug cells are the chain's other two pieces, kept in reserve until an animation rework names them (the shared sprite pulses its two frames for every segment). Cropped from the committed winner — the sheet's cells show the whole worm at the same scale and position, so the head is taken as its detached leftmost component; the crop rings were probed to zero foreign pixels and the sheet's 1-px cell-border frames stay outside every crop. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

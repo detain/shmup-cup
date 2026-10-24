@@ -94,8 +94,20 @@ function framePixels(atlas: Atlas, name: string): Image {
 const hex = (image: Image): string =>
   `${image.width}x${image.height}:${Buffer.from(image.data).toString('hex')}`;
 
-/** The sprites whose frames are drawn at their v2 size already (native, W4-5), by name. */
-const NATIVE = new Set(v2.sprites.filter((s) => s.native === true).map((s) => s.name));
+/**
+ * The sprites whose frames are drawn at their v2 size already (native, W4-5), by name: the
+ * `native: true` art, the real-art PNG overrides (RR-1 skips an override at scale 1 and serves
+ * the PNG's own pixels from the interim scale on — never an upscale of the code source), and
+ * the siblings derived from either — a `@flash` rides its base's pixels at both scales.
+ */
+const NATIVE = new Set<string>();
+for (const sprite of v2.sprites) {
+  if (sprite.native === true || sprite.origin.includes('.png')) NATIVE.add(sprite.name);
+}
+for (const sprite of v2.sprites) {
+  const base = /^(?:flash|p2|palette):(.*)$/.exec(sprite.origin)?.[1];
+  if (base !== undefined && NATIVE.has(base)) NATIVE.add(sprite.name);
+}
 
 /** The laser beams: one per bullet colour, plus its variant for each colour-blind palette. */
 const BEAMS = Object.keys(BULLET_COLORS).flatMap((colour) =>

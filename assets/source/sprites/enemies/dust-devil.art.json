@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/dust-devil",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/dust-devil/frames/winner.png",
+      "sha256": "e8efdf4bcbced05bf78576b9e6d5466fe1c7dd135a1c374b5432f13d4a08384d",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of DUST DEVIL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same DUST DEVIL enemy — a twisting rust-colored vapor funnel with a hollow dark core, stepped shear bands spiraling upward and small dark pebbles orbiting it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the spiral bands advanced a quarter turn in each frame with the pebbles at new orbit positions so the spin loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 33582,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T18:56:25.889Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/dust-devil/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/dust-devil.png",
+          "sha256": "c957d096137ddebffd8e96ad79f4cabf4606e994fbf448aa8125801ec75c75e8",
+          "sidecar": "art-prompts/v2/winners/enemy/dust-devil/winner.json",
+          "sidecarSha256": "af0ed4ff0a2e6f6c1a148fd6f2686f2cb0591f2a4227d45becfb81ef1e3018f5",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/dust-devil/frames/winner.json",
+        "sidecarSha256": "b497de4523a4b1df85116e4030a6d80ebe7205ef644a157730711f44586fecdf",
+        "id": "enemy/dust-devil/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of DUST DEVIL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same DUST DEVIL enemy — a twisting rust-colored vapor funnel with a hollow dark core, stepped shear bands spiraling upward and small dark pebbles orbiting it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the spiral bands advanced a quarter turn in each frame with the pebbles at new orbit positions so the spin loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/dust-devil.recipe.json",
+    "sha256": "5277b901bd09e157ea172325cd947a3e30b8e452f9498fcd40ef2bd39c8e9ae4"
+  },
+  "edit": null,
+  "output": {
+    "png": "dust-devil.png",
+    "sha256": "5bce711396f957ee37fffb72388e596a364cd09d77e9f3ee14a4e80e0ce94a2b",
+    "sidecar": "dust-devil.json",
+    "sidecarSha256": "a3443ee9b246a7782ec7eef221cc967cabc2ac4a3dc016d90fb59d88b44faab2",
+    "frames": 3,
+    "frameWidth": 21,
+    "frameHeight": 30,
+    "colors": 13,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone C drop (R5-03.S3): the three 21x30 spin frames of the DUST DEVIL vapor funnel are the first three cells (reading order) of the owner-picked animation sheet — the spiral bands advanced a quarter turn each cell, the pebbles at new orbit positions, so the loop closes on the fourth cell which stays unused (the slot has three frames; the roster's dust-devil animation is 3 frames at 4 ticks). Cropped from the committed winner with a 6-px key border, shrunk on two sides where the sheet's cell-border frame and stray speckles sat inside it; the crop rings were probed to zero foreign pixels. The enemy is currently placed by no shipped stage (its dune.whirl pattern is registered, the route runs none) — the sprite rides the common atlas page and this redraw only restiles it at the design. The design carries its own 1-px near-black navy outline, so the outline pass is off. The palette is fixed to the sheet's fifteen design colours (a maroon-core, red and rust-to-cream ramp): an adaptive sixteen admits key-blend rim pixels as two olive greens the design never has, so the fixed list keeps the cap clear and sends the rim to its nearest design colour."
+}
