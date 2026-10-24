@@ -1,0 +1,24 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/steed-tail",
+  "category": "boss-part",
+  "frame": { "width": 33, "height": 39 },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/boss/squall-steed/parts/winner.png",
+      "frames": [[50, 620, 168, 229]]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [16, 19],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone E (R5-05.S3): the single 33x39 frame of the curled counterbalance tail is the IDLE CELL OF ROW THREE of the owner-picked SQUALL STEED parts sheet (rows named heart / snout / tail in the sheet prompt; row 3 of the probe = 156x217 upright coil with the cable-family colours, matching the slot's portrait aspect). The slot is 1 frame in the shipped animation plan. Cropped with a 6-px key border; the design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

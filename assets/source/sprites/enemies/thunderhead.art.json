@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/thunderhead",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/thunderhead/frames/winner.png",
+      "sha256": "4341fd765746a94b02b22d3b2f07258b8931e8c1e3b4cac617a3b5f3cbc94d2f",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of THUNDERHEAD. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same THUNDERHEAD enemy — a round boiling charcoal anvil cloud with a single glowing lilac eye and violet-white electric arcs crawling along its belly, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: small dark puff, puff with a lilac pinprick eye, swelling anvil with the eye opening, full storm cell with belly arcs, eye squinting as it discharges one heavy bolt, cell deflating to a puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 15847,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T19:22:04.630Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/thunderhead/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/thunderhead.png",
+          "sha256": "b6ecd5c4466f74232715f77f2f373702fee2ac218572486550b52baa0152e44b",
+          "sidecar": "art-prompts/v2/winners/enemy/thunderhead/winner.json",
+          "sidecarSha256": "26d79b5a6097d9a7f8b685e20708646bd0a77649dc57231a18ec1bb8839a72ac",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/thunderhead/frames/winner.json",
+        "sidecarSha256": "4679add701632af7cc0ebb1232301f538b830a93944168e4588e4f0c8f36907c",
+        "id": "enemy/thunderhead/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of THUNDERHEAD. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same THUNDERHEAD enemy — a round boiling charcoal anvil cloud with a single glowing lilac eye and violet-white electric arcs crawling along its belly, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: small dark puff, puff with a lilac pinprick eye, swelling anvil with the eye opening, full storm cell with belly arcs, eye squinting as it discharges one heavy bolt, cell deflating to a puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/thunderhead.recipe.json",
+    "sha256": "09d5d568ae3be362bebf76011f7e51ab0cc8fddd10af4e70653e712f408ed04a"
+  },
+  "edit": null,
+  "output": {
+    "png": "thunderhead.png",
+    "sha256": "fac3ba41a2543f104c6de02a0b1436bbd3879c5bd499fd808cfea36dddfab787",
+    "sidecar": "thunderhead.json",
+    "sidecarSha256": "0e4f7412e0cddda9de8436fe92a42d7832572267392efee8fc22ac847a8f6669",
+    "frames": 3,
+    "frameWidth": 33,
+    "frameHeight": 21,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone E (R5-05.S3): the three 33x21 frames of the thunderhead's flicker loop are the reading-order cells 2-4 of the owner-picked THUNDERHEAD animation sheet (six states, two rows of three; the probe measures their glow fraction rising 15.6/20.0/21.4% and the silhouettes holding 337-342 x 261-274 px), cropped from the committed winner with a 6-px key border around each subject box; cells 1 (dark pinprick puff), 5 (full discharge) and 6 (collapsing puff) stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

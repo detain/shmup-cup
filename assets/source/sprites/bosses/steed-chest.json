@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/steed-chest 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 33
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 33
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 33
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/steed-chest 1",
+      "frame": {
+        "x": 24,
+        "y": 0,
+        "w": 24,
+        "h": 33
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 33
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 33
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "steed-chest.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 48,
+      "h": 33
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 33
+            },
+            "pivot": {
+              "x": 12,
+              "y": 16
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

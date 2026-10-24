@@ -1,0 +1,103 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/thunderhead 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 33,
+        "h": 21
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/thunderhead 1",
+      "frame": {
+        "x": 33,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 33,
+        "h": 21
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/thunderhead 2",
+      "frame": {
+        "x": 66,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 33,
+        "h": 21
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "thunderhead.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 99,
+      "h": 21
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 33,
+              "h": 21
+            },
+            "pivot": {
+              "x": 16,
+              "y": 10
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

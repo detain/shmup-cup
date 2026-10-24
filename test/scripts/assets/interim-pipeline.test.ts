@@ -217,7 +217,12 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // Since R5-10.T3 the six dimension stand-ins are native (−18, 90a20a3a): 499 measured. The
     // R5-01.S2 to R5-07 stand-ins had already taken 533 to 517 without a note. The floor
     // follows the natives to 450 — headroom for later stand-in waves, loud on a bulk regression.
-    expect(scaled).toBeGreaterThan(450);
+    // The real-art S3 waves take it further: zone F's two PNG overrides and their siblings left
+    // −4 (451 measured at c6865c7e, the pool before zone E), and zone E's five overrides —
+    // thunderhead 6, steed-foal 4, steed-chest 4, steed-snout 2; the interim tail has no
+    // @flash sibling — take −17 more: 434 measured on the tree rebased onto zone F. The floor
+    // moves to 400, headroom of 34 kept for zones G–I whose overrides will leave the same way.
+    expect(scaled).toBeGreaterThan(400);
     expect(wrongPixels).toEqual([]);
   });
 

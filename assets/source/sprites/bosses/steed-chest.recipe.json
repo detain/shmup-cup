@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/steed-chest",
+  "category": "boss-part",
+  "frame": { "width": 24, "height": 33 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/boss/squall-steed/parts/winner.png",
+      "frames": [
+        [67, 37, 204, 248],
+        [369, 38, 199, 247]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [12, 16],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone E (R5-05.S3): the two 24x33 frames of the chest's glow loop are the FIRST TWO CELLS OF ROW ONE of the owner-picked SQUALL STEED parts sheet — the sheet prompt names its rows in order (caged thunder heart, crown snout, tail coil), four idle/charge/fire/damage states each, and the probe confirms row identity numerically (row 0 subjects 192x236 with 26% bright / 19% violet caged-glow signature vs rows 1-2 at 6%/23% violet steel). The caged heart behind the chest doors is this slot's own design identity (the interim pair is the same hatch glowing yellow then blue); cells 3-4 of the row (firing, damaged) stay unused. Cropped with a 6-px key border around each subject box; the design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

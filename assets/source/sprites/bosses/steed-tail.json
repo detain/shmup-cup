@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/steed-tail 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 39
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 33,
+        "h": 39
+      },
+      "sourceSize": {
+        "w": 33,
+        "h": 39
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "steed-tail.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 33,
+      "h": 39
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 33,
+              "h": 39
+            },
+            "pivot": {
+              "x": 16,
+              "y": 19
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

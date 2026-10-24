@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/steed-snout 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 14
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 14
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "steed-snout.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 24,
+      "h": 14
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 14
+            },
+            "pivot": {
+              "x": 12,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
