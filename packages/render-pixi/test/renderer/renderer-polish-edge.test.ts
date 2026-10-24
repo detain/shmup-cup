@@ -256,7 +256,8 @@ async function makeRenderer(
 }
 
 /**
- * Screen centre of the ship sprite (its anchor) and of its hitbox marker's core.
+ * Screen centre of the ship sprite (its anchor) and of its hitbox marker's outline (M2-08; the
+ * outline-only re-style of w15-HBOX reads the same centres — the ring sits where the fill was).
  *
  * @param renderer - The renderer.
  * @returns `{ ship: [x, y], marker: [x, y] }`.
@@ -265,11 +266,11 @@ function centres(renderer: PixiRenderer): { ship: number[]; marker: number[] } {
   const sprite = renderer.bindings[0].container.children[0] as Pixi.Sprite;
   const markers = renderer.hitboxes;
   if (markers === null) throw new Error('no hitbox binding');
-  const core = markers.container.children[1] as Pixi.Sprite;
-  // Radius 1.5 → a 3-px core: its centre is one pixel in.
+  const top = markers.container.children[0] as Pixi.Sprite;
+  // Radius 1.5 → the outline surrounds a 3-px core: its centre is two pixels inside the top strip.
   return {
     ship: [sprite.x + SHIP_ANCHOR.x, sprite.y + SHIP_ANCHOR.y],
-    marker: [core.x + 1, core.y + 1],
+    marker: [top.x + 2, top.y + 2],
   };
 }
 
@@ -317,9 +318,11 @@ describe('render-pixi/renderer interpolation: hitbox markers (plan M2-08)', () =
     renderer.render(w.frame);
     const markers = renderer.hitboxes;
     if (markers === null) throw new Error('no hitbox binding');
-    const cores = markers.container.children as Pixi.Sprite[];
-    expect([cores[1].x + 1, cores[1].y + 1]).toEqual([30, 100 + PLAYFIELD_Y]);
-    expect([cores[3].x + 1, cores[3].y + 1]).toEqual([200, 60 + PLAYFIELD_Y]);
+    const strips = markers.container.children as Pixi.Sprite[];
+    // Four outline strips per slot (top, bottom, left, right); radius 1.5 puts the centre two px
+    // inside the slot's top strip.
+    expect([strips[0].x + 2, strips[0].y + 2]).toEqual([30, 100 + PLAYFIELD_Y]);
+    expect([strips[4].x + 2, strips[4].y + 2]).toEqual([200, 60 + PLAYFIELD_Y]);
     expect(markers.visibleCount).toBe(2);
   });
 

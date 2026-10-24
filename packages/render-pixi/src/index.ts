@@ -81,7 +81,6 @@ export {
   type FrameId,
 } from './atlas/index.js';
 export {
-  HITBOX_CORE_TINT,
   HITBOX_RIM_TINT,
   LASER_WARNING_TINT,
   RENDER_GROUP_LAYERS,

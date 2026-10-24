@@ -258,8 +258,10 @@ describe('render-pixi/renderer hitbox markers (plan M2-08)', () => {
     frame.tick = 1;
     renderer.render(frame);
     expect([layer.visible, markers.visibleCount]).toEqual([true, 1]);
-    const core = markers.container.children[1] as Pixi.Sprite;
-    expect([core.x, core.y]).toEqual([59, 39 + PLAYFIELD_Y]);
+    const top = markers.container.children[0] as Pixi.Sprite;
+    // Radius 1.5 → a 3-px core centred on (60, 40 + PLAYFIELD_Y); the outline's top strip sits
+    // one pixel above that core, spanning the old marker's 5-px boundary.
+    expect([top.x, top.y, top.scale.x, top.scale.y]).toEqual([58, 38 + PLAYFIELD_Y, 5, 1]);
     hitboxes.count = 0;
     renderer.setShowHitbox(false);
     frame.tick = 2;

@@ -22,16 +22,17 @@ function atlas(): Atlas {
 }
 
 /**
- * Centre of a marker (its core's middle pixel) and its core size.
+ * Centre of a marker (the middle pixel of the core it outlines) and that core's size. Four
+ * strips per slot (top, bottom, left, right); the top strip lies one pixel above the core.
  *
- * @param children - The binding's sprites (rim, core per slot).
+ * @param children - The binding's sprites (four per slot).
  * @param slot - The slot.
  * @returns `[x, y, size]`.
  */
 function marker(children: Sprite[], slot: number): number[] {
-  const core = children[2 * slot + 1];
-  const half = (core.scale.x - 1) / 2;
-  return [core.x + half, core.y + half, core.scale.x];
+  const top = children[4 * slot];
+  const half = (top.scale.x - 3) / 2;
+  return [top.x + half + 1, top.y + half + 1, 2 * half + 1];
 }
 
 describe('render-pixi/layers hitbox markers (edges)', () => {
@@ -47,16 +48,39 @@ describe('render-pixi/layers hitbox markers (edges)', () => {
     view.count = 6;
     binding.sync(view, { x: 0, y: 0 });
     const sprites = binding.container.children as Sprite[];
-    expect(radii.map((_r, i) => marker(sprites, i)[2])).toEqual([1, 1, 3, 5, 7, 1]);
-    // The rim is always one pixel around the core.
+    const sizes = [1, 1, 3, 5, 7, 1];
+    expect(radii.map((_r, i) => marker(sprites, i)[2])).toEqual(sizes);
+    // The outline sits one pixel around that core — the old filled marker's boundary, strip by
+    // strip (top and bottom span the corners, left and right fill the sides between them).
     for (let i = 0; i < 6; i++) {
-      const rim = sprites[2 * i];
-      const core = sprites[2 * i + 1];
-      expect([rim.x, rim.y, rim.scale.x, rim.scale.y]).toEqual([
-        core.x - 1,
-        core.y - 1,
-        core.scale.x + 2,
-        core.scale.y + 2,
+      const size = sizes[i];
+      const half = (size - 1) / 2;
+      const cx = 20 * i;
+      const cy = 30 + PLAYFIELD_Y;
+      const [top, bottom, left, right] = sprites.slice(4 * i, 4 * i + 4);
+      expect([top.x, top.y, top.scale.x, top.scale.y]).toEqual([
+        cx - half - 1,
+        cy - half - 1,
+        size + 2,
+        1,
+      ]);
+      expect([bottom.x, bottom.y, bottom.scale.x, bottom.scale.y]).toEqual([
+        cx - half - 1,
+        cy + half + 1,
+        size + 2,
+        1,
+      ]);
+      expect([left.x, left.y, left.scale.x, left.scale.y]).toEqual([
+        cx - half - 1,
+        cy - half,
+        1,
+        size,
+      ]);
+      expect([right.x, right.y, right.scale.x, right.scale.y]).toEqual([
+        cx + half + 1,
+        cy - half,
+        1,
+        size,
       ]);
     }
   });
@@ -144,14 +168,16 @@ describe('render-pixi/layers hitbox markers syncInterpolated', () => {
     binding.syncInterpolated(view, camera, { alpha: 0.5, advance: 1 });
     expect(marker(sprites, 1).slice(0, 2)).toEqual([200, 90 + PLAYFIELD_Y]);
     expect(binding.visibleCount).toBe(2);
-    // And leaves again: its sprites are hidden.
+    // And leaves again: its four strips are hidden.
     view.count = 1;
     binding.syncInterpolated(view, camera, { alpha: 0.5, advance: 1 });
-    expect([sprites[2].visible, sprites[3].visible, binding.visibleCount]).toEqual([
-      false,
-      false,
-      1,
-    ]);
+    expect([
+      sprites[4].visible,
+      sprites[5].visible,
+      sprites[6].visible,
+      sprites[7].visible,
+      binding.visibleCount,
+    ]).toEqual([false, false, false, false, 1]);
   });
 
   it('interpolates without allocating', () => {

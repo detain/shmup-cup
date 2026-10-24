@@ -776,7 +776,7 @@ game** (or RETRY STAGE) — a game already running keeps what it started with.
 | **SCALE** | How the picture fills the screen: **INTEGER** (the start setting — every game pixel is exactly the same size, with a black border where the screen does not fit a whole multiple), **FIT** (as large as possible without changing the shape — a thinner border or none, but some pixel rows and columns come out one screen pixel wider than others) or **STRETCH** (the whole screen, the shape stretched to fit) — see below |
 | **SHAKE** | **ON** (the start setting): the picture shakes for the big moments — your ship lost, a boss exploding; **OFF**: it never shakes |
 | **FLASHES** | **NORMAL** (the start setting) or **REDUCED**: at most one full-screen flash a second, and every flash much dimmer — for players sensitive to flashing light (even on NORMAL the game never flashes more than three times a second) |
-| **HITBOX** | **OFF** (the start setting) or **ON**: a small white square with a pink-red rim in the middle of your ship (and player 2's) shows the spot that must not be hit — only that spot counts for bullets and enemies |
+| **HITBOX** | **OFF** (the start setting) or **ON**: an outline of the hurt area — a pink-red frame drawn around the middle of your ship (and player 2's), open inside so your ship shows through — shows the spot that must not be hit — only that spot counts for bullets and enemies |
 | **BOSS HP** | **OFF** (the start setting) or **ON**: during a boss fight the middle of the top bar shows `BOSS` and a red bar of the boss's remaining strength instead of `HI` — see [The boss HP bar](#the-boss-hp-bar-every-device) |
 | **CRT** | The CRT / scanline look (M3-02): **OFF** (the start setting), **LIGHT** (dark scanlines over the picture) or **FULL** (scanlines, a red / green / blue aperture pattern and darkened corners). It is drawn as part of the pass that puts the picture on the screen, so any setting costs the same — see [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#picture-settings-options--display) |
 | **ASPECT** | The shape of the window the picture sits in (M3-02): **NORMAL** (the whole screen, the start setting), **ULTRA-WIDE** (a very wide cabinet window) or **CLASSIC 4:3** — the space beside the picture becomes a dim blue side panel instead of a black bar, and the picture is never cropped |
@@ -807,8 +807,9 @@ or taller). With FIT and STRETCH small details can look slightly uneven — that
 INTEGER is the sharpest.
 
 **The hitbox marker.** Your ship is only hit where its small weak spot is — bullets that merely
-brush a wing miss. HITBOX ON draws that spot: a white 3 × 3 square in a pink-red frame in the
-middle of the KESTREL or the MANTA (smaller while a **REDUCE** shield is up). It moves exactly with
+brush a wing miss. HITBOX ON draws an outline of that spot: a 1-px pink-red frame around the
+middle of the KESTREL or the MANTA, its inside left open so your ship stays visible (smaller while
+a **REDUCE** shield is up). It moves exactly with
 the ship, disappears while the ship is exploding, and changes nothing about the game. (The
 *hit-area outlines* of the debug build are a different, developer-only tool —
 [debug-tools.md](debug-tools.md).)
@@ -4076,7 +4077,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The picture has black borders on the sides and top (PC) | Expected with **SCALE → INTEGER** (the start setting) when the window is not a whole multiple of the game's picture; choose FIT (thinner or no border) or STRETCH (no border) in OPTIONS |
 | The picture looks stretched, or some pixels look wider than others | **SCALE** is FIT or STRETCH — expected; OPTIONS → DISPLAY → SCALE → INTEGER gives the sharpest, evenly sized pixels |
 | SCALE changes nothing on the TV | Expected on a 1920 × 1080 picture: the game fits it exactly three times, so all three settings look the same |
-| A white square with a pink-red frame sits on my ship | **HITBOX** is ON — it shows the ship's weak spot. OPTIONS → DISPLAY → HITBOX → OFF hides it |
+| A pink-red frame sits on my ship | **HITBOX** is ON — it outlines the ship's weak spot, open inside so the ship shows through. OPTIONS → DISPLAY → HITBOX → OFF hides it |
 | The picture no longer shakes when the ship is lost | **SHAKE** is OFF in OPTIONS |
 | The Mega Crash flash is weak or the boss's blast barely flashes | **FLASHES** is REDUCED in OPTIONS (at most one dim flash a second) — set NORMAL for the full flashes |
 | The Mega Crash no longer turns the screen white | Expected since this build: the flash brightens the picture so you can still see the bullets; it should still be clearly visible |

@@ -372,11 +372,14 @@ R2-01 ×3 fits exactly; in v1 it was ×5). `renderer.setScaleMode(mode)` re-plac
 mode. Sizes that are not positive count as 1.
 
 **Show hitbox.** `createHitboxBinding({ atlas, capacity, offsetY? })` (render-pixi `layers`): per
-`HitboxView` slot a white core `2·floor(radius) + 1` px square (1 px below radius 1) inside a
-1-px rim tinted `HITBOX_RIM_TINT` (`0xff3050`), both quads of the atlas's white pixel — no new
-sprite; tints set once at creation. The renderer binds it on the `HITBOX` layer and shows the layer
-only while `showHitbox` is on (the markers are synced only then). The KESTREL's hurt radius 2.25
-(the port's ×1.5 of 1.5) draws a 5×5 core in a 7×7 rim, centred on the ship.
+`HitboxView` slot a 1-px square **outline** tinted `HITBOX_RIM_TINT` (`0xff3050`) around a core
+`2·floor(radius) + 1` px square (1 px below radius 1) — four quads of the atlas's white pixel, one
+per side, non-overlapping, tracing the boundary of the filled marker M2-08 drew (a white core in a
+solid rim); the interior stays open so the ship shows through (the w15-HBOX re-style, an
+owner-reported occlusion) — no new sprite; the tint set once at creation. The renderer binds it on
+the `HITBOX` layer and shows the layer only while `showHitbox` is on (the markers are synced only
+then). The KESTREL's hurt radius 2.25 (the port's ×1.5 of 1.5) draws a 7 × 7 outline centred on the
+ship — 24 painted pixels where the filled marker painted 49.
 
 ## Render interpolation
 

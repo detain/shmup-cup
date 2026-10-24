@@ -38,9 +38,9 @@
  * head positions (tail first, so the head draws on top).
  *
  * And the hitbox markers of plan M2-08 (the "show hitbox" display option) —
- * {@link createHitboxBinding}: per `HitboxView` slot a white square the size of the ship's hurt
- * circle inside a 1-px {@link HITBOX_RIM_TINT} rim, drawn on the `HITBOX` layer (the renderer shows
- * that layer only while the option is on).
+ * {@link createHitboxBinding}: per `HitboxView` slot the *outline* of the ship's hurt circle — a
+ * 1-px square ring tinted {@link HITBOX_RIM_TINT}, its interior left open so the ship shows
+ * through — drawn on the `HITBOX` layer (the renderer shows that layer only while the option is on).
  *
  * **Render interpolation (M2-08).** On displays faster than the 60 Hz tick the renderer draws
  * between the last two ticks: {@link ParallaxBinding.syncInterpolated} blends each band's
@@ -67,7 +67,7 @@
  * {@link createLaserBinding}, {@link LaserBinding}, {@link LaserBindingOptions},
  * {@link LASER_WARNING_TINT}, {@link createBendingLaserBinding}, {@link BendingLaserBinding},
  * {@link BendingLaserBindingOptions}, {@link createHitboxBinding}, {@link HitboxBinding},
- * {@link HitboxBindingOptions}, {@link HITBOX_CORE_TINT}, {@link HITBOX_RIM_TINT}.
+ * {@link HitboxBindingOptions}, {@link HITBOX_RIM_TINT}.
  *
  * @module
  */
@@ -912,10 +912,10 @@ export function createBendingLaserBinding(
   };
 }
 
-/** Colour of a hitbox marker's core (M2-08). */
-export const HITBOX_CORE_TINT = 0xffffff;
-
-/** Colour of a hitbox marker's 1-px rim (M2-08 — the pink-red that reads on any background). */
+/**
+ * Colour of the hitbox marker's outline (M2-08 — the pink-red that reads on any background).
+ * Since the w15-HBOX re-style the marker is outline-only, so this is its only tint.
+ */
 export const HITBOX_RIM_TINT = 0xff3050;
 
 /** Options of {@link createHitboxBinding}. */
@@ -940,9 +940,11 @@ export interface HitboxBinding {
    * Draws the view's live hurtboxes and hides the rest. Never allocates.
    *
    * @remarks
-   * A marker is centred on `(round(x − camera.x), round(y − camera.y) + offsetY)`: a white core
-   * `2·floor(radius) + 1` pixels square (1 for radii below 1) inside a 1-px rim tinted
-   * {@link HITBOX_RIM_TINT}. Tints are set once, at creation (Pixi's tint setter allocates).
+   * A marker is centred on `(round(x − camera.x), round(y − camera.y) + offsetY)`: a 1-px square
+   * ring tinted {@link HITBOX_RIM_TINT} around a core `2·floor(radius) + 1` pixels square (1 for
+   * radii below 1). The ring traces the filled marker's old boundary; nothing is drawn inside it —
+   * the ship shows through (the w15-HBOX re-style, an owner-reported occlusion). Tints are set
+   * once, at creation (Pixi's tint setter allocates).
    *
    * @param view - The hitbox view the binding was created for.
    * @param camera - The world camera.
@@ -973,7 +975,7 @@ export interface HitboxBinding {
  * Creates the hitbox markers of a hitbox view (load time).
  *
  * @param options - Atlas, capacity and y offset.
- * @returns The binding (two sprites per slot created now, hidden).
+ * @returns The binding (four outline sprites per slot created now, hidden).
  * @throws {RangeError} When `capacity` is not a positive integer.
  *
  * @example
@@ -991,18 +993,32 @@ export function createHitboxBinding(options: HitboxBindingOptions): HitboxBindin
   const offsetY = options.offsetY ?? PLAYFIELD_Y;
   const container = new Container({ label: 'hitboxes' });
   const pixel = atlas.textures[atlas.pixelFrame];
-  const rims: Sprite[] = [];
-  const cores: Sprite[] = [];
+  // One strip per side of the outline, per slot (four sprites a slot). The old marker drew a
+  // white core inside a solid rim square — 49 painted pixels over the ship's centre at the
+  // KESTREL's radius; the strips paint only the ring (24) and leave the interior open, the
+  // w15-HBOX re-style of the owner-reported occlusion. All four carry the rim tint, set once.
+  const topEdges: Sprite[] = [];
+  const bottomEdges: Sprite[] = [];
+  const leftEdges: Sprite[] = [];
+  const rightEdges: Sprite[] = [];
   for (let i = 0; i < capacity; i++) {
-    const rim = new Sprite(pixel);
-    rim.tint = HITBOX_RIM_TINT;
-    rim.visible = false;
-    const core = new Sprite(pixel);
-    core.tint = HITBOX_CORE_TINT;
-    core.visible = false;
-    rims.push(rim);
-    cores.push(core);
-    container.addChild(rim, core);
+    const top = new Sprite(pixel);
+    top.tint = HITBOX_RIM_TINT;
+    top.visible = false;
+    const bottom = new Sprite(pixel);
+    bottom.tint = HITBOX_RIM_TINT;
+    bottom.visible = false;
+    const left = new Sprite(pixel);
+    left.tint = HITBOX_RIM_TINT;
+    left.visible = false;
+    const right = new Sprite(pixel);
+    right.tint = HITBOX_RIM_TINT;
+    right.visible = false;
+    topEdges.push(top);
+    bottomEdges.push(bottom);
+    leftEdges.push(left);
+    rightEdges.push(right);
+    container.addChild(top, bottom, left, right);
   }
   let visible = 0;
   // Render interpolation (M2-08): each marker's centre at the previous tick and at the last tick
@@ -1016,28 +1032,43 @@ export function createHitboxBinding(options: HitboxBindingOptions): HitboxBindin
   let history = false;
 
   /**
-   * Places one marker (whole-pixel arguments: a fractional number passed to a call V8 does not
-   * inline is boxed).
+   * Places one marker's outline (whole-pixel arguments: a fractional number passed to a call V8
+   * does not inline is boxed). The four strips do not overlap, so the painted pixels are exactly
+   * the ring — the interior of the old marker's boundary stays open.
    *
    * @param i - The slot.
    * @param cx - Screen x of the centre.
    * @param cy - Screen y of the centre.
-   * @param half - Half the core's size (`floor(radius)`, 0 below 1).
+   * @param half - Half the core the outline surrounds (`floor(radius)`, 0 below 1).
    */
   const placeMarker = (i: number, cx: number, cy: number, half: number): void => {
     const size = 2 * half + 1;
-    const core = cores[i];
-    core.x = cx - half;
-    core.y = cy - half;
-    core.scale.x = size;
-    core.scale.y = size;
-    core.visible = true;
-    const rim = rims[i];
-    rim.x = cx - half - 1;
-    rim.y = cy - half - 1;
-    rim.scale.x = size + 2;
-    rim.scale.y = size + 2;
-    rim.visible = true;
+    const x0 = cx - half - 1;
+    const y0 = cy - half - 1;
+    const top = topEdges[i];
+    top.x = x0;
+    top.y = y0;
+    top.scale.x = size + 2;
+    top.scale.y = 1;
+    top.visible = true;
+    const bottom = bottomEdges[i];
+    bottom.x = x0;
+    bottom.y = y0 + size + 1;
+    bottom.scale.x = size + 2;
+    bottom.scale.y = 1;
+    bottom.visible = true;
+    const left = leftEdges[i];
+    left.x = x0;
+    left.y = y0 + 1;
+    left.scale.x = 1;
+    left.scale.y = size;
+    left.visible = true;
+    const right = rightEdges[i];
+    right.x = x0 + size + 1;
+    right.y = y0 + 1;
+    right.scale.x = 1;
+    right.scale.y = size;
+    right.visible = true;
   };
 
   /**
@@ -1047,8 +1078,10 @@ export function createHitboxBinding(options: HitboxBindingOptions): HitboxBindin
    */
   const hideFrom = (count: number): void => {
     for (let i = count; i < capacity; i++) {
-      cores[i].visible = false;
-      rims[i].visible = false;
+      topEdges[i].visible = false;
+      bottomEdges[i].visible = false;
+      leftEdges[i].visible = false;
+      rightEdges[i].visible = false;
     }
     visible = count;
   };
