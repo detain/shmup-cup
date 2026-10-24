@@ -251,7 +251,9 @@ describe('the model table', () => {
         key,
       );
     }
-    assert.deepEqual(models.flux2.verdict, { pixels: 'hold', reference: 'hold' });
+    assert.deepEqual(models.flux2.verdict, { pixels: 'ship', reference: 'ship' });
+    assert.ok(models.flux2.conditions.includes('bfl.ai/licensing'), 'the commercial condition');
+    assert.deepEqual(models.ltxvideo.verdict, { pixels: 'hold', reference: 'hold' });
     assert.equal(
       models.flux2.weights.transformer,
       'lmsys/flux2-dev-modelopt-fp8-sglang-transformer',

@@ -7,8 +7,8 @@
       "kind": "image",
       "weights": { "repo": "black-forest-labs/FLUX.1-dev", "revision": null, "transformer": null },
       "licence": "flux1-dev-nc-1.1.1",
-      "verdict": { "pixels": "hold", "reference": "hold" },
-      "conditions": "hold until Black Forest Labs confirms in writing or a commercial licence covers it (art-provenance.md section 8, decision 1)"
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "only in the free open-source (MPL-2.0) distribution, never sold — the owner's ruling of 2026-10-23 (art-provenance.md section 8, decision 1); any paid or commercial distribution needs a BFL commercial licence (bfl.ai/licensing) first"
     },
     "flux2": {
       "id": "black-forest-labs/FLUX.2-dev",
@@ -19,8 +19,8 @@
         "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
       },
       "licence": "flux-nc-2.1",
-      "verdict": { "pixels": "hold", "reference": "hold" },
-      "conditions": "hold until Black Forest Labs confirms in writing or a commercial licence covers it (art-provenance.md section 8, decision 1)"
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "only in the free open-source (MPL-2.0) distribution, never sold — the owner's ruling of 2026-10-23 (art-provenance.md section 8, decision 1); any paid or commercial distribution needs a BFL commercial licence (bfl.ai/licensing) first"
     },
     "sd35": {
       "id": "stabilityai/stable-diffusion-3.5-large",
@@ -44,7 +44,7 @@
       "weights": { "repo": "Qwen/Qwen-Image-Edit-2511", "revision": null, "transformer": null },
       "licence": "apache-2.0",
       "verdict": { "pixels": "ship", "reference": "ship" },
-      "conditions": "after the content review; an edit of a FLUX image inherits the FLUX hold (art-provenance.md section 8, decision 1)"
+      "conditions": "after the content review; an edit of a FLUX image inherits FLUX's non-commercial basis (art-provenance.md section 8, decision 1)"
     },
     "wan22": {
       "id": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",

@@ -67,8 +67,8 @@ model, and `test/scripts/art-origins.test.ts` fails when this table and that fil
 
 | Model (repo used) | Licence | Outputs in a sold game as pixels? | As a design reference? | Conditions on outputs | Attribution / notice | Revenue limit | Our use so far |
 |---|---|---|---|---|---|---|---|
-| **FLUX.2-dev** (`black-forest-labs/FLUX.2-dev` + transformer `lmsys/flux2-dev-modelopt-fp8-sglang-transformer`) | [FLUX Non-Commercial License v2.1](https://huggingface.co/black-forest-labs/FLUX.2-dev/blob/main/LICENSE.md) (web copy: [v2.0, 2025-11-25](https://bfl.ai/legal/non-commercial-license-terms)); id `flux-nc-2.1` | **hold** — §2(d) allows it, §1(c) / §2(a) / §4(a) and BFL's help centre say commercial use needs a commercial licence (§3.1, §4) | **hold** — lower risk than pixels, but the strict reading covers it too | content filter **or** a review for unlawful / infringing content before distribution (§2(e)(i)); AI disclosure where law requires (§2(e)(ii)); never used to train a competing model (§2(d)) | none for outputs (the notice of §3 is for redistributing the model, which we never do) | none — a commercial licence is sold by volume ([bfl.ai/licensing](https://bfl.ai/licensing)) | 84 of 91 round-1 winners, incl. all 7 text items; all 203 round-2 followups and every comment edit planned |
-| **FLUX.1-dev** (`black-forest-labs/FLUX.1-dev`) | [FLUX.1 [dev] Non-Commercial License v1.1.1](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md); id `flux1-dev-nc-1.1.1` | **hold** — same clauses as FLUX.2-dev | **hold** | as FLUX.2-dev | as FLUX.2-dev | as FLUX.2-dev | 1 winner: the ending "the deep is still" |
+| **FLUX.2-dev** (`black-forest-labs/FLUX.2-dev` + transformer `lmsys/flux2-dev-modelopt-fp8-sglang-transformer`) | [FLUX Non-Commercial License v2.1](https://huggingface.co/black-forest-labs/FLUX.2-dev/blob/main/LICENSE.md) (web copy: [v2.0, 2025-11-25](https://bfl.ai/legal/non-commercial-license-terms)); id `flux-nc-2.1` | **ship**, in the free open-source (MPL-2.0) distribution only — the owner's ruling of 2026-10-23 (section 8, decision 1): §2(d) allows the outputs "for any purpose" and the non-commercial distribution meets §1(c) / §2(a) / §4(a) and BFL's help centre alike (§3.1, §4); a sold or otherwise commercial game needs a commercial licence first | **ship**, on the same non-commercial basis — lower risk than pixels, and §6 rule 1 still keeps every FLUX-made reference out of a paid distribution | content filter **or** a review for unlawful / infringing content before distribution (§2(e)(i)); AI disclosure where law requires (§2(e)(ii)); never used to train a competing model (§2(d)) | none for outputs (the notice of §3 is for redistributing the model, which we never do) | none — a commercial licence is sold by volume ([bfl.ai/licensing](https://bfl.ai/licensing)) | 84 of 91 round-1 winners, incl. all 7 text items; all 203 round-2 followups and every comment edit planned |
+| **FLUX.1-dev** (`black-forest-labs/FLUX.1-dev`) | [FLUX.1 [dev] Non-Commercial License v1.1.1](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md); id `flux1-dev-nc-1.1.1` | **ship** — same basis and clauses as FLUX.2-dev | **ship**, same basis | as FLUX.2-dev | as FLUX.2-dev | as FLUX.2-dev | 1 winner: the ending "the deep is still" |
 | **SD3.5 Large** (`stabilityai/stable-diffusion-3.5-large`) | [Stability AI Community License, 2024-07-05](https://stability.ai/community-license-agreement) ([repo copy](https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/LICENSE.md)); id `stability-community-2024-07-05` | **ship**, after registering, while under the revenue limit | **ship** | the Acceptable Use Policy (IV(b)); no use to build a foundation model; you own outputs "to the extent permitted by applicable law" (IV(c)(iii)) | IV(a)'s "Powered by Stability AI" + Notice file are tied to distributing the model or a Derivative Work, which excludes outputs — ambiguous for a game that ships outputs only (§3.3) | **USD 1 M** annual revenue of the licensee and its Affiliates, from any source; above it the licence ends and an Enterprise licence is needed | 6 winners: terrain swatches (AZURE VERGE, BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP, TEMPEST RIDGE, ABYSSAL THRONE) |
 | **Qwen-Image** (`Qwen/Qwen-Image`; and `Qwen/Qwen-Image-Edit-2511`, the `qwenedit` group of `gen-candidate.mjs`) | [Apache 2.0](https://huggingface.co/Qwen/Qwen-Image/blob/main/LICENSE) (Edit-2511: [apache-2.0](https://huggingface.co/Qwen/Qwen-Image-Edit-2511)); id `apache-2.0` | **ship** | **ship** | none in the licence | none for outputs (Apache's NOTICE and licence copy are for redistributing the model) | none | 0 winners (82 round-1 candidates); the Apache alternative if FLUX images must be replaced |
 | **Wan2.2-T2V-A14B** (served as `Wan-AI/Wan2.2-T2V-A14B-Diffusers`) | Apache 2.0 ([model card](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B); [licence text](https://github.com/Wan-Video/Wan2.2/blob/main/LICENSE.txt)); id `apache-2.0` | **ship** | **ship** | the card: usage "must not involve sharing any content that violates applicable laws, causes harm …" | none for outputs | none | video slot a: the 29 text-to-video clips of round 1 |
@@ -523,8 +523,7 @@ with the first override that names a bullet, beam or bend.)*
 ### 9.3 The rules
 
 In the shipped tree every finding **fails**. In the staging folder rules 1, 2 and 6 fail and rules
-3–5 only **warn**: art may wait there for its review or for the FLUX decision, but not with a
-broken record.
+3–5 only **warn**: art may wait there for its review, but not with a broken record.
 
 1. **Traced** — every issue of `checkProvenanceTree`: an override PNG with neither a record nor a
    `LICENSES.md` entry, an invalid record, a record without its PNG, a PNG or sidecar changed since
@@ -534,8 +533,10 @@ broken record.
    the model has its row — section 6 rule 9).
 3. **Nothing on hold** — no image anywhere in a record's source or reference tree, at any depth, has
    the verdict `hold` for the record's `use`, by its model's row or by any row with its recorded
-   licence id. This is section 6 rule 1's FLUX gate: a Qwen edit of a FLUX image holds, and so does
-   a FLUX licence on a model the table lacks.
+   licence id. An edit of a held image holds too, and so does a held licence on a model the table
+   lacks. Section 6 rule 1's gate: since the flip of 2026-10-23 (section 8, decision 1) rule 3
+   holds only LTX-Video — and no verdict here ever licenses FLUX-made art for a paid or commercial
+   distribution (section 6 rule 1), which remains §6's rule, not this table's.
 4. **Reviewed** — an `ai-assisted` record has `reviewed` set (section 6 rule 5).
 5. **A reference is a reference** — `use: "reference"` needs `cleanup` `heavy` or `redrawn`.
 6. **Classified** — every sprite origin is classified and the pipeline reports no source issue; no
@@ -566,13 +567,14 @@ line of the script to relax.
   there and never fails CI: an unreviewed sprite staged next to the shipped tree still gives exit 0
   with `--check`, 0 failures and 1 warning;
 - the ingest tool's five fixture outputs, added as overrides to a temporary copy of
-  `assets/source/`: `fixture-far` (FLUX.1-dev), `drone` and `fixture-glow` (FLUX.2-dev) hold,
-  the unreviewed AI records fail rule 4, `gyre` (`reference` + `none`) fails rule 5, the hand-made
-  `fringe-hull` passes;
-- synthetic records for every rule: an edit of an edit of a FLUX image, a licence that is not the
-  table's, an unknown model or key, a `null` licence, a FLUX licence on an unlisted model, a PNG
-  with no record, a `LICENSES.md` entry, an invalid record, a candidates path, a verdict read for
-  the record's own `use`;
+  `assets/source/`: the FLUX ones (`fixture-far` of FLUX.1-dev, `drone` and `fixture-glow` of
+  FLUX.2-dev) pass rule 3 on the flipped verdicts (section 8, decision 1) while the unreviewed AI
+  records fail rule 4, `gyre` (`reference` + `none`) fails rule 5, the hand-made `fringe-hull`
+  passes;
+- synthetic records for every rule: an edit of an edit of a held image (LTX-Video — rule 3's hold
+  coverage since the FLUX flip), a licence that is not the table's, an unknown model or key, a
+  `null` licence, a held licence on an unlisted model, a PNG with no record, a `LICENSES.md`
+  entry, an invalid record, a candidates path, a verdict read for the record's own `use`;
 - the staging folder warns on rules 3–5 and fails on 1, 2 and 6;
 - **the licence table is filled:** section 2 names every licence id, and has a row for every
   model of `models.json` with its licence id and the same verdicts — so a verdict changed in one
@@ -581,14 +583,15 @@ line of the script to relax.
 
 ### 9.6 Still open
 
-- **The real run** — R3-02's manual ingest of the round-2 winners; only then does the report list
-  real models.
+- **The real run** — the S3 lanes are ingesting the winners' art zone by zone (the pilot's zone A
+  landed the FLUX flip below the same day); the report lists real models from zone A's art onward.
 - **The FLUX decision** (section 8, decision 1) **was ruled 2026-10-23** on the non-commercial
-  basis; the flip it names — `models.json` and section 2 together, so the origin report's rule 3
-  reads the free distribution the ruling covers — **still waits**, and must land before the first
-  real S3 ingest is checked (the verdict column of section 2 speaks of a *sold* game, which the
-  ruling does not license; encoding the non-commercial basis is the first S3 lane's step with the
-  owner).
+  basis, **and the flip landed with it** — `models.json` and section 2 now read `ship` for the
+  free open-source distribution the ruling covers, so the origin report's rule 3 passes FLUX-made
+  art in the open-source game and still bars it from a paid or commercial one (a BFL licence —
+  [bfl.ai/licensing](https://bfl.ai/licensing) — must be in place before anything FLUX-made ships
+  there; the monetization row of [`docs/client/outstanding-work.md`](../client/outstanding-work.md)
+  carries it).
 - **The licence table final** for the models whose art actually ships.
 - **The prompt-library note** — a "Licences" bullet in `art-prompts/images/README.md` (shippable
   art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). It waits for
@@ -609,7 +612,7 @@ line of the script to relax.
 | The override list, and "procedural" derived | the pipeline's `collectSprites()` origins (an override's ends in its PNG's path); `loadSpriteSources(dir).overrides` for the staging folder |
 | The `LICENSES.md` format | a Markdown file in the PNG's folder or any folder above it (up to `sprites/`) naming the PNG by its relative path or its sprite name in backticks, with author and licence |
 | The staging folder | `art-prompts/v2/ingested/`, checked like `assets/source/sprites/` by the tool, `provenance.test.ts`, CI's `ingest` job and the report |
-| Licence ids ↔ models | `art-prompts/ingest/models.json`: each model group's served id, weights, licence id and per-use verdict (`flux1`, `flux2` and `ltxvideo` are **hold** today) |
+| Licence ids ↔ models | `art-prompts/ingest/models.json`: each model group's served id, weights, licence id and per-use verdict (today only `ltxvideo` is **hold**; `flux1` and `flux2` ship in the free open-source distribution on the owner's ruling of 2026-10-23 — section 2, section 6 rule 1) |
 
 Since `4873623` the art round's `gen-candidate.mjs` records each edit input's `editFromSha256`, so
 ingest can later match a winner copy byte for byte (today it matches it by its sidecar's `file`

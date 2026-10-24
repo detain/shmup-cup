@@ -23,8 +23,8 @@
  *   Never the art round's git-ignored candidates or its winners.
  *
  * **Rules** ({@link RULES}). In the shipped tree every finding is a failure; in the staging
- * folder rules 1, 2 and 6 fail and rules 3–5 warn (art may be staged before its review or the
- * FLUX decision, but not with a broken record):
+ * folder rules 1, 2 and 6 fail and rules 3–5 warn (art may be staged before its review, but not
+ * with a broken record):
  *
  * 1. every issue of `checkProvenanceTree` — an override PNG without a record or a `LICENSES.md`
  *    entry, an invalid record, a record without its PNG, a PNG or sidecar changed since ingest, a
@@ -32,8 +32,9 @@
  * 2. every modelled source and edit reference names a model of `models.json` (by `modelKey`, else
  *    by served id), with the table's served id and licence id — a `null` licence fails;
  * 3. no image anywhere in a record's source or reference tree is on `hold` for the record's
- *    `use` — by its model's row or by any row with its recorded licence id (the FLUX gate,
- *    art-provenance §6 rule 1);
+ *    `use` — by its model's row or by any row with its recorded licence id (§6 rule 1's gate;
+ *    since the FLUX flip of 2026-10-23 only LTX-Video holds, and rule 3's hold for a FLUX-made
+ *    sprite is a paid distribution's gate, not this verdict column's;
  * 4. an `ai-assisted` record has been reviewed (`reviewed` is not `null`; §6 rule 5, owner
  *    default W3-11);
  * 5. a record whose `use` is `reference` has `cleanup` `heavy` or `redrawn` — with `none` or
@@ -259,7 +260,7 @@ function modelledImages(record, models) {
       const licence = typeof image.licence === 'string' ? image.licence : null;
       const use = /** @type {'pixels' | 'reference'} */ (record.use);
       // The verdicts are policy kept per licence id: the model's own row, and every row with the
-      // recorded licence (so a FLUX licence on a model the table lacks still holds).
+      // recorded licence (so a held licence on a model the table lacks still holds).
       const rows = Object.values(models).filter((m) => m === entry || m.licence === licence);
       /** @type {'ship' | 'hold' | null} */
       let verdict = null;

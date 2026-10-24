@@ -336,7 +336,7 @@ sprite can be cut from several images, so the per-image fields sit **per source*
 | `reviewed` | `{ "on", "by" }` of the content review (look-alikes, logos, stray text — §6 rule 5), or `null` |
 | `ingestedAt` | the date (the plan's "date"), `YYYY-MM-DD` |
 | `author` | who made or cleaned it, or `null` |
-| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images: `path` — the committed file —, `from` — the `editFrom` entry it stands for, or `null` —, `sha256`, `sidecar` and `sidecarSha256`, and from that sidecar the `model`, `modelKey`, `weights` and `licence` that made it, and its own `reference` list — an edit of a FLUX image inherits FLUX's hold); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
+| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images: `path` — the committed file —, `from` — the `editFrom` entry it stands for, or `null` —, `sha256`, `sidecar` and `sidecarSha256`, and from that sidecar the `model`, `modelKey`, `weights` and `licence` that made it, and its own `reference` list — an edit of a FLUX image inherits FLUX's non-commercial basis); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
 | `recipe` | `{ path, sha256 }` (text hashes — the recipe's, the sidecars' — read line endings as LF) |
 | `edit` | `{ path, sha256, painted, erased }`, or `null` |
 | `output` | `png`, `sha256`, `sidecar`, `sidecarSha256`, `frames`, `frameWidth`, `frameHeight`, `colors`, `alpha` |
@@ -360,12 +360,12 @@ go in the edit layer and a re-run), or when a recipe was never ingested.
 **The origin report is the gate the ingest tool is not** (R3-05 part 2 —
 [art-provenance.md](art-provenance.md) §9). The tool writes a record for anything it can trace, but
 `node scripts/art-origins.mjs --check` — run in CI by `test/scripts/art-origins.test.ts` — **fails**
-a shipped sprite whose record or reference tree holds a model on `hold` for its `use` (today every
-FLUX model — rule 3), an `ai-assisted` record with `reviewed: null` (rule 4, W3-11), and a
-`"use": "reference"` record whose `cleanup` is `none` **or `light`** — with so little cleanup the
+a shipped sprite whose record or reference tree holds a model on `hold` for its `use` (today only
+LTX-Video — rule 3, since the FLUX flip of 2026-10-23), an `ai-assisted` record with
+`reviewed: null` (rule 4, W3-11), and a `"use": "reference"` record whose `cleanup` is `none` **or `light`** — with so little cleanup the
 shipped pixels are still largely the model's, so "reference" needs `heavy` or `redrawn` (rule 5,
 W3-10). In the staging folder those three rules only warn, so art may be ingested before its
-review or the FLUX decision; a broken record, an unknown model or a path into the git-ignored
+review; a broken record, an unknown model or a path into the git-ignored
 candidates fails there too.
 
 **`LICENSES.md`** (for hand-drawn or third-party art without a record): a Markdown file in the

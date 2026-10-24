@@ -9,11 +9,13 @@
  *   pipeline's own origins. A **staged warning** (rules 3–5 in `art-prompts/v2/ingested/`) is
  *   allowed there and never fails CI — a test stages an unreviewed sprite to prove it;
  * - adds the ingest tool's **six fixture outputs** to a temporary copy of `assets/source/` as
- *   override PNGs: the FLUX ones are on hold (rule 3), the unreviewed AI records fail (rule 4),
+ *   override PNGs: the FLUX ones pass the flipped rule-3 verdicts (art-provenance.md §8, decision
+ *   1, 2026-10-23), the unreviewed AI records fail (rule 4),
  *   `gyre` — `use: "reference"` with `cleanup: "none"` — fails rule 5, the hand-made `fringe-hull`
  *   passes;
- * - checks every rule on **synthetic records**: a Qwen edit of an edit of a FLUX image holds, a
- *   licence that is not the table's, an unknown model or key, a `null` licence, a FLUX licence on a
+ * - checks every rule on **synthetic records**: an edit of an edit of a held image (LTX-Video)
+ *   holds, a
+ *   licence that is not the table's, an unknown model or key, a `null` licence, a held licence on a
  *   model the table lacks, a PNG with no record, a `LICENSES.md` entry, an invalid record, a path
  *   in the candidates folder, and the verdict read for the record's own `use`;
  * - checks that the **staging folder** only warns on rules 3–5 and still fails on 1, 2 and 6;
@@ -200,7 +202,7 @@ function cli(...args: string[]): { status: number | null; stdout: string; stderr
  * without provenance, a model not in the table or a candidates path fails — rules 1, 2, 6), no
  * shipped sprite has a finding, and every shipped sprite is traced. A **staged warning** (rules
  * 3–5: a hold, a missing review, a light reference) is allowed — art may wait in the staging folder
- * for its review or for the FLUX decision (`art-provenance.md` §9.3), so R3-02's real ingest does
+ * for its review (`art-provenance.md` §9.3), so R3-02's real ingest does
  * not turn CI red.
  *
  * @param report - A report over the shipped `assets/source/`, with any staging folder.
@@ -312,19 +314,16 @@ describe('R3-05 — the origin report on the shipped tree', () => {
 describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
   const report = buildOriginReport({ sourceDir: fixtureTree(), stagingDir: null });
 
-  it('FLUX holds, unreviewed AI art fails, a reference without real cleanup fails, hand art passes', () => {
+  it('FLUX ships free, unreviewed AI art fails, a reference without real cleanup fails, hand art passes', () => {
     expect(verdicts(report)).toEqual(
       [
-        'shipped backdrops/fixture-far rule 3 failure', // FLUX.1-dev
-        'shipped backdrops/fixture-far rule 4 failure', // not reviewed
-        'shipped enemies/drone rule 3 failure', // FLUX.2-dev (reviewed)
+        'shipped backdrops/fixture-far rule 4 failure', // not reviewed (its FLUX.1 art ships)
         'shipped enemies/gyre rule 4 failure', // not reviewed
         'shipped enemies/gyre rule 5 failure', // use "reference", cleanup "none" (W3-10)
-        'shipped fx/fixture-glow rule 3 failure', // FLUX.2-dev
-        'shipped fx/fixture-glow rule 4 failure', // not reviewed
+        'shipped fx/fixture-glow rule 4 failure', // not reviewed (its FLUX.2 art ships)
       ].sort(),
     );
-    expect(report.failures).toBe(7);
+    expect(report.failures).toBe(4);
     expect(report.warnings).toBe(0);
     expect(row(report.sprites, 'bosses/fringe-hull')).toMatchObject({
       origin: 'hand',
@@ -344,7 +343,7 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       use: 'pixels',
       cleanup: 'light',
       reviewed: true,
-      status: 'failure',
+      status: 'ok', // reviewed FLUX art ships (art-provenance.md §8, decision 1)
     });
     expect(row(report.sprites, 'enemies/gyre')).toMatchObject({
       origin: 'ai-assisted',
@@ -375,13 +374,13 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     expect(byModel['black-forest-labs/FLUX.1-dev']).toEqual({
       sprites: 1,
       licence: 'flux1-dev-nc-1.1.1',
-      pixels: 'hold',
-      reference: 'hold',
+      pixels: 'ship',
+      reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
       sprites: 2,
       licence: 'flux-nc-2.1',
-      pixels: 'hold',
+      pixels: 'ship',
     });
     expect(byModel['Qwen/Qwen-Image-Edit-2511']).toMatchObject({
       licence: 'apache-2.0',
@@ -389,8 +388,8 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     const text = formatOriginReport(report);
-    expect(text).toContain('FAIL [shipped, rule 3] enemies/drone: ');
-    expect(text.endsWith('7 failures, 0 warnings\n')).toBe(true);
+    expect(text).toContain('FAIL [shipped, rule 4] backdrops/fixture-far: ');
+    expect(text.endsWith('4 failures, 0 warnings\n')).toBe(true);
   });
 });
 
@@ -401,11 +400,12 @@ describe('R3-05 — every rule, on synthetic records', () => {
 
   beforeAll(() => {
     mkdirSync(sprites, { recursive: true });
-    // A Qwen edit of a Qwen edit of a FLUX.2 image: the hold is two edits deep (rule 3). The
+    // A Qwen edit of a Qwen edit of an LTX-Video frame: the hold is two edits deep (rule 3;
+    // LTX-Video is the held model since the FLUX flip of 2026-10-23). The
     // edit inputs' `from` names a candidate, which is allowed (rule 6 reads committed paths only).
-    writeOverride(sprites, 'syn/edit-of-flux', (_r, s) => {
+    writeOverride(sprites, 'syn/edit-of-held', (_r, s) => {
       madeBy(s, 'qwenedit');
-      s.reference = [reference('qwenedit', [reference('flux2')])];
+      s.reference = [reference('qwenedit', [reference('ltxvideo')])];
     });
     writeOverride(sprites, 'syn/clean-edit', (_r, s) => {
       madeBy(s, 'qwenedit');
@@ -429,9 +429,13 @@ describe('R3-05 — every rule, on synthetic records', () => {
       madeBy(s, 'qwenvl');
       s.licence = null;
     });
-    // A FLUX licence on a model the table lacks: unknown model (2), and still held by its licence.
-    writeOverride(sprites, 'syn/unlisted-flux', (_r, s) => {
-      Object.assign(s, { model: 'acme/flux-finetune', modelKey: null, licence: 'flux-nc-2.1' });
+    // A held licence on a model the table lacks: unknown model (2), and still held by its licence.
+    writeOverride(sprites, 'syn/unlisted-held', (_r, s) => {
+      Object.assign(s, {
+        model: 'acme/ltx-finetune',
+        modelKey: null,
+        licence: 'ltxv-open-weights-0.x',
+      });
     });
     writeOverride(sprites, 'syn/candidate-path', (_r, s) => {
       madeBy(s, 'qwenvl');
@@ -466,14 +470,14 @@ describe('R3-05 — every rule, on synthetic records', () => {
         'shipped syn/bare rule 1 failure', // no record, no LICENSES.md entry
         'shipped syn/broken rule 1 failure', // invalid JSON
         'shipped syn/candidate-path rule 6 failure',
-        'shipped syn/edit-of-flux rule 3 failure',
+        'shipped syn/edit-of-held rule 3 failure',
         'shipped syn/licence-mismatch rule 2 failure',
         'shipped syn/null-licence rule 2 failure',
         'shipped syn/reference-light rule 5 failure',
         'shipped syn/unknown-key rule 2 failure',
         'shipped syn/unknown-model rule 2 failure',
-        'shipped syn/unlisted-flux rule 2 failure',
-        'shipped syn/unlisted-flux rule 3 failure',
+        'shipped syn/unlisted-held rule 2 failure',
+        'shipped syn/unlisted-held rule 3 failure',
         'shipped syn/unreviewed rule 4 failure',
         'shipped syn/wrong-key rule 2 failure',
       ].sort(),
@@ -484,14 +488,12 @@ describe('R3-05 — every rule, on synthetic records', () => {
   });
 
   it('names the held image by its path in the record, two edits deep', () => {
-    const hold = report.findings.find((f) => f.sprite === 'syn/edit-of-flux');
-    expect(hold?.message).toContain(
-      'sources[0].reference[0].reference[0] black-forest-labs/FLUX.2-dev',
-    );
+    const hold = report.findings.find((f) => f.sprite === 'syn/edit-of-held');
+    expect(hold?.message).toContain('sources[0].reference[0].reference[0] Lightricks/LTX-Video');
     expect(hold?.message).toContain('an edit reference');
-    expect(row(report.sprites, 'syn/edit-of-flux').models).toEqual([
+    expect(row(report.sprites, 'syn/edit-of-held').models).toEqual([
+      'Lightricks/LTX-Video',
       'Qwen/Qwen-Image-Edit-2511',
-      'black-forest-labs/FLUX.2-dev',
     ]);
     expect(report.findings.find((f) => f.sprite === 'syn/candidate-path')?.message).toContain(
       'sources[0].path "art-prompts/v2/candidates/a/syn.png"',
@@ -583,7 +585,7 @@ describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 an
   const empty = join(tmp, 'empty-source');
   mkdirSync(join(empty, 'sprites'), { recursive: true });
 
-  it("only warns for the fixtures' holds, missing reviews and light references", () => {
+  it("only warns for the fixtures' missing reviews and light references", () => {
     const staging = join(tmp, 'staging-fixtures');
     cpSync(FIXTURES, staging, { recursive: true });
     const report = buildOriginReport({ sourceDir: empty, stagingDir: staging });
@@ -591,19 +593,16 @@ describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 an
     expect(report.failures).toBe(0);
     expect(verdicts(report)).toEqual(
       [
-        'staged backdrops/fixture-far rule 3 warning',
         'staged backdrops/fixture-far rule 4 warning',
-        'staged enemies/drone rule 3 warning',
         'staged enemies/gyre rule 4 warning',
         'staged enemies/gyre rule 5 warning',
-        'staged fx/fixture-glow rule 3 warning',
         'staged fx/fixture-glow rule 4 warning',
       ].sort(),
     );
     expect(report.staged.map((r) => [r.name, r.tree, r.status])).toEqual([
       ['backdrops/fixture-far', 'staged', 'warning'],
       ['bosses/fringe-hull', 'staged', 'ok'],
-      ['enemies/drone', 'staged', 'warning'],
+      ['enemies/drone', 'staged', 'ok'],
       ['enemies/gyre', 'staged', 'warning'],
       ['fx/fixture-glow', 'staged', 'warning'],
       ['ships/fixture-ship', 'staged', 'ok'],
@@ -617,9 +616,9 @@ describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 an
     const text = formatOriginReport(report, { list: true });
     expect(text).toContain('Staged sprites by origin and kind:');
     expect(text).toContain(
-      `WARN [staged, rule 3] enemies/drone: ${report.stagingDir}/enemies/drone.art.json: `,
+      `WARN [staged, rule 4] fx/fixture-glow: ${report.stagingDir}/fx/fixture-glow.art.json: `,
     );
-    expect(text.endsWith('0 failures, 7 warnings\n')).toBe(true);
+    expect(text.endsWith('0 failures, 4 warnings\n')).toBe(true);
   });
 
   it('fails a staged PNG without provenance, an unknown model and a candidates path', () => {
@@ -633,13 +632,17 @@ describe('R3-05 — the staging folder warns on rules 3–5 and fails on 1, 2 an
       r.reviewed = null;
       s.path = 'art-prompts/v2/candidates/a/enemy.png';
     });
+    // A held model's staged art still only warns (rule 3; LTX-Video since the FLUX flip).
+    writeOverride(staging, 'enemies/held', (_r, s) => {
+      madeBy(s, 'ltxvideo');
+    });
     const report = buildOriginReport({ sourceDir: empty, stagingDir: staging });
     expect(verdicts(report)).toEqual(
       [
         'staged enemies/bare rule 1 failure',
-        'staged enemies/candidate rule 3 warning',
         'staged enemies/candidate rule 4 warning',
         'staged enemies/candidate rule 6 failure',
+        'staged enemies/held rule 3 warning',
         'staged enemies/unknown rule 2 failure',
       ].sort(),
     );
@@ -725,8 +728,8 @@ describe('R3-05 — the command line', () => {
     const tree = fixtureTree();
     const check = cli('--check', '--source', tree);
     expect(check.status).toBe(1);
-    expect(check.stdout).toContain('FAIL [shipped, rule 3]');
-    expect(check.stderr).toContain('7 failures');
+    expect(check.stdout).toContain('FAIL [shipped, rule 4]');
+    expect(check.stderr).toContain('4 failures');
     expect(cli(`--source=${tree}`).status).toBe(0);
   });
 
@@ -735,7 +738,7 @@ describe('R3-05 — the command line', () => {
     cpSync(FIXTURES, staging, { recursive: true });
     const run = cli('--check', '--staging', staging, '--json');
     expect(run.status).toBe(0);
-    expect((JSON.parse(run.stdout) as OriginReport).warnings).toBe(7);
+    expect((JSON.parse(run.stdout) as OriginReport).warnings).toBe(4);
   });
 
   it('exits 1 when no report can be built', () => {
