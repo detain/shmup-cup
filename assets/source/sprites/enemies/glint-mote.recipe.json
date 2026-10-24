@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/glint-mote",
+  "category": "enemy",
+  "frame": { "width": 12, "height": 12 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/glint-mote/frames/winner.png",
+      "frames": [
+        [67, 72, 276, 285],
+        [67, 484, 275, 287]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [6, 6],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone G (R5-0n.S3): the two 12x12 twinkle frames are cells 1 and 4 of the owner-picked GLINT MOTE animation sheet (five strobe frames of the edge-lights going blazing to plain, then a star-puff burst, two rows of three), cropped from the committed winner with a 6-px key border around each subject box; the blaze cell reads 20,477 pixels over luma 200 against the faint cell's 10,497, so the two frames differ by the whole glow the slot's twinkle animation shows. The sheet's small orbiting flecks fall under a pixel at 12x12 - the gem and its edge light carry the sprite. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

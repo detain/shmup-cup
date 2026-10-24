@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/glint-mote",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/glint-mote/frames/winner.png",
+      "sha256": "d7f50e4f98a43b4a2f271192a8f0790f27e0552c0e4a1684e5a21f21b6528f4a",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of GLINT MOTE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GLINT MOTE enemy — a fist-sized crystal spark with bright-lilac edge-lights and tiny orbiting satellite flecks, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: five strobe frames of the edge-lights going bright to dim with the flecks at new orbit positions, then one burst frame as a harmless star-puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly six cells, three per row, nothing more. The glow fades step by step: cell one blazing white core, cell two bright, cell three medium, cell four faint, cell five a plain lilac crystal with no glow at all; the three satellite diamonds sit at different positions around the crystal in every cell; cell six is the star-puff burst.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 32511,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T20:14:54.460Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/glint-mote/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/glint-mote.png",
+          "sha256": "0495b887d8b80dac5266dfbc6de8e6ecc9743168632026978b74b2b929f5283d",
+          "sidecar": "art-prompts/v2/winners/enemy/glint-mote/winner.json",
+          "sidecarSha256": "86537520754a191d6e37aca11dc5ed765fb8bb3979ef7ba7ddf4cc54975db0d4",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/glint-mote/frames/winner.json",
+        "sidecarSha256": "f4f019b324a9eb0189d875c9ffc9c9dbf22be63369d4970cde982a466b2f5677",
+        "id": "enemy/glint-mote/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of GLINT MOTE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GLINT MOTE enemy — a fist-sized crystal spark with bright-lilac edge-lights and tiny orbiting satellite flecks, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: five strobe frames of the edge-lights going bright to dim with the flecks at new orbit positions, then one burst frame as a harmless star-puff. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly six cells, three per row, nothing more. The glow fades step by step: cell one blazing white core, cell two bright, cell three medium, cell four faint, cell five a plain lilac crystal with no glow at all; the three satellite diamonds sit at different positions around the crystal in every cell; cell six is the star-puff burst."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/glint-mote.recipe.json",
+    "sha256": "8d672d3274d7e67f926ca5664814af78984748231d7dd7bbc1b925632df1c550"
+  },
+  "edit": null,
+  "output": {
+    "png": "glint-mote.png",
+    "sha256": "90b46b3045de2111c2cf67f9a68569677e43b9960bb5e922b0dab7926f538216",
+    "sidecar": "glint-mote.json",
+    "sidecarSha256": "94762a4b2c3ff718d2c8a52bbdac05ee19892cbdb417980c2a33d118223785fb",
+    "frames": 2,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone G (R5-0n.S3): the two 12x12 twinkle frames are cells 1 and 4 of the owner-picked GLINT MOTE animation sheet (five strobe frames of the edge-lights going blazing to plain, then a star-puff burst, two rows of three), cropped from the committed winner with a 6-px key border around each subject box; the blaze cell reads 20,477 pixels over luma 200 against the faint cell's 10,497, so the two frames differ by the whole glow the slot's twinkle animation shows. The sheet's small orbiting flecks fall under a pixel at 12x12 - the gem and its edge light carry the sprite. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}
