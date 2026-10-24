@@ -79,9 +79,14 @@ describe('R3-02 — provenance of real art', () => {
       ['flux1', 'flux2', 'ltx25', 'ltxvideo', 'qwenedit', 'qwenvl', 'sd35', 'wan22'].sort(),
     );
     for (const entry of Object.values(models)) expect(LICENCE_IDS).toContain(entry.licence);
-    // §6 rule 1: nothing FLUX-made ships until Black Forest Labs answers (open decision 1).
-    expect(models.flux1.verdict).toEqual({ pixels: 'hold', reference: 'hold' });
-    expect(models.flux2.verdict).toEqual({ pixels: 'hold', reference: 'hold' });
+    // Owner ruling 2026-10-23 (art-provenance.md §8, decision 1): FLUX art ships in the free
+    // open-source (MPL-2.0) distribution, never sold — a paid distribution needs a BFL licence.
+    expect(models.flux1.verdict).toEqual({ pixels: 'ship', reference: 'ship' });
+    expect(models.flux2.verdict).toEqual({ pixels: 'ship', reference: 'ship' });
+    for (const key of ['flux1', 'flux2'])
+      expect(models[key as 'flux1' | 'flux2'].conditions).toContain('bfl.ai/licensing');
+    // LTX-Video is the table's only hold today (art-provenance.md §2).
+    expect(models.ltxvideo.verdict).toEqual({ pixels: 'hold', reference: 'hold' });
   });
 });
 

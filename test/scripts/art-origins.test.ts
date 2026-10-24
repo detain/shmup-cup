@@ -286,8 +286,16 @@ describe('R3-05 — the origin report on the shipped tree', () => {
         expect([o.endsWith('.font.json'), r.origin, r.kind]).toEqual([true, 'procedural', 'font']);
     }
     const kinds = report.counts.shipped.byOriginKind.procedural;
+    const originOf = new Map(sprites.map((s) => [s.name, s.origin]));
+    const baseIsProcedural = (o: string) => {
+      const base = originOf.get(o.slice(o.indexOf(':') + 1)) ?? '';
+      return base.startsWith('procedural:') || base.endsWith('.sprite.json');
+    };
     expect(kinds.font).toBe(Object.keys(fonts).length);
-    expect(kinds.flash).toBe(sprites.filter((s) => s.name.endsWith('@flash')).length);
+    // The @flash of a recorded (real-art) base belongs to the record, not to procedural.
+    expect(kinds.flash).toBe(
+      sprites.filter((s) => s.origin.startsWith('flash:') && baseIsProcedural(s.origin)).length,
+    );
     expect(kinds.p2).toBe(sprites.filter((s) => s.name.endsWith('@p2')).length);
     expect(kinds.palette ?? 0).toBe(sprites.filter((s) => s.origin.startsWith('palette:')).length);
   });
@@ -301,7 +309,9 @@ describe('R3-05 — the origin report on the shipped tree', () => {
   it('prints the tallies by origin × kind and by served model, and one row per sprite', () => {
     const text = formatOriginReport(report);
     expect(text).toContain('Shipped sprites by origin and kind:');
-    expect(text).toMatch(/\n {2}origin +generator +pixel-map +font +flash +p2 +total\n/);
+    expect(text).toMatch(
+      /\n {2}origin +generator +pixel-map +font +flash +p2(?: +record)? +total\n/,
+    );
     expect(text).toContain('Shipped sprites by served model (as a source or an edit reference):');
     expect(text).toMatch(PASSING_SUMMARY);
     const listed = formatOriginReport(report, { list: true }).split('\n');
@@ -366,7 +376,8 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       if (base.status === 'failure') expect(sibling.status).toBe('failure');
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(5);
+    // The five fixture records plus zone A's two real overrides (the copy holds assets/source).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(7);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -378,7 +389,8 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
-      sprites: 2,
+      // drone and fixture-glow, plus zone A's vane and drifter with their derived @flash sprites.
+      sprites: 6,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });
