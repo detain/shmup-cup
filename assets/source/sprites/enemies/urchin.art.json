@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/urchin",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/urchin/winner.png",
+      "sha256": "647529b187d8e33a0e1d781e4bcfbce4e4bb3cf23bbebb57f24af2bea93b23f8",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": "art-prompts/images/40-enemies/zone-b-brine-nebula.json",
+        "entry": "brine-nebula-sprite-sheet-v1",
+        "text": "SNES-era 16-bit pixel art sprite concept for a horizontal arcade shoot-'em-up: a single URCHIN enemy of the Iron Tide, a small squat reef turret bolted to the seabed of a nebula sea. A low charcoal barnacle dome armored in overlapping slate-gray scales like a pinecone, crowned with a radiating fan of seven sharp purple crystal spines with bright lilac tips, longest at the top. On the dome's left-facing front a single round glowing magenta aiming lens with a white-hot pinpoint center and a dark iris ring stares forward. The dome sits on a small flat chunk of warm sandstone reef rock in pale tan and peach with a few tiny pores. Squat, wide, spiky, unmistakable silhouette. Side view facing left, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, bold simple shape that stays readable at small size, no anti-aliasing, no seaweed, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no labels.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion"
+      },
+      "seed": 281595657,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T00:26:31.228Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/urchin/winner.json",
+        "sidecarSha256": "43fcc1ce5d64d6d46d9a3176f0595008ae7e931bbbe16e81b6f04f2c781e54d5",
+        "id": "enemy/urchin",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/urchin.recipe.json",
+    "sha256": "5a0b92b80cceb74a4b8b66045c769ae32d8799ef10da29bfea957eff25a0a500"
+  },
+  "edit": null,
+  "output": {
+    "png": "urchin.png",
+    "sha256": "d27ff3b906a3983f6249e1d1628242f616f72348db094780fba602b98cfaa7aa",
+    "sidecar": "urchin.json",
+    "sidecarSha256": "9742edfa017a52b412b71d03ec9030462fa4c90d812cf09d2477c2557cb53264",
+    "frames": 1,
+    "frameWidth": 18,
+    "frameHeight": 18,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone B drop (R5-02.S3): the single 18x18 sprite of the urchin reef turret (the roster names no animation — urchin and urchin-ceiling are one frame the renderer flips) is the owner-picked URCHIN design itself (flux2 seed 281595657), the one subject box on the winner sheet, cropped with a 6-px key border; 604x626 subject at a 33.6-fold fit into the 18x18 cell, inside the pilot's ship line (the ~47x carrier was refused, the ~26x drifter shipped). The /frames sheet exists but has no consumer until the content names an anim for the slot. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

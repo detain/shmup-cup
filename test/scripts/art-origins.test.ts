@@ -289,6 +289,10 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     const originOf = new Map(sprites.map((s) => [s.name, s.origin]));
     const baseIsProcedural = (o: string) => {
       const base = originOf.get(o.slice(o.indexOf(':') + 1)) ?? '';
+      // A pipeline source carries ' + <override>.png' once a real-art override sits on it — the
+      // base is then a record, whatever the generator or pixel-map stood underneath (R5-02.S3:
+      // zone B's overrides sit on brine.mjs, whose origin still starts 'procedural:').
+      if (base.includes(' + ')) return false;
       return base.startsWith('procedural:') || base.endsWith('.sprite.json');
     };
     expect(kinds.font).toBe(Object.keys(fonts).length);
@@ -376,8 +380,9 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       if (base.status === 'failure') expect(sibling.status).toBe('failure');
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
-    // The five fixture records plus zone A's two real overrides (the copy holds assets/source).
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(7);
+    // The five fixture records plus zone A's two and zone B's four real overrides (the copy holds
+    // assets/source).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(11);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -389,8 +394,9 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
-      // drone and fixture-glow, plus zone A's vane and drifter with their derived @flash sprites.
-      sprites: 6,
+      // drone and fixture-glow, plus zone A's vane and drifter and zone B's froth, brood-bubble,
+      // urchin and maw-rocket, each with its derived @flash sprite.
+      sprites: 14,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

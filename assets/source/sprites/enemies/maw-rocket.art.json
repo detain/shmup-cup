@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/maw-rocket",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/maw-rocket/frames/winner.png",
+      "sha256": "4c37138b12e653f6c34e7f9ee20a9bdba9c9ca6cdcb23bfc53a30c5773c6b4ee",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of MAW ROCKET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same MAW ROCKET enemy — a small steel torpedo with a hinged open fish-jaw nose showing a dark throat, a finned steel body and an orange nozzle flame at the tail, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four flame-flicker states of the tail nozzle on the identical torpedo body. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The torpedo with its open jaw is pixel-identical in all four cells; only the tail flame changes, clearly: short, medium, long, and medium with a forked tip. Only empty green space between the cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 51693,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T18:36:39.898Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/maw-rocket/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/maw-rocket.png",
+          "sha256": "a22b791e0e674c902827d7fcac2dfea33a9879ce5635b09ec5f3e28613ae5ca7",
+          "sidecar": "art-prompts/v2/winners/enemy/maw-rocket/winner.json",
+          "sidecarSha256": "e02bf2b3ecb76b8076238cda3ffcc1a53b72bf25a719687d1d4ed9e273764539",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/maw-rocket/frames/winner.json",
+        "sidecarSha256": "fa184ffe077fb6d58103471c25c7edc0136cad76325e19b262c2495c13fe6382",
+        "id": "enemy/maw-rocket/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of MAW ROCKET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same MAW ROCKET enemy — a small steel torpedo with a hinged open fish-jaw nose showing a dark throat, a finned steel body and an orange nozzle flame at the tail, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: four flame-flicker states of the tail nozzle on the identical torpedo body. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The torpedo with its open jaw is pixel-identical in all four cells; only the tail flame changes, clearly: short, medium, long, and medium with a forked tip. Only empty green space between the cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/maw-rocket.recipe.json",
+    "sha256": "8699197b33c79e2d9a98d9642a44fcebbf856a67635f59d2d01492b53fbea90c"
+  },
+  "edit": null,
+  "output": {
+    "png": "maw-rocket.png",
+    "sha256": "88c12bd06da1841704ee75e6015db7c3434e5b269862580e9e675365bae212d2",
+    "sidecar": "maw-rocket.json",
+    "sidecarSha256": "82b9f7ea82527f96f134d1342e1ac3f9c0bb1a73d2825a4f2017999ab71161da",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 11,
+    "colors": 15,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone B drop (R5-02.S3): the two 18x11 frames of the maw rocket's burn loop are sheet frames 1 and 4 — the short-flame and long-flame states, matching the interim pair the generator draws with flame lengths 2 and 4 — cropped from the owner-picked MAW ROCKET animation sheet (flux2 seed 51693, an edit of the picked single-design winner seed 2255362114) with a key border around each subject box, kept clear of the 6-px guide row at 509..514 and the 5-px guide column at 509..513. The missile's 364x158 subject lands 18x7.8 inside the cell (a 2.3:1 design in the slot's 1.6:1 box) at a 20.2-fold fit, inside the pilot's ship line. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

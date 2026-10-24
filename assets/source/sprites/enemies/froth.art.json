@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/froth",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/froth/frames/winner.png",
+      "sha256": "bab9522c3abb1750b7ff5d949eaef88969da1b8a16d691a3a56bcc3c28f58b59",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of FROTH. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same FROTH enemy — a wobbling translucent pink-white foam sphere with a darker pink rim, a bright core and a soft sheen, a faint seam line across its middle, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: round and wobbling, growing a seam, pinching in the middle, separated into two smaller froth bubbles. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 35684,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T18:19:08.318Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/froth/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/froth.png",
+          "sha256": "f14dbabf54c514bd4e272dd76223fb3e4ebef1f32ef7323e303f3d8a40fcac83",
+          "sidecar": "art-prompts/v2/winners/enemy/froth/winner.json",
+          "sidecarSha256": "f6655831adc32b2f6063206c33ac0cfb44da78f30cd2f52dd6cdbec569d88e92",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/froth/frames/winner.json",
+        "sidecarSha256": "84f43971ef99d9759e6455cfa7d7cbb0b1e86314ed61afb114066e20051bf387",
+        "id": "enemy/froth/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of FROTH. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same FROTH enemy — a wobbling translucent pink-white foam sphere with a darker pink rim, a bright core and a soft sheen, a faint seam line across its middle, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: round and wobbling, growing a seam, pinching in the middle, separated into two smaller froth bubbles. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/froth.recipe.json",
+    "sha256": "cae16cf8d07d1d87314fe57f4f1eb96eece91c1ee20f88ee46917454ee826fa0"
+  },
+  "edit": null,
+  "output": {
+    "png": "froth.png",
+    "sha256": "d2ab80d87172ea823d3afa7b4794868c2d4892d69b4cf2463fa2412d89324c5e",
+    "sidecar": "froth.json",
+    "sidecarSha256": "1b9aec9216c241af50dfbb30d7e11c14265571b7394c0897940674b35bba3253",
+    "frames": 2,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone B drop (R5-02.S3): the two 27x27 frames of the froth's shimmer loop are the top-row cells of the owner-picked FROTH animation sheet (flux2 seed 35684, an edit of the picked single-design winner seed 1624839885), cropped from the committed winner with a key border around each subject box, clamped clear of the sheet's 13-px near-white guide rows at 121..133 and the 12-px guide row at 506..517 (the sheet draws its two rows unequal: 297 and 290 band px tall, four col bands including two guide strips). The bottom-row cells stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

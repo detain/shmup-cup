@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/froth",
+  "category": "enemy",
+  "frame": { "width": 27, "height": 27 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/froth/frames/winner.png",
+      "frames": [
+        [73, 134, 330, 295],
+        [580, 134, 326, 304]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [13, 13],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone B drop (R5-02.S3): the two 27x27 frames of the froth's shimmer loop are the top-row cells of the owner-picked FROTH animation sheet (flux2 seed 35684, an edit of the picked single-design winner seed 1624839885), cropped from the committed winner with a key border around each subject box, clamped clear of the sheet's 13-px near-white guide rows at 121..133 and the 12-px guide row at 506..517 (the sheet draws its two rows unequal: 297 and 290 band px tall, four col bands including two guide strips). The bottom-row cells stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}

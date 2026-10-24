@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/brood-bubble",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/brood-bubble/frames/winner.png",
+      "sha256": "22077cbc6a837e1dfd3cc9d48e0f007629993a49d7dcefc6fef141adfb0daf5d",
+      "format": "png",
+      "width": 1024,
+      "height": 1024,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of BROOD BUBBLE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same BROOD BUBBLE enemy — a large translucent violet membranous jelly sphere with a small curled dark mechanical fish asleep inside, darker violet rim and a pale highlight on the membrane, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: intact, wobbling, cracking with the film tearing, and emptied with the membrane peeling away like a broken lantern. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Each of the four cells is visibly different: a perfect sphere; the sphere squashed wider and flatter as it wobbles; the sphere with a jagged tear in the film and the fish starting to wake; the torn, empty membrane hanging open with no fish. Only empty green space between the cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 33110,
+      "size": "1024x1024",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T18:32:39.517Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/brood-bubble/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/brood-bubble.png",
+          "sha256": "3d9fe9ee855f359612b7342f93355dff8b8c84c2f495f8cbaa6e4a3a222ebe74",
+          "sidecar": "art-prompts/v2/winners/enemy/brood-bubble/winner.json",
+          "sidecarSha256": "10c2c162ad743be0b554e3064c379e8fcf00712d3694f49514b132c2c2977f87",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/brood-bubble/frames/winner.json",
+        "sidecarSha256": "c18b56179b17ba3464a6b82e1dfaf001b5b319319a85108860a58c83b9ba59c9",
+        "id": "enemy/brood-bubble/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of BROOD BUBBLE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same BROOD BUBBLE enemy — a large translucent violet membranous jelly sphere with a small curled dark mechanical fish asleep inside, darker violet rim and a pale highlight on the membrane, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: intact, wobbling, cracking with the film tearing, and emptied with the membrane peeling away like a broken lantern. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Each of the four cells is visibly different: a perfect sphere; the sphere squashed wider and flatter as it wobbles; the sphere with a jagged tear in the film and the fish starting to wake; the torn, empty membrane hanging open with no fish. Only empty green space between the cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/brood-bubble.recipe.json",
+    "sha256": "ab323a5fae159766f9958311959d055f478aa6064a71f82e7db202b3664e5c91"
+  },
+  "edit": null,
+  "output": {
+    "png": "brood-bubble.png",
+    "sha256": "339a161afb595957373589d823dcd33b369a20426145121ab358b8e5ab3b2620",
+    "sidecar": "brood-bubble.json",
+    "sidecarSha256": "7a8f1529fd8e2535b8673a85313a2f665cffa24c7b3cef46f9d40043420fe80b",
+    "frames": 2,
+    "frameWidth": 30,
+    "frameHeight": 30,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone B drop (R5-02.S3): the two 30x30 frames of the brood bubble's stir loop are the LEFT-column cells (sheet frames 1 and 3) of the owner-picked BROOD BUBBLE animation sheet (flux2 seed 33110, an edit of the picked single-design winner seed 471823308), cropped from the committed winner with a key border around each subject box. The left column is the clean pair: both cells are one enclosed sphere subject ~348 px across; the right-column band is 430 px wide with a frame-2 subject that fills its whole band edge to edge (a smeared or merged state), so the loop takes frames 1 and 3. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

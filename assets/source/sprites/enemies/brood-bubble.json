@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/brood-bubble 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 30
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 30
+      },
+      "sourceSize": {
+        "w": 30,
+        "h": 30
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/brood-bubble 1",
+      "frame": {
+        "x": 30,
+        "y": 0,
+        "w": 30,
+        "h": 30
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 30
+      },
+      "sourceSize": {
+        "w": 30,
+        "h": 30
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "brood-bubble.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 60,
+      "h": 30
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 30,
+              "h": 30
+            },
+            "pivot": {
+              "x": 15,
+              "y": 15
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
