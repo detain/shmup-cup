@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/polyp-turret 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 17
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 17
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 17
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "polyp-turret.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 21,
+      "h": 17
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 21,
+              "h": 17
+            },
+            "pivot": {
+              "x": 10,
+              "y": 8
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

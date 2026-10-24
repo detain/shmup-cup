@@ -380,9 +380,9 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       if (base.status === 'failure') expect(sibling.status).toBe('failure');
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
-    // The five fixture records plus zone A's two, zone B's four, zone C's three and zone D's
-    // two real overrides (the copy holds assets/source).
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(16);
+    // The five fixture records plus zone A's two, zone B's four, zone C's three, zone D's
+    // two and zone F's two real overrides (the copy holds assets/source).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(18);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -395,9 +395,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
       // drone and fixture-glow, plus zone A's vane and drifter, zone B's froth, brood-bubble,
-      // urchin and maw-rocket, zone C's dune-worm, dust-devil and husk-crawler and zone D's
-      // ember-wisp and magma-cone, each of the eleven overrides with its derived @flash sprite.
-      sprites: 24,
+      // urchin and maw-rocket, zone C's dune-worm, dust-devil and husk-crawler, zone D's
+      // ember-wisp and magma-cone and zone F's vault-claw and polyp-turret, each of the thirteen
+      // overrides with its derived @flash sprite.
+      sprites: 28,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

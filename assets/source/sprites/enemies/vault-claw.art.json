@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/vault-claw",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/vault-claw/frames/winner.png",
+      "sha256": "551606b26a9e97a015b5645ec46e3cd4a23993026a62a2c38a1174bb36fed28e",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of VAULT CLAW. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same VAULT CLAW enemy — a bone-white segmented hook of eight beaded links curling out of a socket bump of green tissue, the last link a sharp grabbing hook, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: sheathed socket bump, first link emerging, half-extended four-link arc, fully extended eight-link hook, hooked shut on nothing, recoiling into the socket with fluid beads. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Cell one: only the brown tissue mound, no claw at all. Cell two: the mound with just the curved claw tip poking out of its hole. Cell three: the claw on a short neck of four beads, low and close to the mound. Cells four and five: the full tall arc of eight beads, claw open then clamped shut. Cell six: a short three-bead neck sinking back into the mound, fluid drops falling.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 32947,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T20:06:35.504Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/vault-claw/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/vault-claw.png",
+          "sha256": "aafbed75c9cf609314243fe3537d0346a2439e71a8c371b4bb706a57d80d2e99",
+          "sidecar": "art-prompts/v2/winners/enemy/vault-claw/winner.json",
+          "sidecarSha256": "73edf26d33de0f08b3c909805d8d4ba992c6edd8fc81227511cd55d4d90c2ed5",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/vault-claw/frames/winner.json",
+        "sidecarSha256": "fb7e91dddd88232b7dd123c9d799c1b9d69569cdef32be3e09fed9788847e4c7",
+        "id": "enemy/vault-claw/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of VAULT CLAW. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same VAULT CLAW enemy — a bone-white segmented hook of eight beaded links curling out of a socket bump of green tissue, the last link a sharp grabbing hook, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: sheathed socket bump, first link emerging, half-extended four-link arc, fully extended eight-link hook, hooked shut on nothing, recoiling into the socket with fluid beads. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Cell one: only the brown tissue mound, no claw at all. Cell two: the mound with just the curved claw tip poking out of its hole. Cell three: the claw on a short neck of four beads, low and close to the mound. Cells four and five: the full tall arc of eight beads, claw open then clamped shut. Cell six: a short three-bead neck sinking back into the mound, fluid drops falling."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/vault-claw.recipe.json",
+    "sha256": "e34fba3084c35baf75f164ccc19f33a421dfe51337a1f63ac3212741f759eebd"
+  },
+  "edit": null,
+  "output": {
+    "png": "vault-claw.png",
+    "sha256": "907bd42d7732aff31cf7e618e52b3fdef7e173889dfbd51f0a0b46dd31737cbc",
+    "sidecar": "vault-claw.json",
+    "sidecarSha256": "cbdf9ee94cfc565b04daadc6b888bed583d91ce093cd029781cd3ee3afd26ce9",
+    "frames": 1,
+    "frameWidth": 15,
+    "frameHeight": 15,
+    "colors": 15,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone F (R5-0n.S3): the single static frame of the vault-claw sprite is the fully-extended eight-link hook cell (row 1, col 0 reading order) of the owner-picked VAULT CLAW animation sheet (six poses, two rows of three), cropped from the committed winner with a 6-px key border around the subject box; the tentacle-grab behaviour draws the link chain programmatically, so only the hooked claw head is the sprite. The sheet's other five cells (sheathed bump through recoiling) stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}
