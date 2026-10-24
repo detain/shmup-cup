@@ -1,9 +1,9 @@
 /**
  * Browser test of the enemies (plan M1-08) in headless Chromium: `?stage=test-range` runs the
  * dev stage's timeline, whose first event is a formation of `drifter` popcorn. The drifters'
- * placeholder colours (used by no other sprite) must show up inside the playfield — never in
- * the HUD bars — and the formation must fly left across the screen, with no console errors
- * while the timeline spawns. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2,
+ * sprite colours (the SKEET real art since R5-01.S3, used by no other sprite) must show up
+ * inside the playfield — never in the HUD bars — and the formation must fly left across the
+ * screen, with no console errors while the timeline spawns. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2,
  * viewport 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  *
  * The sim runs under frame advance (`./frame-advance.ts`, the test builds' `window.__shmupDebug`),
@@ -15,11 +15,19 @@ import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
-/** Colours of the `enemies/drifter` placeholder sprite (rim, shell, core). */
+/**
+ * Colours of the `enemies/drifter` sprite (shell, body, core blue). Since R5-01.S3 (`050a6e17`)
+ * this slot carries the owner-picked SKEET real art; these are that art's own pixels, verified
+ * unique across the shipped atlas, the content and the UI literals at ±3 — only the drifter
+ * draws them (the first body pick `#513d52` collided with zone E's `bosses/steed-snout` in
+ * the merged atlas and moved to `#3d2940`). (The interim placeholder greens
+ * `#58b040`/`#2a6a30`/`#c8f080` died with that swap and left this spec sampling thin air:
+ * the CI shard-3 timeout on run 40051409015.)
+ */
 const DRIFTER_COLOURS = [
-  [0x58, 0xb0, 0x40],
-  [0x2a, 0x6a, 0x30],
-  [0xc8, 0xf0, 0x80],
+  [0x28, 0x15, 0x2b],
+  [0x3d, 0x29, 0x40],
+  [0x2a, 0x77, 0xce],
 ] as const;
 
 /**
