@@ -109,7 +109,7 @@ They reach §1's register through the docs agent of the wave that builds them: R
 | **RR-7** | R3-04's stand-in uses R1-05's assumption (PNG-8 at 0.3–0.6 MB per 2048×1024 page), its constants marked "uncalibrated"; an agent may run the optional `R3-04.M1c` here (myadmin1 has the candidates snapshot — wave 4, lane 8) | adopted |
 | **RR-8** | W5-17 kept: one stand-in zone plus `common` replace the TV bench's synthetic `rgba-2048` / `png8-2048` decode pages; `tools/input-probe/results/analyze-bench.mjs` reads the new ids | adopted |
 
-## 6. R5 / R6 re-plan decisions R5-D1 … R5-D9, R6-D1 … R6-D3
+## 6. R5 / R6 re-plan decisions R5-D1 … R5-D9, R6-D1 … R6-D4
 
 | ID | Decision (the default) | Status |
 |---|---|---|
@@ -129,16 +129,18 @@ They reach §1's register through the docs agent of the wave that builds them: R
 | **R6-D1** | The caravan clock stays **3 min** unless `R6-01.B2`'s report says otherwise | done (applied amended — the balance report chose 240 s (14,400 ticks) over the 180 s default; recorded at `9a34473c`) |
 | **R6-D2** | `R6-03.D1`'s version bump and the CHANGELOG `[2.0.0]` section land in one push by the docs agent (`tooling-config.test.ts` checks the CHANGELOG's first section; precedent W1-D2) | adopted |
 | **R6-D3** | `gh release create v2.0.0` runs only after the owner's explicit OK | adopted |
+| **R6-D4** | **The FLUX ruling (owner, 2026-10-23).** The images are fine to use — the game is an open-source (MPL-2.0) non-commercial work, not commercial work, which the FLUX Non-Commercial Licences expressly allow (§2(d)'s outputs clause and the §1(c)/§2(a)/§4(a) non-commercial model clause alike). **The condition that rides with it: before any paid or commercial distribution of art made with FLUX, a BFL commercial licence (bfl.ai/licensing) must be in place** — carried by the monetization row of `docs/client/outstanding-work.md`. `art-provenance.md` §1/§6/§8 decision 1 resolved on this basis; the 299 image winners commit under `art-prompts/v2/winners/` (S3 gate 2, the round's Q-1/Q-2 outcome: plain Git, no LFS — the 35 clips wait for D3 per `winners/VIDEO-PENDING.md`), opening the S3 round | decided by the owner |
 
 ## 7. Open owner questions (none blocks; the default holds)
 
-Q-12 and Q-13 are answered (2026-10-18); their rows stay here so the history reads in one place.
+Q-1, Q-2 and Q-3 are answered (2026-10-23, decision R6-D4 and the winners commit); Q-12 and Q-13 are
+answered (2026-10-18). Their rows stay here so the history reads in one place.
 
 | ID | Question | Default meanwhile | Where it lands |
 |---|---|---|---|
-| **Q-1** | **Is picking finished** for the R0-04 art round? | Not finished: the winners copy (`R0-04.W1`) waits | wave 4 or later |
-| **Q-2** | **Git LFS** for `art-prompts/v2/winners/` (≈ 334 items, videos included)? | Undecided: `R0-04.W1` waits | `R0-04.W1` |
-| **Q-3** | **The FLUX licence** (`art-provenance.md` §8, decision 1): ask BFL or buy the commercial licence before anything FLUX-made ships | On hold (RR-4): no FLUX pixels, no FLUX reference; AI art stays staged in `art-prompts/v2/ingested/` | R3-02's real ingest, every `S3` |
+| **Q-1** | **Is picking finished** for the R0-04 art round? | **Answered 2026-10-23:** finished — the owner's record of 2026-10-18 decides all 334 items (no pending regenerate), and the winners copy (`R0-04.W1`) is committed | wave 4 or later |
+| **Q-2** | **Git LFS** for `art-prompts/v2/winners/` (≈ 334 items, videos included)? | **Answered 2026-10-23:** no LFS this round — the 299 image winners (≈ 421 MB) commit to plain Git under `art-prompts/v2/winners/`; the 35 clips (≈ 45 MB) stay out of Git until D3, listed in `winners/VIDEO-PENDING.md` | `R0-04.W1` |
+| **Q-3** | **The FLUX licence** (`art-provenance.md` §8, decision 1): ask BFL or buy the commercial licence before anything FLUX-made ships | **Answered 2026-10-23 (R6-D4):** the game ships free and open-source (MPL-2.0) — a non-commercial distribution the FLUX NC licences allow; a BFL commercial licence (bfl.ai/licensing) is required before any paid/commercial distribution (monetization row of `docs/client/outstanding-work.md`) | R3-02's real ingest, every `S3` |
 | **Q-4** | Prompt-library edit 7: "SNES" → "16-bit console era" (≈ 1,400 uses — plan R3-05 and `art-provenance.md` §7; measured 1,405 on master)? | Not done; `R0-04.W2` does edits 1–4 only | `R0-04.W2` |
 | **Q-5** | The FACET MONARCH label reword (and its pin in `art-prompt-names.test.ts`)? | Unchanged | `R0-04.W2` if decided |
 | **Q-6** | v1.0.0's TV title overlap (the 7th menu row against the HI line): fix it on `v1.x`? | Not fixed; nothing is pushed to `v1.x` without the owner's OK | a separate v1.x fix, outside these waves |

@@ -37,9 +37,16 @@ Contents:
   the same licences grant the *model* only for non-commercial purposes, forbid using "any data
   produced by" the model for commercial purposes, and Black Forest Labs' own help centre says
   running FLUX.2 [dev] yourself for commercial work needs a commercial licence. The texts pull in
-  two directions. **Until Black Forest Labs answers in writing, or a commercial licence covers it,
-  no FLUX-made image should ship, as pixels or as the declared basis of a redraw** — and the
-  decision is most urgent *before* round 2 adds 203 more FLUX images (open decision 1).
+  two directions. **The owner ruled on 2026-10-23: the images are fine to use.** The game ships as
+  a free, open-source (MPL-2.0), non-commercial work — not commercial work — and that distribution
+  satisfies both readings at once: the §2(d) outputs clause allows the outputs "for any purpose",
+  and the non-commercial model clauses the strict reading leans on (§1(c) / §2(a) / §4(a), which
+  bind the *model's* use to Non-Commercial Purposes) are met because the distribution is
+  non-commercial. **The condition that rides with the ruling: before any paid or commercial
+  distribution of art made with FLUX, a Black Forest Labs commercial licence
+  ([bfl.ai/licensing](https://bfl.ai/licensing)) must be in place** — the monetization row of
+  [`docs/client/outstanding-work.md`](../client/outstanding-work.md) carries it (open decision 1,
+  resolved — section 8).
 - **SD3.5 Large** (6 terrain swatches): outputs may be used commercially by a licensee whose group
   earns **under USD 1 million a year**, after a free **registration** with Stability AI. The
   swatches are material references for hand-pixelled tiles anyway (bible §5.9).
@@ -74,9 +81,11 @@ full, URL, date, verdict.
 The repo also holds the **2026-10-09 model sweep** under `art-prompts/output/` — 122 FLUX.2-dev,
 85 FLUX.1-dev, 187 SD3.5 Large and 18 Qwen-Image images, 29 Wan2.2 and 18 LTX-Video clips, each with
 a sidecar naming its `served_model`. They compared the models before R0-04 and are not game art;
-nothing ships from them. Round 1's candidates and winners are not committed (they live in the
-unversioned `art-prompts/v2/candidates/` and on the picker page); round 2 commits the winners to
-`art-prompts/v2/winners/`.
+nothing ships from them. Round 1's candidates are not committed (they live in the unversioned
+`art-prompts/v2/candidates/` and on the picker page); the round's winners were committed on
+2026-10-23 to `art-prompts/v2/winners/` — the 299 image winners with their sidecars and choice
+records (the owner's ruling record in `winners/choices/`); the 35 video clips wait outside Git for
+D3, listed in `winners/VIDEO-PENDING.md`.
 
 ## 3. What the licences say
 
@@ -341,9 +350,13 @@ machine-generated disclaimer is shown (LTX).
 
 Until the owner's decisions in section 8 change them:
 
-1. **Nothing made by FLUX.2-dev or FLUX.1-dev ships** — not as pixels, not as an edit reference
-   for another model, not as the declared basis of a redraw — until Black Forest Labs confirms in
-   writing or a commercial licence covers it. They stay usable for picking and evaluation.
+1. **FLUX.2-dev and FLUX.1-dev images ship in the free, open-source (MPL-2.0) distribution** —
+   the owner's ruling of 2026-10-23 (section 8, decision 1): non-commercial distribution is what
+   the FLUX Non-Commercial Licences allow, the §2(d) outputs clause and the non-commercial model
+   clause alike. **Nothing FLUX-made ships in a paid or commercial distribution** — not as pixels,
+   not as an edit reference for another model, not as the declared basis of a redraw — until a BFL
+   commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing)) or Black Forest Labs' written
+   confirmation covers it. They stay usable for picking and evaluation.
 2. **SD3.5 Large outputs** ship only after the Stability registration, and only while the
    licensee's group earns under USD 1 M a year.
 3. **Qwen-Image and Wan2.2 outputs** may ship, after review, with their record.
@@ -377,8 +390,8 @@ on a denylist:
 Words that are also everyday English stay off the list on purpose (cave, treasure, salamander,
 halo …; the test lists them) — a check that fails on ordinary prose gets switched off. The scan is
 read-only and skips `node_modules/` and the unversioned `art-prompts/v2/candidates/`, so it reads
-the same files on every machine; round 2's winners (`art-prompts/v2/winners/`) and R3-02's staged
-output (`art-prompts/v2/ingested/`) are scanned once they are committed.
+the same files on every machine; round 2's winners (`art-prompts/v2/winners/`, committed 2026-10-23)
+and R3-02's staged output (`art-prompts/v2/ingested/`) are scanned as committed files.
 
 **What it found (2026-10-17):**
 
@@ -388,6 +401,8 @@ output (`art-prompts/v2/ingested/`) are scanned once they are committed.
 | kernel K1 (`art-prompts/images/00-style-kernel.md`), so most prompts — ~1,400 uses, 138 in the v2 manifest | **"SNES"** as an era word ("SNES-era 16-bit pixel art …") — a console trademark, not a game, studio or character | allowed in the test, pending open decision 6 |
 | `art-prompts/v2/manifest.json`, item `boss/facet-monarch` | **"crystal core"** in the picker *label* ("the crystal core with an orbiting crown"), not in the prompt; also a boss name in the series (feat appendix A) | pinned in the test (`KNOWN_HITS`); `art-prompts/v2/` is the art round's, so it is reported, not edited — open decision 7 |
 | `art-prompts/v2/candidates/a/video/zone-montage-a.json` (unversioned, not scanned) | "in the style of a side-scrolling arcade game" in the prompt that was sent | names no game; reword if the clip is regenerated — open decision 7 |
+| `art-prompts/v2/winners/boss/cinder-bastion/winner.json` (committed with the winners, 2026-10-23) | "huge battleship" in the prompt that was sent ("A single huge battleship boss …") — a phrase §26's legal notes name; it names no game, studio or character | pinned in the test (`KNOWN_HITS`); reword if the item is regenerated — open decision 7 |
+| `art-prompts/v2/winners/boss/facet-monarch/winner.json` (committed with the winners, 2026-10-23) | "crystal core" in the picker *label* the sidecar copies from the manifest row above | pinned in the test (`KNOWN_HITS`) beside its manifest row; the owner rewords — open decision 7 |
 
 The game's own content also calls FACET MONARCH "the crystal core" in prose
 (`content/enemies/README.md`, docs); that is outside this check and is for the trade-dress review.
@@ -398,14 +413,23 @@ is exact, so a pinned hit that disappears fails too, and its row is removed then
 
 ## 8. Open decisions for the owner
 
-1. **FLUX — before round 2.** Ask Black Forest Labs the three questions of section 4, or buy a
+1. ~~**FLUX — before round 2.**~~ **Ruled by the owner on 2026-10-23 — the images may ship.**
+   Original open item: "Ask Black Forest Labs the three questions of section 4, or buy a
    self-hosted commercial licence (the Platform and Professional tiers list FLUX.2 [dev]; Builder
-   does not — [bfl.ai/licensing](https://bfl.ai/licensing)), or replace the 85 FLUX winners. A
-   replacement made *from* a FLUX image (an edit, an image-to-video start frame) inherits the
-   question; a clean replacement starts from the text prompt with an Apache 2.0 model (Qwen-Image;
-   FLUX.2 [klein] 4B is Apache 2.0 too, per BFL, but is not installed) or from hand art. Round 2
-   as planned makes all 203 followups and every comment edit with FLUX.2-dev, so deciding first
-   avoids multiplying the question.
+   does not — [bfl.ai/licensing](https://bfl.ai/licensing)), or replace the 85 FLUX winners." The
+   owner's ruling (verbatim): *"the images are fine to use its currently an opensource game after
+   all not commercial work."* The game ships as a free, open-source (MPL-2.0), non-commercial
+   work, and that satisfies the licence in both readings: **§2(d)** gives the outputs "for any
+   purpose (including for commercial purposes)", and the clauses the strict reading leans on
+   (**§1(c) / §2(a) / §4(a)** — the *model's* use bound to Non-Commercial Purposes, no payments
+   arising from it) are met because the distribution takes no money. Neither BFL's written answer
+   nor a commercial licence was needed for a non-commercial release; round 2 in fact ran with
+   FLUX.2-dev's 203 followups on this basis, and the 299 image winners are committed under
+   `art-prompts/v2/winners/`. **The condition that rides with the ruling: before any paid or
+   commercial distribution of art made with FLUX, a BFL commercial licence
+   ([bfl.ai/licensing](https://bfl.ai/licensing)) must be in place** — carried by the monetization
+   row of [`docs/client/outstanding-work.md`](../client/outstanding-work.md), and it reopens this
+   decision the day the game is sold. Recorded as **R6-D4** in `docs/v2-run/decisions.md`.
 2. **Who is the licensee?** A person or a company, and which companies are its Affiliates (SD3.5:
    "You or Your Affiliate(s)", USD 1 M; LTX: "all subsidiaries, affiliates, and companies under
    common Control", USD 10 M). Both limits count all revenue, not only the game's.
@@ -559,7 +583,12 @@ line of the script to relax.
 
 - **The real run** — R3-02's manual ingest of the round-2 winners; only then does the report list
   real models.
-- **The FLUX decision** (section 8, decision 1) flips `models.json` and section 2 together.
+- **The FLUX decision** (section 8, decision 1) **was ruled 2026-10-23** on the non-commercial
+  basis; the flip it names — `models.json` and section 2 together, so the origin report's rule 3
+  reads the free distribution the ruling covers — **still waits**, and must land before the first
+  real S3 ingest is checked (the verdict column of section 2 speaks of a *sold* game, which the
+  ruling does not license; encoding the non-commercial basis is the first S3 lane's step with the
+  owner).
 - **The licence table final** for the models whose art actually ships.
 - **The prompt-library note** — a "Licences" bullet in `art-prompts/images/README.md` (shippable
   art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). It waits for

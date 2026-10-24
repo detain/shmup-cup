@@ -218,7 +218,9 @@ archive in a browser before you publish it.
   six times for zones B … G, wave 12 added H's 20,250 px (`a2d94928`) and wave 13 I (`2d35a7a5`):
   none of the eight remasters, and not the flipped frame itself, has ever drawn a frame on a TV.
   Every play in §1.1 runs on hardware for the first time.
-- **Real art and music**, whenever they exist. The hand-off is
+- **Real art and music.** The round's 299 image winners exist and are committed (2026-10-23,
+  `art-prompts/v2/winners/` — the S3 round opens on them); music, whenever it exists. The hand-off
+  is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
   replaces, so nothing else has to change. R5-01's zone A joins that queue as complete
   procedural art — the twelve `azure-*` names plus the pipeline's six `@flash` siblings
@@ -237,11 +239,18 @@ archive in a browser before you publish it.
   `terrain-abyss-v2` sheet (v1's twenty tiles verbatim + coral + `abyss-glow`), the three new
   roster names, and the rebuilt ARK's and KING's part names the stand-in kit draws — all standing
   in at R5-D6 shapes until the round above drops the real art.
-  Each zone's own real-art drop (its `R5-0n.S3` step) waits on one owner decision first — the
-  **FLUX serving-model ruling**, [`art-provenance.md`](../dev/art-provenance.md) §8 decision 1 —
-  and it is **the one hard block on the whole art queue**: 85 winners already wait, round 2 (203
-  follow-ups) plans FLUX.2-dev, and no AI image output may ship, or be disclosed as shipping, until
-  it lands. The 2.0.0 release is *not* behind it — its atlas reports zero AI sprites
+  Each zone's own real-art drop (its `R5-0n.S3` step) waited on one owner decision — the
+  **FLUX serving-model ruling**, [`art-provenance.md`](../dev/art-provenance.md) §8 decision 1,
+  **the one hard block on the whole art queue**. It **was ruled on 2026-10-23**: the game ships as
+  a free, open-source (MPL-2.0) non-commercial work — *"the images are fine to use its currently an
+  opensource game after all not commercial work"* — and that distribution is exactly what the FLUX
+  Non-Commercial Licences allow (§2(d)'s outputs clause and the non-commercial model clause alike).
+  **The S3 round opens**: the owner's 2026-10-18 ruling record (334 items) and the 299 image
+  winners are committed under `art-prompts/v2/winners/` (S3 gate 2; the 35 video clips wait for D3
+  per `winners/VIDEO-PENDING.md`). The honest condition rides with the ruling: **before any
+  paid/commercial distribution of art made with FLUX, a BFL commercial licence (bfl.ai/licensing)
+  must be in place** — the monetization row below carries it; re-check on any monetization. The
+  2.0.0 release is *not* behind any of it — its atlas reports zero AI sprites
   (`node scripts/art-origins.mjs`) — so the queue follows the release, with the ingest tool and its
   provenance records ready.
 - **The v1-art clean-up after the release (decision RR-1).** Zone A's remaster deliberately runs
@@ -331,8 +340,9 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | 240 fps latency video, two pads at once, the `rp-` render capture (§8.2, §8.4) | Nothing — but the release's boot ≤ 10 s and whole-process memory figures ride the capture (kit built, R6-02.P2) | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
 | The v2 TV-bench run on the M7 — **run 2026-10-19 on monitor 10.0.0.224, budgets met, P4a–d not needed** (R6-02.P3); open: the second monitor, firmware context loss, W5-2 / W5-15 | Nothing — the measured zone-load verdict is in | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
-| Real art and music — every zone's drop behind the owner's **FLUX licence ruling** (art-provenance.md §8 decision 1; 2.0.0 ships no AI image art — the origin report finds none) | Nothing — placeholders are complete | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
+| Real art and music — the **FLUX licence ruling landed 2026-10-23** (non-commercial basis; re-check on any monetization — art-provenance.md §8 decision 1, decision R6-D4); the 299 winner images are committed under `art-prompts/v2/winners/` and the **S3 round opens**, zone by zone through the `R5-0n.S3` steps (2.0.0 itself ships the placeholder atlas — the origin report finds no AI sprite) | Nothing — the S3 drops run on master | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
+| **Paid/commercial distribution of the game (monetization)** — art made with FLUX.2-dev / FLUX.1-dev requires a **BFL commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing)) in place before any paid distribution ships** (the 2026-10-23 ruling stands on the non-commercial basis alone — art-provenance.md §8 decision 1); the same re-check covers SD3.5's USD 1 M and LTX-2.5's USD 10 M revenue ceilings | Nothing while the game stays free, open-source (MPL-2.0) distribution | [`art-provenance.md`](../dev/art-provenance.md) |
 | The eight remasters of zones B … I (waves 11–13) played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
-| Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); the owner parts that remain: the `R5-09.S3` real-art drop (behind the FLUX ruling) and the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |
+| Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); the owner parts that remain: the `R5-09.S3` real-art drop (the FLUX ruling landed 2026-10-23 — the S3 round opens) and the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |
 | Boss-fight pacing bands (C, D, E, G), zone G's gallery mouth, zone H's arcade pacing, the R6-01 pacing-lever watch bank | Nothing — disclosed by the goldens and the balance pass, not tuned | [§3](#3-polish--blocks-nothing) |
 | The v1-art clean-up after a v2.0.x release (plan_resolution.md RR-1; zone A ships both art lines today) | Nothing — the interim rule keeps both builds alive | [`asset-pipeline.md`](../dev/asset-pipeline.md) |
