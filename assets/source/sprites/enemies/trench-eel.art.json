@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/trench-eel",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/trench-eel/frames/winner.png",
+      "sha256": "079e03047f6afdbc920f714ee4e63a4a52a429e208a4ef01a93b9a684025202e",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of TRENCH EEL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same TRENCH EEL enemy — a long armored eel of gunmetal ring-plate segments with a blunt tooth-ridged snout, a thin violet glow seam along its belly, rearing out of a deck hatch in an S-curve, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: deck seam glowing, snout clearing the hatch lip, three ring-plates out in an S-curve, half the body reared, full arc with the mouth open spitting a violet ring-spark, settling back with only the snout showing. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n In every cell the eel's head points LEFT, as in the reference. It rises out of the hatch step by step: cell one only the hatch glowing violet; cell two just the snout over the lip; cell three the head on a short neck; cell four half the body in an S-curve; cell five the full S-curve spitting the violet ring to the left; cell six only the snout sinking back. One eel per cell, no knots or loops. Only green space between the cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 62228,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T20:41:18.865Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/trench-eel/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/trench-eel.png",
+          "sha256": "550bbd45a4ce6cab508cb4f4b817b65c59521877d126f69a0ba403f2ba65bcae",
+          "sidecar": "art-prompts/v2/winners/enemy/trench-eel/winner.json",
+          "sidecarSha256": "cdecd00d51d943cdb92efbfae6ed8c5543c8f91215b90d4ac14d25555a17f6ac",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/trench-eel/frames/winner.json",
+        "sidecarSha256": "4fdde70864bbec0ca31bbbf3ed58af585128833eb438e72e4c981e5384377a99",
+        "id": "enemy/trench-eel/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of TRENCH EEL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same TRENCH EEL enemy — a long armored eel of gunmetal ring-plate segments with a blunt tooth-ridged snout, a thin violet glow seam along its belly, rearing out of a deck hatch in an S-curve, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: deck seam glowing, snout clearing the hatch lip, three ring-plates out in an S-curve, half the body reared, full arc with the mouth open spitting a violet ring-spark, settling back with only the snout showing. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n In every cell the eel's head points LEFT, as in the reference. It rises out of the hatch step by step: cell one only the hatch glowing violet; cell two just the snout over the lip; cell three the head on a short neck; cell four half the body in an S-curve; cell five the full S-curve spitting the violet ring to the left; cell six only the snout sinking back. One eel per cell, no knots or loops. Only green space between the cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/trench-eel.recipe.json",
+    "sha256": "6a0481326f6803724d3d6ca2d902ce4f1387f05beaf15fbe09d567992b7be352"
+  },
+  "edit": null,
+  "output": {
+    "png": "trench-eel.png",
+    "sha256": "432240b389630743614a53edf63cc7eae5d904a625c0270deb63f9d53afc26ef",
+    "sidecar": "trench-eel.json",
+    "sidecarSha256": "fd563166a5a6419fd9998ef59fa8f1412518a1355289d3fdb2e95891ed1ca1a1",
+    "frames": 2,
+    "frameWidth": 15,
+    "frameHeight": 12,
+    "colors": 15,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone H (R5-0n.S3): the two 15x12 eel frames are cells 4 and 5 of the owner-picked TRENCH EEL animation sheet (the rise sequence: half the body reared in an S-curve, then the full arc spitting a violet ring, head pointing left in every cell), cropped from the committed winner with a 6-px key border around each subject box; the consecutive pair differs by 26.2% of their union - the eel rears higher and the ring leaves the mouth - and the tall cell aspect 0.84 against the slot's 1.25 is 1.49x, inside the 2x refuse line, with the head held left as the interim segment is. The sheet drew dark navy gutter guide lines (luma ~20, 6-7 px) where the prompt asked for none - both crops sit clear of them; each cell keeps its deck-hatch base as the corner the eel rears from (~140 px wide, the lower third's mass), and the contain fit lands the eel head near the slot centre the 2-frame burst animation reads around. The design carries its own 1-px near-black navy outline, so the outline pass is off. The TRENCH EEL's design is the IRON CITADEL roster sheet's (manifest label zone H) though its slot is consumed by the zone-I roster's eel - the zone-H lane owns the design by the pilot's label law."
+}

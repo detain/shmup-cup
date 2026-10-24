@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/sentinel-walker",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/sentinel-walker/frames/winner.png",
+      "sha256": "1afaf8f4edc9db395c17acf27b6b30963d24072069ee9be3ead3def9d26d0f58",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of SENTINEL WALKER. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same SENTINEL WALKER enemy — a squat twin-legged guard machine with a heavy riveted barrel torso, reverse-jointed legs with clawed feet, two short shoulder cannons and a single red sensor eye, amber rivet highlights, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of a full walk stride with the torso bobbing slightly and the silhouette otherwise identical. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The stride is clearly visible: in each cell the two legs are in a different phase, front leg lifted and swinging forward, planted, pushing back, then the rear leg lifting and swinging forward, so the feet are at clearly different heights and spacings from cell to cell, and the torso dips when both feet are planted.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 46632,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T20:17:34.549Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/sentinel-walker/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/sentinel-walker.png",
+          "sha256": "3930585100299f9f254e0db0ba39b7165d4a1e1c5b0cf540882954aff8fb6698",
+          "sidecar": "art-prompts/v2/winners/enemy/sentinel-walker/winner.json",
+          "sidecarSha256": "939baa6c42455403e08bff615fd2cc577de76249769dbdb7ba2c013ee3de9cd4",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/sentinel-walker/frames/winner.json",
+        "sidecarSha256": "a8c570ee39100f00910cbbe41f11e3c6b72f4ed07c08c92c9d31feb600583455",
+        "id": "enemy/sentinel-walker/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of SENTINEL WALKER. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same SENTINEL WALKER enemy — a squat twin-legged guard machine with a heavy riveted barrel torso, reverse-jointed legs with clawed feet, two short shoulder cannons and a single red sensor eye, amber rivet highlights, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of a full walk stride with the torso bobbing slightly and the silhouette otherwise identical. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The stride is clearly visible: in each cell the two legs are in a different phase, front leg lifted and swinging forward, planted, pushing back, then the rear leg lifting and swinging forward, so the feet are at clearly different heights and spacings from cell to cell, and the torso dips when both feet are planted."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/sentinel-walker.recipe.json",
+    "sha256": "c10cd3054a585594d349048d667130b2400624d761808583dc09aaa1d50ba66c"
+  },
+  "edit": null,
+  "output": {
+    "png": "sentinel-walker.png",
+    "sha256": "d31a6874dd124f68497cb166531d9c86dd854452fa9e9c327d69cd4241435e48",
+    "sidecar": "sentinel-walker.json",
+    "sidecarSha256": "446f997bfe2ef925b36d54b6288746929af9b5c0c9d3b5a4bdd0cda33e979401",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 21,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone H (R5-0n.S3): the two 18x21 walker frames are cells 1 and 4 of the owner-picked SENTINEL WALKER animation sheet (a full walk stride over six equal states in two rows of three, read left to right top to bottom, so cell 4 is half a stride from cell 1 and the two legs swap their phase), cropped from the committed winner with a 6-px key border around each subject box; the half-stride pair differs by 16.3% of their union and the cell 1 aspect 0.77 against the slot's 0.86 is a 1.11x match. The sheet drew white gutter guide lines (luma ~314, 5-6 px wide) where the prompt asked for none - both crops sit clear of them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

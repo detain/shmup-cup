@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/bolt-drone",
+  "category": "enemy",
+  "frame": { "width": 14, "height": 14 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/bolt-drone/frames/winner.png",
+      "frames": [
+        [114, 136, 278, 263],
+        [118, 640, 275, 261]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [7, 7],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone H (R5-0n.S3): the two 14x14 arc-drone frames are cells 1 and 3 (prongs idle, arc fully lit) of the owner-picked BOLT DRONE animation sheet (four states idle/charging/fully-lit/fading in two rows of two with even gutters), cropped from the committed winner with a 6-px key border around each subject box; the lit cell differs from the idle cell by 4.5% of their union (the short violet arc between the forward prongs), the wide charging cell by 43.5% - the shipped pair keeps the drone body at a constant 1.06 aspect inside the square slot. The sheet's white gutter guide lines (luma 313) and the fading cell's detached sparks fall outside both crops. The design carries its own 1-px near-black navy outline, so the outline pass is off. The BOLT DRONE was drawn on the TEMPEST RIDGE roster sheet but ships only in the zone-H roster (bolt-drone and sovereign-drone) - the owner handoff routes the drop to this lane."
+  }
+}

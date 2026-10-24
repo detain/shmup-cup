@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/trench-eel 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 15,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/trench-eel 1",
+      "frame": {
+        "x": 15,
+        "y": 0,
+        "w": 15,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 15,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "trench-eel.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 30,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 15,
+              "h": 12
+            },
+            "pivot": {
+              "x": 7,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

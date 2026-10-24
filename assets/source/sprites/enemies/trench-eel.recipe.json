@@ -1,0 +1,27 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/trench-eel",
+  "category": "enemy",
+  "frame": { "width": 15, "height": 12 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/trench-eel/frames/winner.png",
+      "frames": [
+        [23, 433, 326, 386],
+        [430, 433, 333, 385]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [7, 6],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone H (R5-0n.S3): the two 15x12 eel frames are cells 4 and 5 of the owner-picked TRENCH EEL animation sheet (the rise sequence: half the body reared in an S-curve, then the full arc spitting a violet ring, head pointing left in every cell), cropped from the committed winner with a 6-px key border around each subject box; the consecutive pair differs by 26.2% of their union - the eel rears higher and the ring leaves the mouth - and the tall cell aspect 0.84 against the slot's 1.25 is 1.49x, inside the 2x refuse line, with the head held left as the interim segment is. The sheet drew dark navy gutter guide lines (luma ~20, 6-7 px) where the prompt asked for none - both crops sit clear of them; each cell keeps its deck-hatch base as the corner the eel rears from (~140 px wide, the lower third's mass), and the contain fit lands the eel head near the slot centre the 2-frame burst animation reads around. The design carries its own 1-px near-black navy outline, so the outline pass is off. The TRENCH EEL's design is the IRON CITADEL roster sheet's (manifest label zone H) though its slot is consumed by the zone-I roster's eel - the zone-H lane owns the design by the pilot's label law."
+  }
+}

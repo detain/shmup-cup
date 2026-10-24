@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/gyre",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/gyre/frames/winner.png",
+      "sha256": "d78d9e0fed1666b5c4dde277410da7e4d92b8ed0443a82ddc336091c303e995c",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of GYRE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GYRE enemy — a circular gunmetal ring-gun with a central hub and spokes, studded with four small muzzles around its rim, amber rivet highlights, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring rotated one sixth of a turn per frame with one muzzle flashing amber in turn so the volley loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: in cell one the four muzzles point straight up, down, left and right; in each following cell the whole ring with its muzzles and spokes is turned a further fifteen degrees clockwise, so by cell four the muzzles point diagonally; and a different muzzle flashes amber in each cell.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 91584,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T20:45:03.664Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/gyre/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/gyre.png",
+          "sha256": "1c6e27fd71623b2781e561b7f38d19dc0341bc7cf0277cb567613dc84bc558b5",
+          "sidecar": "art-prompts/v2/winners/enemy/gyre/winner.json",
+          "sidecarSha256": "e5007db72ebab117a3f219ff6488844cb88f1578b8b2f29998709440d9fe3817",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/gyre/frames/winner.json",
+        "sidecarSha256": "551d77da106f5e2e148d9b625dee4c3babd877981ec7f2f5901ece1a98b3ba23",
+        "id": "enemy/gyre/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of GYRE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same GYRE enemy — a circular gunmetal ring-gun with a central hub and spokes, studded with four small muzzles around its rim, amber rivet highlights, front view, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: the ring rotated one sixth of a turn per frame with one muzzle flashing amber in turn so the volley loops. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The rotation is clearly visible: in cell one the four muzzles point straight up, down, left and right; in each following cell the whole ring with its muzzles and spokes is turned a further fifteen degrees clockwise, so by cell four the muzzles point diagonally; and a different muzzle flashes amber in each cell."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/gyre.recipe.json",
+    "sha256": "c9350eae6b0410e4139f86534b1d56c24d3bd5e52a5656ebc22a394b69a627a6"
+  },
+  "edit": null,
+  "output": {
+    "png": "gyre.png",
+    "sha256": "93cf34762d2139d3c214836c33f8d9cfc2bc32eae3e0c2e1dd89aa1bb8a6b001",
+    "sidecar": "gyre.json",
+    "sidecarSha256": "544e0d13a8bf2735f175b4dc94c195c2e36308345753981f7a63d178b4024c39",
+    "frames": 2,
+    "frameWidth": 21,
+    "frameHeight": 21,
+    "colors": 13,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone H (R5-0n.S3): the two 21x21 ring-gun frames are cells 1 and 4 of the owner-picked GYRE animation sheet (the ring turned one sixth of a turn per cell with a different muzzle flashing amber, so cell 4 sits 45 degrees from cell 1 and the lit muzzle has moved a quarter of the way round the rim), cropped from the committed winner with a 6-px key border around each subject box; the pair differs by 6.5% of their union - the ring's four-muzzle silhouette turning and the amber flash changing muzzle - and both cell aspects (0.99, 0.99) match the square slot within 1%. The sheet is clean: two rows of three real cells, no guide lines. The adaptive palette let 68 pixels of the muzzle glow's key-blended rim (≈#57dc0d) through beside the amber, so the recipe fixes the design's sixteen colours from a family census of the two cells (the navy outline, the purple-gunmetal ramp, the steel highlight, the violet shadow and the three-step amber flash). The design carries its own 1-px near-black navy outline, so the outline pass is off. The GYRE's design is the IRON CITADEL roster sheet's (manifest label zone H) though the slot serves the zone-A roster's gyre and zone G's stage decor - the zone-H lane owns the design by the pilot's label law."
+}
