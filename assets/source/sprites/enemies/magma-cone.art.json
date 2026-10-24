@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/magma-cone",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/magma-cone/frames/winner.png",
+      "sha256": "7641ebda6d648fdc59cd3d1cbbc462c4329b8d1bc56bcb9d995abd7e32006b71",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of MAGMA CONE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same MAGMA CONE enemy — a squat volcanic cone turret of stacked black basalt plates with glowing lava seams and a crater opening toward the upper left, cold gray seam lines on the dormant plates, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: dormant basalt stack, seam glow widening, crater lid lifting with a first tangerine flare, full eruption with an orange flame cap, column thinning to smoke and sparks, cooling dark crust with cherry cracks. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 34922,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T19:02:15.603Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/magma-cone/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/magma-cone.png",
+          "sha256": "c0c7676e751e17e803c072e0ac0f9c840cabd2e505c3a09bcc0b963d69956f1d",
+          "sidecar": "art-prompts/v2/winners/enemy/magma-cone/winner.json",
+          "sidecarSha256": "d4839eaace3a748d5e5bf68428fb55c0975386841e6938efe09f72943f2e520d",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/magma-cone/frames/winner.json",
+        "sidecarSha256": "0363e7f459c2d16fca5be304b4ccdf73c79bf8a88832cd7718f9e3e9bff25a74",
+        "id": "enemy/magma-cone/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of MAGMA CONE. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same MAGMA CONE enemy — a squat volcanic cone turret of stacked black basalt plates with glowing lava seams and a crater opening toward the upper left, cold gray seam lines on the dormant plates, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: dormant basalt stack, seam glow widening, crater lid lifting with a first tangerine flare, full eruption with an orange flame cap, column thinning to smoke and sparks, cooling dark crust with cherry cracks. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/magma-cone.recipe.json",
+    "sha256": "d503b23d95cfd0bd3b4e49bb30d38071227643729abf3a2db20ce41f15e59fdb"
+  },
+  "edit": null,
+  "output": {
+    "png": "magma-cone.png",
+    "sha256": "a3a8c1f66d71ed550d1df9948a2c5a7e06a8ca691421bd9b8df70172131412ab",
+    "sidecar": "magma-cone.json",
+    "sidecarSha256": "06a3b6e00a6608a4c40e1e2dd1a5159a9e4451b79f0c9ed9ae6fa0307e20fe66",
+    "frames": 2,
+    "frameWidth": 33,
+    "frameHeight": 18,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone D (R5-04.S3): the two 33x18 frames of the cone's charge loop are the top-row cells 1-2 of the owner-picked MAGMA CONE animation sheet (six eruption states in two rows of three: the dormant basalt stack, the seam glow widening), cropped from the committed winner with a 6-px key border around each subject box; the second crop's lower band 391..513 was measured to hold only the row below's rising plume (fragment mass grows 17 to 4756 px toward that row) and is excluded. The remaining four cells stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

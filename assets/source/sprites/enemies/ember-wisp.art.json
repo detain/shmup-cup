@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/ember-wisp",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-23",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-24",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/winners/enemy/ember-wisp/frames/winner.png",
+      "sha256": "f368b505b0e939f9cd148fbaac5ebbcba1fc42ca57b3b1a6fa979550c13759c3",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Reference image 1 shows the chosen design of EMBER WISP. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same EMBER WISP enemy — a small feral flame creature with a molten-gold round core, ragged orange-red flame tongues and a thin sparking tail trailing behind it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of the flame body licking and bending differently around the identical core. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The six frames are clearly different flame poses: the flame tongues sweep up in one, down in the next, spread wide, curl tight, stretch long and flicker short, and the sparks of the tail sit in new places each time; only the core with its two dark slits stays the same. Only green space between the cells, no lines.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 56692,
+      "size": "1248x832",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-17T19:20:45.016Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/enemy/ember-wisp/winner.png",
+          "from": "art-prompts/v2/candidates/a/enemy/ember-wisp.png",
+          "sha256": "ce26f914b78dc6977dee49fe0ee9336dd392936e20a65af8a05c4cd2b02c3b4c",
+          "sidecar": "art-prompts/v2/winners/enemy/ember-wisp/winner.json",
+          "sidecarSha256": "cf327621737fbf350cdb6cd0135486bda70d8e1c7a4fb85fc727d60c335a3363",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/winners/enemy/ember-wisp/frames/winner.json",
+        "sidecarSha256": "20611db396676c9549db2417a37494eb1e62b35dd4cd93e40b6af4775f36edb2",
+        "id": "enemy/ember-wisp/frames",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "Reference image 1 shows the chosen design of EMBER WISP. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same EMBER WISP enemy — a small feral flame creature with a molten-gold round core, ragged orange-red flame tongues and a thin sparking tail trailing behind it, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: six frames of the flame body licking and bending differently around the identical core. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The six frames are clearly different flame poses: the flame tongues sweep up in one, down in the next, spread wide, curl tight, stretch long and flicker short, and the sparks of the tail sit in new places each time; only the core with its two dark slits stays the same. Only green space between the cells, no lines."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/ember-wisp.recipe.json",
+    "sha256": "a38acbf826faadc9a82198ea8df5ea8e5a9d3420b8af7cbb78b4319279ef9757"
+  },
+  "edit": null,
+  "output": {
+    "png": "ember-wisp.png",
+    "sha256": "a29337cedeadc8e1a834a2ae8e12360af0a7bb62779a355980a06a86507ea59b",
+    "sidecar": "ember-wisp.json",
+    "sidecarSha256": "5e4d741e0b321a418a7fb806618deb9363dfe5493e2a0060f37cd1c320c00a33",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 15,
+    "colors": 14,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Zone D (R5-04.S3): the two 18x15 frames of the wisp's flicker loop are the top-row cells 1-2 of the owner-picked EMBER WISP animation sheet (six flame poses, two rows of three), cropped from the committed winner with a 6-px key border around each subject box; the remaining four cells stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+}

@@ -1,0 +1,45 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/ember-wisp",
+  "category": "enemy",
+  "frame": { "width": 18, "height": 15 },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/winners/enemy/ember-wisp/frames/winner.png",
+      "frames": [
+        [41, 117, 330, 184],
+        [445, 117, 312, 184]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "palette": {
+    "colors": [
+      "#4c1321",
+      "#680f18",
+      "#880c0f",
+      "#af0b04",
+      "#d71703",
+      "#f74a04",
+      "#fe7a09",
+      "#ffa023",
+      "#fac768",
+      "#893f28",
+      "#855532",
+      "#b69577",
+      "#cdb48f",
+      "#f3e0b3"
+    ]
+  },
+  "outline": false,
+  "anchor": [9, 7],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-23",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "Zone D (R5-04.S3): the two 18x15 frames of the wisp's flicker loop are the top-row cells 1-2 of the owner-picked EMBER WISP animation sheet (six flame poses, two rows of three), cropped from the committed winner with a 6-px key border around each subject box; the remaining four cells stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  }
+}
