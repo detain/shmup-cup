@@ -351,6 +351,102 @@
       "grid": "fx/explosion-large 16f 72×72",
       "file": "art-prompts/v2/gen3/fx/explosion/large-16/gen.png",
       "exit": 0
+    },
+    {
+      "id": "B-3r",
+      "report": "w15-S3-B-report.md",
+      "grid": "tiles/terrain-reef-v2 29f 12×12 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/brine-nebula/tileset/contact-30r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 0 reads as flat key green (mean 88,215,27)"
+    },
+    {
+      "id": "D-5r",
+      "report": "w15-S3-D-report.md",
+      "grid": "tiles/terrain-magma-v2 24f 12×12 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/magma-deep/tileset/contact-24r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 0 reads as flat key green (mean 93,194,37)"
+    },
+    {
+      "id": "E-10r",
+      "report": "w15-S3-E-report.md",
+      "grid": "tiles/terrain-ridge-v2 36f 12×12 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/tempest-ridge/tileset/contact-36r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 0 reads as flat key green (mean 101,199,73)"
+    },
+    {
+      "id": "F-6r",
+      "report": "w15-S3-F-report.md",
+      "grid": "tiles/terrain-vault-v2 23f 12×12 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/cell-vault/tileset/contact-24r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 12 reads as flat key green (mean 70,192,23)"
+    },
+    {
+      "id": "H-2r",
+      "report": "w15-S3-H-report.md",
+      "grid": "tiles/terrain-citadel-v2 24f 12×12 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/iron-citadel/tileset/contact-24r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: boundary col x=192 guide-line signal 84%"
+    },
+    {
+      "id": "P-3r",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/capsule 4f 18×12 a9,6 blink [0,1,2,3]",
+      "file": "art-prompts/v2/gen3/item/power-capsule/glint-2x2/gen.png",
+      "exit": 0,
+      "exitNote": "shape OK"
+    },
+    {
+      "id": "P-4r",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/capsule-blue 4f 18×12 blink [0,1,2,3]",
+      "file": "art-prompts/v2/gen3/item/power-capsule/blue-glint-2x2/gen.png",
+      "exit": 0,
+      "exitNote": "shape OK"
+    },
+    {
+      "id": "P-7r",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/direct-{red,orange,yellow,green,blue,octagon} 4f 15×15 a7,7 blink",
+      "file": "art-prompts/v2/gen3/item/direct-orbs/orb-grid-24r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 0 EMPTY"
+    },
+    {
+      "id": "I-7r",
+      "report": "w15-S3-I-report.md",
+      "grid": "bosses/ark-pod 4f 27×15 a13,7 charge [0,1,2,3]",
+      "file": "art-prompts/v2/gen3/boss/abyss-ark/parts/pod-2x2/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 0 AR=1.00 outside [1.2,2.6]"
+    },
+    {
+      "id": "G-4r",
+      "report": "w15-S3-G-report.md",
+      "grid": "bosses/facet-plating 1f 24×36 + facet-wing 1f 33×21 + facet-emitter 4f 15×15 charge",
+      "file": "art-prompts/v2/gen3/boss/facet-monarch/parts/kit-6r/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: cell 1 AR=1.00 outside [1.05,2.1]"
+    },
+    {
+      "id": "E-13c2",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-gust 1f 320×48 (gust band, wrap)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-near/gust-wrap-2/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: wrap reach weak: L 0 R 1 of 256 rows"
+    },
+    {
+      "id": "E-13d2",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-flash 1f 320×60 (flash wash)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/flash-flat-2/gen.png",
+      "exit": 1,
+      "exitNote": "shape-fail after 3 attempts: band 1 mean 18,20,33 off ramp 29,44,70 (d=72)"
     }
   ]
 }

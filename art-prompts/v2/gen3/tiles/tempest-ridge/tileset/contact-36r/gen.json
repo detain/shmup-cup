@@ -1,0 +1,79 @@
+{
+  "id": "tiles/tempest-ridge/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established TEMPEST RIDGE material (frost-bitten slate rock with pale ice-blue facets and snow packed in the cracks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a snow cap with hard white windward facets, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Do not copy the reference's stone-wall layout: a clean grid of exactly five columns and four rows, twenty tiles, with no square outlines drawn around the cells. Every tile is different: only one tile has the snow-capped top, the three fills are bare slate, the ceiling edge has icicles on its underside, and the two slopes face opposite ways; corner and slope tiles are cut-out shapes whose empty part is the flat green key.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 (36) equal square cells forming a full 6-columns-by-6-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named TEMPEST RIDGE tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, solid-2, solid-3, floor-2, floor-3, ceiling-2, corner-outer-left, corner-outer-right, corner-inner-left, corner-inner-right, ceil-corner-outer, ceil-corner-inner, brick-crack, brick-crack-2, decor-scree, decor-ice-patch, decor-pine. Every solid/floor/ceiling/wall tile is a full square flush to all four cell edges, filled wall to wall; every slope and edge tile keeps its clean diagonal or edge mask flush to the cell borders (the remainder shows the material's own darker backdrop, never green); decor tiles paint their whole cell. Storm-grey granite with a pale frost rim and cold blue shadows — the established TEMPEST RIDGE material. Flat 2D, no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×1152 px. Produce EXACTLY 36 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1685507589,
+  "width": 1152,
+  "height": 1152,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T18:20:18.132Z",
+  "seconds": 72,
+  "label": "TEMPEST RIDGE 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/tempest-ridge/tileset/contact-36r/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/tempest-ridge/tileset/winner.png"
+  ],
+  "editFromSha256": [
+    "09ff295e76e71d519f55c2015e00b0baace4f1fca2f08af70c18f02b7afddd0d"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established TEMPEST RIDGE material (frost-bitten slate rock with pale ice-blue facets and snow packed in the cracks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a snow cap with hard white windward facets, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Do not copy the reference's stone-wall layout: a clean grid of exactly five columns and four rows, twenty tiles, with no square outlines drawn around the cells. Every tile is different: only one tile has the snow-capped top, the three fills are bare slate, the ceiling edge has icicles on its underside, and the two slopes face opposite ways; corner and slope tiles are cut-out shapes whose empty part is the flat green key.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 (36) equal square cells forming a full 6-columns-by-6-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named TEMPEST RIDGE tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, solid-2, solid-3, floor-2, floor-3, ceiling-2, corner-outer-left, corner-outer-right, corner-inner-left, corner-inner-right, ceil-corner-outer, ceil-corner-inner, brick-crack, brick-crack-2, decor-scree, decor-ice-patch, decor-pine. Every solid/floor/ceiling/wall tile is a full square flush to all four cell edges, filled wall to wall; every slope and edge tile keeps its clean diagonal or edge mask flush to the cell borders (the remainder shows the material's own darker backdrop, never green); decor tiles paint their whole cell. Storm-grey granite with a pale frost rim and cold blue shadows — the established TEMPEST RIDGE material. Flat 2D, no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×1152 px. Produce EXACTLY 36 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+  "outputSize": "1152x1152",
+  "meta": {
+    "job": "w15-REING2",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 1685507589,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established TEMPEST RIDGE material (frost-bitten slate rock with pale ice-blue facets and snow packed in the cracks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a snow cap with hard white windward facets, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Do not copy the reference's stone-wall layout: a clean grid of exactly five columns and four rows, twenty tiles, with no square outlines drawn around the cells. Every tile is different: only one tile has the snow-capped top, the three fills are bare slate, the ceiling edge has icicles on its underside, and the two slopes face opposite ways; corner and slope tiles are cut-out shapes whose empty part is the flat green key.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 (36) equal square cells forming a full 6-columns-by-6-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named TEMPEST RIDGE tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, solid-2, solid-3, floor-2, floor-3, ceiling-2, corner-outer-left, corner-outer-right, corner-inner-left, corner-inner-right, ceil-corner-outer, ceil-corner-inner, brick-crack, brick-crack-2, decor-scree, decor-ice-patch, decor-pine. Every solid/floor/ceiling/wall tile is a full square flush to all four cell edges, filled wall to wall; every slope and edge tile keeps its clean diagonal or edge mask flush to the cell borders (the remainder shows the material's own darker backdrop, never green); decor tiles paint their whole cell. Storm-grey granite with a pale frost rim and cold blue shadows — the established TEMPEST RIDGE material. Flat 2D, no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×1152 px. Produce EXACTLY 36 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+    "sourceWinners": "winners/tiles/tempest-ridge/tileset",
+    "targetGrid": "tiles/terrain-ridge-v2 36f 12×12 (clip-to-mask)",
+    "sheetContract": "opaque; 36 cells as 6x6 of 192x192 gutters 0/0 borders 0/0 on 1152x1152; contact grid",
+    "rowCite": "w15-S3-E-report.md §4 row 10",
+    "generatedAt": "2026-10-26T18:20:18.132Z",
+    "shape": {
+      "w": 1152,
+      "h": 1152,
+      "corners": null,
+      "problems": [
+        "cell 0 reads as flat key green (mean 101,199,73)",
+        "cell 1 reads as flat key green (mean 103,199,75)",
+        "cell 3 reads as flat key green (mean 110,201,87)",
+        "cell 4 reads as flat key green (mean 105,201,79)",
+        "cell 5 reads as flat key green (mean 106,201,79)",
+        "cell 23 reads as flat key green (mean 82,195,41)",
+        "cell 30 reads as flat key green (mean 71,242,2)",
+        "cell 31 reads as flat key green (mean 71,243,2)",
+        "cell 32 reads as flat key green (mean 71,242,2)",
+        "cell 33 reads as flat key green (mean 71,243,2)",
+        "boundary col x=192 guide-line signal 50%",
+        "boundary col x=384 guide-line signal 51%",
+        "boundary col x=576 guide-line signal 52%",
+        "boundary col x=768 guide-line signal 56%",
+        "boundary col x=960 guide-line signal 65%",
+        "boundary row y=192 guide-line signal 76%",
+        "boundary row y=384 guide-line signal 72%",
+        "boundary row y=576 guide-line signal 72%",
+        "boundary row y=768 guide-line signal 47%"
+      ]
+    },
+    "priorShape": {
+      "w": 1216,
+      "h": 1216,
+      "problems": [
+        "row 1 h=123 != 160 + row 6 h=118 mixed squareness + guide ink (REING1 census)"
+      ]
+    }
+  },
+  "amendedBy": "amended by REING2 final re-ask at 2026-10-26, prior shape-fail: row 1 h=123 != 160 + row 6 h=118 mixed squareness + guide ink (REING1 census)"
+}

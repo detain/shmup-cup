@@ -1,0 +1,68 @@
+{
+  "id": "stage/tempest-ridge/layer-far",
+  "slot": "a",
+  "prompt": "CONTRACT REPAIR — the previous attempt violated the shape contract: the served canvas did not match the announced sheet size, because this endpoint never renders a canvas shorter than 256 px, so a 1280×240 ask always came back 1280×256. Rebuild strictly to the contract below; the canvas size line is the exact defect to fix — paint the same design with the same background rule onto the announced sheet.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- FLASH WASH — the exact defect the previous attempt failed: the panel collapsed into a single-colour dark gradient. Paint instead EXACTLY FOUR flat horizontal colour bands of equal height (64 px each) filling the whole sheet top to bottom, in this exact order: the top band is ONE single solid colour #10182a, the second band #1d2c46, the third band #2f4166, the bottom band #475d84. Each band is a perfectly FLAT solid single colour; the four boundaries are perfectly straight horizontal lines near y=64, y=128 and y=192. NO gradient within any band, NO blending, NO cloud texture, NO lightning, NO glow, NO other colours anywhere on the sheet.\n- The sheet canvas measures EXACTLY 1280×256 px. Produce exactly this one four-band wash and nothing else.\n- Style: flat retro 16-bit storm wash in the TEMPEST RIDGE palette (lifted darks, never pure black).",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 596335072,
+  "width": 1280,
+  "height": 256,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T18:43:02.461Z",
+  "seconds": 46.5,
+  "label": "TEMPEST RIDGE parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/flash-flat-2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/stage/tempest-ridge/layer-far/winner.png"
+  ],
+  "editFromSha256": [
+    "ce8128bd7ac7b639e8f741f6ae399e08da4d50443c6958eb0bf3d0c530cdbcd8"
+  ],
+  "instruction": "CONTRACT REPAIR — the previous attempt violated the shape contract: the served canvas did not match the announced sheet size, because this endpoint never renders a canvas shorter than 256 px, so a 1280×240 ask always came back 1280×256. Rebuild strictly to the contract below; the canvas size line is the exact defect to fix — paint the same design with the same background rule onto the announced sheet.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- FLASH WASH — the exact defect the previous attempt failed: the panel collapsed into a single-colour dark gradient. Paint instead EXACTLY FOUR flat horizontal colour bands of equal height (64 px each) filling the whole sheet top to bottom, in this exact order: the top band is ONE single solid colour #10182a, the second band #1d2c46, the third band #2f4166, the bottom band #475d84. Each band is a perfectly FLAT solid single colour; the four boundaries are perfectly straight horizontal lines near y=64, y=128 and y=192. NO gradient within any band, NO blending, NO cloud texture, NO lightning, NO glow, NO other colours anywhere on the sheet.\n- The sheet canvas measures EXACTLY 1280×256 px. Produce exactly this one four-band wash and nothing else.\n- Style: flat retro 16-bit storm wash in the TEMPEST RIDGE palette (lifted darks, never pure black).",
+  "outputSize": "1280x256",
+  "meta": {
+    "job": "w15-REING2",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 596335072,
+    "prompt": "CONTRACT REPAIR — the previous attempt violated the shape contract: the served canvas did not match the announced sheet size, because this endpoint never renders a canvas shorter than 256 px, so a 1280×240 ask always came back 1280×256. Rebuild strictly to the contract below; the canvas size line is the exact defect to fix — paint the same design with the same background rule onto the announced sheet.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- FLASH WASH — the exact defect the previous attempt failed: the panel collapsed into a single-colour dark gradient. Paint instead EXACTLY FOUR flat horizontal colour bands of equal height (64 px each) filling the whole sheet top to bottom, in this exact order: the top band is ONE single solid colour #10182a, the second band #1d2c46, the third band #2f4166, the bottom band #475d84. Each band is a perfectly FLAT solid single colour; the four boundaries are perfectly straight horizontal lines near y=64, y=128 and y=192. NO gradient within any band, NO blending, NO cloud texture, NO lightning, NO glow, NO other colours anywhere on the sheet.\n- The sheet canvas measures EXACTLY 1280×256 px. Produce exactly this one four-band wash and nothing else.\n- Style: flat retro 16-bit storm wash in the TEMPEST RIDGE palette (lifted darks, never pure black).",
+    "sourceWinners": "winners/stage/tempest-ridge/layer-far",
+    "targetGrid": "bg/storm-flash 1f 320×60 (flash wash)",
+    "sheetContract": "opaque; 1 cells as 1x1 of 1280x256 on 1280x256; FOUR EXACT flat ramp bands 64px each #10182a,#1d2c46,#2f4166,#475d84",
+    "rowCite": "w15-S3-E-report.md §4 row 13",
+    "generatedAt": "2026-10-26T18:43:02.461Z",
+    "shape": {
+      "w": 1280,
+      "h": 256,
+      "corners": null,
+      "problems": [
+        "band 1 mean 18,20,33 off ramp 29,44,70 (d=72)",
+        "band 2 mean 20,23,40 off ramp 47,65,102 (d=131)",
+        "band 3 mean 47,53,74 off ramp 71,93,132 (d=122)",
+        "off-ramp pixel fraction 76.31%",
+        "band 0 not flat (sd=51)",
+        "band 1 not flat (sd=42)",
+        "band 2 not flat (sd=30)",
+        "band 3 not flat (sd=90)"
+      ]
+    },
+    "priorShape": {
+      "w": 1280,
+      "h": 256,
+      "problems": [
+        "four-band flat wash collapsed to a dark gradient, 48.66% off-ramp, 99.99% single colour (REING2 PART-1 probe)"
+      ]
+    }
+  },
+  "amendedBy": "amended by REING2 final re-ask at 2026-10-26, prior shape-fail: four-band flat wash collapsed to a dark gradient, 48.66% off-ramp, 99.99% single colour (REING2 PART-1 probe)"
+}
