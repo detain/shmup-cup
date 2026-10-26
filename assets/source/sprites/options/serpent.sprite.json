@@ -1,0 +1,33 @@
+{
+  "name": "options/serpent",
+  "description": "Snake option (w15-WB silhouette): a hollow chain link, two pulse frames.",
+  "palette": { ".": null, "o": "#6a1a1a", "r": "#e83838", "w": "#fff0c0" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..oooo..",
+        ".orrrro.",
+        "orr..rro",
+        "orr..rro",
+        "orr..rro",
+        "orr..rro",
+        ".orrrro.",
+        "..oooo.."
+      ]
+    },
+    {
+      "rows": [
+        "..oooo..",
+        ".owwwwo.",
+        "owr..rwo",
+        "owr..rwo",
+        "owr..rwo",
+        "owr..rwo",
+        ".owwwwo.",
+        "..oooo.."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

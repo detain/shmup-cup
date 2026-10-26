@@ -124,13 +124,21 @@ describe('core/config arsenal fields (M2-03)', () => {
   });
 
   it('the Option type (M2-04): validated, applied by withArsenal, compared by arsenalMatches', () => {
-    expect(OPTION_CHOICES).toEqual(['trail', 'snake', 'formation', 'rotate']);
+    expect(OPTION_CHOICES).toEqual([
+      'trail',
+      'snake',
+      'formation',
+      'rotate',
+      'guard',
+      'echo',
+      'aegis',
+    ]);
     expect(Object.isFrozen(OPTION_CHOICES)).toBe(true);
     for (const choice of OPTION_CHOICES) {
       expect(resolveGameConfig({ optionChoice: choice }).optionChoice).toBe(choice);
     }
     expect(() => resolveGameConfig({ optionChoice: null as never })).toThrow(
-      'GameConfig.optionChoice must be one of trail, snake, formation, rotate, got null',
+      'GameConfig.optionChoice must be one of trail, snake, formation, rotate, guard, echo, aegis, got null',
     );
     const base = resolveGameConfig({ seed: 2 });
     const armed = withArsenal(base, { optionChoice: 'rotate', shieldChoice: 'reduce' });

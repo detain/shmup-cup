@@ -423,9 +423,15 @@ export const SHIELD_CHOICES: readonly ShieldChoice[] = Object.freeze([
  * - `snake` — a chain pulled along behind the ship, away from where it moves, that keeps its shape
  *   when the ship stops;
  * - `formation` — a fixed `>` behind the ship that spreads into a wide `V`;
- * - `rotate` — orbiting the ship, the orbit widening when extended.
+ * - `rotate` — orbiting the ship, the orbit widening when extended;
+ * - `guard` — fixed rear pods that besides copying the main weapon fire a rear volley of their
+ *   own (w15-WB);
+ * - `echo` — wingmen on a half-lagged mirror image of the flown line, folding into the ship and
+ *   going quiet inside terrain (w15-WB);
+ * - `aegis` — dishes orbiting close that swallow enemy bullets ahead of the ship into point
+ *   items (w15-WB).
  */
-export type OptionChoice = 'trail' | 'snake' | 'formation' | 'rotate';
+export type OptionChoice = 'trail' | 'snake' | 'formation' | 'rotate' | 'guard' | 'echo' | 'aegis';
 
 /** Every {@link OptionChoice}, in menu order (the index is `core/options` `OptionMode`'s code). */
 export const OPTION_CHOICES: readonly OptionChoice[] = Object.freeze([
@@ -433,6 +439,9 @@ export const OPTION_CHOICES: readonly OptionChoice[] = Object.freeze([
   'snake',
   'formation',
   'rotate',
+  'guard',
+  'echo',
+  'aegis',
 ] as OptionChoice[]);
 
 /**

@@ -1533,7 +1533,15 @@ export function buildSceneLabels(t: UiText): SceneLabels {
       t.shieldRotate,
       t.shieldReduce,
     ),
-    option: list(t.optionTrail, t.optionSnake, t.optionFormation, t.optionRotate),
+    option: list(
+      t.optionTrail,
+      t.optionSnake,
+      t.optionFormation,
+      t.optionRotate,
+      t.optionGuard,
+      t.optionEcho,
+      t.optionAegis,
+    ),
     autoOrder: list(
       t.orderSpeed,
       t.orderMissile,

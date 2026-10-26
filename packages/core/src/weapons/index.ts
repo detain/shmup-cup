@@ -22,7 +22,8 @@
  *   roles ({@link resolveArsenal}); the MISSILE, DOUBLE and LASER meter slots equip those roles.
  *   {@link WeaponSystem.setArsenal} swaps it in place (the weapon select's preview).
  * - **Options** — one `core/options` {@link OptionGroup} per player, of the session's type
- *   (`GameConfig.optionChoice`: trail, Snake, Formation or Rotate — M2-04; steered by the
+ *   (`GameConfig.optionChoice`: trail, Snake, Formation, Rotate, Guard, Echo or Aegis — M2-04,
+ *   w15-WB; steered by the
  *   player's hold / toggle every tick); every Option fires every weapon of the loadout with its own
  *   caps, wherever its type puts it.
  * - **Hits** — enemy hurtboxes are in the World's grid (phase 6); each shot queries the cells
@@ -223,10 +224,14 @@ import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
 import {
+  GUARD_REAR_ANGLE,
+  GUARD_REAR_INTERVAL,
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
   OPTION_FRAMES,
   OPTION_SPRITE,
+  OPTION_SPRITES,
+  OptionMode,
   createOptionGroup,
   type OptionGroup,
 } from '../options/index.js';
@@ -1852,6 +1857,11 @@ class WeaponSystemImpl implements WeaponSystem {
   private readonly toggleFire: boolean;
   /** The option sprite id (-1 = not drawn). */
   private readonly optionSprite: number;
+  /**
+   * The option silhouettes' sprite ids by {@link OptionMode} code (w15-WB); -1 = that name is
+   * not in the atlas, and the type draws with {@link optionSprite} instead.
+   */
+  private readonly optionSprites: Int32Array;
   /** The Spread Bomb blast's sprite id (-1 = not drawn). */
   private readonly blastSprite: number;
   /** Row offset of the next Twin Laser beam {@link WeaponSystemImpl.emit} fills (a class field). */
@@ -1931,6 +1941,13 @@ class WeaponSystemImpl implements WeaponSystem {
       // The session's Option type (M2-04; a host config without one flies the trail).
       options.push(createOptionGroup(host.config.optionChoice));
     }
+    // The Echo fold probe (w15-WB): one load-time closure per group, reading the live terrain
+    // map — the whole-pixel arguments keep the per-tick call free of boxed heap numbers.
+    const echoProbe = (px: number, py: number): boolean => {
+      const map = host.terrain;
+      return map !== null && terrainAt(map, px, py) !== TerrainType.Empty;
+    };
+    for (let p = 0; p < MAX_PLAYERS; p++) options[p].setTerrainProbe(echoProbe);
     this.loadouts = loadouts;
     this.options = options;
     const content = host.content;
@@ -1968,6 +1985,12 @@ class WeaponSystemImpl implements WeaponSystem {
     this.alwaysFire = config.remoteMode || (config.autofire && config.autofireMode === 'always');
     this.toggleFire = !config.remoteMode && config.autofire && config.autofireMode === 'toggle';
     this.optionSprite = content.sprites.index.get(OPTION_SPRITE) ?? -1;
+    // The per-type silhouettes (w15-WB): one id per OptionMode, in OPTION_SPRITES order.
+    const silhouettes = new Int32Array(OPTION_SPRITES.length);
+    for (let m = 0; m < silhouettes.length; m++) {
+      silhouettes[m] = content.sprites.index.get(OPTION_SPRITES[m]) ?? -1;
+    }
+    this.optionSprites = silhouettes;
     this.blastSprite = content.sprites.index.get(SPREAD_BLAST_SPRITE) ?? -1;
     this.sfxTicks = new Float64Array(SFX_CUE_NAMES.length).fill(-Infinity);
     this.visitor = (slot: number): void => {
@@ -2144,12 +2167,26 @@ class WeaponSystemImpl implements WeaponSystem {
           this.fx = ship.x;
           this.fy = ship.y;
         } else {
+          // An Echo wingman folded into terrain is silent this tick (w15-WB).
+          if (group.folded[k - 1] !== 0) continue;
           this.fx = group.x[k - 1];
           this.fy = group.y[k - 1];
         }
         const s = base + k;
         if (wantMain && main >= 0 && timers[s * 2] === 0 && this.fire(main, s)) {
           timers[s * 2] = t.interval[main];
+        }
+        // The Guard pods' rear volley (w15-WB): the pod's main role straight back, on its own
+        // countdown ({@link OptionGroup.rear}, stepped in `core/options`), besides the copied fire.
+        if (
+          k !== 0 &&
+          group.mode === OptionMode.Guard &&
+          wantMain &&
+          main >= 0 &&
+          group.rear[k - 1] === 0 &&
+          this.fireRear(main, s)
+        ) {
+          group.rear[k - 1] = t.interval[main] * GUARD_REAR_INTERVAL;
         }
         if (wantSub && timers[s * 2 + 1] === 0 && this.fire(WeaponRole.Missile, s)) {
           timers[s * 2 + 1] = t.interval[WeaponRole.Missile];
@@ -2297,6 +2334,28 @@ class WeaponSystemImpl implements WeaponSystem {
       if (live >= cap) return false;
       fired = this.emit(role, s, this.launchHeading(role), 0) >= 0;
     }
+    if (fired) this.sfx(t.sfx[role]);
+    return fired;
+  }
+
+  /**
+   * The Guard pod's rear volley (w15-WB): the pod's main role fired straight back at
+   * {@link GUARD_REAR_ANGLE} under the role's own cap. Beams and rings never volley backwards (a
+   * `Laser` / `Twin` beam is anchored to its shooter's row, a `Ripple` ring flies on its own
+   * growth, not a heading) — a pod whose main is one of those simply never has a rear shot, which
+   * is why the countdown is only started when something flew.
+   *
+   * @param role - The main role (non-empty).
+   * @param s - Shooter id.
+   * @returns Whether anything was fired.
+   */
+  private fireRear(role: number, s: number): boolean {
+    const t = this.roles;
+    const kind = t.kind[role];
+    if (kind === ShotKind.Laser || kind === ShotKind.Twin || kind === ShotKind.Ripple) return false;
+    const live = this.liveCounts[s * WEAPON_ROLE_SLOTS + role];
+    if (live >= t.cap[role]) return false;
+    const fired = this.emit(role, s, GUARD_REAR_ANGLE, 0) >= 0;
     if (fired) this.sfx(t.sfx[role]);
     return fired;
   }
@@ -3146,11 +3205,14 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     const options = this.optionBatch;
     options.count = 0;
-    const sprite = this.optionSprite;
-    if (sprite < 0) return;
+    const fallback = this.optionSprite;
+    if (fallback < 0) return;
     const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & (OPTION_FRAMES - 1);
     for (let p = 0; p < this.options.length; p++) {
       const group = this.options[p];
+      // The type's own silhouette (w15-WB); a name missing from the atlas draws as the orb.
+      const sil = this.optionSprites[group.mode];
+      const sprite = sil >= 0 ? sil : fallback;
       for (let k = 0; k < group.count; k++) {
         const slot = options.count;
         if (slot >= options.capacity) return;

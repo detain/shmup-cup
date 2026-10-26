@@ -917,8 +917,15 @@ export {
 } from './blackhole/index.js';
 
 export {
+  AEGIS_ARC,
+  AEGIS_ORBIT_RADIUS,
+  AEGIS_SWALLOW_RADIUS,
+  ECHO_MIRROR,
+  ECHO_SPACING,
   FORMATION_RETRACTED,
   FORMATION_SPREAD,
+  GUARD_REAR_ANGLE,
+  GUARD_REAR_INTERVAL,
   MAX_OPTIONS,
   OPTION_ANIM_TICKS,
   OPTION_FRAMES,
@@ -928,6 +935,7 @@ export {
   OPTION_SPACING,
   OPTION_SPREAD_TICKS,
   OPTION_SPRITE,
+  OPTION_SPRITES,
   OPTION_TRAIL_CAPACITY,
   OptionGroup,
   OptionMode,
@@ -938,6 +946,7 @@ export {
   STOLEN_OPTION_SPRITE,
   createOptionGroup,
   type OptionFormation,
+  type TerrainProbe,
 } from './options/index.js';
 
 export {

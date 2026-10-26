@@ -1,0 +1,39 @@
+{
+  "name": "options/aegis-dish",
+  "description": "Aegis option (w15-WB silhouette): a radar dish facing the incoming fire, its focus lit.",
+  "palette": {
+    ".": null,
+    "o": "#123a3a",
+    "d": "#2aa0a0",
+    "f": "#7adada",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "...oo...",
+        "..odd.o.",
+        ".odd..o.",
+        "odd....o",
+        "odd....o",
+        ".odd..o.",
+        "..odd.o.",
+        "...oo..."
+      ]
+    },
+    {
+      "rows": [
+        "...oo...",
+        "..odd.o.",
+        ".oddf.o.",
+        "odd...fo",
+        "odd...fo",
+        ".oddf.o.",
+        "..odd.o.",
+        "...oo..."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

@@ -120,6 +120,7 @@ import {
 } from '../enemies/index.js';
 import type { Game } from '../game/index.js';
 import { defineModule } from '../module-info.js';
+import { OptionMode } from '../options/index.js';
 import {
   MAX_PATTERN_LOCALS,
   MAX_REPEAT_DEPTH,
@@ -587,6 +588,15 @@ function mixWeapons(weapons: World['weapons'], toggle: boolean): void {
     mixNumber(g.angle);
     mixArray(g.snakeX, g.snakeX.length);
     mixArray(g.snakeY, g.snakeY.length);
+    // The new types' state (w15-WB), mixed only while that type flies — the M3-01 law, so the
+    // recordings of the four original types keep their hashes byte for byte. The Aegis dishes add
+    // nothing: their orbit rides the `angle` already mixed above.
+    if (g.mode === OptionMode.Guard) mixArray(g.rear, g.rear.length);
+    else if (g.mode === OptionMode.Echo) {
+      let foldedMask = 0;
+      for (let k = 0; k < g.folded.length; k++) foldedMask |= g.folded[k] << k;
+      mixWord(foldedMask);
+    }
   }
   mixArray(weapons.timers, weapons.timers.length);
   mixArray(weapons.freeWayHeading, weapons.freeWayHeading.length);

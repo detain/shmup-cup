@@ -3,17 +3,22 @@
  * swings out opposite to the ship's motion and keeps its shape when the ship stops, the Formation
  * sits at its `>` offsets and spreads into its `V`, the Rotate Options orbit evenly and widen when
  * extended — plus the spread / extend control (hold PowerUp ≥ 15 ticks, or a Special toggle), the
- * type codes, `setFormation` and the allocation guard of the new placements.
+ * type codes, `setFormation` and the allocation guard of the new placements. w15-WB adds the
+ * Guard pods (fixed rear offsets, own rear cadence), the Echo wingmen (mirrored half-lagged trail
+ * with the terrain fold) and the Aegis dishes (fixed close orbit) — and one silhouette per type.
  */
 import { describe, expect, it } from 'vitest';
 import { Action } from '../../src/input/index.js';
 import {
+  AEGIS_ORBIT_RADIUS,
   FORMATION_RETRACTED,
   FORMATION_SPREAD,
   MAX_OPTIONS,
   OPTION_HOLD_TICKS,
   OPTION_MODE_NAMES,
   OPTION_SPREAD_TICKS,
+  OPTION_SPRITE,
+  OPTION_SPRITES,
   OptionMode,
   ROTATE_RADIUS,
   ROTATE_RADIUS_EXTENDED,
@@ -69,13 +74,36 @@ function dist(ax: number, ay: number, bx: number, by: number): number {
 
 describe('core/options types (M2-04)', () => {
   it('names the types in config order and maps unknown names to the trail', () => {
-    expect(OPTION_MODE_NAMES).toEqual(['trail', 'snake', 'formation', 'rotate']);
-    expect(Object.values(OptionMode)).toEqual([0, 1, 2, 3]);
+    expect(OPTION_MODE_NAMES).toEqual([
+      'trail',
+      'snake',
+      'formation',
+      'rotate',
+      'guard',
+      'echo',
+      'aegis',
+    ]);
+    expect(Object.values(OptionMode)).toEqual([0, 1, 2, 3, 4, 5, 6]);
     const group = createOptionGroup('rotate');
     expect([group.formation, group.mode]).toEqual(['rotate', OptionMode.Rotate]);
     group.setFormation('spiral' as never);
     expect([group.formation, group.mode]).toEqual(['trail', OptionMode.Trail]);
     expect(createOptionGroup().formation).toBe('trail');
+    for (const name of OPTION_MODE_NAMES) {
+      const g = createOptionGroup(name);
+      expect(g.formation).toBe(name);
+      expect(g.mode).toBe(OPTION_MODE_NAMES.indexOf(name));
+    }
+  });
+
+  it('one silhouette per type, in mode order, the trail keeping the orb (w15-WB)', () => {
+    expect(OPTION_SPRITES).toHaveLength(OPTION_MODE_NAMES.length);
+    expect(OPTION_SPRITES[OptionMode.Trail]).toBe(OPTION_SPRITE);
+    expect(new Set(OPTION_SPRITES).size).toBe(OPTION_MODE_NAMES.length);
+    for (const name of OPTION_SPRITES) {
+      expect(name.startsWith('options/'), name).toBe(true);
+      expect(name).toMatch(/^options\/[a-z][a-z0-9]*(-[a-z0-9]+)*$/);
+    }
   });
 
   it('Snake: the chain swings out opposite to the motion, SNAKE_LINK apart', () => {
@@ -199,6 +227,108 @@ describe('core/options types (M2-04)', () => {
     expect([group.spreadTicks, group.holdTicks]).toEqual([0, 0]);
   });
 
+  it('Guard pods: the retracted `>` held fixed, the rear countdown stepped (w15-WB)', () => {
+    const group = createOptionGroup('guard');
+    const ship = createPlayer(0, 3);
+    ship.x = 120;
+    ship.y = 90;
+    group.reset(ship, camera());
+    group.follow(ship, camera(), 4, false);
+    for (let k = 0; k < 4; k++) {
+      expect(group.x[k]).toBe(120 + FORMATION_RETRACTED[k * 2]);
+      expect(group.y[k]).toBe(90 + FORMATION_RETRACTED[k * 2 + 1]);
+    }
+    // Spread / extend never moves them (the pods hold their line whatever the player does).
+    group.steer(intent(0, Action.Special));
+    const idle = intent();
+    for (let t = 1; t < OPTION_SPREAD_TICKS + 2; t++) group.steer(idle);
+    expect(group.spreadTicks).toBe(OPTION_SPREAD_TICKS);
+    group.follow(ship, camera(), 4, false);
+    for (let k = 0; k < 4; k++) {
+      expect(group.x[k]).toBe(120 + FORMATION_RETRACTED[k * 2]);
+      expect(group.y[k]).toBe(90 + FORMATION_RETRACTED[k * 2 + 1]);
+    }
+    // The rear countdown steps once per tick and reset spends it (the volley itself is M3's —
+    // core/weapons starts it; see the options-fire test).
+    group.rear[0] = 5;
+    group.rear[3] = 5;
+    group.follow(ship, camera(), 2, false);
+    expect([group.rear[0], group.rear[3]]).toEqual([4, 4]);
+    group.reset(ship, camera());
+    expect(group.rear[0]).toBe(0);
+  });
+
+  it('Echo wingmen: the mirrored half-lagged reflection, folding inside terrain (w15-WB)', () => {
+    const group = createOptionGroup('echo');
+    const ship = createPlayer(0, 3);
+    ship.x = 100;
+    ship.y = 100;
+    const cam = camera(0, 0);
+    group.reset(ship, cam);
+    // Fly straight up 2 px a tick for 30 ticks: the reflection stays on the flown x-line and
+    // mirrors the flown y-history across the ship's line at the half spacing.
+    for (let i = 0; i < 30; i++) {
+      ship.y -= 2;
+      group.follow(ship, cam, 2, true);
+    }
+    expect(ship.y).toBe(40);
+    // Wingman k rides the record (k+1) · ECHO_SPACING back — k0 saw y=52, k1 saw y=64 — mirrored
+    // across the ship's line (y 40): the reflection stands where the flown path was.
+    expect(group.x[0]).toBeCloseTo(100, 9);
+    expect(group.y[0]).toBeCloseTo(28, 9);
+    expect(group.y[1]).toBeCloseTo(16, 9);
+    expect(group.folded[0]).toBe(0);
+    expect(group.folded[1]).toBe(0);
+    // With a probe, the wingman whose point lies in solid rock folds onto the ship — and the
+    // probe only ever sees whole pixels.
+    group.setTerrainProbe((px, py) => {
+      expect(Number.isInteger(px)).toBe(true);
+      expect(Number.isInteger(py)).toBe(true);
+      return py < 25;
+    });
+    group.follow(ship, cam, 2, false);
+    expect(group.folded[0]).toBe(0); // y 28: open air
+    expect(group.y[0]).toBeCloseTo(28, 9);
+    expect(group.folded[1]).toBe(1); // y 16: inside terrain
+    expect(group.x[1]).toBe(100);
+    expect(group.y[1]).toBe(40);
+    // A cold type change never leaks a fold into the next type — and returning to Echo finds the
+    // same fold again (the trail is kept, the probe stays bound).
+    group.setFormation('guard');
+    expect([...group.folded]).toEqual([0, 0, 0, 0]);
+    group.setFormation('echo');
+    group.follow(ship, cam, 2, false);
+    expect(group.folded[1]).toBe(1);
+    // Reset (respawn) clears the fold — and a fresh trail mirrors the ship onto itself, open.
+    group.reset(ship, cam);
+    expect([...group.folded]).toEqual([0, 0, 0, 0]);
+    group.follow(ship, cam, 2, false);
+    expect([...group.folded]).toEqual([0, 0, 0, 0]);
+    expect(group.y[0]).toBeCloseTo(40, 9);
+  });
+
+  it('Aegis dishes: the fixed close orbit, spread-proof, turning (w15-WB)', () => {
+    const group = createOptionGroup('aegis');
+    const ship = createPlayer(0, 3);
+    ship.x = 150;
+    ship.y = 100;
+    group.reset(ship, camera());
+    group.follow(ship, camera(), 2, false);
+    expect(group.angle).toBe(ROTATE_SPEED);
+    for (let k = 0; k < 2; k++) {
+      expect(dist(group.x[k], group.y[k], 150, 100)).toBeCloseTo(AEGIS_ORBIT_RADIUS, 3);
+    }
+    expect(group.x[0] + group.x[1]).toBeCloseTo(300, 3);
+    // Extend to the max: the dishes never widen their ring.
+    group.steer(intent(0, Action.Special));
+    const idle = intent();
+    for (let t = 1; t < OPTION_SPREAD_TICKS + 2; t++) group.steer(idle);
+    group.follow(ship, camera(), 3, false);
+    for (let k = 0; k < 3; k++) {
+      expect(dist(group.x[k], group.y[k], 150, 100)).toBeCloseTo(AEGIS_ORBIT_RADIUS, 3);
+    }
+  });
+
   it('a quick PowerUp tap never moves the options; a Special press toggles; reset retracts', () => {
     const group = createOptionGroup('formation');
     const ship = createPlayer(0, 3);
@@ -236,12 +366,17 @@ describe('core/options types (M2-04)', () => {
 });
 
 describe('core/options types allocation', () => {
-  it('steers and places Snake, Formation and Rotate options without allocating', () => {
+  it('steers and places every Option type without allocating (Snake…Aegis, w15-WB)', () => {
     const groups = [
       createOptionGroup('snake'),
       createOptionGroup('formation'),
       createOptionGroup('rotate'),
+      createOptionGroup('guard'),
+      createOptionGroup('echo'),
+      createOptionGroup('aegis'),
     ];
+    // The Echo fold probe as a stable whole-pixel test (allocation-free like the World's).
+    for (let g = 0; g < 6; g++) groups[g].setTerrainProbe((px, py) => px < 12 || py < 12);
     const s = createPlayer(0, 3);
     s.x = 40.5;
     s.y = 60.25;
@@ -256,7 +391,7 @@ describe('core/options types allocation', () => {
         s.x = cam.x + 40 + (i % 7) * 0.5;
         s.y = 60.25 + (i % 13) * 1.5;
         const input = i % 50 < 20 ? hold : i % 97 === 0 ? tap : idle;
-        for (let g = 0; g < 3; g++) {
+        for (let g = 0; g < 6; g++) {
           const group = groups[g];
           group.steer(input);
           group.follow(s, cam, (i % 5) | 0, i % 3 !== 0);

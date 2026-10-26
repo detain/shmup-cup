@@ -85,6 +85,8 @@
  * - shmup_feat.md §11 — per-enemy rank modifiers ({@link BulletSystem.setShooterRank})
  * - shmup_feat.md §20 — telegraphing (laser warning lines), visible bullet origins
  * - shmup_feat.md §22 — SoA pools, brute-force bullets × players, capsules for lasers
+ * - shmup_feat.md §8 (w15-WB) — the Aegis option's dishes swallow the cancelable bullets that
+ *   reach them ahead of the ship ({@link BulletSystem.aegisSweep})
  *
  * **Public API.** {@link createBulletSystem}, {@link BulletSystem}, {@link BulletHost},
  * {@link BulletOwner}, {@link BulletOrigin}, {@link LaserSource}, {@link spawnBullet},
@@ -108,7 +110,8 @@
  *
  * M3-02: {@link BulletSystem.vortex} (the black-hole bomb's pull), {@link VORTEX_FALLOFF},
  * {@link BulletSystem.grazePlayers} and {@link GRAZE_MARGIN} (graze scoring — the
- * {@link BulletFlag.Grazed} bit).
+ * {@link BulletFlag.Grazed} bit). w15-WB: {@link BulletSystem.aegisSweep} (the Aegis dishes'
+ * swallow).
  *
  * @module
  */
@@ -126,6 +129,7 @@ import { FX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
 import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS, atan2B, quantizeAngle } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
+import { AEGIS_ARC, AEGIS_SWALLOW_RADIUS, OptionMode, type OptionGroup } from '../options/index.js';
 import { PlayerHitCause, playerHit, type PlayerCamera, type PlayerShip } from '../player/index.js';
 import { POD_RADIUS, ShieldHit, absorbPodHit, type ShieldState } from '../shields/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
@@ -1044,6 +1048,18 @@ export interface BulletSystem {
     pull: number,
     player: number,
   ): number;
+  /**
+   * The Aegis dishes of every Aegis-type option group swallow the enemy bullets that reach them
+   * (w15-WB; the World calls it in phase 5, right after the bullets and vortexes moved): a live,
+   * cancelable bullet within {@link AEGIS_SWALLOW_RADIUS} px of a dish and inside the forward
+   * {@link AEGIS_ARC}-unit wedge at its ship leaves a point item (or only sparkles without the
+   * cancel rule) exactly like a cancelled bullet. Lasers are not swallowed — the dishes eat
+   * bullets, not beams. Groups of any other type are skipped at once.
+   *
+   * @param options - The World's per-player option groups (read, never written).
+   * @returns Bullets swallowed (allocation-free).
+   */
+  aegisSweep(options: readonly OptionGroup[]): number;
   /**
    * Removes every cancelable bullet and laser, straight or bending (see
    * {@link cancelAllBullets}).
@@ -2334,6 +2350,55 @@ class BulletSystemImpl implements BulletSystem {
       const move = step < d ? step : d;
       f.x[i] += (dx / d) * move;
       f.y[i] += (dy / d) * move;
+    }
+    return swallowed;
+  }
+
+  /** See {@link BulletSystem.aegisSweep}. */
+  aegisSweep(options: readonly OptionGroup[]): number {
+    const f = this.pool.fields;
+    const n = this.pool.count;
+    const half = AEGIS_ARC / 2;
+    const r2 = AEGIS_SWALLOW_RADIUS * AEGIS_SWALLOW_RADIUS;
+    const players = this.host.players;
+    const events = this.host.events;
+    const points = this.cancelPoints > 0;
+    let swallowed = 0;
+    for (let i = 0; i < n; i++) {
+      const bits = f.flags[i];
+      if ((bits & BulletFlag.Dead) !== 0 || (bits & BulletFlag.Cancelable) === 0) continue;
+      const bx = f.x[i];
+      const by = f.y[i];
+      for (let p = 0; p < options.length; p++) {
+        const group = options[p];
+        if (group.mode !== OptionMode.Aegis || group.count === 0) continue;
+        const ship = players[p];
+        const dx = bx - ship.x;
+        // Ahead only: a bullet level with or behind the ship flies on untouched.
+        if (dx < 0) continue;
+        const a = atan2B(by - ship.y, dx);
+        if (!(a <= half || a >= ANGLE_UNITS - half)) continue;
+        for (let k = 0; k < group.count; k++) {
+          const gx = bx - group.x[k];
+          const gy = by - group.y[k];
+          if (gx * gx + gy * gy > r2) continue;
+          // Whole pixels (M1-10): the push is not inlined, a fractional coordinate is boxed.
+          events.push(
+            SimEventKind.Particles,
+            FX_CUES.BulletCancel,
+            Math.floor(bx) | 0,
+            Math.floor(by) | 0,
+            1,
+          );
+          if (points) this.spawnPoint(i, p);
+          this.killBullet(i);
+          swallowed++;
+          break;
+        }
+        // Swallowed (or this player's dishes missed and a later player's can still hit): a dead
+        // slot ends this bullet's pass.
+        if ((f.flags[i] & BulletFlag.Dead) !== 0) break;
+      }
     }
     return swallowed;
   }

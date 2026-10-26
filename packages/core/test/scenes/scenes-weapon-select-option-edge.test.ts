@@ -168,9 +168,9 @@ describe('core/scenes weapon select (M2-04): OPTION and `?` rows', () => {
     }
     expect(seen).toEqual([...OPTION_CHOICE_LABELS, OPTION_CHOICE_LABELS[0]]);
     s.press(Action.Left);
-    expect([select.option.label, group.formation]).toEqual(['ROTATE', 'rotate']);
+    expect([select.option.label, group.formation]).toEqual(['AEGIS', 'aegis']);
     s.press(Action.Left, 3);
-    expect([select.option.label, group.formation]).toEqual(['TRAIL', 'trail']);
+    expect([select.option.label, group.formation]).toEqual(['ROTATE', 'rotate']);
   });
 
   it('`?` cycles all five shields in order and START takes the last one', () => {

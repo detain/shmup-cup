@@ -1,0 +1,38 @@
+{
+  "name": "options/echo-wing",
+  "description": "Echo option (w15-WB silhouette): a hollow mirror lozenge that fills with light on its pulse.",
+  "palette": {
+    ".": null,
+    "o": "#3a1a4a",
+    "v": "#8a5ac0",
+    "l": "#c8a8f0"
+  },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "...oo...",
+        "..ovvo..",
+        ".ov..vo.",
+        "ov....vo",
+        "ov....vo",
+        ".ov..vo.",
+        "..ovvo..",
+        "...oo..."
+      ]
+    },
+    {
+      "rows": [
+        "...oo...",
+        "..ollo..",
+        ".ovllvo.",
+        "ovllllvo",
+        "ovllllvo",
+        ".ovllvo.",
+        "..ollo..",
+        "...oo..."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

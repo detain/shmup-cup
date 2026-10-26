@@ -1,0 +1,33 @@
+{
+  "name": "options/dart",
+  "description": "Formation option (w15-WB silhouette): a dart head with a notched tail, two pulse frames.",
+  "palette": { ".": null, "o": "#6a1a1a", "r": "#e83838", "y": "#f8a030" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "o.......",
+        "oro.....",
+        "orrr....",
+        "orrrr...",
+        "orrrr...",
+        "orrr....",
+        "oro.....",
+        "o......."
+      ]
+    },
+    {
+      "rows": [
+        "o.......",
+        "oro.....",
+        "oryr....",
+        "oryyr...",
+        "oryyr...",
+        "oryr....",
+        "oro.....",
+        "o......."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

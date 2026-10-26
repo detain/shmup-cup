@@ -214,7 +214,7 @@ describe('integration: Option types and meter shields on the shipped content (M2
         sessions++;
       }
     }
-    expect(sessions).toBe(20);
+    expect(sessions).toBe(35); // w15-WB: seven option types × five shields (was four types, 20)
     expect(v.list).toEqual([]);
   });
 

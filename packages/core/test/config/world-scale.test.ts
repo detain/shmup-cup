@@ -128,6 +128,8 @@ const V1_WORLD: readonly V1World[] = Object.freeze([
   { name: 'RIPPLE_RING_WIDTH', v1: 4, unit: 'world-px' },
   { name: 'SHOT_CULL_MARGIN', v1: 16, unit: 'world-px' },
   // R2-02.W3 — the ship side (player, options, shields, powerups, black hole):
+  { name: 'AEGIS_ORBIT_RADIUS', v1: 16, unit: 'world-px' }, // w15-WB
+  { name: 'AEGIS_SWALLOW_RADIUS', v1: 20, unit: 'world-px' }, // w15-WB
   { name: 'BLACK_HOLE_CORE_RADIUS', v1: 10, unit: 'world-px' },
   { name: 'BLACK_HOLE_DRIFT', v1: 0.25, unit: 'px-per-tick' },
   { name: 'BLACK_HOLE_ENEMY_PULL', v1: 1, unit: 'px-per-tick' },
@@ -231,6 +233,7 @@ const UNSCALED: readonly Unscaled[] = Object.freeze([
     reason: 'count',
     value: 48,
   },
+  { name: 'ECHO_SPACING', reason: 'count', value: 6 }, // w15-WB — a trail-buffer index step
   { name: 'FULL_LOADOUT_SPEED_LEVEL', reason: 'count', value: 2 },
   { name: 'MAX_BLOCK_CELLS', reason: 'count', value: 64 },
   { name: 'MAX_CHAIN_LINKS', reason: 'count', value: 16 },

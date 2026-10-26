@@ -381,7 +381,15 @@ describe('core/scenes the weapon select (M2-03)', () => {
     const select = s.flow.weaponSelect;
     const group = select.preview!.weapons.options[0];
     expect([select.option.label, group.formation]).toEqual(['TRAIL', 'trail']);
-    expect(OPTION_CHOICE_LABELS).toEqual(['TRAIL', 'SNAKE', 'FORMATION', 'ROTATE']);
+    expect(OPTION_CHOICE_LABELS).toEqual([
+      'TRAIL',
+      'SNAKE',
+      'FORMATION',
+      'ROTATE',
+      'GUARD',
+      'ECHO',
+      'AEGIS',
+    ]);
     expect(SHIELD_CHOICE_LABELS).toEqual([
       'FORCE FIELD',
       'SHIELD',
@@ -390,20 +398,20 @@ describe('core/scenes the weapon select (M2-03)', () => {
       'REDUCE',
     ]);
     s.focus(WeaponSelectItem.Option);
-    s.press(Action.Left); // TRAIL → ROTATE (wraps)
-    expect(select.option.label).toBe('ROTATE');
-    expect(group.formation).toBe('rotate');
+    s.press(Action.Left); // TRAIL → AEGIS (wraps)
+    expect(select.option.label).toBe('AEGIS');
+    expect(group.formation).toBe('aegis');
     // While OPTION is focused the preview's Options spread and retract now and then.
     s.hold(0, PREVIEW_SPREAD_TICKS + OPTION_SPREAD_TICKS + 2);
     expect(group.toggled || group.spreadTicks > 0).toBe(true);
     s.press(Action.Down); // `?`
     s.press(Action.Left); // FORCE FIELD → REDUCE (wraps)
     expect(select.shield.label).toBe('REDUCE');
-    expect(select.arsenal()).toMatchObject({ optionChoice: 'rotate', shieldChoice: 'reduce' });
+    expect(select.arsenal()).toMatchObject({ optionChoice: 'aegis', shieldChoice: 'reduce' });
     s.focus(WeaponSelectItem.Start);
     s.launch();
-    expect(s.game.world.config).toMatchObject({ optionChoice: 'rotate', shieldChoice: 'reduce' });
-    expect(s.game.world.weapons.options[0].formation).toBe('rotate');
+    expect(s.game.world.config).toMatchObject({ optionChoice: 'aegis', shieldChoice: 'reduce' });
+    expect(s.game.world.weapons.options[0].formation).toBe('aegis');
   });
 
   it('Back returns to the difficulty menu and drops the preview; RETRY and the next game keep the loadout', () => {

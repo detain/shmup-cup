@@ -1035,6 +1035,9 @@ const movementSystem: WorldSystem = (world) => {
   world.bullets.update();
   // The black holes (M3-02) pull the bullets and enemies that just moved.
   if (world.blackholes.enabled) world.blackholes.update();
+  // The Aegis dishes (w15-WB) eat the bullets that reached them after this tick's movement,
+  // before phase 6 lets any of them touch a ship.
+  world.bullets.aegisSweep(world.weapons.options);
   world.weapons.update();
   world.powerups.update();
 };

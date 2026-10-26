@@ -1,0 +1,40 @@
+{
+  "name": "options/guard-pod",
+  "description": "Guard option (w15-WB silhouette): an armoured pod with a rear-facing muzzle at its left edge.",
+  "palette": {
+    ".": null,
+    "o": "#243444",
+    "g": "#5a7a9a",
+    "c": "#9ac0e0",
+    "k": "#141c24",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..oooo..",
+        ".oggcgo.",
+        ".oggggo.",
+        "okogggo.",
+        "okogggo.",
+        ".oggcgo.",
+        ".oggggo.",
+        "..oooo.."
+      ]
+    },
+    {
+      "rows": [
+        "..oooo..",
+        ".oggggo.",
+        ".ogyggo.",
+        "oykgygo.",
+        "oykgygo.",
+        ".oggggo.",
+        ".ogggyo.",
+        "..oooo.."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}
