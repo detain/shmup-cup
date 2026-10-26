@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "items/capsule",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen3/item/power-capsule/glint-2x2/gen.png",
+      "sha256": "a5eaca45d12347a9da018ce3acce550cf37a9f0f15d833831fa4e985717e9873",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": "art-prompts/images/60-items-fx/items-and-fx.json",
+        "entry": "power-capsules-v1",
+        "text": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- 4 (4) equal square cells laid out as ONE complete grid — TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells 1-4 in reading order (left-right, then top-bottom) are the SAME chubby red-and-white power capsule lying HORIZONTALLY (wider than tall, about 3:2), centred in its cell at the same scale, in four frames of one glint-blink: cell 1 = FULL BRIGHT, cell 2 = DIMMED, cell 3 = DIMMER with only a thin rim glint, cell 4 = RECOVERING toward bright. Only the highlight/brightness state changes — the silhouette stays identical in all four cells.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each capsule sits well inside its cell with at least 40 px of unbroken flat #51e018 key around it and clean flat key gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background, green tint on the subject, green spill, background scenery, cast shadow, more than sixteen capsules, glow halo outside the outline"
+      },
+      "seed": 746663421,
+      "size": "512x512",
+      "steps": 50,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T18:28:42.748Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/item/power-capsule/winner.png",
+          "from": "art-prompts/v2/winners/item/power-capsule/winner.png",
+          "sha256": "274ac375984fd4d1af5055425bca47f39431b1aa99fd037583e8aea0645685f5",
+          "sidecar": "art-prompts/v2/winners/item/power-capsule/winner.json",
+          "sidecarSha256": "3608c81905e71eecef66cd610459bd79f98739ac26e4a5730a0071aa1b1d828b",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen3/item/power-capsule/glint-2x2/gen.json",
+        "sidecarSha256": "6111f9bc1fc2ce3b24ef6216951adbd1cc8688b65d28a62a34a59a6f01e37826",
+        "id": "item/power-capsule",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- 4 (4) equal square cells laid out as ONE complete grid — TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells 1-4 in reading order (left-right, then top-bottom) are the SAME chubby red-and-white power capsule lying HORIZONTALLY (wider than tall, about 3:2), centred in its cell at the same scale, in four frames of one glint-blink: cell 1 = FULL BRIGHT, cell 2 = DIMMED, cell 3 = DIMMER with only a thin rim glint, cell 4 = RECOVERING toward bright. Only the highlight/brightness state changes — the silhouette stays identical in all four cells.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each capsule sits well inside its cell with at least 40 px of unbroken flat #51e018 key around it and clean flat key gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/items/capsule.recipe.json",
+    "sha256": "82926f15fd49b7ce4b957aaa1d29a6271c474d039da14a5aaf2ae5ab702aebf3"
+  },
+  "edit": null,
+  "output": {
+    "png": "capsule.png",
+    "sha256": "0c56ed71aaa27b3caa85c63d5196b4424bf2d8ebe316235f81d692427bd94eca",
+    "sidecar": "capsule.json",
+    "sidecarSha256": "3be11bcc75aca44d343009403e6fb47dfaf9d059080d0c6c6b2e489e6a970a6c",
+    "frames": 4,
+    "frameWidth": 18,
+    "frameHeight": 12,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.REING2 (P-3r): the four blink frames (full bright, dim, dimmer with rim glint, recovering) of the items/capsule capsule on the 2x2 ask sheet, each cropped to its measured subject box, the 6-px key border clamped inside the cell quad (the row-one and row-two capsules touch at the shared y=256 boundary, so no pad may cross it). Numeric probes per w15-REING2-report.md; owner ruling 2026-10-23 applies (art-provenance.md §8 decision 1); picker gate waived by the owner directive of 2026-10-26 for never-designed slots."
+}
