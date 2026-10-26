@@ -1,0 +1,72 @@
+{
+  "id": "boss/galvanic-maw",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single gigantic mechanical fish boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its head pointing to the left edge of the picture, the whole body visible from snout to tail fin with nothing cut off by the frame. A deep-bodied armored predator fish built like a submarine: a blunt heavy steel head with a huge underslung hinged jaw dropped wide open like a steel trap, rows of squared metal teeth along both jaws, and inside the open mouth a dark throat holding a caged sphere of crackling white-blue electricity, the only weak point. Behind the head the body is a tapering chain of overlapping riveted teal-grey hull segments joined by brass hinge-plates, with a row of round porthole lights along the flank. A tall dorsal ridge of comb-like electrode spines along the back with pale violet electric arcs jumping between them. Two pectoral fins made of fanned armored plates, each carrying a small row of gun barrels. A forked tail fin of sharp blade vanes at the far right. A small cold yellow eye lamp above the jaw hinge. Short rows of pink and red bullet lights with bright cores and dark rims trace the jawline. Menacing, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of teal steel, gunmetal, brass, pale violet and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the GM-02 fish BODY ONLY — snout to caudal peduncle, the tail fin, jaw and spine NOT drawn (they are separate parts) — flat broadside view facing left, one subject alone.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, cropped jaw, organic fish flesh, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 2115611203,
+  "width": 1024,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T15:51:03.861Z",
+  "seconds": 80.7,
+  "label": "GALVANIC MAW (GM-02) — zone B boss, the screen-sized mechanical fish; full body on key green",
+  "source": "images/30-bosses/hi-res.json#gm02-hires-v1",
+  "file": "art-prompts/v2/gen3/boss/galvanic-maw/maw-hull/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/galvanic-maw/winner.png"
+  ],
+  "editFromSha256": [
+    "586d478131d453fef492e54e01f6da417c9debeff9bc9517aa9ddfeea8c5df4c"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single gigantic mechanical fish boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its head pointing to the left edge of the picture, the whole body visible from snout to tail fin with nothing cut off by the frame. A deep-bodied armored predator fish built like a submarine: a blunt heavy steel head with a huge underslung hinged jaw dropped wide open like a steel trap, rows of squared metal teeth along both jaws, and inside the open mouth a dark throat holding a caged sphere of crackling white-blue electricity, the only weak point. Behind the head the body is a tapering chain of overlapping riveted teal-grey hull segments joined by brass hinge-plates, with a row of round porthole lights along the flank. A tall dorsal ridge of comb-like electrode spines along the back with pale violet electric arcs jumping between them. Two pectoral fins made of fanned armored plates, each carrying a small row of gun barrels. A forked tail fin of sharp blade vanes at the far right. A small cold yellow eye lamp above the jaw hinge. Short rows of pink and red bullet lights with bright cores and dark rims trace the jawline. Menacing, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of teal steel, gunmetal, brass, pale violet and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the GM-02 fish BODY ONLY — snout to caudal peduncle, the tail fin, jaw and spine NOT drawn (they are separate parts) — flat broadside view facing left, one subject alone.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x640",
+  "pins": {
+    "model": "flux2",
+    "seed": 2115611203,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single gigantic mechanical fish boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its head pointing to the left edge of the picture, the whole body visible from snout to tail fin with nothing cut off by the frame. A deep-bodied armored predator fish built like a submarine: a blunt heavy steel head with a huge underslung hinged jaw dropped wide open like a steel trap, rows of squared metal teeth along both jaws, and inside the open mouth a dark throat holding a caged sphere of crackling white-blue electricity, the only weak point. Behind the head the body is a tapering chain of overlapping riveted teal-grey hull segments joined by brass hinge-plates, with a row of round porthole lights along the flank. A tall dorsal ridge of comb-like electrode spines along the back with pale violet electric arcs jumping between them. Two pectoral fins made of fanned armored plates, each carrying a small row of gun barrels. A forked tail fin of sharp blade vanes at the far right. A small cold yellow eye lamp above the jaw hinge. Short rows of pink and red bullet lights with bright cores and dark rims trace the jawline. Menacing, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of teal steel, gunmetal, brass, pale violet and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the GM-02 fish BODY ONLY — snout to caudal peduncle, the tail fin, jaw and spine NOT drawn (they are separate parts) — flat broadside view facing left, one subject alone.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/galvanic-maw",
+    "targetGrid": "bosses/maw-hull 1f 96×66 a48,33",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 1024x640 gutters 0/0 borders 0/0 on 1024x640",
+    "rowCite": "w15-S3-B-report.md §4 row 1",
+    "generatedAt": "2026-10-26T15:51:03.861Z",
+    "shape": {
+      "w": 1024,
+      "h": 640,
+      "corners": [
+        [
+          52,
+          242,
+          2,
+          255
+        ],
+        [
+          61,
+          248,
+          1,
+          255
+        ],
+        [
+          51,
+          241,
+          1,
+          255
+        ],
+        [
+          57,
+          249,
+          2,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "boss/hollow-king",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single colossal abyssal anglerfish final boss for a retro 16-bit side-scrolling space shooter, shown in a side view facing the left edge of the picture, in a tall portrait frame, centered with a generous empty margin on all four sides, the whole creature visible from the tip of its lure to the end of its tail with nothing cut off by the frame. A cathedral-vast rounded body of black-blue armor plate shaped like a gothic cathedral: pointed arch ribs, buttress-like fin spines and rows of narrow lancet-window vents along its flank. Its belly is an open lantern ribcage of curved ivory bones with a cold pale cyan-green glow between them. An enormous gaping jaw under a high arched lintel of armor, lined with long recurved ivory fangs, the mouth a deep dark void. From the crown of its head a single long segmented lure-antenna arcs up and forward and curves down in front of the jaws, ending in a glowing lantern bulb shaped like a pale cyan-green star, the brightest thing in the picture, its glow kept inside a crisp dark outline. Small cold white eyes sunk deep under heavy brow plates. Tattered translucent membrane fins hang from its back and sides like rotting banners, and a short ragged tail fin trails behind. A few small pink and red bullet ports with bright cores and dark rims glint along the jaw plates. Ancient, regal, terrifying, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of black-blue, deep navy, slate, bone ivory, deep teal, pale cyan-green and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no silt, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the hollow king's ONE swept fin — a wide 1.57:1 swept-back fin blade in the referenced king's bone-and-abyssal materials, facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic fish gloss, wide horizontal framing, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1570838676,
+  "width": 1024,
+  "height": 640,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:41:33.818Z",
+  "seconds": 62.1,
+  "label": "THE HOLLOW KING (HK-10) — final boss inside the Ark, the anglerfish lure-cathedral; full body on key green",
+  "source": "images/30-bosses/hi-res.json#hk10-hires-v1",
+  "file": "art-prompts/v2/gen3/boss/hollow-king/fin-1f/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/hollow-king/winner.png"
+  ],
+  "editFromSha256": [
+    "bb04c66646dd23f048b363e3f4b7db019fa89eb8484460ecb20e253382165409"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single colossal abyssal anglerfish final boss for a retro 16-bit side-scrolling space shooter, shown in a side view facing the left edge of the picture, in a tall portrait frame, centered with a generous empty margin on all four sides, the whole creature visible from the tip of its lure to the end of its tail with nothing cut off by the frame. A cathedral-vast rounded body of black-blue armor plate shaped like a gothic cathedral: pointed arch ribs, buttress-like fin spines and rows of narrow lancet-window vents along its flank. Its belly is an open lantern ribcage of curved ivory bones with a cold pale cyan-green glow between them. An enormous gaping jaw under a high arched lintel of armor, lined with long recurved ivory fangs, the mouth a deep dark void. From the crown of its head a single long segmented lure-antenna arcs up and forward and curves down in front of the jaws, ending in a glowing lantern bulb shaped like a pale cyan-green star, the brightest thing in the picture, its glow kept inside a crisp dark outline. Small cold white eyes sunk deep under heavy brow plates. Tattered translucent membrane fins hang from its back and sides like rotting banners, and a short ragged tail fin trails behind. A few small pink and red bullet ports with bright cores and dark rims glint along the jaw plates. Ancient, regal, terrifying, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of black-blue, deep navy, slate, bone ivory, deep teal, pale cyan-green and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no silt, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the hollow king's ONE swept fin — a wide 1.57:1 swept-back fin blade in the referenced king's bone-and-abyssal materials, facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x640",
+  "pins": {
+    "model": "flux2",
+    "seed": 1570838676,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single colossal abyssal anglerfish final boss for a retro 16-bit side-scrolling space shooter, shown in a side view facing the left edge of the picture, in a tall portrait frame, centered with a generous empty margin on all four sides, the whole creature visible from the tip of its lure to the end of its tail with nothing cut off by the frame. A cathedral-vast rounded body of black-blue armor plate shaped like a gothic cathedral: pointed arch ribs, buttress-like fin spines and rows of narrow lancet-window vents along its flank. Its belly is an open lantern ribcage of curved ivory bones with a cold pale cyan-green glow between them. An enormous gaping jaw under a high arched lintel of armor, lined with long recurved ivory fangs, the mouth a deep dark void. From the crown of its head a single long segmented lure-antenna arcs up and forward and curves down in front of the jaws, ending in a glowing lantern bulb shaped like a pale cyan-green star, the brightest thing in the picture, its glow kept inside a crisp dark outline. Small cold white eyes sunk deep under heavy brow plates. Tattered translucent membrane fins hang from its back and sides like rotting banners, and a short ragged tail fin trails behind. A few small pink and red bullet ports with bright cores and dark rims glint along the jaw plates. Ancient, regal, terrifying, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of black-blue, deep navy, slate, bone ivory, deep teal, pale cyan-green and pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no water, no silt, no bubbles, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the hollow king's ONE swept fin — a wide 1.57:1 swept-back fin blade in the referenced king's bone-and-abyssal materials, facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 1024×640 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/hollow-king",
+    "targetGrid": "bosses/king-fin 1f 33×21 a16,10 (aspect ≈1.57)",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 1024x640 gutters 0/0 borders 0/0 on 1024x640",
+    "rowCite": "w15-S3-I-report.md §3 row 9",
+    "generatedAt": "2026-10-26T16:41:33.818Z",
+    "shape": {
+      "w": 1024,
+      "h": 640,
+      "corners": [
+        [
+          58,
+          236,
+          1,
+          255
+        ],
+        [
+          65,
+          241,
+          1,
+          255
+        ],
+        [
+          58,
+          238,
+          1,
+          255
+        ],
+        [
+          61,
+          244,
+          1,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

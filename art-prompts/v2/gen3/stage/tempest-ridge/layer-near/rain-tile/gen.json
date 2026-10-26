@@ -1,0 +1,72 @@
+{
+  "id": "stage/tempest-ridge/layer-near",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: slanting rain sheets and wind-torn cloud wisps, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces floating on the green key across the middle third of the picture: torn slate-grey cloud wisps with dark outlines, each trailing a short bundle of solid slanting rain streaks. No mountains, no sky, no filled strip, no outline box, and nothing round: no orbs, rings or dots.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) square rain veil tile on flat key green: thin diagonal wind-blown rain streaks (dark slate blue, near-black #1d2c46 family) scattered evenly across the square, sparse enough that most of the square is clean key green; streaks must NOT touch the sheet border (≥48 px clean key margin) so the tile reads on all four edges. No text, no clouds.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1617714049,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:18:37.700Z",
+  "seconds": 76.3,
+  "label": "TEMPEST RIDGE parallax layer 4/4 (near, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-near/rain-tile/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/stage/tempest-ridge/layer-near/winner.png"
+  ],
+  "editFromSha256": [
+    "b9844d7573d75862dd8e65f7f24de859165592a62b9e834126dc0866e0b70cee"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: slanting rain sheets and wind-torn cloud wisps, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces floating on the green key across the middle third of the picture: torn slate-grey cloud wisps with dark outlines, each trailing a short bundle of solid slanting rain streaks. No mountains, no sky, no filled strip, no outline box, and nothing round: no orbs, rings or dots.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) square rain veil tile on flat key green: thin diagonal wind-blown rain streaks (dark slate blue, near-black #1d2c46 family) scattered evenly across the square, sparse enough that most of the square is clean key green; streaks must NOT touch the sheet border (≥48 px clean key margin) so the tile reads on all four edges. No text, no clouds.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 1617714049,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE near parallax layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: slanting rain sheets and wind-torn cloud wisps, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  Paint only separate pieces floating on the green key across the middle third of the picture: torn slate-grey cloud wisps with dark outlines, each trailing a short bundle of solid slanting rain streaks. No mountains, no sky, no filled strip, no outline box, and nothing round: no orbs, rings or dots.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) square rain veil tile on flat key green: thin diagonal wind-blown rain streaks (dark slate blue, near-black #1d2c46 family) scattered evenly across the square, sparse enough that most of the square is clean key green; streaks must NOT touch the sheet border (≥48 px clean key margin) so the tile reads on all four edges. No text, no clouds.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/stage/tempest-ridge/layer-near",
+    "targetGrid": "bg/storm-rain 1f 96×96 (near weather, tileable)",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 1024x1024 gutters 0/0 borders 0/0 on 1024x1024",
+    "rowCite": "w15-S3-E-report.md §4 row 13",
+    "generatedAt": "2026-10-26T16:18:37.700Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          88,
+          224,
+          21,
+          255
+        ],
+        [
+          91,
+          224,
+          16,
+          255
+        ],
+        [
+          84,
+          226,
+          16,
+          255
+        ],
+        [
+          86,
+          226,
+          15,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

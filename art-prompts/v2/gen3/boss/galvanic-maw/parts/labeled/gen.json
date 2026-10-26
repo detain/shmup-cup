@@ -1,0 +1,72 @@
+{
+  "id": "boss/galvanic-maw/parts",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of GALVANIC MAW (GM-02). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GALVANIC MAW (GM-02) boss parts taken from the established design — the throat core with its caged electric ball, the jaw halves and the fin gun batteries, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole fish: the top row the caged white-violet electric ball from the throat, the middle row the pair of toothed jaw halves, the bottom row one triple-barrel gun battery with its fin. All four cells of one row show the same part in the reference's exact gunmetal, brass and violet colours. No lines between the cells, only plain green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = THROAT CORE — a caged white-violet energy ball in its ribcage cage; cell 2 = JAW — ONLY the top half of the jaw (the bottom half is a vertical mirror, do NOT draw it); cell 3 = GUN BATTERY — the short cannon deck; cell 4 = TAIL FIN. All four subjects face left at the SAME scale. No states, no poses beyond one subject per cell, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1190538304,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T15:53:03.441Z",
+  "seconds": 78.6,
+  "label": "GALVANIC MAW (GM-02) parts sheet: the throat core with its caged electric ball, the jaw halves and the fin gun batteries, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/boss/galvanic-maw/parts/labeled/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/galvanic-maw/parts/winner.png"
+  ],
+  "editFromSha256": [
+    "6245dae9137c7e4996c2735ed3ad81f75820d60bb15f1b3df99ac8902b692257"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of GALVANIC MAW (GM-02). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GALVANIC MAW (GM-02) boss parts taken from the established design — the throat core with its caged electric ball, the jaw halves and the fin gun batteries, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole fish: the top row the caged white-violet electric ball from the throat, the middle row the pair of toothed jaw halves, the bottom row one triple-barrel gun battery with its fin. All four cells of one row show the same part in the reference's exact gunmetal, brass and violet colours. No lines between the cells, only plain green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = THROAT CORE — a caged white-violet energy ball in its ribcage cage; cell 2 = JAW — ONLY the top half of the jaw (the bottom half is a vertical mirror, do NOT draw it); cell 3 = GUN BATTERY — the short cannon deck; cell 4 = TAIL FIN. All four subjects face left at the SAME scale. No states, no poses beyond one subject per cell, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 1190538304,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of GALVANIC MAW (GM-02). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of GALVANIC MAW (GM-02) boss parts taken from the established design — the throat core with its caged electric ball, the jaw halves and the fin gun batteries, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole fish: the top row the caged white-violet electric ball from the throat, the middle row the pair of toothed jaw halves, the bottom row one triple-barrel gun battery with its fin. All four cells of one row show the same part in the reference's exact gunmetal, brass and violet colours. No lines between the cells, only plain green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = THROAT CORE — a caged white-violet energy ball in its ribcage cage; cell 2 = JAW — ONLY the top half of the jaw (the bottom half is a vertical mirror, do NOT draw it); cell 3 = GUN BATTERY — the short cannon deck; cell 4 = TAIL FIN. All four subjects face left at the SAME scale. No states, no poses beyond one subject per cell, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/galvanic-maw/parts",
+    "targetGrid": "parts kit: bosses/maw-core 2f 21×21, bosses/maw-jaws-top 1f 39×15, bosses/maw-gun 1f 24×18, bosses/maw-fin 1f 27×39",
+    "sheetContract": "key #51e018; 4 cells as 2x2 of 448x448 gutters 64/64 borders 32/32 on 1024x1024",
+    "rowCite": "w15-S3-B-report.md §4 row 2",
+    "generatedAt": "2026-10-26T15:53:03.441Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          86,
+          226,
+          18,
+          255
+        ],
+        [
+          88,
+          228,
+          17,
+          255
+        ],
+        [
+          83,
+          226,
+          15,
+          255
+        ],
+        [
+          85,
+          229,
+          15,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

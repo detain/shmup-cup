@@ -1,0 +1,74 @@
+{
+  "id": "fx/black-hole",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nEffect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly #000000 in every background pixel: no grey wash, no star field, no glow spill beyond the arc forms themselves, no green anywhere.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4) on a PURE BLACK continuous background (NOT green): the same black-hole vortex in seven cells of exact one-eighth-turn swirl steps (cell 1 = 0°, cell 2 = 45°, cell 3 = 90°, cell 4 = 135°, cell 5 = 180°, cell 6 = 225°, cell 7 = 270° clockwise spiral rotation, spiral arms visibly rotating step by step, core fixed), and cell 8 = the named LIGHTNING DISCHARGE — the white-blue arc-ring burst per the second reference image. Binary forms, no grey wash, no green anywhere. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/black-hole/armed-scene) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, stars, nebula, scenery, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms",
+  "model": "flux2",
+  "seed": 1533507147,
+  "width": 1424,
+  "height": 704,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:52:08.128Z",
+  "seconds": 100.8,
+  "label": "Black-hole bomb — the MANTA's three-armed violet vortex, the effect alone on the black key (v2: 48×48, 8 frames)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/fx/black-hole/swirl-burst-8/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/fx/black-hole/winner.png",
+    "art-prompts/v2/winners/fx/black-hole/armed-scene/winner.png"
+  ],
+  "editFromSha256": [
+    "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62",
+    "c76983c232d8fa7461b821a5c1a324145f315c27f65fc22e8bc830d80786d6a1"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nEffect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly #000000 in every background pixel: no grey wash, no star field, no glow spill beyond the arc forms themselves, no green anywhere.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4) on a PURE BLACK continuous background (NOT green): the same black-hole vortex in seven cells of exact one-eighth-turn swirl steps (cell 1 = 0°, cell 2 = 45°, cell 3 = 90°, cell 4 = 135°, cell 5 = 180°, cell 6 = 225°, cell 7 = 270° clockwise spiral rotation, spiral arms visibly rotating step by step, core fixed), and cell 8 = the named LIGHTNING DISCHARGE — the white-blue arc-ring burst per the second reference image. Binary forms, no grey wash, no green anywhere. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/black-hole/armed-scene) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1424x704",
+  "pins": {
+    "model": "flux2",
+    "seed": 1533507147,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nEffect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly #000000 in every background pixel: no grey wash, no star field, no glow spill beyond the arc forms themselves, no green anywhere.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4) on a PURE BLACK continuous background (NOT green): the same black-hole vortex in seven cells of exact one-eighth-turn swirl steps (cell 1 = 0°, cell 2 = 45°, cell 3 = 90°, cell 4 = 135°, cell 5 = 180°, cell 6 = 225°, cell 7 = 270° clockwise spiral rotation, spiral arms visibly rotating step by step, core fixed), and cell 8 = the named LIGHTNING DISCHARGE — the white-blue arc-ring burst per the second reference image. Binary forms, no grey wash, no green anywhere. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/black-hole/armed-scene) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/fx/black-hole + winners/fx/black-hole/armed-scene",
+    "targetGrid": "fx/black-hole 8f 48×48 a[24,24] (swirl 0..6 + burst 7)",
+    "sheetContract": "key #000000; 8 cells as 4x2 of 288x288 gutters 48/64 borders 64/32 on 1424x704",
+    "rowCite": "w15-S3-P-report.md §4 row 9",
+    "generatedAt": "2026-10-26T16:52:08.128Z",
+    "shape": {
+      "w": 1424,
+      "h": 704,
+      "corners": [
+        [
+          0,
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          0,
+          0,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

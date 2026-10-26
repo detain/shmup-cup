@@ -1,0 +1,74 @@
+{
+  "id": "tiles/iron-citadel/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen IRON CITADEL terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established IRON CITADEL material (riveted dark steel plates in grid courses with amber running-light slots and oil streaks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a hazard-striped steel lip, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Five columns and four rows of identical large square cells, twenty tiles of exactly the same size, aligned in a strict grid; no wide, narrow or extra pieces. Every tile is a flat side-view square of riveted steel plate; corner, inner-corner and slope tiles are the same squares with part cut away to the flat green key. No 3D walls, boxes or perspective.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells (at least 200 px each) laid out as FOUR rows of SIX (6), gutters at least 20 px, one named citadel tile per cell in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, plate, rivet-plate, grate, gate-door. Iron walls with grey rivets and amber vents (the CITADEL_RAMP materials), each solid tile flush to its cell edges, flat 2D pixel stone, no 3D, no perspective, no text.\nA SECOND reference image is supplied (tiles/iron-citadel) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1600×1088 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1013977121,
+  "width": 1600,
+  "height": 1088,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:37:32.383Z",
+  "seconds": 132,
+  "label": "IRON CITADEL 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/iron-citadel/tileset/named-24/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/iron-citadel/tileset/winner.png",
+    "art-prompts/v2/winners/tiles/iron-citadel/winner.png"
+  ],
+  "editFromSha256": [
+    "97e2d09f5f59854732ad081bdce3061597c6d151517421b5b3b97e1dfa554e0d",
+    "2994549662791446ad028b1b098c549dee2446133fece5d747359994e068a0c8"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen IRON CITADEL terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established IRON CITADEL material (riveted dark steel plates in grid courses with amber running-light slots and oil streaks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a hazard-striped steel lip, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Five columns and four rows of identical large square cells, twenty tiles of exactly the same size, aligned in a strict grid; no wide, narrow or extra pieces. Every tile is a flat side-view square of riveted steel plate; corner, inner-corner and slope tiles are the same squares with part cut away to the flat green key. No 3D walls, boxes or perspective.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells (at least 200 px each) laid out as FOUR rows of SIX (6), gutters at least 20 px, one named citadel tile per cell in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, plate, rivet-plate, grate, gate-door. Iron walls with grey rivets and amber vents (the CITADEL_RAMP materials), each solid tile flush to its cell edges, flat 2D pixel stone, no 3D, no perspective, no text.\nA SECOND reference image is supplied (tiles/iron-citadel) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1600×1088 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1600x1088",
+  "pins": {
+    "model": "flux2",
+    "seed": 1013977121,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen IRON CITADEL terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established IRON CITADEL material (riveted dark steel plates in grid courses with amber running-light slots and oil streaks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a hazard-striped steel lip, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Five columns and four rows of identical large square cells, twenty tiles of exactly the same size, aligned in a strict grid; no wide, narrow or extra pieces. Every tile is a flat side-view square of riveted steel plate; corner, inner-corner and slope tiles are the same squares with part cut away to the flat green key. No 3D walls, boxes or perspective.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells (at least 200 px each) laid out as FOUR rows of SIX (6), gutters at least 20 px, one named citadel tile per cell in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, plate, rivet-plate, grate, gate-door. Iron walls with grey rivets and amber vents (the CITADEL_RAMP materials), each solid tile flush to its cell edges, flat 2D pixel stone, no 3D, no perspective, no text.\nA SECOND reference image is supplied (tiles/iron-citadel) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1600×1088 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/tiles/iron-citadel/tileset + winners/tiles/iron-citadel",
+    "targetGrid": "tiles/terrain-citadel-v2 24f 12×12 a0,0 (clip-to-mask)",
+    "sheetContract": "key #51e018; 24 cells as 6x4 of 224x224 gutters 32/32 borders 48/48 on 1600x1088",
+    "rowCite": "w15-S3-H-report.md §3 row 2",
+    "generatedAt": "2026-10-26T16:37:32.383Z",
+    "shape": {
+      "w": 1600,
+      "h": 1088,
+      "corners": [
+        [
+          75,
+          246,
+          15,
+          255
+        ],
+        [
+          78,
+          251,
+          15,
+          255
+        ],
+        [
+          71,
+          244,
+          11,
+          255
+        ],
+        [
+          73,
+          249,
+          12,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

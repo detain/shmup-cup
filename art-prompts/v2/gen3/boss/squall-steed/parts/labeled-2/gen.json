@@ -1,0 +1,72 @@
+{
+  "id": "boss/squall-steed/parts",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of SQUALL STEED (SS-05). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of SQUALL STEED (SS-05) boss parts taken from the established design — the caged thunder heart behind the chest doors, the crown snout and the tail coil, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole seahorse: the top row the glowing thunder heart between its two pairs of chest doors, the middle row the head with its cannon snout, yellow eye and spiked crown, the bottom row the curled blue-and-steel tail coil. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWELVE (12) equal square cells across SEVEN rows in this exact announced order: row 1: HEAD — one cell (the storm steed's head, facing left). row 2: FIN — TWO cells (same swept fin, two states). row 3: MANE — FOUR cells (four mane tufts of one flowing progress). row 4: CREST — TWO cells (same brow crest, two states). row 5: FLANK — one cell (a side armour plate). row 6: LID-TOP — one cell (only the top half of an eye lid). row 7: LID-BOTTOM — one cell (only the bottom half of the eye lid). Twelve cells in total, one subject per cell, all parts facing left at the SAME scale, parts from the referenced sheet's design language, no unnamed extra cells, no multi-part cells.\n- The sheet canvas measures EXACTLY 832×1408 px. Produce EXACTLY 12 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 2052408456,
+  "width": 832,
+  "height": 1408,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:10:42.399Z",
+  "seconds": 83.4,
+  "label": "SQUALL STEED (SS-05) parts sheet: the caged thunder heart behind the chest doors, the crown snout and the tail coil, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/boss/squall-steed/parts/labeled-2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/squall-steed/parts/winner.png"
+  ],
+  "editFromSha256": [
+    "de73f9817af10630bd0660e21159134babe93725f107df8948415fbe001c9ee7"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of SQUALL STEED (SS-05). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of SQUALL STEED (SS-05) boss parts taken from the established design — the caged thunder heart behind the chest doors, the crown snout and the tail coil, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole seahorse: the top row the glowing thunder heart between its two pairs of chest doors, the middle row the head with its cannon snout, yellow eye and spiked crown, the bottom row the curled blue-and-steel tail coil. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWELVE (12) equal square cells across SEVEN rows in this exact announced order: row 1: HEAD — one cell (the storm steed's head, facing left). row 2: FIN — TWO cells (same swept fin, two states). row 3: MANE — FOUR cells (four mane tufts of one flowing progress). row 4: CREST — TWO cells (same brow crest, two states). row 5: FLANK — one cell (a side armour plate). row 6: LID-TOP — one cell (only the top half of an eye lid). row 7: LID-BOTTOM — one cell (only the bottom half of the eye lid). Twelve cells in total, one subject per cell, all parts facing left at the SAME scale, parts from the referenced sheet's design language, no unnamed extra cells, no multi-part cells.\n- The sheet canvas measures EXACTLY 832×1408 px. Produce EXACTLY 12 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "832x1408",
+  "pins": {
+    "model": "flux2",
+    "seed": 2052408456,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of SQUALL STEED (SS-05). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of SQUALL STEED (SS-05) boss parts taken from the established design — the caged thunder heart behind the chest doors, the crown snout and the tail coil, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns, never four rows. Every cell shows one detached part alone, never the whole seahorse: the top row the glowing thunder heart between its two pairs of chest doors, the middle row the head with its cannon snout, yellow eye and spiked crown, the bottom row the curled blue-and-steel tail coil. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWELVE (12) equal square cells across SEVEN rows in this exact announced order: row 1: HEAD — one cell (the storm steed's head, facing left). row 2: FIN — TWO cells (same swept fin, two states). row 3: MANE — FOUR cells (four mane tufts of one flowing progress). row 4: CREST — TWO cells (same brow crest, two states). row 5: FLANK — one cell (a side armour plate). row 6: LID-TOP — one cell (only the top half of an eye lid). row 7: LID-BOTTOM — one cell (only the bottom half of the eye lid). Twelve cells in total, one subject per cell, all parts facing left at the SAME scale, parts from the referenced sheet's design language, no unnamed extra cells, no multi-part cells.\n- The sheet canvas measures EXACTLY 832×1408 px. Produce EXACTLY 12 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/squall-steed/parts",
+    "targetGrid": "steed part tree grids: head 1f 39×30, fin 2f 18×45, mane 4f 27×24, crest 2f 30×18, flank 1f 15×27, lid-top 1f 18×11, lid-bottom 1f 18×11",
+    "sheetContract": "key #51e018; 12 cells as 4xrows[1|2|4|2|1|1|1] of 160x160 gutters 32/32 borders 48/48 on 832x1408",
+    "rowCite": "w15-S3-E-report.md §4 row 8",
+    "generatedAt": "2026-10-26T16:10:42.399Z",
+    "shape": {
+      "w": 832,
+      "h": 1408,
+      "corners": [
+        [
+          110,
+          228,
+          4,
+          255
+        ],
+        [
+          119,
+          235,
+          3,
+          255
+        ],
+        [
+          110,
+          231,
+          3,
+          255
+        ],
+        [
+          114,
+          238,
+          5,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "item/power-capsule",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row: the SAME red power capsule pill (chrome end caps, inner core, per the referenced design) in four frames of ONE glint sweep — a specular highlight band travels along the pill from left end to right end across the four cells, and the CENTROID of the bright glint visibly MOVES from cell to cell. Identical pill silhouette all four cells, facing horizontal, same scale. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background, green tint on the subject, green spill, background scenery, cast shadow, more than sixteen capsules, glow halo outside the outline",
+  "model": "flux2",
+  "seed": 746363421,
+  "width": 1248,
+  "height": 384,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:43:52.094Z",
+  "seconds": 54.1,
+  "label": "Power capsules — red / blue / gold / green weapon capsules × 4 glint frames, sheet on key green (v2: 18×12)",
+  "source": "images/60-items-fx/items-and-fx.json#power-capsules-v1",
+  "file": "art-prompts/v2/gen3/item/power-capsule/glint-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/item/power-capsule/winner.png"
+  ],
+  "editFromSha256": [
+    "274ac375984fd4d1af5055425bca47f39431b1aa99fd037583e8aea0645685f5"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row: the SAME red power capsule pill (chrome end caps, inner core, per the referenced design) in four frames of ONE glint sweep — a specular highlight band travels along the pill from left end to right end across the four cells, and the CENTROID of the bright glint visibly MOVES from cell to cell. Identical pill silhouette all four cells, facing horizontal, same scale. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1248x384",
+  "pins": {
+    "model": "flux2",
+    "seed": 746363421,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item sprite sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly sixteen small chubby capsules laid out as four rows with exactly four capsules in each row, all evenly spaced on a square grid with wide green gutters between them, four across and four down.\nTop row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nSecond row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nThird row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nBottom row, left to right: a red capsule, a blue capsule, a gold capsule, a green capsule.\nAll sixteen are identical in size and shape, only the color differs: a short chubby barrel about one and a half times as wide as it is tall, with a rounded silver metal cap on both the left end and the right end, and a glossy glass middle holding a swirling glowing energy core of its color, a thick near-black navy outline, a thin white highlight arc along the top. The rows are four animation frames of a white glint sweeping across the glass from left to right: in the top row the small white glint sparkle sits on the left side of each capsule's glass, in the second row left of center, in the third row right of center, in the bottom row on the right side. Crisp pixel art, flat saturated fills with three-step shading lit from the top left, jewel-bright arcade finish, glow kept inside the outline. No shadows, no cell borders, no grid lines, no text, no letters, no numbers, no symbols.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row: the SAME red power capsule pill (chrome end caps, inner core, per the referenced design) in four frames of ONE glint sweep — a specular highlight band travels along the pill from left end to right end across the four cells, and the CENTROID of the bright glint visibly MOVES from cell to cell. Identical pill silhouette all four cells, facing horizontal, same scale. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/item/power-capsule",
+    "targetGrid": "items/capsule 4f 18×12 a[9,6]",
+    "sheetContract": "key #51e018; 4 cells as 4x1 of 256x256 gutters 32/0 borders 64/64 on 1248x384",
+    "rowCite": "w15-S3-P-report.md §4 row 3",
+    "generatedAt": "2026-10-26T16:43:52.094Z",
+    "shape": {
+      "w": 1248,
+      "h": 384,
+      "corners": [
+        [
+          65,
+          234,
+          5,
+          255
+        ],
+        [
+          70,
+          235,
+          3,
+          255
+        ],
+        [
+          64,
+          234,
+          3,
+          255
+        ],
+        [
+          68,
+          240,
+          4,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

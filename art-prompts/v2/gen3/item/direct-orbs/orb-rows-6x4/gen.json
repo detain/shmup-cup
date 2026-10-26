@@ -1,0 +1,72 @@
+{
+  "id": "item/direct-orbs",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item reference sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly ten small glass marbles laid out as two rows with exactly five marbles in each row, evenly spaced on a grid with wide green gutters, every marble a perfect circle of the same size.\nTop row, left to right: crimson, bright orange, golden yellow, emerald green, aquamarine.\nBottom row, left to right: sky blue, cobalt blue, violet, hot pink, pearl white.\nAll ten are identical except for the color of their core, and every core is a plain smooth round glowing ball with no symbol, no icon and no picture inside: a clear, nearly colorless glass outer shell, inside it a smaller solid luminous round bead of the marble's color glowing at the dead center with a slightly brighter heart, a ring of clear glass visible between the bead and the shell, one crisp white specular dot on the upper left of the shell, a thin rim-light crescent on the lower right, and a thick near-black navy outline binding each sphere. Crisp pixel art with flat saturated fills and three-step shading ramps lit from the top left, glossy jewel-storefront arcade finish, the glow kept strictly inside each outline. No glow halo past the outline, no shadows, no cell borders, no grid lines, no icons, no text, no letters, no numbers, no labels.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as SIX rows of FOUR (4) cells — each row is ONE direct item colour in four blink frames. Row order top to bottom: row 1 = RED orb, row 2 = ORANGE orb, row 3 = YELLOW orb, row 4 = GREEN orb, row 5 = BLUE orb, row 6 = the OCTAGON marker (flat eight-sided chrome token). Within each row the SAME orb silhouette in four frames of one blink: cell 1 = full bright, cell 2 = dim, cell 3 = dimmer with a rim glint, cell 4 = recovering. Colours from the referenced orb sheet. 24 cells total, equal cells, one subject per cell.\n- The sheet canvas measures EXACTLY 1184×1760 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1887555133,
+  "width": 1184,
+  "height": 1760,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-26T16:49:08.320Z",
+  "seconds": 127.3,
+  "label": "Direct-mode colour orbs — the ten glass orbs, two rows of five on key green (v2: 15×15)",
+  "source": "images/60-items-fx/items-and-fx.json#direct-color-orbs-v3",
+  "file": "art-prompts/v2/gen3/item/direct-orbs/orb-rows-6x4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/item/direct-orbs/winner.png"
+  ],
+  "editFromSha256": [
+    "2d2626f99b464abbb639cebd53dfea088f350889a1c04a8f600aeed91aaaf872"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item reference sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly ten small glass marbles laid out as two rows with exactly five marbles in each row, evenly spaced on a grid with wide green gutters, every marble a perfect circle of the same size.\nTop row, left to right: crimson, bright orange, golden yellow, emerald green, aquamarine.\nBottom row, left to right: sky blue, cobalt blue, violet, hot pink, pearl white.\nAll ten are identical except for the color of their core, and every core is a plain smooth round glowing ball with no symbol, no icon and no picture inside: a clear, nearly colorless glass outer shell, inside it a smaller solid luminous round bead of the marble's color glowing at the dead center with a slightly brighter heart, a ring of clear glass visible between the bead and the shell, one crisp white specular dot on the upper left of the shell, a thin rim-light crescent on the lower right, and a thick near-black navy outline binding each sphere. Crisp pixel art with flat saturated fills and three-step shading ramps lit from the top left, glossy jewel-storefront arcade finish, the glow kept strictly inside each outline. No glow halo past the outline, no shadows, no cell borders, no grid lines, no icons, no text, no letters, no numbers, no labels.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as SIX rows of FOUR (4) cells — each row is ONE direct item colour in four blink frames. Row order top to bottom: row 1 = RED orb, row 2 = ORANGE orb, row 3 = YELLOW orb, row 4 = GREEN orb, row 5 = BLUE orb, row 6 = the OCTAGON marker (flat eight-sided chrome token). Within each row the SAME orb silhouette in four frames of one blink: cell 1 = full bright, cell 2 = dim, cell 3 = dimmer with a rim glint, cell 4 = recovering. Colours from the referenced orb sheet. 24 cells total, equal cells, one subject per cell.\n- The sheet canvas measures EXACTLY 1184×1760 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1184x1760",
+  "pins": {
+    "model": "flux2",
+    "seed": 1887555133,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nRetro 16-bit video game item reference sheet in SNES-era pixel art inspired style, on a perfectly flat solid pure bright green chroma-key background: exactly ten small glass marbles laid out as two rows with exactly five marbles in each row, evenly spaced on a grid with wide green gutters, every marble a perfect circle of the same size.\nTop row, left to right: crimson, bright orange, golden yellow, emerald green, aquamarine.\nBottom row, left to right: sky blue, cobalt blue, violet, hot pink, pearl white.\nAll ten are identical except for the color of their core, and every core is a plain smooth round glowing ball with no symbol, no icon and no picture inside: a clear, nearly colorless glass outer shell, inside it a smaller solid luminous round bead of the marble's color glowing at the dead center with a slightly brighter heart, a ring of clear glass visible between the bead and the shell, one crisp white specular dot on the upper left of the shell, a thin rim-light crescent on the lower right, and a thick near-black navy outline binding each sphere. Crisp pixel art with flat saturated fills and three-step shading ramps lit from the top left, glossy jewel-storefront arcade finish, the glow kept strictly inside each outline. No glow halo past the outline, no shadows, no cell borders, no grid lines, no icons, no text, no letters, no numbers, no labels.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as SIX rows of FOUR (4) cells — each row is ONE direct item colour in four blink frames. Row order top to bottom: row 1 = RED orb, row 2 = ORANGE orb, row 3 = YELLOW orb, row 4 = GREEN orb, row 5 = BLUE orb, row 6 = the OCTAGON marker (flat eight-sided chrome token). Within each row the SAME orb silhouette in four frames of one blink: cell 1 = full bright, cell 2 = dim, cell 3 = dimmer with a rim glint, cell 4 = recovering. Colours from the referenced orb sheet. 24 cells total, equal cells, one subject per cell.\n- The sheet canvas measures EXACTLY 1184×1760 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/item/direct-orbs",
+    "targetGrid": "items/direct-{red,orange,yellow,green,blue,octagon} 4f 15×15 a[7,7] each",
+    "sheetContract": "key #51e018; 24 cells as 4x6 of 256x256 gutters 32/32 borders 32/32 on 1184x1760",
+    "rowCite": "w15-S3-P-report.md §4 row 7",
+    "generatedAt": "2026-10-26T16:49:08.320Z",
+    "shape": {
+      "w": 1184,
+      "h": 1760,
+      "corners": [
+        [
+          84,
+          195,
+          1,
+          255
+        ],
+        [
+          91,
+          202,
+          1,
+          255
+        ],
+        [
+          83,
+          201,
+          0,
+          255
+        ],
+        [
+          87,
+          208,
+          0,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

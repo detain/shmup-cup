@@ -344,6 +344,34 @@ interface KnownHit {
 /** Hits in files no agent may edit, reported in `art-provenance.md` §7. */
 const KNOWN_HITS: readonly KnownHit[] = [
   {
+    file: 'art-prompts/v2/gen3/boss/cinder-bastion/arm-port-2/gen.json',
+    term: 'huge battleship',
+    count: 3,
+    why:
+      'the w15-GEN1 batch edit of the CINDER BASTION winner — the identity prompt quoted verbatim, ' +
+      "riding the sidecar's prompt, instruction and pins.prompt fields (×3); same lineage as the " +
+      'winner row above, reworded with it under open decision 7',
+  },
+  {
+    file: 'art-prompts/v2/gen3/boss/cinder-bastion/core-cradle-2f/gen.json',
+    term: 'huge battleship',
+    count: 3,
+    why:
+      'the w15-GEN1 batch edit of the CINDER BASTION winner — the identity prompt quoted verbatim ' +
+      "into the edit instruction, so the phrase rides the sidecar's prompt, instruction and " +
+      'pins.prompt fields (×3); same lineage as the winner row above, reworded with it under ' +
+      'open decision 7',
+  },
+  {
+    file: 'art-prompts/v2/gen3/boss/cinder-bastion/hull-prow-tower-4/gen.json',
+    term: 'huge battleship',
+    count: 3,
+    why:
+      'the w15-GEN1 batch edit of the CINDER BASTION winner — the identity prompt quoted verbatim, ' +
+      "riding the sidecar's prompt, instruction and pins.prompt fields (×3); same lineage as the " +
+      'winner row above, reworded with it under open decision 7',
+  },
+  {
     file: 'art-prompts/v2/manifest.json',
     term: 'Crystal Core',
     count: 1,

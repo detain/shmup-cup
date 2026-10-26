@@ -1,0 +1,72 @@
+{
+  "id": "tiles/prism-labyrinth/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly TWENTY-FOUR (24) equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named prism tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor. Pale blue-violet faceted stone, flat 2D, lit top-left, every tile flush to its cell edges (a solid stone square or a clean full-mask slope), no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×768 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1634524264,
+  "width": 1152,
+  "height": 768,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:32:23.800Z",
+  "seconds": 57.5,
+  "label": "PRISM LABYRINTH 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/prism-labyrinth/tileset/contact-24/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/prism-labyrinth/tileset/winner.png"
+  ],
+  "editFromSha256": [
+    "396cd48d72bb4465ba2a45b99e20ae9d43b3e47387e3f981b397d443dfefc17f"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly TWENTY-FOUR (24) equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named prism tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor. Pale blue-violet faceted stone, flat 2D, lit top-left, every tile flush to its cell edges (a solid stone square or a clean full-mask slope), no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×768 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1152x768",
+  "pins": {
+    "model": "flux2",
+    "seed": 1634524264,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly TWENTY-FOUR (24) equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named prism tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor. Pale blue-violet faceted stone, flat 2D, lit top-left, every tile flush to its cell edges (a solid stone square or a clean full-mask slope), no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×768 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/tiles/prism-labyrinth/tileset",
+    "targetGrid": "tiles/terrain-prism-v2 24f 12×12 a0,0 (clip-to-mask)",
+    "sheetContract": "opaque; 24 cells as 6x4 of 192x192 gutters 0/0 borders 0/0 on 1152x768; contact grid",
+    "rowCite": "w15-S3-G-report.md §3 row 5",
+    "generatedAt": "2026-10-26T16:32:23.800Z",
+    "shape": {
+      "w": 1152,
+      "h": 768,
+      "corners": [
+        [
+          89,
+          243,
+          4,
+          255
+        ],
+        [
+          93,
+          246,
+          4,
+          255
+        ],
+        [
+          87,
+          241,
+          4,
+          255
+        ],
+        [
+          92,
+          247,
+          6,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

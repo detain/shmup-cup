@@ -1,0 +1,72 @@
+{
+  "id": "tiles/brine-nebula/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established BRINE NEBULA material (reef sandstone of tan and pale rose with coral pores and small barnacle bumps) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a rounded coral crust, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has five columns and four rows of identical square cells, spread across the full width of the sheet, every tile the same size and drawn flat-on with no 3D sides; the decor tiles are small coral and barnacle clusters in the reef's own tan and rose, with no green plants.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-NINE (29) equal square cells laid out as one row of TEN (10) + one row of TEN (10) + one row of NINE (9) — exactly 29 cells. Each cell is one named reef tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, coral-floor-a, coral-floor-b, coral-floor-c, floor-edge, ceil-edge, coral-corner-outer, coral-corner-inner, vent-rock, vent-rock-broken. Every solid/floor/ceiling/wall tile fills its whole cell as a full square flush to all four cell edges; slope and decor tiles keep a plain-green remainder. No half tiles, no merged cells.\n- The sheet canvas measures EXACTLY 1296×400 px. Produce EXACTLY 29 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1382450380,
+  "width": 1296,
+  "height": 400,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T15:53:47.676Z",
+  "seconds": 44.1,
+  "label": "BRINE NEBULA 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/brine-nebula/tileset/named-29/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/brine-nebula/tileset/winner.png"
+  ],
+  "editFromSha256": [
+    "4c1472e6fbc7d832fc88f33eb5257d6899aabee7a0e66f354d2b2030d4931617"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established BRINE NEBULA material (reef sandstone of tan and pale rose with coral pores and small barnacle bumps) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a rounded coral crust, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has five columns and four rows of identical square cells, spread across the full width of the sheet, every tile the same size and drawn flat-on with no 3D sides; the decor tiles are small coral and barnacle clusters in the reef's own tan and rose, with no green plants.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-NINE (29) equal square cells laid out as one row of TEN (10) + one row of TEN (10) + one row of NINE (9) — exactly 29 cells. Each cell is one named reef tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, coral-floor-a, coral-floor-b, coral-floor-c, floor-edge, ceil-edge, coral-corner-outer, coral-corner-inner, vent-rock, vent-rock-broken. Every solid/floor/ceiling/wall tile fills its whole cell as a full square flush to all four cell edges; slope and decor tiles keep a plain-green remainder. No half tiles, no merged cells.\n- The sheet canvas measures EXACTLY 1296×400 px. Produce EXACTLY 29 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1296x400",
+  "pins": {
+    "model": "flux2",
+    "seed": 1382450380,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established BRINE NEBULA material (reef sandstone of tan and pale rose with coral pores and small barnacle bumps) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a rounded coral crust, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  The grid has five columns and four rows of identical square cells, spread across the full width of the sheet, every tile the same size and drawn flat-on with no 3D sides; the decor tiles are small coral and barnacle clusters in the reef's own tan and rose, with no green plants.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-NINE (29) equal square cells laid out as one row of TEN (10) + one row of TEN (10) + one row of NINE (9) — exactly 29 cells. Each cell is one named reef tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, coral-floor-a, coral-floor-b, coral-floor-c, floor-edge, ceil-edge, coral-corner-outer, coral-corner-inner, vent-rock, vent-rock-broken. Every solid/floor/ceiling/wall tile fills its whole cell as a full square flush to all four cell edges; slope and decor tiles keep a plain-green remainder. No half tiles, no merged cells.\n- The sheet canvas measures EXACTLY 1296×400 px. Produce EXACTLY 29 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/tiles/brine-nebula/tileset",
+    "targetGrid": "tiles/terrain-reef tileset 29f 12×12 a0,0",
+    "sheetContract": "key #51e018; 29 cells as 10xrows[10|10|9] of 112x112 gutters 16/16 borders 16/16 on 1296x400",
+    "rowCite": "w15-S3-B-report.md §4 row 3",
+    "generatedAt": "2026-10-26T15:53:47.676Z",
+    "shape": {
+      "w": 1296,
+      "h": 400,
+      "corners": [
+        [
+          42,
+          249,
+          2,
+          255
+        ],
+        [
+          44,
+          254,
+          2,
+          255
+        ],
+        [
+          43,
+          246,
+          1,
+          255
+        ],
+        [
+          47,
+          254,
+          2,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "enemy/polyp-turret/frames",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of POLYP TURRET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same POLYP TURRET enemy — a fleshy green wall-polyp bud on a small tissue base with a puckered mouth at its tip and amber pore-lights along its stalk, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: closed bud, swelling bud, mouth blooming open, discharged puff of violet spores. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named firing state per cell, reading order (left-right, top-bottom): cell 1 = CLOSED BUD; cell 2 = SWELLING; cell 3 = BLOOMING; cell 4 = DISCHARGED. Same polyp-turret body, same scale, facing left in all four cells; only the named state changes. No unnamed extra cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 6389577,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:23:30.074Z",
+  "seconds": 64,
+  "label": "POLYP TURRET animation sheet, four frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/enemy/polyp-turret/frames/named-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/enemy/polyp-turret/frames/winner.png"
+  ],
+  "editFromSha256": [
+    "83182c072b4991ad98ec2102bdd04d81a87bf58a9535a2e29666e491c54b5e7d"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of POLYP TURRET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same POLYP TURRET enemy — a fleshy green wall-polyp bud on a small tissue base with a puckered mouth at its tip and amber pore-lights along its stalk, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: closed bud, swelling bud, mouth blooming open, discharged puff of violet spores. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named firing state per cell, reading order (left-right, top-bottom): cell 1 = CLOSED BUD; cell 2 = SWELLING; cell 3 = BLOOMING; cell 4 = DISCHARGED. Same polyp-turret body, same scale, facing left in all four cells; only the named state changes. No unnamed extra cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 6389577,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of POLYP TURRET. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of four equal cells in two rows of two with even gutters, read left to right and top to bottom, every cell showing the same POLYP TURRET enemy — a fleshy green wall-polyp bud on a small tissue base with a puckered mouth at its tip and amber pore-lights along its stalk, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: closed bud, swelling bud, mouth blooming open, discharged puff of violet spores. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named firing state per cell, reading order (left-right, top-bottom): cell 1 = CLOSED BUD; cell 2 = SWELLING; cell 3 = BLOOMING; cell 4 = DISCHARGED. Same polyp-turret body, same scale, facing left in all four cells; only the named state changes. No unnamed extra cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/enemy/polyp-turret/frames",
+    "targetGrid": "enemies/polyp-turret 1f 21×17 a10,8 (4 named firing states on sheet)",
+    "sheetContract": "key #51e018; 4 cells as 2x2 of 448x448 gutters 64/64 borders 32/32 on 1024x1024",
+    "rowCite": "w15-S3-F-report.md §6 row 2",
+    "generatedAt": "2026-10-26T16:23:30.074Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          99,
+          227,
+          22,
+          255
+        ],
+        [
+          102,
+          229,
+          21,
+          255
+        ],
+        [
+          94,
+          226,
+          18,
+          255
+        ],
+        [
+          97,
+          229,
+          19,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "fx/force-field/loop",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of Force field. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit effect sprite sheet, a regular grid of six equal cells in two rows of three with even gutters, every cell the same established translucent cyan force-field ellipse with overlapping fine contour rings, the shimmer bands rotating a little further around the ellipse in each frame so the loop is seamless, no ship inside, on a flat solid pure black background with no stars and no scenery, crisp pixel clusters, cyan to pale violet palette, no text, no numbers, no cell borders. The background is one flat solid pure black, with no stars, nebula or scenery. No text, letters, numbers, labels, UI or watermark anywhere.\n Leave the ship, the bullet and the impact ripple out of every cell: each cell shows only the empty cyan shield bubble with its rings, empty and dark inside. One bright white shimmer arc travels clockwise around the rim: at 12 o'\\''clock in the first cell, 2 in the second, 4 in the third, 6 in the fourth, 8 in the fifth, 10 in the sixth.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4): the force-field bubble dome (energy shell ONLY — NO ship inside, empty shell) in 4 wear states × 2 shimmer frames each. Reading order: cell 1 = FRESH shimmer-a, cell 2 = FRESH shimmer-b, cell 3 = WORN shimmer-a, cell 4 = WORN shimmer-b, cell 5 = DAMAGED shimmer-a, cell 6 = DAMAGED shimmer-b, cell 7 = CRITICAL shimmer-a, cell 8 = CRITICAL shimmer-b. Wear loses shell segments (fresh fully closed, critical cracked and sparse); the shimmer is a light glint travelling the shell. Identical shell anchor and scale all eight cells. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/force-field) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 315214275,
+  "width": 1424,
+  "height": 704,
+  "steps": 50,
+  "guidance": 4,
+  "generatedAt": "2026-10-26T16:54:11.773Z",
+  "seconds": 123.5,
+  "label": "Force-field shimmer loop without the ship, 6 frames (v2: 45×36)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/fx/force-field/loop/wear-shimmer-8/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/fx/force-field/loop/winner.png",
+    "art-prompts/v2/winners/fx/force-field/winner.png"
+  ],
+  "editFromSha256": [
+    "b600ba6e29f3679c4f7f83d5561f2a792130a214f8b0ce1db075f0068584bbaa",
+    "b0467719494dde9977ccd35de1a81c6fab3870603d0aa941570a3553b80de3f9"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of Force field. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit effect sprite sheet, a regular grid of six equal cells in two rows of three with even gutters, every cell the same established translucent cyan force-field ellipse with overlapping fine contour rings, the shimmer bands rotating a little further around the ellipse in each frame so the loop is seamless, no ship inside, on a flat solid pure black background with no stars and no scenery, crisp pixel clusters, cyan to pale violet palette, no text, no numbers, no cell borders. The background is one flat solid pure black, with no stars, nebula or scenery. No text, letters, numbers, labels, UI or watermark anywhere.\n Leave the ship, the bullet and the impact ripple out of every cell: each cell shows only the empty cyan shield bubble with its rings, empty and dark inside. One bright white shimmer arc travels clockwise around the rim: at 12 o'\\''clock in the first cell, 2 in the second, 4 in the third, 6 in the fourth, 8 in the fifth, 10 in the sixth.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4): the force-field bubble dome (energy shell ONLY — NO ship inside, empty shell) in 4 wear states × 2 shimmer frames each. Reading order: cell 1 = FRESH shimmer-a, cell 2 = FRESH shimmer-b, cell 3 = WORN shimmer-a, cell 4 = WORN shimmer-b, cell 5 = DAMAGED shimmer-a, cell 6 = DAMAGED shimmer-b, cell 7 = CRITICAL shimmer-a, cell 8 = CRITICAL shimmer-b. Wear loses shell segments (fresh fully closed, critical cracked and sparse); the shimmer is a light glint travelling the shell. Identical shell anchor and scale all eight cells. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/force-field) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1424x704",
+  "pins": {
+    "model": "flux2",
+    "seed": 315214275,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of Force field. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit effect sprite sheet, a regular grid of six equal cells in two rows of three with even gutters, every cell the same established translucent cyan force-field ellipse with overlapping fine contour rings, the shimmer bands rotating a little further around the ellipse in each frame so the loop is seamless, no ship inside, on a flat solid pure black background with no stars and no scenery, crisp pixel clusters, cyan to pale violet palette, no text, no numbers, no cell borders. The background is one flat solid pure black, with no stars, nebula or scenery. No text, letters, numbers, labels, UI or watermark anywhere.\n Leave the ship, the bullet and the impact ripple out of every cell: each cell shows only the empty cyan shield bubble with its rings, empty and dark inside. One bright white shimmer arc travels clockwise around the rim: at 12 o'\\''clock in the first cell, 2 in the second, 4 in the third, 6 in the fourth, 8 in the fifth, 10 in the sixth.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4): the force-field bubble dome (energy shell ONLY — NO ship inside, empty shell) in 4 wear states × 2 shimmer frames each. Reading order: cell 1 = FRESH shimmer-a, cell 2 = FRESH shimmer-b, cell 3 = WORN shimmer-a, cell 4 = WORN shimmer-b, cell 5 = DAMAGED shimmer-a, cell 6 = DAMAGED shimmer-b, cell 7 = CRITICAL shimmer-a, cell 8 = CRITICAL shimmer-b. Wear loses shell segments (fresh fully closed, critical cracked and sparse); the shimmer is a light glint travelling the shell. Identical shell anchor and scale all eight cells. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/force-field) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/fx/force-field/loop + winners/fx/force-field",
+    "targetGrid": "shields/force-field 8f 45×36 a[22,18] (4 wear × 2 shimmer)",
+    "sheetContract": "key #51e018; 8 cells as 4x2 of 288x288 gutters 48/64 borders 64/32 on 1424x704",
+    "rowCite": "w15-S3-P-report.md §4 row 10",
+    "generatedAt": "2026-10-26T16:54:11.773Z",
+    "shape": {
+      "w": 1424,
+      "h": 704,
+      "corners": [
+        [
+          30,
+          250,
+          0,
+          255
+        ],
+        [
+          37,
+          255,
+          0,
+          255
+        ],
+        [
+          30,
+          254,
+          0,
+          255
+        ],
+        [
+          33,
+          255,
+          0,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "boss/iron-sovereign/parts",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON SOVEREIGN (IS-08) boss parts taken from the established design — the red furnace aperture core and one rotating shield plate, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites with four sprites in each row, twelve in all, and never the whole slab. The top row: the round red furnace aperture core alone in its rust-brown ring. The middle row: one single brass-rimmed grey shield plate alone, lying flat. The bottom row: the same single shield plate turned on its hinge at different angles. Plain flat green everywhere around the sprites, no lines between cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal TALL cells laid out as TWO rows of FOUR (4) — each cell taller than wide (portrait), because the sovereign slab is tall. One named part per cell, reading order: cell 1 = HULL (the tall iron slab hull alone, face plate visible, no other parts on it); cell 2 = PLATE (one armour strip); cell 3 = POD (one bay pod); cell 4 = EMITTER (one cannon emitter, facing left); cell 5 = CORE idle (the reactor core dark-rimmed); cell 6 = CORE lit (same core, lit); cell 7 = HATCH shut (closed deck hatch pair); cell 8 = HATCH open (the same hatch swung open). Colours and materials exactly from the referenced painting; same scale, one part per cell, no fused whole-boss cell. Exactly EIGHT cells.\nA SECOND reference image is supplied (boss/iron-sovereign) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1120×736 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1178770530,
+  "width": 1120,
+  "height": 736,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:35:20.182Z",
+  "seconds": 114.3,
+  "label": "IRON SOVEREIGN (IS-08) parts sheet: the red furnace aperture core and one rotating shield plate, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/boss/iron-sovereign/parts/named-part-8/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/iron-sovereign/parts/winner.png",
+    "art-prompts/v2/winners/boss/iron-sovereign/winner.png"
+  ],
+  "editFromSha256": [
+    "7944b6f82863bbadf0d629802310f2a2631e06cf17e57d3aed2b84ff8eb43743",
+    "2fe1a940a8588b2b2654780d9432103146a9b71cfb9bc93028f220afa4c967f8"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON SOVEREIGN (IS-08) boss parts taken from the established design — the red furnace aperture core and one rotating shield plate, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites with four sprites in each row, twelve in all, and never the whole slab. The top row: the round red furnace aperture core alone in its rust-brown ring. The middle row: one single brass-rimmed grey shield plate alone, lying flat. The bottom row: the same single shield plate turned on its hinge at different angles. Plain flat green everywhere around the sprites, no lines between cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal TALL cells laid out as TWO rows of FOUR (4) — each cell taller than wide (portrait), because the sovereign slab is tall. One named part per cell, reading order: cell 1 = HULL (the tall iron slab hull alone, face plate visible, no other parts on it); cell 2 = PLATE (one armour strip); cell 3 = POD (one bay pod); cell 4 = EMITTER (one cannon emitter, facing left); cell 5 = CORE idle (the reactor core dark-rimmed); cell 6 = CORE lit (same core, lit); cell 7 = HATCH shut (closed deck hatch pair); cell 8 = HATCH open (the same hatch swung open). Colours and materials exactly from the referenced painting; same scale, one part per cell, no fused whole-boss cell. Exactly EIGHT cells.\nA SECOND reference image is supplied (boss/iron-sovereign) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1120×736 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1120x736",
+  "pins": {
+    "model": "flux2",
+    "seed": 1178770530,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of IRON SOVEREIGN (IS-08). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of IRON SOVEREIGN (IS-08) boss parts taken from the established design — the red furnace aperture core and one rotating shield plate, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n The picture holds exactly three rows of sprites with four sprites in each row, twelve in all, and never the whole slab. The top row: the round red furnace aperture core alone in its rust-brown ring. The middle row: one single brass-rimmed grey shield plate alone, lying flat. The bottom row: the same single shield plate turned on its hinge at different angles. Plain flat green everywhere around the sprites, no lines between cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- EIGHT (8) equal TALL cells laid out as TWO rows of FOUR (4) — each cell taller than wide (portrait), because the sovereign slab is tall. One named part per cell, reading order: cell 1 = HULL (the tall iron slab hull alone, face plate visible, no other parts on it); cell 2 = PLATE (one armour strip); cell 3 = POD (one bay pod); cell 4 = EMITTER (one cannon emitter, facing left); cell 5 = CORE idle (the reactor core dark-rimmed); cell 6 = CORE lit (same core, lit); cell 7 = HATCH shut (closed deck hatch pair); cell 8 = HATCH open (the same hatch swung open). Colours and materials exactly from the referenced painting; same scale, one part per cell, no fused whole-boss cell. Exactly EIGHT cells.\nA SECOND reference image is supplied (boss/iron-sovereign) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1120×736 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/iron-sovereign/parts + winners/boss/iron-sovereign",
+    "targetGrid": "sovereign kit: hull 1f 96×132, plate 1f 12×42, pod 1f 18×18, emitter 1f 24×15, core 2f 27×27, hatch 2f 21×18",
+    "sheetContract": "key #51e018; 8 cells as 4x2 of 224x288 gutters 32/32 borders 64/64 on 1120x736",
+    "rowCite": "w15-S3-H-report.md §3 row 1",
+    "generatedAt": "2026-10-26T16:35:20.182Z",
+    "shape": {
+      "w": 1120,
+      "h": 736,
+      "corners": [
+        [
+          76,
+          239,
+          10,
+          255
+        ],
+        [
+          80,
+          243,
+          9,
+          255
+        ],
+        [
+          72,
+          237,
+          8,
+          255
+        ],
+        [
+          76,
+          243,
+          10,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

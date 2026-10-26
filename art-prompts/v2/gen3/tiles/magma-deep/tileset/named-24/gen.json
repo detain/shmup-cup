@@ -1,0 +1,72 @@
+{
+  "id": "tiles/magma-deep/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen MAGMA DEEP terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established MAGMA DEEP material (black basalt and orange-brown cave brick with glowing lava cracks between the blocks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a cooled crust with ember glints, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles. Corner, inner-corner and slope tiles are real cut-out shapes: the empty part of the cell is the flat green key and the rock ends in a dark outline there, as in a platform-game tileset. The green key is one identical flat colour everywhere, with no darker green squares behind the tiles.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as FOUR rows of SIX (6) cells each — exactly 24. Each cell is one named magma tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, obsidian, brick-hot, lava-drip, vent. Every solid/floor/ceiling/wall tile fills its whole cell flush to all four edges; slope tiles keep a plain-green remainder. Flat key-green gutters between cells, equal cells, no half tiles, no 3D blocks, no perspective.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 667752495,
+  "width": 1376,
+  "height": 928,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:08:03.277Z",
+  "seconds": 69.9,
+  "label": "MAGMA DEEP 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/magma-deep/tileset/named-24/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/magma-deep/tileset/winner.png"
+  ],
+  "editFromSha256": [
+    "3a2ce5fa632e2c84157910c4ba55e6b0e34913efe47cbd1f955a7cddd5626386"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen MAGMA DEEP terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established MAGMA DEEP material (black basalt and orange-brown cave brick with glowing lava cracks between the blocks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a cooled crust with ember glints, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles. Corner, inner-corner and slope tiles are real cut-out shapes: the empty part of the cell is the flat green key and the rock ends in a dark outline there, as in a platform-game tileset. The green key is one identical flat colour everywhere, with no darker green squares behind the tiles.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as FOUR rows of SIX (6) cells each — exactly 24. Each cell is one named magma tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, obsidian, brick-hot, lava-drip, vent. Every solid/floor/ceiling/wall tile fills its whole cell flush to all four edges; slope tiles keep a plain-green remainder. Flat key-green gutters between cells, equal cells, no half tiles, no 3D blocks, no perspective.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1376x928",
+  "pins": {
+    "model": "flux2",
+    "seed": 667752495,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen MAGMA DEEP terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established MAGMA DEEP material (black basalt and orange-brown cave brick with glowing lava cracks between the blocks) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a cooled crust with ember glints, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles. Corner, inner-corner and slope tiles are real cut-out shapes: the empty part of the cell is the flat green key and the rock ends in a dark outline there, as in a platform-game tileset. The green key is one identical flat colour everywhere, with no darker green squares behind the tiles.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-FOUR (24) equal square cells laid out as FOUR rows of SIX (6) cells each — exactly 24. Each cell is one named magma tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, obsidian, brick-hot, lava-drip, vent. Every solid/floor/ceiling/wall tile fills its whole cell flush to all four edges; slope tiles keep a plain-green remainder. Flat key-green gutters between cells, equal cells, no half tiles, no 3D blocks, no perspective.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/tiles/magma-deep/tileset",
+    "targetGrid": "tiles/terrain-magma-v2 24f 12×12 a0,0",
+    "sheetContract": "key #51e018; 24 cells as 6x4 of 192x192 gutters 32/32 borders 32/32 on 1376x928",
+    "rowCite": "w15-S3-D-report.md §5 row 5",
+    "generatedAt": "2026-10-26T16:08:03.277Z",
+    "shape": {
+      "w": 1376,
+      "h": 928,
+      "corners": [
+        [
+          81,
+          239,
+          46,
+          255
+        ],
+        [
+          83,
+          244,
+          43,
+          255
+        ],
+        [
+          75,
+          238,
+          38,
+          255
+        ],
+        [
+          77,
+          242,
+          39,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

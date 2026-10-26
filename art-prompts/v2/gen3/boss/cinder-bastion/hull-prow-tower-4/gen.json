@@ -1,0 +1,72 @@
+{
+  "id": "boss/cinder-bastion",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single huge battleship boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its bow pointing to the left edge of the picture, the whole machine visible with nothing cut off by the frame. A brutal dark warship of soot-black steel and dull red fire-brick armor, with smokestack towers and stubby gun decks along its upper hull, its lower hull fused into a jagged cracked chunk of black volcanic rock veined with glowing orange magma. In the middle of the hull an open armored cradle holds an exposed blazing furnace-orange sphere core with a white-hot center. Around the core, four heavy segmented armored arms of dark slag-metal radiate outward like the spokes of a slowly turning wheel, each arm ending in a three-fingered slag claw, each one caught at a different angle so the rotation reads as frozen motion, one arm passing across the front of the core. Small pink and red gun ports with bright cores and dark rims along the gun decks, a pair of narrow amber eye-slits on the bow. Menacing, heavy, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of soot black, brick red, dark rust, ember orange, lava yellow and white-hot accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no cave walls, no lava pool, no smoke clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = HULL ONLY — the bare iron hull plate body with NO turret, NO prow, NO core, NO other parts overlaid; cell 2 = PROW — the wedge ram prow, facing left; cell 3 = TOWER state 1 — the cannon tower idle; cell 4 = TOWER state 2 — the identical tower with its muzzle glow lit. Same scale, 1-px near-black navy outline, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, arms identical angle, organic, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 609205191,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:04:57.927Z",
+  "seconds": 74.2,
+  "label": "CINDER BASTION (CB-04) — zone D boss, the magma-shaft battleship with four revolving arms; full body on key green",
+  "source": "images/30-bosses/hi-res.json#cb04-hires-v1",
+  "file": "art-prompts/v2/gen3/boss/cinder-bastion/hull-prow-tower-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/cinder-bastion/winner.png"
+  ],
+  "editFromSha256": [
+    "1910f4ebd22b84a6c96ce8177adc53a6ecaa93e387213c5d437936b10209ef43"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single huge battleship boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its bow pointing to the left edge of the picture, the whole machine visible with nothing cut off by the frame. A brutal dark warship of soot-black steel and dull red fire-brick armor, with smokestack towers and stubby gun decks along its upper hull, its lower hull fused into a jagged cracked chunk of black volcanic rock veined with glowing orange magma. In the middle of the hull an open armored cradle holds an exposed blazing furnace-orange sphere core with a white-hot center. Around the core, four heavy segmented armored arms of dark slag-metal radiate outward like the spokes of a slowly turning wheel, each arm ending in a three-fingered slag claw, each one caught at a different angle so the rotation reads as frozen motion, one arm passing across the front of the core. Small pink and red gun ports with bright cores and dark rims along the gun decks, a pair of narrow amber eye-slits on the bow. Menacing, heavy, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of soot black, brick red, dark rust, ember orange, lava yellow and white-hot accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no cave walls, no lava pool, no smoke clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = HULL ONLY — the bare iron hull plate body with NO turret, NO prow, NO core, NO other parts overlaid; cell 2 = PROW — the wedge ram prow, facing left; cell 3 = TOWER state 1 — the cannon tower idle; cell 4 = TOWER state 2 — the identical tower with its muzzle glow lit. Same scale, 1-px near-black navy outline, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 609205191,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single huge battleship boss for a retro 16-bit side-scrolling space shooter, centered with a generous empty margin on all four sides, shown in a flat side view, broadside, its bow pointing to the left edge of the picture, the whole machine visible with nothing cut off by the frame. A brutal dark warship of soot-black steel and dull red fire-brick armor, with smokestack towers and stubby gun decks along its upper hull, its lower hull fused into a jagged cracked chunk of black volcanic rock veined with glowing orange magma. In the middle of the hull an open armored cradle holds an exposed blazing furnace-orange sphere core with a white-hot center. Around the core, four heavy segmented armored arms of dark slag-metal radiate outward like the spokes of a slowly turning wheel, each arm ending in a three-fingered slag claw, each one caught at a different angle so the rotation reads as frozen motion, one arm passing across the front of the core. Small pink and red gun ports with bright cores and dark rims along the gun decks, a pair of narrow amber eye-slits on the bow. Menacing, heavy, readable silhouette. Crisp chunky pixel art with a clean near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of soot black, brick red, dark rust, ember orange, lava yellow and white-hot accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no cave walls, no lava pool, no smoke clouds, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid, one named cell per part, reading order (left-right, top-bottom): cell 1 = HULL ONLY — the bare iron hull plate body with NO turret, NO prow, NO core, NO other parts overlaid; cell 2 = PROW — the wedge ram prow, facing left; cell 3 = TOWER state 1 — the cannon tower idle; cell 4 = TOWER state 2 — the identical tower with its muzzle glow lit. Same scale, 1-px near-black navy outline, exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/cinder-bastion",
+    "targetGrid": "bosses/bastion-hull 1f 84×60 a42,30, bastion-prow 1f 27×39 a13,19, bastion-tower 2f 36×27 a18,13",
+    "sheetContract": "key #51e018; 4 cells as 2x2 of 448x448 gutters 64/64 borders 32/32 on 1024x1024",
+    "rowCite": "w15-S3-D-report.md §5 row 3",
+    "generatedAt": "2026-10-26T16:04:57.927Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          90,
+          236,
+          29,
+          255
+        ],
+        [
+          92,
+          237,
+          25,
+          255
+        ],
+        [
+          85,
+          236,
+          21,
+          255
+        ],
+        [
+          88,
+          240,
+          22,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

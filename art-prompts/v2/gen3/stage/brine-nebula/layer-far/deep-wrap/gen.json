@@ -1,0 +1,74 @@
+{
+  "id": "stage/brine-nebula/layer-far",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA far background layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: a teal-and-violet gas sea nebula that reads like water, rolling horizon bands and a faint wave raster, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only the storm-cloud ceiling, the distant teal gas sea with its wave bands, and dim navy air between them; no rocks, reef towers, cliffs, coral, orbs or dots float anywhere. Every dark area is a lifted deep navy-violet, clearly above black.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE painted backdrop panel, portrait-ish 0.89:1 — the deep water column of the brine grotto in the referenced scene's materials, edge-to-edge with NO chroma key, NO border, NO green: every pixel is painted scenery. The left edge MUST continue exactly into the right edge (seamless horizontal wrap when tiled). No text.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 511574163,
+  "width": 1024,
+  "height": 1152,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T15:59:32.982Z",
+  "seconds": 133,
+  "label": "BRINE NEBULA parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-far/deep-wrap/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/stage/brine-nebula/layer-far/winner.png",
+    "art-prompts/v2/winners/stage/brine-nebula/winner.png"
+  ],
+  "editFromSha256": [
+    "dd5690298d9aea6746e450d8908d09a0b87cb14b9f956633ca9a19d228e528a4",
+    "2afb6f431e3c3cb0ee21b6aeb0039721f8daa62be6cbfd29052f2c57bb362cb3"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA far background layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: a teal-and-violet gas sea nebula that reads like water, rolling horizon bands and a faint wave raster, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only the storm-cloud ceiling, the distant teal gas sea with its wave bands, and dim navy air between them; no rocks, reef towers, cliffs, coral, orbs or dots float anywhere. Every dark area is a lifted deep navy-violet, clearly above black.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE painted backdrop panel, portrait-ish 0.89:1 — the deep water column of the brine grotto in the referenced scene's materials, edge-to-edge with NO chroma key, NO border, NO green: every pixel is painted scenery. The left edge MUST continue exactly into the right edge (seamless horizontal wrap when tiled). No text.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1152",
+  "pins": {
+    "model": "flux2",
+    "seed": 511574163,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA far background layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: a teal-and-violet gas sea nebula that reads like water, rolling horizon bands and a faint wave raster, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only the storm-cloud ceiling, the distant teal gas sea with its wave bands, and dim navy air between them; no rocks, reef towers, cliffs, coral, orbs or dots float anywhere. Every dark area is a lifted deep navy-violet, clearly above black.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE painted backdrop panel, portrait-ish 0.89:1 — the deep water column of the brine grotto in the referenced scene's materials, edge-to-edge with NO chroma key, NO border, NO green: every pixel is painted scenery. The left edge MUST continue exactly into the right edge (seamless horizontal wrap when tiled). No text.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/stage/brine-nebula/layer-far + winners/stage/brine-nebula",
+    "targetGrid": "bg/brine-deep-v2 1f 320×360 (opaque, wrap)",
+    "sheetContract": "opaque; 1 cells as 1x1 of 1024x1152 gutters 0/0 borders 0/0 on 1024x1152",
+    "rowCite": "w15-S3-B-report.md §4 row 4",
+    "generatedAt": "2026-10-26T15:59:32.982Z",
+    "shape": {
+      "w": 1024,
+      "h": 1152,
+      "corners": [
+        [
+          26,
+          9,
+          32,
+          255
+        ],
+        [
+          40,
+          15,
+          52,
+          255
+        ],
+        [
+          35,
+          9,
+          47,
+          255
+        ],
+        [
+          35,
+          9,
+          46,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

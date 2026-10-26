@@ -1,0 +1,72 @@
+{
+  "id": "item/power-capsule/special-capsules",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen power capsule design. Use it only for the capsule's construction and rendering — a short fat glossy pill with a polished silver metal end cap and cap ring and a wide glass barrel, a thick near-black outline, a thin white top highlight, crisp pixel art — and ignore its red, blue, gold and green colours and its four-row layout. Draw a new retro 16-bit sprite sheet for a horizontal arcade shooter: exactly twelve capsules in three rows of four, side view, all the same size and shape, evenly spaced, with wide empty gaps between the rows, on a perfectly flat solid pure bright green chroma-key background. Each row is one capsule kind, the same capsule four times. Top row: four deep royal-blue screen-clearing capsules, each with a glowing white core inside the blue glass. Middle row: four pearl-white bonus capsules, each with a swirling gold core inside the white glass. Bottom row: four extra-life capsules of clear pale glass, each holding a tiny steel-blue dart-shaped fighter silhouette pointing right. Within each row the four capsules are the frames of a white glint sliding across the glass: in the first capsule the glint is at the left end of the glass, in the second just left of centre, in the third just right of centre, in the fourth at the right end. No red, green, orange or yellow capsules, no mixed kinds within a row, no fourth row. Crisp pixel art with a 1-pixel near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sparkle stars, no cast shadow, no glow on the background. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no texture, no floor, no shadow, no green spill on the capsules. No text, letters, numbers, labels, UI or watermark anywhere; nothing is written on the capsules.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the clear pale-glass capsule pill holding a tiny steel-blue fighter silhouette inside (per the referenced sheet's second row design), horizontal pill, one clean frame with a gentle specular sheen.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1852532460,
+  "width": 1024,
+  "height": 1024,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:47:00.872Z",
+  "seconds": 78.9,
+  "label": "Special capsules in the winning construction: BLUE (screen clear), BONUS, 1UP — 4 glint frames each",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/item/power-capsule/special-capsules/1up-single/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/item/power-capsule/special-capsules/winner.png"
+  ],
+  "editFromSha256": [
+    "33f41ed460a963926c4ad2a1e29b563e99dced5c1b997f29840fc426a01a68b3"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen power capsule design. Use it only for the capsule's construction and rendering — a short fat glossy pill with a polished silver metal end cap and cap ring and a wide glass barrel, a thick near-black outline, a thin white top highlight, crisp pixel art — and ignore its red, blue, gold and green colours and its four-row layout. Draw a new retro 16-bit sprite sheet for a horizontal arcade shooter: exactly twelve capsules in three rows of four, side view, all the same size and shape, evenly spaced, with wide empty gaps between the rows, on a perfectly flat solid pure bright green chroma-key background. Each row is one capsule kind, the same capsule four times. Top row: four deep royal-blue screen-clearing capsules, each with a glowing white core inside the blue glass. Middle row: four pearl-white bonus capsules, each with a swirling gold core inside the white glass. Bottom row: four extra-life capsules of clear pale glass, each holding a tiny steel-blue dart-shaped fighter silhouette pointing right. Within each row the four capsules are the frames of a white glint sliding across the glass: in the first capsule the glint is at the left end of the glass, in the second just left of centre, in the third just right of centre, in the fourth at the right end. No red, green, orange or yellow capsules, no mixed kinds within a row, no fourth row. Crisp pixel art with a 1-pixel near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sparkle stars, no cast shadow, no glow on the background. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no texture, no floor, no shadow, no green spill on the capsules. No text, letters, numbers, labels, UI or watermark anywhere; nothing is written on the capsules.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the clear pale-glass capsule pill holding a tiny steel-blue fighter silhouette inside (per the referenced sheet's second row design), horizontal pill, one clean frame with a gentle specular sheen.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 1852532460,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen power capsule design. Use it only for the capsule's construction and rendering — a short fat glossy pill with a polished silver metal end cap and cap ring and a wide glass barrel, a thick near-black outline, a thin white top highlight, crisp pixel art — and ignore its red, blue, gold and green colours and its four-row layout. Draw a new retro 16-bit sprite sheet for a horizontal arcade shooter: exactly twelve capsules in three rows of four, side view, all the same size and shape, evenly spaced, with wide empty gaps between the rows, on a perfectly flat solid pure bright green chroma-key background. Each row is one capsule kind, the same capsule four times. Top row: four deep royal-blue screen-clearing capsules, each with a glowing white core inside the blue glass. Middle row: four pearl-white bonus capsules, each with a swirling gold core inside the white glass. Bottom row: four extra-life capsules of clear pale glass, each holding a tiny steel-blue dart-shaped fighter silhouette pointing right. Within each row the four capsules are the frames of a white glint sliding across the glass: in the first capsule the glint is at the left end of the glass, in the second just left of centre, in the third just right of centre, in the fourth at the right end. No red, green, orange or yellow capsules, no mixed kinds within a row, no fourth row. Crisp pixel art with a 1-pixel near-black navy outline, flat saturated fills with three-step shading ramps lit from the top-left, no anti-aliasing, no sparkle stars, no cast shadow, no glow on the background. The background is one perfectly flat solid pure bright green chroma-key colour everywhere: no gradient, no texture, no floor, no shadow, no green spill on the capsules. No text, letters, numbers, labels, UI or watermark anywhere; nothing is written on the capsules.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the clear pale-glass capsule pill holding a tiny steel-blue fighter silhouette inside (per the referenced sheet's second row design), horizontal pill, one clean frame with a gentle specular sheen.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/item/power-capsule/special-capsules",
+    "targetGrid": "items/1up 1f 18×12 (blink is code-side alpha)",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 1024x1024 gutters 0/0 borders 0/0 on 1024x1024",
+    "rowCite": "w15-S3-P-report.md §4 row 6",
+    "generatedAt": "2026-10-26T16:47:00.872Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          78,
+          218,
+          6,
+          255
+        ],
+        [
+          81,
+          221,
+          5,
+          255
+        ],
+        [
+          76,
+          216,
+          5,
+          255
+        ],
+        [
+          79,
+          221,
+          5,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

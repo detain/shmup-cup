@@ -1,0 +1,72 @@
+{
+  "id": "tiles/cell-vault/tileset",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen CELL VAULT terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established CELL VAULT material (living green tissue of packed cells in a moss-to-jade ramp with pale nuclei and amber pores) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a soft membrane fold, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles, every cell filled. Every tile is a flat side-view square with no 3D cube tops or bevelled frames; the corner, inner-corner and slope tiles are real cut-out shapes whose empty part is the flat green key. Shade the tissue in dark moss and deep jade with dark navy outlines, clearly darker and bluer than the bright key green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-THREE (23) equal square cells laid out as rows of SIX (6) + SIX (6) + SIX (6) + FIVE (5) — exactly 23 cells. Each cell is one named vault tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, tissue-live, calcified, nodule. Solid tiles flush squares, slopes/decor with plain-green remainder, flat key-green gutters, no 3D, no half cells.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 23 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1350016867,
+  "width": 1376,
+  "height": 928,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:26:48.158Z",
+  "seconds": 69.9,
+  "label": "CELL VAULT 12-px tileset sheet in the winning material (20 tiles)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/tiles/cell-vault/tileset/named-23/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/tiles/cell-vault/tileset/winner.png"
+  ],
+  "editFromSha256": [
+    "38d82faa9a5a08684045c25ba0ac2bfab353cb6d63fe7ecc573630eafc3f2a08"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen CELL VAULT terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established CELL VAULT material (living green tissue of packed cells in a moss-to-jade ramp with pale nuclei and amber pores) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a soft membrane fold, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles, every cell filled. Every tile is a flat side-view square with no 3D cube tops or bevelled frames; the corner, inner-corner and slope tiles are real cut-out shapes whose empty part is the flat green key. Shade the tissue in dark moss and deep jade with dark navy outlines, clearly darker and bluer than the bright key green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-THREE (23) equal square cells laid out as rows of SIX (6) + SIX (6) + SIX (6) + FIVE (5) — exactly 23 cells. Each cell is one named vault tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, tissue-live, calcified, nodule. Solid tiles flush squares, slopes/decor with plain-green remainder, flat key-green gutters, no 3D, no half cells.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 23 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1376x928",
+  "pins": {
+    "model": "flux2",
+    "seed": 1350016867,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen CELL VAULT terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established CELL VAULT material (living green tissue of packed cells in a moss-to-jade ramp with pale nuclei and amber pores) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a soft membrane fold, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.  Exactly five columns and four rows, twenty tiles, every cell filled. Every tile is a flat side-view square with no 3D cube tops or bevelled frames; the corner, inner-corner and slope tiles are real cut-out shapes whose empty part is the flat green key. Shade the tissue in dark moss and deep jade with dark navy outlines, clearly darker and bluer than the bright key green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWENTY-THREE (23) equal square cells laid out as rows of SIX (6) + SIX (6) + SIX (6) + FIVE (5) — exactly 23 cells. Each cell is one named vault tile, in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, tissue-live, calcified, nodule. Solid tiles flush squares, slopes/decor with plain-green remainder, flat key-green gutters, no 3D, no half cells.\n- The sheet canvas measures EXACTLY 1376×928 px. Produce EXACTLY 23 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/tiles/cell-vault/tileset",
+    "targetGrid": "tiles/terrain-vault-v2 23f 12×12 a0,0",
+    "sheetContract": "key #51e018; 23 cells as 6xrows[6|6|6|5] of 192x192 gutters 32/32 borders 32/32 on 1376x928",
+    "rowCite": "w15-S3-F-report.md §6 row 6",
+    "generatedAt": "2026-10-26T16:26:48.158Z",
+    "shape": {
+      "w": 1376,
+      "h": 928,
+      "corners": [
+        [
+          77,
+          243,
+          3,
+          255
+        ],
+        [
+          78,
+          247,
+          2,
+          255
+        ],
+        [
+          75,
+          240,
+          2,
+          255
+        ],
+        [
+          74,
+          247,
+          2,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

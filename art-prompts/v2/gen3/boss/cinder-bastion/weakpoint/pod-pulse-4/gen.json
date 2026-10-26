@@ -1,0 +1,74 @@
+{
+  "id": "boss/cinder-bastion/weakpoint",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): High tension boss weak point frame, tight centered composition on the exposed core of the CINDER BASTION, a spherical crucible of chained white-hot fire caged in a rotating collar of dark iron links, between two of its four revolving armored arms caught mid-swing with a narrow gap just opening, the inner faces of the arms lined with heat-blued plates glowing orange at their edges, molten droplets flung in an arc from a hinge, radial heat light sculpting every plate edge with hot rim and long shadow, tiny pink bullets already fired at the core visible as bright sparks skittering off the collar links, background pure blurred lava gradient from ember to cream without any readable shapes, claustrophobic mechanical fury, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired rendering at ultra-detailed quality, pixel-cluster texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid: the SAME iron-ring magma-heart pod in all four cells, its inner heart pulsing brighter to dimmer through the four cells in reading order (cell 1 brightest, cell 4 dimmest) — identical geometry and silhouette cell to cell, only the magma glow intensity steps down. Keyed green background per cell, no close-up render, no panel.\nA SECOND reference image is supplied (boss/cinder-bastion) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, watermark, nuclear reactor, sun surface photo, organic fire, humans, gore, pure black background",
+  "model": "flux2",
+  "seed": 676148486,
+  "width": 1024,
+  "height": 1024,
+  "steps": 45,
+  "guidance": 4,
+  "generatedAt": "2026-10-26T16:06:53.168Z",
+  "seconds": 115.1,
+  "label": "CINDER BASTION (CB-04) weak-point close-up",
+  "source": "images/30-bosses/04-cinder-bastion.json#cb04-weakpoint-v2",
+  "file": "art-prompts/v2/gen3/boss/cinder-bastion/weakpoint/pod-pulse-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/cinder-bastion/weakpoint/winner.png",
+    "art-prompts/v2/winners/boss/cinder-bastion/winner.png"
+  ],
+  "editFromSha256": [
+    "d79016abf135285ad20017cecde1bb9d0fa5261ba9e61baf310077991e00365c",
+    "1910f4ebd22b84a6c96ce8177adc53a6ecaa93e387213c5d437936b10209ef43"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): High tension boss weak point frame, tight centered composition on the exposed core of the CINDER BASTION, a spherical crucible of chained white-hot fire caged in a rotating collar of dark iron links, between two of its four revolving armored arms caught mid-swing with a narrow gap just opening, the inner faces of the arms lined with heat-blued plates glowing orange at their edges, molten droplets flung in an arc from a hinge, radial heat light sculpting every plate edge with hot rim and long shadow, tiny pink bullets already fired at the core visible as bright sparks skittering off the collar links, background pure blurred lava gradient from ember to cream without any readable shapes, claustrophobic mechanical fury, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired rendering at ultra-detailed quality, pixel-cluster texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid: the SAME iron-ring magma-heart pod in all four cells, its inner heart pulsing brighter to dimmer through the four cells in reading order (cell 1 brightest, cell 4 dimmest) — identical geometry and silhouette cell to cell, only the magma glow intensity steps down. Keyed green background per cell, no close-up render, no panel.\nA SECOND reference image is supplied (boss/cinder-bastion) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x1024",
+  "pins": {
+    "model": "flux2",
+    "seed": 676148486,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CINDER BASTION (CB-04). Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): High tension boss weak point frame, tight centered composition on the exposed core of the CINDER BASTION, a spherical crucible of chained white-hot fire caged in a rotating collar of dark iron links, between two of its four revolving armored arms caught mid-swing with a narrow gap just opening, the inner faces of the arms lined with heat-blued plates glowing orange at their edges, molten droplets flung in an arc from a hinge, radial heat light sculpting every plate edge with hot rim and long shadow, tiny pink bullets already fired at the core visible as bright sparks skittering off the collar links, background pure blurred lava gradient from ember to cream without any readable shapes, claustrophobic mechanical fury, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired rendering at ultra-detailed quality, pixel-cluster texture accents, subtle CRT scanline glow, no text. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in a 2×2 grid: the SAME iron-ring magma-heart pod in all four cells, its inner heart pulsing brighter to dimmer through the four cells in reading order (cell 1 brightest, cell 4 dimmest) — identical geometry and silhouette cell to cell, only the magma glow intensity steps down. Keyed green background per cell, no close-up render, no panel.\nA SECOND reference image is supplied (boss/cinder-bastion) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1024×1024 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/cinder-bastion/weakpoint + winners/boss/cinder-bastion",
+    "targetGrid": "bosses/bastion-pod 4f 18×18 a9,9",
+    "sheetContract": "key #51e018; 4 cells as 2x2 of 448x448 gutters 64/64 borders 32/32 on 1024x1024",
+    "rowCite": "w15-S3-D-report.md §5 row 4",
+    "generatedAt": "2026-10-26T16:06:53.168Z",
+    "shape": {
+      "w": 1024,
+      "h": 1024,
+      "corners": [
+        [
+          74,
+          245,
+          41,
+          255
+        ],
+        [
+          79,
+          248,
+          42,
+          255
+        ],
+        [
+          72,
+          245,
+          37,
+          255
+        ],
+        [
+          74,
+          247,
+          38,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

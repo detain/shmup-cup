@@ -1,0 +1,354 @@
+{
+  "rows": [
+    {
+      "id": "B-1",
+      "report": "w15-S3-B-report.md",
+      "grid": "bosses/maw-hull 1f 96×66 a48,33",
+      "file": "art-prompts/v2/gen3/boss/galvanic-maw/maw-hull/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-2",
+      "report": "w15-S3-B-report.md",
+      "grid": "parts kit: bosses/maw-core 2f 21×21, bosses/maw-jaws-top 1f 39×15, bosses/maw-gun 1f 24×18, bosses/maw-fin 1f 27×39",
+      "file": "art-prompts/v2/gen3/boss/galvanic-maw/parts/labeled/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-3",
+      "report": "w15-S3-B-report.md",
+      "grid": "tiles/terrain-reef tileset 29f 12×12 a0,0",
+      "file": "art-prompts/v2/gen3/tiles/brine-nebula/tileset/named-29/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-4a",
+      "report": "w15-S3-B-report.md",
+      "grid": "bg/brine-nebula 1f 192×96 (far band, translucent)",
+      "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-mid-far/bg-wrap/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-4b",
+      "report": "w15-S3-B-report.md",
+      "grid": "bg/brine-sea 1f 192×72 (mid band, palette-cycled)",
+      "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-mid/sea-wrap/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-4c",
+      "report": "w15-S3-B-report.md",
+      "grid": "bg/brine-deep-v2 1f 320×360 (opaque, wrap)",
+      "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-far/deep-wrap/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "B-4d",
+      "report": "w15-S3-B-report.md",
+      "grid": "fore/brine-foam 2f 320×48 (drift pair, binary alpha, wrap)",
+      "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-near/foam-wrap-2f/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "C-1",
+      "report": "w15-S3-C-report.md",
+      "grid": "widow kit: head 2f 27×24, fang 1f 15×18, spinneret 2f 18×18, egg-sac 1f 36×27, body 1f 78×60, leg-top 1f 45×21, leg-bottom 1f 45×21",
+      "file": "art-prompts/v2/gen3/boss/sandgrave-widow/labeled-kit-7/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "D-1",
+      "report": "w15-S3-D-report.md",
+      "grid": "bosses/bastion-core 2f 24×24 a12,12",
+      "file": "art-prompts/v2/gen3/boss/cinder-bastion/core-cradle-2f/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "D-2",
+      "report": "w15-S3-D-report.md",
+      "grid": "bosses/bastion-arm 1f 18×18 a9,9 + bosses/bastion-emitter 2f 27×15 a13,7",
+      "file": "art-prompts/v2/gen3/boss/cinder-bastion/arm-port-2/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "D-3",
+      "report": "w15-S3-D-report.md",
+      "grid": "bosses/bastion-hull 1f 84×60 a42,30, bastion-prow 1f 27×39 a13,19, bastion-tower 2f 36×27 a18,13",
+      "file": "art-prompts/v2/gen3/boss/cinder-bastion/hull-prow-tower-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "D-4",
+      "report": "w15-S3-D-report.md",
+      "grid": "bosses/bastion-pod 4f 18×18 a9,9",
+      "file": "art-prompts/v2/gen3/boss/cinder-bastion/weakpoint/pod-pulse-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "D-5",
+      "report": "w15-S3-D-report.md",
+      "grid": "tiles/terrain-magma-v2 24f 12×12 a0,0",
+      "file": "art-prompts/v2/gen3/tiles/magma-deep/tileset/named-24/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-7",
+      "report": "w15-S3-E-report.md",
+      "grid": "bosses/steed-body 1f 45×81 a22,40",
+      "file": "art-prompts/v2/gen3/boss/squall-steed/body-only/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-8",
+      "report": "w15-S3-E-report.md",
+      "grid": "steed part tree grids: head 1f 39×30, fin 2f 18×45, mane 4f 27×24, crest 2f 30×18, flank 1f 15×27, lid-top 1f 18×11, lid-bottom 1f 18×11",
+      "file": "art-prompts/v2/gen3/boss/squall-steed/parts/labeled-2/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-10",
+      "report": "w15-S3-E-report.md",
+      "grid": "tiles/terrain-ridge-v2 36f 12×12 a0,0",
+      "file": "art-prompts/v2/gen3/tiles/tempest-ridge/tileset/named-36/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-11",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-clouds 1f 192×84 (far band, e2e-sampled ramp)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-mid/clouds-wrap/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-12",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-ridge 1f 192×72 (mid band, e2e-sampled rock)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-mid-far/ridge-wrap/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-13a",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-sky 1f 320×360 (far f0.06 still)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/sky-still/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-13b",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-rain 1f 96×96 (near weather, tileable)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-near/rain-tile/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "E-13c",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-gust 1f 320×48 (gust band, wrap)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-near/gust-wrap/gen.png",
+      "exit": 2
+    },
+    {
+      "id": "E-13d",
+      "report": "w15-S3-E-report.md",
+      "grid": "bg/storm-flash 1f 320×60 (palette-ramp flash, flat)",
+      "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/flash-flat/gen.png",
+      "exit": 2
+    },
+    {
+      "id": "F-1",
+      "report": "w15-S3-F-report.md",
+      "grid": "enemies/chaser-cell 2f 18×18 a9,9",
+      "file": "art-prompts/v2/gen3/enemy/chaser-cell/frames/round-idle-2f/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "F-2",
+      "report": "w15-S3-F-report.md",
+      "grid": "enemies/polyp-turret 1f 21×17 a10,8 (4 named firing states on sheet)",
+      "file": "art-prompts/v2/gen3/enemy/polyp-turret/frames/named-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "F-3",
+      "report": "w15-S3-F-report.md",
+      "grid": "enemies/vault-claw 1f 15×15 a7,7 (6 named claw-head poses on sheet)",
+      "file": "art-prompts/v2/gen3/enemy/vault-claw/frames/named-6/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "F-4",
+      "report": "w15-S3-F-report.md",
+      "grid": "regent F-only kit: regent-fin 2f 30×45, regent-plate 1f 30×24, regent-blister 4f 15×12",
+      "file": "art-prompts/v2/gen3/boss/mantle-regent/parts/f-labeled-7/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "F-6",
+      "report": "w15-S3-F-report.md",
+      "grid": "tiles/terrain-vault-v2 23f 12×12 a0,0",
+      "file": "art-prompts/v2/gen3/tiles/cell-vault/tileset/named-23/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-1",
+      "report": "w15-S3-G-report.md",
+      "grid": "bosses/facet-core 2f 24×24 a12,12 (ship idle + firing)",
+      "file": "art-prompts/v2/gen3/boss/facet-monarch/parts/core-states-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-2",
+      "report": "w15-S3-G-report.md",
+      "grid": "bosses/facet-crystal 1f 15×30 a7,15 (use cell 1)",
+      "file": "art-prompts/v2/gen3/boss/facet-monarch/parts/guards-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-3",
+      "report": "w15-S3-G-report.md",
+      "grid": "bosses/facet-crown 2f 30×15 a15,7 (cells 1-2 from the band)",
+      "file": "art-prompts/v2/gen3/boss/facet-monarch/parts/crown-band-1/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-4",
+      "report": "w15-S3-G-report.md",
+      "grid": "kit: facet-plating 1f 24×36, facet-emitter 4f 15×15 (2 states min), facet-wing 1f 33×21, facet-segment 1f 15×15, facet-tip 1f 15×15",
+      "file": "art-prompts/v2/gen3/boss/facet-monarch/parts/kit-6/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-5",
+      "report": "w15-S3-G-report.md",
+      "grid": "tiles/terrain-prism-v2 24f 12×12 a0,0 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/prism-labyrinth/tileset/contact-24/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "G-7",
+      "report": "w15-S3-G-report.md",
+      "grid": "enemies/option-hunter 2f 24×18 a12,9 p0 (6 named poses on sheet)",
+      "file": "art-prompts/v2/gen3/enemy/option-hunter/frames/equal-6/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "H-1",
+      "report": "w15-S3-H-report.md",
+      "grid": "sovereign kit: hull 1f 96×132, plate 1f 12×42, pod 1f 18×18, emitter 1f 24×15, core 2f 27×27, hatch 2f 21×18",
+      "file": "art-prompts/v2/gen3/boss/iron-sovereign/parts/named-part-8/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "H-2",
+      "report": "w15-S3-H-report.md",
+      "grid": "tiles/terrain-citadel-v2 24f 12×12 a0,0 (clip-to-mask)",
+      "file": "art-prompts/v2/gen3/tiles/iron-citadel/tileset/named-24/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "I-7",
+      "report": "w15-S3-I-report.md",
+      "grid": "bosses/ark-pod 4f 27×15 (one part kind)",
+      "file": "art-prompts/v2/gen3/boss/abyss-ark/parts/pod-row-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "I-8",
+      "report": "w15-S3-I-report.md",
+      "grid": "bosses/ark-turret 16f 24×24 a12,12 (heading fan)",
+      "file": "art-prompts/v2/gen3/boss/abyss-ark/turret-16-headings/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "I-9",
+      "report": "w15-S3-I-report.md",
+      "grid": "bosses/king-fin 1f 33×21 a16,10 (aspect ≈1.57)",
+      "file": "art-prompts/v2/gen3/boss/hollow-king/fin-1f/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-1",
+      "report": "w15-S3-P-report.md",
+      "grid": "ships/kestrel-thruster 4f 9×5 a[9,2]",
+      "file": "art-prompts/v2/gen3/craft/kestrel/in-game-sheet/thruster-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-2",
+      "report": "w15-S3-P-report.md",
+      "grid": "ships/manta-thruster 4f 9×5 a[9,2]",
+      "file": "art-prompts/v2/gen3/craft/manta/in-game-sheet/thruster-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-3",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/capsule 4f 18×12 a[9,6]",
+      "file": "art-prompts/v2/gen3/item/power-capsule/glint-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-4",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/capsule-blue 4f 18×12 a[9,6]",
+      "file": "art-prompts/v2/gen3/item/power-capsule/blue-glint-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-5",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/capsule-bonus 4f 18×12 a[9,6]",
+      "file": "art-prompts/v2/gen3/item/power-capsule/special-capsules/bonus-glint-4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-6",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/1up 1f 18×12 (blink is code-side alpha)",
+      "file": "art-prompts/v2/gen3/item/power-capsule/special-capsules/1up-single/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-7",
+      "report": "w15-S3-P-report.md",
+      "grid": "items/direct-{red,orange,yellow,green,blue,octagon} 4f 15×15 a[7,7] each",
+      "file": "art-prompts/v2/gen3/item/direct-orbs/orb-rows-6x4/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-8",
+      "report": "w15-S3-P-report.md",
+      "grid": "fx/ring 6f 13×13 (grow radii 1..6)",
+      "file": "art-prompts/v2/gen3/fx/explosion/particles/ring-grow-6/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-9",
+      "report": "w15-S3-P-report.md",
+      "grid": "fx/black-hole 8f 48×48 a[24,24] (swirl 0..6 + burst 7)",
+      "file": "art-prompts/v2/gen3/fx/black-hole/swirl-burst-8/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-10",
+      "report": "w15-S3-P-report.md",
+      "grid": "shields/force-field 8f 45×36 a[22,18] (4 wear × 2 shimmer)",
+      "file": "art-prompts/v2/gen3/fx/force-field/loop/wear-shimmer-8/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-11a",
+      "report": "w15-S3-P-report.md",
+      "grid": "fx/explosion-medium 14f 48×48",
+      "file": "art-prompts/v2/gen3/fx/explosion/medium-14/gen.png",
+      "exit": 0
+    },
+    {
+      "id": "P-11b",
+      "report": "w15-S3-P-report.md",
+      "grid": "fx/explosion-large 16f 72×72",
+      "file": "art-prompts/v2/gen3/fx/explosion/large-16/gen.png",
+      "exit": 0
+    }
+  ]
+}

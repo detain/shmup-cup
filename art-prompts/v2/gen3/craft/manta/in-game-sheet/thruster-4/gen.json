@@ -1,0 +1,72 @@
+{
+  "id": "craft/manta/in-game-sheet",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row showing the MANTA's TWIN engine plumes ALONE on green — two parallel short flame trails (the twin nozzles stacked close), NO hull anywhere, nozzle mouths at the right, four loop states in order from the referenced design's idle-embers to full-boost ramp: cell 1 = dim embers; cell 2 = lit; cell 3 = strong; cell 4 = peak boost. Same anchor in every cell. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "overlapping sprites, drop shadows, background gradient, real manta ray, animal texture, visible fish eye, perspective distortion, anti-aliasing, text, labels, numbers, cell borders, green tint on the hull, blurry, photorealistic, 3d render, watermark",
+  "model": "flux2",
+  "seed": 1155425666,
+  "width": 1248,
+  "height": 384,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:42:57.839Z",
+  "seconds": 42.4,
+  "label": "In-game pose sheet: 5 bank frames + 5 thruster states (v2: ~24×15 ship, hand-pixelled from this)",
+  "source": "images/20-player-crafts/sprite-sheets.json#manta-sprite-sheet-v1",
+  "file": "art-prompts/v2/gen3/craft/manta/in-game-sheet/thruster-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/craft/manta/in-game-sheet/winner.png"
+  ],
+  "editFromSha256": [
+    "d1e779bb3745eb626a898d78cd57fed3df7345c4242e929f20ac0c1be4256f7f"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row showing the MANTA's TWIN engine plumes ALONE on green — two parallel short flame trails (the twin nozzles stacked close), NO hull anywhere, nozzle mouths at the right, four loop states in order from the referenced design's idle-embers to full-boost ramp: cell 1 = dim embers; cell 2 = lit; cell 3 = strong; cell 4 = peak boost. Same anchor in every cell. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1248x384",
+  "pins": {
+    "model": "flux2",
+    "seed": 1155425666,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of MANTA. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal shooter, a regular grid of ten equal cells in two rows of five with even gutters, every cell showing the same flat pale-mint manta-ray-shaped starfighter with a small green canopy, amber twin thrusters and a heavy near-black green outline in side view facing right, on a perfectly flat solid pure bright green chroma-key background. Top row, the five banking frames from left to right: steep climb with the nose and the leading wing edge tilted up, slight climb, level glide, slight dive, steep dive with the nose tilted down. Bottom row, the level-glide hull with five thruster states from left to right: idle with two short amber embers, small twin flames, medium twin flames, long red-amber twin plumes, and full boost with white-hot cores in both plumes. Every sprite drawn as crisp pixel art with a 1-pixel near-black green outline at its native pixel scale, flat saturated fills with three-step shading lit from the top-left, identical scale, position and silhouette in every cell, no anti-aliasing, no drop shadows, no glow bleeding onto the background, no text, no numbers, no cell borders, arcade sprite art. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row showing the MANTA's TWIN engine plumes ALONE on green — two parallel short flame trails (the twin nozzles stacked close), NO hull anywhere, nozzle mouths at the right, four loop states in order from the referenced design's idle-embers to full-boost ramp: cell 1 = dim embers; cell 2 = lit; cell 3 = strong; cell 4 = peak boost. Same anchor in every cell. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1248×384 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/craft/manta/in-game-sheet",
+    "targetGrid": "ships/manta-thruster 4f 9×5 a[9,2]",
+    "sheetContract": "key #51e018; 4 cells as 4x1 of 256x256 gutters 32/0 borders 64/64 on 1248x384",
+    "rowCite": "w15-S3-P-report.md §4 row 2",
+    "generatedAt": "2026-10-26T16:42:57.839Z",
+    "shape": {
+      "w": 1248,
+      "h": 384,
+      "corners": [
+        [
+          61,
+          194,
+          1,
+          255
+        ],
+        [
+          65,
+          196,
+          1,
+          255
+        ],
+        [
+          57,
+          190,
+          1,
+          255
+        ],
+        [
+          59,
+          197,
+          1,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

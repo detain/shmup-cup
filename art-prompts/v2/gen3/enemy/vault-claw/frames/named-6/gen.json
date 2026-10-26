@@ -1,0 +1,72 @@
+{
+  "id": "enemy/vault-claw/frames",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of VAULT CLAW. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same VAULT CLAW enemy — a bone-white segmented hook of eight beaded links curling out of a socket bump of green tissue, the last link a sharp grabbing hook, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: sheathed socket bump, first link emerging, half-extended four-link arc, fully extended eight-link hook, hooked shut on nothing, recoiling into the socket with fluid beads. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Cell one: only the brown tissue mound, no claw at all. Cell two: the mound with just the curved claw tip poking out of its hole. Cell three: the claw on a short neck of four beads, low and close to the mound. Cells four and five: the full tall arc of eight beads, claw open then clamped shut. Cell six: a short three-bead neck sinking back into the mound, fluid drops falling.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- SIX (6) equal square cells laid out as TWO rows of THREE (3), one named pose per cell, reading order: cell 1 = RETRACT (claw head folded tight); cell 2 = HOOK (curved hook pose); cell 3 = SWEEP (open sweep pose); cell 4 = EXTENDED (fully extended strike — the current main pose); cell 5 = RELEASE (opening back); cell 6 = REST (neutral hang). Claw HEAD only in every cell — no link chains (they are program-drawn), same scale, same design, facing left. Exactly SIX cells.\n- The sheet canvas measures EXACTLY 1248×832 px. Produce EXACTLY 6 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 905077677,
+  "width": 1248,
+  "height": 832,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:24:31.987Z",
+  "seconds": 61.7,
+  "label": "VAULT CLAW animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/enemy/vault-claw/frames/named-6/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/enemy/vault-claw/frames/winner.png"
+  ],
+  "editFromSha256": [
+    "551606b26a9e97a015b5645ec46e3cd4a23993026a62a2c38a1174bb36fed28e"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of VAULT CLAW. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same VAULT CLAW enemy — a bone-white segmented hook of eight beaded links curling out of a socket bump of green tissue, the last link a sharp grabbing hook, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: sheathed socket bump, first link emerging, half-extended four-link arc, fully extended eight-link hook, hooked shut on nothing, recoiling into the socket with fluid beads. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Cell one: only the brown tissue mound, no claw at all. Cell two: the mound with just the curved claw tip poking out of its hole. Cell three: the claw on a short neck of four beads, low and close to the mound. Cells four and five: the full tall arc of eight beads, claw open then clamped shut. Cell six: a short three-bead neck sinking back into the mound, fluid drops falling.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- SIX (6) equal square cells laid out as TWO rows of THREE (3), one named pose per cell, reading order: cell 1 = RETRACT (claw head folded tight); cell 2 = HOOK (curved hook pose); cell 3 = SWEEP (open sweep pose); cell 4 = EXTENDED (fully extended strike — the current main pose); cell 5 = RELEASE (opening back); cell 6 = REST (neutral hang). Claw HEAD only in every cell — no link chains (they are program-drawn), same scale, same design, facing left. Exactly SIX cells.\n- The sheet canvas measures EXACTLY 1248×832 px. Produce EXACTLY 6 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1248x832",
+  "pins": {
+    "model": "flux2",
+    "seed": 905077677,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of VAULT CLAW. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same VAULT CLAW enemy — a bone-white segmented hook of eight beaded links curling out of a socket bump of green tissue, the last link a sharp grabbing hook, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: sheathed socket bump, first link emerging, half-extended four-link arc, fully extended eight-link hook, hooked shut on nothing, recoiling into the socket with fluid beads. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Cell one: only the brown tissue mound, no claw at all. Cell two: the mound with just the curved claw tip poking out of its hole. Cell three: the claw on a short neck of four beads, low and close to the mound. Cells four and five: the full tall arc of eight beads, claw open then clamped shut. Cell six: a short three-bead neck sinking back into the mound, fluid drops falling.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- SIX (6) equal square cells laid out as TWO rows of THREE (3), one named pose per cell, reading order: cell 1 = RETRACT (claw head folded tight); cell 2 = HOOK (curved hook pose); cell 3 = SWEEP (open sweep pose); cell 4 = EXTENDED (fully extended strike — the current main pose); cell 5 = RELEASE (opening back); cell 6 = REST (neutral hang). Claw HEAD only in every cell — no link chains (they are program-drawn), same scale, same design, facing left. Exactly SIX cells.\n- The sheet canvas measures EXACTLY 1248×832 px. Produce EXACTLY 6 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/enemy/vault-claw/frames",
+    "targetGrid": "enemies/vault-claw 1f 15×15 a7,7 (6 named claw-head poses on sheet)",
+    "sheetContract": "key #51e018; 6 cells as 3x2 of 320x320 gutters 96/96 borders 48/48 on 1248x832",
+    "rowCite": "w15-S3-F-report.md §6 row 3",
+    "generatedAt": "2026-10-26T16:24:31.987Z",
+    "shape": {
+      "w": 1248,
+      "h": 832,
+      "corners": [
+        [
+          90,
+          224,
+          27,
+          255
+        ],
+        [
+          92,
+          227,
+          23,
+          255
+        ],
+        [
+          86,
+          225,
+          22,
+          255
+        ],
+        [
+          89,
+          230,
+          22,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

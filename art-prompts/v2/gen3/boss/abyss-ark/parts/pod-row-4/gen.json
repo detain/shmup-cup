@@ -1,0 +1,72 @@
+{
+  "id": "boss/abyss-ark/parts",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of ABYSS ARK (AA-09). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of ABYSS ARK (AA-09) boss parts taken from the established design — one hull section, the bow, the stern fluke, one turret battery and the heart core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the ship were taken apart, never the whole whale-ship: the top row only the whale head with its glowing eye and striped throat, broken off at the neck; the middle row only one short riveted hull segment carrying a single turret; the bottom row only the forked tail fluke. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row — all four cells show the SAME single part kind: the ark's weapon POD, in four states of one cycle, reading order: pod dormant, pod opening, pod firing (muzzle flash), pod cooling. Nothing else in any cell (no hull, no hooks, no turrets), same scale, facing left, keyed green. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1264×352 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1333184933,
+  "width": 1264,
+  "height": 352,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:38:26.728Z",
+  "seconds": 54.1,
+  "label": "ABYSS ARK (AA-09) parts sheet: one hull section, the bow, the stern fluke, one turret battery and the heart core, 4 frames each (v2 boss parts 18–27 px)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/boss/abyss-ark/parts/pod-row-4/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/abyss-ark/parts/winner.png"
+  ],
+  "editFromSha256": [
+    "12879f1447d83c96da1864a72df30477c427f28e833669261aabb67292a59d72"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of ABYSS ARK (AA-09). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of ABYSS ARK (AA-09) boss parts taken from the established design — one hull section, the bow, the stern fluke, one turret battery and the heart core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the ship were taken apart, never the whole whale-ship: the top row only the whale head with its glowing eye and striped throat, broken off at the neck; the middle row only one short riveted hull segment carrying a single turret; the bottom row only the forked tail fluke. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row — all four cells show the SAME single part kind: the ark's weapon POD, in four states of one cycle, reading order: pod dormant, pod opening, pod firing (muzzle flash), pod cooling. Nothing else in any cell (no hull, no hooks, no turrets), same scale, facing left, keyed green. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1264×352 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1264x352",
+  "pins": {
+    "model": "flux2",
+    "seed": 1333184933,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of ABYSS ARK (AA-09). Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of twelve equal cells in three rows of four with even gutters, read left to right and top to bottom, every cell showing the same set of ABYSS ARK (AA-09) boss parts taken from the established design — one hull section, the bow, the stern fluke, one turret battery and the heart core, facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: each row one part in four frames of its idle, charging, firing and damaged states, following the established boss exactly. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Exactly twelve cells: three rows and four columns. Every cell shows one small detached part alone, as if the ship were taken apart, never the whole whale-ship: the top row only the whale head with its glowing eye and striped throat, broken off at the neck; the middle row only one short riveted hull segment carrying a single turret; the bottom row only the forked tail fluke. Each part is small in its cell with wide green margins. No lines, borders or frames between the cells; everything around the sprites is one flat green.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- FOUR (4) equal square cells in ONE row — all four cells show the SAME single part kind: the ark's weapon POD, in four states of one cycle, reading order: pod dormant, pod opening, pod firing (muzzle flash), pod cooling. Nothing else in any cell (no hull, no hooks, no turrets), same scale, facing left, keyed green. Exactly FOUR cells.\n- The sheet canvas measures EXACTLY 1264×352 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/abyss-ark/parts",
+    "targetGrid": "bosses/ark-pod 4f 27×15 (one part kind)",
+    "sheetContract": "key #51e018; 4 cells as 4x1 of 256x256 gutters 48/0 borders 48/48 on 1264x352",
+    "rowCite": "w15-S3-I-report.md §3 row 7",
+    "generatedAt": "2026-10-26T16:38:26.728Z",
+    "shape": {
+      "w": 1264,
+      "h": 352,
+      "corners": [
+        [
+          109,
+          228,
+          4,
+          255
+        ],
+        [
+          113,
+          233,
+          3,
+          255
+        ],
+        [
+          107,
+          231,
+          2,
+          255
+        ],
+        [
+          107,
+          234,
+          3,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

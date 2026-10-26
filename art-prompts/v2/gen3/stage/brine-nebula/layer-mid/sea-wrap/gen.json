@@ -1,0 +1,74 @@
+{
+  "id": "stage/brine-nebula/layer-mid",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: coral-shaped reef towers of sand-stone tan and pale rose, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The layer holds only the reef towers: no orbs, bullets or glowing dots anywhere. Paint the tan and rose stone in dim dusk shades, clearly darker and greyer than the reference, with only small highlights on the upper-left edges.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- The key green forms clean flat margins above and below the band (at least 48 px); the subject mass itself MUST touch BOTH the left and the right sheet edge so the band wraps seamlessly when tiled horizontally.\n- ONE (1) seamless horizontal wrap band, 2.67:1 wide: the drifting sea surface of the grotto — long layered current ripples spanning the full width, left edge continuing exactly into right edge. CRITICAL palette contract: every pixel of the sea mass uses ONLY these four step colours: #10323e, #184658, #225c6e, #2e7486 (nothing else, no white caps, no other blues). Clean flat key green above and below the mass. No text, no borders.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1536×576 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 456516630,
+  "width": 1536,
+  "height": 576,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T15:57:19.803Z",
+  "seconds": 113.9,
+  "label": "BRINE NEBULA parallax layer 3/4 (mid, 640 px wide band on key green) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/stage/brine-nebula/layer-mid/sea-wrap/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/stage/brine-nebula/winner.png",
+    "art-prompts/v2/winners/stage/brine-nebula/layer-mid/winner.png"
+  ],
+  "editFromSha256": [
+    "2afb6f431e3c3cb0ee21b6aeb0039721f8daa62be6cbfd29052f2c57bb362cb3",
+    "932cc742aedcb6273b261c21b5236cc752c2c896a8982bee260ed66b8a5a22be"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: coral-shaped reef towers of sand-stone tan and pale rose, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The layer holds only the reef towers: no orbs, bullets or glowing dots anywhere. Paint the tan and rose stone in dim dusk shades, clearly darker and greyer than the reference, with only small highlights on the upper-left edges.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- The key green forms clean flat margins above and below the band (at least 48 px); the subject mass itself MUST touch BOTH the left and the right sheet edge so the band wraps seamlessly when tiled horizontally.\n- ONE (1) seamless horizontal wrap band, 2.67:1 wide: the drifting sea surface of the grotto — long layered current ripples spanning the full width, left edge continuing exactly into right edge. CRITICAL palette contract: every pixel of the sea mass uses ONLY these four step colours: #10323e, #184658, #225c6e, #2e7486 (nothing else, no white caps, no other blues). Clean flat key green above and below the mass. No text, no borders.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1536×576 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1536x576",
+  "pins": {
+    "model": "flux2",
+    "seed": 456516630,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen BRINE NEBULA stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): BRINE NEBULA mid parallax layer for a 16-bit side-scrolling arcade shooter, matching the established BRINE NEBULA stage art's shapes, palette family and style, but regraded darker for gameplay: coral-shaped reef towers of sand-stone tan and pale rose, drawn as one horizontal band that tiles seamlessly from its left edge to its right edge, isolated on a perfectly flat solid pure bright green chroma-key background above and below the band, crisp edges with a 1-pixel dark outline where the band meets the key, flat saturated pixel-art shading lit from the top-left, no sky, no glow haze bleeding onto the key, no ships, no characters, no text. Muted, darker-graded values with no large bright areas, so the bright bullets and ships stay the brightest things on screen. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The layer holds only the reef towers: no orbs, bullets or glowing dots anywhere. Paint the tan and rose stone in dim dusk shades, clearly darker and greyer than the reference, with only small highlights on the upper-left edges.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- The key green forms clean flat margins above and below the band (at least 48 px); the subject mass itself MUST touch BOTH the left and the right sheet edge so the band wraps seamlessly when tiled horizontally.\n- ONE (1) seamless horizontal wrap band, 2.67:1 wide: the drifting sea surface of the grotto — long layered current ripples spanning the full width, left edge continuing exactly into right edge. CRITICAL palette contract: every pixel of the sea mass uses ONLY these four step colours: #10323e, #184658, #225c6e, #2e7486 (nothing else, no white caps, no other blues). Clean flat key green above and below the mass. No text, no borders.\nA SECOND reference image is supplied (stage/brine-nebula) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1536×576 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/stage/brine-nebula + winners/stage/brine-nebula/layer-mid",
+    "targetGrid": "bg/brine-sea 1f 192×72 (mid band, palette-cycled)",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 1536x576 gutters 0/0 borders 0/0 on 1536x576; horizontal wrap band",
+    "rowCite": "w15-S3-B-report.md §4 row 4",
+    "generatedAt": "2026-10-26T15:57:19.803Z",
+    "shape": {
+      "w": 1536,
+      "h": 576,
+      "corners": [
+        [
+          69,
+          246,
+          17,
+          255
+        ],
+        [
+          70,
+          247,
+          14,
+          255
+        ],
+        [
+          66,
+          245,
+          13,
+          255
+        ],
+        [
+          67,
+          249,
+          13,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "enemy/chaser-cell/frames",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CHASER CELL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same CHASER CELL enemy — a round translucent green membrane sphere with a pale nucleus, a faint inner glow and a few tiny organelle dots, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: round at rest, nucleus stretching, membrane waisting into a dumbbell, filament bridge at full stretch, pinch to two touching daughter cells, the two daughters separated. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Top row, left to right: the round spiky cell; the cell stretched into a wide egg with its eye-nucleus elongated; a peanut shape pinched at the middle with two eyes. Bottom row: two lobes joined by a thin filament; two touching daughter cells; two daughter cells apart. No cell repeats another.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWO (2) equal square cells in ONE row: cell 1 = the ROUND at-rest chaser cell (a round nucleus cell with its membrane ring, ~18×18 proportions, facing left); cell 2 = the SAME round cell with its inner nucleus pulse one shade brighter (same round silhouette, only the nucleus glint changes). Both cells perfectly ROUND — do NOT draw any mitosis/stretch state, no elongated blobs, no letterboxed forms. Exactly TWO cells.\n- The sheet canvas measures EXACTLY 1024×544 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 1597595698,
+  "width": 1024,
+  "height": 544,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:22:25.891Z",
+  "seconds": 45.4,
+  "label": "CHASER CELL animation sheet, six frames (v2: 4–6 per animation)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/enemy/chaser-cell/frames/round-idle-2f/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/enemy/chaser-cell/frames/winner.png"
+  ],
+  "editFromSha256": [
+    "2f292eb2f4bc64db6243198a3eee5fbb7b8d073fa94e7871b85700768e3680e3"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CHASER CELL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same CHASER CELL enemy — a round translucent green membrane sphere with a pale nucleus, a faint inner glow and a few tiny organelle dots, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: round at rest, nucleus stretching, membrane waisting into a dumbbell, filament bridge at full stretch, pinch to two touching daughter cells, the two daughters separated. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Top row, left to right: the round spiky cell; the cell stretched into a wide egg with its eye-nucleus elongated; a peanut shape pinched at the middle with two eyes. Bottom row: two lobes joined by a thin filament; two touching daughter cells; two daughter cells apart. No cell repeats another.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWO (2) equal square cells in ONE row: cell 1 = the ROUND at-rest chaser cell (a round nucleus cell with its membrane ring, ~18×18 proportions, facing left); cell 2 = the SAME round cell with its inner nucleus pulse one shade brighter (same round silhouette, only the nucleus glint changes). Both cells perfectly ROUND — do NOT draw any mitosis/stretch state, no elongated blobs, no letterboxed forms. Exactly TWO cells.\n- The sheet canvas measures EXACTLY 1024×544 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1024x544",
+  "pins": {
+    "model": "flux2",
+    "seed": 1597595698,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen design of CHASER CELL. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of six equal cells in two rows of three with even gutters, read left to right and top to bottom, every cell showing the same CHASER CELL enemy — a round translucent green membrane sphere with a pale nucleus, a faint inner glow and a few tiny organelle dots, side view facing left, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: round at rest, nucleus stretching, membrane waisting into a dumbbell, filament bridge at full stretch, pinch to two touching daughter cells, the two daughters separated. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Top row, left to right: the round spiky cell; the cell stretched into a wide egg with its eye-nucleus elongated; a peanut shape pinched at the middle with two eyes. Bottom row: two lobes joined by a thin filament; two touching daughter cells; two daughter cells apart. No cell repeats another.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- TWO (2) equal square cells in ONE row: cell 1 = the ROUND at-rest chaser cell (a round nucleus cell with its membrane ring, ~18×18 proportions, facing left); cell 2 = the SAME round cell with its inner nucleus pulse one shade brighter (same round silhouette, only the nucleus glint changes). Both cells perfectly ROUND — do NOT draw any mitosis/stretch state, no elongated blobs, no letterboxed forms. Exactly TWO cells.\n- The sheet canvas measures EXACTLY 1024×544 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/enemy/chaser-cell/frames",
+    "targetGrid": "enemies/chaser-cell 2f 18×18 a9,9",
+    "sheetContract": "key #51e018; 2 cells as 2x1 of 416x416 gutters 64/0 borders 64/64 on 1024x544",
+    "rowCite": "w15-S3-F-report.md §6 row 1",
+    "generatedAt": "2026-10-26T16:22:25.891Z",
+    "shape": {
+      "w": 1024,
+      "h": 544,
+      "corners": [
+        [
+          89,
+          216,
+          17,
+          255
+        ],
+        [
+          92,
+          218,
+          14,
+          255
+        ],
+        [
+          86,
+          217,
+          15,
+          255
+        ],
+        [
+          89,
+          221,
+          14,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "stage/tempest-ridge/layer-far",
+  "slot": "a",
+  "prompt": "CONTRACT REPAIR — the previous attempt violated the shape contract: the cell count or the background contract was violated — produce EXACTLY the announced number of equal cells, each subject fully on the flat key background, no guide lines. Rebuild strictly to the contract below; the cell count and the background rule are the exact defects to fix.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE flat-painted panel, 5.33:1 wide: the entire frame painted as an even lightning-flash wash using ONLY the four-step storm ramp colours #10182a, #1d2c46, #2f4166, #475d84 as broad flat horizontal strata (no shapes, no outlines, no text, no key green anywhere — edge-to-edge paint).\n- The sheet canvas measures EXACTLY 1280×240 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill",
+  "model": "flux2",
+  "seed": 595933072,
+  "width": 1280,
+  "height": 256,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:21:40.328Z",
+  "seconds": 48.5,
+  "label": "TEMPEST RIDGE parallax layer 1/4 (far, opaque 640×360) in the winner's style",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/flash-flat/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/stage/tempest-ridge/layer-far/winner.png"
+  ],
+  "editFromSha256": [
+    "ce8128bd7ac7b639e8f741f6ae399e08da4d50443c6958eb0bf3d0c530cdbcd8"
+  ],
+  "instruction": "CONTRACT REPAIR — the previous attempt violated the shape contract: the cell count or the background contract was violated — produce EXACTLY the announced number of equal cells, each subject fully on the flat key background, no guide lines. Rebuild strictly to the contract below; the cell count and the background rule are the exact defects to fix.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE flat-painted panel, 5.33:1 wide: the entire frame painted as an even lightning-flash wash using ONLY the four-step storm ramp colours #10182a, #1d2c46, #2f4166, #475d84 as broad flat horizontal strata (no shapes, no outlines, no text, no key green anywhere — edge-to-edge paint).\n- The sheet canvas measures EXACTLY 1280×240 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "1280x256",
+  "pins": {
+    "model": "flux2",
+    "seed": 595933072,
+    "prompt": "CONTRACT REPAIR — the previous attempt violated the shape contract: the cell count or the background contract was violated — produce EXACTLY the announced number of equal cells, each subject fully on the flat key background, no guide lines. Rebuild strictly to the contract below; the cell count and the background rule are the exact defects to fix.\n\nEDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen TEMPEST RIDGE stage art. Keep its exact colour palette, motifs, lighting and painting style, and paint only the single layer described below (framing and background follow the description, not the reference): TEMPEST RIDGE far background layer for a 16-bit side-scrolling arcade shooter, matching the established TEMPEST RIDGE stage art's shapes, palette family and style, but regraded darker for gameplay: a deep-navy storm sky with distant lightning glow inside the clouds, an opaque painted 16:9 backdrop that tiles seamlessly from its left edge to its right edge, clean flat shapes with pixel-art texture accents, saturated limited palette, lifted deep-navy darks never pure black, no foreground objects, no ships, no characters, no text. Graded dark for gameplay: most of the image sits in deep, dim dusk tones with low mid-tones, and bright areas appear only as small light sources, so the bright bullets and ships stay the brightest things on screen. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Enemy bullets are round glowing orbs with bright cores and dark rims. No text, letters, numbers, labels, UI or watermark anywhere.  The far layer is empty of objects: only storm clouds, a faint distant ridge line and lightning glowing inside the clouds; no orbs, fireballs, lights or dots anywhere. Keep it dim but never near-black: the whole sky is a dusky slate-blue with soft lighter cloud bands and visible shading from top to bottom, the lower half a field of dim blue-grey cloud tops, not darkness.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- ONE (1) full-bleed OPAQUE flat-painted panel, 5.33:1 wide: the entire frame painted as an even lightning-flash wash using ONLY the four-step storm ramp colours #10182a, #1d2c46, #2f4166, #475d84 as broad flat horizontal strata (no shapes, no outlines, no text, no key green anywhere — edge-to-edge paint).\n- The sheet canvas measures EXACTLY 1280×240 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/stage/tempest-ridge/layer-far",
+    "targetGrid": "bg/storm-flash 1f 320×60 (palette-ramp flash, flat)",
+    "sheetContract": "opaque; 1 cells as 1x1 of 1280x240 gutters 0/0 borders 0/0 on 1280x240",
+    "rowCite": "w15-S3-E-report.md §4 row 13",
+    "generatedAt": "2026-10-26T16:21:40.328Z",
+    "shape": {
+      "w": 1280,
+      "h": 256,
+      "corners": [
+        [
+          1,
+          3,
+          18,
+          255
+        ],
+        [
+          30,
+          38,
+          60,
+          255
+        ],
+        [
+          16,
+          24,
+          46,
+          255
+        ],
+        [
+          20,
+          29,
+          51,
+          255
+        ]
+      ],
+      "problems": [
+        "dims 1280x256 != requested 1280x240"
+      ]
+    }
+  }
+}

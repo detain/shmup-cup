@@ -1,0 +1,72 @@
+{
+  "id": "boss/squall-steed",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single giant mechanical seahorse fortress boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view, upright, head and snout facing the left edge of the picture, centered with a wide empty margin above and below it, the whole body standing about three quarters of the picture height, with nothing cut off by the frame. A bulky armored war-fortress in the shape of a seahorse: a massive barrel-chested torso of riveted slate-blue armor plate with small gun turrets and lightning-rod antennae on its back, a proud arched neck of heavy overlapping plates, a long tubular snout ending in a cannon muzzle, a helmet-like head with a spiked crown crest and a single glowing yellow eye under a heavy armored lid, a mane of thin brass lightning rods down the back of the neck, and a tall dorsal sail of taut steel ribs and storm-grey canvas. Its chest stands open: exactly three great armored breastplate doors swung outward on hinges like petals around a blazing white-blue electrical heart, the obvious weak point. Below, a thick segmented steel-and-cable tail curls into a tight spiral coil with short violet sparks crackling along it. Small pink and red gun ports with bright cores and dark rims along the belly plates. Menacing, regal, heavy, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of slate blue, steel blue, storm grey, brass rivets, violet rim light and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no clouds, no rain, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the SQUALL STEED torso ALONE as a tall vertical portrait panel — the horse-dragon body WITHOUT its head, WITHOUT any chest glow orb, WITHOUT a face, WITHOUT tail or mane or armour plates (those parts are separate sprites drawn over this body). Keep the referenced painting's coat colours, materials and lighting exactly. Broadside facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 896×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, horse with legs, organic animal, closed chest, player character, pure black background, green tint on the subject, green spill, background scenery, cast shadow",
+  "model": "flux2",
+  "seed": 1139010075,
+  "width": 896,
+  "height": 1152,
+  "steps": 50,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T16:09:18.787Z",
+  "seconds": 75.3,
+  "label": "SQUALL STEED (SS-05) — zone E boss, the storm seahorse fortress; full body on key green",
+  "source": "images/30-bosses/hi-res.json#ss05-hires-v1",
+  "file": "art-prompts/v2/gen3/boss/squall-steed/body-only/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/edits",
+  "negativeSent": null,
+  "mode": "edit",
+  "editFrom": [
+    "art-prompts/v2/winners/boss/squall-steed/winner.png"
+  ],
+  "editFromSha256": [
+    "3b2d3ac327ac9263bb52b0a375f201085a9a2e0fd44e0adf77f8e6b60d064623"
+  ],
+  "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single giant mechanical seahorse fortress boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view, upright, head and snout facing the left edge of the picture, centered with a wide empty margin above and below it, the whole body standing about three quarters of the picture height, with nothing cut off by the frame. A bulky armored war-fortress in the shape of a seahorse: a massive barrel-chested torso of riveted slate-blue armor plate with small gun turrets and lightning-rod antennae on its back, a proud arched neck of heavy overlapping plates, a long tubular snout ending in a cannon muzzle, a helmet-like head with a spiked crown crest and a single glowing yellow eye under a heavy armored lid, a mane of thin brass lightning rods down the back of the neck, and a tall dorsal sail of taut steel ribs and storm-grey canvas. Its chest stands open: exactly three great armored breastplate doors swung outward on hinges like petals around a blazing white-blue electrical heart, the obvious weak point. Below, a thick segmented steel-and-cable tail curls into a tight spiral coil with short violet sparks crackling along it. Small pink and red gun ports with bright cores and dark rims along the belly plates. Menacing, regal, heavy, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of slate blue, steel blue, storm grey, brass rivets, violet rim light and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no clouds, no rain, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the SQUALL STEED torso ALONE as a tall vertical portrait panel — the horse-dragon body WITHOUT its head, WITHOUT any chest glow orb, WITHOUT a face, WITHOUT tail or mane or armour plates (those parts are separate sprites drawn over this body). Keep the referenced painting's coat colours, materials and lighting exactly. Broadside facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 896×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "outputSize": "896x1152",
+  "pins": {
+    "model": "flux2",
+    "seed": 1139010075,
+    "prompt": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nA single giant mechanical seahorse fortress boss for a retro 16-bit side-scrolling space shooter, shown in a flat side view, upright, head and snout facing the left edge of the picture, centered with a wide empty margin above and below it, the whole body standing about three quarters of the picture height, with nothing cut off by the frame. A bulky armored war-fortress in the shape of a seahorse: a massive barrel-chested torso of riveted slate-blue armor plate with small gun turrets and lightning-rod antennae on its back, a proud arched neck of heavy overlapping plates, a long tubular snout ending in a cannon muzzle, a helmet-like head with a spiked crown crest and a single glowing yellow eye under a heavy armored lid, a mane of thin brass lightning rods down the back of the neck, and a tall dorsal sail of taut steel ribs and storm-grey canvas. Its chest stands open: exactly three great armored breastplate doors swung outward on hinges like petals around a blazing white-blue electrical heart, the obvious weak point. Below, a thick segmented steel-and-cable tail curls into a tight spiral coil with short violet sparks crackling along it. Small pink and red gun ports with bright cores and dark rims along the belly plates. Menacing, regal, heavy, readable silhouette. Crisp chunky pixel art with a clean dark navy outline, flat saturated fills with three-step shading ramps lit from the top-left, limited palette of slate blue, steel blue, storm grey, brass rivets, violet rim light and white-blue electric light with pink accents. Perfectly flat solid pure bright green chroma-key background, no gradient, no texture, no clouds, no rain, no water, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no letters, no numbers, no logo, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.- Every subject sits well inside the sheet: at least 48 px of unbroken flat #51e018 key between every subject and the nearest sheet border, and all four sheet corners are pure #51e018.\n- ONE (1) single subject: the SQUALL STEED torso ALONE as a tall vertical portrait panel — the horse-dragon body WITHOUT its head, WITHOUT any chest glow orb, WITHOUT a face, WITHOUT tail or mane or armour plates (those parts are separate sprites drawn over this body). Keep the referenced painting's coat colours, materials and lighting exactly. Broadside facing left, centered with generous key-green margin.\n- The sheet canvas measures EXACTLY 896×1152 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "sourceWinners": "winners/boss/squall-steed",
+    "targetGrid": "bosses/steed-body 1f 45×81 a22,40",
+    "sheetContract": "key #51e018; 1 cells as 1x1 of 896x1152 gutters 0/0 borders 0/0 on 896x1152",
+    "rowCite": "w15-S3-E-report.md §4 row 7",
+    "generatedAt": "2026-10-26T16:09:18.787Z",
+    "shape": {
+      "w": 896,
+      "h": 1152,
+      "corners": [
+        [
+          101,
+          236,
+          7,
+          255
+        ],
+        [
+          105,
+          239,
+          6,
+          255
+        ],
+        [
+          97,
+          235,
+          6,
+          255
+        ],
+        [
+          100,
+          238,
+          7,
+          255
+        ]
+      ],
+      "problems": []
+    }
+  }
+}
