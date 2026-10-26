@@ -24,9 +24,8 @@
  *   `--art-scale` the atlas' terrain tiles contradict is refused (exit 2) unless forced.
  *
  * The four shipped-port cases above read `content/` as v1 data and are `it.runIf(CONTENT_STILL_V1)`
- * — retired once the content is ported (the two-scale kit ports it in its tree, so they skip
- * there), by design, independently of the self-expiring `CONTENT_PORT_PENDING` gate (U5 deletes
- * that file in wave 5; these cases keep skipping).
+ * — they skip by design since R2-02's port (the v1-baseline comparison kit ports the content in
+ * its own tree; these cases keep skipping).
  *
  * The fixtures carry the geometry they were written for (`fixtures/rescale/geometry.json`), and
  * the shipped content's runs use the same fixed v1 → v2 numbers, so the ported values do not
