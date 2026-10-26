@@ -914,9 +914,12 @@ export function createBendingLaserBinding(
 
 /**
  * Colour of the hitbox marker's outline (M2-08 — the pink-red that reads on any background).
- * Since the w15-HBOX re-style the marker is outline-only, so this is its only tint.
+ * Since the w15-HBOX re-style the marker is outline-only, so this is its only tint, and since
+ * w15-HBDIM it sits at half that brightness (the owner's "less noticeable" note): the same
+ * pink-red hue at 50% per channel, kept fully opaque so one known colour reaches the screen
+ * (a quad alpha would blend with whatever is under the rim and scatter the pixel checks).
  */
-export const HITBOX_RIM_TINT = 0xff3050;
+export const HITBOX_RIM_TINT = 0x7f1828;
 
 /** Options of {@link createHitboxBinding}. */
 export interface HitboxBindingOptions {

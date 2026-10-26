@@ -372,7 +372,8 @@ R2-01 ×3 fits exactly; in v1 it was ×5). `renderer.setScaleMode(mode)` re-plac
 mode. Sizes that are not positive count as 1.
 
 **Show hitbox.** `createHitboxBinding({ atlas, capacity, offsetY? })` (render-pixi `layers`): per
-`HitboxView` slot a 1-px square **outline** tinted `HITBOX_RIM_TINT` (`0xff3050`) around a core
+`HitboxView` slot a 1-px square **outline** tinted `HITBOX_RIM_TINT` (`0x7f1828` — since w15-HBDIM
+the half-brightness pink-red, fully opaque so its on-screen pixel is known) around a core
 `2·floor(radius) + 1` px square (1 px below radius 1) — four quads of the atlas's white pixel, one
 per side, non-overlapping, tracing the boundary of the filled marker M2-08 drew (a white core in a
 solid rim); the interior stays open so the ship shows through (the w15-HBOX re-style, an

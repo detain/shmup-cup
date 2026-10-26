@@ -1,10 +1,11 @@
 /**
  * The hitbox markers of the "show hitbox" option (plan M2-08): since the w15-HBOX re-style each
  * marker is the *outline* of the hurt core — four 1-px `HITBOX_RIM_TINT` strips tracing the old
- * filled marker's boundary, interior left open so the ship shows through. The tests below are the
- * draw census: they expand every visible quad into painted pixels and require the set to equal the
- * old rim's perimeter exactly — zero interior pixels, unchanged box extent. Unused slots hidden; no
- * allocation.
+ * filled marker's boundary, interior left open so the ship shows through; since w15-HBDIM the rim
+ * sits at half brightness (the owner's "less noticeable" note) — the presence pin below. The tests
+ * below are the draw census: they expand every visible quad into painted pixels and require the
+ * set to equal the old rim's perimeter exactly — zero interior pixels, unchanged box extent. Unused
+ * slots hidden; no allocation.
  */
 import { PLAYFIELD_Y, createHitboxBatch } from '@shmup/core';
 import type { Sprite } from 'pixi.js';
@@ -85,6 +86,10 @@ describe('render-pixi/layers hitbox markers', () => {
       HITBOX_RIM_TINT,
       HITBOX_RIM_TINT,
     ]);
+    // The w15-HBDIM presence pin: the rim is the half-brightness pink-red (0xff3050 × 1/2 per
+    // channel), kept fully opaque so one known colour reaches the screen (the pixel-checked
+    // marker must not blend with whatever the ring happens to sit on).
+    expect(HITBOX_RIM_TINT).toBe(0x7f1828);
     // Radius 1.5 → a 3-px core surrounded at ±2: centre (90, 50 + PLAYFIELD_Y).
     expect([top0.x, top0.y, top0.scale.x, top0.scale.y]).toEqual([88, 48 + PLAYFIELD_Y, 5, 1]);
     expect([bottom0.x, bottom0.y, bottom0.scale.x, bottom0.scale.y]).toEqual([
