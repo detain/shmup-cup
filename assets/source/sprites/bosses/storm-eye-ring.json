@@ -1,0 +1,125 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/storm-eye-ring 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "sourceSize": {
+        "w": 45,
+        "h": 45
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/storm-eye-ring 1",
+      "frame": {
+        "x": 45,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "sourceSize": {
+        "w": 45,
+        "h": 45
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/storm-eye-ring 2",
+      "frame": {
+        "x": 90,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "sourceSize": {
+        "w": 45,
+        "h": 45
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/storm-eye-ring 3",
+      "frame": {
+        "x": 135,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 45,
+        "h": 45
+      },
+      "sourceSize": {
+        "w": 45,
+        "h": 45
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "storm-eye-ring.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 180,
+      "h": 45
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 45,
+              "h": 45
+            },
+            "pivot": {
+              "x": 22,
+              "y": 22
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

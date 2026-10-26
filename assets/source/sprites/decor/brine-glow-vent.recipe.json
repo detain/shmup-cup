@@ -1,0 +1,47 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "decor/brine-glow-vent",
+  "category": "fx",
+  "frame": {
+    "width": 24,
+    "height": 24
+  },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/b-vent2/gen.png",
+      "frames": [
+        [
+          24,
+          35,
+          223,
+          188
+        ],
+        [
+          264,
+          34,
+          224,
+          189
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "black"
+  },
+  "alpha": "additive",
+  "outline": false,
+  "anchor": [
+    12,
+    12
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.GEN4 (b-vent2): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a BLACK-SMOKER sea vent \u2014 a rock collar with a dark rim around a glowing opening, warm light welling from the crack. The palette: deep navy-teals #15263a #10323e #184658 #0e3e50 with pale foam #b8e8f0 highlights and warm gold #d8a018 accents, near-black navy outline \u2014 the BRINE NEBULA zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane \u2014 this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) \u2014 every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.5:1), centred in its cell at the same scale \u2014 ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = glow steady: bright core, body ring, faint wide halo; cell 2 = pulse: the whole glow one step SMALLER and softer.\n- The sheet canvas measures EXACTLY 512\u00d7256 px. Produce EXACTLY 2 subject cells \u2014 no more, no fewer \u2014 and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet \u2014 the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. \u2014 the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 34.6% over the interim animation floor 6.94%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" \u2014 record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+  }
+}

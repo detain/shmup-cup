@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/iron-banner",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/h-banner/gen.png",
+      "sha256": "915b8d6dde9f24d1ab3ec07a91ece657a473b5355cf66aba5614cb1faed70f9f",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: an IRON BANNER standard — a riveted dark pole carrying a heavy cloth banner with the Sovereign sigil: an amber diamond with a lit heart, folds shifting, pennant edge at its right. The palette: citadel steel #8a8e98 #4a4e58 with hazard AMBER #e0a040 accents, dark iron #3c404a, near-black navy outline — the IRON CITADEL zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = folds settled, pennant down; cell 2 = folds rippling, pennant lifting.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464041507,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:30:47.174Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/h-banner/gen.json",
+        "sidecarSha256": "825b3f0867614183714c6045801cca389e436bc0d727890ed641c03cf9c86d9e",
+        "id": "gen4/h-banner",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/iron-banner.recipe.json",
+    "sha256": "cf61324b7470494d1c8e08c5382b29e36393fed9b976810c26317cae2a4326f4"
+  },
+  "edit": null,
+  "output": {
+    "png": "iron-banner.png",
+    "sha256": "055485f98e5afb5fdd40e0d897967f15b9e0808f6167e2aad14fb44f02794f12",
+    "sidecar": "iron-banner.json",
+    "sidecarSha256": "e899652ee994819c535e5c29b575a7d180d18069b31d00802b3a01ffa3a2514d",
+    "frames": 2,
+    "frameWidth": 16,
+    "frameHeight": 16,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (h-banner): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: an IRON BANNER standard — a riveted dark pole carrying a heavy cloth banner with the Sovereign sigil: an amber diamond with a lit heart, folds shifting, pennant edge at its right. The palette: citadel steel #8a8e98 #4a4e58 with hazard AMBER #e0a040 accents, dark iron #3c404a, near-black navy outline — the IRON CITADEL zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = folds settled, pennant down; cell 2 = folds rippling, pennant lifting.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 29.5% over the interim animation floor 2.34%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

@@ -1,0 +1,58 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/storm-eye-ring",
+  "category": "boss-part",
+  "frame": {
+    "width": 45,
+    "height": 45
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/e-ring2/gen.png",
+      "frames": [
+        [
+          8,
+          12,
+          239,
+          235
+        ],
+        [
+          264,
+          12,
+          240,
+          235
+        ],
+        [
+          8,
+          268,
+          239,
+          234
+        ],
+        [
+          264,
+          267,
+          240,
+          235
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    22,
+    22
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.GEN4 (e-ring2): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE ring — a wide luminous swirl: a bright cyclone arc ring open on one side with a faint halo, cold white-blue light. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = arc at 0 degrees; cell 2 = arc turned quarter; cell 3 = arc half-turned; cell 4 = arc three-quarter.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 4 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 21.3/19.2/31.0% over the interim animation floor 1.58%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+  }
+}

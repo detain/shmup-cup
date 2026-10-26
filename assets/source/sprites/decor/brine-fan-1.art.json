@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "decor/brine-fan-1",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/b-fans/gen.png",
+      "sha256": "484d3cef72e6937780be0a312b4b06bd0b1e440fd42d16fbae3f515808780e3f",
+      "format": "png",
+      "width": 768,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: three fanned CORAL decorations of the brine reef — each one five straight rays spreading from a small rock foot up to pale tips, teal bodies with foam highlights, differing only in spread. The palette: deep navy-teals #15263a #10323e #184658 #0e3e50 with pale foam #b8e8f0 highlights and warm gold #d8a018 accents, near-black navy outline — the BRINE NEBULA zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 3 equal square cells laid out as THREE cells in ONE row of THREE (3 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = NARROW fan: rays close together; cell 2 = MIDDLE fan: rays spread wider; cell 3 = FULL fan: rays at their widest.\n- The sheet canvas measures EXACTLY 768×256 px. Produce EXACTLY 3 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464015169,
+      "size": "768x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:19:39.343Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/b-fans/gen.json",
+        "sidecarSha256": "cba455079b1a573527bfb87f234e014fb5009862932e926dafb3160c74e9974a",
+        "id": "gen4/b-fans",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/decor/brine-fan-1.recipe.json",
+    "sha256": "863cc21e64c82fae8b36a4f608fce4ac3a6f06fb3926675755d82067aa82b997"
+  },
+  "edit": null,
+  "output": {
+    "png": "brine-fan-1.png",
+    "sha256": "1d49496233508fdc27c34331c540e4268c518f45ce73ece02f25cde199b0ef48",
+    "sidecar": "brine-fan-1.json",
+    "sidecarSha256": "3326fdb0f020ff2bec33fefd0dcd6af7cf45f2114b505b61a1eaf58026f7e9ee",
+    "frames": 1,
+    "frameWidth": 30,
+    "frameHeight": 24,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (b-fans): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: three fanned CORAL decorations of the brine reef — each one five straight rays spreading from a small rock foot up to pale tips, teal bodies with foam highlights, differing only in spread. The palette: deep navy-teals #15263a #10323e #184658 #0e3e50 with pale foam #b8e8f0 highlights and warm gold #d8a018 accents, near-black navy outline — the BRINE NEBULA zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 3 equal square cells laid out as THREE cells in ONE row of THREE (3 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = NARROW fan: rays close together; cell 2 = MIDDLE fan: rays spread wider; cell 3 = FULL fan: rays at their widest.\n- The sheet canvas measures EXACTLY 768×256 px. Produce EXACTLY 3 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 1 cell cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 54.1/42.3% over the interim animation floor 0%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

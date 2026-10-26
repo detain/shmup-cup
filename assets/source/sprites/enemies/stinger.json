@@ -1,0 +1,125 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/stinger 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 10
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/stinger 1",
+      "frame": {
+        "x": 18,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 10
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/stinger 2",
+      "frame": {
+        "x": 36,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 10
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/stinger 3",
+      "frame": {
+        "x": 54,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 10
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "stinger.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 72,
+      "h": 10
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 18,
+              "h": 10
+            },
+            "pivot": {
+              "x": 9,
+              "y": 5
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

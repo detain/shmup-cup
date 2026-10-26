@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/azure-warden",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/a-warden/gen.png",
+      "sha256": "25c2792b22f5b38fcf22995168329d842176015808e7aef5910ca0acf4e3aae6",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a WARDEN floor turret — a low squat armoured drum on a wide base foot, one short barrel facing left, aqua stone plates. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.4:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = idle: barrel level, dark muzzle; cell 2 = firing: muzzle burst flash, barrel recoiled up.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464007065,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:15:59.360Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/a-warden/gen.json",
+        "sidecarSha256": "58bed1544dd50e6746ebaa6cbfe7f5fdb4ee858f40f8484423e5e1f4df8c5ec0",
+        "id": "gen4/a-warden",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/azure-warden.recipe.json",
+    "sha256": "4f0032fd65cb860bd264916fb534757d3dc70fa8a1b900e2cfd3cd8fd3ea3611"
+  },
+  "edit": null,
+  "output": {
+    "png": "azure-warden.png",
+    "sha256": "b001120df605d4bec2c554ee1d1994d0c58c5ac085c1aa9f950d4b7176e33c07",
+    "sidecar": "azure-warden.json",
+    "sidecarSha256": "81440fb6d88e270796a6e077eab005a784d1c58731be4544759174a1728ab09b",
+    "frames": 2,
+    "frameWidth": 21,
+    "frameHeight": 15,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (a-warden): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a WARDEN floor turret — a low squat armoured drum on a wide base foot, one short barrel facing left, aqua stone plates. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.4:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = idle: barrel level, dark muzzle; cell 2 = firing: muzzle burst flash, barrel recoiled up.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 71.2% over the interim animation floor 6.98%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

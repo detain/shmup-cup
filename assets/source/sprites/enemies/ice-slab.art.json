@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/ice-slab",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/e-slab/gen.png",
+      "sha256": "2a7c04e0927e6a30f831e4cb2aef5650264fa9e469e1b2a1a9d10fbcd4c03bf7",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: an ICE SLAB chunk — a square-cut granite-slate block with jagged broken rows top and bottom, frost-rimmed faces, pale chipped edges. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = level; cell 2 = tipped 90 degrees; cell 3 = upside down; cell 4 = tipped 270 degrees.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464026312,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:24:26.228Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/e-slab/gen.json",
+        "sidecarSha256": "afbf8bd0a2491cadfaa1664a69029048de8e817e4cbb766e305a6f4d6f1c4a4d",
+        "id": "gen4/e-slab",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/ice-slab.recipe.json",
+    "sha256": "764c182a0b26581a31c687a6b1326f2c9a19fedf5adb742e900610d108da8dda"
+  },
+  "edit": null,
+  "output": {
+    "png": "ice-slab.png",
+    "sha256": "ad4ce4a0250786dde1c1f521aed6048b67a64148a3829d272b0323306b334f20",
+    "sidecar": "ice-slab.json",
+    "sidecarSha256": "8c27588c2504809453255f53d5681dfeb3f752392c2374c80f0d8b37d390ac43",
+    "frames": 4,
+    "frameWidth": 21,
+    "frameHeight": 21,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (e-slab): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: an ICE SLAB chunk — a square-cut granite-slate block with jagged broken rows top and bottom, frost-rimmed faces, pale chipped edges. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = level; cell 2 = tipped 90 degrees; cell 3 = upside down; cell 4 = tipped 270 degrees.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 4 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 76.9/76.8/74.5% over the interim animation floor 4.99%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

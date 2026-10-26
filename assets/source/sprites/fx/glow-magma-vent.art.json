@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "fx/glow-magma-vent",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/d-vent2/gen.png",
+      "sha256": "e78cf77c0b0414c0fc7ec936759c5104e5db316ec2ad1ea13ee321873ab20ff4",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a MAGMA VENT glow — a wide low elliptical fumarole: bright molten core, a body ring, a faint halo, embers at the rim. The palette: glowing lava orange #e0703a and deep #8a3a24 over dark basalt #3a2a2a, near-black navy outline — the MAGMA DEEP zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- REFINED: the glow is COMPACT — the bright core plus rock collar fill only about half the cell, and the faint halo must fade out within 60 px of the collar, leaving a wide band of PURE FLAT BLACK (over 100 px) to every cell border; frame 1 one step smaller and dimmer.\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.5:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = steady glow; cell 2 = pulse: the whole glow one step smaller and softer.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 474010117,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:55:13.967Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/d-vent2/gen.json",
+        "sidecarSha256": "bc304c71711e1e1996632f9c97cf856a36b201119a6a7406844fbdfe84b9a63c",
+        "id": "gen4/d-vent2",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/fx/glow-magma-vent.recipe.json",
+    "sha256": "46f9e22cdb7b1c50349725b629699684bc1800328b872acaf7649f56656a388e"
+  },
+  "edit": null,
+  "output": {
+    "png": "glow-magma-vent.png",
+    "sha256": "5e966464b7db899eb0aff7a518656b7576a9b0e9acd55ddf6ebf0234c2d67712",
+    "sidecar": "glow-magma-vent.json",
+    "sidecarSha256": "4227036cc472bbad55b1e5cd3672d8b6465fa4c5bc449b5694ccdf2c2f01ab1c",
+    "frames": 2,
+    "frameWidth": 36,
+    "frameHeight": 24,
+    "colors": 24,
+    "alpha": "additive"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (d-vent2): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a MAGMA VENT glow — a wide low elliptical fumarole: bright molten core, a body ring, a faint halo, embers at the rim. The palette: glowing lava orange #e0703a and deep #8a3a24 over dark basalt #3a2a2a, near-black navy outline — the MAGMA DEEP zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.5:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = steady glow; cell 2 = pulse: the whole glow one step smaller and softer.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 75.6% over the interim animation floor 14.12%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

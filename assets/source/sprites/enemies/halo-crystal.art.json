@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/halo-crystal",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/halo-crystal/frames/gen.png",
+      "sha256": "fb45253355772ff03a7a73f6e94b9f062dff7be03f166c9b13340c23da6b3567",
+      "format": "png",
+      "width": 1248,
+      "height": 832,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "code",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "No model and no prompt: made in code from the winner candidates/a/enemy/halo-crystal.png. Six frames: the six satellites orbit clockwise around the unmoving central gem, 10 degrees further in each frame (the hexagon repeats every 60 degrees, so frame 6 runs on into frame 1), each satellite turning with its orbit so it keeps pointing outward; a faint shine band crosses the gem from upper left to lower right in frames 2-6.",
+        "negative": null
+      },
+      "seed": null,
+      "size": "1248x832",
+      "steps": null,
+      "guidance": null,
+      "generatedAt": "2026-10-18T01:01:12.163Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.png",
+          "from": "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.png",
+          "sha256": "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784",
+          "sidecar": "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.json",
+          "sidecarSha256": "1ca8da5312d9e025999df4c68e7cfa1bedfa9c8a2d89919173d65222c01dd429",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/halo-crystal/frames/gen.json",
+        "sidecarSha256": "4c965578dc9e3aa1a5d2965269dd2c9562c90803c6c13c169001fd2d05965ff2",
+        "id": "enemy/halo-crystal/frames",
+        "slot": "a",
+        "mode": "code",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/halo-crystal.recipe.json",
+    "sha256": "afc1a3c51a0088667c09e974f21422fce598bce3d6b8af7fde7ea0a98c559df0"
+  },
+  "edit": null,
+  "output": {
+    "png": "halo-crystal.png",
+    "sha256": "4fdd7ee471d53de5635d0b4d4118b0b479b5d9dcab3824114c075e9598fdcbae",
+    "sidecar": "halo-crystal.json",
+    "sidecarSha256": "82ed5f8aa79cddb920d58126a2774517819d00a106f31d7505295e3c726d317d",
+    "frames": 2,
+    "frameWidth": 21,
+    "frameHeight": 21,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "GEN4 owner-waived never-designed batch: the zone-G halo-crystal 2f orbit pair, cut from the code-class sheet gen5/halo-crystal/frames (make_frames.py rotating a FLUX.2 winner 10 deg — deterministic, no GPU). Owner chain on the candidates picker: s7280 \"all 6 look same\", s29280 \"only 2/6 changed\", edit-2 approved — the pinned crop cells [0,0] + [1,0] are that pair. Crops [52,38,314,340] and [36,469,345,310] with gutters 93/86 px clear are the G-report §3 row 37 pin, +6 px baked — never re-padded. Owner art ruling 2026-10-23: \"the images are fine to use... open source game... not commercial\"; owner directive 2026-10-26: \"ai generate those other things too\" — picker gate waived for never-designed slots (owner directive 2026-10-26: picker gate waived for never-designed slots)."
+}

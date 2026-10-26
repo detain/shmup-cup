@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/azure-gale",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/a-gale/gen.png",
+      "sha256": "6d445855f6f529e67ff846966d15fad370e939664c73fa2cc45c4ee6d89fa4a4",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a GALE swept-wing glider — a wide arrow-shaped sail body with a round fan wheel at its bow and two long tapering wing tips, pale aqua panels. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = fan blades at 0 degrees, wings level; cell 2 = fan quarter-turned, wingtips tipped up; cell 3 = fan half-turned, wings level; cell 4 = fan three-quarter-turned, wingtips tipped down.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464008078,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:16:28.758Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/a-gale/gen.json",
+        "sidecarSha256": "556c457501c5f0649f5da61f394781980a25364946cb00579ea9792d6c13b2d0",
+        "id": "gen4/a-gale",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/azure-gale.recipe.json",
+    "sha256": "f8c778f37b429988e9105082d5be4b255e1456fb005b80e236d85afa45780014"
+  },
+  "edit": null,
+  "output": {
+    "png": "azure-gale.png",
+    "sha256": "24251f82b4c0a2c1c28e5a29f1e0e5bf9693a5fdd93ec360ddb5e9394b5da619",
+    "sidecar": "azure-gale.json",
+    "sidecarSha256": "976b1e618c8a24dee09c3f061b7e55ea3590b67abd5ccca973af26227cc1460d",
+    "frames": 4,
+    "frameWidth": 24,
+    "frameHeight": 18,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (a-gale): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a GALE swept-wing glider — a wide arrow-shaped sail body with a round fan wheel at its bow and two long tapering wing tips, pale aqua panels. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = fan blades at 0 degrees, wings level; cell 2 = fan quarter-turned, wingtips tipped up; cell 3 = fan half-turned, wings level; cell 4 = fan three-quarter-turned, wingtips tipped down.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 4 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 46.7/46.9/48.9% over the interim animation floor 6.71%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

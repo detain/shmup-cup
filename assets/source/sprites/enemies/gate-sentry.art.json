@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/gate-sentry",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/h-sentry/gen.png",
+      "sha256": "675ef23ee4dc28fb2db7e8dee4e1247936e5f1df77779019efbb43894a6cf2d1",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a GATE SENTRY turret — a steel base block with a lit lip, an amber hazard band, a rimmed foot, and a dark crenellated head whose EYE SLOT burns red ringed amber. The palette: citadel steel #8a8e98 #4a4e58 with hazard AMBER #e0a040 accents, dark iron #3c404a, near-black navy outline — the IRON CITADEL zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = eye ring lit, pupil dark; cell 2 = eye pupil lit, ring dark (the two swap).\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464040494,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:30:26.731Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/h-sentry/gen.json",
+        "sidecarSha256": "40e7ace9f9627fe7d9cb6839d10645a567e3c2a07d0395168ca1e7d6a8ce3dbd",
+        "id": "gen4/h-sentry",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/gate-sentry.recipe.json",
+    "sha256": "1f5baa5a87e28465ba96e6f26f94ba6627ba8efcf19e5d37032101b2611ef1e5"
+  },
+  "edit": null,
+  "output": {
+    "png": "gate-sentry.png",
+    "sha256": "db114d1798f15037a3136671b1d9d75cf10e86e764c5020b79c4a60e44017653",
+    "sidecar": "gate-sentry.json",
+    "sidecarSha256": "b97427d9e7e919c627e5616ffaaa37acc3cffa5490cde2ace135e410e8485b8a",
+    "frames": 2,
+    "frameWidth": 20,
+    "frameHeight": 16,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (h-sentry): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a GATE SENTRY turret — a steel base block with a lit lip, an amber hazard band, a rimmed foot, and a dark crenellated head whose EYE SLOT burns red ringed amber. The palette: citadel steel #8a8e98 #4a4e58 with hazard AMBER #e0a040 accents, dark iron #3c404a, near-black navy outline — the IRON CITADEL zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = eye ring lit, pupil dark; cell 2 = eye pupil lit, ring dark (the two swap).\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 41.8% over the interim animation floor 5%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

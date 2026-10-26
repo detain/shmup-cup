@@ -234,6 +234,7 @@ describe('the model table', () => {
   it('names every model group of the art round with a licence id and verdicts (art-provenance.md §2)', () => {
     const models = loadModels();
     assert.deepEqual(Object.keys(models).sort(), [
+      'code',
       'flux1',
       'flux2',
       'ltx25',

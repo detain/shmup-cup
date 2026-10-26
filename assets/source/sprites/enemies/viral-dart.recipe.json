@@ -1,0 +1,58 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/viral-dart",
+  "category": "enemy",
+  "frame": {
+    "width": 18,
+    "height": 12
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/f-dart/gen.png",
+      "frames": [
+        [
+          29,
+          64,
+          201,
+          123
+        ],
+        [
+          281,
+          75,
+          203,
+          111
+        ],
+        [
+          24,
+          330,
+          203,
+          112
+        ],
+        [
+          289,
+          324,
+          200,
+          118
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    9,
+    6
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.GEN4 (f-dart): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a VIRAL DART runner — a sleek seed-shaped green dart facing left with a flicking tail fin and a lit nucleus. The palette: vault moss greens #a8c498 #5a7858 over dark #2e3a2c tissue, pale bone-white cyst light, near-black navy outline — the CELL VAULT zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.5:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = tail fin up; cell 2 = fin level; cell 3 = fin down; cell 4 = fin mid flicking.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 4 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 49.8/26.7/52.5% over the interim animation floor 2.78%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+  }
+}

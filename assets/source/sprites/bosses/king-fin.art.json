@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/king-fin",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/i-kingfin/gen.png",
+      "sha256": "0d216571e85205a86bc8f3c8c40787721bc7b0ea16766f62579313ef105bceef",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THRONE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.6:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the fan, rays open.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464046572,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:33:04.548Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/i-kingfin/gen.json",
+        "sidecarSha256": "82a8ec61fe69f194664f37c5888bed27918b0190c1497cb73e2b30f350b7f351",
+        "id": "gen4/i-kingfin",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/king-fin.recipe.json",
+    "sha256": "27144c1183a6d12578dda9f5e734bffba69a5ff7d75281c06bea955c638fb500"
+  },
+  "edit": null,
+  "output": {
+    "png": "king-fin.png",
+    "sha256": "e756c56b1f0c24d874d0a4d4e71e4bcb942f6471e683d7559580ddfa5309662c",
+    "sidecar": "king-fin.json",
+    "sidecarSha256": "bb27154cd01c778d380540f40662bb09e75a3313f0a3a921a66fbcd4580d06c5",
+    "frames": 1,
+    "frameWidth": 33,
+    "frameHeight": 21,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (i-kingfin): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THRONE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.6:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the fan, rays open.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 1 cell cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors % over the interim animation floor 0%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

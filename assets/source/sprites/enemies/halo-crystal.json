@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/halo-crystal 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 21
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/halo-crystal 1",
+      "frame": {
+        "x": 21,
+        "y": 0,
+        "w": 21,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 21
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "halo-crystal.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 42,
+      "h": 21
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 21,
+              "h": 21
+            },
+            "pivot": {
+              "x": 10,
+              "y": 10
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

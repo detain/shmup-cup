@@ -1,0 +1,103 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/prism-shard 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 15,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/prism-shard 1",
+      "frame": {
+        "x": 15,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 15,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/prism-shard 2",
+      "frame": {
+        "x": 30,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 15,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 15,
+        "h": 15
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "prism-shard.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 45,
+      "h": 15
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 15,
+              "h": 15
+            },
+            "pivot": {
+              "x": 7,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -45,8 +45,14 @@ const ITEM_COLOURS: readonly (readonly [string, Rgb, Rgb])[] = [
   ['octagon', [0xd8, 0x20, 0x20], [0xff, 0xb0, 0xb0]],
 ];
 
-/** The green Arm's ring (`shields/arm` tier 1, #58f070) — only that sprite uses it. */
-const ARM_GREEN: Rgb = [0x58, 0xf0, 0x70];
+/**
+ * The green Arm's ring body (`shields/arm` tier 1, frame 0, #09ac3f) — only that sprite uses it.
+ * Re-pointed for GEN4 (2026-10-26): the ingested real art (`art-prompts/v2/gen5/p-arm`) replaced
+ * the interim generator's ring, so the sampled colour is the art's own body green. The ±3 window
+ * is numerically unique across every atlas frame (all pages, 591 sprites incl. the font), every
+ * content JSON colour and every shipped-code palette hex — zero collisions.
+ */
+const ARM_GREEN: Rgb = [0x09, 0xac, 0x3f];
 
 /** The first colour item's kind (`ItemKind.DirectRed`). */
 const DIRECT_RED = 3;

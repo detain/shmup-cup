@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "decor/azure-crystal-b 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 48
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "azure-crystal-b.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 48
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 36,
+              "h": 48
+            },
+            "pivot": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

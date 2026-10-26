@@ -76,7 +76,7 @@ describe('R3-02 — provenance of real art', () => {
   it('the model table maps every art-round model to a licence id of art-provenance.md §2', () => {
     const models = loadModels();
     expect(Object.keys(models).sort()).toEqual(
-      ['flux1', 'flux2', 'ltx25', 'ltxvideo', 'qwenedit', 'qwenvl', 'sd35', 'wan22'].sort(),
+      ['code', 'flux1', 'flux2', 'ltx25', 'ltxvideo', 'qwenedit', 'qwenvl', 'sd35', 'wan22'].sort(),
     );
     for (const entry of Object.values(models)) expect(LICENCE_IDS).toContain(entry.licence);
     // Owner ruling 2026-10-23 (art-provenance.md §8, decision 1): FLUX art ships in the free

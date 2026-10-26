@@ -389,9 +389,12 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // sentinel-walker, trench-eel — the fixture gyre stands in for the ingested one),
     // zone I's two (depth-mine, gulper), the S3 cross-zone pass's eight (the copy
     // holds assets/source), REING1's two (tiles/terrain-prism-v2, fx/black-hole) and
-    // REING2's two (items/capsule, items/capsule-blue) — the fixture gyre stands in
-    // for the ingested one, so the copy lands thirty-seven live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(41);
+    // REING2's two (items/capsule, items/capsule-blue) and GEN4's
+    // forty-two (the never-designed batch's landed quartets — the code-class halo
+    // record joins too: its recorded source is still FLUX.2-dev, so it is
+    // ai-assisted like the rest) — the fixture gyre stands in for the
+    // ingested one, so the copy lands seventy-nine live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(83);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -411,13 +414,16 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // glint-mote, zone H's bolt-drone, gyre, sentinel-walker and trench-eel, zone I's
       // depth-mine and gulper, the S3 cross-zone pass's kestrel, manta, pod, orb,
       // stolen, explosion-small, debris and spark, REING1's terrain-prism-v2 and
-      // black-hole and REING2's capsule and capsule-blue — with twenty-four derived @flash
+      // black-hole, REING2's capsule and capsule-blue and GEN4's forty-two
+      // never-designed drops —
+      // with forty-nine derived @flash
       // sprites (the interim tail has none, the S3 drops are player/option/item/fx art
-      // that never flashes; the capsules never flash either) and the two crafts' derived
-      // @p2 sprites: sixty-three live sprites, and the fixture tree lands sixty-three
-      // again — its pair adds the drone and the glow while the fixture gyre supersedes
-      // zone H's ingested pair.
-      sprites: 63,
+      // that never flashes; the capsules never flash either; GEN4's enemies, bosses,
+      // decor and glow vents flash) and the two crafts' derived
+      // @p2 sprites: one hundred thirty live sprites, and the fixture tree lands
+      // one hundred thirty again — its pair adds the drone and the glow while the
+      // fixture gyre supersedes zone H's ingested pair.
+      sprites: 130,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

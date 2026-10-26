@@ -1,0 +1,46 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/halo-crystal",
+  "category": "enemy",
+  "frame": {
+    "width": 21,
+    "height": 21
+  },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/halo-crystal/frames/gen.png",
+      "frames": [
+        [
+          52,
+          38,
+          314,
+          340
+        ],
+        [
+          36,
+          469,
+          345,
+          310
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    10,
+    10
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "GEN4 owner-waived never-designed batch: the zone-G halo-crystal 2f orbit pair, cut from the code-class sheet gen5/halo-crystal/frames (make_frames.py rotating a FLUX.2 winner 10 deg — deterministic, no GPU). Owner chain on the candidates picker: s7280 \"all 6 look same\", s29280 \"only 2/6 changed\", edit-2 approved — the pinned crop cells [0,0] + [1,0] are that pair. Crops [52,38,314,340] and [36,469,345,310] with gutters 93/86 px clear are the G-report §3 row 37 pin, +6 px baked — never re-padded. Owner art ruling 2026-10-23: \"the images are fine to use... open source game... not commercial\"; owner directive 2026-10-26: \"ai generate those other things too\" — picker gate waived for never-designed slots (owner directive 2026-10-26: picker gate waived for never-designed slots)."
+  }
+}

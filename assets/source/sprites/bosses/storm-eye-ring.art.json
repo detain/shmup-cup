@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/storm-eye-ring",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/e-ring2/gen.png",
+      "sha256": "3ffcd3146e8471565ad983c2cf35041450bd6d7b82533114410933df763a1611",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE ring — a solid granite annulus (rock-grey speckled stone band, like the ridge terrain), eight dark iron compass studs set around its outer edge, a pale ice inner rim, seen flat-on; the studs march around as the ring swirls The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84, speckled granite greys and pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME ring, squarish (width close to height), centred in its cell at the same scale — ONLY the stud phase and swirl offset change, silhouette identical: cell 1 = studs at the compass points; cell 2 = rotated a quarter-step clockwise; cell 3 = rotated two quarter-steps; cell 4 = rotated three quarter-steps.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 474000000,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:52:56.729Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/e-ring2/gen.json",
+        "sidecarSha256": "963a023cd14c24f68e5823fd26d216c4f0fd0322c935d38669510537ed38c049",
+        "id": "gen4/e-ring2",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/storm-eye-ring.recipe.json",
+    "sha256": "773eff8f23cc7a2bca178d2e2791b475970512d182805171a908ab3b51acdef6"
+  },
+  "edit": null,
+  "output": {
+    "png": "storm-eye-ring.png",
+    "sha256": "ad34af6ec9bd3e8ccb4e5829115673a8af398151fd79068bee45c9ee1ff616da",
+    "sidecar": "storm-eye-ring.json",
+    "sidecarSha256": "0c557fa1d6a8bac6c56b5322db5cc6ce947a558db797b62a08cc981645c2f317",
+    "frames": 4,
+    "frameWidth": 45,
+    "frameHeight": 45,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (e-ring2): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE ring — a wide luminous swirl: a bright cyclone arc ring open on one side with a faint halo, cold white-blue light. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, squarish (width close to height), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = arc at 0 degrees; cell 2 = arc turned quarter; cell 3 = arc half-turned; cell 4 = arc three-quarter.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 4 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 21.3/19.2/31.0% over the interim animation floor 1.58%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

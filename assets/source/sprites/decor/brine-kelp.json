@@ -1,0 +1,125 @@
+{
+  "frames": [
+    {
+      "filename": "decor/brine-kelp 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 48
+      },
+      "duration": 100
+    },
+    {
+      "filename": "decor/brine-kelp 1",
+      "frame": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 48
+      },
+      "duration": 100
+    },
+    {
+      "filename": "decor/brine-kelp 2",
+      "frame": {
+        "x": 24,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 48
+      },
+      "duration": 100
+    },
+    {
+      "filename": "decor/brine-kelp 3",
+      "frame": {
+        "x": 36,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 48
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "brine-kelp.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 48,
+      "h": 48
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 48
+            },
+            "pivot": {
+              "x": 6,
+              "y": 24
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

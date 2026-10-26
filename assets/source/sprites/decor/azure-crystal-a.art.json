@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "decor/azure-crystal-a",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen5/a-crys-a/gen.png",
+      "sha256": "2e8f58c95855a4807be4d6824cf7d36c1563adf1a07b674a4416d5782573bbf2",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a single THREE-BLADE CRYSTAL CLUSTER — three upright aqua crystal blades of different heights sprouting from one small rock foot, lit edges, faceted. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, standing UPRIGHT (taller than wide, about 1:1.5), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the cluster.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 464003013,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T19:14:27.412Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen5/a-crys-a/gen.json",
+        "sidecarSha256": "cf6206cf76bf8d7086ef884edb25b56aca5705455cc0ccb373eb2ba81200be0a",
+        "id": "gen4/a-crys-a",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/decor/azure-crystal-a.recipe.json",
+    "sha256": "36b50c786a2c3d9ce035f303797ece18fbbab801cc694bab8761a60eeb3f8ea5"
+  },
+  "edit": null,
+  "output": {
+    "png": "azure-crystal-a.png",
+    "sha256": "cb70db7bb8b405e256d6aed83afbc0ce0a700fde41eab6dccfe8f1b8a363ebf5",
+    "sidecar": "azure-crystal-a.json",
+    "sidecarSha256": "2dd500fc06397d9c4bb371a1c13817b35b63d53287528ab5936617454e7235b7",
+    "frames": 1,
+    "frameWidth": 24,
+    "frameHeight": 36,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.GEN4 (a-crys-a): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a single THREE-BLADE CRYSTAL CLUSTER — three upright aqua crystal blades of different heights sprouting from one small rock foot, lit edges, faceted. The palette: teal-aqua stone #336a64 #2a5a58, lit aqua #5a9aa0 #7fe8d0 #c8ecdc with pale #d8fff4 highlights, near-black navy outline — the AZURE VERGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, standing UPRIGHT (taller than wide, about 1:1.5), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the cluster.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 1 cell cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors % over the interim animation floor 0%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+}

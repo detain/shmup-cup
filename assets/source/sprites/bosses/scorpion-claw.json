@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/scorpion-claw 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 18
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 18
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 18
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/scorpion-claw 1",
+      "frame": {
+        "x": 27,
+        "y": 0,
+        "w": 27,
+        "h": 18
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 18
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 18
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "scorpion-claw.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 54,
+      "h": 18
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 27,
+              "h": 18
+            },
+            "pivot": {
+              "x": 13,
+              "y": 9
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

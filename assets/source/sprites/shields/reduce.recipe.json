@@ -1,0 +1,46 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "shields/reduce",
+  "category": "item",
+  "frame": {
+    "width": 30,
+    "height": 21
+  },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/p-reduce/gen.png",
+      "frames": [
+        [
+          67,
+          60,
+          154,
+          140
+        ],
+        [
+          294,
+          60,
+          150,
+          140
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    15,
+    10
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.GEN4 (p-reduce): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a REDUCE shield ring — a thin dotted green energy ring hugging an invisible ship, small even dashes on an ellipse, emerald glow inside the dots. Green #48d060 / #a8f0b0 dots with navy outline on the key.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 equal square cells laid out as TWO cells in ONE row of TWO (2 columns by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.4:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = ring dots lit evenly; cell 2 = dots half-spent with gaps.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 37.4% over the interim animation floor 4.44%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/king-fin",
+  "category": "boss-part",
+  "frame": {
+    "width": 33,
+    "height": 21
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen5/i-kingfin/gen.png",
+      "frames": [
+        [
+          35,
+          86,
+          444,
+          362
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    16,
+    10
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.GEN4 (i-kingfin): SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THRONE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.6:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the fan, rays open.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur. — the 1 cell cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors % over the interim animation floor 0%. Owner ruling 2026-10-23, verbatim: \"the images are fine to use... open source game... not commercial\". Owner directive 2026-10-26, verbatim: \"ai generate those other things too\" — record line: owner directive 2026-10-26: picker gate waived for never-designed slots."
+  }
+}
