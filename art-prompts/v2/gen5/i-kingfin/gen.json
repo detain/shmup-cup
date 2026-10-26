@@ -1,0 +1,44 @@
+{
+  "id": "gen4/i-kingfin",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THRONE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.6:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the fan, rays open.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 464046572,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:33:04.548Z",
+  "seconds": 9.2,
+  "label": "GEN4 owner-waived never-designed slot bosses/king-fin 1f sheet 512x512",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/i-kingfin/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 464046572,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THRONE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.6:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the fan, rays open.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the HOLLOW KING's FIN — a five-rayed pectoral fan of dark membrane facing left off a bone base at its right edge, lit leading edge, cold frost dots scattered on the web. The palette: abyss teal #6ad0c8 lit mids #2a6a70 over near-black depths #1a2a34, cold bioluminescence, near-black navy outline — the ABYSSAL THR",
+    "targetGrid": "bosses/king-fin 1f 33×21 a16,10",
+    "sheetContract": "key #51e018; 1 cells of 512x512 on 512x512",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:33:04.548Z",
+    "shape": {
+      "w": 512,
+      "h": 512,
+      "problems": []
+    }
+  },
+  "amendedBy": "GEN4 owner-waived never-designed batch (generated 2026-10-26)"
+}

@@ -1,0 +1,29 @@
+{
+ "id": "enemy/halo-crystal",
+ "slot": "a",
+ "prompt": "SNES-era 16-bit pixel art inspired sprite concept for a horizontal arcade shoot-'em-up: a single HALO CRYSTAL enemy, a floating crystal turret from a violet prism labyrinth, shown alone, front view, centered with a generous empty margin on a perfectly flat solid pure bright green chroma-key background that fills the whole image. In the middle sits one big faceted violet gem, a chunky cut crystal with a wide flat top facet and angled side facets in a ramp of deep indigo, royal violet and pale lavender, crisp lilac glints along its facet ridges. Around the core float exactly six small crystal satellites, evenly spaced on one circular ring, sitting at the six corners of a regular hexagon, 60 degrees apart: one straight above the core at twelve o'clock, one at two o'clock, one at four o'clock, one straight below at six o'clock, one at eight o'clock and one at ten o'clock. Six satellites and no more; nothing at three o'clock or nine o'clock, so the left and right sides of the ring stay open. Every satellite is the same small lilac-and-violet diamond shard, the same size, pointing outward from the core, all at the same distance from the center, with clear green space between each satellite and the core and no lines connecting them. Crisp chunky pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, a bold readable silhouette that stays clear at small size, no anti-aliasing, no sparkle stars, no scenery, no cast shadow, no glow bleeding onto the background, no frame, no text, no labels, no numbers.",
+ "negative": "photorealistic, 3d render, text, labels, numbers, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, green tint on the subject, green spill, multiple creatures, sprite sheet grid, perspective distortion",
+ "model": "flux2",
+ "seed": 1596539916,
+ "width": 1024,
+ "height": 1024,
+ "steps": 40,
+ "guidance": 3.5,
+ "generatedAt": "2026-10-17T16:41:38.912Z",
+ "seconds": 81.9,
+ "label": "HALO CRYSTAL — zone G (PRISM LABYRINTH) medium crystal turret (~21 px); single sprite, front view on key green",
+ "source": "images/40-enemies/zone-g-prism-labyrinth.json#prism-labyrinth-sprite-sheet-v1",
+ "file": "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.png",
+ "format": "png",
+ "requestedFormat": "png",
+ "servedModel": "black-forest-labs/FLUX.2-dev",
+ "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+ "negativeSent": null,
+ "mode": "generate",
+ "outputSize": "1024x1024",
+ "replaced": "art-prompts/v2/candidates/history/2026-10-17/a/enemy/halo-crystal.png",
+ "pickPath": "art-prompts/v2/candidates/a/enemy/halo-crystal.png",
+ "pins": {
+  "note": "committed copy of the round winner used by the GEN4 code-class sheet (GEN4 owner-waived never-designed batch)"
+ }
+}

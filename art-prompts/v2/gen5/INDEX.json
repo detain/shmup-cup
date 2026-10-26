@@ -1,0 +1,440 @@
+{
+ "rows": [
+  {
+   "id": "G4/a-arch",
+   "grid": "decor/azure-arch 1f 96×48 a0,0",
+   "file": "art-prompts/v2/gen5/a-arch/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-crys-a",
+   "grid": "decor/azure-crystal-a 1f 24×36 a0,0",
+   "file": "art-prompts/v2/gen5/a-crys-a/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-crys-b",
+   "grid": "decor/azure-crystal-b 1f 36×48 a0,0",
+   "file": "art-prompts/v2/gen5/a-crys-b/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-gale",
+   "grid": "enemies/azure-gale 4f 24×18 a12,9",
+   "file": "art-prompts/v2/gen5/a-gale/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-gnat",
+   "grid": "enemies/azure-gnat 2f 12×9 a6,4",
+   "file": "art-prompts/v2/gen5/a-gnat/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=2.68 outside [0.73,2.40] (slot 1.33)"
+  },
+  {
+   "id": "G4/a-matron",
+   "grid": "enemies/azure-matron 4f 36×24 a18,12",
+   "file": "art-prompts/v2/gen5/a-matron/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-shell",
+   "grid": "bosses/azure-captain-shell 2f 45×36 a22,18",
+   "file": "art-prompts/v2/gen5/a-shell/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/a-skiff",
+   "grid": "enemies/azure-skiff 4f 16×12 a8,6",
+   "file": "art-prompts/v2/gen5/a-skiff/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/a-skiff2",
+   "grid": "enemies/azure-skiff 4f 16×12 a8,6",
+   "file": "art-prompts/v2/gen5/a-skiff2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=3.35 outside [0.73,2.40] (slot 1.33)"
+  },
+  {
+   "id": "G4/a-warden",
+   "grid": "enemies/azure-warden 2f 21×15 a10,7",
+   "file": "art-prompts/v2/gen5/a-warden/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-fans",
+   "grid": "[object Object] 3f ? a? + [object Object] 3f ? a? + [object Object] 3f ? a?",
+   "file": "art-prompts/v2/gen5/b-fans/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-fin",
+   "grid": "bosses/herald-fin 1f 24×9 a12,4",
+   "file": "art-prompts/v2/gen5/b-fin/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=1.43 outside [1.47,4.80] (slot 2.67)"
+  },
+  {
+   "id": "G4/b-fin2",
+   "grid": "bosses/herald-fin 1f 24×9 a12,4",
+   "file": "art-prompts/v2/gen5/b-fin2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-kelp",
+   "grid": "decor/brine-kelp 4f 12×48 a6,24",
+   "file": "art-prompts/v2/gen5/b-kelp/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-mine",
+   "grid": "enemies/brine-mine 4f 16×16 a8,8",
+   "file": "art-prompts/v2/gen5/b-mine/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-skipper",
+   "grid": "enemies/spume-skipper 4f 18×11 a9,5",
+   "file": "art-prompts/v2/gen5/b-skipper/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/b-skipper2",
+   "grid": "enemies/spume-skipper 4f 18×11 a9,5",
+   "file": "art-prompts/v2/gen5/b-skipper2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 20/20/19/9)"
+  },
+  {
+   "id": "G4/b-spine",
+   "grid": "bosses/maw-spine 2f 18×18 a9,9",
+   "file": "art-prompts/v2/gen5/b-spine/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/b-vent",
+   "grid": "decor/brine-glow-vent 2f 24×24 a12,12",
+   "file": "art-prompts/v2/gen5/b-vent/gen.png",
+   "exit": 1,
+   "exitNote": "state xors 4.6 below floor 6.25 (interim 6.94)"
+  },
+  {
+   "id": "G4/b-vent2",
+   "grid": "decor/brine-glow-vent 2f 24×24 a12,12",
+   "file": "art-prompts/v2/gen5/b-vent2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/c-burrow",
+   "grid": "enemies/spine-burrower 4f 21×21 a10,10",
+   "file": "art-prompts/v2/gen5/c-burrow/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/c-claw",
+   "grid": "bosses/scorpion-claw 2f 27×18 a13,9",
+   "file": "art-prompts/v2/gen5/c-claw/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/92/68/52)"
+  },
+  {
+   "id": "G4/c-claw2",
+   "grid": "bosses/scorpion-claw 2f 27×18 a13,9",
+   "file": "art-prompts/v2/gen5/c-claw2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/c-lance",
+   "grid": "enemies/dune-lance 4f 30×15 a15,7",
+   "file": "art-prompts/v2/gen5/c-lance/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=1.00 outside [1.10,3.60] (slot 2.00)"
+  },
+  {
+   "id": "G4/c-shell",
+   "grid": "bosses/scorpion-shell 2f 45×36 a22,18",
+   "file": "art-prompts/v2/gen5/c-shell/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/c-shell2",
+   "grid": "bosses/scorpion-shell 2f 45×36 a22,18",
+   "file": "art-prompts/v2/gen5/c-shell2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/c-tail",
+   "grid": "bosses/scorpion-tail 1f 45×21 a22,10",
+   "file": "art-prompts/v2/gen5/c-tail/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/d-geode",
+   "grid": "enemies/magma-geode 4f 24×18 a12,9",
+   "file": "art-prompts/v2/gen5/d-geode/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/d-mine",
+   "grid": "enemies/slag-mine 4f 15×15 a7,7",
+   "file": "art-prompts/v2/gen5/d-mine/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/d-vent",
+   "grid": "fx/glow-magma-vent 2f 36×24 a18,12",
+   "file": "art-prompts/v2/gen5/d-vent/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 13/65/11/63)"
+  },
+  {
+   "id": "G4/d-vent2",
+   "grid": "fx/glow-magma-vent 2f 36×24 a18,12",
+   "file": "art-prompts/v2/gen5/d-vent2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-bird",
+   "grid": "enemies/lightbird 4f 24×12 a12,6",
+   "file": "art-prompts/v2/gen5/e-bird/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=1.01 outside [1.10,3.60] (slot 2.00)"
+  },
+  {
+   "id": "G4/e-bird2",
+   "grid": "enemies/lightbird 4f 24×12 a12,6",
+   "file": "art-prompts/v2/gen5/e-bird2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 1 margin <12px (edges 11/90/14/64)"
+  },
+  {
+   "id": "G4/e-cloud",
+   "grid": "bosses/storm-eye-cloud 2f 27×18 a13,9",
+   "file": "art-prompts/v2/gen5/e-cloud/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 20/50/7/66)"
+  },
+  {
+   "id": "G4/e-cloud2",
+   "grid": "bosses/storm-eye-cloud 2f 27×18 a13,9",
+   "file": "art-prompts/v2/gen5/e-cloud2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-core",
+   "grid": "bosses/storm-eye-core 4f 24×24 a12,12",
+   "file": "art-prompts/v2/gen5/e-core/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-core2",
+   "grid": "bosses/storm-eye-core 4f 24×24 a12,12",
+   "file": "art-prompts/v2/gen5/e-core2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-crest",
+   "grid": "bosses/steed-crest 2f 30×18 a15,9",
+   "file": "art-prompts/v2/gen5/e-crest/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-flank",
+   "grid": "bosses/steed-flank 1f 15×27 a7,13",
+   "file": "art-prompts/v2/gen5/e-flank/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-mane",
+   "grid": "bosses/steed-mane 4f 27×24 a13,12",
+   "file": "art-prompts/v2/gen5/e-mane/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=2.36 outside [0.62,2.02] (slot 1.13)"
+  },
+  {
+   "id": "G4/e-mane2",
+   "grid": "bosses/steed-mane 4f 27×24 a13,12",
+   "file": "art-prompts/v2/gen5/e-mane2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/e-ring",
+   "grid": "bosses/storm-eye-ring 4f 45×45 a22,22",
+   "file": "art-prompts/v2/gen5/e-ring/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-ring2",
+   "grid": "bosses/storm-eye-ring 4f 45×45 a22,22",
+   "file": "art-prompts/v2/gen5/e-ring2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/e-slab",
+   "grid": "enemies/ice-slab 4f 21×21 a10,10",
+   "file": "art-prompts/v2/gen5/e-slab/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/f-cyst",
+   "grid": "enemies/tissue-cyst 4f 24×18 a12,9",
+   "file": "art-prompts/v2/gen5/f-cyst/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=0.64 outside [0.73,2.40] (slot 1.33)"
+  },
+  {
+   "id": "G4/f-cyst2",
+   "grid": "enemies/tissue-cyst 4f 24×18 a12,9",
+   "file": "art-prompts/v2/gen5/f-cyst2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/f-dart",
+   "grid": "enemies/viral-dart 4f 18×12 a9,6",
+   "file": "art-prompts/v2/gen5/f-dart/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/f-node",
+   "grid": "fx/glow-vault-node 2f 24×16 a12,8",
+   "file": "art-prompts/v2/gen5/f-node/gen.png",
+   "exit": 1,
+   "exitNote": "state xors 6.3 below floor 14.53 (interim 16.15)"
+  },
+  {
+   "id": "G4/f-node2",
+   "grid": "fx/glow-vault-node 2f 24×16 a12,8",
+   "file": "art-prompts/v2/gen5/f-node2/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/g-glint",
+   "grid": "enemies/prism-glint 4f 18×14 a9,7",
+   "file": "art-prompts/v2/gen5/g-glint/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/g-glint2",
+   "grid": "enemies/prism-glint 4f 18×14 a9,7",
+   "file": "art-prompts/v2/gen5/g-glint2/gen.png",
+   "exit": 1,
+   "exitNote": "corner 2,509 ink on key"
+  },
+  {
+   "id": "G4/g-shard",
+   "grid": "enemies/prism-shard 3f 15×15 a7,7",
+   "file": "art-prompts/v2/gen5/g-shard/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/g-vent",
+   "grid": "fx/glow-prism-vent 2f 36×24 a18,12",
+   "file": "art-prompts/v2/gen5/g-vent/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/h-banner",
+   "grid": "enemies/iron-banner 2f 16×16 a8,8",
+   "file": "art-prompts/v2/gen5/h-banner/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/h-sentry",
+   "grid": "enemies/gate-sentry 2f 20×16 a10,8",
+   "file": "art-prompts/v2/gen5/h-sentry/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/halo-crystal",
+   "report": "w15-S3-G-report.md",
+   "grid": "enemies/halo-crystal 2f 21×21 a10,10",
+   "file": "art-prompts/v2/gen5/halo-crystal/frames/gen.png",
+   "exit": 0,
+   "exitNote": "code class — deterministic make_frames.py re-lay of the owner chain (s7280, s29280, edit-2 final); no GPU"
+  },
+  {
+   "id": "G4/i-crawler",
+   "grid": "enemies/abyss-crawler 4f 24×15 a12,7",
+   "file": "art-prompts/v2/gen5/i-crawler/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/i-kingfin",
+   "grid": "bosses/king-fin 1f 33×21 a16,10",
+   "file": "art-prompts/v2/gen5/i-kingfin/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/i-stinger",
+   "grid": "enemies/stinger 4f 18×10 a9,5",
+   "file": "art-prompts/v2/gen5/i-stinger/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/i-tender",
+   "grid": "enemies/deep-tender 4f 18×12 a9,6",
+   "file": "art-prompts/v2/gen5/i-tender/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 AR=2.74 outside [0.82,2.70] (slot 1.50)"
+  },
+  {
+   "id": "G4/i-tender2",
+   "grid": "enemies/deep-tender 4f 18×12 a9,6",
+   "file": "art-prompts/v2/gen5/i-tender2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/i-vent",
+   "grid": "fx/glow-abyss-vent 2f 36×24 a18,12",
+   "file": "art-prompts/v2/gen5/i-vent/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/p-arm",
+   "grid": "shields/arm 9f 39×27 a19,13",
+   "file": "art-prompts/v2/gen5/p-arm/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/p-point",
+   "grid": "items/point 4f 7×7 a3,3",
+   "file": "art-prompts/v2/gen5/p-point/gen.png",
+   "exit": 1,
+   "exitNote": "cell 0 margin <12px (edges 0/0/0/0)"
+  },
+  {
+   "id": "G4/p-point2",
+   "grid": "items/point 4f 7×7 a3,3",
+   "file": "art-prompts/v2/gen5/p-point2/gen.png",
+   "exit": 1,
+   "exitNote": "corner 2,253 ink on key"
+  },
+  {
+   "id": "G4/p-reduce",
+   "grid": "shields/reduce 2f 30×21 a15,10",
+   "file": "art-prompts/v2/gen5/p-reduce/gen.png",
+   "exit": 0
+  },
+  {
+   "id": "G4/p-sparkle",
+   "grid": "fx/sparkle 4f 7×7 a3,3",
+   "file": "art-prompts/v2/gen5/p-sparkle/gen.png",
+   "exit": 1,
+   "exitNote": "state xors 9/16.6/15.6 below floor 9.18 (interim 10.2)"
+  },
+  {
+   "id": "G4/p-sparkle2",
+   "grid": "fx/sparkle 4f 7×7 a3,3",
+   "file": "art-prompts/v2/gen5/p-sparkle2/gen.png",
+   "exit": 1,
+   "exitNote": "cell 3 margin <12px (edges 56/58/0/6)"
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "gen4/p-arm",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the DIRECT ARM barrier — an elliptical energy shield of hexagonal armour panels around an invisible ship, one colour family per tier of three frames. Frames 1-3 EMERALD GREEN family, frames 4-6 SILVER-STEEL family, frames 7-9 GOLD family; each tier: bright full state, mid, dim; navy outline on every panel.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 9 equal square cells laid out as NINE cells as THREE rows of THREE (3-column by 3-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.4:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = green full bright; cell 2 = green mid; cell 3 = green dim; cell 4 = silver full bright; cell 5 = silver mid; cell 6 = silver dim; cell 7 = gold full bright; cell 8 = gold mid; cell 9 = gold dim.\n- The sheet canvas measures EXACTLY 768×768 px. Produce EXACTLY 9 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 464050624,
+  "width": 768,
+  "height": 768,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:35:14.363Z",
+  "seconds": 16.4,
+  "label": "GEN4 owner-waived never-designed slot shields/arm 9f sheet 768x768",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/p-arm/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "768x768",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 464050624,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the DIRECT ARM barrier — an elliptical energy shield of hexagonal armour panels around an invisible ship, one colour family per tier of three frames. Frames 1-3 EMERALD GREEN family, frames 4-6 SILVER-STEEL family, frames 7-9 GOLD family; each tier: bright full state, mid, dim; navy outline on every panel.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 9 equal square cells laid out as NINE cells as THREE rows of THREE (3-column by 3-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.4:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = green full bright; cell 2 = green mid; cell 3 = green dim; cell 4 = silver full bright; cell 5 = silver mid; cell 6 = silver dim; cell 7 = gold full bright; cell 8 = gold mid; cell 9 = gold dim.\n- The sheet canvas measures EXACTLY 768×768 px. Produce EXACTLY 9 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the DIRECT ARM barrier — an elliptical energy shield of hexagonal armour panels around an invisible ship, one colour family per tier of three frames. Frames 1-3 EMERALD GREEN family, frames 4-6 SILVER-STEEL family, frames 7-9 GOLD family; each tier: bright full state, mid, dim; navy outline on every panel.\n\nRebui",
+    "targetGrid": "shields/arm 9f 39×27 a19,13",
+    "sheetContract": "key #51e018; 9 cells of 256x256 on 768x768",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:35:14.363Z",
+    "shape": {
+      "w": 768,
+      "h": 768,
+      "problems": []
+    }
+  },
+  "amendedBy": "GEN4 owner-waived never-designed batch (generated 2026-10-26)"
+}

@@ -1,0 +1,58 @@
+{
+  "id": "gen4/p-point2",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a POINT item — a small solid gold diamond gem (bright gold body, darker gold lower facet, near-black rim) that twinkles The palette: gold #ffd840 #d8a018 with pale #fff0a0 glints and near-black navy outline — arcade item palette\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME diamond, square (width close to height), centred in its cell at the same scale — ONLY the twinkle state changes: cell 1 = plain gem; cell 2 = gem with a four-ray white sparkle flash on its upper-left; cell 3 = gem slightly dimmed, ray gone; cell 4 = gem brightening back, one small ray.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 16 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 474004026,
+  "width": 256,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:53:22.829Z",
+  "seconds": 4.5,
+  "label": "p-point2 (GEN4 green-key second pass)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/p-point2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "256x256",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 474004026,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a POINT item — a small solid gold diamond gem (bright gold body, darker gold lower facet, near-black rim) that twinkles The palette: gold #ffd840 #d8a018 with pale #fff0a0 glints and near-black navy outline — arcade item palette\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME diamond, square (width close to height), centred in its cell at the same scale — ONLY the twinkle state changes: cell 1 = plain gem; cell 2 = gem with a four-ray white sparkle flash on its upper-left; cell 3 = gem slightly dimmed, ray gone; cell 4 = gem brightening back, one small ray.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 16 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a POINT popup gem — a small golden arcade diamond coin-flash with a lit crown facet and dark outline, glowing. Warm gold #ffd040 / #d8a018 with white sparkle on black.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black",
+    "targetGrid": "items/point 4f 7×7 a3,3",
+    "sheetContract": "key #51e018; 4 cells of 128x128 on 256x256",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:53:22.829Z",
+    "shape": {
+      "w": 256,
+      "h": 256,
+      "problems": [
+        "corner 2,253 ink on key",
+        "cell 0 margin <12px (edges 0/1/0/0)",
+        "cell 1 margin <12px (edges 0/3/0/3)",
+        "cell 2 margin <12px (edges 0/0/0/1)"
+      ]
+    },
+    "priorShape": {
+      "w": 512,
+      "h": 512,
+      "problems": [
+        "cell 0 margin <12px (edges 0/0/0/0)",
+        "cell 1 margin <12px (edges 0/0/0/0)",
+        "cell 2 margin <12px (edges 0/0/0/0)"
+      ]
+    }
+  },
+  "amendedBy": "GEN4 green-key second pass supersedes the black-key material error of p-point"
+}

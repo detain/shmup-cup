@@ -1,0 +1,87 @@
+{
+ "id": "enemy/halo-crystal/frames",
+ "slot": "a",
+ "prompt": "No model and no prompt: made in code from the winner candidates/a/enemy/halo-crystal.png. Six frames: the six satellites orbit clockwise around the unmoving central gem, 10 degrees further in each frame (the hexagon repeats every 60 degrees, so frame 6 runs on into frame 1), each satellite turning with its orbit so it keeps pointing outward; a faint shine band crosses the gem from upper left to lower right in frames 2-6.",
+ "negative": null,
+ "model": "code",
+ "origin": "derived in code from the owner's winner: no AI model, no GPU, no server",
+ "seed": null,
+ "width": 1248,
+ "height": 832,
+ "steps": null,
+ "guidance": null,
+ "generatedAt": "2026-10-18T01:01:12.163Z",
+ "seconds": 18.8,
+ "label": "HALO CRYSTAL animation sheet, six frames (v2: 4–6 per animation)",
+ "source": "v2-target",
+ "file": "art-prompts/v2/gen5/halo-crystal/frames/gen.png",
+ "format": "png",
+ "requestedFormat": "png",
+ "servedModel": null,
+ "endpoint": null,
+ "negativeSent": null,
+ "mode": "code",
+ "derivedFrom": "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.png",
+ "derivedFromSha256": "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784",
+ "editFrom": [
+  "art-prompts/v2/gen5/halo-crystal/base/halo-crystal.png"
+ ],
+ "editFromSha256": [
+  "affa19ec156d16feb0e1243ea54bcef077ce70b20870eee938232767e4e64784"
+ ],
+ "instruction": null,
+ "transform": {
+  "frames": 6,
+  "layout": "2 rows x 3, read left to right then the bottom row",
+  "cell": "416x416",
+  "gutters": "none drawn; one continuous key",
+  "key": "RGB 37,239,0 (the winner's border mode); every non-subject pixel is exactly this",
+  "separation": "connected components (8-way) of RGB distance to the key > 45: the core (largest) and six satellites; 6 stray single pixels dropped",
+  "despill": "G clamped to max(R, B) on subject pixels (only the 1-2 px edge blend changes)",
+  "orbit": "clockwise around the ring centre (y 515.96, x 512.49 in the winner), frame k at (k-1) x 10 degrees; each satellite moves from its drawn hexagon corner toward the next corner clockwise in polar coordinates (angle + gap/6, i.e. 10.02/10.02/9.89/10.06/10.12/9.88 degrees; radius linear), so the 7th step lands exactly on frame 1 and the loop closes",
+  "satelliteSpin": "each satellite turns with its orbit (rotated by the same angle about its own centroid) and keeps pointing outward",
+  "core": "fixed, pixel-copied; frame 1 is the winner's core unchanged; frames 2-6 add a faint two-step shine band (22 %% / 45 %% lighten toward the core's own brightest lilac, outline untouched) that steps across the gem from upper left to lower right",
+  "resampling": "satellites turned bilinearly at the winner's resolution; each whole frame area-averaged (Pillow BOX) by 416/928 = 0.4483 with premultiplied alpha; alpha thresholded at 0.5, so edges are binary on the key"
+ },
+ "script": "/tmp/claude-1000/-home-sites-shmup-cup/637d1767-c0eb-45a8-9dbd-64db6b595458/scratchpad/code-frames/make_frames.py",
+ "scriptSha256": "6d8d7d4706aeb080f01834626ea52c1c035f1d00718d1e59f65aea5d6aabecdb",
+ "command": "python3 -I /tmp/claude-1000/-home-sites-shmup-cup/637d1767-c0eb-45a8-9dbd-64db6b595458/scratchpad/code-frames/make_frames.py --halo-out /home/sites/shmup-cup/art-prompts/v2/candidates/a/enemy/halo-crystal/frames/edit-2.png --hole-out /home/sites/shmup-cup/art-prompts/v2/candidates/a/fx/black-hole/spin-frames/edit-2.png --sidecars",
+ "outputSize": "1248x832",
+ "meta": {
+  "job": "code-1",
+  "kind": "comment-edit",
+  "round": "2",
+  "choiceUpdatedAt": "2026-10-18T00:42:48.006Z",
+  "parentId": "enemy/halo-crystal/frames",
+  "comments": [
+   {
+    "key": "enemy/halo-crystal/frames",
+    "comment": "ll 6 frames look the same  they should be different somehow since this is an animation sheet .. maybe the outside crystals spinning clockwise around the large crystal while the large crystal ddoes ome type of spinning of its own  or something liek that ",
+    "updatedAt": "2026-10-18T00:05:17.330Z"
+   },
+   {
+    "key": "enemy/halo-crystal/frames/edit-1",
+    "comment": "only 2/6 cells have the changed frames .. the rest seem the same.. all 6 should be different from each other making it an animation",
+    "updatedAt": "2026-10-18T00:42:48.006Z"
+   }
+  ]
+ },
+ "pickPath": "art-prompts/v2/candidates/a/enemy/halo-crystal/frames/edit-2.png (gitignored picks tree; byte-copied, sha256 fb45253355772ff03a7a73f6e94b9f062dff7be03f166c9b13340c23da6b3567)",
+ "scriptCommitted": "art-prompts/v2/code-frames/make_frames.py",
+ "pins": {
+  "model": "code",
+  "seed": null,
+  "prompt": "No model and no prompt: made in code from the winner candidates/a/enemy/halo-crystal.png. Six frames: the six satellites orbit clockwise around the unmoving central gem, 10 degrees further in each frame (the hexagon repeats every 60 degrees, so frame 6 runs on into frame 1), each satellite turning with its orbit so it keeps pointing outward; a faint shine band crosses the gem from upper left to lower right in frames 2-6.",
+  "targetGrid": "enemies/halo-crystal 2f 21×21 a10,10 (zone G geode flying splinter kin)",
+  "sheetContract": "key RGB 37,239,0; 2×3 cells 416x416 read row-major; cells [0,0]+[1,0] = the two frames of the 2f slot (the owner's chain-approved pair: orbit start + 10 deg); pinned crops [52,38,314,340] and [36,469,345,310] (gutters 93/86 px clear, w15-S3-G-report.md §3 row 37)",
+  "rowCite": "w15-S3-G-report.md §3 row 37 (enemies/halo-crystal 2f 21×21, crop params pinned; owner chain s7280 \"all 6 look same\" → s29280 \"only 2/6 changed\" → edit-2 approved)",
+  "sourceWinners": "gen5/halo-crystal/base (committed copy, sha affa19ec = sidecar derivedFromSha256)",
+  "generatedAt": "2026-10-18T01:01:12.163Z",
+  "shape": {
+   "w": 1248,
+   "h": 832,
+   "problems": []
+  }
+ },
+ "amendedBy": "GEN4 owner-waived never-designed batch: committed from the gitignored picks tree 2026-10-26 (no GPU — model code, deterministic re-lay of the FLUX.2 winner by the committed art-prompts/v2/code-frames/make_frames.py, scriptSha256 verified against the committed file)"
+}

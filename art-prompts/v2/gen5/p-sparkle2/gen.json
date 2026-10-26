@@ -1,0 +1,53 @@
+{
+  "id": "gen4/p-sparkle2",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a CANCEL SPARKLE — a small pale-gold four-point star (diamond cross) that flashes out when an enemy bullet is cancelled The palette: pale gold #fff0a0 to white #ffffff cores over gold #d8a018 edges, near-black navy outline — arcade fx palette\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME star, square, centred in its cell in the SAME position — ONLY the flash state changes: cell 1 = full bright fat cross-star; cell 2 = thinner, longer rays (white-hot); cell 3 = a short plus of pale light; cell 4 = a single dim dot. This is a continuous one-blast fade: strict monotone from fat star to dot.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 16 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 474005039,
+  "width": 256,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:53:38.814Z",
+  "seconds": 4.6,
+  "label": "p-sparkle2 (GEN4 green-key second pass)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/p-sparkle2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "256x256",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 474005039,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a CANCEL SPARKLE — a small pale-gold four-point star (diamond cross) that flashes out when an enemy bullet is cancelled The palette: pale gold #fff0a0 to white #ffffff cores over gold #d8a018 edges, near-black navy outline — arcade fx palette\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME star, square, centred in its cell in the SAME position — ONLY the flash state changes: cell 1 = full bright fat cross-star; cell 2 = thinner, longer rays (white-hot); cell 3 = a short plus of pale light; cell 4 = a single dim dot. This is a continuous one-blast fade: strict monotone from fat star to dot.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 16 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a CANCEL SPARKLE — a tiny pale-gold four-point twinkle star, bright core and soft fading tips. Pale gold-white on black.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vig",
+    "targetGrid": "fx/sparkle 4f 7×7 a3,3",
+    "sheetContract": "key #51e018; 4 cells of 128x128 on 256x256",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:53:38.814Z",
+    "shape": {
+      "w": 256,
+      "h": 256,
+      "problems": [
+        "cell 3 margin <12px (edges 56/58/0/6)"
+      ]
+    },
+    "priorShape": {
+      "w": 512,
+      "h": 512,
+      "problems": [
+        "state xors 9/16.6/15.6 below floor 9.18 (interim 10.2)"
+      ]
+    }
+  },
+  "amendedBy": "GEN4 green-key second pass supersedes the black-key material error of p-sparkle"
+}

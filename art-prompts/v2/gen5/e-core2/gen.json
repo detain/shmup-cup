@@ -1,0 +1,49 @@
+{
+  "id": "gen4/e-core2",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE core — a bright pale ice-blue orb nested inside a THREE-BILLOW storm cloud with a heavy flattened dark underside, lit slate grey billows top-left; the cloud keeps its shape while the eye pulses inside it The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME cloud-and-eye subject, squarish, centred in its cell at the same scale — ONLY the eye state changes, the cloud lobes and silhouette stay identical: cell 1 = eye full bright with a wide ice glint; cell 2 = eye contracting, glint narrower; cell 3 = eye a small dim slate bead; cell 4 = eye recovering, half-lit.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 474001013,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:53:06.594Z",
+  "seconds": 9.6,
+  "label": "e-core2 (GEN4 green-key second pass)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/e-core2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "1"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 474001013,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE core — a bright pale ice-blue orb nested inside a THREE-BILLOW storm cloud with a heavy flattened dark underside, lit slate grey billows top-left; the cloud keeps its shape while the eye pulses inside it The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no second green shade.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME cloud-and-eye subject, squarish, centred in its cell at the same scale — ONLY the eye state changes, the cloud lobes and silhouette stay identical: cell 1 = eye full bright with a wide ice glint; cell 2 = eye contracting, glint narrower; cell 3 = eye a small dim slate bead; cell 4 = eye recovering, half-lit.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STORM EYE core — a small pulsing heart of the cyclone: bright white-blue core, body ring, faint soft halo. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contrac",
+    "targetGrid": "bosses/storm-eye-core 4f 24×24 a12,12",
+    "sheetContract": "key #51e018; 4 cells of 256x256 on 512x512",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:53:06.594Z",
+    "shape": {
+      "w": 512,
+      "h": 512,
+      "problems": []
+    },
+    "priorShape": {
+      "w": 512,
+      "h": 512,
+      "problems": []
+    }
+  },
+  "amendedBy": "GEN4 green-key second pass supersedes the black-key material error of e-core"
+}

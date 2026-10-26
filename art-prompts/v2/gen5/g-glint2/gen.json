@@ -1,0 +1,58 @@
+{
+  "id": "gen4/g-glint2",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a PRISM GLINT — a faceted star-glint of pale violet light: bright four-point core, thin body ring, soft halo. The palette: prism ice-violet #b8e0f8, mids #6a9ac8 over dark indigo #2c4468 facets, near-black navy outline — the PRISM LABYRINTH zone. (Do NOT add any halo ring around the crystal for halo-adjacent subjects: the ring is separate art.)\n\nRebuild it as a sprite sheet under this strict contract:\n- REFINED: the crystal glint is COMPACT — the ice-white star core plus short rays occupy at most half the cell width, rays fade to pure flat black within 60 px; keep at least 100 px of untouched flat black to every border; four pulse sizes clearly shrinking frame to frame.\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = full flash; cell 2 = contracting; cell 3 = faint; cell 4 = recovering.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 474015182,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:56:37.855Z",
+  "seconds": 9.9,
+  "label": "GEN4 re-ask g-glint2",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/g-glint2/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "2"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 474015182,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a PRISM GLINT — a faceted star-glint of pale violet light: bright four-point core, thin body ring, soft halo. The palette: prism ice-violet #b8e0f8, mids #6a9ac8 over dark indigo #2c4468 facets, near-black navy outline — the PRISM LABYRINTH zone. (Do NOT add any halo ring around the crystal for halo-adjacent subjects: the ring is separate art.)\n\nRebuild it as a sprite sheet under this strict contract:\n- REFINED: the crystal glint is COMPACT — the ice-white star core plus short rays occupy at most half the cell width, rays fade to pure flat black within 60 px; keep at least 100 px of untouched flat black to every border; four pulse sizes clearly shrinking frame to frame.\n- On a CONTINUOUS flat pure BLACK background, exactly hex #000000, identical solid black in every background pixel: no gradient, no vignette, no stars, no floor plane — this is ADDITIVE glow art: brightness is opacity, so everything visible sits on pure black and the dim halo fades smoothly INTO the black.\n- EXACTLY 4 equal square cells laid out as FOUR cells as TWO rows of TWO (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, lying HORIZONTALLY (wider than tall, about 1.3:1), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical in all cells.\n  cell 1 = full flash; cell 2 = contracting; cell 3 = faint; cell 4 = recovering.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 30 px of unbroken flat #000000 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: a PRISM GLINT — a faceted star-glint of pale violet light: bright four-point core, thin body ring, soft halo. The palette: prism ice-violet #b8e0f8, mids #6a9ac8 over dark indigo #2c4468 facets, near-black navy outline — the PRISM LABYRINTH zone. (Do NOT add any halo ring around the crystal for halo-adjacent subj",
+    "targetGrid": "enemies/prism-glint 4f 18×14 a9,7",
+    "sheetContract": "key #000000; 4 cells of 256x256 on 512x512",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:56:37.855Z",
+    "shape": {
+      "w": 512,
+      "h": 512,
+      "problems": [
+        "corner 2,509 ink on key",
+        "cell 0 margin <12px (edges 0/0/0/0)",
+        "cell 1 margin <12px (edges 0/0/0/0)",
+        "cell 2 margin <12px (edges 0/0/0/0)"
+      ]
+    },
+    "priorShape": {
+      "w": 512,
+      "h": 512,
+      "problems": [
+        "cell 0 margin <12px (edges 0/0/0/0)",
+        "cell 1 margin <12px (edges 0/0/0/0)",
+        "cell 2 margin <12px (edges 0/0/0/0)"
+      ]
+    }
+  },
+  "amendedBy": "GEN4 refined re-ask after [\"cell 0 margin <12px (edges 0/0/0/0)\",\"cell 1 margin <12px (edges 0/0/0/0)\"] on g-glint"
+}

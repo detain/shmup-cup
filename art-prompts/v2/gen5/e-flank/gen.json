@@ -1,0 +1,44 @@
+{
+  "id": "gen4/e-flank",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the SQUALL STEED's FLANK — a tall upright granite slab plate, lit leading edge, frost rims top and bottom, four dark gill vents in a column. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, standing UPRIGHT (taller than wide, about 1:1.8), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the plate.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 464033403,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T19:27:32.699Z",
+  "seconds": 8.6,
+  "label": "GEN4 owner-waived never-designed slot bosses/steed-flank 1f sheet 512x512",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen5/e-flank/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN4",
+    "attempt": "3"
+  },
+  "pins": {
+    "model": "flux2",
+    "seed": 464033403,
+    "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the SQUALL STEED's FLANK — a tall upright granite slab plate, lit leading edge, frost rims top and bottom, four dark gill vents in a column. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 equal square cell laid out as one cell (1 column by 1 row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom): the SAME subject, standing UPRIGHT (taller than wide, about 1:1.8), centred in its cell at the same scale — ONLY the named state changes between cells; the silhouette stays identical.\n  cell 1 = the plate.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge (outline only around the bright core, fading out in the halo), no anti-aliasing, no motion blur.",
+    "designBrief": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the SQUALL STEED's FLANK — a tall upright granite slab plate, lit leading edge, frost rims top and bottom, four dark gill vents in a column. The palette: storm slate navies #10182a #1d2c46 #2f4166 #475d84 with pale ice #c8d4e0 highlights, near-black navy outline — the TEMPEST RIDGE zone.\n\nRebuild it as a sprite s",
+    "targetGrid": "bosses/steed-flank 1f 15×27 a7,13",
+    "sheetContract": "key #51e018; 1 cells of 512x512 on 512x512",
+    "rowCite": "undefined owner queue — never-designed slot, owner directive 2026-10-26",
+    "generatedAt": "2026-10-26T19:27:32.699Z",
+    "shape": {
+      "w": 512,
+      "h": 512,
+      "problems": []
+    }
+  },
+  "amendedBy": "GEN4 owner-waived never-designed batch (generated 2026-10-26)"
+}
