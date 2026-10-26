@@ -6,8 +6,8 @@
   "frameCount": 1,
   "sources": [
     {
-      "image": "art-prompts/v2/winners/enemy/polyp-turret/frames/winner.png",
-      "frames": [[75, 108, 330, 332]]
+      "image": "art-prompts/v2/gen3/enemy/polyp-turret/frames/named-4/gen.png",
+      "frames": [[82, 103, 326, 337]]
     }
   ],
   "fit": "contain",
@@ -16,9 +16,9 @@
   "provenance": {
     "use": "pixels",
     "reviewed": {
-      "on": "2026-10-23",
+      "on": "2026-10-26",
       "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
     },
-    "notes": "Zone F (R5-0n.S3): the single static frame of the polyp-turret sprite is the closed-bud cell (row 0, col 0 reading order) of the owner-picked POLYP TURRET animation sheet (four firing states, two rows of two), cropped from the committed winner with a 6-px key border around the subject box; the sheet's other three cells (swelling bud, mouth blooming open, discharged spore puff) stay unused until an animation rework names them. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+    "notes": "R6-03.REING1: re-ingested from the GEN-1 gen3 re-ask sheet — the closed-bud state is cell 1 of the four named cells (CLOSED BUD, SWELLING, BLOOMING, DISCHARGED), cropped with a 6-px key border around its measured subject box. Numeric probes on the sheet: zero foreign ink within 20 px of the crop box, subject extent AR 0.97 against the interim frame's 0.94 (3% — the presentation is held), key-adjacent rim pixels despilled by the tool's default pass. The design carries its own 1-px near-black navy outline, so the outline pass is off."
   }
 }

@@ -1,0 +1,24 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "tiles/terrain-prism-v2",
+  "category": "tile",
+  "frame": { "width": 12, "height": 12 },
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen3/tiles/prism-labyrinth/tileset/contact-24/gen.png",
+      "grid": { "cellWidth": 192, "cellHeight": 192, "columns": 6, "rows": 4 }
+    }
+  ],
+  "key": { "mode": "none" },
+  "outline": false,
+  "collision": { "tileset": "content/tilesets/terrain-prism.tileset.json", "mode": "clip-to-mask" },
+  "anchor": [0, 0],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.REING1 (zone G row G-5): the twenty-four prism tiles of the v2 tileset in the exact content order — solid, floor, ceiling, wall-left, wall-right, the seven slope forms, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor — taken as a 6x4 full-bleed contact grid of 192-px cells from the GEN-1 gen3 sheet, whose sidecar names all twenty-four cells in that same reading order. Numeric probes: all 24 cell hashes distinct, zero key background anywhere (the sheet is an opaque painted panel, key mode none), no guide lines at cell boundaries. clip-to-mask keeps the tileset's collision masks the truth (decision W5-11); facet-glow is an empty decoration and keeps its art whole."
+  }
+}

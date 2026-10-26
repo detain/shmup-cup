@@ -1,0 +1,106 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "tiles/terrain-prism-v2",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen3/tiles/prism-labyrinth/tileset/contact-24/gen.png",
+      "sha256": "628eaf545b4f5d4d59af844982b2ada2203ef6a6ae94533a4a94fc68ce24c8fc",
+      "format": "png",
+      "width": 1152,
+      "height": 768,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly TWENTY-FOUR (24) equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named prism tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor. Pale blue-violet faceted stone, flat 2D, lit top-left, every tile flush to its cell edges (a solid stone square or a clean full-mask slope), no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×768 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+      },
+      "seed": 1634524264,
+      "size": "1152x768",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T16:32:23.800Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/tiles/prism-labyrinth/tileset/winner.png",
+          "from": "art-prompts/v2/winners/tiles/prism-labyrinth/tileset/winner.png",
+          "sha256": "396cd48d72bb4465ba2a45b99e20ae9d43b3e47387e3f981b397d443dfefc17f",
+          "sidecar": "art-prompts/v2/winners/tiles/prism-labyrinth/tileset/winner.json",
+          "sidecarSha256": "25828a847fdf6aaef8efb2adbdafd1f32a2cc91e9e3352220668e6c28fca3def",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": [
+            {
+              "path": "art-prompts/v2/winners/tiles/prism-labyrinth/winner.png",
+              "from": "art-prompts/v2/candidates/a/tiles/prism-labyrinth.png",
+              "sha256": "90fe17e9d13d2529d35b6fde272210b23f817a370dae99329fc64d1c1ceea5f1",
+              "sidecar": "art-prompts/v2/winners/tiles/prism-labyrinth/winner.json",
+              "sidecarSha256": "dd4ee2cd7c396bbc6ae4f062d5d04298535eab36898d203a278327b2d5794748",
+              "model": "black-forest-labs/FLUX.2-dev",
+              "modelKey": "flux2",
+              "weights": {
+                "repo": "black-forest-labs/FLUX.2-dev",
+                "revision": null,
+                "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+              },
+              "licence": "flux-nc-2.1",
+              "reference": []
+            }
+          ]
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen3/tiles/prism-labyrinth/tileset/contact-24/gen.json",
+        "sidecarSha256": "906e2d015f050416ef59fac29269dce2f0ee17c0e4f37afd441adcde6c57b097",
+        "id": "tiles/prism-labyrinth/tileset",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nReference image 1 shows the chosen PRISM LABYRINTH terrain material swatch. Keep its colours, rock forms, strata and surface textures, translated from the painted swatch into the crisp pixel-art tileset described below: Retro 16-bit terrain tileset sheet for a horizontal arcade shooter, a regular grid of twenty equal square tiles in four rows of five with even gutters on a perfectly flat solid pure bright green chroma-key background, every tile drawn in the established PRISM LABYRINTH material (violet crystal built from triangle facets with lilac edge-glints and darker indigo seams) at the same pixel scale, read left to right and top to bottom: three plain fill variants, a top surface edge with a row of sharp facet tips, a bottom ceiling edge, a left edge, a right edge, four outer corners, two inner corners, a 45-degree slope rising to the right, a 45-degree slope falling to the right, two destructible block variants with visible cracks, and two decor tiles. Crisp pixel art with a 1-pixel dark outline only on open edges, flat shading lit from the top-left, tiles meet seamlessly, no perspective, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly TWENTY-FOUR (24) equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid. Each cell is one named prism tile in this exact reading order: solid, floor, ceiling, wall-left, wall-right, slope-up, slope-down, slope-up-low, slope-up-high, slope-down-high, slope-down-low, ceil-slope-up, ceil-slope-down, ceil-slope-up-low, ceil-slope-up-high, ceil-slope-down-high, ceil-slope-down-low, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor. Pale blue-violet faceted stone, flat 2D, lit top-left, every tile flush to its cell edges (a solid stone square or a clean full-mask slope), no perspective, no 3D bevels.\n- The sheet canvas measures EXACTLY 1152×768 px. Produce EXACTLY 24 subject cells — no more, no fewer — and nothing else on the sheet.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/tiles/terrain-prism-v2.recipe.json",
+    "sha256": "d88a545743a6896a3bf58407cc9ebab0ba61ec4983a56013b615a34d83e2d902"
+  },
+  "edit": null,
+  "output": {
+    "png": "terrain-prism-v2.png",
+    "sha256": "8175400daf1e284f57b9a7bd27c4293c4547e133dbb59813b4a35f74043f982c",
+    "sidecar": "terrain-prism-v2.json",
+    "sidecarSha256": "01bd614c21fc0a011fd8ba3c84de3acb27dbf5cdafeacfb5201cc1e00ecf5d9d",
+    "frames": 24,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.REING1 (zone G row G-5): the twenty-four prism tiles of the v2 tileset in the exact content order — solid, floor, ceiling, wall-left, wall-right, the seven slope forms, brick, cube, tissue, crystal, crystal-hot, facet-glow, shard-floor — taken as a 6x4 full-bleed contact grid of 192-px cells from the GEN-1 gen3 sheet, whose sidecar names all twenty-four cells in that same reading order. Numeric probes: all 24 cell hashes distinct, zero key background anywhere (the sheet is an opaque painted panel, key mode none), no guide lines at cell boundaries. clip-to-mask keeps the tileset's collision masks the truth (decision W5-11); facet-glow is an empty decoration and keeps its art whole."
+}

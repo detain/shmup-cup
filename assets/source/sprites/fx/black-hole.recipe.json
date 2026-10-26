@@ -1,0 +1,35 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "fx/black-hole",
+  "category": "fx",
+  "frame": { "width": 48, "height": 48 },
+  "frameCount": 8,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen3/fx/black-hole/swirl-burst-8/gen.png",
+      "frames": [
+        [58, 48, 282, 278],
+        [394, 48, 295, 278],
+        [730, 48, 300, 278],
+        [1074, 48, 292, 278],
+        [58, 378, 283, 282],
+        [394, 378, 296, 282],
+        [730, 378, 300, 282],
+        [1075, 378, 291, 282]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": { "mode": "black" },
+  "alpha": "additive",
+  "outline": false,
+  "anchor": [24, 24],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    },
+    "notes": "R6-03.REING1 (player row P-9): the MANTA's signature bomb in eight frames — swirl frames 1-7 and the collapse burst frame 8, the sidecar's announced reading order, each cropped to its measured subject box plus a 6-px key border (the pad zone carries only this cell's own dim glow, 60 px clear of every neighbour box). Numeric probes: consecutive-frame keyed-pixel XOR 10.8-39.3% (the rotation and the burst are present, not duplicates), each swirl centre pure key-black — the hole itself — so the black key keeps it empty; the sheet corners measure #000000 exactly. Additive alpha on a black key, no outline pass."
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "fx/black-hole",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+  },
+  "ingestedAt": "2026-10-26",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen3/fx/black-hole/swirl-burst-8/gen.png",
+      "sha256": "9ec27ec20b18ae1c729d628714f519f034b8b181996a81dc31adb71cf7a621c0",
+      "format": "png",
+      "width": 1424,
+      "height": 704,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nEffect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly #000000 in every background pixel: no grey wash, no star field, no glow spill beyond the arc forms themselves, no green anywhere.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4) on a PURE BLACK continuous background (NOT green): the same black-hole vortex in seven cells of exact one-eighth-turn swirl steps (cell 1 = 0°, cell 2 = 45°, cell 3 = 90°, cell 4 = 135°, cell 5 = 180°, cell 6 = 225°, cell 7 = 270° clockwise spiral rotation, spiral arms visibly rotating step by step, core fixed), and cell 8 = the named LIGHTNING DISCHARGE — the white-blue arc-ring burst per the second reference image. Binary forms, no grey wash, no green anywhere. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/black-hole/armed-scene) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur.",
+        "negative": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, stars, nebula, scenery, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms"
+      },
+      "seed": 1533507147,
+      "size": "1424x704",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T16:52:08.128Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/winners/fx/black-hole/winner.png",
+          "from": "art-prompts/v2/winners/fx/black-hole/winner.png",
+          "sha256": "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62",
+          "sidecar": "art-prompts/v2/winners/fx/black-hole/winner.json",
+          "sidecarSha256": "72fcc5998799b44fbdbc5412be10e84b31816c9ca812b750075a60b7f98401a2",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        },
+        {
+          "path": "art-prompts/v2/winners/fx/black-hole/armed-scene/winner.png",
+          "from": "art-prompts/v2/winners/fx/black-hole/armed-scene/winner.png",
+          "sha256": "c76983c232d8fa7461b821a5c1a324145f315c27f65fc22e8bc830d80786d6a1",
+          "sidecar": "art-prompts/v2/winners/fx/black-hole/armed-scene/winner.json",
+          "sidecarSha256": "4f5afa82e0601c4d4366c047ed7cbffcae9ab618cc3667068415bf9ce491a3a7",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": [
+            {
+              "path": "art-prompts/v2/winners/fx/black-hole/winner.png",
+              "from": "art-prompts/v2/candidates/a/fx/black-hole.png",
+              "sha256": "08cebe8a1b617d366776c277ec165bda981f82be66f559db4e1eb7caa967fa62",
+              "sidecar": "art-prompts/v2/winners/fx/black-hole/winner.json",
+              "sidecarSha256": "72fcc5998799b44fbdbc5412be10e84b31816c9ca812b750075a60b7f98401a2",
+              "model": "black-forest-labs/FLUX.2-dev",
+              "modelKey": "flux2",
+              "weights": {
+                "repo": "black-forest-labs/FLUX.2-dev",
+                "revision": null,
+                "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+              },
+              "licence": "flux-nc-2.1",
+              "reference": []
+            }
+          ]
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen3/fx/black-hole/swirl-burst-8/gen.json",
+        "sidecarSha256": "79fa831c5585ec9cea88bbd0f204d39c8bea3274c49a9fd2cc92a898b6efbeea",
+        "id": "fx/black-hole",
+        "slot": "a",
+        "mode": "edit",
+        "instruction": "EDIT the reference image(s). Keep this exact design identity — the silhouette language, colours, materials, lighting and 1-px near-black navy outline of:\nEffect concept for a horizontal arcade shooter in SNES-era 16-bit pixel art inspired style: a single artificial black hole centered with a generous empty margin on all sides, on a flat solid pure black background with no stars, no bullets and no scenery. At its center an absolute-dark perfectly round core, ringed by a blazing thin lilac rim of light one or two pixels thick. Wrapped around it, a vortex with exactly three spiral arms, spaced evenly a third of a turn apart like a three-bladed pinwheel, curling clockwise into the core: the arm starting at the top is bright violet, the arm starting at the lower right is deep indigo-blue, the arm starting at the lower left is steel blue. Each arm is built from several parallel streaked filaments of pixel light, broad and bright at its outer end and thinning to a hairline as it winds inward, with a darker indigo shadow edge on its outer side. A thin flickering accretion crackle of tiny white and lilac pixel sparks dances just outside the lilac ring. Clear black gaps between the three arms. Bold dark edges on the arms, saturated limited palette of violet, indigo, steel blue and lilac, crisp hard-edged pixel clusters, no soft glow haze. No text, no letters, no UI.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure BLACK background, exactly #000000 in every background pixel: no grey wash, no star field, no glow spill beyond the arc forms themselves, no green anywhere.\n- EIGHT (8) equal square cells laid out as TWO rows of FOUR (4) on a PURE BLACK continuous background (NOT green): the same black-hole vortex in seven cells of exact one-eighth-turn swirl steps (cell 1 = 0°, cell 2 = 45°, cell 3 = 90°, cell 4 = 135°, cell 5 = 180°, cell 6 = 225°, cell 7 = 270° clockwise spiral rotation, spiral arms visibly rotating step by step, core fixed), and cell 8 = the named LIGHTNING DISCHARGE — the white-blue arc-ring burst per the second reference image. Binary forms, no grey wash, no green anywhere. Exactly EIGHT cells.\nA SECOND reference image is supplied (fx/black-hole/armed-scene) — neighbouring art of the same scene for material and palette consistency; borrow its look, not its layout.\n- The sheet canvas measures EXACTLY 1424×704 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no soft gradients on the background, no motion blur."
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/fx/black-hole.recipe.json",
+    "sha256": "10828fed4d0023a73161a6a174f900bf98cb4fb8d6667d190ab33574ab1b0a72"
+  },
+  "edit": null,
+  "output": {
+    "png": "black-hole.png",
+    "sha256": "a0ca8a9af113bef2b1f4a4100cff3ce4da3c3419cec47617ec57720e8af831e8",
+    "sidecar": "black-hole.json",
+    "sidecarSha256": "75988d273ebc95d1ea2b04bd560af29820c5c6aba7870d88a51c90eee32fa17b",
+    "frames": 8,
+    "frameWidth": 48,
+    "frameHeight": 48,
+    "colors": 24,
+    "alpha": "additive"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "R6-03.REING1 (player row P-9): the MANTA's signature bomb in eight frames — swirl frames 1-7 and the collapse burst frame 8, the sidecar's announced reading order, each cropped to its measured subject box plus a 6-px key border (the pad zone carries only this cell's own dim glow, 60 px clear of every neighbour box). Numeric probes: consecutive-frame keyed-pixel XOR 10.8-39.3% (the rotation and the burst are present, not duplicates), each swirl centre pure key-black — the hole itself — so the black key keeps it empty; the sheet corners measure #000000 exactly. Additive alpha on a black key, no outline pass."
+}

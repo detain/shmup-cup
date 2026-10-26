@@ -384,12 +384,12 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     }
     expect(report.counts.shipped.byOriginKind.hand).toEqual({ record: 1 });
     // The five fixture records this test ships as overrides, over the live tree's thirty-
-    // three: zone A's two (drifter, vane), zone B's four, zone C's three, zone D's two,
+    // five: zone A's two (drifter, vane), zone B's four, zone C's three, zone D's two,
     // zone E's five, zone F's two, zone G's one, zone H's four (bolt-drone, gyre,
     // sentinel-walker, trench-eel — the fixture gyre stands in for the ingested one),
-    // zone I's two (depth-mine, gulper) and the S3 cross-zone pass's eight (the copy
-    // holds assets/source).
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(37);
+    // zone I's two (depth-mine, gulper), the S3 cross-zone pass's eight (the copy
+    // holds assets/source) and REING1's two (tiles/terrain-prism-v2, fx/black-hole).
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(39);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -401,19 +401,20 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       reference: 'ship',
     });
     expect(byModel['black-forest-labs/FLUX.2-dev']).toMatchObject({
-      // The fixture copy's two FLUX.2 sprites plus the live tree's fifty-nine — its
-      // thirty-three overrides: zone A's vane and drifter, zone B's froth, brood-bubble,
+      // The fixture copy's two FLUX.2 sprites plus the live tree's sixty-one — its
+      // thirty-five overrides: zone A's vane and drifter, zone B's froth, brood-bubble,
       // urchin and maw-rocket, zone C's dune-worm, dust-devil and husk-crawler, zone D's
       // ember-wisp and magma-cone, zone E's thunderhead, steed-foal, steed-chest,
       // steed-snout and steed-tail, zone F's vault-claw and polyp-turret, zone G's
       // glint-mote, zone H's bolt-drone, gyre, sentinel-walker and trench-eel, zone I's
-      // depth-mine and gulper, and the S3 cross-zone pass's kestrel, manta, pod, orb,
-      // stolen, explosion-small, debris and spark — with twenty-four derived @flash
+      // depth-mine and gulper, the S3 cross-zone pass's kestrel, manta, pod, orb,
+      // stolen, explosion-small, debris and spark, and REING1's terrain-prism-v2 and
+      // black-hole — with twenty-four derived @flash
       // sprites (the interim tail has none, the S3 drops are player/option/item/fx art
-      // that never flashes) and the two crafts' derived @p2 sprites: fifty-nine live
-      // sprites, and the fixture tree lands fifty-nine again — its pair adds the drone
+      // that never flashes) and the two crafts' derived @p2 sprites: sixty-one live
+      // sprites, and the fixture tree lands sixty-one again — its pair adds the drone
       // and the glow while the fixture gyre supersedes zone H's ingested pair.
-      sprites: 59,
+      sprites: 61,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

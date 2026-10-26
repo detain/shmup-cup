@@ -431,6 +431,16 @@ export function collectSprites(options = {}) {
   for (const sprite of code.sprites) codeNames.add(sprite.name);
   for (const sprite of procedural) codeNames.add(sprite.name);
   for (const sprite of code.v2) codeNames.add(sprite.name);
+  // REING1 (R4-P.P3, decision RR-1): a generator's v2-branch name — a `-v2` tileset drawn only
+  // at an art scale ≠ 1 — is code-sourced art too, though at scale 1 it has no entry above.
+  // Its names are collected from one pass at the interim scale, so a PNG override of such a
+  // name never leaks into the digest-pinned v1 build: that atlas stays v1 byte for byte.
+  if (!scaled)
+    for (const sprite of generateProceduralSprites({
+      tileSize: terrainTileSize(INTERIM_ART_SCALE),
+      artScale: INTERIM_ART_SCALE,
+    }))
+      codeNames.add(sprite.name);
   const overrides = scaled
     ? code.overrides
     : code.overrides.filter((png) => !codeNames.has(png.name));
