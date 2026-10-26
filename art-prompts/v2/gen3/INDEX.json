@@ -145,14 +145,16 @@
       "report": "w15-S3-E-report.md",
       "grid": "bg/storm-gust 1f 320×48 (gust band, wrap)",
       "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-near/gust-wrap/gen.png",
-      "exit": 2
+      "exit": 0,
+      "exitNote": "amended by GEN-2 re-ask at h=256, prior shape-fail in w15-GEN1-report.md"
     },
     {
       "id": "E-13d",
       "report": "w15-S3-E-report.md",
       "grid": "bg/storm-flash 1f 320×60 (palette-ramp flash, flat)",
       "file": "art-prompts/v2/gen3/stage/tempest-ridge/layer-far/flash-flat/gen.png",
-      "exit": 2
+      "exit": 0,
+      "exitNote": "amended by GEN-2 re-ask at h=256, prior shape-fail in w15-GEN1-report.md"
     },
     {
       "id": "F-1",
