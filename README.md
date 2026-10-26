@@ -192,9 +192,11 @@ Installing on a TV, step by step: **[install-on-tv.md](docs/client/install-on-tv
 - **The game is data.** Stages, enemies, bosses, weapons, bullet patterns, particles, sounds,
   music, input profiles, the campaign map and every UI string are validated JSON under
   [`content/`](content/README.md). Bullet patterns are a small compiled DSL — no `eval` anywhere.
-- **The art and audio are code.** Sprites are pixel maps and seeded procedural generators packed
-  into an atlas by a committed script; sound effects are synth parameter sets and the music is chip
-  songs, rendered deterministically at load. A real artist can replace any frame by name.
+- **The art and audio are code — and now partly real.** Sprites are pixel maps and seeded
+  procedural generators packed into an atlas by a committed script; sound effects are synth
+  parameter sets and the music is chip songs, rendered deterministically at load. Any frame can be
+  replaced by name — and the wave-14/15 art round did that for 79 sprite names, which now ship
+  AI-assisted art with committed provenance records.
 - **Written for Chromium 68.** The TV engine floor is checked by lint, by an API scan over every
   shipped source tree, and by browser tests that boot the actual TV bundles.
 - **PixiJS v8 for pixels only.** WebGL1 first, one 640×360 render target, integer upscale, and a
@@ -269,8 +271,9 @@ playable from the title screen to the credits.
 
 What is *not* done is everything that needs hardware, an account or a person: the game has never
 been installed on the Samsung monitors it was written for, never run on an LG set, never spoken to
-Steam and never been submitted to a store, and its art, music and the Spanish and Japanese texts
-are placeholders made by the build rather than by an artist, a composer or a native speaker.
+Steam and never been submitted to a store; the round that put real art on 79 sprite names closed
+free, but its music and the Spanish and Japanese texts are still placeholders made by the build
+rather than by a composer or a native speaker.
 
 All of it is listed in one place, grouped by what each item blocks:
 **[docs/client/outstanding-work.md](docs/client/outstanding-work.md)**.

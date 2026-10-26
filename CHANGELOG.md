@@ -890,6 +890,33 @@ heading into the release section above.
   still reads waits for a v2.0.x step after the release, with its five points recorded in R6-03's
   As built in [`plan_resolution.md`](plan_resolution.md).
 
+### The real art arrives (the R6-03.S3 era, waves 14–15)
+
+**79 sprite names now ship AI-assisted real art** with `.art.json` provenance records — 130 of the
+atlas's 591 sprites are served from FLUX.2-dev (the 79 records plus the 49 `@flash` and 2 `@p2`
+siblings the packer derives), the rest stays the build's own procedural v2 kit. The program closed
+on 2026-10-26 as it ran: the S3 harvest cut **33 names** from the owner's 299 committed picker
+winners (every zone plus the palette round); the GEN-1/GEN-2 derivative sheets fed re-ingests that
+added **4 names** (the prism tilesheet, the black-hole fx, and the two capsules 8 frames); and the
+owner-waived GEN-4 batch landed **42 never-picked names in one commit** — 16 enemies, 12 boss
+parts (among them the azure captain's shell and the storm-eye's cloud, core and ring), 8 decor,
+4 fx glows and the two shield pods. What stayed procedural is
+measured, not cautious: terrain tilesets past prism (the green-anchor pathology), backdrop wrap and
+flat bands, merged kit rows and wide silhouettes fail the frame probes with per-row numbers in the
+wave-15 reports, and the waiver's ten never-designed rows sit on a final STOP list. Re-posing an
+animation's frame count moves the simulation — the six hull bosses' part kits and the deferred anim
+rows are owner pool decisions, never lane calls. The three stores are committed: `winners/`
+(299 images + 35 owner clips), `gen3/` (62 approved-derivative rows), `gen5/` (68 waived rows);
+`models.json` carries the deterministic re-lay's `code` row. The era's two owner rulings, by date:
+**2026-10-23** — FLUX art ships in the free, open-source (MPL-2.0) non-commercial distribution
+(*"the images are fine to use its currently an opensource game after all not commercial work"*);
+before any paid distribution a BFL commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing))
+must be in place. **2026-10-26** — the picker gate is waived for the never-designed slots
+(*"ai generate those other things too"*), with the frame probes unchanged. Music was never part of
+it: nothing composed has landed. Full closeout:
+[`docs/dev/real-assets.md`](docs/dev/real-assets.md) and
+[`docs/dev/art-provenance.md`](docs/dev/art-provenance.md).
+
 ### Engine and tooling
 
 Nothing here changes what the game shows or does: the golden replays, the attract demos and the

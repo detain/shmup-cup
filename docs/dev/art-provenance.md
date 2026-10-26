@@ -85,8 +85,8 @@ a sidecar naming its `served_model`. They compared the models before R0-04 and a
 nothing ships from them. Round 1's candidates are not committed (they live in the unversioned
 `art-prompts/v2/candidates/` and on the picker page); the round's winners were committed on
 2026-10-23 to `art-prompts/v2/winners/` — the 299 image winners with their sidecars and choice
-records (the owner's ruling record in `winners/choices/`); the 35 video clips wait outside Git for
-D3, listed in `winners/VIDEO-PENDING.md`.
+records (the owner's ruling record in `winners/choices/`); the 35 video clips joined them in wave
+15, committed beside their rows.
 
 ## 3. What the licences say
 
@@ -408,6 +408,12 @@ and R3-02's staged output (`art-prompts/v2/ingested/`) are scanned as committed 
 The game's own content also calls FACET MONARCH "the crystal core" in prose
 (`content/enemies/README.md`, docs); that is outside this check and is for the trade-dress review.
 
+**Wave 15's sidecar pins (2026-10-26):** the GEN-1 batch edits of the CINDER BASTION winner quote
+that winner's own identity prompt — "huge battleship" — into their `gen.json` sidecars, so three
+`art-prompts/v2/gen3/boss/cinder-bastion/*` rows (arm-port-2, core-cradle-2f, hull-prow-tower-4,
+×3 each) are pinned in `KNOWN_HITS` beside the winner row above — same lineage, reworded with it
+under open decision 7.
+
 **When it fails:** reword the prompt in plain words ([art-bible-v2.md](art-bible-v2.md#7-writing-prompts-for-this-bible)).
 A hit in a file no agent may edit is reported and pinned in `KNOWN_HITS` with its reason; the pin
 is exact, so a pinned hit that disappears fails too, and its row is removed then.
@@ -455,6 +461,13 @@ is exact, so a pinned hit that disappears fails too, and its row is removed then
 9. **Copyright registration**, if ever wanted: the U.S. Copyright Office asks applicants to
    identify AI-generated material and claim only the human part
    ([registration guidance, March 2023](https://www.copyright.gov/ai/ai_policy_guidance.pdf)).
+10. ~~**The picker gate for the never-designed slots.**~~ **Waived by the owner on 2026-10-26**
+    (verbatim: *"ai generate those other things too"*): slots no candidate was ever picked for may
+    ship generated art without an owner pick, probed as before — GEN-4 landed 42 such names under
+    it, and the waiver's STOP rows stayed gate-blocked on their probe numbers. Same round added the
+    `code` group to `models.json` (section 2): a deterministic re-lay of a committed FLUX.2 winner
+    by `art-prompts/v2/code-frames/make_frames.py` — no new model, so the FLUX.2 basis governs —
+    the row that unblocked `enemies/halo-crystal`.
 
 ## 9. Part 2: the origin report
 
@@ -584,8 +597,10 @@ line of the script to relax.
 
 ### 9.6 Still open
 
-- **The real run** — the S3 lanes are ingesting the winners' art zone by zone (the pilot's zone A
-  landed the FLUX flip below the same day); the report lists real models from zone A's art onward.
+- ~~**The real run**~~ **closed 2026-10-26**: the report on the shipped atlas reads 79 AI-assisted
+  records / 130 FLUX.2-dev-served sprites out of 591, 461 procedural, zero failures (the census
+  pinned by `test/scripts/art-origins.test.ts`) — see the closeout of
+  [real-assets.md](real-assets.md).
 - **The FLUX decision** (section 8, decision 1) **was ruled 2026-10-23** on the non-commercial
   basis, **and the flip landed with it** — `models.json` and section 2 now read `ship` for the
   free open-source distribution the ruling covers, so the origin report's rule 3 passes FLUX-made
@@ -595,8 +610,10 @@ line of the script to relax.
   carries it).
 - **The licence table final** for the models whose art actually ships.
 - **The prompt-library note** — a "Licences" bullet in `art-prompts/images/README.md` (shippable
-  art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). It waits for
-  round 2, with R3-01's post-round-2 edits, because the art round uses the library until then.
+  art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). The round's
+  close makes its "FLUX on hold" wording stale — the flip of 2026-10-23 applies to that library too
+  — but `art-prompts/` is the art round's own, edited by the owner, not by a lane: reported here as
+  due for its post-round refresh, with R3-01's other round-2 notes.
 - The owner items of section 8 (registration, LTX notices, store texts) are unchanged.
 - ~~**Colour-blind variants of real art (for R3-03)**~~ **delivered (R3-03.V5, decision W5-13):**
   when a bullet, beam or bend name is a real-art override, its `@<palette>` variants are recoloured
