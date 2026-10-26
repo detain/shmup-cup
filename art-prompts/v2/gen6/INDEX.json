@@ -1,0 +1,2727 @@
+{
+  "generatedAt": "2026-10-26T23:06:31.966Z",
+  "lane": "w15-GEN5",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "rows": [
+    {
+      "id": "a-kestrel",
+      "report": "w15-GEN5",
+      "grid": "448x256 cells, 3x2, canvas 1344x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-kestrel",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (74/77/0/25)",
+          "cell 1 AR=3.67 outside [1.3,3] (s1)",
+          "cell 1 margin <12px (0/75/0/59)",
+          "cell 2 margin <12px (0/79/64/28)",
+          "cell 3 AR=3.39 outside [1.3,3] (s3)",
+          "cell 3 margin <12px (62/73/0/69)",
+          "cell 4 AR=3.96 outside [1.3,3] (s4)",
+          "cell 4 margin <12px (0/76/0/67)",
+          "cell 5 AR=3.87 outside [1.3,3] (s5)",
+          "cell 5 margin <12px (0/78/22/68)",
+          "gutter after col 0 ink 28.0%",
+          "gutter after col 1 ink 32.7%"
+        ],
+        "boxes": [
+          [
+            74,
+            77,
+            374,
+            154
+          ],
+          [
+            448,
+            75,
+            448,
+            122
+          ],
+          [
+            896,
+            79,
+            384,
+            149
+          ],
+          [
+            62,
+            329,
+            386,
+            114
+          ],
+          [
+            448,
+            332,
+            448,
+            113
+          ],
+          [
+            896,
+            334,
+            426,
+            110
+          ]
+        ],
+        "xors": [
+          50.3,
+          44.2,
+          69.5,
+          69.6,
+          53.4
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-manta",
+      "report": "w15-GEN5",
+      "grid": "416x256 cells, 3x2, canvas 1248x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-manta",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (58/58/0/19)",
+          "cell 1 AR=4.78 outside [1.25,3.6] (s1)",
+          "cell 1 margin <12px (0/88/0/81)",
+          "cell 2 margin <12px (0/69/57/31)",
+          "cell 3 AR=3.76 outside [1.25,3.6] (s3)",
+          "cell 3 margin <12px (51/83/0/76)",
+          "cell 4 margin <12px (0/73/0/64)",
+          "cell 5 margin <12px (0/61/45/47)",
+          "gutter after col 0 ink 19.6%",
+          "gutter after col 1 ink 25.2%"
+        ],
+        "boxes": [
+          [
+            58,
+            58,
+            358,
+            179
+          ],
+          [
+            416,
+            88,
+            416,
+            87
+          ],
+          [
+            832,
+            69,
+            359,
+            156
+          ],
+          [
+            51,
+            339,
+            365,
+            97
+          ],
+          [
+            416,
+            329,
+            416,
+            119
+          ],
+          [
+            832,
+            317,
+            371,
+            148
+          ]
+        ],
+        "xors": [
+          35.1,
+          36.1,
+          63.2,
+          64.7,
+          44.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-pod",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-pod",
+        "ok": false,
+        "fails": [
+          "cell 0 centre hole 0.1% < 25%",
+          "cell 1 centre hole 0.3% < 25%",
+          "cell 2 centre hole 0.2% < 25%",
+          "cell 3 centre hole 0.3% < 25%"
+        ],
+        "boxes": [
+          [
+            41,
+            29,
+            183,
+            199
+          ],
+          [
+            287,
+            28,
+            189,
+            200
+          ],
+          [
+            40,
+            280,
+            184,
+            198
+          ],
+          [
+            276,
+            280,
+            199,
+            195
+          ]
+        ],
+        "xors": [
+          58.9,
+          61.6,
+          64,
+          63.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-arm",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 3x3, canvas 768x768, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-arm",
+        "ok": false,
+        "fails": [
+          "cell 0 centre hole 0.0% < 25%",
+          "cell 1 centre hole 0.0% < 25%",
+          "cell 2 centre hole 0.0% < 25%",
+          "cell 3 centre hole 0.0% < 25%",
+          "cell 4 centre hole 0.0% < 25%",
+          "cell 5 centre hole 0.0% < 25%",
+          "cell 6 centre hole 0.0% < 25%",
+          "cell 7 centre hole 0.0% < 25%",
+          "cell 8 centre hole 0.0% < 25%"
+        ],
+        "boxes": [
+          [
+            33,
+            68,
+            189,
+            123
+          ],
+          [
+            290,
+            68,
+            189,
+            123
+          ],
+          [
+            547,
+            68,
+            189,
+            122
+          ],
+          [
+            33,
+            324,
+            189,
+            121
+          ],
+          [
+            290,
+            324,
+            189,
+            121
+          ],
+          [
+            547,
+            324,
+            188,
+            121
+          ],
+          [
+            33,
+            578,
+            189,
+            121
+          ],
+          [
+            290,
+            578,
+            189,
+            121
+          ],
+          [
+            547,
+            578,
+            189,
+            121
+          ]
+        ],
+        "xors": [
+          47.6,
+          48.4,
+          64.9,
+          46.6,
+          44.3,
+          64,
+          44.8,
+          45.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-reduce",
+      "report": "w15-GEN5",
+      "grid": "320x256 cells, 2x1, canvas 640x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-reduce",
+        "ok": false,
+        "fails": [
+          "cell 0 centre hole 0.0% < 55%",
+          "cell 1 centre hole 0.0% < 55%"
+        ],
+        "boxes": [
+          [
+            41,
+            68,
+            245,
+            128
+          ],
+          [
+            354,
+            69,
+            241,
+            127
+          ]
+        ],
+        "xors": [
+          58.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-orb",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "a-orb/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-orb",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            76,
+            78,
+            108,
+            110
+          ],
+          [
+            285,
+            25,
+            199,
+            202
+          ],
+          [
+            29,
+            280,
+            201,
+            202
+          ],
+          [
+            309,
+            313,
+            157,
+            144
+          ]
+        ],
+        "xors": [
+          57.8,
+          57,
+          62.2,
+          75
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-stolen",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "a-stolen/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-stolen",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            72,
+            80,
+            136,
+            137
+          ],
+          [
+            277,
+            60,
+            188,
+            158
+          ],
+          [
+            72,
+            295,
+            136,
+            138
+          ],
+          [
+            306,
+            295,
+            148,
+            144
+          ]
+        ],
+        "xors": [
+          67.7,
+          67.7,
+          43.6,
+          44.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-bonus",
+      "report": "w15-GEN5",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-bonus/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "a-bonus",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            142,
+            143,
+            227,
+            225
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-oneup",
+      "report": "w15-GEN5",
+      "grid": "448x288 cells, 1x1, canvas 448x288, chroma key #51e018",
+      "file": "a-oneup/gen.png",
+      "exit": "PROBE-OK@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-oneup",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            153,
+            76,
+            141,
+            144
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-shot-basic",
+      "report": "w15-GEN5",
+      "grid": "576x256 cells, 1x1, canvas 576x256, chroma key #51e018",
+      "file": "a-shot-basic/gen.png",
+      "exit": "PROBE-OK@5",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-basic",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            120,
+            64,
+            324,
+            128
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2"
+      ]
+    },
+    {
+      "id": "a-shot-laser",
+      "report": "w15-GEN5",
+      "grid": "576x256 cells, 1x1, canvas 576x256, chroma key #51e018",
+      "file": "a-shot-laser/gen.png",
+      "exit": "PROBE-OK@5",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-laser",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            82,
+            56,
+            418,
+            157
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2"
+      ]
+    },
+    {
+      "id": "a-shot-twin",
+      "report": "w15-GEN5",
+      "grid": "576x256 cells, 1x1, canvas 576x256, chroma key #51e018",
+      "file": "a-shot-twin/gen.png",
+      "exit": "PROBE-OK@5",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-twin",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            99,
+            43,
+            349,
+            174
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2"
+      ]
+    },
+    {
+      "id": "a-shot-tail",
+      "report": "w15-GEN5",
+      "grid": "576x256 cells, 1x1, canvas 576x256, chroma key #51e018",
+      "file": "a-shot-tail/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-tail",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            119,
+            98,
+            244,
+            80
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-missile",
+      "report": "w15-GEN5",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-missile",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=2.97 outside [1.15,1.95] (s0)",
+          "cell 0 margin <12px (0/84/18/81)",
+          "cell 1 AR=2.32 outside [1.15,1.95] (s1)"
+        ],
+        "boxes": [
+          [
+            0,
+            84,
+            270,
+            91
+          ],
+          [
+            329,
+            84,
+            211,
+            91
+          ]
+        ],
+        "xors": [
+          58.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "a-shot-torpedo",
+      "report": "w15-GEN5",
+      "grid": "384x256 cells, 2x1, canvas 768x256, chroma key #51e018",
+      "file": "a-shot-torpedo/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-torpedo",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            84,
+            74,
+            236,
+            104
+          ],
+          [
+            429,
+            75,
+            263,
+            105
+          ]
+        ],
+        "xors": [
+          53.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-twoway",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "a-shot-twoway/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-twoway",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            51,
+            37,
+            168,
+            172
+          ],
+          [
+            296,
+            36,
+            168,
+            173
+          ]
+        ],
+        "xors": [
+          16.3
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-vertical",
+      "report": "w15-GEN5",
+      "grid": "256x576 cells, 1x1, canvas 256x576, chroma key #51e018",
+      "file": "a-shot-vertical/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-vertical",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            88,
+            59,
+            80,
+            313
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-double",
+      "report": "w15-GEN5",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-shot-double/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-double",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            82,
+            168,
+            350,
+            173
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-free",
+      "report": "w15-GEN5",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-shot-free/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-free",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            143,
+            148,
+            354,
+            210
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "a-shot-bomb",
+      "report": "w15-GEN5",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-shot-bomb/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "a-shot-bomb",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            92,
+            127,
+            311,
+            271
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "b-hunter",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "b-hunter/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "b-hunter",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            62,
+            63,
+            140,
+            121
+          ],
+          [
+            282,
+            63,
+            188,
+            120
+          ]
+        ],
+        "xors": [
+          59.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "b-steed-kit",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 3x3, canvas 768x768, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-steed-kit",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (42/17/38/10)",
+          "cell 3 margin <12px (96/25/64/7)",
+          "cell 4 AR=1.10 outside [0.25,0.95] (s4)",
+          "cell 4 margin <12px (20/37/10/14)"
+        ],
+        "boxes": [
+          [
+            42,
+            17,
+            176,
+            229
+          ],
+          [
+            287,
+            34,
+            197,
+            203
+          ],
+          [
+            532,
+            107,
+            211,
+            63
+          ],
+          [
+            96,
+            281,
+            96,
+            224
+          ],
+          [
+            276,
+            293,
+            226,
+            205
+          ],
+          [
+            528,
+            289,
+            176,
+            198
+          ],
+          [
+            68,
+            540,
+            159,
+            203
+          ],
+          [
+            295,
+            547,
+            189,
+            189
+          ],
+          [
+            549,
+            547,
+            191,
+            190
+          ]
+        ],
+        "xors": [
+          72.2,
+          51.8,
+          69.5,
+          63.6,
+          46.6
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "b-orbs24",
+      "report": "w15-GEN5",
+      "grid": "192x192 cells, 6x4, canvas 1152x768, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-orbs24",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=0.53 outside [0.7,1.7] (s0)",
+          "cell 0 margin <12px (127/70/0/0)",
+          "cell 1 margin <12px (0/70/0/0)",
+          "cell 2 margin <12px (0/70/7/0)",
+          "cell 3 margin <12px (5/70/0/0)",
+          "cell 4 margin <12px (0/70/0/0)",
+          "cell 5 AR=0.53 outside [0.7,1.7] (s5)",
+          "cell 5 margin <12px (0/70/127/0)",
+          "cell 6 AR=0.35 outside [0.7,1.7] (s6)",
+          "cell 6 margin <12px (127/0/0/7)",
+          "cell 7 margin <12px (0/0/0/7)",
+          "cell 8 margin <12px (0/0/7/7)",
+          "cell 9 margin <12px (5/0/0/7)",
+          "cell 10 margin <12px (0/0/0/7)",
+          "cell 11 AR=0.35 outside [0.7,1.7] (s11)",
+          "cell 11 margin <12px (0/0/127/7)",
+          "cell 12 AR=0.36 outside [0.7,1.7] (s12)",
+          "cell 12 margin <12px (127/11/0/0)",
+          "cell 13 margin <12px (0/11/0/0)",
+          "cell 14 margin <12px (0/11/7/0)",
+          "cell 15 margin <12px (5/11/0/0)",
+          "cell 16 margin <12px (0/11/0/0)",
+          "cell 17 AR=0.43 outside [0.7,1.7] (s17)",
+          "cell 17 margin <12px (0/11/127/29)",
+          "cell 18 AR=0.64 outside [0.7,1.7] (s18)",
+          "cell 18 margin <12px (127/0/0/90)",
+          "cell 19 AR=1.88 outside [0.7,1.7] (s19)",
+          "cell 19 margin <12px (0/0/0/90)",
+          "cell 20 AR=1.81 outside [0.7,1.7] (s20)",
+          "cell 20 margin <12px (0/0/7/90)",
+          "cell 21 AR=1.83 outside [0.7,1.7] (s21)",
+          "cell 21 margin <12px (5/0/0/90)",
+          "cell 22 margin <12px (0/0/87/90)",
+          "cell 23 EMPTY (0px)",
+          "gutter after col 0 ink 63.1%",
+          "gutter after col 1 ink 42.3%",
+          "gutter after col 2 ink 21.0%",
+          "gutter after col 3 ink 52.2%",
+          "gutter after col 4 ink 47.2%",
+          "gutter after row 0 ink 46.4%",
+          "gutter after row 2 ink 41.1%"
+        ],
+        "boxes": [
+          [
+            127,
+            70,
+            65,
+            122
+          ],
+          [
+            192,
+            70,
+            192,
+            122
+          ],
+          [
+            384,
+            70,
+            185,
+            122
+          ],
+          [
+            581,
+            70,
+            187,
+            122
+          ],
+          [
+            768,
+            70,
+            192,
+            122
+          ],
+          [
+            960,
+            70,
+            65,
+            122
+          ],
+          [
+            127,
+            192,
+            65,
+            185
+          ],
+          [
+            192,
+            192,
+            192,
+            185
+          ],
+          [
+            384,
+            192,
+            185,
+            185
+          ],
+          [
+            581,
+            192,
+            187,
+            185
+          ],
+          [
+            768,
+            192,
+            192,
+            185
+          ],
+          [
+            960,
+            192,
+            65,
+            185
+          ],
+          [
+            127,
+            395,
+            65,
+            181
+          ],
+          [
+            192,
+            395,
+            192,
+            181
+          ],
+          [
+            384,
+            395,
+            185,
+            181
+          ],
+          [
+            581,
+            395,
+            187,
+            181
+          ],
+          [
+            768,
+            395,
+            192,
+            181
+          ],
+          [
+            960,
+            395,
+            65,
+            152
+          ],
+          [
+            127,
+            576,
+            65,
+            102
+          ],
+          [
+            192,
+            576,
+            192,
+            102
+          ],
+          [
+            384,
+            576,
+            185,
+            102
+          ],
+          [
+            581,
+            576,
+            187,
+            102
+          ],
+          [
+            768,
+            576,
+            105,
+            102
+          ],
+          null
+        ],
+        "xors": [
+          64.7,
+          66.3,
+          48.9,
+          57.8,
+          67.5,
+          68.8,
+          70.7,
+          72.3,
+          50.3,
+          62.1,
+          72.7,
+          68.5,
+          57.6,
+          57.8,
+          41.4,
+          51.3,
+          54.7,
+          null
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "b-bastionpod",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-bastionpod",
+        "ok": false,
+        "fails": [
+          "trend lum delta 7.4 < 14"
+        ],
+        "boxes": [
+          [
+            15,
+            14,
+            227,
+            228
+          ],
+          [
+            270,
+            14,
+            228,
+            228
+          ],
+          [
+            15,
+            270,
+            227,
+            228
+          ],
+          [
+            270,
+            270,
+            228,
+            228
+          ]
+        ],
+        "xors": [
+          23.7,
+          13.4,
+          23.5,
+          13.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "b-fxring",
+      "report": "w15-GEN5",
+      "grid": "192x192 cells, 3x2, canvas 576x384, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-fxring",
+        "ok": false,
+        "fails": [
+          "cell 1 margin <12px (36/44/8/6)",
+          "cell 2 margin <12px (24/36/13/5)",
+          "cell 3 margin <12px (34/28/2/14)",
+          "cell 4 margin <12px (19/18/8/14)"
+        ],
+        "boxes": [
+          [
+            74,
+            73,
+            53,
+            53
+          ],
+          [
+            228,
+            44,
+            148,
+            142
+          ],
+          [
+            408,
+            36,
+            155,
+            151
+          ],
+          [
+            34,
+            220,
+            156,
+            150
+          ],
+          [
+            211,
+            210,
+            165,
+            160
+          ],
+          [
+            413,
+            224,
+            150,
+            146
+          ]
+        ],
+        "xors": [
+          33.9,
+          43.7,
+          42.2,
+          54.3,
+          57.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "b-arkpod",
+      "report": "w15-GEN5",
+      "grid": "512x256 cells, 2x2, canvas 1024x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-arkpod",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (0/0/0/0)",
+          "cell 1 margin <12px (0/0/0/0)",
+          "cell 2 margin <12px (0/0/0/0)",
+          "cell 3 margin <12px (0/0/0/0)",
+          "gutter after col 0 ink 59.3%",
+          "gutter after row 0 ink 14.5%",
+          "border strip ink 59.3%",
+          "trend lum delta 6.5 < 12"
+        ],
+        "boxes": [
+          [
+            0,
+            0,
+            512,
+            256
+          ],
+          [
+            512,
+            0,
+            512,
+            256
+          ],
+          [
+            0,
+            256,
+            512,
+            256
+          ],
+          [
+            512,
+            256,
+            512,
+            256
+          ]
+        ],
+        "xors": [
+          5.2,
+          28.4,
+          4.9,
+          28.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "b-facetkit",
+      "report": "w15-GEN5",
+      "grid": "256x256 cells, 3x2, canvas 768x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "key",
+      "probe": {
+        "id": "b-facetkit",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (74/27/0/7)",
+          "cell 1 margin <12px (0/95/13/69)",
+          "cell 5 margin <12px (10/16/28/18)"
+        ],
+        "boxes": [
+          [
+            74,
+            27,
+            182,
+            222
+          ],
+          [
+            256,
+            95,
+            243,
+            92
+          ],
+          [
+            565,
+            63,
+            147,
+            145
+          ],
+          [
+            44,
+            303,
+            158,
+            159
+          ],
+          [
+            295,
+            303,
+            161,
+            159
+          ],
+          [
+            522,
+            272,
+            218,
+            222
+          ]
+        ],
+        "xors": [
+          73.1,
+          65,
+          59.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "t-reef",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x5 of 192px, canvas 1152x960",
+      "file": "t-reef/gen.png",
+      "exit": "PROBE-OK@6",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-reef",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ],
+          [
+            0,
+            768,
+            192,
+            192
+          ],
+          [
+            192,
+            768,
+            192,
+            192
+          ],
+          [
+            384,
+            768,
+            192,
+            192
+          ],
+          [
+            576,
+            768,
+            192,
+            192
+          ],
+          [
+            768,
+            768,
+            192,
+            192
+          ],
+          [
+            960,
+            768,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          74.7,
+          75.6,
+          80.6,
+          76.9,
+          78.3,
+          91.3,
+          78.7,
+          79.4,
+          78.9,
+          80.7,
+          82.9,
+          90.9,
+          71.2,
+          80.4,
+          84.1,
+          79.2,
+          82.4,
+          91.9,
+          78.3,
+          79.8,
+          80.4,
+          82.6,
+          81.2,
+          90.8,
+          82.1,
+          81.3,
+          81.5,
+          80.6,
+          80.1
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "t-magma",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x4 of 192px, canvas 1152x768",
+      "file": "t-magma/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-magma",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          46.8,
+          64.5,
+          75.8,
+          69.7,
+          68,
+          90.4,
+          68.7,
+          66.1,
+          75.2,
+          80.1,
+          78.3,
+          92.1,
+          84.5,
+          81.5,
+          76.8,
+          83.8,
+          78.2,
+          91,
+          78.2,
+          73.8,
+          65.1,
+          76,
+          75.9
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "t-ridge",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x5 of 192px, canvas 1152x960",
+      "file": "t-ridge/gen.png",
+      "exit": "PROBE-OK@6",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-ridge",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ],
+          [
+            0,
+            768,
+            192,
+            192
+          ],
+          [
+            192,
+            768,
+            192,
+            192
+          ],
+          [
+            384,
+            768,
+            192,
+            192
+          ],
+          [
+            576,
+            768,
+            192,
+            192
+          ],
+          [
+            768,
+            768,
+            192,
+            192
+          ],
+          [
+            960,
+            768,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          76.3,
+          77.2,
+          78,
+          76,
+          77.5,
+          87.1,
+          80.9,
+          81.3,
+          81,
+          81.5,
+          80.7,
+          90,
+          80.6,
+          81.9,
+          73.6,
+          84.9,
+          80.1,
+          85.3,
+          72.8,
+          72.4,
+          71.8,
+          79.9,
+          81.2,
+          87.2,
+          68.4,
+          70.3,
+          75.4,
+          65.9,
+          55.8
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "t-vault",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x4 of 192px, canvas 1152x768",
+      "file": "t-vault/gen.png",
+      "exit": "PROBE-OK@6",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-vault",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          62.3,
+          66.1,
+          56.7,
+          64,
+          63.8,
+          69.7,
+          55.9,
+          60.5,
+          60.8,
+          62.7,
+          58.7,
+          69.3,
+          51.3,
+          64.1,
+          48.7,
+          67.5,
+          62.1,
+          72.5,
+          60.7,
+          68,
+          68.1,
+          64.6,
+          61.3
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    },
+    {
+      "id": "t-citadel",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x4 of 192px, canvas 1152x768",
+      "file": "t-citadel/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-citadel",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          63.4,
+          55.2,
+          59.2,
+          60.4,
+          63.4,
+          79,
+          63,
+          57.2,
+          61.7,
+          64.6,
+          66.1,
+          76.2,
+          58.8,
+          53.2,
+          61,
+          64.4,
+          58.3,
+          73.4,
+          47.3,
+          45.3,
+          57.8,
+          61,
+          60.1
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1"
+      ]
+    },
+    {
+      "id": "t-abyss",
+      "report": "w15-GEN5",
+      "grid": "opaque full-bleed contact 6x4 of 192px, canvas 1152x768",
+      "file": null,
+      "exit": "STOP@6",
+      "mode": "opaque",
+      "probe": {
+        "id": "t-abyss",
+        "ok": false,
+        "fails": [
+          "guide line at row 1 uniformity 100%"
+        ],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          54.2,
+          54.8,
+          50.2,
+          55.5,
+          50.8,
+          65,
+          59.2,
+          51.4,
+          53,
+          53.7,
+          56.9,
+          73.2,
+          44.2,
+          59.8,
+          53.3,
+          58.8,
+          59.7,
+          81.9,
+          64.2,
+          65.6,
+          64.5,
+          70,
+          69
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        "r1a1",
+        "r1a2",
+        "r1a3",
+        "r2a1",
+        "r2a2",
+        "r2a3"
+      ]
+    }
+  ]
+}

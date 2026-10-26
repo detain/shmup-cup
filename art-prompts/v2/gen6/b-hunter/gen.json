@@ -1,0 +1,75 @@
+{
+  "id": "gen6/b-hunter",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the OPTION HUNTER — a violet-magenta grab-drone with hot-pink pincers that steals a fighter's option orbs.\n\nDesign identity to keep exactly — A compact hostile drone of dark indigo shell, magenta-violet body plating, lavender metal joints and two hot-pink grabbing pincers in front, one glowing white optic; angular 16-bit threat silhouette, clearly a thief machine, facing RIGHT.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = REST — claws folded, pincers closed, optics dim The subject lies within aspect 0.95:1 to 1.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = GRAB — jaws and pincers wide open, optics and claw edges lit The subject lies within aspect 0.95:1 to 1.8:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.\n- Both cells show the SAME drone at the SAME size facing right; only the claw/jaw and light state changes.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 520020260,
+  "width": 512,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T22:29:51.336Z",
+  "seconds": 7.1,
+  "label": "GEN5 round B retry b-hunter 512x256",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen6/b-hunter/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x256",
+  "meta": {
+    "job": "w15-GEN5",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "lane": "w15-GEN5",
+  "round": "B",
+  "exit": "PROBE-OK",
+  "ownerAsk": "if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content",
+  "gridContract": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "b-hunter",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        62,
+        63,
+        140,
+        121
+      ],
+      [
+        282,
+        63,
+        188,
+        120
+      ]
+    ],
+    "xors": [
+      59.5
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": "r1a1",
+      "ok": true,
+      "fails": 0
+    },
+    {
+      "att": "r2a1",
+      "ok": true,
+      "fails": 0
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "gen6/a-shot-bomb",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the BOMB — a charged smart-bomb orb crackling with sparks.\n\nDesign identity to keep exactly — A dense red-orange plasma bomb orb with a hot white-gold core, crackling yellow spark arcs across its shell and a dark crimson rim — clearly 'about to explode', heavier and hotter than any pickup.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the BOMB charge — a swollen crimson-orange plasma orb packed with crackling yellow sparks The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 1.28:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 520019247,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T22:29:43.902Z",
+  "seconds": 9.4,
+  "label": "GEN5 round A redesign a-shot-bomb 512x512",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen6/a-shot-bomb/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN5",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "lane": "w15-GEN5",
+  "round": "A",
+  "exit": "PROBE-OK",
+  "ownerAsk": "most everything could go with a bit more detail",
+  "gridContract": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "a-shot-bomb",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        92,
+        127,
+        311,
+        271
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": "r1a1",
+      "ok": true,
+      "fails": 0
+    },
+    {
+      "att": "r2a1",
+      "ok": true,
+      "fails": 0
+    }
+  ]
+}

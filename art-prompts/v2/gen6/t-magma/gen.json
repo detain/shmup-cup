@@ -1,0 +1,229 @@
+{
+  "id": "gen6/t-magma",
+  "slot": "a",
+  "prompt": "EDIT the reference image(s). Keep this exact design identity — the colours, rock forms, strata and surface textures of the material swatch in Reference image 1. Chosen MAGMA DEEP terrain material: black basalt and orange-brown cave brick with glowing lava cracks; flat orthographic front-on wall surfaces, chunky 12-pixel-tile scale, three-to-four step shading ramps lit from the top-left.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 24 equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid.\n- Each cell is one named magma deep tile in this exact reading order (24 tiles): cell 1 = solid, cell 2 = floor, cell 3 = ceiling, cell 4 = wall-left, cell 5 = wall-right, cell 6 = slope-up, cell 7 = slope-down, cell 8 = slope-up-low, cell 9 = slope-up-high, cell 10 = slope-down-high, cell 11 = slope-down-low, cell 12 = ceil-slope-up, cell 13 = ceil-slope-down, cell 14 = ceil-slope-up-low, cell 15 = ceil-slope-up-high, cell 16 = ceil-slope-down-high, cell 17 = ceil-slope-down-low, cell 18 = brick, cell 19 = cube, cell 20 = tissue, cell 21 = obsidian, cell 22 = brick-hot, cell 23 = lava-drip, cell 24 = vent.\n- The sheet canvas measures EXACTLY 1152×768 px.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Every cell is a fully painted tile face — solid stone, slope or decor material reaching all four cell edges where the named tile is a full-mask tile; slope and edge tiles keep their painted material inside the cell with the empty part of the cell showing the zone backdrop rock, never flat key colour, never a single uniform hue.\n- Each of the 24 cells is visually DIFFERENT from its reading-order neighbours (except the declared copies): different strata, edges, cracks or decor — a repeated flat texture ruins the sheet.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, 1-px near-black navy outline only on open edges, tiles meet seamlessly, no perspective, no 3D bevels, no anti-aliasing.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 520028364,
+  "width": 1152,
+  "height": 768,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T22:37:37.779Z",
+  "seconds": 24.7,
+  "label": "GEN5 round B retry t-magma 1152x768",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen6/t-magma/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1152x768",
+  "meta": {
+    "job": "w15-GEN5",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "lane": "w15-GEN5",
+  "round": "B",
+  "exit": "PROBE-OK",
+  "ownerAsk": "if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content",
+  "gridContract": "opaque full-bleed contact 6x4 of 192px, canvas 1152x768",
+  "keyContract": "opaque full-bleed contact grid",
+  "probe": {
+    "id": "t-magma",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        0,
+        0,
+        192,
+        192
+      ],
+      [
+        192,
+        0,
+        192,
+        192
+      ],
+      [
+        384,
+        0,
+        192,
+        192
+      ],
+      [
+        576,
+        0,
+        192,
+        192
+      ],
+      [
+        768,
+        0,
+        192,
+        192
+      ],
+      [
+        960,
+        0,
+        192,
+        192
+      ],
+      [
+        0,
+        192,
+        192,
+        192
+      ],
+      [
+        192,
+        192,
+        192,
+        192
+      ],
+      [
+        384,
+        192,
+        192,
+        192
+      ],
+      [
+        576,
+        192,
+        192,
+        192
+      ],
+      [
+        768,
+        192,
+        192,
+        192
+      ],
+      [
+        960,
+        192,
+        192,
+        192
+      ],
+      [
+        0,
+        384,
+        192,
+        192
+      ],
+      [
+        192,
+        384,
+        192,
+        192
+      ],
+      [
+        384,
+        384,
+        192,
+        192
+      ],
+      [
+        576,
+        384,
+        192,
+        192
+      ],
+      [
+        768,
+        384,
+        192,
+        192
+      ],
+      [
+        960,
+        384,
+        192,
+        192
+      ],
+      [
+        0,
+        576,
+        192,
+        192
+      ],
+      [
+        192,
+        576,
+        192,
+        192
+      ],
+      [
+        384,
+        576,
+        192,
+        192
+      ],
+      [
+        576,
+        576,
+        192,
+        192
+      ],
+      [
+        768,
+        576,
+        192,
+        192
+      ],
+      [
+        960,
+        576,
+        192,
+        192
+      ]
+    ],
+    "xors": [
+      46.8,
+      64.5,
+      75.8,
+      69.7,
+      68,
+      90.4,
+      68.7,
+      66.1,
+      75.2,
+      80.1,
+      78.3,
+      92.1,
+      84.5,
+      81.5,
+      76.8,
+      83.8,
+      78.2,
+      91,
+      78.2,
+      73.8,
+      65.1,
+      76,
+      75.9
+    ],
+    "floor": 0.3
+  },
+  "attempts": [
+    {
+      "att": "r1a1",
+      "ok": true,
+      "fails": 0
+    },
+    {
+      "att": "r2a1",
+      "ok": true,
+      "fails": 0
+    }
+  ]
+}

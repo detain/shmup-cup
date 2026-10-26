@@ -1,0 +1,100 @@
+{
+  "id": "gen6/a-stolen",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the STOLEN option orb — the same plasma orb corrupted by an enemy, cold and cracked.\n\nDesign identity to keep exactly — The plasma orb design (orange core, rolling shell, crimson rim) but corrupted: desaturated cold crimson-to-grey shell, one jagged crack leaking dim sparks, duller core — still the same orb silhouette.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = corrupted pulse low — dim desaturated core The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = corrupted pulse high — flickering cold core The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = shell crack A — cracked shell seam upper-left The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = shell crack B — cracked shell seam lower-right The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 520506078,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T22:55:01.180Z",
+  "seconds": 9.5,
+  "label": "GEN5 round A redesign a-stolen 512x512",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen6/a-stolen/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN5",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "lane": "w15-GEN5",
+  "round": "A",
+  "exit": "PROBE-OK",
+  "ownerAsk": "shields now look more like a rock",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "a-stolen",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        72,
+        80,
+        136,
+        137
+      ],
+      [
+        277,
+        60,
+        188,
+        158
+      ],
+      [
+        72,
+        295,
+        136,
+        138
+      ],
+      [
+        306,
+        295,
+        148,
+        144
+      ]
+    ],
+    "xors": [
+      67.7,
+      67.7,
+      43.6,
+      44.2
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": "r1a1",
+      "ok": false,
+      "fails": 5
+    },
+    {
+      "att": "r1a2",
+      "ok": false,
+      "fails": 5
+    },
+    {
+      "att": "r1a3",
+      "ok": false,
+      "fails": 2
+    },
+    {
+      "att": "r2a1",
+      "ok": true,
+      "fails": 0
+    }
+  ]
+}

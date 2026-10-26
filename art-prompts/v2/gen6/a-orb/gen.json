@@ -1,0 +1,100 @@
+{
+  "id": "gen6/a-orb",
+  "slot": "a",
+  "prompt": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the OPTION orb — a small glowing plasma orb of guard energy that trails a fighter.\n\nDesign identity to keep exactly — Small glowing plasma orb with a hot orange core, a bright red-orange shell of rolling energy, a dark crimson rim, a tiny pale-yellow specular glint upper-left and a faint ring of tiny sparks; redesigned with visible energy seams in the shell so it reads as guard tech, with a compact core and rim-weighted shell.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = pulse low — small core, rolling shell dim The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = pulse high — hot core swollen, bright shell The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = shell roll A — rolling energy shifted upper-left The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = shell roll B — rolling energy shifted lower-right The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+  "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell",
+  "model": "flux2",
+  "seed": 520505065,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-26T22:54:51.297Z",
+  "seconds": 9.9,
+  "label": "GEN5 round A redesign a-orb 512x512",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen6/a-orb/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN5",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner improvement ask 2026-10-26 (verbatim): \"players ship itself could be a little bigger ... shields now look more like a rock ... weapon selections ... powerups more indicative of what they do ... most everything could go with a bit more detail ... start with the player ship ... manta ... 1.5-2x its size\" + \"keep going on w/ the plan and finishing it but also see if you dadan work in these improvements ... now while the image/video generation is still doable w/ the model on 2 cards\"",
+    "Owner retry ask 2026-10-26 (verbatim): \"if there is stuf thawt generation couldnt land also try regenerating it again like if there was problemse w/ the genrated content\""
+  ],
+  "lane": "w15-GEN5",
+  "round": "A",
+  "exit": "PROBE-OK",
+  "ownerAsk": "shields now look more like a rock",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "a-orb",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        76,
+        78,
+        108,
+        110
+      ],
+      [
+        285,
+        25,
+        199,
+        202
+      ],
+      [
+        29,
+        280,
+        201,
+        202
+      ],
+      [
+        309,
+        313,
+        157,
+        144
+      ]
+    ],
+    "xors": [
+      57.8,
+      57,
+      62.2,
+      75
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": "r1a1",
+      "ok": false,
+      "fails": 4
+    },
+    {
+      "att": "r1a2",
+      "ok": false,
+      "fails": 5
+    },
+    {
+      "att": "r1a3",
+      "ok": false,
+      "fails": 5
+    },
+    {
+      "att": "r2a1",
+      "ok": true,
+      "fails": 0
+    }
+  ]
+}
