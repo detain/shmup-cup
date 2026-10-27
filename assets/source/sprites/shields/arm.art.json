@@ -3,13 +3,13 @@
   "sprite": "shields/arm",
   "origin": "ai-assisted",
   "use": "pixels",
-  "cleanup": "none",
-  "handCleaned": false,
+  "cleanup": "light",
+  "handCleaned": true,
   "reviewed": {
     "on": "2026-10-26",
     "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
   },
-  "ingestedAt": "2026-10-26",
+  "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
@@ -52,10 +52,15 @@
     "path": "assets/source/sprites/shields/arm.recipe.json",
     "sha256": "cb7eb04ccef412f19c985cd9b13658daccb52957516cb401715d6a0d3bbcea15"
   },
-  "edit": null,
+  "edit": {
+    "path": "assets/source/sprites/shields/arm.edit.png",
+    "sha256": "d20e4cb2537d1d0aa0ba50d1fe12bc39225e812d16ce8e46d8353ff974904d6c",
+    "painted": 0,
+    "erased": 2685
+  },
   "output": {
     "png": "arm.png",
-    "sha256": "5defb2a1584ae99d31827b9d8ff91cc5676bd4a7c4ceb823959641033dfc9c1a",
+    "sha256": "5d0911865861ac5e6b39fe05667703ddc3f94527feca67719f743145ade3ac01",
     "sidecar": "arm.json",
     "sidecarSha256": "fc87a78a744b2d13e2f04f70e24cad3216d7179fc4f9fadc35069822d4b12ab1",
     "frames": 9,

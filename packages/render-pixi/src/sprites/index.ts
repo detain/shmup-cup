@@ -210,6 +210,12 @@ export interface SpriteLayerBindingOptions {
    * batch keeps its default blend and the existing shape.
    */
   readonly additive?: boolean;
+  /**
+   * Constant opacity for the whole set (w15-SHIELDFIX — the dimmed shield batch): every sprite
+   * gets `alpha` **once at creation**, never per frame (Pixi's `alpha` setter takes a fraction
+   * and rebuilds state; the same reason as `additive`). `1`/absent keeps the existing shape.
+   */
+  readonly alpha?: number;
 }
 
 /** A preallocated set of sprites mirroring one `SpriteBatchView`. */
@@ -264,7 +270,8 @@ export interface SpriteLayerBinding {
 /**
  * Creates the sprite binding for one batch view.
  *
- * @param options - Atlas, tables, capacity, layer, y offset and the additive flag (R3-06.L4).
+ * @param options - Atlas, tables, capacity, layer, y offset, the additive flag (R3-06.L4)
+ *   and the constant alpha (w15-SHIELDFIX) — both applied once at creation.
  * @returns The binding (all sprites created now, hidden).
  * @throws {RangeError} When `capacity` is not a positive integer.
  *
@@ -282,12 +289,14 @@ export function createSpriteLayerBinding(options: SpriteLayerBindingOptions): Sp
   }
   const offsetY = options.offsetY ?? PLAYFIELD_Y;
   const additive = options.additive === true;
+  const alpha = options.alpha ?? 1;
   const container = new Container({ label: `batch-${layer}` });
   const sprites: Sprite[] = [];
   for (let i = 0; i < capacity; i++) {
     const sprite = new Sprite();
     sprite.visible = false;
     if (additive) sprite.blendMode = 'add';
+    if (alpha !== 1) sprite.alpha = alpha; // w15-SHIELDFIX: cold, once — never a per-frame write
     sprites.push(sprite);
     container.addChild(sprite);
   }

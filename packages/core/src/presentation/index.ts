@@ -200,6 +200,14 @@ export interface SpriteBatchView {
    * once at creation.
    */
   readonly blend?: SpriteBatchBlend;
+  /**
+   * Constant opacity the whole batch composites at (w15-SHIELDFIX): absent means `1`. Only
+   * {@link createSpriteBatch} producers pass one; a host maps it to the sprite set's `alpha`
+   * set **once at creation**, never per frame (Pixi rebuilds state on the setter, and the
+   * per-sprite contract hashes stay untouched — this is a batch-level constant, like
+   * {@link blend}). The shield batch dims to 0.65 so a raised shield never hides the ship.
+   */
+  readonly alpha?: number;
 }
 
 /** A writable sprite batch with canonical typed arrays (see {@link createSpriteBatch}). */
@@ -226,9 +234,11 @@ export interface SpriteBatch extends SpriteBatchView {
  * @param blend - Compositing blend (R3-06.L4, default `'normal'`): `'additive'` marks the
  *   batch for the host's add-blended sprite set; `'normal'` leaves the field absent, so the
  *   resolved shape of every existing batch is unchanged.
+ * @param alpha - Constant opacity (w15-SHIELDFIX, default `1`): only a batch that differs
+ *   from fully opaque carries the field, so every existing batch's shape is unchanged.
  * @returns An empty batch (`count` 0).
- * @throws {RangeError} When `capacity` is not a positive integer or `layer` is not a
- *   {@link LayerId}.
+ * @throws {RangeError} When `capacity` is not a positive integer, `layer` is not a
+ *   {@link LayerId}, or `alpha` is not within 0…1.
  *
  * @example
  * ```ts
@@ -241,12 +251,16 @@ export function createSpriteBatch(
   layer: LayerId,
   capacity: number,
   blend?: SpriteBatchBlend,
+  alpha?: number,
 ): SpriteBatch {
   if (!Number.isInteger(capacity) || capacity <= 0) {
     throw new RangeError('sprite batch capacity must be a positive integer');
   }
   if (!Number.isInteger(layer) || layer < 0 || layer >= LAYER_COUNT) {
     throw new RangeError(`sprite batch layer must be a LayerId (0…${LAYER_COUNT - 1})`);
+  }
+  if (alpha !== undefined && !(alpha >= 0 && alpha <= 1)) {
+    throw new RangeError('sprite batch alpha must be within 0…1');
   }
   const batch: SpriteBatch = {
     layer,
@@ -261,6 +275,10 @@ export function createSpriteBatch(
   if (blend === 'additive') {
     // Absent is the norm; only a glow batch carries the field (cold, at creation).
     (batch as { blend?: SpriteBatchBlend }).blend = 'additive';
+  }
+  if (alpha !== undefined && alpha !== 1) {
+    // Same precedent as blend: a dimmed batch (the shields) carries the field (cold).
+    (batch as { alpha?: number }).alpha = alpha;
   }
   return batch;
 }

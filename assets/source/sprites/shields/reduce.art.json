@@ -3,13 +3,13 @@
   "sprite": "shields/reduce",
   "origin": "ai-assisted",
   "use": "pixels",
-  "cleanup": "none",
-  "handCleaned": false,
+  "cleanup": "light",
+  "handCleaned": true,
   "reviewed": {
     "on": "2026-10-26",
     "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
   },
-  "ingestedAt": "2026-10-26",
+  "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
@@ -52,10 +52,15 @@
     "path": "assets/source/sprites/shields/reduce.recipe.json",
     "sha256": "8e494a59f24ebc90fc6bdf1cd44bef394de9d8436efebdc4db879682c9f3576c"
   },
-  "edit": null,
+  "edit": {
+    "path": "assets/source/sprites/shields/reduce.edit.png",
+    "sha256": "4145c3ee334834d0a771a5e29b001985e73491bf95b1c904bf816b7e072dee42",
+    "painted": 0,
+    "erased": 359
+  },
   "output": {
     "png": "reduce.png",
-    "sha256": "1739a4ca21df6fb02e8472c2f8804bd53cdf347d4ec44f215ce1958a96c2c340",
+    "sha256": "5943e779a251be40dfab2ce62bc0a9cb9f03b594746a27e66290bc5e1603c3cc",
     "sidecar": "reduce.json",
     "sidecarSha256": "5baad5625117a01c47c2f3b965c6c358cead1d71446bdb8753482f1cfa5676f8",
     "frames": 2,

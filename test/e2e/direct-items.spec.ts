@@ -46,13 +46,15 @@ const ITEM_COLOURS: readonly (readonly [string, Rgb, Rgb])[] = [
 ];
 
 /**
- * The green Arm's ring body (`shields/arm` tier 1, frame 0, #09ac3f) — only that sprite uses it.
- * Re-pointed for GEN4 (2026-10-26): the ingested real art (`art-prompts/v2/gen5/p-arm`) replaced
- * the interim generator's ring, so the sampled colour is the art's own body green. The ±3 window
- * is numerically unique across every atlas frame (all pages, 591 sprites incl. the font), every
- * content JSON colour and every shipped-code palette hex — zero collisions.
+ * The green Arm's ring as it reaches the screen: body `shields/arm` tier 1 frame 0, #09ac3f,
+ * composited at the shield batch's translucency (0.65, w15-SHIELDFIX) over the playfield's base
+ * sky #10173a → 0.65 × c + 0.35 × sky = (11, 119, 61). Re-pointed 2026-10-27: the owner ruling
+ * dimmed the whole shield batch so the ship stays visible through the Arm — the raw body green no
+ * longer survives to the screenshot. The ±3 window is numerically unique: zero opaque pixels in
+ * every atlas frame (ungrouped build, all sprites incl. the font, 2026-10-27), 0 px in every
+ * pre-Arm sample (4×10 + 4×3 ticks), 55–57 px steady in all six post-Arm samples.
  */
-const ARM_GREEN: Rgb = [0x09, 0xac, 0x3f];
+const ARM_RING: Rgb = [0x0b, 0x77, 0x3d];
 
 /** The first colour item's kind (`ItemKind.DirectRed`). */
 const DIRECT_RED = 3;
@@ -202,7 +204,7 @@ test.describe('Direct-mode items (web build)', () => {
 
     // None of the item colours on screen yet.
     const palette = ITEM_COLOURS.flatMap(([, body, lit]) => [body, lit]);
-    expect(await countColours(page, [...palette, ARM_GREEN])).toEqual(
+    expect(await countColours(page, [...palette, ARM_RING])).toEqual(
       Array(palette.length + 1).fill(0),
     );
     // The six colour items in a row ahead of the ship, held still (they drift with the view).
@@ -239,7 +241,7 @@ test.describe('Direct-mode items (web build)', () => {
     let ring = 0;
     for (let poll = 0; poll < 10 && ring < 10; poll++) {
       await waitTicks(page, 3);
-      [ring] = await countColours(page, [ARM_GREEN]);
+      [ring] = await countColours(page, [ARM_RING]);
     }
     expect(ring, 'the green Arm drawn').toBeGreaterThanOrEqual(10);
     for (const label of ['SHOT', 'SUB', 'ARM', 'SPD']) {

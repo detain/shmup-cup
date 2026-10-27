@@ -1461,6 +1461,16 @@ class PickupLists implements PowerUpOutcomes {
 }
 
 /** The power-up system (a class: monomorphic methods, typed-array fields). */
+/**
+ * Opacity the shield batch composites at (w15-SHIELDFIX). A raised shield must never
+ * hide the ship it guards — the owner ruling of 2026-10-27 ("fix that… at least make it
+ * translucent or something"), after the FLUX arm/reduce art measured 94%/72% opaque over
+ * the ship box. Carried once at batch creation (the `blend` precedent, R3-06.L4): the host
+ * sets `sprite.alpha` at binding, never per frame, and the per-tick sprite contract hashes
+ * fold no batch-level field — replays and the presentation fingerprint do not move.
+ */
+const SHIELD_BATCH_ALPHA = 0.65;
+
 class PowerUpSystemImpl implements PowerUpSystem {
   /** See {@link PowerUpSystem.pool}. */
   readonly pool: SoaPool<ItemSchema>;
@@ -1543,7 +1553,12 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.host = host;
     this.pool = host.pools.register('items', createSoaPool(MAX_ITEMS, ITEM_SCHEMA));
     this.itemBatch = createSpriteBatch(LayerId.Items, MAX_ITEMS);
-    this.shieldBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS * (1 + MAX_SHIELD_PODS));
+    this.shieldBatch = createSpriteBatch(
+      LayerId.Player,
+      MAX_PLAYERS * (1 + MAX_SHIELD_PODS),
+      undefined,
+      SHIELD_BATCH_ALPHA,
+    );
     const meters: PowerMeter[] = [];
     for (let p = 0; p < MAX_PLAYERS; p++) meters.push(createPowerMeter());
     this.meters = meters;

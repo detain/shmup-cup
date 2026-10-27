@@ -1147,6 +1147,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
             capacity: batch.capacity,
             layer: batch.layer,
             additive: batch.blend === 'additive',
+            alpha: batch.alpha, // w15-SHIELDFIX: only the dimmed shield batch carries it
           });
           layers.layers[batch.layer].addChild(binding.container);
           bindings.push(binding);
