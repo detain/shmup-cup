@@ -78,6 +78,13 @@ export const CHECKPOINT_FORMAT_VERSION = 1;
  */
 export const CHECKPOINT_MAX_CHARS = 12_000;
 
+/**
+ * The run-kind of a checkpoint: the `core/scenes` `RunMode` union, restated here because the
+ * replay module does not import from scenes (the identical literal unions are assignable both
+ * ways; the classifier of {@link classifyCheckpointText} is the parse boundary).
+ */
+export type CheckpointRunMode = 'normal' | 'bossRush' | 'caravan' | 'arcade';
+
 /** The run-level fields of the checkpoint (a plain-JSON copy of `core/scenes` `RunState`). */
 export interface RunCheckpointRun {
   /** The campaign's id, or `null` for a single-stage run (must match the content at resume). */
@@ -92,8 +99,8 @@ export interface RunCheckpointRun {
   readonly route: readonly number[];
   /** The checkpoint the current zone starts at (-1 = its start). */
   readonly checkpoint: number;
-  /** What kind of run it is (`core/scenes` `RunMode`). */
-  readonly mode: string;
+  /** What kind of run it is (the `core/scenes` `RunMode` union — {@link CheckpointRunMode}). */
+  readonly mode: CheckpointRunMode;
   /** The loop the run plays. */
   readonly loop: number;
   /** The caravan's clock of the run's Worlds (0 = none). */

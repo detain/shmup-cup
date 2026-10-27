@@ -492,6 +492,7 @@ import {
 } from '../weapons/index.js';
 import {
   JOIN_ACTIONS,
+  applyContinuePowerReset,
   canContinue,
   continueWorld,
   continuesLeft,
@@ -502,7 +503,7 @@ import {
   stepWorld,
   type World,
 } from '../world/index.js';
-import { RunRecorder, RunReplayPlayback, worldStartJson } from './replays.js';
+import { RunRecorder, RunReplayPlayback, readWorldStart, worldStartJson } from './replays.js';
 import {
   RunFlag,
   RunState,
@@ -1142,6 +1143,12 @@ export const TitleItem = {
   Help: 6,
   /** EXIT (only where the platform can quit — the TV, the desktop app): 7 since 2026-10-27. */
   Exit: 7,
+  /**
+   * CONTINUE? (R2 — the TV-resume): 8, **appended** after Exit (the never-renumber law). It is
+   * not a mode — the resumed run carries its recorded one; the row exists only while a valid
+   * checkpoint record is in hand, and then it is the menu's first row.
+   */
+  Continue: 8,
 } as const;
 
 /**
@@ -2393,6 +2400,24 @@ interface FlowControl {
    * @returns Whether a resume can be offered.
    */
   checkpointResumable(): boolean;
+  /**
+   * The World an **exact-tick** resume (R2 — TL-4) rebuilt: {@link GameScene.enter} adopts it
+   * instead of starting a fresh one. `null` except for the one enter after a successful exact
+   * resume.
+   */
+  pendingWorld: World | null;
+  /** The next game start through `run.pendingStart` is a resumed one: apply the continue reset. */
+  resumePending: boolean;
+  /**
+   * Start the game from the stored run checkpoint (R2 — the title's CONTINUE?). Both shapes
+   * follow the game's own rules: with a tail snapshot and current build the World is rewound to
+   * the exact death tick (TL-4, verified-or-checkpoint), else the last passed checkpoint restarts
+   * under the continue rule (lives, power, the score's continue digit). The record is consumed
+   * either way. A transition (cold): it ends any previous recording first.
+   *
+   * @returns Whether the resumed game starts (a stale or unreadable record says no and clears).
+   */
+  beginResume(): boolean;
 }
 
 /**
@@ -2572,11 +2597,26 @@ export class TitleScene extends SceneBase {
    * The title menu — the mode select ({@link TitleItem} order): 1 PLAYER / 2 PLAYERS / PRACTICE /
    * OPTIONS / SOUND TEST / EXTRA / HELP / EXIT — EXIT only when the platform can quit, PRACTICE
    * disabled without a campaign (M2-06 added 2 PLAYERS, M2-15 PRACTICE and SOUND TEST, M3-01
-   * EXTRA, the 2026-10-27 owner order HELP).
+   * EXTRA, the 2026-10-27 owner order HELP). While a run checkpoint is resumable (R2) its first
+   * row is CONTINUE? ({@link TitleItem.Continue}); {@link rowIds} maps a focus index to the
+   * {@link TitleItem} it starts.
    */
-  readonly menu: ListMenu;
+  menu: ListMenu;
   /** Where {@link TitleScene.menu} is drawn: its cursor clears the session language's labels. */
-  private readonly menuLayout: MenuLayout;
+  private menuLayout: MenuLayout;
+  /** The {@link TitleItem} of each menu row (focus index → id; R2 — rows are conditional). */
+  private rowIds: number[];
+  /** Focus index of the 1 PLAYER row (0, or 1 with the CONTINUE? row before it — R2). */
+  private startRow = 0;
+  /** Whether {@link TitleScene.menu} currently holds the CONTINUE? row (R2). */
+  private hasContinueRow = false;
+  /**
+   * String slots the flow allocated for this title: the no-row menu's count **plus one** reserved
+   * for the CONTINUE? row, so a rebuild on `enter` never needs a slot the flow did not give
+   * (R2). The reservation is constant — every drawn command carries its string, never its slot —
+   * so the presentation fingerprint does not move with it.
+   */
+  private readonly menuSlotsMax: number;
   /** 0 = `PRESS OK`, 1 = the menu. */
   phase: number = TitlePhase.Prompt;
   /**
@@ -2594,23 +2634,82 @@ export class TitleScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
+    const built = TitleScene.buildMenu(flow, false);
+    this.menu = built.menu;
+    this.menuLayout = built.layout;
+    this.rowIds = built.ids;
+    this.startRow = built.shift;
+    // R2: one extra row slot reserved for the CONTINUE? (menuStringSlots grows by exactly one
+    // per item — the row's label slot); the getter returns this constant, so the flow's slot
+    // layout never moves when the row appears or disappears.
+    this.menuSlotsMax = 4 + menuStringSlots(built.menu) + 1;
+  }
+
+  /**
+   * Builds the menu set for the current row choice (R2 — a transition, never a tick): the mode
+   * rows in {@link TitleItem} order, the optional CONTINUE? row first. Disabled bits follow the
+   * row's position because the rows themselves shift when the checkpoint row is present.
+   *
+   * @param flow - The flow (for the labels, the host's exit and content).
+   * @param withContinue - Whether the resumable checkpoint's row is in.
+   * @returns The menu, its layout, the row's {@link TitleItem} ids and the 1 PLAYER row index.
+   */
+  private static buildMenu(
+    flow: FlowControl,
+    withContinue: boolean,
+  ): { menu: ListMenu; layout: MenuLayout; ids: number[]; shift: number } {
     const t = flow.text;
-    const items = [t.titleOnePlayer, t.titleTwoPlayers, t.titlePractice, t.titleOptions];
+    const ids: number[] = [];
+    const items: string[] = [];
+    if (withContinue) {
+      ids.push(TitleItem.Continue);
+      items.push(t.continueTitle);
+    }
+    ids.push(
+      TitleItem.Start,
+      TitleItem.TwoPlayers,
+      TitleItem.Practice,
+      TitleItem.Options,
+      TitleItem.SoundTest,
+      TitleItem.Extra,
+      TitleItem.Help,
+    );
+    items.push(t.titleOnePlayer, t.titleTwoPlayers, t.titlePractice, t.titleOptions);
     items.push(t.titleSoundTest, t.titleExtra, t.titleHelp);
-    if (flow.host.exit !== null) items.push(t.titleExit);
+    if (flow.host.exit !== null) {
+      ids.push(TitleItem.Exit);
+      items.push(t.titleExit);
+    }
     const content = flow.host.content;
     // EXTRA (M3-01) needs something to offer: the boss rush stage, a campaign or the replays.
     const extra =
       content.stageIndex.has(BOSS_RUSH_STAGE) ||
       content.campaign !== null ||
       (flow.host.replays ?? null) !== null;
-    this.menu = createListMenu(items, {
+    // The mode rows keep their TitleItem numbering (Start = 0 … Exit = 7, HELP-ABOUT landed
+    // 2026-10-27, Continue = 8); the CONTINUE? row sits at the front, so every mode index
+    // after it shifts by one in the menu's own focus space.
+    const shift = withContinue ? 1 : 0;
+    const menu = createListMenu(items, {
       // Practice plays a campaign zone (M2-15).
       disabledMask:
-        (content.campaign === null ? 1 << TitleItem.Practice : 0) |
-        (extra ? 0 : 1 << TitleItem.Extra),
+        (content.campaign === null ? 1 << (TitleItem.Practice + shift) : 0) |
+        (extra ? 0 : 1 << (TitleItem.Extra + shift)),
     });
-    this.menuLayout = titleMenuLayout(items);
+    return { menu, layout: titleMenuLayout(items), ids, shift };
+  }
+
+  /**
+   * Rebuilds the menu rows for a new CONTINUE? state (R2, from {@link TitleScene.enter}).
+   *
+   * @param withContinue - Whether the row is in.
+   */
+  private applyMenu(withContinue: boolean): void {
+    const built = TitleScene.buildMenu(this.flow, withContinue);
+    this.menu = built.menu;
+    this.menuLayout = built.layout;
+    this.rowIds = built.ids;
+    this.startRow = built.shift;
   }
 
   /**
@@ -2627,9 +2726,9 @@ export class TitleScene extends SceneBase {
     return this.phase === TitlePhase.Menu;
   }
 
-  /** See {@link SceneBase.stringSlots}. */
+  /** See {@link SceneBase.stringSlots}. R2: the reserved maximum (CONTINUE? row counted). */
   get stringSlots(): number {
-    return 4 + menuStringSlots(this.menu);
+    return this.menuSlotsMax;
   }
 
   /**
@@ -2640,6 +2739,15 @@ export class TitleScene extends SceneBase {
   override enter(): void {
     super.enter();
     this.flow.endRun();
+    // R2 (TL-2): the CONTINUE? row exists exactly while a resumable record is in hand — and
+    // only after `endRun`, so a run that just came back here cleared its record and offers no
+    // row (its carry-over would be a lie). A rebuild is a transition (cold, like the menu open).
+    const wantsRow = this.flow.checkpointResumable();
+    if (wantsRow !== this.hasContinueRow) {
+      this.hasContinueRow = wantsRow;
+      this.applyMenu(wantsRow);
+      this.uiRevision++;
+    }
     this.phase = TitlePhase.Prompt;
     this.ticks = 0;
     this.idle = 0;
@@ -2684,7 +2792,9 @@ export class TitleScene extends SceneBase {
       if ((input.pressed & Action.Confirm) !== 0) {
         this.phase = TitlePhase.Menu;
         this.menu.open(MENU_OPEN_LOCK_TICKS);
-        this.menu.focusFirstEnabled(TitleItem.Start);
+        // R2: with the CONTINUE? row in, the resume is the point of coming back to the title —
+        // the focus starts on the row; else it starts on 1 PLAYER as ever (`startRow`).
+        this.menu.focusFirstEnabled(this.hasContinueRow ? 0 : this.startRow);
         this.uiRevision++;
         flow.sfx(SFX_CUES.MenuSelect);
       }
@@ -2706,28 +2816,41 @@ export class TitleScene extends SceneBase {
       return;
     }
     if (result === MenuResult.Confirmed) {
-      if (menu.focus === TitleItem.Start || menu.focus === TitleItem.TwoPlayers) {
+      // R2: the focus index is a row position, the row's *meaning* comes from {@link rowIds}
+      // (the CONTINUE? row shifts the mode rows by one when it is present).
+      const chosen = this.rowIds[menu.focus];
+      if (chosen === TitleItem.Continue) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        if (flow.beginResume()) return;
+        // The record went stale under the row (cleared at this very enter, or unreadable):
+        // the row leaves with the next rebuild — input falls through to the menu.
+        this.hasContinueRow = false;
+        this.applyMenu(false);
+        this.uiRevision++;
+        return;
+      }
+      if (chosen === TitleItem.Start || chosen === TitleItem.TwoPlayers) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.practice.active = false;
         flow.nextMode = 'normal';
-        flow.choosePlayers(menu.focus === TitleItem.TwoPlayers);
+        flow.choosePlayers(chosen === TitleItem.TwoPlayers);
         flow.stack.push(flow.difficultyMenu);
-      } else if (menu.focus === TitleItem.Practice) {
+      } else if (chosen === TitleItem.Practice) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.practiceSelect);
-      } else if (menu.focus === TitleItem.Options) {
+      } else if (chosen === TitleItem.Options) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.options);
-      } else if (menu.focus === TitleItem.SoundTest) {
+      } else if (chosen === TitleItem.SoundTest) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.soundTest);
-      } else if (menu.focus === TitleItem.Extra) {
+      } else if (chosen === TitleItem.Extra) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.extra);
-      } else if (menu.focus === TitleItem.Help) {
+      } else if (chosen === TitleItem.Help) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.about);
-      } else if (menu.focus === TitleItem.Exit) {
+      } else if (chosen === TitleItem.Exit) {
         flow.ask(ConfirmPurpose.Exit);
       }
       return;
@@ -2894,6 +3017,18 @@ export class GameScene extends SceneBase {
     super.enter();
     const flow = this.flow;
     const run = flow.run;
+    const rebuilt = flow.pendingWorld;
+    if (rebuilt !== null) {
+      // R2 (TL-4): the exact-tick resume rewound a World to the death tick — adopt it as it is
+      // (its `recorder` segment re-begins from its start state; the new record of the new live
+      // edge overwrites the consumed one at this birth flush). The title music fades under it.
+      flow.pendingWorld = null;
+      flow.resumePending = false;
+      flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+      this.useWorld(rebuilt);
+      this.starts++;
+      return;
+    }
     if (run.pendingStart) {
       run.pendingStart = false;
     } else {
@@ -2901,6 +3036,12 @@ export class GameScene extends SceneBase {
       flow.save.count('gamesStarted');
     }
     this.restart(false);
+    if (flow.resumePending) {
+      // R2 (TL-2): the checkpoint resume spent the game's own continue rule on the fresh World —
+      // lives, power and the score's continue digit, exactly what the CONTINUE screen's OK does.
+      flow.resumePending = false;
+      applyContinuePowerReset(this.world);
+    }
   }
 
   /** The game ends: its score joins the session hi-score. */
@@ -10749,6 +10890,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     flushTick: -2,
     flushPendingStart: false,
     flushCarry: new CarryState(),
+    // R2 TV-resume: the exact rewind's handed World and the R1 start's continue-rule marker.
+    pendingWorld: null,
+    resumePending: false,
     flushCheckpoint(force: boolean): void {
       const store = control.checkpointStore;
       if (store === null || run.practice) return;
@@ -11175,6 +11319,73 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       control.pendingCount = 0;
       control.prepareStage(run.stage);
       save.count('gamesStarted');
+      stack.reset(control.game);
+      return true;
+    },
+    /**
+     * R2 (TL-2): the R1 checkpoint start — the record's map state is restored and its live World's
+     * players carried in, then the game's own continue rule resets them at the World's birth
+     * ({@link GameScene.enter} spends `resumePending`; `applyContinuePowerReset` is the rule).
+     * The tail (exact rewind, TL-4) is not read here: R1 is what TL-4 falls back *to*.
+     */
+    beginResume(): boolean {
+      const store = control.checkpointStore;
+      if (store === null) return false;
+      const record = store.current;
+      if (record === null) return false;
+      if (!control.checkpointResumable()) {
+        void store.clear();
+        return false;
+      }
+      let config: GameConfig;
+      try {
+        config = resolveGameConfig(record.config);
+      } catch (_error) {
+        void store.clear();
+        return false;
+      }
+      let carry: CarryState | null;
+      try {
+        carry = readWorldStart(record.carry).carry;
+      } catch (_error) {
+        void store.clear();
+        return false;
+      }
+      if (carry === null) {
+        void store.clear();
+        return false;
+      }
+      const saved = record.run;
+      control.endRun(); // ends any previous recording — and clears the store; the record is ours
+      control.runConfig = config;
+      run.begin(host.content.campaign, saved.stage, saved.mode, saved.loop, saved.timeLimit);
+      const route = saved.route;
+      run.route.length = 0;
+      for (let i = 0; i < route.length; i++) run.route.push(route[i]);
+      run.zone = saved.zone;
+      run.depth = saved.depth;
+      // The World restarts at the last passed checkpoint (`prepareRunWorld` reads `run.checkpoint`
+      // into `segmentStart`); a between-Worlds record starts its zone fresh.
+      run.checkpoint = record.pendingStart ? -1 : record.checkpointPassed;
+      run.flags = saved.flags;
+      run.deaths = saved.deaths;
+      run.continues = saved.continues;
+      run.continuesAtStart = saved.continuesAtStart;
+      run.assists = saved.assists;
+      run.inBonus = saved.inBonus;
+      run.bonusStage = saved.bonusStage;
+      run.bonusReturnX = saved.bonusReturnX;
+      run.bonusLocked = saved.bonusLocked;
+      run.inEscape = saved.inEscape;
+      run.escapeStage = saved.escapeStage;
+      run.entry.copyFrom(carry);
+      run.pendingStart = true; // `GameScene.enter` builds the World from the entry carry
+      control.resumePending = true; // …and spends the game's own continue rule on it
+      control.recorder.beginRun();
+      control.pendingCount = 0;
+      control.prepareStage(run.stage);
+      save.count('gamesStarted');
+      void store.clear(); // the record is one-shot: consumed by the resume itself
       stack.reset(control.game);
       return true;
     },

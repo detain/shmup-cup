@@ -1416,6 +1416,39 @@ export function continueWorld(world: World, who: number = ALL_PLAYERS): boolean 
 }
 
 /**
+ * Applies the game's own continue rule to every living player of a World that was **not** played
+ * to a game over (R2 — the TV-resume R1 start): lives back to the config's, all power taken away
+ * and the starting loadout given (the same `resetPower` a continue runs), the score's last digit
+ * marked as a continued one (`core/scoring` `markContinue`) and one `continuesUsed` for the run.
+ * Not a {@link continueWorld}: that one requires the game-over status, checks the remaining
+ * continues and restarts the stage — a resumed World is already born at its checkpoint with the
+ * ships flying in (`applyCarry`), and its resume IS the continue the player spends (the title's
+ * CONTINUE? record is one-shot), so the gates do not apply. Rank and the view follow the reset.
+ *
+ * @param world - The freshly prepared World (its players already carried in).
+ * @returns Whether any player was reset (a carry with nobody alive does nothing).
+ */
+export function applyContinuePowerReset(world: World): boolean {
+  const players = world.players;
+  const config = world.config;
+  const board = world.scoring.board;
+  let reset = false;
+  for (let i = 0; i < players.length; i++) {
+    const player = players[i];
+    if (!player.active) continue;
+    reset = true;
+    player.lives = config.startingLives;
+    resetPower(world, i);
+    markContinue(board, i);
+  }
+  if (!reset) return false;
+  world.continuesUsed++;
+  updateWorldRank(world);
+  syncWorldView(world);
+  return true;
+}
+
+/**
  * Takes all of a player's power (the `arcade` penalty — in Direct mode `applyDirectDeathPenalty`
  * — whatever the config's), then gives the config's starting loadout: what a continue does to a
  * ship (cold path).

@@ -171,6 +171,7 @@ export {
   classifyCheckpointText,
   type RunCheckpointClassified,
   type RunCheckpointInput,
+  type CheckpointRunMode,
   type RunCheckpointRecord,
   type RunCheckpointRun,
   type RunCheckpointVerdict,

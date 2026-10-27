@@ -320,8 +320,11 @@ describe('core/scenes flow edge: construction', () => {
       }
       expect(next).toBeLessThanOrEqual(flow.view.ui.stringCapacity);
       // PRESS OK, HI, the logo's text, the cursor and the items (2 PLAYERS since M2-06, PRACTICE
-      // and SOUND TEST since M2-15, EXTRA and the secret codes' message since M3-01).
-      expect(flow.title.stringSlots).toBe(canExit ? 15 : 14);
+      // and SOUND TEST since M2-15, EXTRA and the secret codes' message since M3-01, HELP since
+      // the 2026-10-27 owner order) — plus the one slot R2 reserves for the title's CONTINUE? row
+      // (it is drawn only while a checkpoint record is resumable; the reservation keeps the
+      // flow's slot layout constant).
+      expect(flow.title.stringSlots).toBe(canExit ? 16 : 15);
     }
   });
 

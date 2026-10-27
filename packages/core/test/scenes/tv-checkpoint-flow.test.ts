@@ -185,3 +185,149 @@ describe('run checkpoint flushes (R2 TL-1)', () => {
     expect((game.scenes as SceneFlow).checkpointAvailable).toBe(false);
   });
 });
+
+/**
+ * Second boot (R2 — TL-2): the shell's own order over the SAME storage the first boot wrote —
+ * load the store, then create the game, which starts on the title. The platform stands in for
+ * the killed-and-restarted app (the kill is a suspend; storage persists).
+ *
+ * @param platform - The first boot's platform (its storage holds the record).
+ * @param db - The content (default: the same campaign).
+ * @returns The game, its flow and the loaded store.
+ */
+async function resume(
+  platform: HeadlessPlatform,
+  db: ContentDb = content(),
+): Promise<{ game: Game; flow: SceneFlow; store: RunCheckpointStore }> {
+  const store = new RunCheckpointStore(platform.storage, 'test');
+  await store.load();
+  const game = createGame(platform, { seed: 11, stage: 't-s' }, db, {
+    scenes: 'title',
+    save: createSaveStore(null),
+    checkpoint: store,
+    buildId: 'test',
+  });
+  return { game, flow: game.scenes as SceneFlow, store };
+}
+
+/**
+ * One step of the second boot's game.
+ *
+ * @param game - The game.
+ * @param platform - Its platform.
+ * @param held - The held mask.
+ */
+function step2(game: Game, platform: HeadlessPlatform, held: ActionMask): void {
+  commitPlayerInput(platform.snapshot.players[0], held);
+  game.step();
+  game.events.drain(() => undefined);
+}
+
+/**
+ * One press of the second boot's game (a tick down, a tick up).
+ *
+ * @param game - The game.
+ * @param platform - Its platform.
+ * @param action - The action.
+ */
+function press2(game: Game, platform: HeadlessPlatform, action: ActionMask): void {
+  step2(game, platform, action);
+  step2(game, platform, 0);
+}
+
+/**
+ * Reads the checkpoint key after letting the store's write chain settle.
+ *
+ * @param platform - The boot's platform.
+ * @returns The stored text (`''`: cleared).
+ */
+async function readStorage(platform: HeadlessPlatform): Promise<string | null> {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  return platform.storage.get(RUN_CHECKPOINT_STORAGE_KEY);
+}
+
+describe('title CONTINUE? and the checkpoint resume (R2 TL-2)', () => {
+  it('offers the row for a carried record and starts the checkpoint game with the continue rule', async () => {
+    const s1 = new Session();
+    s1.hold(0, 90); // past checkpoint 1
+    s1.platform.suspend(); // the TV kill
+    const record = await s1.record();
+    expect(record.checkpointPassed).toBe(1);
+
+    const { game, flow } = await resume(s1.platform);
+    expect(flow.checkpointAvailable).toBe(true);
+    press2(game, s1.platform, Action.Confirm); // PRESS OK → menu
+    expect(flow.title.menu.items.map((i) => i.label)[0]).toBe('CONTINUE?');
+    expect(flow.title.menu.focus).toBe(0);
+    press2(game, s1.platform, Action.Confirm); // the row
+    expect(flow.stack.top?.id).toBe('game');
+    const run = flow.run;
+    expect([run.checkpoint, run.zone, run.stage, run.practice]).toEqual([1, 0, 't-s', false]);
+    expect(run.campaign?.id).toBe('test');
+    const world = flow.world;
+    expect(world.stage?.checkpoint).toBe(1);
+    // The game's own continue rule was spent (TL-2 semantics): one continue, lives from the config.
+    expect(world.continuesUsed).toBe(1);
+    expect(world.players[0].lives).toBe(world.config.startingLives);
+    // The record is consumed by the resume itself — and the resumed run immediately writes its
+    // own fresh one at the World's birth (kill again right now, resume at this new edge).
+    expect(flow.checkpointAvailable).toBe(true);
+    const fresh = classifyCheckpointText(await readStorage(s1.platform), 'test').record;
+    expect(fresh).not.toBeNull();
+    expect(fresh?.savedTick).toBeLessThanOrEqual(1); // this boot's tick count, not s1's 90
+    expect(fresh?.checkpointPassed).toBe(1); // the fresh World was born at checkpoint 1
+  });
+
+  it('keeps every mode row working while the row is in (shifted focus dispatch)', async () => {
+    const s1 = new Session();
+    s1.hold(0, 30);
+    s1.platform.suspend();
+    await s1.record();
+    const { game, flow } = await resume(s1.platform);
+    press2(game, s1.platform, Action.Confirm); // menu open
+    press2(game, s1.platform, Action.Down); // off CONTINUE? onto 1 PLAYER
+    expect(flow.title.menu.focus).toBe(1);
+    press2(game, s1.platform, Action.Confirm);
+    expect(flow.stack.top?.id).toBe('difficulty');
+  });
+
+  it('hides the row for a foreign build id and clears that key at load', async () => {
+    const s1 = new Session();
+    s1.hold(0, 40);
+    s1.platform.suspend();
+    const text = await s1.text();
+    const parsed = JSON.parse(text as string) as Record<string, unknown>;
+    parsed.buildId = 'some-other-build';
+    await s1.platform.storage.set(RUN_CHECKPOINT_STORAGE_KEY, JSON.stringify(parsed));
+    const { game, flow, store } = await resume(s1.platform);
+    expect(store.available).toBe(false);
+    expect(flow.checkpointAvailable).toBe(false);
+    press2(game, s1.platform, Action.Confirm);
+    expect(flow.title.menu.items.map((i) => i.label)[0]).toBe('1 PLAYER');
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    expect(await s1.platform.storage.get(RUN_CHECKPOINT_STORAGE_KEY)).toBe('');
+  });
+
+  it('a between-Worlds record starts the armed zone fresh', async () => {
+    const s1 = new Session();
+    s1.hold(0, 40);
+    s1.platform.suspend();
+    const text = await s1.text();
+    const parsed = JSON.parse(text as string) as Record<string, unknown>;
+    // The map-open shape: next zone armed, no live World to anchor on.
+    parsed.pendingStart = true;
+    parsed.savedTick = -1;
+    parsed.checkpointPassed = -1;
+    parsed.tail = null;
+    await s1.platform.storage.set(RUN_CHECKPOINT_STORAGE_KEY, JSON.stringify(parsed));
+    const { game, flow } = await resume(s1.platform);
+    expect(flow.checkpointAvailable).toBe(true);
+    press2(game, s1.platform, Action.Confirm);
+    press2(game, s1.platform, Action.Confirm);
+    expect(flow.stack.top?.id).toBe('game');
+    expect(flow.run.checkpoint).toBe(-1);
+    const world = flow.world;
+    expect(world.tick).toBeLessThan(3); // a fresh World flies in
+    expect(world.continuesUsed).toBe(1); // and it still spends the continue rule
+  });
+});
