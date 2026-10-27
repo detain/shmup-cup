@@ -31,6 +31,7 @@ import {
   shmupBuildInfo,
   shmupContent,
   shmupVideos,
+  shmupStills,
 } from '../../vite.shared.js';
 import { applyConfigVariant, variantFromEnv, variantName } from './scripts/config-xml.mjs';
 
@@ -129,6 +130,7 @@ export default defineConfig({
     shmupContent(),
     shmupAssets(),
     shmupVideos(),
+    shmupStills(),
     shmupBuildInfo(),
     liveReloadDefine(),
     classicScriptTag(),

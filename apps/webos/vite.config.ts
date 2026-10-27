@@ -35,6 +35,7 @@ import {
   shmupBuildInfo,
   shmupContent,
   shmupVideos,
+  shmupStills,
 } from '../../vite.shared.js';
 
 /**
@@ -91,7 +92,14 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupContent(), shmupAssets(), shmupVideos(), shmupBuildInfo(), classicScriptTag()],
+  plugins: [
+    shmupContent(),
+    shmupAssets(),
+    shmupVideos(),
+    shmupStills(),
+    shmupBuildInfo(),
+    classicScriptTag(),
+  ],
   server: {
     host: true,
     port: 5175,
