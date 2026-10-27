@@ -22,7 +22,9 @@
  *   `screenPass: 'filter'` escape hatch is on — the **shipped** CRT is charged nothing at any
  *   setting, because since M3-02d it is the pass-2 blit's own shader and pools no target — and
  *   the canvas's front / back / depth-stencil
- *   buffers at the display size) and a JS heap baseline. Chip songs
+ *   buffers at the display size, and (plan v20x A4) the image surface's **resident still**
+ *   ({@link MemoryInputs.stillsPages}) at the same attached-page rate as an atlas page — GPU
+ *   copy plus held image, zero while the surface shows nothing) and a JS heap baseline. Chip songs
  *   are sized from their rows ({@link songFrameBound}) without rendering them; recorded tracks
  *   from their loop end, or {@link FILE_TRACK_FALLBACK_SECONDS} of stereo when it is unknown.
  * - **Budgets** (plan R1-05, W3-5). Out of {@link MEMORY_BUDGET_BYTES}: the heap baseline
@@ -378,6 +380,15 @@ export interface MemoryInputs {
   readonly crtAsFilter?: boolean;
   /** JS heap baseline (default {@link HEAP_BASELINE_BYTES}). */
   readonly heapBytes?: number;
+  /**
+   * The image surface's resident stills (plan v20x A4): one entry while the stills director
+   * shows a picture ({@link createImageSurface} — the shell's `stills` module passes the
+   * surface's current bitmap size), empty or omitted while it holds nothing (a hidden surface
+   * closes its bitmap and destroys its texture, so it charges zero — the VRAM law). Each entry
+   * costs `w × h × 4` on the GPU and the same again for the decoded image held as the
+   * re-upload source: exactly the attached-page rule of {@link MemoryInputs.atlasPages}.
+   */
+  readonly stillsPages?: readonly PageSize[];
   /** The budget (default {@link MEMORY_BUDGET_BYTES}). */
   readonly budget?: number;
 }
@@ -394,6 +405,11 @@ export interface MemoryEstimate {
   readonly music: number;
   /** Render targets (the internal frame, the pooled filter passes, the canvas buffers). */
   readonly targets: number;
+  /**
+   * Bytes of the image surface's resident stills, folded into {@link MemoryEstimate.textures}
+   * and {@link MemoryEstimate.images} (plan v20x A4; reported separately for the budget table).
+   */
+  readonly stills: number;
   /** JS heap baseline. */
   readonly heap: number;
   /** Everything. */
@@ -433,6 +449,16 @@ export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
   if (inputs.keepPageImages !== false) {
     for (const page of inputs.imagePages ?? inputs.atlasPages) images += pageBytes(page);
   }
+  // The resident stills (plan v20x A4): GPU copy and held image, the attached-page rule —
+  // counted regardless of `keepPageImages`, which models the atlas's eager/lazy policy, not
+  // the surface's (a shown still always holds both halves; a hidden one holds neither).
+  let stillBytes = 0;
+  for (const page of inputs.stillsPages ?? []) {
+    const bytes = pageBytes(page);
+    textures += bytes;
+    images += bytes;
+    stillBytes += bytes * 2;
+  }
   const display = inputs.display ?? DEFAULT_DISPLAY;
   const frame = inputs.frame ?? { width: FRAME_WIDTH, height: FRAME_HEIGHT };
   // The frame target is created directly (`RenderTexture.create`), so it is exactly its own
@@ -452,6 +478,7 @@ export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
     sfx: inputs.sfxBytes,
     music: inputs.musicBytes,
     targets,
+    stills: stillBytes,
     heap,
     total,
     budget,
