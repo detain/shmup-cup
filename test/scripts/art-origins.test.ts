@@ -405,8 +405,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // copy lands ninety-five live plus five minus one. w15-REING7's eighteen gen7 records joined
     // (the nine zone-map planets, the four capsule pills, the three round bodies, the flak
     // casing and the 36-tile ridge sheet), so the copy lands one hundred thirteen live
-    // plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(117);
+    // plus five minus one. w15-REING89's seventeen gen8/gen9 records join (the twelve
+    // enemy rows and the five HALCYON BULWARK pieces of the PROBE-OK harvest), so the copy
+    // lands one hundred thirty-four live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(134);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -440,8 +442,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // fixture gyre supersedes zone H's ingested pair. w15-REING7's eighteen gen7 override
       // sprites join, and the round bodies' records pull their nine colour-blind @palette
       // siblings over from procedural too — one hundred seventy-three live, and the fixture
-      // tree lands one hundred seventy-three again.
-      sprites: 173,
+      // tree lands one hundred seventy-three again. w15-REING89's seventeen gen8/gen9
+      // override sprites join with their seventeen derived @flash siblings (every row
+      // flashes) — two hundred seven live, and the fixture tree lands two hundred seven again.
+      sprites: 207,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

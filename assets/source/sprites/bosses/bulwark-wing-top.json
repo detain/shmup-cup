@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/bulwark-wing-top 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 84,
+        "h": 21
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 84,
+        "h": 21
+      },
+      "sourceSize": {
+        "w": 84,
+        "h": 21
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "bulwark-wing-top.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 84,
+      "h": 21
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 84,
+              "h": 21
+            },
+            "pivot": {
+              "x": 42,
+              "y": 10
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

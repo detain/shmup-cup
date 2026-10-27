@@ -57,8 +57,20 @@
  * unchanged), so the stand-in band and the TV residency budget do not move, and the bundle's
  * gzip and dist rows still stand under their real ceilings. Headroom 1,232 B kept — a bulk
  * colour regression still trips this cap loudly.
+ *
+ * **w15-REING89 (the same owner re-add ruling, dated 2026-10-26): raised 320,000 → 330,000.**
+ * The gen8/gen9 harvest's 17 rows — twelve enemies (darter, hopper, turret, both carriers,
+ * hatch, option-hunter, spinner, cube, suction pod, bubble, volcano) and the five HALCYON
+ * BULWARK pieces (hull, emitter, plate, both wings) — land as native art whose richer
+ * palettes compress worse than the upscaled v1 frames they replace; the page measures
+ * **328,024 B** on this landing (+9,256 B over REING7's 318,768 B), and the zone-A page
+ * carries the bulwark's and turret art's share, 34,225 → 36,156 B (+1,931 B) under its own
+ * untouched cap. The AREA law holds again: 619 sprites, 2,200 frames unchanged — every row
+ * draws in the slot the upscaled frame held, so the stand-in band and the TV residency budget
+ * do not move, and the bundle's gzip and dist rows still stand under their real ceilings.
+ * Headroom 1,976 B kept — a bulk colour regression still trips this cap loudly.
  */
-export const ATLAS_COMMON_PNG_CAP = 320_000;
+export const ATLAS_COMMON_PNG_CAP = 330_000;
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
  * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a
@@ -72,7 +84,7 @@ export const ATLAS_ZONE_PNG_CAP = 600_000;
 /**
  * Cap on an atlas's total PNG bytes, every page summed (R1-05's guard, set to the measured v2
  * projection by R3-04.M2b): {@link ATLAS_COMMON_PNG_CAP} plus one
- * {@link ATLAS_ZONE_PNG_CAP} for each of the campaign's nine zones — 5,700,000 B. The stand-in
+ * {@link ATLAS_ZONE_PNG_CAP} for each of the campaign's nine zones — 5,730,000 B. The stand-in
  * set measures 3,401,438 B against it (`common` once plus the nine zone pages — the same
  * table's Σ rows, 4,228,727 B, less its nine repeated `common` copies, 827,289 B); the interim
  * placeholder art is far under both (143,775 B today). The cap is what detailed art may grow

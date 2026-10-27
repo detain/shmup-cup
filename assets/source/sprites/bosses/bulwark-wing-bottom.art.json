@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/bulwark-wing-bottom",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen8/b-wing-b/gen.png",
+      "sha256": "27f460c62a59fe2ca0b2741e30bbf014436cc27b9844c2130ebd44bec51d42b1",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: ONE armour wing of the HALCYON BULWARK boss — lower wing, a long armoured plate carrying a laser emitter.\n\nDesign identity to keep exactly — a long, flat armoured airfoil wing plate about four times as wide as it is tall: a bold steel-blue band (#2e5082 body, #4a78b0 face, #8ab8e8 lit edge) with a deep blue #1e3458 shadow edge along one long side, a single cyan sensor light (#38d8f8) near the thick inner (right) end, and two or three small amber warning stripes (#e8c048) on the outer third, 1-px near-black outline (#0a1428). The plate is SOLID and chunky: its height is a full quarter of its length (about 4:1 — never a 5.5:1 sliver, hairline wire, thin blade or tapered needle), yet it stays a SMALL horizontal chip of roughly 380 px long by 95 px thick floating dead-centre in the 512×256 frame (huge empty green bands above and below it) — most of the frame is EMPTY flat green and the background must dominate; a wing spanning edge to edge ruins the sheet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell = the whole 512×256 canvas, holding exactly ONE wing — nothing else.\n- The subject (one wing): the LOWER wing: its vertical mirror — flat dark shadow edge along the TOP, bottom edge tapering toward the blunt outer tip on the LEFT, blunt mounting end on the RIGHT. The subject lies within aspect 2.90:1 to 5.40:1.\n- CENTRING AND SIZE: the wing lies at the exact centre of the canvas, at most 430 px long and 75-115 px thick, centred VERTICALLY with at least 70 px of unbroken flat #51e018 above and below it, and at least 30 px clear to each canvas side.\n- NO guide lines, NO borders, NO frames, NO text, NO labels, NO numbers — the description above is ordering instruction only, never drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail as possible at that low resolution (rivets, panel seams, lit edge ramp), crisp hard-edged square pixels, chunky bold forms, four-to-six step shading lit from the top-left, clean saturated colours, 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521096104,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T02:55:54.462Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen8/b-wing-b/gen.json",
+        "sidecarSha256": "db26881366f93cf8389f1f657eee8bad1df6581ac8203b17d1f28aaba4990727",
+        "id": "gen8/b-wing-b",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/bulwark-wing-bottom.recipe.json",
+    "sha256": "6680fd67bf766068d39b9fb7cd93e6b4b2207d455c57fdc861f1b45e46e44830"
+  },
+  "edit": null,
+  "output": {
+    "png": "bulwark-wing-bottom.png",
+    "sha256": "291783aa2225c20dc365be3e446e49a7b1b535e3e31706b36b8e5699ade459be",
+    "sidecar": "bulwark-wing-bottom.json",
+    "sidecarSha256": "9377b4ca656af1eaa745a4542772712f968768e60785f28a33373baca5c92459",
+    "frames": 1,
+    "frameWidth": 84,
+    "frameHeight": 21,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "bosses/bulwark-wing-bottom (1f 84×21 served) — split from family row b-wings after 6 attempts (family attempt 7 of 8) — the 1 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; single frame; the sheet state probe floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: ONE armour wing of the HALCYON BULWARK boss — lower wing, a long armoured plate carrying a laser emitter.\n\nDesign identity to keep exactly — a long, flat armoured airfoil wing plate about four times as wide as it is tall: a bold steel-blue band (#2e5082 body, #4a78b0 face, #8ab8e8 lit edge) with a deep blue #1e3458 shadow edge along one long side, a single cyan sensor light (#38d8f8) near the thick inner (right) end, and two or three small amber warning stripes (#e8c048) on the outer third, 1-px near-black outline (#0a1428). The plate is SOLID and chunky: its height is a full quarter of its length (about 4:1 — never a 5.5:1 sliver, hairline wire, thin blade or tapered needle), yet it stays a SMALL horizontal chip of roughly 380 px long by 95 px thick floating dead-centre in the 512×256 frame (huge empty green bands above and below it) — most of the frame is EMPTY flat green and the background must dominate; a wing spanning edge to edge ruins the sheet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell = the whole 512×256 canvas, holding exactly ONE wing — nothing else.\n- The subject (one wing): the LOWER wing: its vertical mirror — flat dark shadow edge along the TOP, bottom edge tapering toward the blunt outer tip on the LEFT, blunt mounting end on the RIGHT. The subject lies within aspect 2.90:1 to 5.40:1.\n- CENTRING AND SIZE: the wing lies at the exact centre of the canvas, at most 430 px long and 75-115 px thick, centred VERTICALLY with at least 70 px of unbroken flat #51e018 above and below it, and at least 30 px clear to each canvas side.\n- NO guide lines, NO borders, NO frames, NO text, NO labels, NO numbers — the description above is ordering instruction only, never drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail as possible at that low resolution (rivets, panel seams, lit edge ramp), crisp hard-edged square pixels, chunky bold forms, four-to-six step shading lit from the top-left, clean saturated colours, 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}

@@ -222,7 +222,12 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // thunderhead 6, steed-foal 4, steed-chest 4, steed-snout 2; the interim tail has no
     // @flash sibling — take −17 more: 434 measured on the tree rebased onto zone F. The floor
     // moves to 400, headroom of 34 kept for zones G–I whose overrides will leave the same way.
-    expect(scaled).toBeGreaterThan(400);
+    // w15-REING89 (owner re-add ruling of 2026-10-26): the gen8/gen9 harvest's 17 enemy and
+    // bulwark rows land as natives — their 27 v1-scale base frames and the 27 @flash siblings
+    // the pipeline now derives from native art leave the pool, −54: 358 measured on the landing
+    // tree, frames replaced 1:1 at the same served sizes. The floor follows the natives to 350 —
+    // headroom for the next restored wave, loud on a bulk regression.
+    expect(scaled).toBeGreaterThan(350);
     expect(wrongPixels).toEqual([]);
   });
 

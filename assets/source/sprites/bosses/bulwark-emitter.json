@@ -1,0 +1,94 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/bulwark-emitter 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "bosses/bulwark-emitter 1",
+      "frame": {
+        "x": 27,
+        "y": 0,
+        "w": 27,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 15
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "bulwark-emitter.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 54,
+      "h": 15
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 0,
+        "direction": "forward"
+      },
+      {
+        "name": "glow",
+        "from": 0,
+        "to": 1,
+        "direction": "forward"
+      }
+    ],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 27,
+              "h": 15
+            },
+            "pivot": {
+              "x": 13,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

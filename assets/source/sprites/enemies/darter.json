@@ -1,0 +1,88 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/darter 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/darter 1",
+      "frame": {
+        "x": 21,
+        "y": 0,
+        "w": 21,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 21,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 21,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "darter.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 42,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "fly",
+        "from": 0,
+        "to": 1,
+        "direction": "forward"
+      }
+    ],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 21,
+              "h": 12
+            },
+            "pivot": {
+              "x": 10,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

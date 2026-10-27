@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/cube",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen9/e-cube/gen.png",
+      "sha256": "9eed3ceb866a32c48b77ec2745bcabb7a5ed2bd508b83b5c64c59194599c1ede",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the CUBE carrier — a bevelled violet armour cube with a glowing yellow core, flying in pincer waves.\n\nDesign identity to keep exactly — a chunky bevelled cube seen face-on with a diagonal cut at its lower-right corner: vivid violet face (#8a48e8) with a pale lilac top-left bevel (#c8a0ff), a deep indigo shadow bevel (#4a2090), and dead-centre a bright egg-yolk core (#f8e060) two pixels wide set in a small dark socket, all on a 1-px near-black outline (#1a0a2e). Solid, square, glowing.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE cube; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the cube at REST phase — the yellow core sunk in a dark square socket ringed by four inset shadow facets. The subject lies within aspect 0.70:1 to 1.35:1.\n  cell 2 = the SAME cube one step into its slow spin — outer silhouette and core unchanged, the inset facets smoothed to flat violet faces (the socket opened). The subject lies within aspect 0.70:1 to 1.35:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521206078,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T03:05:06.126Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen9/e-cube/gen.json",
+        "sidecarSha256": "55d99d68a38ccb2419cf81ab5635e156240ec4800db2fa99b3f2ee7f8fcf4653",
+        "id": "gen9/e-cube",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/cube.recipe.json",
+    "sha256": "b05021cb573f3829910bbf8594fe3721bf56b876f7020c2ed4574f4f0e09807b"
+  },
+  "edit": null,
+  "output": {
+    "png": "cube.png",
+    "sha256": "4dfeba64dee5ad78d8a0f8929ee9544b9a7d6b45e9160f8943ebdbd5b60a7f49",
+    "sidecar": "cube.json",
+    "sidecarSha256": "69cd3862d24adc8f0231752257983dc1bebf82d1e86836166d257620ac115d52",
+    "frames": 2,
+    "frameWidth": 15,
+    "frameHeight": 15,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/* sprite maps still interim/upscaled, usage-ranked): enemies/cube (2f 10×10 → 15×15 served; Direct-mode carrier cube, core spin frames) incl its auto-derived @flash sibling — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 80% over the interim animation floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the CUBE carrier — a bevelled violet armour cube with a glowing yellow core, flying in pincer waves.\n\nDesign identity to keep exactly — a chunky bevelled cube seen face-on with a diagonal cut at its lower-right corner: vivid violet face (#8a48e8) with a pale lilac top-left bevel (#c8a0ff), a deep indigo shadow bevel (#4a2090), and dead-centre a bright egg-yolk core (#f8e060) two pixels wide set in a small dark socket, all on a 1-px near-black outline (#1a0a2e). Solid, square, glowing.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE cube; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the cube at REST phase — the yellow core sunk in a dark square socket ringed by four inset shadow facets. The subject lies within aspect 0.70:1 to 1.35:1.\n  cell 2 = the SAME cube one step into its slow spin — outer silhouette and core unchanged, the inset facets smoothed to flat violet faces (the socket opened). The subject lies within aspect 0.70:1 to 1.35:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}

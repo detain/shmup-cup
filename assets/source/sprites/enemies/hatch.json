@@ -1,0 +1,94 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/hatch 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 30,
+        "h": 15
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/hatch 1",
+      "frame": {
+        "x": 30,
+        "y": 0,
+        "w": 30,
+        "h": 15
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 30,
+        "h": 15
+      },
+      "sourceSize": {
+        "w": 30,
+        "h": 15
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "hatch.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 60,
+      "h": 15
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "closed",
+        "from": 0,
+        "to": 0,
+        "direction": "forward"
+      },
+      {
+        "name": "open",
+        "from": 1,
+        "to": 1,
+        "direction": "forward"
+      }
+    ],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 30,
+              "h": 15
+            },
+            "pivot": {
+              "x": 15,
+              "y": 7
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

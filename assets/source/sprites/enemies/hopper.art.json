@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/hopper",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen8/e-hopper/gen.png",
+      "sha256": "5e338081f4604f5e56c36cee1c30e48ab92253a8061744bf1ea9f57a983fc9ba",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the HOPPER enemy — a round blue legged walker that hops along the ground.\n\nDesign identity to keep exactly — a compact round beetle-like creature: a bright blue domed shell (#3878e8) with a white highlight streak (#b8d8ff) on its upper-left, deep blue under-rim (#1c3c88), a dark eye band near the front, and thin articulated grey legs (#6a7088) sprouting from under the shell, all on a 1-px near-black outline (#101830). Body plus legs stay roughly square overall.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE hopper; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the hopper STANDING on extended legs — legs splayed down and out, body riding high over them. The subject lies within aspect 0.72:1 to 1.35:1.\n  cell 2 = the SAME hopper mid-jump — legs tucked up tight against the shell, body lowered into a compact coil. The subject lies within aspect 0.72:1 to 1.35:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521091039,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T02:43:44.225Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen8/e-hopper/gen.json",
+        "sidecarSha256": "c6af805c050ebe9817be54a0682cc312a7c7c90a16bb334edbfae892f9a3769e",
+        "id": "gen8/e-hopper",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/hopper.recipe.json",
+    "sha256": "4c5db5ec48a28a2d13a758e4b32d8f7eb5f2e408e525e6a9a0a941fcdf9c0888"
+  },
+  "edit": null,
+  "output": {
+    "png": "hopper.png",
+    "sha256": "422b2b7d4ce09a3b05e24c5a0dfc46c3187c7b6d8534f11d0f0a6f8f0ff26da5",
+    "sidecar": "hopper.json",
+    "sidecarSha256": "e0713c669d1a1ba0254e4358bdf0e559d69a185a0643cd9e678e185ec676d1f9",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 18,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/hopper (2f 18×18 served; legged walker, frame 1 legs tucked mid-jump) incl its auto-derived @flash sibling — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 53.7% over the interim animation floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the HOPPER enemy — a round blue legged walker that hops along the ground.\n\nDesign identity to keep exactly — a compact round beetle-like creature: a bright blue domed shell (#3878e8) with a white highlight streak (#b8d8ff) on its upper-left, deep blue under-rim (#1c3c88), a dark eye band near the front, and thin articulated grey legs (#6a7088) sprouting from under the shell, all on a 1-px near-black outline (#101830). Body plus legs stay roughly square overall.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE hopper; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the hopper STANDING on extended legs — legs splayed down and out, body riding high over them. The subject lies within aspect 0.72:1 to 1.35:1.\n  cell 2 = the SAME hopper mid-jump — legs tucked up tight against the shell, body lowered into a compact coil. The subject lies within aspect 0.72:1 to 1.35:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}

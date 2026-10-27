@@ -1,0 +1,40 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/bulwark-wing-bottom",
+  "category": "boss-part",
+  "frame": {
+    "width": 84,
+    "height": 21
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen8/b-wing-b/gen.png",
+      "frames": [
+        [
+          69,
+          90,
+          373,
+          82
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    42,
+    10
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+    },
+    "notes": "bosses/bulwark-wing-bottom (1f 84×21 served) — split from family row b-wings after 6 attempts (family attempt 7 of 8) — the 1 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; single frame; the sheet state probe floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: ONE armour wing of the HALCYON BULWARK boss — lower wing, a long armoured plate carrying a laser emitter.\n\nDesign identity to keep exactly — a long, flat armoured airfoil wing plate about four times as wide as it is tall: a bold steel-blue band (#2e5082 body, #4a78b0 face, #8ab8e8 lit edge) with a deep blue #1e3458 shadow edge along one long side, a single cyan sensor light (#38d8f8) near the thick inner (right) end, and two or three small amber warning stripes (#e8c048) on the outer third, 1-px near-black outline (#0a1428). The plate is SOLID and chunky: its height is a full quarter of its length (about 4:1 — never a 5.5:1 sliver, hairline wire, thin blade or tapered needle), yet it stays a SMALL horizontal chip of roughly 380 px long by 95 px thick floating dead-centre in the 512×256 frame (huge empty green bands above and below it) — most of the frame is EMPTY flat green and the background must dominate; a wing spanning edge to edge ruins the sheet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell = the whole 512×256 canvas, holding exactly ONE wing — nothing else.\n- The subject (one wing): the LOWER wing: its vertical mirror — flat dark shadow edge along the TOP, bottom edge tapering toward the blunt outer tip on the LEFT, blunt mounting end on the RIGHT. The subject lies within aspect 2.90:1 to 5.40:1.\n- CENTRING AND SIZE: the wing lies at the exact centre of the canvas, at most 430 px long and 75-115 px thick, centred VERTICALLY with at least 70 px of unbroken flat #51e018 above and below it, and at least 30 px clear to each canvas side.\n- NO guide lines, NO borders, NO frames, NO text, NO labels, NO numbers — the description above is ordering instruction only, never drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail as possible at that low resolution (rivets, panel seams, lit edge ramp), crisp hard-edged square pixels, chunky bold forms, four-to-six step shading lit from the top-left, clean saturated colours, 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  }
+}

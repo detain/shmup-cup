@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/option-hunter",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen9/e-hunter/gen.png",
+      "sha256": "9fcddffe6cf5b6ecb434917d9359c3c9440257867f2704f79c41f6e5436337c9",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the OPTION HUNTER — an armoured grabber that hunts the player's Option drones with two pincer claws.\n\nDesign identity to keep exactly — a compact violet armoured pod about 4:3 wider-than-tall: a rounded-rectangle chassis in mid violet (#8a3ad8) with lighter lilac face plates (#c890ff) and deep plum shadow edges (#4a1a7a), a horizontal crimson eye slit (#ff3860) with a small white glint (#ffe0f0) across its centre, and two slender silver-grey claw arms (#b0b0c0) reaching from its upper-left and lower-left toward the left edge — open pincers on the LEFT, the threat side; all on a 1-px near-black outline (#140a20).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE hunter; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the hunter with claws at FULL REACH — arms stretched wide toward the left, eye slit dim with the white glint at its upper edge. The subject lies within aspect 0.90:1 to 1.70:1.\n  cell 2 = the SAME hunter MID-GRAB — claws drawn in closer to the pod, eye slit blazing with the white glint dropped to its lower edge; chassis unchanged. The subject lies within aspect 0.90:1 to 1.70:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521204052,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T03:04:51.654Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen9/e-hunter/gen.json",
+        "sidecarSha256": "48d9ab05fa1849aa165e764fe98ff03d63f56410ddd949f4bad289c11bdaa3f4",
+        "id": "gen9/e-hunter",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/option-hunter.recipe.json",
+    "sha256": "8c7aa84e422610db8e5b81edb137fe73e9a6817d053d8652001197730f357886"
+  },
+  "edit": null,
+  "output": {
+    "png": "option-hunter.png",
+    "sha256": "cbcf06652b5db9d2bdfb1b2363e65e7effc42c669869405239f227215d319372",
+    "sidecar": "option-hunter.json",
+    "sidecarSha256": "ffed4f363ad18a2bca74397c90954c120f3dc22756f0e87b3c789ac06ee77f7e",
+    "frames": 2,
+    "frameWidth": 24,
+    "frameHeight": 18,
+    "colors": 7,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/* sprite maps still interim/upscaled, usage-ranked): enemies/option-hunter (2f 16×12 → 24×18 served; Option Hunter, grab pulse frames) incl its auto-derived @flash sibling — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 59.9% over the interim animation floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the OPTION HUNTER — an armoured grabber that hunts the player's Option drones with two pincer claws.\n\nDesign identity to keep exactly — a compact violet armoured pod about 4:3 wider-than-tall: a rounded-rectangle chassis in mid violet (#8a3ad8) with lighter lilac face plates (#c890ff) and deep plum shadow edges (#4a1a7a), a horizontal crimson eye slit (#ff3860) with a small white glint (#ffe0f0) across its centre, and two slender silver-grey claw arms (#b0b0c0) reaching from its upper-left and lower-left toward the left edge — open pincers on the LEFT, the threat side; all on a 1-px near-black outline (#140a20).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE hunter; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the hunter with claws at FULL REACH — arms stretched wide toward the left, eye slit dim with the white glint at its upper edge. The subject lies within aspect 0.90:1 to 1.70:1.\n  cell 2 = the SAME hunter MID-GRAB — claws drawn in closer to the pod, eye slit blazing with the white glint dropped to its lower edge; chassis unchanged. The subject lies within aspect 0.90:1 to 1.70:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}

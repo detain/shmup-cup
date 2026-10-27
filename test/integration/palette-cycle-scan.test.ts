@@ -83,7 +83,9 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
   ],
   DUNE: ['bosses/widow-head'],
   VAULT: ['bosses/regent-eye'],
-  PRISM: ['enemies/hopper'],
+  // w15-REING89: the hopper's PRISM line went — its native gen8 palette keeps the margin
+  // on its own, and the list cannot rot (the clearReserved pass moves near-ramp colours
+  // ≥ 3/255 Chebyshev from every reserved step by construction).
   // w15-C: the gold `capsule-power` flavor pill speaks capsule-bonus's colour language on
   // purpose (the shared gold band #f8d878) — the same no-cycling-layer exemption as its sibling.
   // w15-REING7: the gen7 pill landed as native art that keeps the CITADEL margin, so only the

@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/turret",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen8/gen9 harvest (w15-GEN8/GEN9 ask rounds, the PROBE-OK rows of the art-prompts/v2/gen8 and art-prompts/v2/gen9 stores)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen9/e-turret/gen.png",
+      "sha256": "f855e4e894eb04e2c50f119b6db6ffb34367b49a7fb8052b118fa383d771c2f6",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the TURRET enemy — a small armoured ground emplacement with a barrel aimed up and to the right.\n\nDesign identity to keep exactly — a squat domed gun mount about 6:5 wider-than-tall: a mid-grey armoured dome (#8890a0) with a dark slate under-rim (#4a5068), a short thick barrel rising diagonally to the upper-right in the same grey with a dark outline (#1a1030), a horizontal band of three glowing red gun ports (#e83838) across the dome's face, all on a 1-px near-black outline. Sturdy, low, bolted to the ground.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE turret; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the turret IDLE — barrel steady, gun ports a calm dim red. The subject lies within aspect 0.90:1 to 1.60:1.\n  cell 2 = the SAME turret FIRING — exactly the same pixels in exactly the same places, only recoloured: the muzzle cap at the barrel tip and the gun ports flare hot yellow (#f8d030). NO flame jet, NO smoke, NO recoil, NO extra length — the silhouette is identical to cell 1; only light changes. The subject lies within aspect 0.90:1 to 1.60:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521200000,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T03:04:21.203Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen9/e-turret/gen.json",
+        "sidecarSha256": "1ad34b3debf373ea663ee22de9d3c9b597934eb8e06f30a7f3d3f72dc5a7b510",
+        "id": "gen9/e-turret",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/turret.recipe.json",
+    "sha256": "d0c0a203d1e2eb62b1a2c6d4d8597f7b9e8c87b13b0abda331f79306a0b84eec"
+  },
+  "edit": null,
+  "output": {
+    "png": "turret.png",
+    "sha256": "ecf8a5144da2f908b716b50ec52b53330a3f61d732fdac9db930845890cbbbeb",
+    "sidecar": "turret.json",
+    "sidecarSha256": "5840116641f8a5891996efe33c17428057dc2cddb8b405750269dcb67c100390",
+    "frames": 2,
+    "frameWidth": 18,
+    "frameHeight": 15,
+    "colors": 9,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/* sprite maps still interim/upscaled, usage-ranked): enemies/turret (2f 12×10 v1 → 18×15 served; ground turret, frame 1 muzzle flash) incl its auto-derived @flash sibling — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 20.2% over the interim animation floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the TURRET enemy — a small armoured ground emplacement with a barrel aimed up and to the right.\n\nDesign identity to keep exactly — a squat domed gun mount about 6:5 wider-than-tall: a mid-grey armoured dome (#8890a0) with a dark slate under-rim (#4a5068), a short thick barrel rising diagonally to the upper-right in the same grey with a dark outline (#1a1030), a horizontal band of three glowing red gun ports (#e83838) across the dome's face, all on a 1-px near-black outline. Sturdy, low, bolted to the ground.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE turret; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the turret IDLE — barrel steady, gun ports a calm dim red. The subject lies within aspect 0.90:1 to 1.60:1.\n  cell 2 = the SAME turret FIRING — exactly the same pixels in exactly the same places, only recoloured: the muzzle cap at the barrel tip and the gun ports flare hot yellow (#f8d030). NO flame jet, NO smoke, NO recoil, NO extra length — the silhouette is identical to cell 1; only light changes. The subject lies within aspect 0.90:1 to 1.60:1.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}
