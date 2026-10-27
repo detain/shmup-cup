@@ -75,10 +75,11 @@ yellow destroys every enemy on the screen, and the red octagon switches the main
 and waves; OK does nothing in its games and **Ch ▼** switches its speed
 ([preview-build.md](preview-build.md#choosing-your-ship)). OK on the MANTA starts at once; OK on
 the KESTREL opens the **WEAPON SELECT** screen:
-four weapon types (the classic TYPE A, and TYPE B, C and D with the Spread Bomb, Tail Gun, Ripple
-Laser, 2-Way Missile, Vertical, Cyclone Laser, Photon Torpedo, Free Way and Twin Laser) or EDIT to
-mix them, how the Options fly (TRAIL, SNAKE, FORMATION or ROTATE — Ch ▲ or a held OK spreads the
-last two), what the `?` box gives (the FORCE FIELD, the SHIELD / FREE SHIELD / ROTATE pods that
+six weapon types (the classic TYPE A, TYPE B, C and D with the Spread Bomb, Tail Gun, Ripple
+Laser, 2-Way Missile, Vertical, Cyclone Laser, Photon Torpedo, Free Way and Twin Laser, and TYPE E
+and F with the FLAK CONE, RAIL LANCE, SEEKER DRONE, CHAIN ARC and SKY MARKER) or EDIT to
+mix them, how the Options fly (TRAIL, SNAKE, FORMATION, ROTATE, GUARD, ECHO or AEGIS — Ch ▲ or a
+held OK spreads FORMATION and ROTATE), what the `?` box gives (the FORCE FIELD, the SHIELD / FREE SHIELD / ROTATE pods that
 stop what touches them, or REDUCE, which shrinks the ship's weak spot) and what the `!` box does
 (it can also drop back to the basic gun, slow the ship, turn spare ships into Options or restore
 your shield), and automatic power-ups with their order — while a live preview flies your choice behind the menu

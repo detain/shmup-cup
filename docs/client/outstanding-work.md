@@ -32,7 +32,7 @@ reads in [real-assets.md](../dev/real-assets.md) and the art rows of §3.
 
 A fourth thing is worth stating once, because it colours everything below. **The music and the
 Spanish and Japanese translations are placeholders** — original, deliberate and complete (every
-sound and all 365 strings in three languages exist), but written by an agent, not composed by a
+sound and all 387 strings in three languages exist), but written by an agent, not composed by a
 musician or read by a native speaker. **The art is no longer one.** The R6-03.S3 real-art round
 closed on 2026-10-27 at the end of its detail-regeneration program: **231 of the atlas's 619
 sprites ship real AI-assisted art** (142 `.art.json` records plus the `@flash`, `@p2` and

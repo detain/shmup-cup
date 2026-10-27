@@ -69,10 +69,15 @@ Run these on both monitors, on a **release** build (`pnpm --filter @shmup/tizen 
 ## AI-content disclosure (every store)
 
 The game was built by AI agents and its v2 art round works with generative AI (plan R3), so every
-store gets a disclosure. What 2.0.0 **ships** is drawn by the repo's committed programs — the
-origin report (`node scripts/art-origins.mjs`) names no model on any sprite — but the agents wrote
-much of the text, the translations and the audio data, and the art round's AI candidates wait on the
-owner's licence decision to ship in a later drop, when the disclosure must be re-run for them. This
+store gets a disclosure. What 2.0.0 **ships** includes AI-made image art — 231 of the atlas's 619
+sprites are served from FLUX.2-dev real art under 142 committed `.art.json` provenance records
+(`node scripts/art-origins.mjs` is the report), the rest drawn by the repo's committed programs and
+pixel maps — and the agents wrote much of the text, the translations and the audio data. The owner
+ruled the FLUX licence position on **2026-10-23** (R6-D4,
+[`art-provenance.md`](../dev/art-provenance.md) §8 decision 1): this free open-source (MPL-2.0)
+distribution is what the FLUX Non-Commercial licences allow, and a BFL commercial licence
+(bfl.ai/licensing) is the condition on any **paid** distribution; re-run this section whenever the
+shipped set moves. This
 section covers all four stores, not only Samsung's; the other submission recipes are
 [`webos.md`](webos.md), [`steam.md`](steam.md) and [`web-release.md`](web-release.md). Store
 rules were read on **2026-10-17**; check them again at submission.
