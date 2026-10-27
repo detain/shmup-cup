@@ -1589,6 +1589,8 @@ export {
   replayStorageKey,
   runAssisted,
   runReplayText,
+  runSegmentFromJson,
+  runSegmentToJson,
   type ReplayLibrary,
   type ReplaySummary,
   type RunReplay,
@@ -1596,6 +1598,25 @@ export {
   type RunReplayTextKind,
   type RunSegment,
   type RunSegmentJson,
+} from './replay/index.js';
+
+// ------------------------------------------------------------------------------ R2 (v20x-TL)
+// The TV-resume checkpoint: the run's live position flushed on World births, checkpoint passes and
+// suspensions — the title's CONTINUE? row and the verified-or-checkpoint rewind read it back.
+
+export {
+  CHECKPOINT_FORMAT_VERSION,
+  CHECKPOINT_MAX_CHARS,
+  RUN_CHECKPOINT_KIND,
+  RUN_CHECKPOINT_STORAGE_KEY,
+  RunCheckpointStore,
+  buildCheckpointText,
+  classifyCheckpointText,
+  type RunCheckpointClassified,
+  type RunCheckpointInput,
+  type RunCheckpointRecord,
+  type RunCheckpointRun,
+  type RunCheckpointVerdict,
 } from './replay/index.js';
 
 export {

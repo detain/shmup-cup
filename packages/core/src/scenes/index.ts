@@ -403,6 +403,7 @@ import {
 } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
+import { buildCheckpointText, type RunCheckpointStore } from '../replay/checkpoint.js';
 import { createDemoPlayback, type DemoPlayback } from '../replay/demo.js';
 import { decodeReplay, type Replay } from '../replay/format.js';
 import {
@@ -501,17 +502,17 @@ import {
   stepWorld,
   type World,
 } from '../world/index.js';
-import { RunRecorder, RunReplayPlayback } from './replays.js';
+import { RunRecorder, RunReplayPlayback, worldStartJson } from './replays.js';
 import {
   RunFlag,
   RunState,
   awardZoneBonus,
   captureCarry,
+  CarryState,
   prepareRunWorld,
   runWorldConfig,
   tallyZone,
   worldDeaths,
-  type CarryState,
   type RunMode,
 } from './run.js';
 
@@ -1009,6 +1010,13 @@ export interface SceneFlowHost {
   readonly shareReplay?: ((text: string) => boolean) | null;
   /** The build id the flow's replays record (`__SHMUP_BUILD__`; default `'dev'` — M3-01). */
   readonly buildId?: string;
+  /**
+   * The TV-resume checkpoint store (R2 — `core/replay` {@link RunCheckpointStore}, loaded by the
+   * host before the title like the replay library): the run's live position is flushed to it on
+   * World births, checkpoint passes and suspensions, and the title offers CONTINUE? while a valid
+   * record is in hand. Omitted or `null`: no checkpointing, no row (the shell always provides it).
+   */
+  readonly checkpoint?: RunCheckpointStore | null;
 }
 
 /** The kind of a rebindable device (M2-16): what its profile drives. */
@@ -2355,6 +2363,36 @@ interface FlowControl {
   pauseSecret(code: number): boolean;
   /** The carry the last {@link FlowControl.createRunWorld} brought in (`null`: none). */
   lastCarry: CarryState | null;
+  /**
+   * The TV-resume checkpoint store (R2 — the host's, `null` without one). Lives here so the
+   * flush, the title row and the resume all reach the same cache.
+   */
+  readonly checkpointStore: RunCheckpointStore | null;
+  /** The live World's last passed checkpoint, as the flush last saw it (R2; the cp-edge trigger). */
+  lastCheckpointPassed: number;
+  /**
+   * Flushes the run's checkpoint (R2, TL-1) — a cold-path transition, never per tick. Writes when
+   * the live World's position moved (its tick, the passed checkpoint, the pending-zone edge) or
+   * when forced (a birth, a zone advance, a suspension — the last chance before a TV kill).
+   * Silent no-op without a store, during practice, or when the recorder's run is not valid.
+   *
+   * @param force - Write even when nothing moved (a suspension must always try).
+   */
+  flushCheckpoint(force: boolean): void;
+  /** Dirty key of the last flush: the live tick written (`-1` between Worlds, `-2` before any). */
+  flushTick: number;
+  /** Dirty key of the last flush: whether it landed between Worlds (the pending-zone edge). */
+  flushPendingStart: boolean;
+  /** The reused carry object {@link FlowControl.flushCheckpoint} captures the live World into. */
+  readonly flushCarry: CarryState;
+  /**
+   * Whether the store's record can start a game on this content (R2 — the title's CONTINUE? row
+   * and the resume share this one answer): campaign identity, a stage the content still has, and
+   * a passed checkpoint inside it. The record's own staleness was decided by the store at load.
+   *
+   * @returns Whether a resume can be offered.
+   */
+  checkpointResumable(): boolean;
 }
 
 /**
@@ -2976,6 +3014,10 @@ export class GameScene extends SceneBase {
     this.cardLook = campaign !== null ? 1 : 0;
     this.hud.invalidate();
     this.uiRevision++;
+    // R2 (TL-1): the World's birth is a flush edge — the record now anchors on this World, and
+    // the passed-checkpoint counter restarts with it (the cp-edge trigger below reads the new one).
+    flow.lastCheckpointPassed = world.stage === null ? -1 : world.stage.checkpoint;
+    flow.flushCheckpoint(true);
   }
 
   /**
@@ -3027,6 +3069,15 @@ export class GameScene extends SceneBase {
     stepWorld(world, input);
     recorder.check(world);
     flow.noteAssists(world);
+    // R2 (TL-1): a passed checkpoint is a flush edge — the cold write lands the new position.
+    const stage = world.stage;
+    if (stage !== null) {
+      const cp = stage.checkpoint;
+      if (cp !== flow.lastCheckpointPassed) {
+        flow.lastCheckpointPassed = cp;
+        flow.flushCheckpoint(false);
+      }
+    }
     const status = world.status;
     const run = flow.run;
     if (run.inBonus) {
@@ -10476,6 +10527,17 @@ export interface SceneFlow {
    */
   onResume(): void;
   /**
+   * The platform suspends (the app is hidden — on the Samsung TV a source switch arrives here
+   * seconds before the app dies, R2): the run's checkpoint is flushed while storage is still
+   * reachable. `createGame` calls it from `platform.lifecycle.onSuspend`.
+   */
+  onSuspend(): void;
+  /**
+   * Whether a stored checkpoint can be resumed on this content right now (R2 — TL-2): the title
+   * draws its CONTINUE? row exactly while this holds (a valid, fresh, content-matching record).
+   */
+  readonly checkpointAvailable: boolean;
+  /**
    * Raises the chosen difficulty's session hi-score (the flow starts from the save's best of each
    * difficulty's table); a lower value changes nothing.
    *
@@ -10681,6 +10743,100 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     secretShips: false,
     unlockedNow: false,
     lastCarry: null,
+    checkpointStore: host.checkpoint ?? null,
+    lastCheckpointPassed: -1,
+    // R2 TV-resume: the flush's dirty keys (tick, pending edge) and its reused carry object.
+    flushTick: -2,
+    flushPendingStart: false,
+    flushCarry: new CarryState(),
+    flushCheckpoint(force: boolean): void {
+      const store = control.checkpointStore;
+      if (store === null || run.practice) return;
+      const recorder = control.recorder;
+      if (!recorder.recording || !recorder.valid) return;
+      const segment = recorder.segment;
+      const header = segment.header;
+      if (header === null) return;
+      const world = control.game.world;
+      const pending = run.pendingStart;
+      const passed = world.stage === null ? -1 : world.stage.checkpoint;
+      // Between Worlds (the map with the next zone armed) there is no live tick to anchor on.
+      const tick = pending ? -1 : world.tick;
+      if (
+        !force &&
+        tick === control.flushTick &&
+        passed === control.lastCheckpointPassed &&
+        pending === control.flushPendingStart
+      ) {
+        return;
+      }
+      control.flushTick = tick;
+      control.lastCheckpointPassed = passed;
+      control.flushPendingStart = pending;
+      const text = buildCheckpointText({
+        buildId,
+        config: { ...header.config },
+        savedTick: tick,
+        // Between Worlds the next zone has no passed checkpoint; the map's own state is the anchor.
+        checkpointPassed: pending ? -1 : passed,
+        pendingStart: pending,
+        run: {
+          campaignId: run.campaign === null ? null : run.campaign.id,
+          zone: run.zone,
+          stage: run.stage,
+          depth: run.depth,
+          route: run.route,
+          checkpoint: run.checkpoint,
+          mode: run.mode,
+          loop: run.loop,
+          timeLimit: run.timeLimit,
+          flags: run.flags,
+          deaths: run.deaths,
+          continues: run.continues,
+          continuesAtStart: run.continuesAtStart,
+          assists: run.assists,
+          inBonus: run.inBonus,
+          bonusStage: run.bonusStage,
+          bonusReturnX: run.bonusReturnX,
+          bonusLocked: run.bonusLocked,
+          inEscape: run.inEscape,
+          escapeStage: run.escapeStage,
+        },
+        // The players as the live World holds them, in the replay start JSON's own shape.
+        carry: worldStartJson(
+          run.segmentStart,
+          captureCarry(world, control.flushCarry),
+          world.scoring.board.hiScore,
+        ),
+        tailSegment: pending ? null : segment.snapshot(world),
+      });
+      if (text === null) return; // over cap even without the tail: keep the previous record
+      void store.store(text);
+    },
+    /**
+     * Whether the store's record can start a game on this content (R2 — the title's CONTINUE? row
+     * and {@link FlowControl.beginResume} share this one answer): campaign identity, a stage the
+     * content still has, and a passed checkpoint inside it. The record's own staleness (build id,
+     * formats) was decided by the store at load; this is the content cross-check.
+     *
+     * @returns Whether a resume can be offered.
+     */
+    checkpointResumable(): boolean {
+      const store = control.checkpointStore;
+      const record = store === null ? null : store.current;
+      if (record === null) return false;
+      const runState = record.run;
+      const campaign = host.content.campaign;
+      if ((runState.campaignId === null) !== (campaign === null)) return false;
+      if (campaign !== null && runState.campaignId !== campaign.id) return false;
+      const stage = runState.stage;
+      if (stage === null) return false;
+      const stageSlot = host.content.stageIndex.get(stage);
+      const spec = stageSlot === undefined ? undefined : host.content.stages[stageSlot];
+      if (spec === undefined) return false;
+      const count = spec.checkpoints === undefined ? 0 : spec.checkpoints.length;
+      return record.pendingStart || record.checkpointPassed < count;
+    },
     noteAssists(world: World): void {
       let assists = run.assists;
       if (save.options.play.speed < 100) assists |= AssistFlag.Speed;
@@ -10710,6 +10866,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       });
       control.lastReplay = replay;
       if (replay !== null && control.replays !== null) control.replays.storeLast(replay);
+      // R2: the run ended — its checkpoint goes with it (the title row disappears).
+      const store = control.checkpointStore;
+      if (store !== null) void store.clear();
     },
     nextLoop(): void {
       run.nextLoop();
@@ -11347,6 +11506,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
         control.sfx(SFX_CUES.PauseToggle);
         stack.push(control.pause);
       }
+    },
+    onSuspend() {
+      // R2 (TL-1): the last chance before a TV kill — flush the run's position, forced.
+      control.flushCheckpoint(true);
+    },
+    get checkpointAvailable() {
+      return control.checkpointResumable();
     },
     setHiScore(value) {
       // Capped like the scoring board's, so the title and a new World show the same value.

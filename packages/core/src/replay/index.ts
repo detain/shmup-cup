@@ -67,7 +67,12 @@
  * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}, {@link MAX_KEPT_REPLAY_TEXT}); v2's R2-01:
  * the refusal of a replay v1 recorded — {@link ReplayVersionError} / {@link ReplayVersionReason}
  * (`./format.ts`), {@link classifyRunReplayText} / {@link RunReplayTextKind},
- * `ReplaySummary.legacy` and `ReplayStoreResult.Legacy` (`./run.ts`).
+ * `ReplaySummary.legacy` and `ReplayStoreResult.Legacy` (`./run.ts`); v2's R2 TV-resume (`./checkpoint.ts`):
+ * the run checkpoint {@link RunCheckpointStore} / {@link buildCheckpointText} /
+ * {@link classifyCheckpointText} ({@link RUN_CHECKPOINT_STORAGE_KEY}, {@link CHECKPOINT_MAX_CHARS},
+ * {@link CHECKPOINT_FORMAT_VERSION}, {@link RUN_CHECKPOINT_KIND}) and the segment copies
+ * {@link SegmentRecorder.snapshot} / {@link runSegmentToJson} / {@link runSegmentFromJson}
+ * (`./run.ts`).
  *
  * **Attract playback (M2-15).** The attract loop's demo play (shmup_feat.md §16) runs the bundled
  * demos (`content/demos/*.replay.json`, `core/data` `ContentDb.demos`) through this same playback
@@ -146,6 +151,8 @@ export {
   replayStorageKey,
   runAssisted,
   runReplayText,
+  runSegmentFromJson,
+  runSegmentToJson,
   type ReplayLibrary,
   type ReplaySummary,
   type RunReplay,
@@ -154,6 +161,20 @@ export {
   type RunSegment,
   type RunSegmentJson,
 } from './run.js';
+export {
+  CHECKPOINT_FORMAT_VERSION,
+  CHECKPOINT_MAX_CHARS,
+  RUN_CHECKPOINT_KIND,
+  RUN_CHECKPOINT_STORAGE_KEY,
+  RunCheckpointStore,
+  buildCheckpointText,
+  classifyCheckpointText,
+  type RunCheckpointClassified,
+  type RunCheckpointInput,
+  type RunCheckpointRecord,
+  type RunCheckpointRun,
+  type RunCheckpointVerdict,
+} from './checkpoint.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({

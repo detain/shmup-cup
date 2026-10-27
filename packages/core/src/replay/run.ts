@@ -47,12 +47,19 @@
  *
  * Pure: the storage arrives as a `PlatformStorage`; nothing here reads a clock.
  *
+ * **Storage budget with the run checkpoint (v2's R2 TV-resume).** The checkpoint
+ * (`./checkpoint.ts`) adds one key, `shmup-cup:run.checkpoint.v1` (27 characters → 54 B with the
+ * prefix): the worst case above is 1,024,438 B, and `CHECKPOINT_MAX_CHARS` 12,000 chars add
+ * 24,054 B — 1,048,492 B, inside the 1,048,576 B of all app keys. The realistic record is a few
+ * KB (the tail is what grows it; `./checkpoint.ts` drops it first when the text nears the cap).
+ *
  * **Public API** (re-exported by `./index.ts` and the package root): the list above plus
  * {@link RunSegment}, {@link RunSegmentJson}, {@link RunReplayJson}, {@link RunAction},
  * {@link ReplaySummary}, {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
  * {@link KEPT_REPLAY_SLOTS}, {@link SEGMENT_CAPACITY}, {@link MAX_RUN_SEGMENTS},
  * {@link MAX_SEGMENT_ACTIONS}, {@link RUN_REPLAY_KIND}, {@link RUN_REPLAY_FORMAT_VERSION}; R2-01:
- * {@link classifyRunReplayText}, {@link RunReplayTextKind}.
+ * {@link classifyRunReplayText}, {@link RunReplayTextKind}; R2 TV-resume:
+ * {@link SegmentRecorder.snapshot}, {@link runSegmentToJson}, {@link runSegmentFromJson}.
  *
  * **Implements.** shmup_feat.md §21 Replays — "[P2] save/share replays, replay browser,
  * fast-forward" (the browser and the fast-forward are `core/scenes`'), "header: … all sim-affecting
@@ -403,6 +410,44 @@ export class SegmentRecorder {
       actions: this.actionWords.slice(0, this.actionCount * 2),
     });
   }
+
+  /**
+   * A copy of the live segment so far, **without** sealing it or ending the recording (v2's
+   * R2 TV-resume: the run checkpoint's exact-tick tail — {@link runSegmentToJson} turns the copy
+   * into the stored JSON, and recording continues). Unlike {@link SegmentRecorder.finish} the
+   * header stays, `assists` are taken from the header as it is, and the final hash is the World's
+   * hash **now** (the seal-time hash of the copy), so a playback of the copy verifies to this very
+   * tick. `null` when idle, sealed, overflowed, or a periodic hash is missing (the tick is a
+   * multiple of {@link REPLAY_HASH_INTERVAL} whose `check` has not run — never mid-tick).
+   *
+   * @param world - The World (its hash becomes the copy's final hash).
+   * @returns The segment copy, or `null`.
+   * @remarks
+   * Allocates the copies (a cold path: the checkpoint flush at a world birth, a checkpoint pass or
+   * the platform's suspend).
+   */
+  snapshot(world: World): RunSegment | null {
+    const header = this.header;
+    if (header === null || this.sealed || this.overflow) return null;
+    const ticks = this.ticks;
+    const expected = Math.floor(ticks / REPLAY_HASH_INTERVAL);
+    if (this.hashCount < expected) return null;
+    const inputs: Uint32Array[] = [];
+    for (let p = 0; p < MAX_PLAYERS; p++) inputs.push(this.inputs[p].slice(0, ticks));
+    const replay: Replay = Object.freeze({
+      header,
+      ticks,
+      inputs: Object.freeze(inputs),
+      hashInterval: REPLAY_HASH_INTERVAL,
+      hashes: this.hashes.slice(0, expected),
+      finalHash: hashWorld(world),
+    });
+    return Object.freeze({
+      replay,
+      start: this.start,
+      actions: this.actionWords.slice(0, this.actionCount * 2),
+    });
+  }
 }
 
 /**
@@ -431,6 +476,53 @@ export function encodeRunReplay(run: RunReplay): RunReplayJson {
     assists: run.assists,
     segments,
   };
+}
+
+/**
+ * Encodes one segment as plain JSON ({@link RunSegmentJson}) — the same element
+ * {@link encodeRunReplay} writes per segment, on its own (v2's R2 TV-resume: the run checkpoint's
+ * exact-tick tail). Allocates (a cold path).
+ *
+ * @param segment - The segment.
+ * @returns The document.
+ */
+export function runSegmentToJson(segment: RunSegment): RunSegmentJson {
+  return {
+    replay: encodeReplay(segment.replay),
+    start: segment.start,
+    actions: Array.from(segment.actions),
+  };
+}
+
+/**
+ * Reads back a {@link runSegmentToJson} document (validating the replay through
+ * {@link decodeReplay}: a v1 or foreign-frame recording throws {@link ReplayVersionError}, a
+ * malformed one a `RangeError`). Allocates (a cold path).
+ *
+ * @param data - The decoded JSON document.
+ * @returns The segment (its actions a fresh `Uint32Array`).
+ * @throws {RangeError} For a document that is not a segment, or through {@link decodeReplay}.
+ */
+export function runSegmentFromJson(data: unknown): RunSegment {
+  if (!isRecord(data)) throw new RangeError('run segment: not an object');
+  const start = data.start;
+  if (start !== null && !isRecord(start)) throw new RangeError('run segment: bad start');
+  const actions = data.actions;
+  if (!Array.isArray(actions)) throw new RangeError('run segment: actions must be an array');
+  const words = new Uint32Array(actions.length);
+  const items = actions as unknown[];
+  for (let i = 0; i < items.length; i++) {
+    const value = items[i];
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 0xffffffff) {
+      throw new RangeError(`run segment: action word ${i} is not a uint32`);
+    }
+    words[i] = value;
+  }
+  return Object.freeze({
+    replay: decodeReplay(data.replay),
+    start: start ?? null,
+    actions: words,
+  });
 }
 
 /**

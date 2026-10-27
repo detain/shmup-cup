@@ -194,6 +194,7 @@ import {
   defineModule,
   loadSave,
   parseSave,
+  RunCheckpointStore,
   type ContentFile,
   type Game,
   type GameConfig,
@@ -1537,6 +1538,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   // The saved replays (M3-01): read before the title too (an unreadable slot is empty).
   const replays = createReplayLibrary(platform.storage);
   await replays.load();
+  // The TV-resume checkpoint (R2): read before the title (a stale record deletes itself at load).
+  const checkpoint = new RunCheckpointStore(platform.storage, options.buildId ?? 'dev');
+  await checkpoint.load();
   applyAudioOptions(audio, save.options.audio);
   const profiles = options.inputProfiles ?? null;
   let profileChoices: readonly InputProfileChoice[] = [];
@@ -1590,6 +1594,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             replays,
             shareReplay: options.shareReplay ?? null,
             buildId: options.buildId ?? 'dev',
+            // R2 (TL-1): the TV-resume checkpoint store, read before the title.
+            checkpoint,
           }
         : {},
     );

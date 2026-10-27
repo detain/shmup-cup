@@ -83,6 +83,7 @@ import {
   type SceneStart,
   type SoundTestSetup,
 } from '../scenes/index.js';
+import type { RunCheckpointStore } from '../replay/checkpoint.js';
 import type { ReplayLibrary } from '../replay/run.js';
 import type { SaveStore } from '../save/index.js';
 import { createWorld, stepWorld, type World } from '../world/index.js';
@@ -308,6 +309,12 @@ export interface GameOptions {
   readonly shareReplay?: ((text: string) => boolean) | null;
   /** The build id the scene flow's replays record (`__SHMUP_BUILD__`; default `'dev'` — M3-01). */
   readonly buildId?: string;
+  /**
+   * The TV-resume checkpoint store (R2 — `core/replay` `RunCheckpointStore`, loaded by the host):
+   * the scene flow flushes the run's live position into it and offers the title's CONTINUE? row
+   * from it. Omitted or `null`: no checkpointing. Ignored for bare gameplay.
+   */
+  readonly checkpoint?: RunCheckpointStore | null;
 }
 
 /**
@@ -377,6 +384,7 @@ export function createGame(
             replays: options.replays ?? null,
             shareReplay: options.shareReplay ?? null,
             buildId: options.buildId ?? 'dev',
+            checkpoint: options.checkpoint ?? null,
           },
           start,
         );
@@ -570,6 +578,8 @@ export function createGame(
 
   platform.lifecycle.onSuspend(() => {
     state.suspended = true;
+    // R2 (TL-1): a hidden TV app may die any second — flush the run's checkpoint first.
+    if (flow !== null) flow.onSuspend();
   });
   platform.lifecycle.onResume(() => {
     state.suspended = false;
