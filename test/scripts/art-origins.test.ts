@@ -393,9 +393,9 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // forty-two (the never-designed batch's landed quartets — the code-class halo
     // record joins too: its recorded source is still FLUX.2-dev, so it is
     // ai-assisted like the rest) — the fixture gyre stands in for the
-    // ingested one; REING-6's ten gen6 shot records joined first (the two re-landed options
-    // kept their own), so the copy lands eighty-nine live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(93);
+    // ingested one; REING-6's fourteen gen6 records joined (the two re-landed options kept
+    // their own), so the copy lands ninety-three live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(97);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -416,16 +416,16 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // depth-mine and gulper, the S3 cross-zone pass's kestrel, manta, pod, orb,
       // stolen, explosion-small, debris and spark, REING1's terrain-prism-v2 and
       // black-hole, REING2's capsule and capsule-blue, GEN4's forty-two
-      // never-designed drops and REING-6's ten gen6 shot sprites (the re-landed orb and
-      // stolen keep their records) —
+      // never-designed drops and REING-6's fourteen gen6 sprites (the re-landed orb and
+      // stolen keep their records; the ten shots and the four terrain-v2 sheets are new) —
       // with forty-nine derived @flash
       // sprites (the interim tail has none, the S3 drops are player/option/item/fx art
       // that never flashes; the capsules never flash either; GEN4's enemies, bosses,
       // decor and glow vents flash) and the two crafts' derived
-      // @p2 sprites: one hundred forty live sprites, and the fixture tree lands
-      // one hundred forty again — its pair adds the drone and the glow while the
+      // @p2 sprites: one hundred forty-four live sprites, and the fixture tree lands
+      // one hundred forty-four again — its pair adds the drone and the glow while the
       // fixture gyre supersedes zone H's ingested pair.
-      sprites: 140,
+      sprites: 144,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

@@ -1,0 +1,175 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "tiles/terrain-vault-v2",
+  "category": "tile",
+  "frame": {
+    "width": 12,
+    "height": 12
+  },
+  "frameCount": 23,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen6/t-vault/gen.png",
+      "frames": [
+        [
+          0,
+          0,
+          192,
+          192
+        ],
+        [
+          192,
+          0,
+          192,
+          192
+        ],
+        [
+          384,
+          0,
+          192,
+          192
+        ],
+        [
+          576,
+          0,
+          192,
+          192
+        ],
+        [
+          768,
+          0,
+          192,
+          192
+        ],
+        [
+          960,
+          0,
+          192,
+          192
+        ],
+        [
+          0,
+          192,
+          192,
+          192
+        ],
+        [
+          192,
+          192,
+          192,
+          192
+        ],
+        [
+          384,
+          192,
+          192,
+          192
+        ],
+        [
+          576,
+          192,
+          192,
+          192
+        ],
+        [
+          768,
+          192,
+          192,
+          192
+        ],
+        [
+          960,
+          192,
+          192,
+          192
+        ],
+        [
+          0,
+          384,
+          192,
+          192
+        ],
+        [
+          192,
+          384,
+          192,
+          192
+        ],
+        [
+          384,
+          384,
+          192,
+          192
+        ],
+        [
+          576,
+          384,
+          192,
+          192
+        ],
+        [
+          768,
+          384,
+          192,
+          192
+        ],
+        [
+          960,
+          384,
+          192,
+          192
+        ],
+        [
+          0,
+          576,
+          192,
+          192
+        ],
+        [
+          192,
+          576,
+          192,
+          192
+        ],
+        [
+          384,
+          576,
+          192,
+          192
+        ],
+        [
+          576,
+          576,
+          192,
+          192
+        ],
+        [
+          768,
+          576,
+          192,
+          192
+        ]
+      ]
+    }
+  ],
+  "outline": false,
+  "anchor": [
+    0,
+    0
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    },
+    "notes": "w15-REING6 (gen6 row t-vault): the 23 terrain tiles of the v2 zone-F (CELL VAULT) tileset in the tileset-JSON name order, drawn full-bleed on the 1152x768 opaque contact grid (no key, no guide ink - probe-verified 0% flat-key per cell, 0 boundary ink). Cell 24 of the 24-cell sheet is the declared crop-copy and is dropped: the shipped sprite holds 23 frames. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+  },
+  "key": {
+    "mode": "none"
+  },
+  "collision": {
+    "tileset": "content/tilesets/terrain-vault.tileset.json",
+    "mode": "clip-to-mask"
+  }
+}

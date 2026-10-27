@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "tiles/terrain-vault-v2",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/t-vault/gen.png",
+      "sha256": "482cdaa71b6e10f062b7c36d7d1578126fac4f925557a6a846fc91d2b702f262",
+      "format": "png",
+      "width": 1152,
+      "height": 768,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "EDIT the reference image(s). Keep this exact design identity — the colours, rock forms, strata and surface textures of the material swatch in Reference image 1. Chosen CELL VAULT terrain material: living green tissue of packed cells in a moss-to-jade ramp with pale nuclei; flat orthographic front-on wall surfaces, chunky 12-pixel-tile scale, three-to-four step shading ramps lit from the top-left.\n\nRebuild it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 24 equal square cells forming a full 6-columns-by-4-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid.\n- Each cell is one named cell vault tile in this exact reading order (24 tiles): cell 1 = solid, cell 2 = floor, cell 3 = ceiling, cell 4 = wall-left, cell 5 = wall-right, cell 6 = slope-up, cell 7 = slope-down, cell 8 = slope-up-low, cell 9 = slope-up-high, cell 10 = slope-down-high, cell 11 = slope-down-low, cell 12 = ceil-slope-up, cell 13 = ceil-slope-down, cell 14 = ceil-slope-up-low, cell 15 = ceil-slope-up-high, cell 16 = ceil-slope-down-high, cell 17 = ceil-slope-down-low, cell 18 = brick, cell 19 = cube, cell 20 = tissue, cell 21 = tissue-live, cell 22 = calcified, cell 23 = nodule, cell 24 = nodule.\n- DECLARED COPIES: cell 24 is an EXACT copy of cell 23 (both show nodule).\n- The sheet canvas measures EXACTLY 1152×768 px.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- Every cell is a fully painted tile face — solid stone, slope or decor material reaching all four cell edges where the named tile is a full-mask tile; slope and edge tiles keep their painted material inside the cell with the empty part of the cell showing the zone backdrop rock, never flat key colour, never a single uniform hue.\n- Each of the 24 cells is visually DIFFERENT from its reading-order neighbours (except the declared copies): different strata, edges, cracks or decor — a repeated flat texture ruins the sheet.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, 1-px near-black navy outline only on open edges, tiles meet seamlessly, no perspective, no 3D bevels, no anti-aliasing.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520032390,
+      "size": "1152x768",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:40:24.087Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/t-vault/gen.json",
+        "sidecarSha256": "e81ffb832577b844e08784a23f1daaf8795e72c3b930c9ec02393bb079522a9f",
+        "id": "gen6/t-vault",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/tiles/terrain-vault-v2.recipe.json",
+    "sha256": "d376a5357f749cc5770cba78d4026a84b3585c568b4efcbb3d45ba456216eb84"
+  },
+  "edit": null,
+  "output": {
+    "png": "terrain-vault-v2.png",
+    "sha256": "09c68b3c59a384afa3eac1f43eececb2af2b3f752a278e60c1cd0f863b9a06f0",
+    "sidecar": "terrain-vault-v2.json",
+    "sidecarSha256": "ecd4c22db366199c3f968bc23693d8783a80bebe6903ea9e792b8a80b1fc9a95",
+    "frames": 23,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row t-vault): the 23 terrain tiles of the v2 zone-F (CELL VAULT) tileset in the tileset-JSON name order, drawn full-bleed on the 1152x768 opaque contact grid (no key, no guide ink - probe-verified 0% flat-key per cell, 0 boundary ink). Cell 24 of the 24-cell sheet is the declared crop-copy and is dropped: the shipped sprite holds 23 frames. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}
