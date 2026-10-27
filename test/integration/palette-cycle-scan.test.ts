@@ -86,7 +86,9 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
   PRISM: ['enemies/hopper'],
   // w15-C: the gold `capsule-power` flavor pill speaks capsule-bonus's colour language on
   // purpose (the shared gold band #f8d878) — the same no-cycling-layer exemption as its sibling.
-  CITADEL: ['items/capsule-bonus', 'items/capsule-power'],
+  // w15-REING7: the gen7 pill landed as native art that keeps the CITADEL margin, so only the
+  // bonus jewel still speaks the shared gold band (the list cannot rot).
+  CITADEL: ['items/capsule-bonus'],
   ABYSS: [
     'bg/brine-sea',
     'bosses/king-lure',

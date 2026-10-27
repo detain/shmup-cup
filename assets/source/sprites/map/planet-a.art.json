@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "map/planet-a",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/a-planet-a/gen.png",
+      "sha256": "17ec2d998d6d4d95c703979dd4cf4c19da98e03fda08d200bda61c41924c88d3",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone A (AZURE VERGE): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — an ocean world of layered blues (deep navy #0c1a3c shadow, #173466, #2e5a94, bright #5a9ee0 toward the lit side): irregular dark-teal-green continent masses (#2a5a58 with #4a9a7a lit edges and a pale #8ad0a8 coast fringe), a bright white-ice polar cap (#d8fff4) across the top, and a few short flat white cloud dashes over the sea. a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the AZURE VERGE zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521000000,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:37:35.324Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/a-planet-a/gen.json",
+        "sidecarSha256": "d7fdc2f7c2fd37edac1c75b01744e29cb4c873d9126fed7a0a7495beddc95db3",
+        "id": "gen7/a-planet-a",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/map/planet-a.recipe.json",
+    "sha256": "a3ad8ffe3b4966f84eff45fa0cf5f334d96058d7bf56fb5a0fab818da661a525"
+  },
+  "edit": null,
+  "output": {
+    "png": "planet-a.png",
+    "sha256": "52f9df9fc3fa780954ce95dc566a5443ba57224c1b54ec531dcfcd9a8bf7a670",
+    "sidecar": "planet-a.json",
+    "sidecarSha256": "b12ee1b5f43906a74caa88f0c43854df1ae4a9cf6b5dc31191a43a57b0a8ff1c",
+    "frames": 1,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 31,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row a-planet-a): the AZURE VERGE planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

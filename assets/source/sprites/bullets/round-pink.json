@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "bullets/round-pink 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 11,
+        "h": 11
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 11,
+        "h": 11
+      },
+      "sourceSize": {
+        "w": 11,
+        "h": 11
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "round-pink.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 11,
+      "h": 11
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 11,
+              "h": 11
+            },
+            "pivot": {
+              "x": 5,
+              "y": 5
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

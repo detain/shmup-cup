@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bullets/round-pink",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/e-round-pink/gen.png",
+      "sha256": "48032aa546a226d8d879d67546dacdf00ab19441b38b39b3476fd24f6ce3a701",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: one enemy bullet of the round family: a single compact plasma ball — the most-seen sprite of the game.\n\nDesign identity to keep exactly — A dense glowing energy ball with hard stepped pixel edges (never a soft blur): hot pink plasma sphere: #e878b8 body, deep rose #8a2a5a shadow side, bright #ffd0ec lit edge, a small white specular dot top-left, concentric posterised shading rings lit from the top-left, a 1-px near-black outline. Perfectly circular, chunky, unmistakably a hostile projectile.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the round-pink enemy bullet The subject is ONE large centred figure filling only about two thirds of the cell, aspect ratio about 1.0:1 (0.7:1 to 1.4:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521029364,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:46:59.809Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/e-round-pink/gen.json",
+        "sidecarSha256": "673d15d14987646e93e3b5ca0c723332c1ad5391b8a5bdb3c233e209bb98e102",
+        "id": "gen7/e-round-pink",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bullets/round-pink.recipe.json",
+    "sha256": "ead390bfbd9040e7d5c5c1e25f25a4a944ac52df7464c20e3644d151569d604d"
+  },
+  "edit": null,
+  "output": {
+    "png": "round-pink.png",
+    "sha256": "a69cf5b2c454fb9e524870278f2b3a00fc57bd1679b445647f6b7cde39ac8aca",
+    "sidecar": "round-pink.json",
+    "sidecarSha256": "5951f62e973404b232fa3c586f63ebe7ccbcc971539ef6bb2fdfad9aac445e71",
+    "frames": 1,
+    "frameWidth": 11,
+    "frameHeight": 11,
+    "colors": 5,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row e-round-pink): the magenta round-shot body, its subject bbox widened 6 px, contain-fit into the 11x11 slot; the pipeline's W5-13 recolour derives the colour-blind @palette siblings from the table body colour, as for every bullet. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

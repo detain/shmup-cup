@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "tiles/terrain-ridge-v2",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/f-ridge36/gen.png",
+      "sha256": "bd4e400be1faa3dd95fc497d56df885c4cb42cd97199c9b980ff0e15c5092165",
+      "format": "png",
+      "width": 1728,
+      "height": 768,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art terrain material study: frost-bitten slate rock with pale ice-blue facets and snow in the cracks; flat orthographic front-on wall surfaces, chunky 12-pixel-tile scale, rich multi-step shading ramps lit from the top-left, slate greys #14202e-#5d779f with frost rims #b8c8dc and near-black #0b1420 crevices.\n\nDraw it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 equal square cells forming a full 9-columns-by-4-rows grid EDGE TO EDGE (nine tiles across, four rows down — a WIDE sheet, not a square one) — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid.\n- Each cell is one named tempest ridge storm-granite tile in this exact reading order (36 tiles): cell 1 = solid, cell 2 = floor, cell 3 = ceiling, cell 4 = wall-left, cell 5 = wall-right, cell 6 = slope-up, cell 7 = slope-down, cell 8 = slope-up-low, cell 9 = slope-up-high, cell 10 = slope-down-high, cell 11 = slope-down-low, cell 12 = ceil-slope-up, cell 13 = ceil-slope-down, cell 14 = ceil-slope-up-low, cell 15 = ceil-slope-up-high, cell 16 = ceil-slope-down-high, cell 17 = ceil-slope-down-low, cell 18 = brick, cell 19 = cube, cell 20 = tissue, cell 21 = solid-2, cell 22 = solid-3, cell 23 = floor-2, cell 24 = floor-3, cell 25 = ceiling-2, cell 26 = corner-outer-left, cell 27 = corner-outer-right, cell 28 = corner-inner-left, cell 29 = corner-inner-right, cell 30 = ceil-corner-outer, cell 31 = ceil-corner-inner, cell 32 = brick-crack, cell 33 = brick-crack-2, cell 34 = decor-scree, cell 35 = decor-ice-patch, cell 36 = decor-pine.\n- The sheet canvas measures EXACTLY 1728×768 px.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- The 36 cells together form ONE continuous rock cliff wall: strata bands, cracks and frost seams RUN ACROSS the cell boundaries (a band leaving a cell at its right edge continues at the same height in the next cell), so NO straight seam, groove or line may ever follow the cell grid — the grid must be invisible.\n- BOUNDARY LAW (most important): along every internal cell boundary the two adjoining faces must DIFFER — a different rock tone, a crossing crack, a frost patch — so that no single row or column of pixels is uniform all along any grid line; the painted rock must break every potential seam. In particular, no straight painted groove, mortar line, frost seam or shadow may ever run along the vertical 192-px boundaries or the horizontal 192-px boundaries of the 9×4 grid.\n- Every cell is a fully painted tile face — solid stone, slope or decor material reaching all four cell edges where the named tile is a full-mask tile; slope and edge tiles keep their painted material inside the cell with the empty part of the cell showing the zone backdrop rock, never flat key colour, never a single uniform hue.\n- The six corner tiles (cells 26-31) each paint a hard frost-rimmed rock diagonal: cells 26/27 put the convex rock corner at bottom-left / bottom-right (frost cap along the diagonal, backdrop rock beyond it); cells 28/29 are concave wall-meets-floor corners (rock fills an L opening right / left); cells 30/31 are the same two corner kinds hung from the ceiling (rock mass at the top, diagonal frost rim below).\n\n- Each of the 36 cells is visually DIFFERENT from its reading-order neighbours: different strata, edges, cracks or decor — a repeated flat texture ruins the sheet.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, a rich four-to-six step shading ramp lit from the top-left, careful rock-material detail, clean saturated colours, 1-px near-black outline only on open edges, tiles meet seamlessly, no perspective, no 3D bevels, no anti-aliasing.\nLAYOUT NOTE: the 36 tiles read left-to-right, then top-to-bottom across the nine-across, four-deep grid — cell 1 is the top-left, cell 36 the bottom-right.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521083039,
+      "size": "1728x768",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T02:26:12.983Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/f-ridge36/gen.json",
+        "sidecarSha256": "363a85c2842a481a8e4845f153cd9a73165810d6c7eecc06a5b24fdf70eb60cc",
+        "id": "gen7/f-ridge36",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/tiles/terrain-ridge-v2.recipe.json",
+    "sha256": "4548dfdd70d47298411f4d8ce3537234719cce20b02e27ee7cd4a8a77378e296"
+  },
+  "edit": null,
+  "output": {
+    "png": "terrain-ridge-v2.png",
+    "sha256": "22d8af6eabb279273961bd0dda83bbc91a953d2d5c5321b88f37126bd3a1b25d",
+    "sidecar": "terrain-ridge-v2.json",
+    "sidecarSha256": "2160ddd59a94f38b26ba13734b5a6088c0e313e856e0a91ad007a75e2e621853",
+    "frames": 36,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row f-ridge36, the GEN-7L ROW-MAJOR cure): the 36 terrain tiles of the v2 zone-E (TEMPEST RIDGE) tileset in the tileset-JSON name order, drawn full-bleed on the 1728x768 opaque contact grid in row-major order (no key, no guide ink - probe-verified 36/36 unique cells, 0% alpha and 0% key-green px). The tileset names 30 of the 36 frames; the six corner-variant cells (26-31, 1-based) keep their art un-named, as in every zone tileset landing. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

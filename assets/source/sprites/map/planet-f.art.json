@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "map/planet-f",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/a-planet-f/gen.png",
+      "sha256": "a5714a4f6d494dd4976186335bc620c43ac6ec307c416202c0eab501033e1c7d",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone F (CELL VAULT): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — a living green world (#14241a shadow, #1c2a22, #2c402c, lit #4e7a5e): organic membrane blobs with soft inner shading (#3a5a48, #5a8468, #6e9a7a), each carrying a tiny pale glowing nucleus (#e8f0c8) at its centre, separated by very dark vein membranes (#07100a); a faint #8ab8a0 rim light. a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the CELL VAULT zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521005065,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:38:24.710Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/a-planet-f/gen.json",
+        "sidecarSha256": "0db177d1c67db509784b45b74eba8b54577c0a6b1b128065bb99b564495046a8",
+        "id": "gen7/a-planet-f",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/map/planet-f.recipe.json",
+    "sha256": "294e2d1a7838b32dc8104f5ab3511232eebf460e4e59dea36d17f26353bc476e"
+  },
+  "edit": null,
+  "output": {
+    "png": "planet-f.png",
+    "sha256": "bdd036ab4bf1e65659e7d9b1038fcf16dee9922d05b9d36ae4424bd2fd8b5c33",
+    "sidecar": "planet-f.json",
+    "sidecarSha256": "0259b0f278960e8708d269214af66adad859da1d12a336f4ce9dd87765af55cb",
+    "frames": 1,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row a-planet-f): the CELL VAULT planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

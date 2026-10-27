@@ -21,11 +21,13 @@ import { BOOT_TIMEOUT_MS, tap, waitTicks } from './ticks.js';
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
 
-/** Body colours of the standard palette (`scripts/assets/procedural/bullets.mjs`). */
+/** Body colours of the standard palette — since w15-REING7 the landed gen7 round art (the
+ * non-standard palettes keep the `scripts/assets/procedural/palettes.mjs` table colours,
+ * which the pipeline's W5-13 recolour writes over the override). */
 const STANDARD = [
-  [0xff, 0x5a, 0xa0],
-  [0xff, 0x3a, 0x3a],
-  [0xb8, 0x4c, 0xff],
+  [0xfd, 0x02, 0x7d],
+  [0xd2, 0x01, 0x00],
+  [0xc5, 0x08, 0xd1],
 ] as const;
 
 /**

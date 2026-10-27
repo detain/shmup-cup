@@ -17,11 +17,13 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
-/** Body colours of the bullet readability palette (`scripts/assets/procedural/bullets.mjs`). */
+/** Body colours of the bullet readability palette — since w15-REING7 the standard family of the
+ * landed gen7 round art (its @palette variants keep the table colours, recoloured by the
+ * pipeline's W5-13 pass); was `scripts/assets/procedural/bullets.mjs`'s flat bodies. */
 const BULLET_COLOURS = [
-  [0xff, 0x5a, 0xa0],
-  [0xff, 0x3a, 0x3a],
-  [0xb8, 0x4c, 0xff],
+  [0xfd, 0x02, 0x7d],
+  [0xd2, 0x01, 0x00],
+  [0xc5, 0x08, 0xd1],
 ] as const;
 
 /** Bullet-coloured pixels of one screenshot. */

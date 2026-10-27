@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "map/planet-i 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 27
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 27,
+        "h": 27
+      },
+      "sourceSize": {
+        "w": 27,
+        "h": 27
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "planet-i.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 27,
+      "h": 27
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 27,
+              "h": 27
+            },
+            "pivot": {
+              "x": 13,
+              "y": 13
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

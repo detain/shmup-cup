@@ -1,0 +1,40 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "map/planet-f",
+  "category": "ui",
+  "frame": {
+    "width": 27,
+    "height": 27
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen7/a-planet-f/gen.png",
+      "frames": [
+        [
+          88,
+          93,
+          335,
+          330
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    13,
+    13
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+    },
+    "notes": "w15-REING7 (gen7 row a-planet-f): the CELL VAULT planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+  },
+  "key": {
+    "mode": "green"
+  }
+}

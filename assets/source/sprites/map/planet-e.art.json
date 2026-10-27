@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "map/planet-e",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/a-planet-e/gen.png",
+      "sha256": "34af44686dee4965727c5e47cc3cc2a9bb47858de1a1904a9a94150ffc0e9600",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone E (TEMPEST RIDGE): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — a storm-grey granite world (#14202e shadow, #26304a, #3c4658, lit #5d779f, rim #9ab0cc): near-black squall bands (#0b1420) swept diagonally across the sphere, pale cold cloud puffs (#8aa0ba with #b8c8dc tops), and a few small yellow-white lightning streaks (#f8f0a0) inside the squall bands. a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the TEMPEST RIDGE zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521004052,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:38:14.877Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/a-planet-e/gen.json",
+        "sidecarSha256": "7d8e13a391928b37d05703b19344b65fe3aeddea5eab5d6b6a7f8d225d3e91b5",
+        "id": "gen7/a-planet-e",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/map/planet-e.recipe.json",
+    "sha256": "84ed98af360bb23c3c69050e6f1987b17c191aef640064fce44ca36bf580aada"
+  },
+  "edit": null,
+  "output": {
+    "png": "planet-e.png",
+    "sha256": "4770bcfa49ee383a88e4370800c614726c43335c7e1935e194477d1939f9b8ef",
+    "sidecar": "planet-e.json",
+    "sidecarSha256": "fa0e8246e0654c9322b8df3116d84e479b32c1d266de0b6c3e6bdb53dcd36616",
+    "frames": 1,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row a-planet-e): the TEMPEST RIDGE planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

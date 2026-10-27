@@ -304,7 +304,11 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     expect(kinds.p2).toBe(
       sprites.filter((s) => s.origin.startsWith('p2:') && baseIsProcedural(s.origin)).length,
     );
-    expect(kinds.palette ?? 0).toBe(sprites.filter((s) => s.origin.startsWith('palette:')).length);
+    // Likewise the colour-blind @palette siblings of a recorded base (w15-REING7: the three
+    // gen7 round bodies landed with records, so their variants ride the record, not procedural).
+    expect(kinds.palette ?? 0).toBe(
+      sprites.filter((s) => s.origin.startsWith('palette:') && baseIsProcedural(s.origin)).length,
+    );
   });
 
   it('every model that made shipped art is in the model table (none today)', () => {
@@ -316,8 +320,9 @@ describe('R3-05 — the origin report on the shipped tree', () => {
   it('prints the tallies by origin × kind and by served model, and one row per sprite', () => {
     const text = formatOriginReport(report);
     expect(text).toContain('Shipped sprites by origin and kind:');
+    // The palette column joins the table once any @palette sibling rides a record (w15-REING7).
     expect(text).toMatch(
-      /\n {2}origin +generator +pixel-map +font +flash +p2(?: +record)? +total\n/,
+      /\n {2}origin +generator +pixel-map +font +flash +p2(?: +palette)?(?: +record)? +total\n/,
     );
     expect(text).toContain('Shipped sprites by served model (as a source or an edit reference):');
     expect(text).toMatch(PASSING_SUMMARY);
@@ -397,8 +402,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // their own), so the copy lands ninety-three live plus five minus one. w15-ENRICH-A's three
     // records joined (items/bonus and items/one-up — gen6 rows REING6 stopped at the pool floor; the
     // option hunter went with them and was dropped in review, see the w15-ENRICH-A report), so the
-    // copy lands ninety-five live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(99);
+    // copy lands ninety-five live plus five minus one. w15-REING7's eighteen gen7 records joined
+    // (the nine zone-map planets, the four capsule pills, the three round bodies, the flak
+    // casing and the 36-tile ridge sheet), so the copy lands one hundred thirteen live
+    // plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(117);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -429,8 +437,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // decor and glow vents flash) and the two crafts' derived
       // @p2 sprites: one hundred forty-six live sprites, and the fixture tree lands
       // one hundred forty-six again — its pair adds the drone and the glow while the
-      // fixture gyre supersedes zone H's ingested pair.
-      sprites: 146,
+      // fixture gyre supersedes zone H's ingested pair. w15-REING7's eighteen gen7 override
+      // sprites join, and the round bodies' records pull their nine colour-blind @palette
+      // siblings over from procedural too — one hundred seventy-three live, and the fixture
+      // tree lands one hundred seventy-three again.
+      sprites: 173,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

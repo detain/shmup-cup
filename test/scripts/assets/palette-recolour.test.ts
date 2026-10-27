@@ -100,6 +100,13 @@ describe('R3-03.V5 — palette variants recolour the PNG override', () => {
       }
     }
     writeFileSync(join(spritesDir, 'bullets', 'round-purple.png'), encodePng(round));
+    // w15-REING7: the name now carries a real-art override in the copied source, so the fixture
+    // rewrites the sidecar to its synthetic strip too (as oval-red above) — the shipped 11×11
+    // frame would not fit the 7×7 picture.
+    writeFileSync(
+      join(spritesDir, 'bullets', 'round-purple.json'),
+      JSON.stringify({ frames: [{ frame: { x: 0, y: 0, w: 7, h: 7 } }], meta: {} }),
+    );
 
     // lasers/bend-purple: one 11×11 frame, a 3×3 core with a body pixel at its centre.
     const bend = createImage(11, 11);
@@ -266,7 +273,9 @@ describe('R3-03.V5 — palette variants recolour the PNG override', () => {
     const origins = new Map(atlas.sprites.map((s) => [s.name, s.origin]));
     expect(origins.get('bullets/needle-red@deuteranopia')).toBe('procedural:palettes');
     expect(origins.get('lasers/bend-red@deuteranopia')).toBe('procedural:palettes');
-    expect(origins.get('bullets/round-pink@tritanopia')).toBe('procedural:palettes');
+    // w15-REING7: `bullets/round-pink` now carries the gen7 override, so its variants ride the
+    // record (the synthetic purple fixture above asserts the recolour itself).
+    expect(origins.get('bullets/round-pink@tritanopia')).toBe('palette:bullets/round-pink');
     // The needle keeps its procedural geometry (an override would replace the frames).
     expect(atlas.manifest.frames['bullets/needle-red@deuteranopia#0'].w).toBe(17);
     // And the standard sprites themselves never change colour.

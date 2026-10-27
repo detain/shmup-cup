@@ -46,8 +46,19 @@
  * not move: every new native draws in the slot the upscaled frame held, and the bundle's gzip
  * and dist rows still stand under their real ceilings. Headroom 1,025 B kept — a bulk colour
  * regression still trips this cap loudly.
+ *
+ * **w15-REING7 (the same owner re-add ruling, dated 2026-10-26): raised 309,500 → 320,000.**
+ * The gen7 harvest's 18 common-page rows — the nine zone-map planets (native 31/32-colour art,
+ * new names), the four capsule pills, the three round-shot bodies and the flak casing — replace
+ * upscaled flat frames with richer native palettes that compress worse; the page measures
+ * **318,768 B** on this landing (+10,293 B over ENRICH-A's 308,475 B). The zone-E page moves
+ * 49,219 → 59,194 B with its 36 native ridge tiles, under its own untouched cap. The AREA law
+ * holds again: every row draws in the slot the upscaled frame held (619 sprites, 2,200 frames
+ * unchanged), so the stand-in band and the TV residency budget do not move, and the bundle's
+ * gzip and dist rows still stand under their real ceilings. Headroom 1,232 B kept — a bulk
+ * colour regression still trips this cap loudly.
  */
-export const ATLAS_COMMON_PNG_CAP = 309_500;
+export const ATLAS_COMMON_PNG_CAP = 320_000;
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
  * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a

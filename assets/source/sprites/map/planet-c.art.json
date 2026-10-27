@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "map/planet-c",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/a-planet-c/gen.png",
+      "sha256": "440013c2ebeb222f4350f9a01bb85038b3a403347fc93cb9635119424654bbf0",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone C (DUNE EXPANSE): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — a desert world in amber bands (shadow #2a1c10, #6f5234, #a07840, lit #d8a860, rim #e0b870): long soft dune strata with darker rock-shadow masses (#4a3024), bright sunlit sand crests (#e8cc9e), scattered impact craters drawn as dark pits (#140c06) each rimmed by a lit crescent, and a dark brown polar cap at the top. a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the DUNE EXPANSE zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n- The planet disc sits exactly in the middle of the canvas and fills only about 65% of its width — a wide, even margin of flat #51e018 all around it; it must not come near any edge or corner.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521003026,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:39:58.703Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/a-planet-c/gen.json",
+        "sidecarSha256": "029ba826ca7de453521e38519f516aa58318bffdb5fc68bdd153ea80b60b9d55",
+        "id": "gen7/a-planet-c",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/map/planet-c.recipe.json",
+    "sha256": "77466faf5744da82f2b777c20a4a90ee5982620bbe5abd9e0f23dd813367f570"
+  },
+  "edit": null,
+  "output": {
+    "png": "planet-c.png",
+    "sha256": "96ea72688caeb7df0d7367c0075801b1903d7e44b37f317f1be606b3941fea50",
+    "sidecar": "planet-c.json",
+    "sidecarSha256": "0afd1027862ed6097b852398ce05498eee58b2e0970f13c8e0e30abcc264e1eb",
+    "frames": 1,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row a-planet-c): the DUNE EXPANSE planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

@@ -1,0 +1,254 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "tiles/terrain-ridge-v2",
+  "category": "tile",
+  "frame": {
+    "width": 12,
+    "height": 12
+  },
+  "frameCount": 36,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen7/f-ridge36/gen.png",
+      "frames": [
+        [
+          0,
+          0,
+          192,
+          192
+        ],
+        [
+          192,
+          0,
+          192,
+          192
+        ],
+        [
+          384,
+          0,
+          192,
+          192
+        ],
+        [
+          576,
+          0,
+          192,
+          192
+        ],
+        [
+          768,
+          0,
+          192,
+          192
+        ],
+        [
+          960,
+          0,
+          192,
+          192
+        ],
+        [
+          1152,
+          0,
+          192,
+          192
+        ],
+        [
+          1344,
+          0,
+          192,
+          192
+        ],
+        [
+          1536,
+          0,
+          192,
+          192
+        ],
+        [
+          0,
+          192,
+          192,
+          192
+        ],
+        [
+          192,
+          192,
+          192,
+          192
+        ],
+        [
+          384,
+          192,
+          192,
+          192
+        ],
+        [
+          576,
+          192,
+          192,
+          192
+        ],
+        [
+          768,
+          192,
+          192,
+          192
+        ],
+        [
+          960,
+          192,
+          192,
+          192
+        ],
+        [
+          1152,
+          192,
+          192,
+          192
+        ],
+        [
+          1344,
+          192,
+          192,
+          192
+        ],
+        [
+          1536,
+          192,
+          192,
+          192
+        ],
+        [
+          0,
+          384,
+          192,
+          192
+        ],
+        [
+          192,
+          384,
+          192,
+          192
+        ],
+        [
+          384,
+          384,
+          192,
+          192
+        ],
+        [
+          576,
+          384,
+          192,
+          192
+        ],
+        [
+          768,
+          384,
+          192,
+          192
+        ],
+        [
+          960,
+          384,
+          192,
+          192
+        ],
+        [
+          1152,
+          384,
+          192,
+          192
+        ],
+        [
+          1344,
+          384,
+          192,
+          192
+        ],
+        [
+          1536,
+          384,
+          192,
+          192
+        ],
+        [
+          0,
+          576,
+          192,
+          192
+        ],
+        [
+          192,
+          576,
+          192,
+          192
+        ],
+        [
+          384,
+          576,
+          192,
+          192
+        ],
+        [
+          576,
+          576,
+          192,
+          192
+        ],
+        [
+          768,
+          576,
+          192,
+          192
+        ],
+        [
+          960,
+          576,
+          192,
+          192
+        ],
+        [
+          1152,
+          576,
+          192,
+          192
+        ],
+        [
+          1344,
+          576,
+          192,
+          192
+        ],
+        [
+          1536,
+          576,
+          192,
+          192
+        ]
+      ]
+    }
+  ],
+  "fit": "stretch",
+  "outline": false,
+  "anchor": [
+    0,
+    0
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+    },
+    "notes": "w15-REING7 (gen7 row f-ridge36, the GEN-7L ROW-MAJOR cure): the 36 terrain tiles of the v2 zone-E (TEMPEST RIDGE) tileset in the tileset-JSON name order, drawn full-bleed on the 1728x768 opaque contact grid in row-major order (no key, no guide ink - probe-verified 36/36 unique cells, 0% alpha and 0% key-green px). The tileset names 30 of the 36 frames; the six corner-variant cells (26-31, 1-based) keep their art un-named, as in every zone tileset landing. FLUX.2-dev non-commercial ruling 2026-10-23."
+  },
+  "key": {
+    "mode": "none"
+  },
+  "collision": {
+    "tileset": "content/tilesets/terrain-ridge.tileset.json",
+    "mode": "clip-to-mask"
+  }
+}

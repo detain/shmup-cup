@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "items/capsule-power",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/d-pill-power/gen.png",
+      "sha256": "d22ae9afb0ff94e8cc9c4e8405bc2e7c33b5689b22290bf357ec85e7569ef09e",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame glint cycle of the pill power-up capsule pill: a rounded horizontal glass capsule, three-quarters as tall as wide.\n\nDesign identity to keep exactly — Gold glass power pill: amber-gold capsule body (#f8a030, shadow #8a4a10, lit #fff0c0). Its mark: a bold white exclamation bar with a dot, reading as a pure power-up sign. The pill body itself stays IDENTICAL in silhouette across all four cells: a hard-shaded pixel capsule with a bright top-left specular streak, 1-px near-black outline, and the white mark centred on its face reading crisply even small.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 1 dim — capsule dark, mark steady The subject lies within aspect 1.0:1 to 2.2:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = frame 2 dim — capsule dark, the small specular glint moved a step along the glass The subject lies within aspect 1.0:1 to 2.2:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = frame 3 bright — capsule body lit, mark steady The subject lies within aspect 1.0:1 to 2.2:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = frame 4 bright — capsule body lit, glint at its far step The subject lies within aspect 1.0:1 to 2.2:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521023299,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:42:10.254Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/d-pill-power/gen.json",
+        "sidecarSha256": "1421d4e11a30dcacf7ac436636ff8e4962cca84559c5905990f22065a6fc1d28",
+        "id": "gen7/d-pill-power",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/items/capsule-power.recipe.json",
+    "sha256": "2ff7b61d2d41488141b810ab9482178742772c4108f8a2f1df83a2fdbeb0bd5d"
+  },
+  "edit": null,
+  "output": {
+    "png": "capsule-power.png",
+    "sha256": "76a330449bd950a592a84f9c1862bfa6f6167b662a31cc7fba417810160ffc02",
+    "sidecar": "capsule-power.json",
+    "sidecarSha256": "24354282e5d312dd242db6e99d64edb04f0a6f87d5704dcf5a62a338c324f795",
+    "frames": 4,
+    "frameWidth": 18,
+    "frameHeight": 12,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row d-pill-power): the gold POWER capsule, its four blink frames in the 2x2 sheet's row-major order, each cell's subject bbox widened 6 px, contain-fit into the 18x12 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "map/planet-d",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen7 harvest (w15-GEN7 ask round, PROBE-OK rows of the art-prompts/v2/gen7 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen7/a-planet-d/gen.png",
+      "sha256": "da5fec50cec255047765102943c5477ef67b18928117404544f28b2dc1272ac6",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone D (MAGMA DEEP): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — a scorched basalt world, very dark (#1a1212 shadow, #2a1408, #3a221a, #5a3a28 toward light): radial glowing lava cracks splitting the dark rock — deep red (#a02c10) at the crack edges, orange (#d0501c) in the cores and small yellow-hot (#f8b048) glow pools — with grey ash fields (#4a3632) and a faint warm rim light (#f8c860). a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the MAGMA DEEP zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521003039,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T01:38:04.830Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen7/a-planet-d/gen.json",
+        "sidecarSha256": "c0aa760fba5ac6502c744d0de8e9e762c68c9132490ac6870602682530e875ca",
+        "id": "gen7/a-planet-d",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/map/planet-d.recipe.json",
+    "sha256": "3a3781cc9d9ca6428256d475c42d2d9a5a32c40d3d0d8e31a9aa56d321a47e66"
+  },
+  "edit": null,
+  "output": {
+    "png": "planet-d.png",
+    "sha256": "ecab1e426cabfe2280623bcf8f4932a1618b290a0ff64b7c570f0af78fc19d87",
+    "sidecar": "planet-d.json",
+    "sidecarSha256": "8444ef4af0672eb74ea3e2d12241b1fa8f393e927ad254b3ef1a0ae4f73c0449",
+    "frames": 1,
+    "frameWidth": 27,
+    "frameHeight": 27,
+    "colors": 32,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING7 (gen7 row a-planet-d): the MAGMA DEEP planet for the zone map's corner, the 512x512 key-green cell's subject bbox widened 6 px, contain-fit into the 27x27 slot. FLUX.2-dev non-commercial ruling 2026-10-23."
+}
