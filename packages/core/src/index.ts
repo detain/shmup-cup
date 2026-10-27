@@ -1249,6 +1249,7 @@ export {
   ListMenu,
   MENU_CONFIRM_BUFFER_TICKS,
   MENU_REPEAT_DELAY,
+  MAP_PLANET_SPRITES,
   MENU_REPEAT_INTERVAL,
   MenuItemKind,
   MenuResult,

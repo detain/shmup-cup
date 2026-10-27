@@ -438,6 +438,7 @@ import {
   HUD_COMMAND_COUNT,
   HUD_STRING_COUNT,
   MenuResult,
+  MAP_PLANET_SPRITES,
   NAME_ENTRY_STRING_SLOTS,
   UI_COLORS,
   confirmTick,
@@ -6892,13 +6893,32 @@ const MAP_EDGE_DOTS = 7;
 
 /**
  * Most UI-list commands the zone map spends on its edges' dots: the rest of the list holds the
- * nodes (six commands each, up to `core/data` `MAX_CAMPAIGN_ZONES`), the preview panel and the
- * dialog over it — so even the largest map the content validation accepts fits in the list.
+ * nodes (six commands each, up to `core/data` `MAX_CAMPAIGN_ZONES`), the letters' planets (one
+ * command each, up to `MAP_PLANET_SPRITES.length` — only the single-letter zone ids `a` to `i`
+ * own one, w15), the preview panel and the dialog over it — so even the largest map the content
+ * validation accepts fits in the list: 151 + 32 · 6 + 9 + 12 + 2 + 18 (the dialog) = 384.
  */
-const MAP_EDGE_DOT_BUDGET = 160;
+const MAP_EDGE_DOT_BUDGET = 151;
 
 /** Half-period of the focused choice's blink on the map, in ticks. */
 const MAP_BLINK_TICKS = 16;
+
+/** Char code of the first campaign letter that owns a planet — `'a'` (w15). */
+const FIRST_PLANET_LETTER = 'a'.charCodeAt(0);
+
+/**
+ * The {@link MAP_PLANET_SPRITES} slot a zone id owns (w15): the campaign letters `a` to `i` each
+ * own one planet, every other id owns none. A pure lookup, read once per zone in the
+ * `MapScene` constructor and stored in its `nodePlanet`.
+ *
+ * @param id - The zone's id from the campaign content.
+ * @returns The index into `UiSprites.planets`, or -1 for an id that names no planet.
+ */
+function planetSlotForZoneId(id: string): number {
+  if (id.length !== 1) return -1;
+  const letter = id.charCodeAt(0) - FIRST_PLANET_LETTER;
+  return letter >= 0 && letter < MAP_PLANET_SPRITES.length ? letter : -1;
+}
 
 /**
  * The zone map (shmup_feat.md §14 "branching zone map", §17 "zone map"; plan M2-10): after a
@@ -6908,8 +6928,10 @@ const MAP_BLINK_TICKS = 16;
  * A full screen (the title's drifting starfield behind it). The campaign's zones are drawn as a
  * node graph — one column per depth, the zones of a depth spread top to bottom in file order,
  * dotted edges between them — with the route so far lit, the zone just cleared in yellow, the
- * zones it leads to outlined and the focused one blinking; under the graph a panel previews the
- * focused zone (`ZONE C`, its name, its preview lines). Up / Down move between the exits of the
+ * zones it leads to outlined and the focused one blinking; each lettered zone (`a` to `i`) draws
+ * its own planet (`map/planet-a` … `map/planet-i`, w15) behind its panel and letter — v2 art, so
+ * the scale-1 build resolves to -1 ids and the map stays plain panels; under the graph a panel
+ * previews the focused zone (`ZONE C`, its name, its preview lines). Up / Down move between the exits of the
  * cleared zone (sorted top to bottom, wrapping, the UI kit's auto-repeat — `menuTick`), OK
  * launches: the chosen zone's stage is prepared (`SimEventKind.PrepareStage`, so the host loads
  * its music now), `LAUNCH` blinks for {@link MAP_LAUNCH_TICKS}, then the run moves on
@@ -6927,6 +6949,8 @@ export class MapScene extends SceneBase {
   readonly nodeX: Int16Array;
   /** Per zone: its node's centre y. */
   readonly nodeY: Int16Array;
+  /** Per zone: its planet's slot in `UiSprites.planets`, -1 for an id that names none (w15). */
+  readonly nodePlanet: Int16Array;
   /** Per zone: its exits sorted top to bottom (the menu's order). */
   readonly exits: readonly (readonly number[])[];
   /**
@@ -6956,6 +6980,7 @@ export class MapScene extends SceneBase {
     const depths = campaign === null ? 1 : campaign.depths;
     this.nodeX = new Int16Array(zones.length);
     this.nodeY = new Int16Array(zones.length);
+    this.nodePlanet = new Int16Array(zones.length);
     const perDepth: number[] = [];
     for (const zone of zones) perDepth[zone.depth] = (perDepth[zone.depth] ?? 0) + 1;
     const exits: number[][] = [];
@@ -6970,6 +6995,7 @@ export class MapScene extends SceneBase {
       const y = MAP_TOP + ((zone.row + 0.5) * (MAP_BOTTOM - MAP_TOP)) / rows;
       this.nodeX[i] = Math.round(x);
       this.nodeY[i] = Math.round(y);
+      this.nodePlanet[i] = planetSlotForZoneId(zone.id);
       const sorted = zone.exits.slice().sort((a, b) => zones[a].row - zones[b].row);
       exits.push(sorted);
       const labels: string[] = [];
@@ -7111,6 +7137,7 @@ export class MapScene extends SceneBase {
       }
     }
     const choices = this.zone >= 0 && this.zone < this.exits.length ? this.exits[this.zone] : null;
+    const planets = this.flow.sprites.planets;
     for (let i = 0; i < zones.length; i++) {
       const x = this.nodeX[i] - hw;
       const y = this.nodeY[i] - (MAP_NODE_H >> 1);
@@ -7133,6 +7160,9 @@ export class MapScene extends SceneBase {
         text = i === focused ? UI_COLORS.focus : UI_COLORS.text;
       }
       drawPanel(list, x, y, MAP_NODE_W, MAP_NODE_H, fill, border, 255);
+      const planet = this.nodePlanet[i];
+      const planetId = planet >= 0 ? planets[planet] : -1;
+      if (planetId >= 0) list.sprite(planetId, 0, this.nodeX[i], this.nodeY[i]);
       const slot = base + 8 + MAX_ZONE_PREVIEW_LINES + i;
       list.setString(slot, zones[i].label);
       list.text(slot, this.nodeX[i], y + L.nodeTextDy, text, TextAlign.Center);

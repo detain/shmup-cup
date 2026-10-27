@@ -39,6 +39,7 @@ import * as logo from './logo.mjs';
 import * as magma from './magma.mjs';
 import * as palettes from './palettes.mjs';
 import * as particles from './particles.mjs';
+import * as planets from './planets.mjs';
 import * as prism from './prism.mjs';
 import * as rasterBands from './raster-bands.mjs';
 import * as shields from './shields.mjs';
@@ -94,6 +95,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'magma', generate: magma.generate },
   { id: 'palettes', generate: palettes.generate },
   { id: 'particles', generate: particles.generate },
+  { id: 'planets', generate: planets.generate },
   { id: 'prism', generate: prism.generate },
   { id: 'raster-bands', generate: rasterBands.generate },
   { id: 'shields', generate: shields.generate },

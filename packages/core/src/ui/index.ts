@@ -227,11 +227,30 @@ export function uiPx(v: number): number {
 // ------------------------------------------------------------------------------ sprites
 
 /**
+ * The campaign's nine zone planets the zone map draws behind its letters (w15): one per campaign
+ * letter `a`–`i`, at the list's index for that letter. The art is v2-only (the `planets` generator
+ * answers nothing at scale 1, decision RR-1a), so at the interim scale the map still draws plain
+ * panels — the ids resolve to -1 and each node guards it.
+ */
+export const MAP_PLANET_SPRITES: readonly string[] = Object.freeze([
+  'map/planet-a',
+  'map/planet-b',
+  'map/planet-c',
+  'map/planet-d',
+  'map/planet-e',
+  'map/planet-f',
+  'map/planet-g',
+  'map/planet-h',
+  'map/planet-i',
+]);
+
+/**
  * Atlas sprites the UI kit draws: the HUD's stock icon (and player 2's palette swap of it —
  * M2-06), meter slot box (frames normal / highlighted / disabled) and slot labels (one frame per
  * slot), the title logo, its v2 backdrop (R4-05.E2) and — M2-14 — the ending scenes' pieces (the
- * citadel's and the ARK's silhouettes, a blast, a bubble, the dawn sun, the sea's surface). Part
- * of the core's `ENGINE_SPRITES`, so every host interns them.
+ * citadel's and the ARK's silhouettes, a blast, a bubble, the dawn sun, the sea's surface), the
+ * zone map's nine planets (w15, {@link MAP_PLANET_SPRITES}). Part of the core's `ENGINE_SPRITES`,
+ * so every host interns them.
  */
 export const UI_SPRITES: readonly string[] = Object.freeze([
   'hud/life',
@@ -246,6 +265,7 @@ export const UI_SPRITES: readonly string[] = Object.freeze([
   'ui/ending-sun',
   'ui/ending-surface',
   'ui/title-backdrop',
+  ...MAP_PLANET_SPRITES,
 ]);
 
 /** Sprite ids of {@link UI_SPRITES} in a content table (-1 = not interned: drawn without it). */
@@ -274,6 +294,12 @@ export interface UiSprites {
   readonly endingSurface: number;
   /** `ui/title-backdrop` — the title's full-frame backdrop (R4-05.E2; anchor: its top-left corner). */
   readonly titleBackdrop: number;
+  /**
+   * The nine zone planets by campaign letter — index 0 is `map/planet-a`, index 8 `map/planet-i`
+   * (w15; each anchored at its centre, drawn behind the map's zone letter). Frozen; -1 entries
+   * where the atlas has none (the interim scale-1 build).
+   */
+  readonly planets: readonly number[];
 }
 
 /**
@@ -307,8 +333,12 @@ export function resolveUiSprites(content: ContentDb): UiSprites {
     endingSun: id('ui/ending-sun'),
     endingSurface: id('ui/ending-surface'),
     titleBackdrop: id('ui/title-backdrop'),
+    planets: Object.freeze(MAP_PLANET_SPRITES.map((name) => id(name))),
   });
 }
+
+/** The {@link UiSprites.planets} row with no planet interned (w15). */
+const NO_PLANETS: readonly number[] = Object.freeze(MAP_PLANET_SPRITES.map(() => -1));
 
 /** Sprite ids that draw nothing (every UI sprite missing). */
 const NO_SPRITES: UiSprites = Object.freeze({
@@ -324,6 +354,7 @@ const NO_SPRITES: UiSprites = Object.freeze({
   endingSun: -1,
   endingSurface: -1,
   titleBackdrop: -1,
+  planets: NO_PLANETS,
 });
 
 // ------------------------------------------------------------------------------ input

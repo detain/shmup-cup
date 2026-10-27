@@ -254,7 +254,7 @@
         "dimension.mjs  direct.mjs  dune.mjs",
         "ending.mjs  escape.mjs  explosions.mjs  hud.mjs",
         "items.mjs  lasers.mjs  magma.mjs",
-        "palettes.mjs  particles.mjs  prism.mjs",
+        "palettes.mjs  particles.mjs  planets.mjs  prism.mjs",
         "raster-bands.mjs  shields.mjs",
         "starfield.mjs  tempest.mjs",
         "terrain.mjs  ui.mjs  vault.mjs",

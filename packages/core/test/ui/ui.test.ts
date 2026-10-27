@@ -95,6 +95,15 @@ describe('core/ui', () => {
       'ui/ending-sun',
       'ui/ending-surface',
       'ui/title-backdrop',
+      'map/planet-a',
+      'map/planet-b',
+      'map/planet-c',
+      'map/planet-d',
+      'map/planet-e',
+      'map/planet-f',
+      'map/planet-g',
+      'map/planet-h',
+      'map/planet-i',
     ]);
     expect(resolveUiSprites(EMPTY_CONTENT_DB)).toEqual({
       life: -1,
@@ -109,6 +118,7 @@ describe('core/ui', () => {
       endingSun: -1,
       endingSurface: -1,
       titleBackdrop: -1,
+      planets: [-1, -1, -1, -1, -1, -1, -1, -1, -1],
     });
     const { db } = loadContent([], { extraSprites: UI_SPRITES });
     const sprites = resolveUiSprites(db);

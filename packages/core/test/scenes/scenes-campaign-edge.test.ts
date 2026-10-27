@@ -39,7 +39,7 @@ import {
   type SceneFlow,
   HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
-import { uiPx } from '../../src/ui/index.js';
+import { resolveUiSprites, uiPx } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { CAMPAIGN, campaignContent as content, shipped, stage } from '../helpers/campaign.js';
 
@@ -255,6 +255,7 @@ describe('core/scenes campaign edges: the zone map (M2-10)', () => {
       Math.round(top + ((r + 0.5) * (bottom - top)) / rows);
     expect([...map.nodeX]).toEqual([left, right, right]); // 40, 344, 344 at 384×216
     expect([...map.nodeY]).toEqual([row(0, 1), row(0, 2), row(1, 2)]); // 88, 64, 112
+    expect([...map.nodePlanet]).toEqual([-1, -1, -1]); // w15: S / U / L own no planet (letters a–i do)
     expect(map.edgeDots).toBe(7);
     s.toMap();
     expect(map.focusedZone).toBe(1); // the top one first
@@ -321,6 +322,27 @@ describe('core/scenes campaign edges: the zone map (M2-10)', () => {
     expect(s.flow.map.focusedZone).toBe(5); // F, the top exit of D
     const frame = s.game.renderFrame();
     expect(frame.ui.dropped).toBe(0);
+    // w15: every lettered zone draws its planet behind its node — nine sprite commands at the
+    // node centres, inside the exact 384-command list even with the dialog.
+    const ui = frame.ui;
+    const planets: Array<{ id: number; x: number; y: number }> = [];
+    for (let k = 0; k < ui.count; k++) {
+      if (ui.op[k] !== DrawOp.Sprite) continue;
+      planets.push({ id: ui.ref[k], x: ui.x[k], y: ui.y[k] });
+    }
+    expect(planets).toHaveLength(9);
+    const spriteNames = nine.sprites.names;
+    const spritePlanets = resolveUiSprites(nine).planets;
+    for (let i = 0; i < 9; i++) {
+      expect(s.flow.map.nodePlanet[i], spriteNames[spritePlanets[i]]).toBe(i);
+      const want = spritePlanets[i];
+      expect(want, `map/planet-${'abcdefghi'[i]}`).toBeGreaterThanOrEqual(0);
+      expect(planets.find((p) => p.id === want)).toEqual({
+        id: want,
+        x: s.flow.map.nodeX[i],
+        y: s.flow.map.nodeY[i],
+      });
+    }
     const texts = s.uiTexts();
     for (const label of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'])
       expect(texts).toContain(label);
@@ -373,6 +395,7 @@ describe('core/scenes campaign edges: the zone map (M2-10)', () => {
     const s = new Session(big);
     const map = s.flow.map;
     expect(map.edgeDots).toBe(1);
+    expect(map.nodePlanet.every((slot) => slot === -1)).toBe(true); // w15: z-ids name no planet
     s.flow.run.route.push(1, 5);
     s.flow.run.zone = 5;
     s.flow.stack.reset(s.flow.map);

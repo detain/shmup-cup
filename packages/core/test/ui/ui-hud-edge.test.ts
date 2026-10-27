@@ -71,6 +71,7 @@ const NONE: UiSprites = {
   endingSun: -1,
   endingSurface: -1,
   titleBackdrop: -1,
+  planets: [-1, -1, -1, -1, -1, -1, -1, -1, -1],
 };
 
 /**
