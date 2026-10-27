@@ -83,6 +83,18 @@ Everything else on this page can wait behind this one. Set up per
   boot ≤ 10 s and whole-process memory figures R6-02.P3 could not measure), and one complete route
   on a human's remote. The render budgets are already met on firmware (R6-02.P3, §3); the game's
   own frame on the monitors is the one number no bench can supply.
+- **The 2.1.0 rebuild confirm** (plan v20x closeout — one install covers the era): the bitmap page
+  decode (P0-1 `e519e80e` — the owner document's **−47…−56 %** file→GPU claim and the
+  ≈1493→≈790 ms zone-load figure want the monitors' confirmation; the desktop gate proved
+  byte-identity and the upload mechanism on SwiftShader only), the context-loss watchdog
+  (P0-3 `628a1afa` — it cannot be provoked on the TV, so the reading is the **absence** of hangs),
+  the TV resume (the checkpoint store and the title's CONTINUE? row; the `?scenario=rewind` bench
+  row replaces the engine's **÷12 estimate** with a measured M7 figure — TL-4's verdict is
+  ≈2–3 s for a full rewind at 5–10 k steps/s), the cutscene video (its two bench knob rows
+  adjudicate the default flip — `VIDEO_DEFAULT_ON` is false pending the owner ruling of
+  2026-10-27), and the ending stills (five paintings, default on). Plus the owner's UX call on the
+  colour-key bindings P0-2 registered (`8cb4b0cf`): the shortlist is red→Special, green→Speed,
+  yellow→palette cycle, blue→CRT toggle.
 
 Results go into the checklists themselves and anything surprising into
 [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md).

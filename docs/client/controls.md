@@ -27,7 +27,10 @@ work too, and every device drives both the game and the menus.
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
 > no button: the next one flies in by itself; with continues left, OK on the **CONTINUE?**
 > countdown carries on from the last checkpoint (Back gives up), and after **GAME OVER** OK
-> returns to the title. After a zone's boss the **ZONE MAP** opens: ▲ ▼ choose the next zone, OK
+> returns to the title. If the TV shut the app down mid-run and the game had reached a checkpoint,
+> the **title** itself shows a **CONTINUE?** row — OK carries that run on under the same continue
+> rules (lives and power reset; the row vanishes once used or discarded). After a zone's boss the
+> **ZONE MAP** opens: ▲ ▼ choose the next zone, OK
 > launches it, Back asks **QUIT TO TITLE?**; after the last zone the **ending** plays — OK shows
 > the whole story, OK again the result card, OK there the **credits** (OK or Back skips them to the
 > title) ([preview-build.md](preview-build.md#the-endings-and-the-credits)). In a **2 PLAYERS** game a second player joins at any time with START on a
@@ -35,8 +38,9 @@ work too, and every device drives both the game and the menus.
 > After a high score the **name entry** asks for your initials — ▲ ▼ change the letter, ▶ or OK go
 > to the next, ◀ or Back go back, OK on `END` finishes — and the high-score table follows (OK
 > returns to the title). Left alone on `PRESS OK` for 12 seconds the title plays the **attract
-> loop** (a zone demo, the high-score tables, the story) — **any** button returns to the title. The
-> title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
+> loop** (a zone demo, the high-score tables, the story) — **any** button returns to the title. A
+> cutscene clip (the title's sting, a zone's WARNING band, a story vista, an ending beat) can lie
+> over the picture, and **any pressed button skips it at once**; the clips ship switched **off** > default. The title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
 > START) and **SOUND TEST** box (◀ ▶ choose a tune or a sound, OK plays it) close with Back
 > ([preview-build.md](preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes and opens five pages:
@@ -132,8 +136,9 @@ the TV remote, the keyboard and both gamepads.
   fast-forwarded. Press OK on RESUME to carry on.
   Long-pressing Back and the volume keys belong to the TV and are never used by the
   game — they set the monitor's volume as usual; the game's own volumes (MASTER, MUSIC, SFX)
-  are in **OPTIONS**. The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
-  for later use.
+  are in **OPTIONS**. The colour buttons (red/green/yellow/blue on the on-screen number pad) reach the
+  game from v2.1.0: nothing is bound to them by default (their jobs are an open owner call), but
+  they can be bound on the rebind screen like any other key.
 - **Back** never closes the game by surprise: in the game it pauses, in menus it goes back,
   and on the title screen it asks **EXIT SHMUP CUP?** (NO is highlighted) — only **YES** returns
   to the monitor's home screen. Only while the app is still loading, or on its error screen,
@@ -444,8 +449,9 @@ CONTROLS` or `GAMEPAD CONTROLS`) and one line per action with the keys it has no
 - Each **profile** keeps its own keys: rebinding KEYBOARD does not change KEYBOARD AS REMOTE, and
   PROFILE shows the chosen profile's keys. REBIND KEYS changes the profile in use.
 - **On the TV** the remote's buttons the game receives are the arrows, OK, Back (never rebindable),
-  Play/Pause and Channel up / down — for example POWER-UP can go on Channel down (it then swaps with
-  SPEED). The colour and number buttons are not available to the game.
+  Play/Pause, Channel up / down and — since v2.1.0 — the colour buttons (nothing bound to them by
+  default), so for example POWER-UP can go on Channel down (it then swaps with SPEED). The number
+  buttons are not available to the game.
 - **The gamepad**: every gamepad uses the same buttons (GAMEPAD); the D-pad counts as four buttons
   (`D↑` …) that can be rebound too, while the left stick always moves.
 - The rebinding can never lock you out: if saved keys would leave the menus without a way to move,

@@ -303,10 +303,11 @@ pnpm --filter @shmup/tizen bench:run
 
 ### Step 5 — run the bench on each M7, TWICE per monitor (WebGL 1 then WebGL 2)
 
-1. Press **Enter** on the bench page ("172 scenarios + decode + stand-in", ~90 min; per scenario
+1. Press **Enter** on the bench page ("174 scenarios + decode + stand-in + rewind" — the v2.0.x
+   matrix grew from the 172 rows the first sessions ran; a little over ~90 min; per scenario
    10 s warm-up, 14 s free-running, 6 s with `gl.finish()`, page reloads between). **Red** re-runs
-   the current scenario; **Back** exits. The run ends with the decode page loads and the stand-in
-   frame.
+   the current scenario; **Back** exits. The run ends with the decode page loads, the stand-in
+   frame and the rewind measurement.
 2. Then run it **again on WebGL 2**: in the remote Web Inspector (app id
    `ShmpCupBnc.RenderBench`) set `localStorage['shmup-cup:gl'] = '2'` and relaunch; clear it (or set
    `'1'`) to go back. The shipped default is WebGL 1 — run that pass first.

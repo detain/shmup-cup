@@ -630,6 +630,17 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   makes vitest ignore the filter and run the whole project (wave 4's FIXE mis-run: 1,959 passed /
   421 skipped / 2 failed, EXIT 1, where one file was the target) — the flag is how one prints a
   passing test's stdout, since the default reporter hides it.
+- **A shared-host e2e run sets `env CI=1`** (v2.0.x era, probe4; the adjudication upstream at
+  `7ee20a07`): `vite preview` with `reuseExistingServer: !ci` *silently joins* a sibling lane's
+  server squatting the port — the HELP twin walked the web build it did not name and read its
+  verdicts off the wrong bundle. Outside CI a run does not know a squat from its own server;
+  with `CI=1` preview refuses the occupied port and the collision fails loud. Two suites on one
+  host share nothing but this law.
+- **An art round owes `pnpm docs:images --check`** (R6-03.D6.FIX1 `88a92797`): `docs/images/`
+  is derived from the atlas by `scripts/doc-images.mjs`, whose `--check` exits 1 on any stale
+  plate; the taste round moved sprites and the plates went stale un-noticed until the FIX1
+  re-render. A step that moves a sprite includes the plates check in its gates the same way it
+  includes the pipeline floors below.
 - **Band/layer/census-moving steps owe the shared-kit gates** (R5-10.T3): a step that adds a
   parallax band kind, moves a `LayerId` census or changes an upscaled-pool floor includes
   `test/scripts/assets` — the `interim-pipeline.test.ts` floor in particular — and

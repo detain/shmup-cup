@@ -794,6 +794,21 @@ The variants are never content names — the
 renderer finds them by name when the player picks a palette
 ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
 
+## The stills kit (v2.0.x A4 — the ending paintings)
+
+`scripts/v20x/stills-encode.mjs` derives the shipped still set from the ingested moment winners:
+each painting is contain-fitted on the letterbox pad `0x05070f` at the frame's 640 × 360, quantised
+by median cut to a **PNG-8** file with a `.art.json` provenance sidecar, and recorded in
+`assets/generated/stills/stills-ledger.json` beside `LICENSES-stills.md`. The kit is committed
+source data like the procedural generators — `node scripts/v20x/stills-encode.mjs --check`
+re-creates every committed byte and re-diffs the ledger (CI's shape). `assets/generated/stills/`
+is git-ignored like the atlas output; the `shmupStills` Vite plugin (`vite.shared.ts`) copies
+`stillsShippedFiles()` into `dist/assets/stills/`, and a build with `SHMUP_NO_STILLS=1` baked ships
+none. The set measured **277,485 B** of PNG (≈ 292 KB of dist payload — the 24 MiB TV budget
+absorbs it without moving, `9dfb9ef5`); the shell draws them through the render-pixi image-still
+surface, never as atlas frames — see
+[rendering-and-shell.md](rendering-and-shell.md) for the surface and the directors.
+
 ## Extending it
 
 ### Adding a sprite

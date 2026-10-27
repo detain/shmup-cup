@@ -88,7 +88,7 @@ Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 
 | Profile | Label (CONTROLS) | `device` | `hosts` | Used | Debounce | Single key | Diagonals / SOCD | `register` |
 |---|---|---|---|---|---|---|---|---|
-| `tizen-remote-safe` | `REMOTE` | `remote` | `tizen` | Samsung TV default | 0 | yes | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown`, `Guide`, `Extra` |
+| `tizen-remote-safe` | `REMOTE` | `remote` | `tizen` | Samsung TV default | 0 | yes | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown`, `Guide`, `Extra`, `ColorF0Red`, `ColorF1Green`, `ColorF2Yellow`, `ColorF3Blue` |
 | `webos-remote-safe` | `REMOTE` | `remote` | `webos` | LG TV default (M3-03) | 0 | no | `combine` / `neutral` | — (webOS registers nothing) |
 | `keyboard-default` | `KEYBOARD` | `keyboard` | any | web default | 0 | no | `combine` / `neutral` | — |
 | `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | any | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 0 | yes | `combine` / `neutral` | — |
@@ -126,6 +126,14 @@ replaced every guess in this table:
   button are ordinary keys with a real down/up; nothing binds them by default, but REBIND can now
   capture them. The volume keys stay unregistered even though `registerKey` accepts them —
   registering takes volume control away from the viewer.
+- **The four colour keys are registered since v2.0.x P0-2 (`8cb4b0cf`)** — `ColorF0Red`
+  (403), `ColorF1Green` (404), `ColorF2Yellow` (405), `ColorF3Blue` (406), appended to the
+  register list after `Extra`; the `XF86*` spellings of the same buttons throw on these builds
+  and are never used. Registered means REBIND can capture them — nothing binds them yet, and
+  which action each should get (red → Special, green → Speed, yellow → palette cycle,
+  blue → CRT toggle was the proposing doc's shortlist) is the owner's open UX call. The LG
+  sets need no such registration and bind 403 / 404 directly (Special / Speed). The volume
+  keys stay unregistered on both TVs — registering takes volume control from the viewer.
 
 | Action | `keyboard-default` game / menu | `tizen-remote-*` game / menu | `gamepad-standard` game / menu |
 |---|---|---|---|
@@ -392,8 +400,9 @@ platform registers the active key profile's `register` list with
 `tizen.tvinputdevice.registerKeyBatch()` (per-key `registerKey` fallback when the batch reports
 an unsupported key). `registerRemoteKeys()` filters `SYSTEM_REMOTE_KEYS` itself, so even a hand
 edit that slipped past validation can never take `Exit` or the volume keys from the system.
-The shipped profiles register only D14's three keys; the colour keys (403–406) stay in the
-no-profile fallback `REMOTE_KEYS_TO_REGISTER` until something uses them. Back is also watched
+The shipped profiles register D14's three keys plus `Guide` / `Extra`, and — since v2.0.x
+P0-2 (`8cb4b0cf`) — the four colour keys (403–406) too, which until then lived only in the
+no-profile fallback `REMOTE_KEYS_TO_REGISTER`. Back is also watched
 by `watchBackKey`, but only until the shell runs (the loading and boot error screens are the
 root screen then, so Back exits); since M1-16 the watcher is removed once the game runs and Back
 is an ordinary key of the profile — `Pause` in the game, `Back` in menus — which the scene stack
@@ -523,7 +532,7 @@ keys, a key the device cannot hold). The whole feature — tokens, statuses, the
 | A second arrow or OK does nothing while an arrow is held | Expected on a `singleKey` profile (the real remote behaves this way): let the first key go first |
 | Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or KEYBOARD AS REMOTE picked in OPTIONS → CONTROLS and saved) — since M3-02b its `singleKey` drops the second arrow's `keydown` outright, as the hardware does |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
-| A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
+| A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause, Ch± and — since v2.0.x P0-2 — the four colour keys are registered by default; the volume keys never are |
 | Back closes the TV app instead of pausing | Only expected on the loading and boot error screens; since M1-16 Back pauses in the game and asks before quitting on the title. An older build exits — reinstall |
 | A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice (`options.input.profileId` in `shmup-cup:save.v1`) may be overriding the default — pick the default in CONTROLS or use `?profile=` |
 | A pad drives player 1 in a co-op game | Expected until it presses a button its gamepad profile's **menu** table binds to Confirm or Pause (A, START) — that seats it as player 2. With the seat taken (another pad, or `keyboard-split` active) every other pad drives player 1 |
