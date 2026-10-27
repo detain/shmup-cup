@@ -118,7 +118,10 @@
  * (R3-04.M3e). Since R3-04.M3d the shell
  * also listens for `webglcontextlost` / `webglcontextrestored` on the canvas: a restored context
  * lost every GPU page upload with the old one, so the boot re-fetches and re-uploads every
- * resident page on the restore event.
+ * resident page on the restore event. A loss that never restores is no longer waited on (P0-3,
+ * `tizen_optimize.md` §8.3): the frame loop counts rendered frames while the lost listener's
+ * flag stands, asks the context once after ~1 s, and a still-lost one halts the loop and swaps
+ * the canvas for the boot error screen with Back wired to `platform.exit()`.
  *
  * **Replays and rumble (M3-01).** Right after the save the shell creates and loads the replay
  * library (`core/replay` `createReplayLibrary` over `platform.storage` — keys `replay.last`,
@@ -1846,8 +1849,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     // Cancel the loss so the browser restores the context at all — Pixi's own listener does the
     // same; the two calls are one intention.
     event.preventDefault();
+    contextLost = true;
+    contextLostFrames = 0;
   };
   const onContextRestored = (): void => {
+    contextLost = false;
+    contextLostFrames = 0;
     void recoverAtlasPages();
   };
   const canvasEvents = canvas as Partial<HTMLCanvasElement>;
@@ -1856,6 +1863,71 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     canvas.addEventListener('webglcontextlost', onContextLost);
     canvas.addEventListener('webglcontextrestored', onContextRestored);
   }
+  // The context-loss watchdog (tizen_optimize.md §8.3, P0-3). The recovery above waits for a
+  // restore event, and a driver reset that never fires one would leave the loop ticking and
+  // drawing into a dead surface forever — an infinite black screen with the game running behind
+  // it. So the lost listener arms a flag; the frame body reads **only that flag** every frame
+  // (one branch, no allocation, nothing else in the hot loop moves), and {@link watchContextLoss}
+  // counts the rendered frames until ~1 s has passed and asks the live context once whether it
+  // is still lost. Yes: the canvas is swapped for the boot error screen (the same
+  // {@link createBootOverlay} a failing boot shows) with Back → {@link Platform.exit}. No: the
+  // flag was a lie or the restore raced the check, and the watchdog re-arms for the next loss.
+  // The rejection of §8.3 stands: nothing here forces a loss when the page merely pauses — the
+  // Home overlay is a `blur` and the pause menu must keep drawing.
+  /** Rendered frames the watchdog waits out before believing the loss permanent (≈ 1 s). */
+  const CONTEXT_LOSS_FRAMES = 60;
+  /** The Back keys of the three hosts: Tizen 10009, webOS 461, Escape / Backspace on the web. */
+  const CONTEXT_LOSS_BACK_KEYS: readonly number[] = Object.freeze([10009, 461, 27, 8]);
+  /** Whether the canvas reported a context loss the frame loop has not seen restored. */
+  let contextLost = false;
+  /** Rendered frames counted while {@link contextLost} (reset on every loss and every restore). */
+  let contextLostFrames = 0;
+  /**
+   * The watchdog fired: the context is gone and the driver will not bring it back. The loop
+   * stops (the sim and the dead draws halt with it), the context listeners go (a restore after
+   * the verdict has nothing to recover), and the boot error screen covers the canvas — Back
+   * exits through the platform wherever an exit exists (a web tab reloads by hand).
+   */
+  const reportContextLoss = (): void => {
+    contextLost = false;
+    loop.stop();
+    // The stated screen is a halt, not a picture over a live game: the sim stops with the loop
+    // and the audio suspends as it does when the page is put to bed (the failure class §8.3
+    // names was a black canvas with live audio behind it).
+    void audio.suspend();
+    canvas.removeEventListener('webglcontextlost', onContextLost);
+    canvas.removeEventListener('webglcontextrestored', onContextRestored);
+    markState(canvas, 'error');
+    const exit = platform.exit;
+    createBootOverlay(canvas)?.showError('GPU CONTEXT LOST', [
+      exit !== null ? 'PRESS BACK TO EXIT' : 'RELOAD THE PAGE TO START AGAIN',
+    ]);
+    if (exit === null) return; // The web: nothing to exit; the screen states the reload.
+    /** One Back press on the stated screen closes the app (the platform owns what "exit" means). */
+    const exitOnBack = (event: KeyboardEvent): void => {
+      if (CONTEXT_LOSS_BACK_KEYS.includes(event.keyCode)) exit();
+    };
+    win.addEventListener('keydown', exitOnBack);
+  };
+  /**
+   * One rendered frame while the context is lost (reached only through the flag check in
+   * {@link onFrame}, so a healthy loop never pays it). Counts to {@link CONTEXT_LOSS_FRAMES},
+   * then asks the live context once: still lost lands on {@link reportContextLoss}; not lost
+   * re-arms the watchdog for the next loss (a restore whose event raced the flag never got here
+   * with the flag set, but the context's own answer is the ground truth).
+   */
+  const watchContextLoss = (): void => {
+    contextLostFrames++;
+    if (contextLostFrames < CONTEXT_LOSS_FRAMES) return;
+    contextLostFrames = 0;
+    contextLost = false;
+    // The canvas answers `getContext` with its live context for the type it was made with and
+    // `null` for the other — the chain covers both WebGL1 and WebGL2 boots (the pair the loss
+    // specs use). A context object keeps answering after the loss: that is what makes the one
+    // check possible at all.
+    const gl = canvas.getContext('webgl') ?? canvas.getContext('webgl2');
+    if (gl !== null && gl.isContextLost()) reportContextLoss();
+  };
   // The first prepare always reports, so `lastUploadMs` holds the boot's uploads now.
   let bootUploadMs = 0;
   for (let p = 0; p < lastUploadMs.length; p++) bootUploadMs += lastUploadMs[p];
@@ -2020,6 +2092,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
    * @param now - rAF timestamp.
    */
   const onFrame = (now: number): void => {
+    // The context-loss watchdog (tizen_optimize.md §8.3): the whole cost when healthy is this
+    // one branch on a flag — the counting and the one `isContextLost` check live behind it, in
+    // {@link watchContextLoss}. Every frame that reaches here renders (the residency hold below
+    // redraws and the normal path draws), so the count is exactly the frames the black screen
+    // would be made of.
+    if (contextLost) watchContextLoss();
     const tools = debug;
     if (tools !== null) tools.beginFrame(now);
     // Render interpolation follows the display's refresh rate (M2-08).
