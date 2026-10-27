@@ -1,12 +1,24 @@
 {
   "name": "shots/double",
-  "description": "Double (diagonal) shot, travelling up and to the right, v2 (R4-01.A6, art bible v2 § 5.3): the v1 5 × 5 stair widened to 7 × 7, the white core row two pixels thick.",
-  "palette": { ".": null, "c": "#38c8e8", "w": "#ffffff" },
+  "description": "Double shot v2 (w15-WEAPONLOOK2): hand-drawn native TWIN parallel bars — two staggered cyan-edged white dashes (one upper-left, one lower-right) that read as the two projectiles the weapon fires; the FLUX single diagonal stair is retired. Distinct from the twin beam's comb and two-way's dart (w15-WEAPONLOOK § 6).",
+  "palette": {
+    ".": null,
+    "c": "#38c8e8",
+    "w": "#ffffff"
+  },
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": ["....cw.", "....cw.", "...ccwc", "..cwwc.", "..cwwc.", "ccwcc..", "wwc...."]
+      "rows": [
+        "wwww...",
+        "cccc...",
+        ".......",
+        "..wwww.",
+        "..cccc.",
+        ".......",
+        "......."
+      ]
     }
   ]
 }

@@ -22,14 +22,15 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** `shots/basic` body colour (w15-REING-6 gen6 real art, #0374d3) — nothing else uses it. */
-const SHOT_RIM = [0x03, 0x74, 0xd3] as const;
+/** `shots/basic`'s rim caps (w15-WEAPONLOOK2 hand map, #1e5a9a) — nothing else serves it. */
+const SHOT_RIM = [0x1e, 0x5a, 0x9a] as const;
 /**
  * `shots/laser`'s bolt lights (w15-REING-6 gen6 real art — the cyan ramp and its core).
  * Every one belongs to `shots/laser` alone (censed over the whole v2 atlas); a bolt shows
- * ~2 px of each, so the beam census sums them. The ramp's `#7ff9ff` is deliberately absent:
- * the sampler's ±3 window reaches `shots/basic`'s `#81f8ff` tip from it, which would poison
- * the default-loadout negative test with the basic bolts' own glow.
+ * ~2 px of each, so the beam census sums them. The ramp's `#7ff9ff` stays absent by dated
+ * census: it sat ±3 of `shots/basic`'s old FLUX `#81f8ff` tip, which w15-WEAPONLOOK2's
+ * hand map retired (basic now serves #1e5a9a/#38c8e8/#ffffff, all far outside this set) —
+ * the four lights the census pins keep standing on the laser alone.
  */
 const LASER_LIGHTS: readonly (readonly [number, number, number])[] = [
   [0xd7, 0xfb, 0xff],

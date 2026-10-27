@@ -1,13 +1,13 @@
 {
   "name": "shots/basic",
-  "description": "Main shot, v2 (R4-01.A6, art bible v2 § 5.3): the v1 8 × 3 dart at 12 × 5, the white core three rows deep under a one-row shell.",
+  "description": "Main shot v2 (w15-WEAPONLOOK2): hand-drawn native energy bolt — a one-row cyan shell over a six-pixel white core, capped dark at both ends, with the massing lifted to rows 1-3 only (row 0 and 4 clear, wings inset). Separates the FLUX trio from tail, torpedo and missile (w15-WEAPONLOOK § 6).",
   "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
   "anchor": [6, 2],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": ["...bccccc...", "bccwwwwwwwww", "bccwwwwwwwww", "bccwwwwwwwww", "...bccccc..."]
+      "rows": ["............", "..cccccccc..", "bccwwwwwwccb", "..cccccccc..", "............"]
     }
   ]
 }

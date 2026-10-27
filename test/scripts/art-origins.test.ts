@@ -323,9 +323,11 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     const text = formatOriginReport(report);
     expect(text).toContain('Shipped sprites by origin and kind:');
     // The palette column joins the table once any @palette sibling rides a record (w15-REING7).
-    // The pixel-map column retires the same way it joined: w15-PIXMAP1 landed the last interim
-    // name (shots/missile, the era arc 118→…→1→0), so no shipped sprite is served from a v2
-    // pixel map any more and the column leaves the report — the writer prints a column only
+    // The pixel-map column left when w15-PIXMAP1 closed the interim pool (missile's hand map
+    // shipped as a zero-GPU code-frame record, 118→…→1→0) and rejoined the moment hand-drawn
+    // pixel maps began serving shipped names on their own: w15-WEAPONLOOK's eleven bolt maps,
+    // now nineteen with w15-WEAPONLOOK2's eight that retire the FLUX PNG overrides of basic,
+    // double, free, missile, tail, torpedo, twin and two-way — the writer prints a column only
     // while its class has a member (the procedural p2 key's exit above is the same class).
     expect(text).toMatch(
       /\n {2}origin +generator(?: +pixel-map)? +font +flash +p2(?: +palette)?(?: +record)? +total\n/,
@@ -422,8 +424,12 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // kestrel-thruster recolor), so the copy lands one hundred fifty-three live plus five
     // minus one. w15-PIXMAP1's one joins (the zero-GPU shots/missile code-frame record — the
     // last interim name in the game, the era arc 118→…→1→0 closes with it), so the copy lands
-    // one hundred fifty-four live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(154);
+    // one hundred fifty-four live plus five minus one. w15-WEAPONLOOK2's eight PNG overrides
+    // retire (basic, double, free, missile — PIXMAP1's code-frame record among them — tail,
+    // torpedo, twin, two-way: each superseded by a hand-drawn v2 pixel map, so the eight
+    // records leave with the eight .art.json files), landing one hundred forty-six live plus
+    // five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(146);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -471,10 +477,14 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // kestrel-thruster's and the life icon's — now ride the records instead of the
       // procedural maps: two hundred thirty-eight live, and the fixture tree lands two
       // hundred thirty-eight again. w15-PIXMAP1's shots/missile joins with one sprite and
-      // nothing derived (no @flash, no @p2, no @palette — the interim pixel-map class it
-      // leaves is now empty, so the report's pixel-map column retires with it): two
-      // hundred thirty-nine live, and the fixture tree lands two hundred thirty-nine again.
-      sprites: 239,
+      // nothing derived (no @flash, no @p2, no @palette): two hundred thirty-nine live, and
+      // the fixture tree lands two hundred thirty-nine again. w15-WEAPONLOOK2's eight shot
+      // overrides retire (basic, double, free, missile, tail, torpedo, twin and two-way, none
+      // with a derived sibling — shots carry no @flash, @p2 or @palette variant), landing two
+      // hundred thirty-one live, and the fixture tree lands two hundred thirty-one again;
+      // the interim pixel-map class these eight join on top of w15-WEAPONLOOK's eleven is
+      // what the report's pixel-map column counts (nineteen).
+      sprites: 231,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

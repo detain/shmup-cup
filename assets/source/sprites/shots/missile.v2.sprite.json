@@ -1,6 +1,6 @@
 {
   "name": "shots/missile",
-  "description": "Ground missile with a flickering exhaust, v2 (w15-PIXMAP1, art bible v2 § 5.3): the v1 missile redrawn at 12 × 5 — tail fins on the outline rows, a two-pixel nozzle, a three-step tapered exhaust flame and a white nose shoulder capped in outline dark — on v1's palette and its core-line grammar.",
+  "description": "Ground missile v2 (w15-WEAPONLOOK2): hand-drawn native rocket — a silver nose cone on a white body with canted stabiliser fins and a flickering orange/amber exhaust stub at the left; the fly frame swaps the flame colour only (same silhouette). Reads as a finned rocket, not a smooth bolt — separates it from torpedo, basic and twin (w15-WEAPONLOOK § 6).",
   "palette": {
     ".": null,
     "o": "#2a3a4a",
@@ -9,18 +9,36 @@
     "r": "#e84818",
     "y": "#f8c030"
   },
-  "anchor": [6, 2],
+  "anchor": [
+    6,
+    2
+  ],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": ["...ggooooooo", ".yroogggggwo", "yyroogggggwo", ".yroogggggwo", "...ggooooooo"]
+      "rows": [
+        "..o....gg...",
+        "..yyo..gggww",
+        "oyryoogggwww",
+        "..yyo..gggww",
+        "..o....gg..."
+      ]
     },
     {
-      "rows": ["...ggooooooo", ".rroogggggwo", "rrroogggggwo", ".rroogggggwo", "...ggooooooo"]
+      "rows": [
+        "..o....gg...",
+        "..rro..gggww",
+        "oryroogggwww",
+        "..rro..gggww",
+        "..o....gg..."
+      ]
     }
   ],
   "animations": {
-    "fly": [0, 1]
+    "fly": [
+      0,
+      1
+    ]
   }
 }

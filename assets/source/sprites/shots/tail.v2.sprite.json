@@ -1,13 +1,13 @@
 {
   "name": "shots/tail",
-  "description": "Tail Gun: the shot fired straight back, v2 (R4-01.A6, art bible v2 § 5.3): the v1 8 × 3 dart mirrored at 12 × 5, the white core three rows deep.",
+  "description": "Tail Gun v2 (w15-WEAPONLOOK2): hand-drawn native swept-back dart facing LEFT (it flies backwards) — the white core row crowned by edge-corner cyan fins and a dark tail cap at the right end; the v1 mirror-dart reading kept, the FLUX gem retired. Separates the tail bolt from basic's centred wings (w15-WEAPONLOOK § 6).",
   "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
   "anchor": [6, 2],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": ["...cccccb...", "wwwwwwwwwccb", "wwwwwwwwwccb", "wwwwwwwwwccb", "...cccccb..."]
+      "rows": ["cc........cc", ".cc.........", "wwwwwwwwwwcb", ".cc.........", "cc........cc"]
     }
   ]
 }

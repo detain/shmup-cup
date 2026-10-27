@@ -1,13 +1,13 @@
 {
   "name": "shots/twin",
-  "description": "Twin Laser beam segment, v2 (R4-01.A6, art bible v2 § 5.3): tiles horizontally (anchor at its left end); the v1 8 × 3 segment at 12 × 5 with the core three rows deep.",
+  "description": "Twin Laser beam segment v2 (w15-WEAPONLOOK2): hand-drawn native comb beam — a continuous green core row with ridge spines every third column (white under green above and below), 3-px tiling period so it seams across segments; tiles horizontally (anchor at its left end). A ridged beam, not a solid bar — separates it from the FLUX twin/tail pair (w15-WEAPONLOOK § 6).",
   "palette": { ".": null, "g": "#90f070", "w": "#ffffff" },
   "anchor": [0, 2],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": ["gggggggggggg", "wwwwwwwwwwww", "wwwwwwwwwwww", "wwwwwwwwwwww", "gggggggggggg"]
+      "rows": ["g..g..g..g..", "w..w..w..w..", "gggggggggggg", "w..w..w..w..", "g..g..g..g.."]
     }
   ]
 }

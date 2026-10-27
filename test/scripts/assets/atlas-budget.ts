@@ -111,6 +111,17 @@
  * AREA law holds: 619 sprites, 2,200 frames unchanged, every map drawing in the slot
  * its generator art held, so the stand-in band, the TV residency budget and the
  * bundle's gzip and dist rows track the page, not the cap.
+ *
+ * **w15-WEAPONLOOK2 (dated 2026-10-27): no raise — measured first, the page shrinks.**
+ * Eight hand-drawn maps retire the PNG-served FLUX bolts that round 1 could not separate:
+ * basic, double, free, missile, tail, torpedo, twin and two-way — the twin of the
+ * double↔two-way 0.987 pair, the ring of free, the left-facing tail dart and the finned
+ * torpedo/missile rockets each replace a 10–12-colour AI PNG with the v1 3–5-colour
+ * palette at the identical grid. The common page moves 336,101 → **335,795 B** (−306 B —
+ * hollow and lean silhouettes cost fewer indexed pixels than the FLUX glows they retire),
+ * headroom 1,205 B under the untouched 337,000 B cap. The AREA law holds (619 sprites,
+ * 2,200 frames); the upscaled pool is unmoved at 313 — all eight names were PNG-served,
+ * never pool-upscaled — so the floor 310 clause stands unchanged.
  */
 export const ATLAS_COMMON_PNG_CAP = 337_000;
 /**
