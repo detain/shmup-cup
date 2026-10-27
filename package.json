@@ -62,9 +62,9 @@
     "pngjs": "^7.0.0",
     "prettier": "^3.9.10",
     "semver": "^7.8.5",
-    "turbo": "^2.11.9",
+    "turbo": "^2.11.10",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.71.2",
+    "typescript-eslint": "^8.72.0",
     "vite": "catalog:",
     "vitest": "catalog:"
   }

@@ -19,7 +19,7 @@ catalog:
   # TypeScript 7 (native Go compiler) has no JS API until 7.1, and typescript-eslint
   # 8.x requires typescript <6.1 — so the toolchain is pinned to the newest 6.0.x.
   typescript: ~6.0.3
-  vite: ^8.3.4
+  vite: ^8.3.5
   vitest: ^5.0.5
 
 # Dependencies whose install scripts are allowed to run (pnpm blocks all others).
