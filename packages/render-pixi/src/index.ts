@@ -68,6 +68,7 @@ export {
   MAX_ATLAS_SIZE,
   MISSING_SPRITE,
   PIXEL_SPRITE,
+  closePageImage,
   createAtlas,
   type Atlas,
   type AtlasFontInfo,
@@ -228,6 +229,13 @@ export {
   type VideoSurface,
   type VideoSurfaceOptions,
 } from './video/index.js';
+export {
+  createImageSurface,
+  type ImageBand,
+  type ImageBandAnchors,
+  type ImageSurface,
+  type ImageSurfaceOptions,
+} from './stills/index.js';
 export {
   DEBUG_DEVICE_MAX,
   FRAME_GRAPH_LENGTH,
