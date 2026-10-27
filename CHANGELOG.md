@@ -6,7 +6,7 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 [`shmup_progress.md`](docs/old/shmup_progress.md); v2 follows
 [`plan_resolution.md`](plan_resolution.md), whose §17 tracks its progress.
 
-## [2.0.0] — 2026-10-24
+## [2.0.0] — 2026-10-27
 
 **Shmup Cup 2.0.0** — the **640×360 remaster**: the same game as v1 re-based on the new
 frame with every world quantity ×1.5, 12-px tiles and a 9×12 font cell; all nine campaign zones
