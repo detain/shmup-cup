@@ -19,7 +19,8 @@ booting after the dependency bumps. The step record is
 **The art, honestly:** the game ships v2's own art as the committed pipeline draws it — the R4
 native redraws and the R5 zones' stand-in kit, every sprite at the new density — **and the
 harvested real art too**, since waves 14–15: FLUX.2-dev sheets re-ingested as PNG overrides with
-`.art.json` provenance, 239 of the atlas's 619 sprites served from them (the closeout below and
+`.art.json` provenance, 231 of the atlas's 619 sprites served from them (142 records after the
+two WEAPONLOOK retire rounds; the closeout below and
 [real-assets.md](docs/dev/real-assets.md)). The licence basis is the owner's ruling of
 **2026-10-23**: the art ships in the free, open-source (MPL-2.0) non-commercial distribution, and
 a BFL commercial licence is in place before any paid distribution
@@ -895,14 +896,17 @@ heading into the release section above.
 
 ### The real art arrives (the R6-03.S3 era, waves 14–15)
 
-**239 of the atlas's 619 sprites (2,200 frames) are served from FLUX.2-dev real art** — 150
-`.art.json` records plus the 75 `@flash`, 5 `@p2` and 9 `@palette` siblings the packer derives;
-the remaining 380 stay the build's own procedural v2 kit. The S3 harvest had cut **33 names**
+**231 of the atlas's 619 sprites (672 of its 2,200 frames) are served from FLUX.2-dev real art**
+— 142 `.art.json` records plus the 75 `@flash`, 5 `@p2` and 9 `@palette` siblings the packer
+derives; the remaining 388 stay the build's own procedural v2 kit. The S3 harvest had cut **33 names**
 from the owner's 299 committed picker winners; the GEN-1/GEN-2 derivative sheets fed re-ingests
 of 4 names; the owner-waived GEN-4 batch landed **42 never-designed names in one commit** ("ai
 generate those other things too"); the follow-up rounds — REING6 → REING123 and PIXMAP1 over the
 committed `gen6/`–`gen13/` stores — carried the tally from 79 records and 130 served sprites to
-the era-final 150 and 239. What the gate proved along the way is as much the result as the art:
+150 and 239; the two WEAPONLOOK retire rounds of the closing day (2026-10-27: `056cc83b`'s
+eleven hand-drawn bolt maps, then `d5b95b3d` retiring eight gen6 FLUX bolt overrides to pixel
+maps) set the era-final 142 records and 231 served. What the gate proved along the way is as
+much the result as the art:
 
 - **The interim class closed at zero.** The names still served from an upscaled
   `*.v2.sprite.json` pixel map stood at **118** after the REING8/9 round; the rounds cut that
@@ -942,8 +946,10 @@ stands. And the art-budget carve-out — *"tell the subagent its ok to go over t
 readd that stuff it removed"* — let the frame and pool floors rise for **restored** art with a
 measured disclosure at every step: the common-page cap walked 300,000 → 301,000 → 307,000 →
 309,500 → 320,000 → 330,000 → 335,000 → **337,000** with the page's own byte count at each raise
-(the last, 335,815 B, needed no further raise), the upscaled-pool floor 400 → 350 → 340 →
-**320** — and no gameplay cap ever moved. The three earlier stores stand as committed
+(the last, 335,815 B, needed no further raise), the upscaled-pool floor 400 → 350 → 340 → 320 →
+**310** (w15-WEAPONLOOK, 2026-10-27: the hand-drawn rail, chain, drone and beacon maps retire
+those names from the upscaled pool — 313 measured — and the floor follows the natives, pinned in
+`interim-pipeline.test.ts`) — and no gameplay cap ever moved. The three earlier stores stand as committed
 (`winners/` 299 + 35 clips, `gen3/` 62 rows, `gen5/` 68 rows) beside `gen6/`–`gen13/`. What
 stayed procedural is measured, not cautious; the per-row numbers ride the wave-15 reports. The
 six hull bosses' part kits and the deferred anim rows stayed owner pool decisions — re-posing an
@@ -970,9 +976,10 @@ with its own pins and review.
   (6 sprites, 17 frames), restored under the owner's art-budget ruling (the section above).
 - **Three new Option modes** (w15-WB, `add6f1fa` + pins `60276479`): **GUARD** (code 4) parks
   fixed pods behind the ship that copy the main weapon and fire a rear volley, **ECHO** (5)
-  flies wingmen on a half-lagged mirror of the line you flew, folding into the ship, and
-  **AEGIS** (6) orbits close dishes that swallow enemy bullets ahead of the ship into point
-  items — a sweep the world runs in its phase-5 pass through a new `TerrainProbe`. The modes
+  flies wingmen on a half-lagged mirror of the line you flew, folding into the ship through a
+  new `TerrainProbe` that `core/weapons` binds to the stage's terrain map, and **AEGIS** (6)
+  orbits close dishes that swallow enemy bullets ahead of the ship into point
+  items — a sweep the world runs in its phase-5 pass through `BulletSystem.aegisSweep`. The modes
   append to `OptionMode` and never renumber, the debug weapon-mix hashes the rear and folded
   geometry only while a ship uses them, and the six silhouettes join `OPTION_SPRITES`.
 - **A richer drop program** (w15-C, `09f82019` … `245b6b6b`): capsules now repaint by what

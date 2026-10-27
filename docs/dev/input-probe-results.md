@@ -568,7 +568,7 @@ shipped scene) reads 11.0 / 13.8 % there, 0.6 / 3.1 % at `OUTPUT = 960×540`; on
 motivated R6-04's Auto default. Met; no mitigation needed.
 
 **3. Zone load ≤ 2 s — met.** §12.5: cold 1484–1592 ms, zone-change 730–766 ms, 15 of 15 — the
-corpus's most reproducible number, GL-independent, 24.8–25.8 % under the cap. The decode split
+corpus's most reproducible number, GL-independent, 20.4–25.8 % under the cap. The decode split
 (2048² pages): PNG-8 file→GPU 338.1–409.7 ms (decode 169.3–226.3) vs RGBA 778.0–836.3 — ≈ 2.2×,
 ≈ 38–40 ms/Mpx, exactly the R1-05 indexed-page choice paying off on the TV. Caveat carried with the
 data: these builds pre-date R5's final art and ran the synthetic page shape; the ≤ 1 + 2 pages per
