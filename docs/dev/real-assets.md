@@ -23,6 +23,9 @@ generated image into a sprite source with its provenance. Its companions:
   tool implements;
 - [art-provenance.md](art-provenance.md) — which models' output may ship, and what every shipped
   AI-assisted image records;
+- [`docs/images/concept/`](../images/concept/README.md) — the browsable gallery of the approved
+  winner paintings (boss portraits, ending moments, zone scenes) as ≤512 px previews, with the
+  sidecar-extracted index of model and date; documentation only, never build input;
 - [asset-pipeline.md](asset-pipeline.md) (how the atlas is built) and [audio.md](audio.md) (how
   sound reaches the speakers).
 

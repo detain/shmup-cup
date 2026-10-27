@@ -6,7 +6,9 @@
 Everything that flies at you, in the order a run meets it. Every picture on this page is the
 enemy's own art, drawn straight from the game's sprite sources by `pnpm docs:images` — the bosses
 are assembled part by part from the same data the game builds them from, so a portrait shows
-exactly what arrives on screen, weak point and all.
+exactly what arrives on screen, weak point and all. The approved concept paintings the bosses were
+designed from — the picker-era winners, full portraits and endings included — hang in the
+[concept gallery](../images/concept/README.md).
 
 Numbers are the shipped values on **NORMAL**: hit points, and the score a kill pays. Difficulty,
 [rank](../dev/difficulty-and-rank.md) and the loop change how fast a thing shoots and how quick
