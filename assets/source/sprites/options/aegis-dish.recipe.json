@@ -1,0 +1,55 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "options/aegis-dish",
+  "category": "option",
+  "frame": {
+    "width": 12,
+    "height": 12
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen11/o-aegis-dish/gen.png",
+      "frames": [
+        [
+          31,
+          50,
+          205,
+          185
+        ],
+        [
+          260,
+          49,
+          205,
+          185
+        ],
+        [
+          46,
+          282,
+          205,
+          185
+        ],
+        [
+          285,
+          281,
+          205,
+          185
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    6,
+    6
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen11 harvest (w15-GEN11 quality-regen wave 4 ask round, the PROBE-OK rows of the art-prompts/v2/gen11 store)"
+    },
+    "notes": "o-aegis-dish (gen11 quality-regen wave 4, PROBE-OK@2; w15-REING11): options/aegis-dish v2 (4 pulse frames 12x12 native, OPTION_FRAMES pulse; Aegis radar dish; hitFlash false, no @flash sibling). the four cells of the 2x2-of-256 sheet on the flat #51e018 key cropped to a shared 205x185 contain box centred on each measured subject box (the pulse glow widens over frames 2–3; the shared box keeps its size as designed, REING6 precedent). First real-art landing of this name. The optional v1 8x8 twin stays interim (a PNG override of a code-sourced name is skipped at scale 1 — decision RR-1 — so the scale-1 digest cannot move). The design carries its own outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame pulse loop of the AEGIS — one of the player's orbiting Option pods, a COMPACT roughly SQUARE glowing module (never a long ellipse, never stretched wide, never a capsule lying on its side) that trails the ship in formation. The four cells are the SAME pod breathing its light over four steps.\n\nDesign identity to keep exactly — a compact parabola radar AEGIS DISH opening to the upper right, TALLER than it is wide (a deep bowl about 0.85:1 wide — its width never exceeds its height): a deep teal bowl (#2aa0a0) with a bright aqua inner face (#7adada) and a dark teal rim (#123a3a), a fine feed arm laid across the aperture's mouth, a small stem foot at the bottom. All on a 1-px near-black teal outline (#123a3a). Its four pulse steps: 0 the calm steel dish; 1 the phosphor face lights teal from the centre; 2 the flare peak — an amber beam (#f8a030) fires ACROSS the feed arm, light only, the metalwork unchanged; 3 the beam dies back to amber sparks on the feed.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as a 2×2 GRID (2-column by 2-row, reading left-right then top-bottom) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 CALM — the bare steel-teal dish, unlit. The subject lies within aspect 0.60:1 to 1.20:1.\n  cell 2 = FRAME 1 — the SAME dish: its phosphor face glows lit teal from the centre. The subject lies within aspect 0.60:1 to 1.20:1.\n  cell 3 = FRAME 2 FLARE — the SAME dish: an amber light beams across the feed arm. The subject lies within aspect 0.60:1 to 1.20:1.\n  cell 4 = FRAME 3 — the SAME dish: the beam is gone, a few amber sparks cling to the feed. The subject lies within aspect 0.60:1 to 1.20:1.\n- POD SHAPE LAW: the pod is a compact, near-square blob filling its cell's inner box EQUALLY in width and height (about 1:1, never wider than 1.4:1, never taller than 1.4:1). If the pod looks stretched, flattened, or off-centre the sheet is ruined. The four cells sit in a 2x2 grid, each pod alone in its cell.\n- SAME-SIZE LAW: the pod's metalwork and circle diameter are IDENTICAL in all four cells, at the identical position of each cell — only the named light changes. A bigger or smaller pod in any cell ruins the sheet.\n- COLOUR-ONLY STATE LAW: frames 1 to 3 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes.\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace the interim v2 pixel maps 1:1 at the same served sizes."
+  }
+}

@@ -32,8 +32,8 @@ const TIZEN_INDEX = pathToFileURL(
 
 /** The fresh Force Field's ring colour (`shields/force-field` frame 0, #70e8ff) — unique. */
 const RING = [0x70, 0xe8, 0xff] as const;
-/** KESTREL hull colour (`ships/kestrel` real art, #343154). */
-const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
+/** KESTREL deck colour (`ships/kestrel` w15-REING-11 gen11 art, #909bd8). */
+const KESTREL_HULL = [0x90, 0x9b, 0xd8] as const;
 
 /**
  * The fresh Force Field's ellipse at the art's scale: 30×24 in the v1 art, ×1.5 rounded up in the

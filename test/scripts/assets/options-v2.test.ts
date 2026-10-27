@@ -216,13 +216,14 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
   }
 
   it('holds the orb red body in every dark pulse frame (weapons.spec threshold)', () => {
-    // w15-REING-6: the shipped orb is the gen6 re-land, whose crimson body is the family
-    // `#aa0d19`/`#8d0718`/`#640816` (13–30 px a frame across the roll; a single member is as
-    // thin as 3 px where the shading ramp steps). The interim map's amber-only flare frame 2
-    // governs only where no override ships — that art still serves scale 1.
+    // w15-REING-11: the shipped orb is the gen11 re-land, whose crimson body is the family
+    // `#a9021a`/`#7e0317`/`#530815` (37–40 px a frame summed across the pulse; the single
+    // `#a9021a` alone is 11–17 px, well past the browser spec's threshold of 8). The interim
+    // map's amber-only flare frame 2 governs only where no override ships — that art still
+    // serves scale 1.
     const override = overrideOf('options/orb');
     const family =
-      override === null ? [rgb('#e83838')] : [rgb('#aa0d19'), rgb('#8d0718'), rgb('#640816')];
+      override === null ? [rgb('#e83838')] : [rgb('#a9021a'), rgb('#7e0317'), rgb('#530815')];
     for (const frame of v2.manifest.sprites['options/orb'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;
@@ -241,11 +242,11 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
   });
 
   it('holds the stolen light grey in every frame (option-hunter.spec census)', () => {
-    // w15-REING-6: the shipped stolen orb is the gen6 re-land's drained mauve-grey `#80516c`
-    // (3–10 px a frame, the owner's crimson-to-grey corrupted redesign); the interim
-    // `#a8a8b4` and the R6-03.S3 `#b5afb4` govern only where no override ships.
+    // w15-REING-11: the shipped stolen orb is the gen11 re-land's drained grey `#756f78`
+    // (17–25 px a frame, the corrupted orb's dim shell); the interim `#a8a8b4` and the
+    // w15-REING-6 gen6 `#80516c` govern only where no override ships.
     const override = overrideOf('options/stolen');
-    const [r, g, b] = rgb(override === null ? '#a8a8b4' : '#80516c');
+    const [r, g, b] = rgb(override === null ? '#a8a8b4' : '#756f78');
     for (const frame of v2.manifest.sprites['options/stolen'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;

@@ -409,9 +409,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // enemy rows and the five HALCYON BULWARK pieces of the PROBE-OK harvest), so the copy
     // lands one hundred thirty-four live plus five minus one. w15-REING10's five gen10
     // records join (the gimmick-range chips — bubble-small, lava, rock, rush-cube and the
-    // tentacle claw — of the re-probed PROBE-OK harvest), so the copy lands one hundred
-    // thirty-nine live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(139);
+    // tentacle claw — of the re-probed PROBE-OK harvest) and w15-REING11's six gen11
+    // records join (the manta-thruster and the five option rows that never held art; the
+    // four re-asked rows keep their own), so the copy lands one hundred forty-five live
+    // plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(145);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -447,11 +449,14 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // siblings over from procedural too — one hundred seventy-three live, and the fixture
       // tree lands one hundred seventy-three again. w15-REING89's seventeen gen8/gen9
       // override sprites join with their seventeen derived @flash siblings (every row
-      // flashes) — two hundred seven live, and the fixture tree lands two hundred seven again.
-      // w15-REING10's five gen10 override sprites join with their five derived @flash
-      // siblings (every row flashes) — two hundred seventeen live, and the fixture tree
-      // lands two hundred seventeen again.
-      sprites: 217,
+      // flashes) — two hundred seven live, and the fixture tree lands two hundred seven
+      // again. w15-REING10's five gen10 override sprites join with their five derived
+      // @flash siblings (every row flashes) and w15-REING11's six gen11 override sprites
+      // join with the manta-thruster's derived @p2 sibling (the four re-asked rows keep
+      // their sprites, and no @flash rides with any of the ten gen11 rows — none of them
+      // flashes on hit): two hundred twenty-four live, and the fixture tree lands two
+      // hundred twenty-four again.
+      sprites: 224,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

@@ -24,8 +24,8 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** KESTREL hull colour (`ships/kestrel` real art, #343154) — nothing else uses it. */
-const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
+/** KESTREL deck colour (`ships/kestrel` w15-REING-11 gen11 art, #909bd8) — nothing else uses it. */
+const KESTREL_HULL = [0x90, 0x9b, 0xd8] as const;
 
 /** Where the KESTREL's hull colour is on screen, in frame pixels ({@link shipCentre}). */
 interface HullView {

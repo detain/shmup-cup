@@ -69,8 +69,20 @@
  * draws in the slot the upscaled frame held, so the stand-in band and the TV residency budget
  * do not move, and the bundle's gzip and dist rows still stand under their real ceilings.
  * Headroom 1,976 B kept — a bulk colour regression still trips this cap loudly.
+ *
+ * **w15-REING11 (the same owner re-add ruling, dated 2026-10-26): raised 330,000 →
+ * 335,000.** Measured first: this lane's ten gen11 rows alone took the REING89 page
+ * 328,024 → **329,939 B** (+1,915 B, 61 B headroom — no raise at the measured base). The
+ * landing rebased over w15-REING10's five gimmick chips (a foreign page-mover of +1,177 B,
+ * 329,201 B on its own tree), and the MERGED page measures **331,116 B** — 1,116 B over
+ * the old cap, the sum of two honest landings, which is exactly what the owner's dated
+ * ruling answers. The gen11 rows — the two hulls (five bank frames), the manta-thruster's
+ * burn loop and the seven option pulse loops — replace upscaled v1 frames in place and
+ * the AREA law holds: 619 sprites, 2,200 frames unchanged, so the stand-in band, the TV
+ * residency budget and the bundle's gzip and dist rows do not move. Headroom 3,884 B
+ * kept — a bulk colour regression still trips this cap loudly.
  */
-export const ATLAS_COMMON_PNG_CAP = 330_000;
+export const ATLAS_COMMON_PNG_CAP = 335_000;
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
  * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a

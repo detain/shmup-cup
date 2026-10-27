@@ -36,8 +36,8 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** The MANTA's light hull (R6-03.S3 real art, #acbe9f) — only its sprite uses it. */
-const MANTA_CANOPY = [0xac, 0xbe, 0x9f] as const;
+/** The MANTA's light hull (w15-REING-11 gen11 art, #bdd1b7) — only its sprite uses it. */
+const MANTA_CANOPY = [0xbd, 0xd1, 0xb7] as const;
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface DirectView {

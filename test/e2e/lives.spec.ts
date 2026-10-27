@@ -17,8 +17,8 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy, uiPx } from './frame-pixels.js';
 import { BOOT_TIMEOUT_MS, SHIP_ENTER_TICKS, waitTicks } from './ticks.js';
 
-/** KESTREL hull colour in the playfield (R6-03.S3 real art, #343154) — only the ship uses it. */
-const HULL = [0x34, 0x31, 0x54] as const;
+/** KESTREL deck colour in the playfield (w15-REING-11 gen11 art, #909bd8) — only the ship uses it. */
+const HULL = [0x90, 0x9b, 0xd8] as const;
 /** The stock-icon grey (`hud/life` palette `h`, #c8d0e0 — interim art, shared with the old hull). */
 const LIFE_ICON = [0xc8, 0xd0, 0xe0] as const;
 /** `GAME OVER`'s colour in the flight HUD (0xf85858) — nothing else in the top bar uses it. */

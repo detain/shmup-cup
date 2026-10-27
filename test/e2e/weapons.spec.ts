@@ -37,10 +37,10 @@ const LASER_LIGHTS: readonly (readonly [number, number, number])[] = [
   [0xec, 0xfa, 0xff],
   [0x04, 0xae, 0xc3],
 ];
-/** `options/orb` body colour (w15-REING-6 gen6 real art, #aa0d19). */
-const OPTION_BODY = [0xaa, 0x0d, 0x19] as const;
-/** KESTREL hull colour (`ships/kestrel` real art, #343154). */
-const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
+/** `options/orb` body colour (w15-REING-11 gen11 art, #a9021a). */
+const OPTION_BODY = [0xa9, 0x02, 0x1a] as const;
+/** KESTREL deck colour (`ships/kestrel` w15-REING-11 gen11 art, #909bd8). */
+const KESTREL_HULL = [0x90, 0x9b, 0xd8] as const;
 
 /** Frame pixels of one colour in the playfield. */
 interface ColourPixels {

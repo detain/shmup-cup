@@ -1,0 +1,153 @@
+{
+  "frames": [
+    {
+      "filename": "ships/manta-thruster 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 5
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta-thruster 1",
+      "frame": {
+        "x": 9,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 5
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta-thruster 2",
+      "frame": {
+        "x": 18,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 5
+      },
+      "duration": 100
+    },
+    {
+      "filename": "ships/manta-thruster 3",
+      "frame": {
+        "x": 27,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 5
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "manta-thruster.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 5
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 9,
+              "h": 5
+            },
+            "pivot": {
+              "x": 9,
+              "y": 2
+            }
+          }
+        ]
+      }
+    ],
+    "shmup": {
+      "p2": {
+        "#1ed5d1": "#d1d51e",
+        "#25735c": "#5c7325",
+        "#27b998": "#98b927",
+        "#2a730b": "#0b732a",
+        "#2ab6a8": "#a8b62a",
+        "#2f8e09": "#098e2f",
+        "#364e34": "#344e36",
+        "#36ab05": "#05ab36",
+        "#38943c": "#3c9438",
+        "#3ead4f": "#4fad3e",
+        "#46b07f": "#7fb046",
+        "#48b391": "#91b348",
+        "#4ae2d7": "#d7e24a",
+        "#4af1dc": "#dcf14a",
+        "#54ab62": "#62ab54",
+        "#5dedd9": "#d9ed5d",
+        "#66c4ac": "#acc466",
+        "#69d38d": "#8dd369",
+        "#6bfbe3": "#e3fb6b",
+        "#80f5e8": "#e8f580",
+        "#89cbaa": "#aacb89",
+        "#8bc196": "#96c18b",
+        "#8bf7e8": "#e8f78b",
+        "#c7f7f5": "#f5f7c7"
+      }
+    }
+  }
+}
