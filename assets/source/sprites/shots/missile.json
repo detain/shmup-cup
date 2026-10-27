@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "filename": "shots/missile 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 5
+      },
+      "duration": 100
+    },
+    {
+      "filename": "shots/missile 1",
+      "frame": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 12,
+        "h": 5
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "missile.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 24,
+      "h": 5
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 5
+            },
+            "pivot": {
+              "x": 6,
+              "y": 2
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

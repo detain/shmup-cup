@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/missile",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the w15-PIXMAP1 zero-GPU code-frame derivation"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/code-frames/missile/gen.png",
+      "sha256": "4242fcd6a166ed8ed3a3c00386f005b82dc73c4bff96d7ff75a802bc5b9a41fe",
+      "format": "png",
+      "width": 768,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "code",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "No model and no prompt: made in code from the committed hand-drawn v2 pixel map (assets/source/sprites/shots/missile.v2.sprite.json, w15-PIXMAP1). The interim map was a stretched v1 box, not a redraw, and FLUX never drew this lance-subject cleanly (the s-shots-missile asks); the map is the last name in the v2 interim pool. The redraw is hand-pixelled per art bible v2 § 5.3 — the missile at 12 × 5 with tail fins on the outline rows, a two-pixel nozzle, a three-step tapered exhaust flame and a white nose shoulder capped in outline dark — on v1's exact five colours; this script lays those map rows ×16 nearest on the flat ask key, one solid block per pixel, centred in each cell of the sheet.",
+        "negative": null
+      },
+      "seed": null,
+      "size": "768x256",
+      "steps": null,
+      "guidance": null,
+      "generatedAt": "2026-10-27T13:00:00.000Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/code-frames/missile/gen.json",
+        "sidecarSha256": "feafbdd1d189aad9c3ccc040852a415b0d9f84789b4de04aa1649b2737ec768c",
+        "id": "w15-PIXMAP1/s-missile/frames",
+        "slot": "a",
+        "mode": "code",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/missile.recipe.json",
+    "sha256": "5e1f27d92c39aaeffcdad3858c9d51ae86442d6f6ec39f5de2222ea3dbc088d4"
+  },
+  "edit": null,
+  "output": {
+    "png": "missile.png",
+    "sha256": "4ab8607a9671243dc53b45b9b33d73fb3153077f5b265aef2e3445a6505d9381",
+    "sidecar": "missile.json",
+    "sidecarSha256": "eda22ed80cb077e561e3a29c1a82d7d023a843484c8d769dbd9ab9cf307ee947",
+    "frames": 2,
+    "frameWidth": 12,
+    "frameHeight": 5,
+    "colors": 5,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "shots/missile v2 (2 flicker frames 12x5 native, the fly [0,1] loop, the ground missile; anchor [6,2] keeps the centre; hitFlash false, no @flash sibling). The last name in the v2 interim pool (the era census 118→…→1→0): the interim map was a stretched v1 box — a full 12 × 5 outline rectangle with a three-row body — not a redraw, and FLUX never drew this lance-subject cleanly. The redraw is hand-pixelled per art bible v2 § 5.3 (tail fins on the outline rows, a two-pixel nozzle, a three-step tapered exhaust flame, a white nose shoulder capped in outline dark, the core line whole) and lives as the committed pixel map assets/source/sprites/shots/missile.v2.sprite.json, the design source of truth; the committed art-prompts/v2/code-frames/make_missile.mjs reads its rows and palette from disk and lays them ×16 nearest on the flat ask key (model code, deterministic byte-exact re-run, --check proven). The five colours are exactly the ones the interim map shipped (#2a3a4a, #a0a8b8, #ffffff, #e84818, #f8c030), so the palette-cycle margin is kept by design and nothing new enters the atlas palette; no colour is invented and no step is improvised. No p2 map: the shot ships no @p2 sibling today. The bullet/laser palette law (the ^(bullets|lasers)/ regex) does not cover shots/, so no @palette variants are owed. The design carries its own outline, so the outline pass is off."
+}

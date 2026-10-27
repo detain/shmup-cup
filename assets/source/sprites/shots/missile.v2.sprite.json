@@ -1,6 +1,6 @@
 {
   "name": "shots/missile",
-  "description": "Ground missile with a flickering exhaust, v2 (R4-01.A6, art bible v2 § 5.3): the v1 8 × 3 missile at 12 × 5 with the grey body three rows deep.",
+  "description": "Ground missile with a flickering exhaust, v2 (w15-PIXMAP1, art bible v2 § 5.3): the v1 missile redrawn at 12 × 5 — tail fins on the outline rows, a two-pixel nozzle, a three-step tapered exhaust flame and a white nose shoulder capped in outline dark — on v1's palette and its core-line grammar.",
   "palette": {
     ".": null,
     "o": "#2a3a4a",
@@ -9,36 +9,18 @@
     "r": "#e84818",
     "y": "#f8c030"
   },
-  "anchor": [
-    6,
-    2
-  ],
+  "anchor": [6, 2],
   "hitFlash": false,
   "native": true,
   "frames": [
     {
-      "rows": [
-        "...oooooooo.",
-        "yyrooggggwwo",
-        "yyrooggggwwo",
-        "yyrooggggwwo",
-        "...oooooooo."
-      ]
+      "rows": ["...ggooooooo", ".yroogggggwo", "yyroogggggwo", ".yroogggggwo", "...ggooooooo"]
     },
     {
-      "rows": [
-        "...oooooooo.",
-        "rrrooggggwwo",
-        "rrrooggggwwo",
-        "rrrooggggwwo",
-        "...oooooooo."
-      ]
+      "rows": ["...ggooooooo", ".rroogggggwo", "rrroogggggwo", ".rroogggggwo", "...ggooooooo"]
     }
   ],
   "animations": {
-    "fly": [
-      0,
-      1
-    ]
+    "fly": [0, 1]
   }
 }

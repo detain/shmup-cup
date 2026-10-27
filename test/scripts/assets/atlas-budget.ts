@@ -92,6 +92,13 @@
  * 2,200 frames unchanged — so the stand-in band, the TV residency budget and the
  * bundle's gzip rows track the page, not the cap. Headroom 1,206 B kept — a bulk colour
  * regression still trips this cap loudly.
+ *
+ * **w15-PIXMAP1 (the interim pool's last name, dated 2026-10-27): no raise — measured
+ * first.** shots/missile's hand-drawn v2 map (the era census's final 1 → 0) ships as a
+ * zero-GPU code-frame override: same 12 × 5 grid, same 2 frames, the pixels only
+ * restructured (52 opaque a frame where the stretched box held 54). The common page
+ * moves 335,794 → **335,815 B** (+21 B of re-indexed PNG payload, an in-place swap the
+ * AREA law keeps: 619 sprites, 2,200 frames unchanged). Headroom 1,185 B.
  */
 export const ATLAS_COMMON_PNG_CAP = 337_000;
 /**

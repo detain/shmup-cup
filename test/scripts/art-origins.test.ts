@@ -323,8 +323,12 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     const text = formatOriginReport(report);
     expect(text).toContain('Shipped sprites by origin and kind:');
     // The palette column joins the table once any @palette sibling rides a record (w15-REING7).
+    // The pixel-map column retires the same way it joined: w15-PIXMAP1 landed the last interim
+    // name (shots/missile, the era arc 118→…→1→0), so no shipped sprite is served from a v2
+    // pixel map any more and the column leaves the report — the writer prints a column only
+    // while its class has a member (the procedural p2 key's exit above is the same class).
     expect(text).toMatch(
-      /\n {2}origin +generator +pixel-map +font +flash +p2(?: +palette)?(?: +record)? +total\n/,
+      /\n {2}origin +generator(?: +pixel-map)? +font +flash +p2(?: +palette)?(?: +record)? +total\n/,
     );
     expect(text).toContain('Shipped sprites by served model (as a source or an edit reference):');
     expect(text).toMatch(PASSING_SUMMARY);
@@ -416,8 +420,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // four re-asked rows keep their own) and w15-REING123's eight join (the gyro, the four
     // HALCYON BULWARK chips, the chain link, the life stock icon and the zero-GPU
     // kestrel-thruster recolor), so the copy lands one hundred fifty-three live plus five
-    // minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(153);
+    // minus one. w15-PIXMAP1's one joins (the zero-GPU shots/missile code-frame record — the
+    // last interim name in the game, the era arc 118→…→1→0 closes with it), so the copy lands
+    // one hundred fifty-four live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(154);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -464,8 +470,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // link, the life icon and the thruster do not) and the two @p2 siblings — the
       // kestrel-thruster's and the life icon's — now ride the records instead of the
       // procedural maps: two hundred thirty-eight live, and the fixture tree lands two
-      // hundred thirty-eight again.
-      sprites: 238,
+      // hundred thirty-eight again. w15-PIXMAP1's shots/missile joins with one sprite and
+      // nothing derived (no @flash, no @p2, no @palette — the interim pixel-map class it
+      // leaves is now empty, so the report's pixel-map column retires with it): two
+      // hundred thirty-nine live, and the fixture tree lands two hundred thirty-nine again.
+      sprites: 239,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });
