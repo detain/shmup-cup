@@ -995,8 +995,47 @@ with its own pins and review.
   letter behind the label. The edges' dot budget moved 160 → 151 to pay for them; the shipped
   16-edge map is unchanged.
 
-v2.0.0 release-candidate polish round: shield translucency, hitbox fade, ground-enemy background
-fix, weapon silhouette differentiation (see wave-15 reports).
+### The release-candidate polish round (wave 15 taste lanes)
+
+Four owner-eye fixes landed on the release candidate — shield translucency, hitbox fade,
+ground-enemy background fix, weapon silhouette differentiation — all in the art and the rim,
+none touching the simulation:
+
+- **Shields turn translucent** (w15-SHIELDFIX, `b220ad62`): a raised shield hid the ship it
+  guarded — the FLUX Arm/Reduce art measured 94 % / 72 % opaque over the ship box. The whole
+  shield batch now composites at **α 0.65**, carried once at batch creation through a new optional
+  `alpha` on `createSpriteBatch` / `SpriteBatchView` (the `blend` precedent — the host sets
+  `sprite.alpha` when it binds the layer, never per frame, and the field is not hashed, so the
+  goldens and the fingerprints do not move); and the Arm and Reduce sprites are **hand-hollowed**
+  through erase-only `.edit.png` layers, rock interiors erased and outlines kept. The ship reads
+  through every active shield — and the hollowing shrank the common atlas page by 922 B.
+- **The hitbox rim fades to a quarter** (w15-HBDIM2, `fa616957`): `HITBOX_RIM_TINT` drops from the
+  half-brightness `0x7f1828` to `0x20060a` — one eighth of the original `0xff3050` — still fully
+  opaque (a known colour must reach the screen for the browser specs' exact pixel checks). The
+  fade stops at a pinned floor: every Chebyshev distance to the sixteen common darks of the
+  shipped content stays above 8 (worst 20 — the chosen maximum-fade point), asserted in
+  `layers-hitbox.test.ts`. On the dark bands the 1-px line no longer picks itself out of moving
+  picture; on a paused frame it still reads, as a dark ring around the hurt core.
+- **The ground hatch loses its solid background** (w15-GROUNDBG, `bc3f32c5`): zone H's
+  `enemies/hatch-bay` — the floor/ceiling hatch that stays mounted on the ground — served as a
+  full-bleed opaque slab, because the v1 plate painted its whole canvas and no v2 redraw existed,
+  so the interim ×1.5 upscale carried the flush steel backdrop. A native 24×12 `hatchBayFrameV2`
+  rebuilds it as a stepped floor hatch with a transparent surround (ink 100 % → 78.5 %) on the
+  module's own palette, and its `@flash` sibling re-derives to the true silhouette; no
+  ground-mounted sprite is full-bleed any more.
+- **Every player bolt gets its own silhouette** (w15-WEAPONLOOK `056cc83b` + w15-WEAPONLOOK2
+  `d5b95b3d`): **nineteen hand-drawn v2 pixel maps** separate the shot roster — eleven
+  generator-served names drawn over with family silhouettes first, then the eight gen6 FLUX bolts
+  whose maps lay dead under their PNG overrides, hand-drawn and retired to pixel-maps (the FLUX
+  count drops 239 → 231, the pixel-map column rises 11 → 19). Measured on shape similarity across
+  the 28-name bolt roster, **no pair involving a re-drawn gen6 name exceeds 0.85 — the worst is
+  0.830** — and round one's six filed look-alikes fall to 0.544–0.825 (double ↔ two-way, the
+  round's headline at 0.987, now reads as two different objects). The two disclosed pairs still
+  above 0.85 each keep an untouched PNG member: blast ↔ disc at 0.882 (an explosion FX against a
+  weapon spinner — the eye reads context the mass metric cannot see) and bomb ↔ sub-bomb at 0.861,
+  itself pulled down from 0.945. The leaner maps gave atlas bytes back: the common page ends at
+  335,795 B under the untouched 337,000 cap.
+
 ### Engine and tooling
 
 Nothing here changes what the game shows or does: the golden replays, the attract demos and the

@@ -324,6 +324,17 @@ FORCE_FIELD_SHIMMER_FRAMES (2) + ((blink >> 2) & 1)` over the World tick. The Ar
 its tier's colour block of wear frames and the other kinds keep their plain wear frame; at
 `artScale: 1` the v1 30×24 four-frame field stands (RR-1).
 
+**Shield look (w15-SHIELDFIX, 2026-10-27).** The whole batch composites at **α 0.65**
+(`SHIELD_BATCH_ALPHA`): the opacity rides the batch as `createSpriteBatch`'s optional fourth
+`alpha` — the `blend` precedent, carried once at creation, applied by the host to `sprite.alpha`
+when it binds the layer and never per frame; the field is no part of the sprite contract hashes,
+so replays and the presentation fingerprint do not move. And the v2 FLUX art of **Arm and Reduce
+is hand-hollowed**: erase-only `.edit.png` layers (`painted: 0`, erased 2,685 / 359 px in the
+records, `cleanup: light`) remove the rock interiors the generator filled in, keeping every
+outline pixel and the whole palette. The ship reads through every active shield — the owner
+complaint the fix answers was a shield that hid the ship it guards (the art measured 94 % / 72 %
+opaque over the ship box).
+
 ## Mega Crash (the `!` slot)
 
 With the default `!` choice (`megaChoice: 'megaCrash'` — the only one that does, M2-03), equipping

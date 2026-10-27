@@ -151,6 +151,12 @@ warning), 2 bad usage. CI's `ingest` job runs `npm test` and `--check`.
    merged last, so re-ingesting never loses hand work. Opaque pixels paint; the erase colour
    (`#ff00ff` by default) makes a pixel transparent; transparent pixels change nothing;
    half-transparent ones are ignored and reported. Make it from a copy of `<name>.png`.
+   **Precedent (w15-SHIELDFIX, 2026-10-27):** the first edit layers added over *already-shipped*
+   FLUX art — `shields/arm` and `shields/reduce` hand-hollowed **erase-only** (2,685 and 359 px
+   erased, `painted: 0` in the records): the shield batch draws over the ship, and the generator's
+   filled rock interiors hid it. Erase can add no colour, so the palette and the quantisation of
+   every surviving pixel stay byte-identical (the frame sidecars are unmoved, `cleanup` flips to
+   `light`), and the hollowed art shrinks the atlas page (−922 B common).
 7. **Write** `<name>.png` (the frames side by side in one row), `<name>.json` and `<name>.art.json`.
 
 **Determinism.** The same recipe, sources and edit layer give **the same bytes on every machine**:
