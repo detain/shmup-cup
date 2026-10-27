@@ -1,16 +1,16 @@
 {
   "id": "gen7/f-ridge36",
   "slot": "a",
-  "prompt": "Pixel-art terrain material study: frost-bitten slate rock with pale ice-blue facets and snow in the cracks; flat orthographic front-on wall surfaces, chunky 12-pixel-tile scale, rich multi-step shading ramps lit from the top-left, slate greys #14202e-#5d779f with frost rims #b8c8dc and near-black #0b1420 crevices.\n\nDraw it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge — NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 equal square cells forming a full 6-columns-by-6-rows grid EDGE TO EDGE — no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid.\n- Each cell is one named tempest ridge storm-granite tile in this exact reading order (36 tiles): cell 1 = solid, cell 2 = floor, cell 3 = ceiling, cell 4 = wall-left, cell 5 = wall-right, cell 6 = slope-up, cell 7 = slope-down, cell 8 = slope-up-low, cell 9 = slope-up-high, cell 10 = slope-down-high, cell 11 = slope-down-low, cell 12 = ceil-slope-up, cell 13 = ceil-slope-down, cell 14 = ceil-slope-up-low, cell 15 = ceil-slope-up-high, cell 16 = ceil-slope-down-high, cell 17 = ceil-slope-down-low, cell 18 = brick, cell 19 = cube, cell 20 = tissue, cell 21 = solid-2, cell 22 = solid-3, cell 23 = floor-2, cell 24 = floor-3, cell 25 = ceiling-2, cell 26 = corner-outer-left, cell 27 = corner-outer-right, cell 28 = corner-inner-left, cell 29 = corner-inner-right, cell 30 = ceil-corner-outer, cell 31 = ceil-corner-inner, cell 32 = brick-crack, cell 33 = brick-crack-2, cell 34 = decor-scree, cell 35 = decor-ice-patch, cell 36 = decor-pine.\n- The sheet canvas measures EXACTLY 1152×1152 px.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- The 36 cells together form ONE continuous rock cliff wall: strata bands, cracks and frost seams RUN ACROSS the cell boundaries (a band leaving a cell at its right edge continues at the same height in the next cell), so NO straight seam, groove or line may ever follow the cell grid — the grid must be invisible.\n- BOUNDARY LAW (most important): along every internal cell boundary the two adjoining faces must DIFFER — a different rock tone, a crossing crack, a frost patch — so that no single row or column of pixels is uniform all along any grid line; the painted rock must break every potential seam.\n- Every cell is a fully painted tile face — solid stone, slope or decor material reaching all four cell edges where the named tile is a full-mask tile; slope and edge tiles keep their painted material inside the cell with the empty part of the cell showing the zone backdrop rock, never flat key colour, never a single uniform hue.\n- The six corner tiles (cells 26-31) each paint a hard frost-rimmed rock diagonal: cells 26/27 put the convex rock corner at bottom-left / bottom-right (frost cap along the diagonal, backdrop rock beyond it); cells 28/29 are concave wall-meets-floor corners (rock fills an L opening right / left); cells 30/31 are the same two corner kinds hung from the ceiling (rock mass at the top, diagonal frost rim below).\n\n- Each of the 36 cells is visually DIFFERENT from its reading-order neighbours: different strata, edges, cracks or decor — a repeated flat texture ruins the sheet.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, a rich four-to-six step shading ramp lit from the top-left, careful rock-material detail, clean saturated colours, 1-px near-black outline only on open edges, tiles meet seamlessly, no perspective, no 3D bevels, no anti-aliasing.",
+  "prompt": "Pixel-art terrain material study: frost-bitten slate rock with pale ice-blue facets and snow in the cracks; flat orthographic front-on wall surfaces, chunky 12-pixel-tile scale, rich multi-step shading ramps lit from the top-left, slate greys #14202e-#5d779f with frost rims #b8c8dc and near-black #0b1420 crevices.\n\nDraw it as a sprite sheet under this strict contract:\n- FULL-BLEED OPAQUE painted panel: every pixel of the whole sheet is painted scenery, edge to edge \u2014 NO chroma key, NO border, NO frame, NO green anywhere.\n- A CONTACT SHEET of exactly 36 equal square cells forming a full 9-columns-by-4-rows grid EDGE TO EDGE (nine tiles across, four rows down \u2014 a WIDE sheet, not a square one) \u2014 no gutters, no borders, no key background anywhere: cells touch each other on a one-cell grid.\n- Each cell is one named tempest ridge storm-granite tile in this exact reading order (36 tiles): cell 1 = solid, cell 2 = floor, cell 3 = ceiling, cell 4 = wall-left, cell 5 = wall-right, cell 6 = slope-up, cell 7 = slope-down, cell 8 = slope-up-low, cell 9 = slope-up-high, cell 10 = slope-down-high, cell 11 = slope-down-low, cell 12 = ceil-slope-up, cell 13 = ceil-slope-down, cell 14 = ceil-slope-up-low, cell 15 = ceil-slope-up-high, cell 16 = ceil-slope-down-high, cell 17 = ceil-slope-down-low, cell 18 = brick, cell 19 = cube, cell 20 = tissue, cell 21 = solid-2, cell 22 = solid-3, cell 23 = floor-2, cell 24 = floor-3, cell 25 = ceiling-2, cell 26 = corner-outer-left, cell 27 = corner-outer-right, cell 28 = corner-inner-left, cell 29 = corner-inner-right, cell 30 = ceil-corner-outer, cell 31 = ceil-corner-inner, cell 32 = brick-crack, cell 33 = brick-crack-2, cell 34 = decor-scree, cell 35 = decor-ice-patch, cell 36 = decor-pine.\n- The sheet canvas measures EXACTLY 1728\u00d7768 px.\n- The cells form ONE full-bleed contact grid edge to edge: no gutters, no key background between cells, but absolutely NO guide lines, NO drawn cell borders, NO frames, NO text, NO labels, NO numbers anywhere (the tile names are ordering instructions only, never drawn).\n- The 36 cells together form ONE continuous rock cliff wall: strata bands, cracks and frost seams RUN ACROSS the cell boundaries (a band leaving a cell at its right edge continues at the same height in the next cell), so NO straight seam, groove or line may ever follow the cell grid \u2014 the grid must be invisible.\n- BOUNDARY LAW (most important): along every internal cell boundary the two adjoining faces must DIFFER \u2014 a different rock tone, a crossing crack, a frost patch \u2014 so that no single row or column of pixels is uniform all along any grid line; the painted rock must break every potential seam. In particular, no straight painted groove, mortar line, frost seam or shadow may ever run along the vertical 192-px boundaries or the horizontal 192-px boundaries of the 9\u00d74 grid.\n- Every cell is a fully painted tile face \u2014 solid stone, slope or decor material reaching all four cell edges where the named tile is a full-mask tile; slope and edge tiles keep their painted material inside the cell with the empty part of the cell showing the zone backdrop rock, never flat key colour, never a single uniform hue.\n- The six corner tiles (cells 26-31) each paint a hard frost-rimmed rock diagonal: cells 26/27 put the convex rock corner at bottom-left / bottom-right (frost cap along the diagonal, backdrop rock beyond it); cells 28/29 are concave wall-meets-floor corners (rock fills an L opening right / left); cells 30/31 are the same two corner kinds hung from the ceiling (rock mass at the top, diagonal frost rim below).\n\n- Each of the 36 cells is visually DIFFERENT from its reading-order neighbours: different strata, edges, cracks or decor \u2014 a repeated flat texture ruins the sheet.\n- Style: the finest retro pixel art for its native resolution \u2014 crisp hard-edged square pixels, a rich four-to-six step shading ramp lit from the top-left, careful rock-material detail, clean saturated colours, 1-px near-black outline only on open edges, tiles meet seamlessly, no perspective, no 3D bevels, no anti-aliasing.\nLAYOUT NOTE: the 36 tiles read left-to-right, then top-to-bottom across the nine-across, four-deep grid \u2014 cell 1 is the top-left, cell 36 the bottom-right.",
   "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
   "model": "flux2",
-  "seed": 521035429,
-  "width": 1152,
-  "height": 1152,
+  "seed": 521083039,
+  "width": 1728,
+  "height": 768,
   "steps": 40,
   "guidance": 3.5,
-  "generatedAt": "2026-10-27T01:51:53.036Z",
-  "seconds": 37,
+  "generatedAt": "2026-10-27T02:26:12.983Z",
+  "seconds": 37.1,
   "label": "f-ridge36",
   "source": "v2-target",
   "file": "art-prompts/v2/gen7/f-ridge36/gen.png",
@@ -20,10 +20,10 @@
   "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
   "negativeSent": null,
   "mode": "generate",
-  "outputSize": "1152x1152",
+  "outputSize": "1728x768",
   "meta": {
-    "job": "w15-GEN6",
-    "attempt": "3"
+    "job": "w15-GEN7L",
+    "attempt": "4"
   },
   "governance": [
     "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
@@ -32,23 +32,16 @@
     "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
     "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
   ],
-  "lane": "w15-GEN6",
+  "lane": "w15-GEN7L",
   "round": "F",
-  "exit": "STOP",
-  "ownerAsk": "w15-GEN6 ADDENDUM re-ask: the shipped tiles/terrain-ridge-v2 has 36 frames — the 30-cell GEN5 sheet never drew the six corner variants; re-cut the full 36-tile grid so REING-7 can land it.",
-  "gridContract": "opaque full-bleed contact 6x6 of 192px, canvas 1152x1152",
+  "exit": "PROBE-OK@4",
+  "ownerAsk": "w15-GEN6 ADDENDUM re-ask: the shipped tiles/terrain-ridge-v2 has 36 frames \u2014 the 30-cell GEN5 sheet never drew the six corner variants; re-cut the full 36-tile grid so REING-7 can land it.",
+  "gridContract": "opaque full-bleed contact 9x4 of 192px, canvas 1728x768 (36 named cells in reading order; corner variants cells 26-31)",
   "keyContract": "opaque full-bleed contact grid",
   "probe": {
     "id": "f-ridge36",
-    "ok": false,
-    "fails": [
-      "guide line at col 1 uniformity 100%",
-      "guide line at row 1 uniformity 100%",
-      "guide line at row 2 uniformity 100%",
-      "guide line at row 3 uniformity 100%",
-      "guide line at row 4 uniformity 100%",
-      "guide line at row 5 uniformity 100%"
-    ],
+    "ok": true,
+    "fails": [],
     "boxes": [
       [
         0,
@@ -87,6 +80,24 @@
         192
       ],
       [
+        1152,
+        0,
+        192,
+        192
+      ],
+      [
+        1344,
+        0,
+        192,
+        192
+      ],
+      [
+        1536,
+        0,
+        192,
+        192
+      ],
+      [
         0,
         192,
         192,
@@ -123,186 +134,168 @@
         192
       ],
       [
-        0,
-        384,
+        1152,
+        192,
         192,
         192
       ],
       [
+        1344,
         192,
-        384,
-        192,
-        192
-      ],
-      [
-        384,
-        384,
         192,
         192
       ],
       [
-        576,
-        384,
+        1536,
         192,
-        192
-      ],
-      [
-        768,
-        384,
-        192,
-        192
-      ],
-      [
-        960,
-        384,
         192,
         192
       ],
       [
         0,
-        576,
+        384,
         192,
         192
       ],
       [
         192,
-        576,
+        384,
         192,
         192
       ],
       [
         384,
-        576,
+        384,
         192,
         192
       ],
       [
         576,
-        576,
+        384,
         192,
         192
       ],
       [
         768,
-        576,
+        384,
         192,
         192
       ],
       [
         960,
-        576,
+        384,
+        192,
+        192
+      ],
+      [
+        1152,
+        384,
+        192,
+        192
+      ],
+      [
+        1344,
+        384,
+        192,
+        192
+      ],
+      [
+        1536,
+        384,
         192,
         192
       ],
       [
         0,
-        768,
+        576,
         192,
         192
       ],
       [
         192,
-        768,
+        576,
         192,
         192
       ],
       [
         384,
-        768,
+        576,
         192,
         192
       ],
       [
         576,
-        768,
-        192,
-        192
-      ],
-      [
-        768,
-        768,
-        192,
-        192
-      ],
-      [
-        960,
-        768,
-        192,
-        192
-      ],
-      [
-        0,
-        960,
-        192,
-        192
-      ],
-      [
-        192,
-        960,
-        192,
-        192
-      ],
-      [
-        384,
-        960,
-        192,
-        192
-      ],
-      [
         576,
-        960,
         192,
         192
       ],
       [
         768,
-        960,
+        576,
         192,
         192
       ],
       [
         960,
-        960,
+        576,
+        192,
+        192
+      ],
+      [
+        1152,
+        576,
+        192,
+        192
+      ],
+      [
+        1344,
+        576,
+        192,
+        192
+      ],
+      [
+        1536,
+        576,
         192,
         192
       ]
     ],
     "xors": [
-      52.3,
-      56.1,
-      54.4,
-      46.3,
-      47.1,
-      67.8,
-      58.3,
-      55.7,
-      55.1,
-      52.2,
-      42.3,
-      59.9,
-      50.9,
-      55.9,
-      58.5,
-      60.8,
-      65.1,
-      70.4,
-      30.8,
-      64.5,
-      55.1,
-      64.4,
-      57.4,
-      66.4,
-      55.2,
-      55.7,
-      47.7,
-      45.9,
-      47.8,
-      60.6,
-      51.9,
-      56.2,
-      54.9,
-      49.9,
-      58.3
+      74.4,
+      74.4,
+      74.3,
+      73.1,
+      71.5,
+      73.7,
+      76.4,
+      73.4,
+      89.6,
+      72.3,
+      74.5,
+      74.3,
+      74.3,
+      73.6,
+      77.9,
+      76.3,
+      74.8,
+      89.2,
+      59,
+      72.3,
+      74.2,
+      69.1,
+      71.3,
+      73.7,
+      72.6,
+      70.8,
+      89.9,
+      76.1,
+      75.4,
+      73.1,
+      72.2,
+      72.3,
+      73.2,
+      73.6,
+      73.7
     ],
     "floor": 0.3
   },
@@ -333,6 +326,11 @@
         "guide line at row 1 uniformity 100%",
         "guide line at row 2 uniformity 100%"
       ]
+    },
+    {
+      "att": 4,
+      "ok": true,
+      "fails": []
     }
   ]
 }

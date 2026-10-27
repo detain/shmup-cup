@@ -1,15 +1,15 @@
 {
   "id": "gen7/e-missile",
   "slot": "a",
-  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two flight frames of the player missile: a small arcade rocket, thin and four-to-five times longer than tall, pointing right.\n\nDesign identity to keep exactly — a long slim steel-and-white rocket with a red nose band and two tiny fins (near-black outline, top-left lit), trailing to the LEFT: one frame puffs a short grey smoke tail, the other burns a compact orange flame tail. The whole rocket-plus-tail is slender — about three times as long as tall — and centred with wide empty key above, below, left and right. The rocket itself sits identical in both cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the missile flying state 1 — a LONG SLIM rocket with a short smoke tail, nose pointing right, its whole length about three times its height, lying across the middle of its cell The subject lies within aspect 1.6:1 to 3.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = the missile flying state 2 — the SAME rocket body in the SAME position, the tail now a bright flame jet The subject lies within aspect 1.6:1 to 3.8:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 768×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two flight frames of the player missile: a small arcade rocket, compact and about three times longer than tall, pointing right.\n\nDesign identity to keep exactly \u2014 a long slim steel-and-white rocket with a red nose band and two tiny fins (near-black outline, top-left lit), trailing to the LEFT: one frame puffs a short grey smoke tail, the other burns a compact orange flame tail. The rocket is a COMPACT stubby arcade bomb-rocket with a short fat body and prominent broad fins; the smoke or flame tail is SHORT (only a small puff or jet, never a long streak) \u2014 the whole rocket-plus-tail box is about three times as long as tall \u2014 and centred with wide empty key above, below, left and right. The rocket itself sits identical in both cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) \u2014 every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the missile flying state 1 \u2014 a LONG SLIM rocket with a short smoke tail, nose pointing right, its whole length about three times its height (at most 3.8 times), lying across the middle of its cell The subject lies within aspect 1.6:1 to 3.8:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 2 = the missile flying state 2 \u2014 the SAME rocket body in the SAME position, the tail now a bright flame jet The subject lies within aspect 1.6:1 to 3.8:1, identical scale and position as the other cells \u2014 only the named state changes.\n- The sheet canvas measures EXACTLY 768\u00d7256 px. Produce EXACTLY 2 subject cells \u2014 no more, no fewer \u2014 and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small \u2014 at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet \u2014 the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution \u2014 crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
   "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
   "model": "flux2",
-  "seed": 521033403,
+  "seed": 521086026,
   "width": 768,
   "height": 256,
   "steps": 40,
   "guidance": 3.5,
-  "generatedAt": "2026-10-27T01:51:06.943Z",
+  "generatedAt": "2026-10-27T02:28:44.185Z",
   "seconds": 8.1,
   "label": "e-missile",
   "source": "v2-target",
@@ -22,8 +22,8 @@
   "mode": "generate",
   "outputSize": "768x256",
   "meta": {
-    "job": "w15-GEN6",
-    "attempt": "3"
+    "job": "w15-GEN7L",
+    "attempt": "8"
   },
   "governance": [
     "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
@@ -32,35 +32,35 @@
     "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
     "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
   ],
-  "lane": "w15-GEN6",
+  "lane": "w15-GEN7L",
   "round": "E",
-  "exit": "STOP",
-  "ownerAsk": "Owner improvement ask: player-shot stragglers at full detail — the missile (a GEN5 sheet failed only the aspect gate at a wrong window; the true grid is 12×5, aspect about 2.4:1).",
+  "exit": "STOP@8",
+  "ownerAsk": "Owner improvement ask: player-shot stragglers at full detail \u2014 the missile (a GEN5 sheet failed only the aspect gate at a wrong window; the true grid is 12\u00d75, aspect about 2.4:1).",
   "gridContract": "384x256 cells, 2x1, canvas 768x256, chroma key #51e018",
   "keyContract": "flat #51e018 chroma key",
   "probe": {
     "id": "e-missile",
     "ok": false,
     "fails": [
-      "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
-      "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+      "cell 0 AR=4.10 outside [1.6,3.8] (s0)",
+      "cell 1 AR=3.93 outside [1.6,3.8] (s1)"
     ],
     "boxes": [
       [
-        45,
-        109,
-        259,
-        46
+        101,
+        99,
+        242,
+        59
       ],
       [
-        439,
-        109,
-        233,
-        48
+        437,
+        100,
+        228,
+        58
       ]
     ],
     "xors": [
-      54.1
+      67.1
     ],
     "floor": 0.4
   },
@@ -87,6 +87,49 @@
       "fails": [
         "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
         "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+      ]
+    },
+    {
+      "att": 4,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.27 outside [1.6,3.8] (s0)",
+        "cell 0 margin <12px (60/0/0/0)",
+        "cell 1 AR=1.07 outside [1.6,3.8] (s1)"
+      ]
+    },
+    {
+      "att": 5,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.50 outside [1.6,3.8] (s0)",
+        "cell 0 margin <12px (0/0/0/0)",
+        "cell 1 AR=1.26 outside [1.6,3.8] (s1)"
+      ]
+    },
+    {
+      "att": 6,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=4.70 outside [1.6,3.8] (s0)",
+        "cell 1 AR=4.50 outside [1.6,3.8] (s1)"
+      ]
+    },
+    {
+      "att": 7,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.45 outside [1.6,3.8] (s0)",
+        "cell 0 margin <12px (12/0/0/0)",
+        "cell 1 AR=1.16 outside [1.6,3.8] (s1)"
+      ]
+    },
+    {
+      "att": 8,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=4.10 outside [1.6,3.8] (s0)",
+        "cell 1 AR=3.93 outside [1.6,3.8] (s1)"
       ]
     }
   ]

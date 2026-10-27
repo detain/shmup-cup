@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T02:14:37.628Z",
+  "generatedAt": "2026-10-27T02:28:57Z",
   "lane": "w15-GEN6",
   "governance": [
     "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
@@ -395,77 +395,83 @@
     },
     {
       "id": "b-drone",
-      "report": "w15-GEN6",
+      "report": "w15-GEN7L",
       "grid": "256x256 cells, 4x2, canvas 1024x512, chroma key #51e018",
       "file": null,
-      "exit": "STOP@4",
+      "exit": "STOP@8",
       "mode": "key",
       "probe": {
         "id": "b-drone",
         "ok": false,
         "fails": [
-          "cell 0 margin <12px (77/82/0/64)",
-          "cell 1 margin <12px (0/82/46/53)",
-          "cell 4 margin <12px (77/43/3/104)"
+          "cell 0 AR=2.60 outside [1,2.45] (s0)",
+          "cell 2 AR=0.38 outside [0.4,1] (s2)",
+          "cell 2 margin <12px (84/34/91/10)",
+          "cell 3 AR=0.38 outside [0.5,1.92] (s3)",
+          "cell 3 margin <12px (80/34/95/10)",
+          "cell 4 AR=2.67 outside [1,2.45] (s4)",
+          "cell 5 AR=2.68 outside [0.5,1.92] (s5)",
+          "cell 6 AR=0.38 outside [0.4,1] (s6)",
+          "cell 7 AR=0.38 outside [0.5,1.92] (s7)"
         ],
         "boxes": [
           [
-            77,
-            82,
-            179,
-            110
+            28,
+            96,
+            211,
+            81
           ],
           [
-            256,
-            82,
-            210,
-            121
+            316,
+            70,
+            165,
+            141
           ],
           [
-            569,
-            53,
-            108,
-            176
+            596,
+            34,
+            81,
+            212
           ],
           [
-            782,
-            72,
-            150,
-            123
+            848,
+            34,
+            81,
+            212
           ],
           [
-            77,
-            299,
-            176,
-            109
+            28,
+            346,
+            211,
+            79
           ],
           [
-            338,
+            276,
+            346,
+            212,
+            79
+          ],
+          [
+            596,
             282,
-            110,
-            176
+            81,
+            211
           ],
           [
-            569,
+            848,
             282,
-            108,
-            176
-          ],
-          [
-            781,
-            293,
-            120,
-            167
+            81,
+            211
           ]
         ],
         "xors": [
-          54.9,
-          43,
-          45.2,
-          45.7,
-          37.3,
-          22.6,
-          55.1
+          43.8,
+          39.1,
+          22.8,
+          44.1,
+          21.9,
+          40.7,
+          25.1
         ],
         "floor": 0.4
       },
@@ -502,6 +508,41 @@
             "cell 0 margin <12px (77/82/0/64)",
             "cell 1 margin <12px (0/82/46/53)",
             "cell 4 margin <12px (77/43/3/104)"
+          ]
+        },
+        {
+          "att": 5,
+          "ok": false,
+          "fails": [
+            "cell 2 AR=1.31 outside [0.4,1] (s2)",
+            "cell 3 AR=2.38 outside [0.5,1.92] (s3)",
+            "cell 4 margin <12px (0/0/21/81)"
+          ]
+        },
+        {
+          "att": 6,
+          "ok": false,
+          "fails": [
+            "cell 3 AR=0.46 outside [0.5,1.92] (s3)",
+            "cell 4 AR=0.82 outside [1,2.45] (s4)",
+            "cell 7 margin <12px (59/1/0/41)"
+          ]
+        },
+        {
+          "att": 7,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.87 outside [1,2.45] (s0)",
+            "cell 4 AR=0.96 outside [1,2.45] (s4)"
+          ]
+        },
+        {
+          "att": 8,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.60 outside [1,2.45] (s0)",
+            "cell 2 AR=0.38 outside [0.4,1] (s2)",
+            "cell 2 margin <12px (84/34/91/10)"
           ]
         }
       ]
@@ -729,35 +770,31 @@
     },
     {
       "id": "c-dart",
-      "report": "w15-GEN6",
+      "report": "w15-GEN7L",
       "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
-      "file": null,
-      "exit": "STOP@3",
+      "file": "c-dart/gen.png",
+      "exit": "PROBE-OK@5",
       "mode": "key",
       "probe": {
         "id": "c-dart",
-        "ok": false,
-        "fails": [
-          "cell 0 margin <12px (0/3/5/4)",
-          "cell 1 margin <12px (3/9/0/2)",
-          "border strip ink 5.7%"
-        ],
+        "ok": true,
+        "fails": [],
         "boxes": [
           [
-            0,
-            3,
-            283,
-            249
+            64,
+            69,
+            151,
+            123
           ],
           [
-            291,
-            9,
-            285,
-            245
+            360,
+            69,
+            152,
+            123
           ]
         ],
         "xors": [
-          16.9
+          19.3
         ],
         "floor": 0.4
       },
@@ -786,6 +823,20 @@
             "cell 1 margin <12px (3/9/0/2)",
             "border strip ink 5.7%"
           ]
+        },
+        {
+          "att": 4,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 margin <12px (0/0/0/0)",
+            "gutter after col 0 ink 26.8%"
+          ]
+        },
+        {
+          "att": 5,
+          "ok": true,
+          "fails": []
         }
       ]
     },
@@ -1481,34 +1532,34 @@
     },
     {
       "id": "e-missile",
-      "report": "w15-GEN6",
+      "report": "w15-GEN7L",
       "grid": "384x256 cells, 2x1, canvas 768x256, chroma key #51e018",
       "file": null,
-      "exit": "STOP@3",
+      "exit": "STOP@8",
       "mode": "key",
       "probe": {
         "id": "e-missile",
         "ok": false,
         "fails": [
-          "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
-          "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+          "cell 0 AR=4.10 outside [1.6,3.8] (s0)",
+          "cell 1 AR=3.93 outside [1.6,3.8] (s1)"
         ],
         "boxes": [
           [
-            45,
-            109,
-            259,
-            46
+            101,
+            99,
+            242,
+            59
           ],
           [
-            439,
-            109,
-            233,
-            48
+            437,
+            100,
+            228,
+            58
           ]
         ],
         "xors": [
-          54.1
+          67.1
         ],
         "floor": 0.4
       },
@@ -1535,6 +1586,49 @@
           "fails": [
             "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
             "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+          ]
+        },
+        {
+          "att": 4,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.27 outside [1.6,3.8] (s0)",
+            "cell 0 margin <12px (60/0/0/0)",
+            "cell 1 AR=1.07 outside [1.6,3.8] (s1)"
+          ]
+        },
+        {
+          "att": 5,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.50 outside [1.6,3.8] (s0)",
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 AR=1.26 outside [1.6,3.8] (s1)"
+          ]
+        },
+        {
+          "att": 6,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=4.70 outside [1.6,3.8] (s0)",
+            "cell 1 AR=4.50 outside [1.6,3.8] (s1)"
+          ]
+        },
+        {
+          "att": 7,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.45 outside [1.6,3.8] (s0)",
+            "cell 0 margin <12px (12/0/0/0)",
+            "cell 1 AR=1.16 outside [1.6,3.8] (s1)"
+          ]
+        },
+        {
+          "att": 8,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=4.10 outside [1.6,3.8] (s0)",
+            "cell 1 AR=3.93 outside [1.6,3.8] (s1)"
           ]
         }
       ]
@@ -1604,22 +1698,15 @@
     },
     {
       "id": "f-ridge36",
-      "report": "w15-GEN6",
-      "grid": "opaque full-bleed contact 6x6 of 192px, canvas 1152x1152",
-      "file": null,
-      "exit": "STOP@3",
+      "report": "w15-GEN7L",
+      "grid": "opaque full-bleed contact 9x4 of 192px, canvas 1728x768 (36 named cells in reading order; corner variants cells 26-31)",
+      "file": "f-ridge36/gen.png",
+      "exit": "PROBE-OK@4",
       "mode": "opaque",
       "probe": {
         "id": "f-ridge36",
-        "ok": false,
-        "fails": [
-          "guide line at col 1 uniformity 100%",
-          "guide line at row 1 uniformity 100%",
-          "guide line at row 2 uniformity 100%",
-          "guide line at row 3 uniformity 100%",
-          "guide line at row 4 uniformity 100%",
-          "guide line at row 5 uniformity 100%"
-        ],
+        "ok": true,
+        "fails": [],
         "boxes": [
           [
             0,
@@ -1658,6 +1745,24 @@
             192
           ],
           [
+            1152,
+            0,
+            192,
+            192
+          ],
+          [
+            1344,
+            0,
+            192,
+            192
+          ],
+          [
+            1536,
+            0,
+            192,
+            192
+          ],
+          [
             0,
             192,
             192,
@@ -1694,186 +1799,168 @@
             192
           ],
           [
-            0,
-            384,
+            1152,
+            192,
             192,
             192
           ],
           [
+            1344,
             192,
-            384,
-            192,
-            192
-          ],
-          [
-            384,
-            384,
             192,
             192
           ],
           [
-            576,
-            384,
+            1536,
             192,
-            192
-          ],
-          [
-            768,
-            384,
-            192,
-            192
-          ],
-          [
-            960,
-            384,
             192,
             192
           ],
           [
             0,
-            576,
+            384,
             192,
             192
           ],
           [
             192,
-            576,
+            384,
             192,
             192
           ],
           [
             384,
-            576,
+            384,
             192,
             192
           ],
           [
             576,
-            576,
+            384,
             192,
             192
           ],
           [
             768,
-            576,
+            384,
             192,
             192
           ],
           [
             960,
-            576,
+            384,
+            192,
+            192
+          ],
+          [
+            1152,
+            384,
+            192,
+            192
+          ],
+          [
+            1344,
+            384,
+            192,
+            192
+          ],
+          [
+            1536,
+            384,
             192,
             192
           ],
           [
             0,
-            768,
+            576,
             192,
             192
           ],
           [
             192,
-            768,
+            576,
             192,
             192
           ],
           [
             384,
-            768,
+            576,
             192,
             192
           ],
           [
             576,
-            768,
-            192,
-            192
-          ],
-          [
-            768,
-            768,
-            192,
-            192
-          ],
-          [
-            960,
-            768,
-            192,
-            192
-          ],
-          [
-            0,
-            960,
-            192,
-            192
-          ],
-          [
-            192,
-            960,
-            192,
-            192
-          ],
-          [
-            384,
-            960,
-            192,
-            192
-          ],
-          [
             576,
-            960,
             192,
             192
           ],
           [
             768,
-            960,
+            576,
             192,
             192
           ],
           [
             960,
-            960,
+            576,
+            192,
+            192
+          ],
+          [
+            1152,
+            576,
+            192,
+            192
+          ],
+          [
+            1344,
+            576,
+            192,
+            192
+          ],
+          [
+            1536,
+            576,
             192,
             192
           ]
         ],
         "xors": [
-          52.3,
-          56.1,
-          54.4,
-          46.3,
-          47.1,
-          67.8,
-          58.3,
-          55.7,
-          55.1,
-          52.2,
-          42.3,
-          59.9,
-          50.9,
-          55.9,
-          58.5,
-          60.8,
-          65.1,
-          70.4,
-          30.8,
-          64.5,
-          55.1,
-          64.4,
-          57.4,
-          66.4,
-          55.2,
-          55.7,
-          47.7,
-          45.9,
-          47.8,
-          60.6,
-          51.9,
-          56.2,
-          54.9,
-          49.9,
-          58.3
+          74.4,
+          74.4,
+          74.3,
+          73.1,
+          71.5,
+          73.7,
+          76.4,
+          73.4,
+          89.6,
+          72.3,
+          74.5,
+          74.3,
+          74.3,
+          73.6,
+          77.9,
+          76.3,
+          74.8,
+          89.2,
+          59,
+          72.3,
+          74.2,
+          69.1,
+          71.3,
+          73.7,
+          72.6,
+          70.8,
+          89.9,
+          76.1,
+          75.4,
+          73.1,
+          72.2,
+          72.3,
+          73.2,
+          73.6,
+          73.7
         ],
         "floor": 0.3
       },
@@ -1904,6 +1991,11 @@
             "guide line at row 1 uniformity 100%",
             "guide line at row 2 uniformity 100%"
           ]
+        },
+        {
+          "att": 4,
+          "ok": true,
+          "fails": []
         }
       ]
     }

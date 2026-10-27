@@ -1,16 +1,16 @@
 {
   "id": "gen7/b-drone",
   "slot": "a",
-  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: eight direction frames of ONE seeker drone dart: a small arrow-headed smart bullet with a lit thruster tail.\n\nDesign identity to keep exactly — a compact steel-grey arrow dart: a sharp triangular nose, short stubby wings, a round thruster nozzle at the tail burning hot amber (#f8a030 flame, #f8b048 core). One identical dart drawn eight times, each rotated to point its own of the eight compass directions; the lit thruster always trails opposite the nose.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 8 square cells laid out as 2 ROWS OF 4 (4-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = seeker dart pointing RIGHT (east) — horizontal, nose at the right The subject lies within aspect 1.0:1 to 2.45:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = the SAME dart pointing lower-right (south-east, 45 degrees nose-down) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = the SAME dart pointing DOWN (south, nose at the bottom, vertical) The subject lies within aspect 0.4:1 to 1.0:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = the SAME dart pointing lower-left (south-west) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells — only the named state changes.\n  cell 5 = the SAME dart pointing LEFT (west, nose at the left) The subject lies within aspect 1.0:1 to 2.45:1, identical scale and position as the other cells — only the named state changes.\n  cell 6 = the SAME dart pointing upper-left (north-west) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells — only the named state changes.\n  cell 7 = the SAME dart pointing UP (north, nose at the top, vertical) The subject lies within aspect 0.4:1 to 1.0:1, identical scale and position as the other cells — only the named state changes.\n  cell 8 = the SAME dart pointing upper-right (north-east) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 1024×512 px. Produce EXACTLY 8 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n- Every cell shows the SAME dart at the SAME size, perfectly CENTRED in its cell and COMPACT — each dart is only about 40% of the cell width; the other 60% stays flat green key. Only the pointing direction changes; the directions in reading order are exactly E, SE, S, SW, W, NW, N, NE — the diagonals point corner-to-corner at true 45 degrees, the cardinals perfectly level or vertical.",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: eight direction frames of ONE seeker drone dart: a small arrow-headed smart bullet with a lit thruster tail.\n\nDesign identity to keep exactly \u2014 a compact steel-grey arrow dart: a sharp triangular nose, short stubby wings, a round thruster nozzle at the tail burning hot amber (#f8a030 flame, #f8b048 core). One identical dart drawn eight times, each rotated to point its own of the eight compass directions; the lit thruster always trails opposite the nose.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 8 square cells laid out as 2 ROWS OF 4 (4-column by 2-row) \u2014 every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = seeker dart pointing RIGHT (east) \u2014 horizontal, nose at the right The subject lies within aspect 1.0:1 to 2.45:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 2 = the SAME dart pointing lower-right (south-east, 45 degrees nose-down) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 3 = the SAME dart pointing DOWN (south, nose at the bottom, vertical) The subject lies within aspect 0.4:1 to 1.0:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 4 = the SAME dart pointing lower-left (south-west) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 5 = the SAME dart pointing LEFT (west, nose at the left) The subject lies within aspect 1.0:1 to 2.45:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 6 = the SAME dart pointing upper-left (north-west) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 7 = the SAME dart pointing UP (north, nose at the top, vertical) The subject lies within aspect 0.4:1 to 1.0:1, identical scale and position as the other cells \u2014 only the named state changes.\n  cell 8 = the SAME dart pointing upper-right (north-east) The subject lies within aspect 0.5:1 to 1.92:1, identical scale and position as the other cells \u2014 only the named state changes.\n- The sheet canvas measures EXACTLY 1024\u00d7512 px. Produce EXACTLY 8 subject cells \u2014 no more, no fewer \u2014 and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small \u2014 at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet \u2014 the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution \u2014 crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n- Every cell shows the SAME dart at the SAME size, perfectly CENTRED in its cell and COMPACT \u2014 each dart is only about 40% of the cell width (about 100 px inside the 256 px cell) and NEVER more than half the cell in any direction; the rest stays flat green key. Only the pointing direction changes; the directions in reading order are exactly E, SE, S, SW, W, NW, N, NE \u2014 the diagonals point corner-to-corner at true 45 degrees, the cardinals perfectly level or vertical.\n- WIDE-FRAME RULE (this is where previous sheets failed): the RIGHT-pointing and LEFT-pointing darts (cells 1 and 5) are the widest subjects \u2014 nose tip and thruster flame must stop at least 15% of the cell width short of the left AND right cell borders, and at least 12% of the cell height short of the top and bottom borders. The diagonal darts likewise keep at least 12% of the cell clear on every side. Any ink touching a cell border ruins the whole sheet.\n- FLAME SHAPE RULE (this is where the newest sheet failed): the thruster flame is a SHORT narrow plume straight along the aim line \u2014 it never fans sideways. The UP-pointing and DOWN-pointing darts (cells 3 and 7) must be TALLER than wide (bounding box at most 1:1, flame adds height only); the diagonal darts (cells 2, 4, 6, 8) must stay within 1.9:1 \u2014 a fanned-out flame that widens the bounding box ruins those cells. The nose tip and tail flame of every dart stop well short of the inner border: at least 12 px of flat key between any ink and any cell edge, top and bottom included \u2014 aim for 25 px of clearance everywhere, and never let a nose tip graze the top or bottom border.\n- DIRECTION DISCIPLINE (the newest sheet's misses): the LEFT-pointing dart (cell 5) lies FLAT and HORIZONTAL, a mirror of cell 1 \u2014 never drawn vertical; the lower-left (cell 4) and upper-right (cell 8) darts hold a plump 45\u00b0 pose whose box stays close to 1:1 rather than a thin sliver; all eight darts are the SAME length, so every horizontal or diagonal dart spans about the same pixel width.\n- HORIZONTAL DARTS LIE FLAT (the newest miss): the RIGHT (cell 1) and LEFT (cell 5) darts are WIDER than tall \u2014 body plus wings plus short flame together about 150 px wide but only about 75 px tall (aspect about 2:1, never below 1:1); the flame must not extend the height, and the wings must not spread above and below farther than the dart is long.",
   "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
   "model": "flux2",
-  "seed": 521014143,
+  "seed": 521084000,
   "width": 1024,
   "height": 512,
   "steps": 40,
   "guidance": 3.5,
-  "generatedAt": "2026-10-27T01:50:05.462Z",
-  "seconds": 15.5,
+  "generatedAt": "2026-10-27T02:28:16.914Z",
+  "seconds": 14.5,
   "label": "b-drone",
   "source": "v2-target",
   "file": "art-prompts/v2/gen7/b-drone/gen.png",
@@ -22,8 +22,8 @@
   "mode": "generate",
   "outputSize": "1024x512",
   "meta": {
-    "job": "w15-GEN6",
-    "attempt": "4"
+    "job": "w15-GEN7L",
+    "attempt": "8"
   },
   "governance": [
     "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
@@ -32,78 +32,84 @@
     "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
     "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
   ],
-  "lane": "w15-GEN6",
+  "lane": "w15-GEN7L",
   "round": "B",
-  "exit": "STOP",
-  "ownerAsk": "Owner ask (w15-WA §7 art table): real-art v2 twins for the five new weapon families.",
+  "exit": "STOP@8",
+  "ownerAsk": "Owner ask (w15-WA \u00a77 art table): real-art v2 twins for the five new weapon families.",
   "gridContract": "256x256 cells, 4x2, canvas 1024x512, chroma key #51e018",
   "keyContract": "flat #51e018 chroma key",
   "probe": {
     "id": "b-drone",
     "ok": false,
     "fails": [
-      "cell 0 margin <12px (77/82/0/64)",
-      "cell 1 margin <12px (0/82/46/53)",
-      "cell 4 margin <12px (77/43/3/104)"
+      "cell 0 AR=2.60 outside [1,2.45] (s0)",
+      "cell 2 AR=0.38 outside [0.4,1] (s2)",
+      "cell 2 margin <12px (84/34/91/10)",
+      "cell 3 AR=0.38 outside [0.5,1.92] (s3)",
+      "cell 3 margin <12px (80/34/95/10)",
+      "cell 4 AR=2.67 outside [1,2.45] (s4)",
+      "cell 5 AR=2.68 outside [0.5,1.92] (s5)",
+      "cell 6 AR=0.38 outside [0.4,1] (s6)",
+      "cell 7 AR=0.38 outside [0.5,1.92] (s7)"
     ],
     "boxes": [
       [
-        77,
-        82,
-        179,
-        110
+        28,
+        96,
+        211,
+        81
       ],
       [
-        256,
-        82,
-        210,
-        121
+        316,
+        70,
+        165,
+        141
       ],
       [
-        569,
-        53,
-        108,
-        176
+        596,
+        34,
+        81,
+        212
       ],
       [
-        782,
-        72,
-        150,
-        123
+        848,
+        34,
+        81,
+        212
       ],
       [
-        77,
-        299,
-        176,
-        109
+        28,
+        346,
+        211,
+        79
       ],
       [
-        338,
+        276,
+        346,
+        212,
+        79
+      ],
+      [
+        596,
         282,
-        110,
-        176
+        81,
+        211
       ],
       [
-        569,
+        848,
         282,
-        108,
-        176
-      ],
-      [
-        781,
-        293,
-        120,
-        167
+        81,
+        211
       ]
     ],
     "xors": [
-      54.9,
-      43,
-      45.2,
-      45.7,
-      37.3,
-      22.6,
-      55.1
+      43.8,
+      39.1,
+      22.8,
+      44.1,
+      21.9,
+      40.7,
+      25.1
     ],
     "floor": 0.4
   },
@@ -140,6 +146,41 @@
         "cell 0 margin <12px (77/82/0/64)",
         "cell 1 margin <12px (0/82/46/53)",
         "cell 4 margin <12px (77/43/3/104)"
+      ]
+    },
+    {
+      "att": 5,
+      "ok": false,
+      "fails": [
+        "cell 2 AR=1.31 outside [0.4,1] (s2)",
+        "cell 3 AR=2.38 outside [0.5,1.92] (s3)",
+        "cell 4 margin <12px (0/0/21/81)"
+      ]
+    },
+    {
+      "att": 6,
+      "ok": false,
+      "fails": [
+        "cell 3 AR=0.46 outside [0.5,1.92] (s3)",
+        "cell 4 AR=0.82 outside [1,2.45] (s4)",
+        "cell 7 margin <12px (59/1/0/41)"
+      ]
+    },
+    {
+      "att": 7,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=0.87 outside [1,2.45] (s0)",
+        "cell 4 AR=0.96 outside [1,2.45] (s4)"
+      ]
+    },
+    {
+      "att": 8,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.60 outside [1,2.45] (s0)",
+        "cell 2 AR=0.38 outside [0.4,1] (s2)",
+        "cell 2 margin <12px (84/34/91/10)"
       ]
     }
   ]
