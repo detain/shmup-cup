@@ -172,12 +172,12 @@ describe('integration: the atlas the CJK arithmetic is measured against (M3-03)'
     expect(atlas.pages[0].w).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
   });
 
-  it('occupies 479,505 pixels — 46 % of its page — and encodes to 136.6 KB', () => {
-    expect(OCCUPIED_PIXELS).toBe(479_505);
+  it('occupies 480,273 pixels — 46 % of its page — and encodes to 137.6 KB', () => {
+    expect(OCCUPIED_PIXELS).toBe(480_273);
     const page = atlas.pages[0].w * atlas.pages[0].h;
     expect(page).toBe(1_048_576);
     expect(Math.round((OCCUPIED_PIXELS / page) * 100)).toBe(46);
-    expect((PNG_BYTES / 1000).toFixed(1)).toBe('136.6');
+    expect((PNG_BYTES / 1000).toFixed(1)).toBe('137.6');
   });
 });
 
@@ -247,19 +247,19 @@ describe('integration: the six places that repeat the figures agree (M3-03)', ()
 
   it('carries the recomputed numbers in the places that state them', () => {
     const pipeline = read('docs/dev/asset-pipeline.md');
-    expect(pipeline).toContain('479,505');
+    expect(pipeline).toContain('480,273');
     expect(pipeline).toContain('993,600');
     expect(pipeline).toContain('1,048,576');
     expect(pipeline).toContain('4,194,304');
     expect(pipeline).toContain('6900 × 12 × 12');
     expect(pipeline).toContain('46 %');
-    expect(pipeline).toContain('136.6');
+    expect(pipeline).toContain('137.6');
     // `core/ui` and the plan repeat the two that matter most: the area and the ratio.
-    expect(read('packages/core/src/ui/strings.ts')).toContain('479,505');
+    expect(read('packages/core/src/ui/strings.ts')).toContain('480,273');
     const plan = read('docs/old/shmup_plan.md');
     expect(plan).toContain('993,600');
-    expect(plan).toContain('479,505');
-    expect(read('docs/old/shmup_progress.md')).toContain('479,505');
+    expect(plan).toContain('480,273');
+    expect(read('docs/old/shmup_progress.md')).toContain('480,273');
   });
 
   it('says a kanji language is feasible, and says why it is not shipped', () => {

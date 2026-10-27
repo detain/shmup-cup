@@ -416,9 +416,9 @@ The number that made this decision is the one a **real kanji set** would cost �
 *and* 2, plus the kana and symbols) is about **6,900 characters**; at a legible 12×12 that is
 `6900 × 12 × 12` = **993,600 pixels** (≈ 1.0 M). Measured against this build:
 
-- the game's **whole** atlas occupies **479,505 pixels** — the sum of every frame in
+- the game's **whole** atlas occupies **480,273 pixels** — the sum of every frame in
   `assets/generated/atlas/main.json` — which packed as **one 1024² page** (1,048,576 px, 46 % full)
-  encodes to **136.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
+  encodes to **137.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
   these figures are computed on the **v1-scale** art: `test/integration/cjk-budget.test.ts` rebuilds
   `buildAtlas({ ungrouped: true, artScale: 1 })` — decision W4-6, so the interim ×1.5 atlas (2.25×
   the area) does not move them and the six documents that quote them stand. That is the landed
@@ -432,7 +432,7 @@ The number that made this decision is the one a **real kanji set** would cost �
 - `apps/tizen/dist` measured **1,676.1 KB** on 2026-09-16, against the 8,192 KB `DIST_BUDGET` of
   that day; the budget doubled to **16,384 KB** in R3-04.M2b (`DIST_BUDGET` in
   `apps/tizen/scripts/check-bundle.mjs`, imported by the webOS check), and the page above encodes
-  to 136.6 KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
+  to 137.6 KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
 
 A kanji language is therefore **feasible** — do not read this section as saying it is impossible.
 What rules it out *here* is that an extra page of that size roughly **doubles the atlas download

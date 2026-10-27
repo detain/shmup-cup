@@ -4639,8 +4639,8 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     lazily-loaded atlas was needed — that machinery would have been for nothing at this size. The
     number that decided the *subset* is what a real kanji set would cost — a **download-and-boot**
     number, not a budget overrun. The whole JIS X 0208 set (levels 1 *and* 2) is ~6,900 glyphs ≈
-    **993,600 pixels** at 12×12: about **2.1×** the 479,505 pixels the entire atlas occupies today
-    (one 1024² page, 46 % full, 136.6 KB of PNG) and under a **quarter of one 2048² page**, so it
+    **993,600 pixels** at 12×12: about **2.1×** the 480,273 pixels the entire atlas occupies today
+    (one 1024² page, 46 % full, 137.6 KB of PNG) and under a **quarter of one 2048² page**, so it
     is *one* extra page, and it fits `DIST_BUDGET` comfortably (`apps/tizen/dist` is 1,676.1 KB of
     the 8,192 KB budget — the build check's own figure, re-measured 2026-09-16). A kanji language
     is feasible; what rules it out here is roughly **doubling the atlas
