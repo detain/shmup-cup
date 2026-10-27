@@ -256,7 +256,7 @@
         "items.mjs  lasers.mjs  magma.mjs",
         "palettes.mjs  particles.mjs  planets.mjs  prism.mjs",
         "raster-bands.mjs  shields.mjs",
-        "starfield.mjs  tempest.mjs",
+        "shots.mjs  starfield.mjs  tempest.mjs",
         "terrain.mjs  ui.mjs  vault.mjs",
         "weapons.mjs",
         "arm.mjs  blackhole.mjs  decor.mjs",

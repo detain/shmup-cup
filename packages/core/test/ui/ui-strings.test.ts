@@ -158,6 +158,12 @@ describe('core/ui string table coverage (M2-16)', () => {
       '2-WAY BK',
       'BACK DBL',
       'SPR GUN',
+      // W15-A: the five main weapon types' frames.
+      'FLAK',
+      'RAIL',
+      'SEEKER',
+      'CHAIN',
+      'BEACON',
     ]);
     const found: string[] = [];
     for (const file of files) {

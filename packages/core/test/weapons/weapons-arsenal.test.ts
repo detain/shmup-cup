@@ -27,6 +27,7 @@ import {
   RIPPLE_RING_WIDTH,
   SHOOTERS_PER_PLAYER,
   SPREAD_BLAST_SPRITE,
+  BEACON_BEAM_SPRITE,
   ShotFlag,
   ShotKind,
   WEAPON_BEHAVIOR_LABELS,
@@ -272,8 +273,9 @@ describe('core/weapons arsenal (M2-03): presets and Weapon Edit', () => {
     expect(Object.keys(WEAPON_BEHAVIOR_LABELS).sort()).toEqual(
       Object.keys(WEAPON_BEHAVIOR_PARAMS).sort(),
     );
-    expect(WEAPON_SPRITES).toEqual([SPREAD_BLAST_SPRITE]);
+    expect(WEAPON_SPRITES).toEqual([SPREAD_BLAST_SPRITE, BEACON_BEAM_SPRITE]);
     expect(ENGINE_SPRITES).toContain(SPREAD_BLAST_SPRITE);
+    expect(ENGINE_SPRITES).toContain(BEACON_BEAM_SPRITE);
   });
 
   it('Weapon Edit picks each slot among every preset`s weapons; bad edits throw', () => {

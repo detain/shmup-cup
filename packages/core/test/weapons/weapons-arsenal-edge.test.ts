@@ -368,7 +368,7 @@ function spriteId(name: string): number {
 const SQRT_HALF = Math.SQRT1_2;
 
 describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
-  it('appends ShotKind codes 4–9 after Type A (hashed: never renumbered)', () => {
+  it('appends ShotKind codes 4–20 after Type A (hashed: never renumbered)', () => {
     expect(ShotKind).toEqual({
       Straight: 0,
       Double: 1,
@@ -385,6 +385,14 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
       Upper: 11,
       HawkWind: 12,
       SpreadGun: 13,
+      // W15-A: the five main types and the two kinds only they use (Arc / Strike), appended.
+      Flak: 14,
+      Rail: 15,
+      Drone: 16,
+      Chain: 17,
+      Arc: 18,
+      Beacon: 19,
+      Strike: 20,
     });
     expect(ShotFlag.Blast).toBe(16);
     // The Tail Gun / Vertical are Double kinds, the Cyclone Laser a Laser kind.
@@ -395,8 +403,9 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
 
   it('gives every behaviour one kind, slot list, label and tunables', () => {
     const ids = Object.keys(WEAPON_BEHAVIOR_KINDS).sort();
-    // Types A–D (13), the two Direct-mode behaviours of M2-05 and the seven Extra Edit ones (M3-01).
-    expect(ids).toHaveLength(22);
+    // Types A–D (13), the two Direct-mode behaviours of M2-05, the seven Extra Edit ones (M3-01)
+    // and the five W15-A main types.
+    expect(ids).toHaveLength(27);
     expect(WEAPON_SCRIPT_IDS).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_PARAMS).sort()).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_SLOTS).sort()).toEqual(ids);

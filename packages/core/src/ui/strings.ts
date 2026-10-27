@@ -335,6 +335,12 @@ const STATIC_UI_TEXT = {
   meterShortTwoWayBack: '2B',
   meterShortBackDouble: 'BD',
   meterShortSpreadGun: 'SG',
+  // W15-A: the five new main weapon types' compact meter labels.
+  meterShortFlak: 'FK',
+  meterShortRail: 'RL',
+  meterShortSeeker: 'SK',
+  meterShortChain: 'CH',
+  meterShortBeacon: 'BK',
   // M3-01: the EXTRA menu and its modes.
   titleExtra: 'EXTRA',
   extraTitle: 'EXTRA',
@@ -642,6 +648,11 @@ export const FIXED_UI_TEXT_IDS: readonly string[] = Object.freeze([
   'meterShortTwoWayBack',
   'meterShortBackDouble',
   'meterShortSpreadGun',
+  'meterShortFlak',
+  'meterShortRail',
+  'meterShortSeeker',
+  'meterShortChain',
+  'meterShortBeacon',
 ]);
 
 /** {@link FIXED_UI_TEXT_IDS} as a lookup. */

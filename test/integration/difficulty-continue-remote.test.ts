@@ -284,12 +284,21 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE C
     expect(select.type.label).toBe('TYPE C');
     s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE D
-    s.press(TIZEN_KEY_CODES.ArrowRight); // EDIT: the rows keep TYPE D's weapons
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE E (W15-A)
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE F (W15-A)
+    s.press(TIZEN_KEY_CODES.ArrowRight); // EDIT: the rows keep TYPE F's weapons
     s.press(TIZEN_KEY_CODES.ArrowDown); // MISSILE
-    s.press(TIZEN_KEY_CODES.ArrowLeft); // PHOTON TORPEDO → 2-WAY MISSILE
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // SKY MARKER → SEEKER DRONE
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // → PHOTON TORPEDO
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // → 2-WAY MISSILE
     expect(select.missile.label).toBe('2-WAY MISSILE');
     s.press(TIZEN_KEY_CODES.ArrowDown); // DOUBLE
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // FLAK CONE → FREE WAY (W15-A widened the slot)
+    expect(select.double.label).toBe('FREE WAY');
     s.press(TIZEN_KEY_CODES.ArrowDown); // LASER
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // CHAIN ARC → RAIL LANCE (W15-A)
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // → TWIN LASER
+    expect(select.laser.label).toBe('TWIN LASER');
     s.press(TIZEN_KEY_CODES.ArrowDown); // OPTION (M2-04)
     s.press(TIZEN_KEY_CODES.ArrowRight); // TRAIL → SNAKE
     s.press(TIZEN_KEY_CODES.ArrowRight); // FORMATION
@@ -303,7 +312,7 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     for (let i = 0; i < 3; i++) s.press(TIZEN_KEY_CODES.ArrowDown); // AUTO, ORDER, START
     s.launch();
     expect(s.game.world.config).toMatchObject({
-      weaponPreset: 'type-d',
+      weaponPreset: 'type-f', // EDIT keeps the last TYPE's set — W15-A pushed it behind E and F
       weaponEdit: { missile: 'missile.twoWay', double: 'shot.free', laser: 'laser.twin' },
       megaChoice: 'speedDown',
       optionChoice: 'formation',

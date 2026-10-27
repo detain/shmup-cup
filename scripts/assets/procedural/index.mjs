@@ -43,6 +43,7 @@ import * as planets from './planets.mjs';
 import * as prism from './prism.mjs';
 import * as rasterBands from './raster-bands.mjs';
 import * as shields from './shields.mjs';
+import * as shots from './shots.mjs';
 import * as starfield from './starfield.mjs';
 import * as tempest from './tempest.mjs';
 import * as terrain from './terrain.mjs';
@@ -99,6 +100,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'prism', generate: prism.generate },
   { id: 'raster-bands', generate: rasterBands.generate },
   { id: 'shields', generate: shields.generate },
+  { id: 'shots', generate: shots.generate },
   { id: 'starfield', generate: starfield.generate },
   { id: 'tempest', generate: tempest.generate },
   { id: 'terrain', generate: terrain.generate },

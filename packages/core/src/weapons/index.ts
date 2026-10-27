@@ -181,7 +181,9 @@
  * {@link applyDirectLoadout}, {@link DIRECT_MAX_LEVEL}, {@link MAX_DIRECT_WEAPONS},
  * {@link WEAPON_ROLE_SLOTS}, {@link resolveFamilies}; M3-01: the Extra Edit's
  * {@link ShotKind}s (`Control`, `Upper`, `HawkWind`, `SpreadGun`), {@link SPREAD_GUN_BEHAVIOR} and
- * {@link Loadout.spread}.
+ * {@link Loadout.spread}; W15-A: {@link BEACON_BEAM_SPRITE} and the five new behaviours'
+ * {@link ShotKind}s (`Flak`, `Rail`, `Drone`, `Chain`, `Beacon`, plus the internal `Arc` and
+ * `Strike` they spawn).
  *
  * @module
  */
@@ -220,7 +222,7 @@ import {
   type EventQueue,
 } from '../events/index.js';
 import { Action, MAX_PLAYERS } from '../input/index.js';
-import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS } from '../math/index.js';
+import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS, atan2B } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
 import {
@@ -329,6 +331,29 @@ export const ShotKind = {
   HawkWind: 12,
   /** `shot.spreadGun`: the two diagonals, and forward too once equipped again (M3-01). */
   SpreadGun: 13,
+  /** `shot.flak` (W15-A): one pellet of the Flak Cone — straight flight, dies at its life. */
+  Flak: 14,
+  /** `shot.rail` (W15-A): the Rail Lance bolt — a short, fast, piercing beam of fixed length. */
+  Rail: 15,
+  /** `shot.drone` (W15-A): a Seeker Drone dart — turn-rate-limited homing, self-destructs. */
+  Drone: 16,
+  /** `laser.chain` (W15-A): the Chain Arc bolt — on a kill it forks arcs at nearby enemies. */
+  Chain: 17,
+  /**
+   * The Chain Arc's forked bolt (spawned by {@link ShotKind.Chain}, never by content): straight
+   * flight, dies at the role's `forkTicks` (W15-A).
+   */
+  Arc: 18,
+  /**
+   * `missile.beacon` (W15-A): the Sky Marker, thrown in an arc; once it sticks it waits, then
+   * turns into a {@link ShotKind.Strike} in the same slot.
+   */
+  Beacon: 19,
+  /**
+   * The Sky Marker's beam column (the {@link ShotKind.Beacon} it was thrown as becomes this on a
+   * tick): a full-height piercing strike, world-anchored in x (W15-A).
+   */
+  Strike: 20,
 } as const;
 
 /** A {@link ShotKind} code. */
@@ -362,6 +387,11 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
   'missile.twoWayBack': ShotKind.TwoWay,
   'shot.backDouble': ShotKind.Double,
   'shot.spreadGun': ShotKind.SpreadGun,
+  'shot.flak': ShotKind.Flak,
+  'shot.rail': ShotKind.Rail,
+  'shot.drone': ShotKind.Drone,
+  'laser.chain': ShotKind.Chain,
+  'missile.beacon': ShotKind.Beacon,
 });
 
 /**
@@ -574,6 +604,60 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
     hw: 3 * WORLD_SCALE,
     hh: 3 * WORLD_SCALE,
   }),
+  'shot.flak': Object.freeze({
+    pellets: 8,
+    coneAngle: 96,
+    lifeTicks: 26,
+    ox: 8 * WORLD_SCALE,
+    oy: 0,
+    hw: 2.5 * WORLD_SCALE,
+    hh: 2.5 * WORLD_SCALE,
+  }),
+  'shot.rail': Object.freeze({
+    maxLength: 96 * WORLD_SCALE,
+    hitCooldownTicks: 8,
+    passArmour: 1,
+    ox: 10 * WORLD_SCALE,
+    oy: 0,
+    hh: 3 * WORLD_SCALE,
+    frames: 2,
+  }),
+  'shot.drone': Object.freeze({
+    drones: 2,
+    turnRate: 6,
+    seekRadius: 120 * WORLD_SCALE,
+    gap: 10 * WORLD_SCALE,
+    turn: 1,
+    ox: 6 * WORLD_SCALE,
+    oy: 0,
+    hw: 3 * WORLD_SCALE,
+    hh: 2 * WORLD_SCALE,
+    frames: 8,
+  }),
+  'laser.chain': Object.freeze({
+    forks: 2,
+    forkRange: 60 * WORLD_SCALE,
+    forkTicks: 6,
+    ox: 8 * WORLD_SCALE,
+    oy: 0,
+    hw: 4 * WORLD_SCALE,
+    hh: 2.5 * WORLD_SCALE,
+    frames: 2,
+  }),
+  'missile.beacon': Object.freeze({
+    beacons: 2,
+    gap: 12 * WORLD_SCALE,
+    lobSpeed: 3 * WORLD_SCALE,
+    gravity: 0.18 * WORLD_SCALE,
+    delayTicks: 40,
+    beamTicks: 12,
+    beamWidth: 16 * WORLD_SCALE,
+    hitCooldownTicks: 16,
+    ox: 6 * WORLD_SCALE,
+    oy: 0,
+    hh: 3 * WORLD_SCALE,
+    frames: 2,
+  }),
 });
 
 /** The loadout slot each behaviour belongs in (checked by {@link checkWeaponBehaviors}). */
@@ -601,6 +685,11 @@ export const WEAPON_BEHAVIOR_SLOTS: Readonly<Record<WeaponBehaviorId, readonly W
     'missile.twoWayBack': Object.freeze(['missile'] as WeaponSlot[]),
     'shot.backDouble': Object.freeze(['double'] as WeaponSlot[]),
     'shot.spreadGun': Object.freeze(['double'] as WeaponSlot[]),
+    'shot.flak': Object.freeze(['double'] as WeaponSlot[]),
+    'shot.rail': Object.freeze(['laser'] as WeaponSlot[]),
+    'shot.drone': Object.freeze(['missile'] as WeaponSlot[]),
+    'laser.chain': Object.freeze(['laser'] as WeaponSlot[]),
+    'missile.beacon': Object.freeze(['missile'] as WeaponSlot[]),
   });
 
 /**
@@ -630,6 +719,11 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
   'missile.twoWayBack': '2-WAY BK',
   'shot.backDouble': 'BACK DBL',
   'shot.spreadGun': 'SPR GUN',
+  'shot.flak': 'FLAK',
+  'shot.rail': 'RAIL',
+  'shot.drone': 'SEEKER',
+  'laser.chain': 'CHAIN',
+  'missile.beacon': 'BEACON',
 });
 
 /**
@@ -640,6 +734,21 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
 export const RIPPLE_RING_WIDTH = 4 * WORLD_SCALE;
 
 /**
+ * How many `shots/beacon-beam` sprites the Sky Marker's beam column stacks over the playfield's
+ * height (W15-A — 4 of them, each `PLAYFIELD_H / 4` tall: 56 px at scale 1, 84 at the port).
+ */
+const STRIKE_BEAM_SEGMENTS = 4;
+
+/**
+ * How far down its heading a Chain Arc fork is born past the victim (v1 16 px — one pellet
+ * diameter of clearance, so the arc cannot hit the enemy the bolt just damaged).
+ */
+const ARC_SPAWN_GAP = 16 * WORLD_SCALE;
+
+/** tan(22.5°) — the octant boundary ratio the Seeker Drone's heading frames compare against. */
+const OCTANT_TAN = 0.4142135623730951;
+
+/**
  * The Spread Gun's behaviour id (M3-01): a Double role firing it may be equipped twice
  * (`core/powerups` `MeterChoices.doubleLevels`).
  */
@@ -648,8 +757,14 @@ export const SPREAD_GUN_BEHAVIOR = 'shot.spreadGun';
 /** The Spread Bomb's blast sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
 export const SPREAD_BLAST_SPRITE = 'shots/blast';
 
+/** The Sky Marker's beam-column sprite (an engine sprite, W15-A — part of `ENGINE_SPRITES`). */
+export const BEACON_BEAM_SPRITE = 'shots/beacon-beam';
+
 /** The sprites the weapons draw on their own, whatever the content (part of `ENGINE_SPRITES`). */
-export const WEAPON_SPRITES: readonly string[] = Object.freeze([SPREAD_BLAST_SPRITE]);
+export const WEAPON_SPRITES: readonly string[] = Object.freeze([
+  SPREAD_BLAST_SPRITE,
+  BEACON_BEAM_SPRITE,
+]);
 
 /**
  * The Free Way's heading per 8-way direction, `[(moveY + 1) × 3 + (moveX + 1)]` (binary units; -1
@@ -1459,6 +1574,34 @@ class RoleTables {
   readonly track = new Float64Array(WEAPON_ROLE_SLOTS);
   /** `SpriteFlag` mirror bits of the role's own shots (`flip`: 1 = FlipX, 2 = FlipY — M3-01). */
   readonly flip = new Uint8Array(WEAPON_ROLE_SLOTS);
+  /** Flak Cone: pellets per volley (`pellets`, W15-A). */
+  readonly pellets = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Flak Cone: binary-angle step between the volley's pellets (`coneAngle`, W15-A). */
+  readonly coneStep = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Flak Cone: a pellet's life in ticks (`lifeTicks`, W15-A). */
+  readonly lifeTicks = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Seeker Drone: darts per volley (`drones`, W15-A). */
+  readonly drones = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Seeker Drone: most binary angle units a dart may turn per tick (`turnRate`, W15-A). */
+  readonly turnRate = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Seeker Drone: how far a dart looks for a target (`seekRadius`, W15-A). */
+  readonly seekRadius = new Float64Array(WEAPON_ROLE_SLOTS);
+  /** Chain Arc: bolts forked when its shot kills (`forks`, W15-A). */
+  readonly forks = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Chain Arc: how far from the victim a forked bolt may seek (`forkRange`, W15-A). */
+  readonly forkRange = new Float64Array(WEAPON_ROLE_SLOTS);
+  /** Chain Arc: a forked bolt's life in ticks (`forkTicks`, W15-A). */
+  readonly forkTicks = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Sky Marker: markers per volley (`beacons`, W15-A). */
+  readonly beacons = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Sky Marker: the thrown marker's initial climb (`lobSpeed`, px/tick — W15-A). */
+  readonly lobSpeed = new Float64Array(WEAPON_ROLE_SLOTS);
+  /** Sky Marker: ticks a stuck marker waits before its beam (`delayTicks`, W15-A). */
+  readonly delayTicks = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Sky Marker: the beam's life in ticks (`beamTicks`, W15-A). */
+  readonly beamTicks = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** Sky Marker: the beam column's full width (`beamWidth`, world px — W15-A). */
+  readonly beamWidth = new Float64Array(WEAPON_ROLE_SLOTS);
 }
 
 /**
@@ -1483,7 +1626,7 @@ function tunable(spec: WeaponSpec, name: string): number {
  * The columns a cached weapon row holds: every {@link compileRole} write but the interval, which
  * follows the role's fallback (see {@link captureRow}).
  */
-const ROLE_ROW_FIELDS = 31;
+const ROLE_ROW_FIELDS = 45;
 
 /**
  * Weapons whose compiled row {@link WeaponSystem.setArsenal} keeps (a fixed block, made on the
@@ -1535,6 +1678,20 @@ function captureRow(out: Float64Array, at: number, t: RoleTables, r: number): vo
   out[at + 28] = t.passArmour[r];
   out[at + 29] = t.track[r];
   out[at + 30] = t.flip[r];
+  out[at + 31] = t.pellets[r];
+  out[at + 32] = t.coneStep[r];
+  out[at + 33] = t.lifeTicks[r];
+  out[at + 34] = t.drones[r];
+  out[at + 35] = t.turnRate[r];
+  out[at + 36] = t.seekRadius[r];
+  out[at + 37] = t.forks[r];
+  out[at + 38] = t.forkRange[r];
+  out[at + 39] = t.forkTicks[r];
+  out[at + 40] = t.beacons[r];
+  out[at + 41] = t.lobSpeed[r];
+  out[at + 42] = t.delayTicks[r];
+  out[at + 43] = t.beamTicks[r];
+  out[at + 44] = t.beamWidth[r];
 }
 
 /**
@@ -1581,6 +1738,20 @@ function applyRow(t: RoleTables, r: number, row: Float64Array, at: number): void
   t.passArmour[r] = row[at + 28];
   t.track[r] = row[at + 29];
   t.flip[r] = row[at + 30];
+  t.pellets[r] = row[at + 31];
+  t.coneStep[r] = row[at + 32];
+  t.lifeTicks[r] = row[at + 33];
+  t.drones[r] = row[at + 34];
+  t.turnRate[r] = row[at + 35];
+  t.seekRadius[r] = row[at + 36];
+  t.forks[r] = row[at + 37];
+  t.forkRange[r] = row[at + 38];
+  t.forkTicks[r] = row[at + 39];
+  t.beacons[r] = row[at + 40];
+  t.lobSpeed[r] = row[at + 41];
+  t.delayTicks[r] = row[at + 42];
+  t.beamTicks[r] = row[at + 43];
+  t.beamWidth[r] = row[at + 44];
 }
 
 /**
@@ -1645,6 +1816,20 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   t.passArmour[r] = 0;
   t.track[r] = 0;
   t.flip[r] = 0;
+  t.pellets[r] = 0;
+  t.coneStep[r] = 0;
+  t.lifeTicks[r] = 0;
+  t.drones[r] = 0;
+  t.turnRate[r] = 0;
+  t.seekRadius[r] = 0;
+  t.forks[r] = 0;
+  t.forkRange[r] = 0;
+  t.forkTicks[r] = 0;
+  t.beacons[r] = 0;
+  t.lobSpeed[r] = 0;
+  t.delayTicks[r] = 0;
+  t.beamTicks[r] = 0;
+  t.beamWidth[r] = 0;
   if (spec === null) return;
   const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
     ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
@@ -1692,6 +1877,28 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   const track = tunable(spec, 'track');
   t.track[r] = track > 1 ? 1 : track > 0 ? track : 0;
   t.flip[r] = Math.round(tunable(spec, 'flip')) & (SpriteFlag.FlipX | SpriteFlag.FlipY);
+  // W15-A: the five new main weapon types' columns.
+  const pellets = Math.floor(tunable(spec, 'pellets'));
+  t.pellets[r] = pellets > 0 ? pellets : 0;
+  t.coneStep[r] =
+    pellets > 1 ? Math.round(Math.abs(tunable(spec, 'coneAngle')) / (pellets - 1)) : 0;
+  const lifeTicks = Math.round(tunable(spec, 'lifeTicks'));
+  t.lifeTicks[r] = lifeTicks > 0 ? lifeTicks : 0;
+  t.drones[r] = Math.floor(tunable(spec, 'drones')) > 0 ? Math.floor(tunable(spec, 'drones')) : 0;
+  t.turnRate[r] = Math.round(Math.abs(tunable(spec, 'turnRate')));
+  t.seekRadius[r] = Math.abs(tunable(spec, 'seekRadius'));
+  t.forks[r] = Math.floor(tunable(spec, 'forks')) > 0 ? Math.floor(tunable(spec, 'forks')) : 0;
+  t.forkRange[r] = Math.abs(tunable(spec, 'forkRange'));
+  const forkTicks = Math.round(tunable(spec, 'forkTicks'));
+  t.forkTicks[r] = forkTicks > 0 ? forkTicks : 0;
+  t.beacons[r] =
+    Math.floor(tunable(spec, 'beacons')) > 0 ? Math.floor(tunable(spec, 'beacons')) : 0;
+  t.lobSpeed[r] = tunable(spec, 'lobSpeed') > 0 ? tunable(spec, 'lobSpeed') : 0;
+  const delayTicks = Math.round(tunable(spec, 'delayTicks'));
+  t.delayTicks[r] = delayTicks > 0 ? delayTicks : 0;
+  const beamTicks = Math.round(tunable(spec, 'beamTicks'));
+  t.beamTicks[r] = beamTicks >= 1 ? beamTicks : 1;
+  t.beamWidth[r] = Math.abs(tunable(spec, 'beamWidth'));
 }
 
 /**
@@ -1862,6 +2069,8 @@ class WeaponSystemImpl implements WeaponSystem {
    * not in the atlas, and the type draws with {@link optionSprite} instead.
    */
   private readonly optionSprites: Int32Array;
+  /** The Sky Marker's beam column (`shots/beacon-beam`, W15-A), -1 when the atlas lacks it. */
+  private readonly beamSprite: number;
   /** The Spread Bomb blast's sprite id (-1 = not drawn). */
   private readonly blastSprite: number;
   /** Row offset of the next Twin Laser beam {@link WeaponSystemImpl.emit} fills (a class field). */
@@ -1992,6 +2201,7 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     this.optionSprites = silhouettes;
     this.blastSprite = content.sprites.index.get(SPREAD_BLAST_SPRITE) ?? -1;
+    this.beamSprite = content.sprites.index.get(BEACON_BEAM_SPRITE) ?? -1;
     this.sfxTicks = new Float64Array(SFX_CUE_NAMES.length).fill(-Infinity);
     this.visitor = (slot: number): void => {
       this.visit(slot);
@@ -2330,6 +2540,41 @@ class WeaponSystemImpl implements WeaponSystem {
       this.lane = t.halfGap[role];
       if (this.emit(role, s, 0, 0) >= 0) fired = true;
       this.lane = 0;
+    } else if (kind === ShotKind.Flak) {
+      // Flak Cone (W15-A): one volley at a time, its pellets across the cone — every one of the
+      // role's earlier shots must be gone, and the cap must hold the whole volley.
+      const n = t.pellets[role];
+      if (n < 1 || live > 0 || cap < n) return false;
+      const step = t.coneStep[role];
+      const start = -Math.round(((n - 1) * step) / 2);
+      fired = false;
+      for (let j = 0; j < n; j++) {
+        if (this.emit(role, s, start + j * step, 0) >= 0) fired = true;
+      }
+    } else if (kind === ShotKind.Drone) {
+      // Seeker Drone (W15-A): a volley of darts spread vertically, so long as all of them fit
+      // under the cap (they turn toward a target as they fly).
+      const n = t.drones[role];
+      if (n < 1 || live + n > cap) return false;
+      const half = t.halfGap[role];
+      fired = false;
+      for (let j = 0; j < n; j++) {
+        this.lane = n > 1 ? -half + (2 * half * j) / (n - 1) : 0;
+        if (this.emit(role, s, 0, 0) >= 0) fired = true;
+      }
+      this.lane = 0;
+    } else if (kind === ShotKind.Beacon) {
+      // Sky Marker (W15-A): one volley at a time — thrown markers, spread vertically, that stick
+      // and call the beam (the Double's "both gone" gate).
+      const n = t.beacons[role];
+      if (n < 1 || live > 0 || cap < n) return false;
+      const half = t.halfGap[role];
+      fired = false;
+      for (let j = 0; j < n; j++) {
+        this.lane = n > 1 ? -half + (2 * half * j) / (n - 1) : 0;
+        if (this.emit(role, s, 0, 0) >= 0) fired = true;
+      }
+      this.lane = 0;
     } else {
       if (live >= cap) return false;
       fired = this.emit(role, s, this.launchHeading(role), 0) >= 0;
@@ -2436,7 +2681,8 @@ class WeaponSystemImpl implements WeaponSystem {
       // The Spread Gun's lower diagonal: its up-diagonal art mirrored.
       flip |= SpriteFlag.FlipY;
     }
-    const lane = kind === ShotKind.Twin ? this.lane : 0;
+    const lane =
+      kind === ShotKind.Twin || kind === ShotKind.Drone || kind === ShotKind.Beacon ? this.lane : 0;
     f.x[i] = this.fx + t.ox[look] + this.offX;
     f.y[i] = this.fy + t.oy[look] + lane + this.offY;
     const speed = t.speed[role];
@@ -2444,6 +2690,19 @@ class WeaponSystemImpl implements WeaponSystem {
       f.vx[i] = speed;
       // A beam's `vy` is its row offset from the shooter's (the Twin Laser's lanes).
       f.vy[i] = lane;
+    } else if (kind === ShotKind.Drone) {
+      // Seeker Drone (W15-A): born flying straight ahead from its lane; the update turns it.
+      f.vx[i] = speed;
+      f.vy[i] = 0;
+    } else if (kind === ShotKind.Rail) {
+      // Rail Lance (W15-A): a bolt of fixed length flying straight — it is born extended.
+      f.vx[i] = speed;
+      f.vy[i] = 0;
+      f.length[i] = t.maxLength[role];
+    } else if (kind === ShotKind.Beacon) {
+      // Sky Marker (W15-A): thrown forward and up; its gravity brings it down onto the terrain.
+      f.vx[i] = speed;
+      f.vy[i] = -t.lobSpeed[role];
     } else {
       f.vx[i] = (SIN_TABLE_Q16[a + ANGLE_QUARTER] / TRIG_SCALE) * speed;
       f.vy[i] = (SIN_TABLE_Q16[a] / TRIG_SCALE) * speed;
@@ -2623,6 +2882,157 @@ class WeaponSystemImpl implements WeaponSystem {
         if (!(x - f.length[i] <= right && x >= left && y >= top && y <= bottom)) this.kill(i);
         continue;
       }
+      if (kind === ShotKind.Rail) {
+        // Rail Lance (W15-A): a bolt of fixed length flying straight. Its head scans the columns
+        // it crosses this tick; rock stops it dead, and it flies on through everything else.
+        const y = f.y[i];
+        const from = f.x[i] + dx;
+        let head = from + f.vx[i];
+        let stopped = false;
+        if (map !== null) {
+          const row = Math.floor(y) | 0;
+          const c1 = Math.floor(head) | 0;
+          for (let c = (Math.floor(from) | 0) + 1; c <= c1; c++) {
+            if (terrainAt(map, c, row) !== TerrainType.Empty) {
+              head = c;
+              this.hitTerrain(i, c, row);
+              stopped = true;
+              break;
+            }
+          }
+        }
+        f.x[i] = head;
+        if (stopped) {
+          this.kill(i);
+          continue;
+        }
+        const length = t.maxLength[role];
+        // "Not inside", so NaN positions are culled too.
+        if (!(head - length <= right && head >= left && y >= top && y <= bottom)) this.kill(i);
+        continue;
+      }
+      if (kind === ShotKind.Drone) {
+        // Seeker Drone (W15-A): a dart that turns toward the nearest damageable enemy within its
+        // seek radius, at most `turnRate` binary units a tick, and shows its heading's octant.
+        // All of it stays inline in this method: the angle never crosses a call V8 leaves
+        // un-inlined (M2-09 / R2-02 — boxed heap numbers per tick), so the turn is a vector
+        // rotation by the table cosine and sine of `turnRate` toward the cross product's side,
+        // and the octant falls out of the velocity's own comparisons.
+        const turn = t.turnRate[role];
+        const vx = f.vx[i];
+        const vy = f.vy[i];
+        if (turn > 0) {
+          const x0 = f.x[i];
+          const y0 = f.y[i];
+          const limit = t.seekRadius[role];
+          const reach = limit * limit;
+          const enemies = this.host.enemies.enemies;
+          let bt = -1;
+          let bd = 0;
+          for (let k = 0; k < enemies.length; k++) {
+            const e = enemies[k];
+            if (
+              e.state !== EnemyState.Live ||
+              (e.flags & (EnemyFlag.Ghost | EnemyFlag.Invulnerable)) !== 0
+            )
+              continue;
+            const ex = e.x - x0;
+            const ey = e.y - y0;
+            const d = ex * ex + ey * ey;
+            if (d < reach && (bt < 0 || d < bd)) {
+              bt = k;
+              bd = d;
+            }
+          }
+          if (bt >= 0) {
+            const e = enemies[bt];
+            const cross = vx * (e.y - y0) - vy * (e.x - x0);
+            const sn0 = SIN_TABLE_Q16[turn & ANGLE_MASK] / TRIG_SCALE;
+            const cs0 = SIN_TABLE_Q16[(turn + ANGLE_QUARTER) & ANGLE_MASK] / TRIG_SCALE;
+            const sn = cross < 0 ? -sn0 : sn0;
+            f.vx[i] = vx * cs0 - vy * sn;
+            f.vy[i] = vy * cs0 + vx * sn;
+            const avx = f.vx[i] < 0 ? -f.vx[i] : f.vx[i];
+            const avy = f.vy[i] < 0 ? -f.vy[i] : f.vy[i];
+            if (avy <= OCTANT_TAN * avx) f.frame[i] = vx >= 0 ? 0 : 4;
+            else if (avx <= OCTANT_TAN * avy) f.frame[i] = vy > 0 ? 2 : 6;
+            else if (vy > 0) f.frame[i] = vx > 0 ? 1 : 3;
+            else f.frame[i] = vx < 0 ? 5 : 7;
+          }
+        }
+        const x = f.x[i] + dx + f.vx[i];
+        const y = f.y[i] + dy + f.vy[i];
+        f.x[i] = x;
+        f.y[i] = y;
+        if (!(x >= left && x <= right && y >= top && y <= bottom)) this.kill(i);
+        continue;
+      }
+      if (kind === ShotKind.Beacon) {
+        // Sky Marker (W15-A): thrown forward and up, its gravity brings it down to stick on the
+        // first terrain (it stops short of a wall), and after `delayTicks` it becomes a Strike.
+        const frames = t.frames[role];
+        f.frame[i] = frames > 1 ? (age >> 2) % frames : 0;
+        if ((flags & ShotFlag.Sliding) === 0) {
+          const vy = f.vy[i] + t.gravity[role];
+          f.vy[i] = vy;
+          const x = f.x[i] + dx + f.vx[i];
+          const y = f.y[i] + dy + vy;
+          f.x[i] = x;
+          f.y[i] = y;
+          if (map !== null && x - x === 0 && y - y === 0) {
+            const px = Math.floor(x) | 0;
+            const low = Math.floor(y + f.hh[i]) | 0;
+            if (terrainAt(map, px, low) !== TerrainType.Empty) {
+              const scan = (Math.floor(y - f.hh[i]) | 0) - t.step[role];
+              const surface = findFloor(map, px, scan, low - scan);
+              if (surface > scan) {
+                // Stuck on the surface: world-anchored from here on, its own clock restarted.
+                f.y[i] = surface - f.hh[i] - 0.5;
+                f.vx[i] = 0;
+                f.vy[i] = 0;
+                f.age[i] = 0;
+                f.flags[i] = flags | ShotFlag.Sliding;
+              } else {
+                // A wall: the marker breaks there (and dents a destructible tile — M2-07).
+                this.hitTerrain(i, px, low);
+                this.kill(i);
+                continue;
+              }
+            }
+          }
+        } else if (age >= t.delayTicks[role]) {
+          // The beam drops: the same slot becomes a full-height piercing strike at its column.
+          f.kind[i] = ShotKind.Strike;
+          f.flags[i] = ShotFlag.Pierce | ShotFlag.PassArmour;
+          f.age[i] = 0;
+          f.vx[i] = 0;
+          f.vy[i] = 0;
+          f.hw[i] = t.beamWidth[role] / 2;
+          f.hh[i] = PLAYFIELD_H / 2;
+          f.y[i] = camera.y + PLAYFIELD_H / 2;
+          f.frame[i] = 0;
+          const beam = this.beamSprite;
+          if (beam >= 0) f.sprite[i] = beam;
+        }
+        const bx = f.x[i];
+        const by = f.y[i];
+        if (!(bx >= left && bx <= right && by >= top && by <= bottom)) this.kill(i);
+        continue;
+      }
+      if (kind === ShotKind.Strike) {
+        // The Sky Marker's beam (W15-A): world-anchored at its column, the full playfield height,
+        // burning `beamTicks` ticks — the last two fade frames.
+        const life = t.beamTicks[role];
+        if (age >= life) {
+          this.kill(i);
+          continue;
+        }
+        f.frame[i] = age >= life - 2 ? 1 : 0;
+        f.y[i] = camera.y + PLAYFIELD_H / 2;
+        const sx = f.x[i];
+        if (!(sx >= left && sx <= right)) this.kill(i);
+        continue;
+      }
       if (kind === ShotKind.SpreadBomb) {
         if ((flags & ShotFlag.Blast) !== 0) {
           // The blast stays where it burst (world-anchored) and burns `blastTicks` ticks.
@@ -2791,6 +3201,14 @@ class WeaponSystemImpl implements WeaponSystem {
             ? Math.round(((size - t.startSize[role]) * (frames - 1)) / span) | 0
             : 0;
       }
+      // Flak pellets and Chain Arc forks die at their life (W15-A).
+      if (kind === ShotKind.Flak || kind === ShotKind.Arc) {
+        const limit = kind === ShotKind.Flak ? t.lifeTicks[role] : t.forkTicks[role];
+        if (age >= limit) {
+          this.kill(i);
+          continue;
+        }
+      }
       const x = f.x[i] + dx + f.vx[i];
       const y = f.y[i] + dy + f.vy[i];
       f.x[i] = x;
@@ -2835,7 +3253,9 @@ class WeaponSystemImpl implements WeaponSystem {
       const y = f.y[i];
       const hh = f.hh[i];
       const kind = f.kind[i];
-      if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
+      // A Sky Marker damages nothing until it becomes its beam (W15-A).
+      if (kind === ShotKind.Beacon) continue;
+      if (kind === ShotKind.Laser || kind === ShotKind.Twin || kind === ShotKind.Rail) {
         this.qx0 = x - f.length[i];
         this.qx1 = x;
       } else {
@@ -3112,11 +3532,101 @@ class WeaponSystemImpl implements WeaponSystem {
       const died = enemySystem.damage(e, f.damage[i], (f.shooter[i] / SHOOTERS_PER_PLAYER) | 0);
       if ((flags & ShotFlag.Pierce) !== 0) {
         this.cooldowns[(f.table[i] - 1) * MAX_ENEMIES + e.slot] = t.cooldown[f.role[i]];
-      } else if (!(died && kind === ShotKind.Torpedo)) {
+      } else {
+        if (kind === ShotKind.Chain) this.forkArcs(i, e);
         // The Photon Torpedo flies on through what it destroys ("pierces small enemies").
-        this.kill(i);
+        if (!(died && kind === ShotKind.Torpedo)) this.kill(i);
       }
     }
+  }
+
+  /**
+   * A Chain Arc bolt that hit forks bolts at the closest enemies around the victim (W15-A):
+   * bounded index loop keeping the two nearest, cap-checked, then {@link spawnArc}. Never
+   * allocates.
+   *
+   * @param i - The bolt's shot slot (still alive).
+   * @param victim - The enemy it hit (it may survive the hit).
+   */
+  private forkArcs(i: number, victim: Enemy): void {
+    const f = this.pool.fields;
+    const t = this.roles;
+    const role = f.role[i];
+    const n = t.forks[role];
+    const shooter = f.shooter[i];
+    if (n < 1) return;
+    const live = this.liveCounts[shooter * WEAPON_ROLE_SLOTS + role];
+    let room = t.cap[role] - live;
+    if (n < room) room = n;
+    if (room < 1) return;
+    const range = t.forkRange[role];
+    const limit = range * range;
+    const vx = victim.x;
+    const vy = victim.y;
+    const enemies = this.host.enemies.enemies;
+    // The two nearest candidates, kept as a bounded pair (ties keep the lower slot).
+    let b0 = -1;
+    let d0 = 0;
+    let b1 = -1;
+    let d1 = 0;
+    for (let k = 0; k < enemies.length; k++) {
+      const e = enemies[k];
+      if (e.slot === victim.slot) continue;
+      if (
+        e.state !== EnemyState.Live ||
+        (e.flags & (EnemyFlag.Ghost | EnemyFlag.Invulnerable)) !== 0
+      )
+        continue;
+      const ex = e.x - vx;
+      const ey = e.y - vy;
+      const d = ex * ex + ey * ey;
+      if (d > limit) continue;
+      if (b0 < 0 || d < d0) {
+        b1 = b0;
+        d1 = d0;
+        b0 = e.slot;
+        d0 = d;
+      } else if (b1 < 0 || d < d1) {
+        b1 = e.slot;
+        d1 = d;
+      }
+    }
+    if (b0 < 0) return;
+    this.spawnArc(role, shooter, vx, vy, b0);
+    if (room >= 2 && b1 >= 0) this.spawnArc(role, shooter, vx, vy, b1);
+  }
+
+  /**
+   * Spawns one Chain Arc fork aimed at a target, born at the victim (W15-A). The slot's kind
+   * becomes {@link ShotKind.Arc}: it flies the straight path and dies at `forkTicks`.
+   *
+   * @param role - The chain weapon's role (the arc reuses its tables).
+   * @param shooter - The bolt's shooter id.
+   * @param x - World x to born it at.
+   * @param y - World y of it.
+   * @param targetSlot - The enemy slot to aim at (skipped when it left play).
+   */
+  private spawnArc(role: number, shooter: number, x: number, y: number, targetSlot: number): void {
+    const enemies = this.host.enemies.enemies;
+    if (!(targetSlot >= 0 && targetSlot < enemies.length)) return;
+    const e = enemies[targetSlot];
+    if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) return;
+    // The shot is born at the victim, not at the shooter: aim there, step clear of the victim's
+    // own box, then relocate the slot (an arc born inside it would hit the corpse's enemy).
+    const a = atan2B(e.y - y, e.x - x);
+    const bx = x + (SIN_TABLE_Q16[(a + ANGLE_QUARTER) & ANGLE_MASK] / TRIG_SCALE) * ARC_SPAWN_GAP;
+    const by = y + (SIN_TABLE_Q16[a & ANGLE_MASK] / TRIG_SCALE) * ARC_SPAWN_GAP;
+    this.fx = bx;
+    this.fy = by;
+    const i = this.emit(role, shooter, a, 0);
+    if (i < 0) return;
+    const f = this.pool.fields;
+    // The chain role is non-piercing by definition (its content `pierce` is false), so the emit
+    // gave this shot no flags and no table; the bolt that forked it dies on the hit itself.
+    f.kind[i] = ShotKind.Arc;
+    f.length[i] = 0;
+    f.age[i] = 0;
+    f.frame[i] = 1;
   }
 
   /**
@@ -3191,6 +3701,57 @@ class WeaponSystemImpl implements WeaponSystem {
           batch.frame[slot] = frames > 1 ? (phase + s) % frames : 0;
           batch.flags[slot] = draw;
           batch.count = slot + 1;
+        }
+        continue;
+      }
+      if (kind === ShotKind.Rail) {
+        // The Rail Lance bolt (W15-A): segments along its fixed length, and its muzzle-flash
+        // frame at the head for the first two ticks of its life.
+        const length = f.length[i];
+        const tail = x - length;
+        const segments = Math.ceil(length / LASER_SEGMENT_LENGTH) | 0;
+        for (let s = 1; s <= segments; s++) {
+          let sx = x - s * LASER_SEGMENT_LENGTH;
+          if (sx < tail) sx = tail;
+          const slot = batch.count;
+          if (slot >= cap) break;
+          batch.x[slot] = sx;
+          batch.y[slot] = y;
+          batch.spriteId[slot] = sprite;
+          batch.frame[slot] = 0;
+          batch.flags[slot] = draw;
+          batch.count = slot + 1;
+        }
+        if (f.age[i] < 2) {
+          const slot = batch.count;
+          if (slot < cap) {
+            batch.x[slot] = x;
+            batch.y[slot] = y;
+            batch.spriteId[slot] = sprite;
+            batch.frame[slot] = 1;
+            batch.flags[slot] = draw;
+            batch.count = slot + 1;
+          }
+        }
+        continue;
+      }
+      if (kind === ShotKind.Strike) {
+        // The Sky Marker's beam (W15-A): a column of `shots/beacon-beam` sprites covering the
+        // full playfield height at its world x.
+        const beam = this.beamSprite;
+        if (beam >= 0) {
+          const segH = PLAYFIELD_H / STRIKE_BEAM_SEGMENTS;
+          const first = y - (STRIKE_BEAM_SEGMENTS - 1) * (segH / 2);
+          for (let s = 0; s < STRIKE_BEAM_SEGMENTS; s++) {
+            const slot = batch.count;
+            if (slot >= cap) break;
+            batch.x[slot] = x;
+            batch.y[slot] = first + s * segH;
+            batch.spriteId[slot] = beam;
+            batch.frame[slot] = f.frame[i];
+            batch.flags[slot] = draw;
+            batch.count = slot + 1;
+          }
         }
         continue;
       }

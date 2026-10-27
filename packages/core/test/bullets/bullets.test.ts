@@ -224,8 +224,9 @@ describe('core/bullets', () => {
     ]);
     expect(ENGINE_SPRITES).toEqual([
       ...BULLET_SPRITES,
-      // The Spread Bomb's blast (M2-03).
+      // The Spread Bomb's blast (M2-03) and the Sky Marker's beam column (W15-A).
       'shots/blast',
+      'shots/beacon-beam',
       'options/orb',
       'items/capsule',
       // The blue capsule and the grey stolen Option; the shield pod and Reduce (M2-04).

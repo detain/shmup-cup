@@ -533,12 +533,14 @@ describe('core/weapons edge cases — tables, content and roles', () => {
       expect(Object.isFrozen(WEAPON_BEHAVIOR_SLOTS[id]), id).toBe(true);
     }
     // Every shot kind is used by a behaviour (the Tail Gun and the Vertical share the Double's,
-    // the Cyclone Laser the Laser's — M2-03).
-    expect([...new Set(Object.values(WEAPON_BEHAVIOR_KINDS))].sort((a, b) => a - b)).toEqual(
-      Object.values(ShotKind)
-        .slice()
-        .sort((a, b) => a - b),
-    );
+    // the Cyclone Laser the Laser's — M2-03). The Chain Arc's forked bolt and the Sky Marker's
+    // beam (W15-A) are internal kinds: behaviours spawn them at runtime, content never names
+    // them, so they are exempt — and must not enter the behaviour table.
+    const internal = new Set<number>([ShotKind.Arc, ShotKind.Strike]);
+    const used = new Set<number>(Object.values(WEAPON_BEHAVIOR_KINDS));
+    for (const kind of Object.values(ShotKind)) {
+      expect(used.has(kind), `ShotKind ${kind}`).toBe(!internal.has(kind));
+    }
     expect(Object.isFrozen(SHOT_SCHEMA)).toBe(true);
     // The Double's and the missile's climb / fall default to 45°.
     expect(WEAPON_BEHAVIOR_PARAMS['shot.double'].angle).toBe(128);

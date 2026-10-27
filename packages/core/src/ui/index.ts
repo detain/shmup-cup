@@ -2345,6 +2345,11 @@ export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
   '2-WAY BK',
   'BACK DBL',
   'SPR GUN',
+  'FLAK',
+  'RAIL',
+  'SEEKER',
+  'CHAIN',
+  'BEACON',
 ]);
 
 /**
@@ -2376,6 +2381,11 @@ export const METER_SHORT_IDS: readonly UiTextId[] = Object.freeze([
   'meterShortTwoWayBack',
   'meterShortBackDouble',
   'meterShortSpreadGun',
+  'meterShortFlak',
+  'meterShortRail',
+  'meterShortSeeker',
+  'meterShortChain',
+  'meterShortBeacon',
 ] as UiTextId[]);
 
 /**

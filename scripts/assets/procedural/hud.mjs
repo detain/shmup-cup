@@ -7,8 +7,8 @@
  *   tiny 3×5 / 4×5 pixel script, white for tinting — the seven slot labels `SPEED`, `MISSILE`,
  *   `DOUBLE`, `LASER`, `OPTION`, `?`, `!` (frames 0…6, the meter's slot order, `shmup_feat.md`
  *   §6A), then the names of the Types B–D weapons the MISSILE / DOUBLE / LASER slots may hold
- *   (frames 7…15, plan M2-03), then the Extra Edit weapons' (frames 16…22, plan M3-01) — the order
- *   of core `ui` `METER_LABEL_FRAMES`.
+ *   (frames 7…15, plan M2-03), then the Extra Edit weapons' (frames 16…22, plan M3-01), then the
+ *   W15-A main weapon types' (frames 23…27) — the order of core `ui` `METER_LABEL_FRAMES`.
  *
  * At the v2 art scale (`options.artScale` ≠ 1, R4-03.C5) both sprites are the art bible §5.11's
  * native sizes — the slot box fills the 12-px bar edge to edge with the §3.4 outline and the §3.5
@@ -55,6 +55,11 @@ export const METER_LABELS = /** @type {const} */ ([
   '2-WAY BK',
   'BACK DBL',
   'SPR GUN',
+  'FLAK',
+  'RAIL',
+  'SEEKER',
+  'CHAIN',
+  'BEACON',
 ]);
 
 /** Original 3×5 micro glyphs for the letters the labels need. */

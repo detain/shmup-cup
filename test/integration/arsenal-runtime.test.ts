@@ -166,8 +166,11 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
     const roleKind = WEAPON_BEHAVIOR_KINDS[spec.behavior];
     // Hawk Wind's shots (M3-01) are Missiles below the playfield's middle, Upper Missiles above.
     const hawk = roleKind === ShotKind.HawkWind;
+    // W15-A internal kinds live in their weapon's role slots: a Chain Arc's forks are Arcs in the
+    // chain's Laser role, and a Sky Marker transforms Beacon into Strike in its Missile role.
+    const internal = kind === ShotKind.Arc || kind === ShotKind.Strike;
     v.check(
-      hawk ? kind === ShotKind.Missile || kind === ShotKind.Upper : roleKind === kind,
+      internal || (hawk ? kind === ShotKind.Missile || kind === ShotKind.Upper : roleKind === kind),
       () => at() + ` in role ${role}`,
     );
     if ((flags & ShotFlag.Blast) !== 0) {
@@ -176,7 +179,9 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
       continue;
     }
     v.check(y >= top && y <= bottom, () => at() + ' outside the view vertically');
-    if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
+    if (kind === ShotKind.Laser || kind === ShotKind.Twin || kind === ShotKind.Rail) {
+      // The Rail Lance (W15-A) carries a fixed trailing length like the beams: its head may leave
+      // the view while its body still covers it.
       const length = f.length[i];
       v.check(x >= left && x - length <= right, () => at() + ` (length ${length}) outside`);
       v.check(
@@ -227,12 +232,20 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
 }
 
 describe('integration: the meter arsenal on the shipped content (M2-03)', () => {
-  it('ships four presets over named, drawn and labelled weapons', () => {
-    expect(DB.weaponPresets.map((p) => p.id)).toEqual(['type-a', 'type-b', 'type-c', 'type-d']);
+  it('ships six presets over named, drawn and labelled weapons', () => {
+    expect(DB.weaponPresets.map((p) => p.id)).toEqual([
+      'type-a',
+      'type-b',
+      'type-c',
+      'type-d',
+      'type-e',
+      'type-f',
+    ]);
     for (const slot of ['missile', 'double', 'laser'] as const) {
-      // The Weapon Edit weapons (M3-01: the Extra Edit ones are marked `extra`).
+      // The Weapon Edit weapons (M3-01: the Extra Edit ones are marked `extra`). The W15-A
+      // types added flak to the double slot and the rail and chain to the laser slot.
       const list = weaponsOfSlot(DB, slot).filter((weapon) => weapon.extra !== true);
-      expect(list, slot).toHaveLength(4);
+      expect(list, slot).toHaveLength(slot === 'double' ? 5 : 6);
       for (const weapon of list) {
         expect(weapon.name, weapon.id).toMatch(/^[A-Z0-9 .-]{1,16}$/);
         expect(weapon.sprite, weapon.id).toMatch(/^shots\//);
@@ -278,7 +291,7 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
         }
       }
     }
-    expect(arsenals).toBe(64);
+    expect(arsenals).toBe(180); // 5 double × 6 laser × 6 missile since the W15-A types
     expect(v.list).toEqual([]);
   });
 

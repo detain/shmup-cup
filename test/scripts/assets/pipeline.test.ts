@@ -245,7 +245,7 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     expect(count('items/capsule')).toBe(2);
     expect(count('shields/force-field')).toBe(4);
     // The slot labels and the Types B–D weapon names (M2-03).
-    expect(count('hud/meter-labels')).toBe(23); // + the Extra Edit weapons' labels (M3-01)
+    expect(count('hud/meter-labels')).toBe(28); // + the Extra Edit weapons' labels (M3-01) and the five W15-A main types
     for (const shape of ['round', 'oval', 'needle']) {
       for (const colour of ['pink', 'red', 'purple']) {
         expect(count(`bullets/${shape}-${colour}`)).toBe(shape === 'round' ? 1 : 8);

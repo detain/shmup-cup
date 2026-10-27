@@ -35,7 +35,7 @@ describe('scripts/assets/procedural/hud', () => {
     expect(borders.size).toBe(3);
   });
 
-  it('draws the meter labels in white, centred and all different (slots, then Types B–D, then Extra Edit)', () => {
+  it('draws the meter labels in white, centred and all different (through W15-A)', () => {
     const labels = byName(sprites, 'hud/meter-labels');
     // The seven slot labels, then the Types B–D weapon names (M2-03) — the engine's frame table.
     expect(hud.METER_LABELS.slice(0, 7)).toEqual([
@@ -49,7 +49,7 @@ describe('scripts/assets/procedural/hud', () => {
     ]);
     expect([...hud.METER_LABELS]).toEqual([...METER_LABEL_FRAMES]);
     const n = hud.METER_LABELS.length;
-    expect(n).toBe(23); // + the seven Extra Edit weapons (M3-01)
+    expect(n).toBe(28); // + the seven Extra Edit weapons (M3-01), + the five W15-A types
     expect(labels.frames).toHaveLength(n);
     expect(new Set(labels.frames.map((f) => Buffer.from(f.data).toString('hex'))).size).toBe(n);
     labels.frames.forEach((frame, i) => {
@@ -113,8 +113,8 @@ describe('scripts/assets/procedural/hud — the v2 art (R4-03.C5)', () => {
   it('draws the v2 labels 54×8, white, centred, rows 1 to 5, all different', () => {
     const labels = byName(sprites, 'hud/meter-labels');
     expect(labels.native).toBe(true);
-    expect(labels.frames).toHaveLength(23);
-    expect(new Set(labels.frames.map((f) => Buffer.from(f.data).toString('hex'))).size).toBe(23);
+    expect(labels.frames).toHaveLength(28);
+    expect(new Set(labels.frames.map((f) => Buffer.from(f.data).toString('hex'))).size).toBe(28);
     labels.frames.forEach((frame, i) => {
       expect([frame.width, frame.height]).toEqual([54, 8]);
       let minX = frame.width;

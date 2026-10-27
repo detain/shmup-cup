@@ -1,0 +1,139 @@
+{
+  "formatVersion": 1,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "shot.flak",
+      "name": "FLAK CONE",
+      "slot": "double",
+      "behavior": "shot.flak",
+      "damage": 1,
+      "speed": 15,
+      "cap": 8,
+      "pierce": false,
+      "sprite": "shots/flak",
+      "sfx": "PlayerShot",
+      "refireTicks": 10,
+      "params": {
+        "pellets": 8,
+        "coneAngle": 96,
+        "lifeTicks": 26,
+        "ox": 12,
+        "oy": 0,
+        "hw": 3.75,
+        "hh": 3.75
+      }
+    },
+    {
+      "id": "shot.rail",
+      "name": "RAIL LANCE",
+      "slot": "laser",
+      "behavior": "shot.rail",
+      "damage": 6,
+      "speed": 12,
+      "cap": 2,
+      "pierce": true,
+      "sprite": "shots/rail",
+      "sfx": "PlayerShot",
+      "refireTicks": 22,
+      "params": {
+        "maxLength": 144,
+        "hitCooldownTicks": 8,
+        "passArmour": 1,
+        "ox": 15,
+        "oy": 0,
+        "hh": 4.5,
+        "frames": 2
+      }
+    },
+    {
+      "id": "shot.drone",
+      "name": "SEEKER DRONE",
+      "slot": "missile",
+      "behavior": "shot.drone",
+      "damage": 1,
+      "speed": 10.5,
+      "cap": 6,
+      "pierce": false,
+      "sprite": "shots/drone",
+      "sfx": "PlayerMissile",
+      "params": {
+        "drones": 2,
+        "turnRate": 6,
+        "seekRadius": 180,
+        "gap": 15,
+        "ox": 9,
+        "oy": 0,
+        "hw": 4.5,
+        "hh": 3,
+        "frames": 8
+      }
+    },
+    {
+      "id": "laser.chain",
+      "name": "CHAIN ARC",
+      "slot": "laser",
+      "behavior": "laser.chain",
+      "damage": 2,
+      "speed": 18,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/chain",
+      "sfx": "PlayerShot",
+      "refireTicks": 12,
+      "params": {
+        "forks": 2,
+        "forkRange": 90,
+        "forkTicks": 6,
+        "ox": 12,
+        "oy": 0,
+        "hw": 6,
+        "hh": 3.75,
+        "frames": 2
+      }
+    },
+    {
+      "id": "missile.beacon",
+      "name": "SKY MARKER",
+      "slot": "missile",
+      "behavior": "missile.beacon",
+      "damage": 4,
+      "speed": 9,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/beacon",
+      "sfx": "PlayerMissile",
+      "refireTicks": 20,
+      "params": {
+        "beacons": 2,
+        "gap": 18,
+        "lobSpeed": 4.5,
+        "gravity": 0.27,
+        "delayTicks": 40,
+        "beamTicks": 12,
+        "beamWidth": 24,
+        "hitCooldownTicks": 16,
+        "ox": 9,
+        "oy": 0,
+        "hh": 4.5,
+        "frames": 2
+      }
+    }
+  ],
+  "presets": [
+    {
+      "id": "type-e",
+      "main": "shot.basic",
+      "missile": "shot.drone",
+      "double": "shot.flak",
+      "laser": "shot.rail"
+    },
+    {
+      "id": "type-f",
+      "main": "shot.basic",
+      "missile": "missile.beacon",
+      "double": "shot.flak",
+      "laser": "laser.chain"
+    }
+  ]
+}
