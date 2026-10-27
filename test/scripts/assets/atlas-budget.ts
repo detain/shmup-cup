@@ -99,6 +99,18 @@
  * restructured (52 opaque a frame where the stretched box held 54). The common page
  * moves 335,794 → **335,815 B** (+21 B of re-indexed PNG payload, an in-place swap the
  * AREA law keeps: 619 sprites, 2,200 frames unchanged). Headroom 1,185 B.
+ *
+ * **w15-WEAPONLOOK (dated 2026-10-27): no raise — measured first.** Eleven hand-drawn
+ * v2 bolt maps answer "many of the weapons still look mostly the same" by silhouette:
+ * rail, chain, beacon, drone (the four interim-upscaled names, −14 pool frames) plus
+ * disc, sub-disc, sub-bomb, beam, sub-laser, sub-laser-wide and cyclone (seven
+ * native-generator replacements), each at its exact served size, frame count and
+ * palette. Landing rebased over w15-SHIELDFIX's −922 B page shrink (335,815 →
+ * 334,893), and the common page measures **336,101 B** on this tree (+1,208 B over
+ * the shields' 334,893 B) — inside the untouched 337,000 B cap, headroom 899 B. The
+ * AREA law holds: 619 sprites, 2,200 frames unchanged, every map drawing in the slot
+ * its generator art held, so the stand-in band, the TV residency budget and the
+ * bundle's gzip and dist rows track the page, not the cap.
  */
 export const ATLAS_COMMON_PNG_CAP = 337_000;
 /**

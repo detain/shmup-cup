@@ -241,7 +241,13 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // and 331 measured on this tree), frames replaced 1:1 at the same served sizes: 619
     // sprites, 2,200 frames unchanged. The floor follows the natives to 320 — headroom for the
     // next restored wave, loud on a bulk regression.
-    expect(scaled).toBeGreaterThan(320);
+    // w15-WEAPONLOOK (owner art-budget carve-out of 2026-10-26, dated 2026-10-27): eleven hand-
+    // drawn v2 bolt maps answer "many of the weapons still look mostly the same" by silhouette.
+    // Four names leave the upscaled pool — rail (2 frames), chain (2), drone (8), beacon (2):
+    // −14, 313 measured on this tree — and seven replace native generator frames in place (disc,
+    // sub-disc, sub-bomb, beam, sub-laser, sub-laser-wide, cyclone), moving no compared frame.
+    // 619 sprites, 2,200 frames unchanged. The floor follows the natives to 310.
+    expect(scaled).toBeGreaterThan(310);
     expect(wrongPixels).toEqual([]);
   });
 

@@ -1,0 +1,56 @@
+{
+  "name": "shots/rail",
+  "description": "Rail Lance bolt v2 (w15-WEAPONLOOK): hand-drawn native lance — swept tail fletching, energy-node spine, barbed arrowhead with white tip; the flash frame is a thin bright star. Distinct silhouette vs the Direct pills.",
+  "palette": {
+    ".": null,
+    "a": "#2f5362",
+    "b": "#70e0ff",
+    "c": "#eafaff",
+    "w": "#ffffff"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "........................",
+        "........................",
+        "........................",
+        "........................",
+        ".................aaa....",
+        ".aaa.............aaba...",
+        "..ca.............aabba..",
+        "...aaaaaaaaaaaaaaacccwa.",
+        "...abbbcbbbbcbbbbwwwwwwa",
+        "...aaaaaaaaaaaaaaacccwa.",
+        "..ca.............aabba..",
+        ".aaa.............aaba...",
+        ".................aaa....",
+        "........................",
+        "........................",
+        "........................",
+        "........................"
+      ]
+    },
+    {
+      "rows": [
+        "........................",
+        "...........cc...........",
+        "...........bb...........",
+        "...........bb...........",
+        "...........cc...........",
+        "..........bccb..........",
+        "...........cc...........",
+        "....cccccwwwwwwccccc....",
+        "...bbcccwwwwwwwwcccbb...",
+        "....cccccwwwwwwccccc....",
+        "...........cc...........",
+        "..........bccb..........",
+        "...........cc...........",
+        "...........bb...........",
+        "...........bb...........",
+        "...........cc...........",
+        "........................"
+      ]
+    }
+  ]
+}

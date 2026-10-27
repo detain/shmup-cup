@@ -1,0 +1,80 @@
+{
+  "name": "shots/beam",
+  "description": "Direct beam v2 (w15-WEAPONLOOK): hand-drawn flat-edged energy bars — pointed diamond tip, vent notches, butt cap — blue thin/thick then amber and white (level roles), not the rounded pills.",
+  "palette": {
+    ".": null,
+    "a": "#3878ff",
+    "b": "#e0f0ff",
+    "c": "#f8c030",
+    "d": "#fff8d0",
+    "e": "#f8a020",
+    "f": "#ffffff"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        ".......................................",
+        ".......................................",
+        ".......................................",
+        ".......................................",
+        "...a...................................",
+        "...aaaabaaaaabaaaaabaaaaaaaa...........",
+        "...aababbbabbbabbbabbbabbbaab..........",
+        "...aaaaaaaaaaaaaaaaaaaaaaaaa...........",
+        "...a...................................",
+        ".......................................",
+        ".......................................",
+        "......................................."
+      ]
+    },
+    {
+      "rows": [
+        ".......................................",
+        ".......................................",
+        ".......................................",
+        "...a...................................",
+        "...aaaabaaaaabaaaaabaaaaabaaaaa........",
+        "...aabbbbbbbbbbbbbbbbbbbbbbbbbba.......",
+        "...aababbbabbbabbbabbbabbbabbbaab......",
+        "...aabbbbbbbbbbbbbbbbbbbbbbbbbba.......",
+        "...aaaaaaaaaaaaaaaaaaaaaaaaaaaa........",
+        "...a...................................",
+        ".......................................",
+        "......................................."
+      ]
+    },
+    {
+      "rows": [
+        ".......................................",
+        ".......................................",
+        "...c...................................",
+        "...ccccdcccccdcccccdcccccdccccccc......",
+        "...ccdddddddddddddddddddddddddddd......",
+        "...ccddddddddddddddddddddddddddddc.....",
+        "...ccdcdddcdddcdddcdddcdddcdddcddcd....",
+        "...ccddddddddddddddddddddddddddddc.....",
+        "...ccdddddddddddddddddddddddddddd......",
+        "...cccccccccccccccccccccccccccccc......",
+        "...c...................................",
+        "......................................."
+      ]
+    },
+    {
+      "rows": [
+        ".......................................",
+        "...e...................................",
+        "...eeeefeeeeefeeeeefeeeeefeeeeefeee....",
+        "...eeffffffffffffffffffffffffffffff....",
+        "...eeffffffffffffffffffffffffffffffe...",
+        "...eefefffefffefffefffefffefffefffeef..",
+        "...eeffffffffffffffffffffffffffffffe...",
+        "...eeffffffffffffffffffffffffffffff....",
+        "...eeffffffffffffffffffffffffffffff....",
+        "...eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee....",
+        "...e...................................",
+        "......................................."
+      ]
+    }
+  ]
+}

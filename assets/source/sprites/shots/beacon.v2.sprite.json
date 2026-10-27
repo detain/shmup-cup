@@ -1,0 +1,53 @@
+{
+  "name": "shots/beacon",
+  "description": "Sky Marker beacon v2 (w15-WEAPONLOOK): hand-drawn native stake — pointed spike, collar fins, caged dim lamp (f0) and lit lamp with glow wings (f1); blinks (age>>2)%2 as before.",
+  "palette": {
+    ".": null,
+    "a": "#3c414e",
+    "b": "#ffe060",
+    "c": "#9aa8c0",
+    "d": "#fffcef",
+    "e": "#5c532f"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "...aaa...",
+        "..a.b.a..",
+        "..aebea..",
+        "..abdba..",
+        "..aebea..",
+        "..aaaaa..",
+        "..ccccc..",
+        ".accacca.",
+        "...aca...",
+        "...aca...",
+        "...aca...",
+        "...aca...",
+        "...aaa...",
+        "....a....",
+        "....a...."
+      ]
+    },
+    {
+      "rows": [
+        "...bbb...",
+        "..abbba..",
+        "bbadddabb",
+        "ababbbaba",
+        "..abbba..",
+        "..aaaaa..",
+        "..ccccc..",
+        ".accacca.",
+        "...aca...",
+        "...aca...",
+        "...aca...",
+        "...aca...",
+        "...aaa...",
+        "....a....",
+        "....a...."
+      ]
+    }
+  ]
+}

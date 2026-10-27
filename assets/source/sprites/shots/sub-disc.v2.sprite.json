@@ -1,0 +1,57 @@
+{
+  "name": "shots/sub-disc",
+  "description": "Sub-disc v2 (w15-WEAPONLOOK): hand-drawn bi-convex LENS — pointed sides, core band, top/bottom rim notches, two sizes for the two levels — reads against the ring disc and the orb blast.",
+  "palette": {
+    ".": null,
+    "a": "#208838",
+    "b": "#78f078",
+    "c": "#ffffff"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "..................",
+        "..................",
+        "..................",
+        "..................",
+        "..................",
+        ".........a........",
+        ".........a........",
+        ".....aabbbbbaa....",
+        "....accccccccca...",
+        "...cacccccccccac..",
+        "....accccccccca...",
+        ".....aabbbbbaa....",
+        ".........a........",
+        ".........a........",
+        "..................",
+        "..................",
+        "..................",
+        ".................."
+      ]
+    },
+    {
+      "rows": [
+        "..................",
+        "..................",
+        "..................",
+        "..................",
+        ".........a........",
+        ".........a........",
+        "....aaabbbbbaaa...",
+        "...abbbbbbbbbbba..",
+        "..accccccccccccca.",
+        ".cacccccccccccccac",
+        "..accccccccccccca.",
+        "...abbbbbbbbbbba..",
+        "....aaabbbbbaaa...",
+        ".........a........",
+        ".........a........",
+        "..................",
+        "..................",
+        ".................."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "shots/chain",
+  "description": "Chain Arc v2 (w15-WEAPONLOOK): hand-drawn forked lightning bolt (f0) and chain hook (f1) at native size — crisp zigzag with bright core, prong and barb, no glow massing.",
+  "palette": {
+    ".": null,
+    "a": "#c890ff",
+    "b": "#f1e3ff",
+    "c": "#ffffff"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "..............",
+        "...........aca",
+        "........acaaa.",
+        "......aca.....",
+        "....acaaa.....",
+        "b.aca...ba....",
+        "aca......a....",
+        "aa............"
+      ]
+    },
+    {
+      "rows": [
+        "...........aa.",
+        "...........cca",
+        "............ca",
+        "ab.........caa",
+        ".a........cab.",
+        "..ac....aa....",
+        "....aaac......",
+        ".............."
+      ]
+    }
+  ]
+}

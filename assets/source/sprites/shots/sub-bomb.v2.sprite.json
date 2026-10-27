@@ -1,0 +1,26 @@
+{
+  "name": "shots/sub-bomb",
+  "description": "Sub-bomb v2 (w15-WEAPONLOOK): hand-drawn segmented CASK with hoops, fuse nub and spark — the bomb silhouette at 9 px, never an orb.",
+  "palette": {
+    ".": null,
+    "a": "#185a20",
+    "b": "#40d050",
+    "c": "#ffffff"
+  },
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "...aab...",
+        "...aa....",
+        ".aaaaaaa.",
+        ".abbbbba.",
+        ".aaaaaaa.",
+        ".acbbbba.",
+        ".abbbbba.",
+        ".aaaaaaa.",
+        ".aaaaaaa."
+      ]
+    }
+  ]
+}

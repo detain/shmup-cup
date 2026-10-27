@@ -1,0 +1,89 @@
+{
+  "name": "shots/cyclone",
+  "description": "Cyclone laser segment v2 (w15-WEAPONLOOK): hand-drawn twin swirl strands with white core, 12-px tiling period and 3-col/frame advance — bold strands on transparent field, the heavy glow fill removed so it reads as a vortex, not a blob.",
+  "palette": {
+    ".": null,
+    "a": "#6040c0",
+    "b": "#c890ff",
+    "c": "#ffffff"
+  },
+  "anchor": [
+    0,
+    6
+  ],
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "............",
+        "..........aa",
+        "aa.....aaabb",
+        "bbaa.aabbb..",
+        "..bbabb.....",
+        "....b.......",
+        "cccccccccccc",
+        "cccccccccccc",
+        "....b.......",
+        "..bbabb.....",
+        "bbaa.aabbb..",
+        "aa.....aaabb",
+        "..........aa",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        ".......aa...",
+        "....aaabbaa.",
+        "a.aabbb..bba",
+        "babb.......b",
+        ".b..........",
+        "cccccccccccc",
+        "cccccccccccc",
+        ".b..........",
+        "babb.......b",
+        "a.aabbb..bba",
+        "....aaabbaa.",
+        ".......aa...",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "....aa......",
+        ".aaabbaa....",
+        "abbb..bbaa.a",
+        "b.......bbab",
+        "..........b.",
+        "cccccccccccc",
+        "cccccccccccc",
+        "..........b.",
+        "b.......bbab",
+        "abbb..bbaa.a",
+        ".aaabbaa....",
+        "....aa......",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        ".aa.........",
+        "abbaa.....aa",
+        "b..bbaa.aabb",
+        ".....bbabb..",
+        ".......b....",
+        "cccccccccccc",
+        "cccccccccccc",
+        ".......b....",
+        ".....bbabb..",
+        "b..bbaa.aabb",
+        "abbaa.....aa",
+        ".aa.........",
+        "............"
+      ]
+    }
+  ]
+}
