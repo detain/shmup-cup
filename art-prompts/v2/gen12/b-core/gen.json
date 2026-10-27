@@ -1,0 +1,73 @@
+{
+  "id": "gen12/b-core",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frame(s) of the boss weak-point CORE — a round energy heart mounted in a short steel collar, seen head-on — the glowing weak point every zone boss exposes. The two cells are the SAME core pulsing its light — draw it as one clear subject.\n\nDesign identity to keep exactly — the glowing weak-point CORE of a boss seen head-on: a round energy heart set inside a short gunmetal collar. A pale blue-white blaze at its centre (#e8ffff), a bright cyan ring around it (#38c8e8), a deep-navy blue energy field beyond (#1858c8), all held in a steel mount (#4a5a78 with #8898b8 lit edges) on a 1-px near-black navy outline (#0a1020). Its two pulse steps: 0 the BLAZE — white-hot centre, vivid cyan ring; 1 the DIM — the white centre settles to pale cyan, the blue field cools, the steel collar unchanged.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 BLAZE — the core at full light: white centre, bright cyan ring, blue field. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = FRAME 1 DIM — the SAME core, same pixels, recoloured: the centre dims toward pale cyan, the blue field deepens. The subject lies within aspect 0.70:1 to 1.30:1.\n- COLOUR-ONLY STATE LAW: frames 1 to 1 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521502026,
+  "width": 512,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T04:13:53.471Z",
+  "seconds": 6.9,
+  "label": "b-core",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen12/b-core/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x256",
+  "meta": {
+    "job": "w15-GEN12",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN12",
+  "round": "bosses-4",
+  "exit": "PROBE-OK@1",
+  "ownerAsk": "Quality-regen wave 5 per GEN12 brief, disk-derived: bosses/core (2 pulse frames 16x16 v1 → 24x24 served; boss weak-point core, colour-only blaze/dim; hitFlash true — @flash sibling pipeline-derived) — bosses pool finish, 4 disk-derived interim names (brief row 3, AR windows from the shipped v1 maps)",
+  "gridContract": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "bosses/core (2 pulse frames 16x16 v1 → 24x24 served; boss weak-point core, colour-only blaze/dim; hitFlash true — @flash sibling pipeline-derived)",
+  "probe": {
+    "id": "b-core",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        39,
+        17,
+        189,
+        220
+      ],
+      [
+        284,
+        17,
+        189,
+        220
+      ]
+    ],
+    "xors": [
+      21.7
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521502026,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

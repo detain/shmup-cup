@@ -1,0 +1,363 @@
+{
+  "generatedAt": "2026-10-27T04:18:16.779Z",
+  "lane": "w15-GEN12",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "rows": [
+    {
+      "id": "s-kestrel-thruster",
+      "report": "w15-GEN12",
+      "target": "ships/kestrel-thruster (4 flicker frames 9x5 v2 native, nozzle on right edge; KESTREL flame loop; hitFlash false, no @flash sibling)",
+      "grid": "384x256 cells, 2x2, canvas 768x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "s-kestrel-thruster",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (0/4/35/43)",
+          "cell 1 AR=2.39 outside [1.2,2.3] (f1)",
+          "cell 2 AR=2.42 outside [1.2,2.3] (f2)",
+          "cell 3 AR=2.42 outside [1.2,2.3] (f3)"
+        ],
+        "boxes": [
+          [
+            0,
+            4,
+            349,
+            209
+          ],
+          [
+            411,
+            82,
+            303,
+            127
+          ],
+          [
+            40,
+            336,
+            312,
+            129
+          ],
+          [
+            407,
+            334,
+            302,
+            125
+          ]
+        ],
+        "xors": [
+          58.7,
+          54.9,
+          56.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521500000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/4/72/56)",
+            "cell 1 margin <12px (11/29/73/57)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521501000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 margin <12px (0/0/0/0)",
+            "cell 2 margin <12px (0/0/0/0)",
+            "cell 3 margin <12px (0/0/0/0)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521502000,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.58 outside [1.2,2.3] (f0)",
+            "cell 2 margin <12px (0/79/71/4)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521503000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/4/34/37)"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521504000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/2/41/51)",
+            "cell 1 margin <12px (64/2/0/0)",
+            "cell 2 margin <12px (0/60/42/1)",
+            "cell 3 margin <12px (64/0/0/1)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521505000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/2/31/0)",
+            "cell 1 margin <12px (41/13/0/0)",
+            "cell 2 margin <12px (0/0/0/0)",
+            "cell 3 margin <12px (0/0/0/0)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521506000,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.71 outside [1.2,2.3] (f0)",
+            "cell 1 AR=2.63 outside [1.2,2.3] (f1)",
+            "cell 2 AR=2.59 outside [1.2,2.3] (f2)",
+            "cell 3 AR=2.55 outside [1.2,2.3] (f3)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521507000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/4/35/43)",
+            "cell 1 AR=2.39 outside [1.2,2.3] (f1)",
+            "cell 2 AR=2.42 outside [1.2,2.3] (f2)",
+            "cell 3 AR=2.42 outside [1.2,2.3] (f3)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o-gyro",
+      "report": "w15-GEN12",
+      "target": "options/gyro (4 pulse frames 12x12 v2 native, v1 twin 8x8 2f; Rotate gyro rotor, spokes turn per OPTION_FRAMES; hitFlash false, no @flash sibling)",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "o-gyro/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "o-gyro",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            62,
+            61,
+            165,
+            165
+          ],
+          [
+            286,
+            61,
+            164,
+            165
+          ],
+          [
+            62,
+            286,
+            165,
+            165
+          ],
+          [
+            285,
+            286,
+            165,
+            167
+          ]
+        ],
+        "xors": [
+          82.5,
+          83.3,
+          74.6
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521501013,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-core",
+      "report": "w15-GEN12",
+      "target": "bosses/core (2 pulse frames 16x16 v1 → 24x24 served; boss weak-point core, colour-only blaze/dim; hitFlash true — @flash sibling pipeline-derived)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "b-core/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-core",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            39,
+            17,
+            189,
+            220
+          ],
+          [
+            284,
+            17,
+            189,
+            220
+          ]
+        ],
+        "xors": [
+          21.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521502026,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-emitter",
+      "report": "w15-GEN12",
+      "target": "bosses/emitter (2 frames 12x12 v1 → 18x18 served; boss bullet emitter, idle red / charge yellow-white aperture, colour-only; hitFlash true — @flash pipeline-derived)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "b-emitter/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-emitter",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            62,
+            46,
+            159,
+            160
+          ],
+          [
+            292,
+            46,
+            158,
+            160
+          ]
+        ],
+        "xors": [
+          66
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521503039,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-hull-block",
+      "report": "w15-GEN12",
+      "target": "bosses/hull-block (1 frame 16x16 v1 → 24x24 served; riveted hull tile of the big boss walls; hitFlash true — @flash pipeline-derived)",
+      "grid": "256x256 cells, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "b-hull-block/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-hull-block",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            63,
+            63,
+            130,
+            131
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521504052,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-shield-plate",
+      "report": "w15-GEN12",
+      "target": "bosses/shield-plate (2 frames 8x16 v1 → 12x24 served; armour plate before a boss core, intact / cracked, colour-only; hitFlash true — @flash pipeline-derived)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "b-shield-plate/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "b-shield-plate",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            110,
+            19,
+            79,
+            219
+          ],
+          [
+            324,
+            19,
+            78,
+            219
+          ]
+        ],
+        "xors": [
+          41
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521505065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.90 outside [0.32,0.72] (f0)",
+            "cell 0 margin <12px (2/23/46/1)",
+            "dup 0-1 material-mean-diff 351.2 > 300"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521506065,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    }
+  ]
+}
