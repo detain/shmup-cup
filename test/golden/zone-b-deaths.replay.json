@@ -71,23 +71,23 @@
     "AJAy"
   ],
   "hashes": [
-    1981679867,
-    870101672,
-    3645539030,
-    2702749509,
-    3630731420,
-    2914590880,
-    1810624866,
-    2646234312,
-    2594124103,
-    3146730435
+    3821900335,
+    2421332046,
+    4282790892,
+    86853903,
+    4291267763,
+    2197265253,
+    2798248756,
+    1225985026,
+    2425053342,
+    147811814
   ],
-  "finalHash": 374174802,
+  "finalHash": 2089688401,
   "description": "BRINE NEBULA, a weaving pilot that never dodges, Arcade penalty (M2-11 tests): deaths among the bubbles, the checkpoint restarts, game over",
   "expected": {
     "status": "gameOver",
     "ticks": 6416,
-    "score": 5550,
+    "score": 5100,
     "lives": 0,
     "deathTicks": [
       4137,

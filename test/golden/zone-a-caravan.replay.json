@@ -73,12 +73,12 @@
   "hashes": [
     1547233901,
     4190691162,
-    2116266452,
-    3728571760,
-    3201951046,
-    1958896274
+    4197681055,
+    2835329119,
+    4140315392,
+    1401133940
   ],
-  "finalHash": 1958896274,
+  "finalHash": 1401133940,
   "description": "the CARAVAN clock on AZURE VERGE (M3-01): one minute with god mode, then time up — status stageClear with the World timeUp",
   "expected": {
     "status": "stageClear",

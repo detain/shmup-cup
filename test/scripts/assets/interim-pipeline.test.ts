@@ -438,6 +438,10 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
     // Pinned when R2-01 landed the stage (the atlas `pnpm assets` wrote before it, byte for byte).
     // Re-pinned by W15-A (2026-10-26): the six shots.mjs sprites, the five new meter-label frames
     // and the restored beam fade frame moved the scale-1 atlas (612 sprites, 2,154 frames).
+    // Re-pinned by w15-C (2026-10-26): the seven `items.mjs` variety sprites — four flavored pills
+    // (4 glint frames) and three drop crates (6 shimmer stages), 34 scale-1 frames on top of
+    // W15-A's set (457 sprites, 1,479 nodes at scale 1; 619 sprites, 2,188 frames at 1.5) — moved
+    // it again with the owner art-budget ruling's ENRICH pass included.
     // Only an edit of the v1 sprite sources or generators may move it — or a real-art PNG override,
     // a `native` source or a v2 font file landing in `assets/source/` (R3, R4-03): overrides and
     // native sources pass through unscaled at every scale, so they put v2-size frames into the
@@ -450,7 +454,7 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
     }
     hash.update(formatManifest(v1.manifest));
     expect(hash.digest('hex')).toBe(
-      'fcbdd968d7acf90a5b529564c4176ff71b0aa4bf771bc1f3208df2e7ddc0855c',
+      'ca65de8bba8d9db078e0acdef520366cc4203df5cfc6bcdfe71fc014cb387c10',
     );
   });
 });

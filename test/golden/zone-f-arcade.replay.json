@@ -64,29 +64,29 @@
       "blackHole": false
     }
   },
-  "ticks": 3169,
+  "ticks": 3163,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgkAzQOCgAgBAhEAUYGABAEBEQDkAcCAgAIBQAkAsgGBgAQBAQ0ALcCAgAIBQAkAqAKCgAgBAhQACIKACAECFAABgYAEAQEEAAGCgAgBAggAEIGABAEBAQCEAYKACAECCQDMA4KACAECEQBRgYAEAQERAOQBwICAAgFACQCyAYGABAEBDQAtwICAAgFACQCoAoKACAECFAAIgoAIAQIUAAGBgAQBAQQAAYKACAECCAAQgYAEAQEBAFw=",
-    "AOEY"
+    "ACiCgAgBAgkAzQOCgAgBAhEA8QKBgAQBAS0AJoKACAECEQAWgoAIAQISAAWBgAQBAQ4A3QKCgAgBAhIAJYKACAEAAYGABAEBAQABgoAIAQIBAAGBgAQBAQEAAYKACAECCQCEAYKACAECCQDMA4KACAECEQBRgYAEAQERAOQBwICAAgFACQCyAYGABAEBDQAtwICAAgFACQCoAoKACAECFAAIgoAIAQIUAAGBgAQBAQQAAYKACAECCAAQgYAEAQEBAFw=",
+    "ANsY"
   ],
   "hashes": [
-    3544789090,
-    335233831,
-    3949905055,
-    982154668,
-    779507978
+    1186788518,
+    3023221129,
+    1491628963,
+    1778594481,
+    4197025823
   ],
-  "finalHash": 3854505909,
+  "finalHash": 3181414702,
   "description": "CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the 4-way bot from the start against the rank-scaled fire — the chasing cells, the tissue walls, the grabbing tentacles — to MANTLE REGENT shot down",
   "expected": {
     "status": "gameOver",
-    "ticks": 3169,
-    "score": 3600,
+    "ticks": 3163,
+    "score": 2700,
     "lives": 0,
     "deathTicks": [
-      1492,
-      3076
+      1486,
+      3070
     ],
     "bossDefeated": false
   }

@@ -71,21 +71,21 @@
     "AIYq"
   ],
   "hashes": [
-    2132775461,
-    816893957,
-    2962543966,
-    2282582656,
-    2881034823,
-    3011060715,
-    2469376786,
-    25961244
+    1506075597,
+    4176323980,
+    3348895296,
+    362101799,
+    884766234,
+    3313495916,
+    2060893327,
+    3906516295
   ],
-  "finalHash": 2549206738,
+  "finalHash": 1186743515,
   "description": "IRON CITADEL on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-14 tests): deaths at the outer walls, every restart back at the start, game over",
   "expected": {
     "status": "gameOver",
     "ticks": 5382,
-    "score": 5400,
+    "score": 5100,
     "lives": 0,
     "deathTicks": [
       992,

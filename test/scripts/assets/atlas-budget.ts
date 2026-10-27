@@ -29,8 +29,15 @@
  * with headroom (the bundle's gzip budget 512 KB vs 406.5 KB used, dist 16,384 KB vs 2,404 KB),
  * and the art must not be cut to fit a book number. Functional caps (the 96-slot shot pool) are
  * untouched by this change.
+ *
+ * **w15-C (owner art-budget ruling 2026-10-26, the era's sole authorized raise, continued):
+ * raised 301,000 → 307,000.** The item-variety art adds seven sprites and 34 frames at scale 1
+ * (four flavored pills × 4 glint frames, three drop crates × 6 shimmer stages, the ENRICH pass);
+ * the common page measures **306,128 B** with them (+5,460 B over W15-A's 300,668 B). The same
+ * arithmetic as the row above: a discipline figure, not a firmware wall — the TV's real ceilings
+ * keep their headroom, and the gameplay caps (the 32-slot item pool first of all) stand untouched.
  */
-export const ATLAS_COMMON_PNG_CAP = 301_000;
+export const ATLAS_COMMON_PNG_CAP = 307_000;
 
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
