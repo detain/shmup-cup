@@ -168,7 +168,7 @@ function beaconFrames() {
   const frames = [];
   for (let lit = 0; lit < 2; lit++) {
     const image = createImage(6, 10);
-    // The stake's body (rows 4…9) and its two fins.
+    // The stake's body (rows 4…9) and its two fins: a shaded rail with a machined stripe.
     for (let y = 4; y < 10; y++) {
       setPixel(image, 2, y, steel.rim);
       setPixel(image, 3, y, y % 2 === 0 ? steel.body : steel.rim);

@@ -286,12 +286,16 @@ test.describe('weapon select (Tizen build via file://)', () => {
     await remoteTap(page, 40); // MISSILE (unlocked by EDIT)
     await remoteTap(page, 39); // MISSILE → SPREAD BOMB
     await remoteTap(page, 40); // DOUBLE
-    await remoteTap(page, 37); // DOUBLE → FREE WAY (wraps)
+    await remoteTap(page, 37); // DOUBLE → FLAK CONE (the wrap's last double row since W15-A)
+    await remoteTap(page, 37); // FLAK CONE → FREE WAY
     await remoteTap(page, 40); // LASER
     await remoteTap(page, 39); // LASER → RIPPLE LASER
     await expect.poll(async () => (await view(page)).preview).toBe('laser.ripple');
     await remoteTap(page, 40); // OPTION (M2-04)
-    await remoteTap(page, 37); // TRAIL → ROTATE (wraps)
+    await remoteTap(page, 37); // TRAIL → AEGIS (the wrap's last row since w15-WB)
+    await remoteTap(page, 37); // AEGIS → ECHO
+    await remoteTap(page, 37); // ECHO → GUARD
+    await remoteTap(page, 37); // GUARD → ROTATE
     await remoteTap(page, 40); // ? SLOT
     await remoteTap(page, 39); // FORCE FIELD → SHIELD
     await remoteTap(page, 40); // ! SLOT

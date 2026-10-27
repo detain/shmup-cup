@@ -3024,7 +3024,7 @@ class WeaponSystemImpl implements WeaponSystem {
       }
       if (kind === ShotKind.Strike) {
         // The Sky Marker's beam (W15-A): world-anchored at its column, the full playfield height,
-        // burning `beamTicks` ticks — the last two fade frames.
+        // burning `beamTicks` ticks — the last two ticks draw the fade frame.
         const life = t.beamTicks[role];
         if (age >= life) {
           this.kill(i);

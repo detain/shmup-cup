@@ -20,8 +20,17 @@
  * Cap on the `common` group's PNG bytes (one page summed; R3-04.M2b): the RR-7 band's top
  * (0.6 MB per 2048×1024 page) scaled to `common`'s 1024×1024 size — 300,000 B. The stand-in
  * measures 91,921 B, and the band's own floor sits at 150,000 B for this size.
+ *
+ * **W15-A (owner ruling 2026-10-26): raised 300,000 → 301,000.** The five main weapon types add
+ * six sprites and 22 frames (the eight Seeker Drone headings, the Rail muzzle flash, the Sky
+ * Marker's blink pair and the beam's full-height fade frame); the common page measures
+ * **300,668 B** with them (+1,849 B over the 298,819 B the rebased master measured). The ruling:
+ * this is the lane's own discipline figure, not a firmware wall — the TV's real ceilings stand
+ * with headroom (the bundle's gzip budget 512 KB vs 406.5 KB used, dist 16,384 KB vs 2,404 KB),
+ * and the art must not be cut to fit a book number. Functional caps (the 96-slot shot pool) are
+ * untouched by this change.
  */
-export const ATLAS_COMMON_PNG_CAP = 300_000;
+export const ATLAS_COMMON_PNG_CAP = 301_000;
 
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate

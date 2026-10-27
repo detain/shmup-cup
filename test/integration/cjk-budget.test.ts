@@ -172,12 +172,14 @@ describe('integration: the atlas the CJK arithmetic is measured against (M3-03)'
     expect(atlas.pages[0].w).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
   });
 
-  it('occupies 480,273 pixels — 46 % of its page — and encodes to 137.6 KB', () => {
-    expect(OCCUPIED_PIXELS).toBe(480_273);
+  it('occupies 483,048 pixels — 46 % of its page — and encodes to 138.5 KB', () => {
+    // Re-pinned by W15-A (2026-10-26): the six shots.mjs sprites and the five new meter-label
+    // frames (480,273 px / 137.6 KB before).
+    expect(OCCUPIED_PIXELS).toBe(483_048);
     const page = atlas.pages[0].w * atlas.pages[0].h;
     expect(page).toBe(1_048_576);
     expect(Math.round((OCCUPIED_PIXELS / page) * 100)).toBe(46);
-    expect((PNG_BYTES / 1000).toFixed(1)).toBe('137.6');
+    expect((PNG_BYTES / 1000).toFixed(1)).toBe('138.5');
   });
 });
 

@@ -436,6 +436,8 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
 
   it('pins the v1 atlas: every page’s pixels and the manifest, by digest', () => {
     // Pinned when R2-01 landed the stage (the atlas `pnpm assets` wrote before it, byte for byte).
+    // Re-pinned by W15-A (2026-10-26): the six shots.mjs sprites, the five new meter-label frames
+    // and the restored beam fade frame moved the scale-1 atlas (612 sprites, 2,154 frames).
     // Only an edit of the v1 sprite sources or generators may move it — or a real-art PNG override,
     // a `native` source or a v2 font file landing in `assets/source/` (R3, R4-03): overrides and
     // native sources pass through unscaled at every scale, so they put v2-size frames into the
@@ -448,7 +450,7 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
     }
     hash.update(formatManifest(v1.manifest));
     expect(hash.digest('hex')).toBe(
-      '711cb6d928050d36ac1e4c6f0fd40ffecbe8bf663315c6dba1b0475a975336ec',
+      'fcbdd968d7acf90a5b529564c4176ff71b0aa4bf771bc1f3208df2e7ddc0855c',
     );
   });
 });
