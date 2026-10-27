@@ -145,8 +145,19 @@ export const ATLAS_PAGE_MAX_SIZE = 2048;
  * `check-bundle-budgets.test.ts`, `test/integration/tv-engine-floor.test.ts`,
  * `apps/webos/test/scripts/check-bundle.test.ts`, both apps' READMEs and the budget tables of
  * `docs/dev`.
+ *
+ * **R7-VID re-derivation (owner 'Vs' ruling, 2026-10-27):** the shipped cutscene set adds
+ * 6,803,092 B of silent H.264 clips under `assets/video/` and the built `dist/` measures
+ * 9,421,536 B with them — the video-less game term of the sum above is 2,618,444 B measured
+ * (it matches its projection). Under the 16 MiB guard the margin would be 7,355,680 B, and
+ * the next steps spend it: the RR-7 art band keeps 2,298,562 B of atlas headroom above the
+ * measured pages, and v2.1.x plans zone F's WARNING sting plus the captain stings (≈ the
+ * current set's size again) — 5,057,118 B would not be enough. The guard moves to a new
+ * measurement, 24 MiB (25,165,824 B: 13,445,726 B left after the art band, one whole clip-set
+ * doubling plus slack), still one fifth of the 120 MB real install ceiling — the 16 MiB
+ * arithmetic above stands as the R3-04.M2b history.
  */
-export const DIST_BUDGET = 16 * 1024 * 1024;
+export const DIST_BUDGET = 24 * 1024 * 1024;
 
 /** Where the atlas manifest ships, relative to `dist/` (rule 10 — plan R1-05). */
 export const ATLAS_MANIFEST_FILE = 'assets/atlas/main.json';

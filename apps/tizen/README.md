@@ -58,8 +58,9 @@ after), `config.xml` / `icon.png` are present, every other file lives under
 `dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
 page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
 **budgets** hold: `app.js` ≤ 512 KB gzipped (350 KB until M2-16, 384 KB until M3-02), every atlas page a PNG of at most 2048², the whole
-`dist/` ≤ 16 MB (8 MB until R3-04.M2b set the v2 value from the stand-in projection — its derivation
-is `DIST_BUDGET`'s docblock; `APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
+`dist/` ≤ 24 MB (8 MB until R3-04.M2b set the v2 value from the stand-in projection, 16 MB until
+R7-VID's cutscene clips — the derivation is `DIST_BUDGET`'s docblock; `APP_JS_GZIP_BUDGET`,
+`ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
 228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB,
 after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 ≈ 359 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos, M2-16 the two UI string tables, the Options pages and the rebinding; R1-05 took the atlas manifest out, −22 KB, ≈ 376 KB since). Since R1-05 **rule 10** also requires
 `dist/assets/atlas/main.json`, parsing and listing every page with its real size, with no atlas PNG

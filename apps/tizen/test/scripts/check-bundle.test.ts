@@ -292,7 +292,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect([APP_JS_GZIP_BUDGET, ATLAS_PAGE_MAX_SIZE, DIST_BUDGET]).toEqual([
       512 * 1024,
       2048,
-      16 * 1024 * 1024,
+      24 * 1024 * 1024,
     ]);
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
@@ -324,7 +324,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     const problems = checkTizenBundle(dir).problems;
     expect(problems).toHaveLength(2);
     expect(problems[0]).toMatch(/^app\.js is [\d.]+ KB gzipped, over the 512\.0 KB budget$/);
-    expect(problems[1]).toMatch(/^dist\/ holds [\d.]+ KB, over the 16384\.0 KB budget$/);
+    expect(problems[1]).toMatch(/^dist\/ holds [\d.]+ KB, over the 24576.0 KB budget$/);
   });
 
   it('reports a missing build folder instead of throwing', () => {
