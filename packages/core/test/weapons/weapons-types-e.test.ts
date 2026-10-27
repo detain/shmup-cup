@@ -458,6 +458,31 @@ describe('core/weapons W15-A: Chain Arc (laser.chain)', () => {
     expect(1000 - up.hp).toBe(2);
     expect(1000 - down.hp).toBe(2);
   });
+
+  it('keeps the lower slots when three neighbours tie on distance', () => {
+    const w = world({ weaponPreset: 'type-f' }, 100, 100);
+    const victim = spawn(w, 'target', 220, 160);
+    // Three neighbours at exactly the same squared distance (30² + 24²), spawned in slot order:
+    // the bounded pair keeps the two lowest slots — the third never gets an arc.
+    const first = spawn(w, 'target', 250, 136);
+    const second = spawn(w, 'target', 250, 184);
+    const third = spawn(w, 'target', 190, 136);
+    const ship = w.players[0];
+    w.weapons.spawnShot(WeaponRole.Laser, 0, ship.x, 160);
+    let forked: ShotRecord[] = [];
+    for (let t = 0; t < 30; t++) {
+      run(w, 1);
+      forked = shots(w, ShotKind.Arc);
+      if (forked.length > 0) break;
+    }
+    expect(1000 - victim.hp).toBe(2);
+    expect(forked.length).toBe(2);
+    for (const s of forked) expect(s.vx).toBeGreaterThan(0); // none turns back at the third
+    run(w, 8);
+    expect(1000 - first.hp).toBe(2);
+    expect(1000 - second.hp).toBe(2);
+    expect(third.hp).toBe(1000);
+  });
 });
 
 describe('core/weapons W15-A: Sky Marker (missile.beacon)', () => {
@@ -510,5 +535,18 @@ describe('core/weapons W15-A: Sky Marker (missile.beacon)', () => {
     expect(sawFade).toBe(true); // the last two of its 12 ticks show the fade frame
     expect(shotAt(w, slot, ShotKind.Strike)).toBeNull(); // and the beam is gone
     expect(1000 - high.hp).toBe(4); // once each: no second burn
+  });
+
+  it('breaks against a wall instead of sticking', () => {
+    const w = world({ weaponPreset: 'type-f' }, 100, 100);
+    const ship = w.players[0];
+    // Thrown deep inside the floor: the scan window is solid through, there is no surface
+    // above the contact — the wall arm kills the marker (it never sticks, never strikes).
+    const slot = w.weapons.spawnShot(WeaponRole.Missile, 0, ship.x, SURF + 13);
+    expect(slot).toBeGreaterThanOrEqual(0);
+    run(w, 1);
+    expect(shotAt(w, slot, ShotKind.Beacon)).toBeNull();
+    run(w, 50); // no strike ever drops from a broken marker
+    expect(shots(w, ShotKind.Strike).length).toBe(0);
   });
 });

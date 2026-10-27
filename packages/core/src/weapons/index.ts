@@ -745,7 +745,10 @@ const STRIKE_BEAM_SEGMENTS = 4;
  */
 const ARC_SPAWN_GAP = 16 * WORLD_SCALE;
 
-/** tan(22.5°) — the octant boundary ratio the Seeker Drone's heading frames compare against. */
+/**
+ * The octant boundary ratio the Seeker Drone's heading frames compare against: √2−1 rounded to
+ * the nearest double one ULP high (exact ties are deterministic and the band is wide; W15-A N1).
+ */
 const OCTANT_TAN = 0.4142135623730951;
 
 /**
@@ -1586,7 +1589,7 @@ class RoleTables {
   readonly turnRate = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Seeker Drone: how far a dart looks for a target (`seekRadius`, W15-A). */
   readonly seekRadius = new Float64Array(WEAPON_ROLE_SLOTS);
-  /** Chain Arc: bolts forked when its shot kills (`forks`, W15-A). */
+  /** Chain Arc: bolts forked on its shot's hit (`forks`, W15-A). */
   readonly forks = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Chain Arc: how far from the victim a forked bolt may seek (`forkRange`, W15-A). */
   readonly forkRange = new Float64Array(WEAPON_ROLE_SLOTS);
@@ -3616,8 +3619,11 @@ class WeaponSystemImpl implements WeaponSystem {
     const a = atan2B(e.y - y, e.x - x);
     const bx = x + (SIN_TABLE_Q16[(a + ANGLE_QUARTER) & ANGLE_MASK] / TRIG_SCALE) * ARC_SPAWN_GAP;
     const by = y + (SIN_TABLE_Q16[a & ANGLE_MASK] / TRIG_SCALE) * ARC_SPAWN_GAP;
-    this.fx = bx;
-    this.fy = by;
+    // `emit` places the shot at the muzzle offset of its row; subtract it so the slot really is
+    // born on the victim→target line (a parallel 12-px shift would make the arc graze past).
+    const t = this.roles;
+    this.fx = bx - t.ox[role];
+    this.fy = by - t.oy[role];
     const i = this.emit(role, shooter, a, 0);
     if (i < 0) return;
     const f = this.pool.fields;

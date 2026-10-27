@@ -9,7 +9,8 @@
  * `shots/rail` — the Rail Lance: frame 0 the bolt (a flat cyan lance the renderer tiles along the
  * shot's `length` at {@link LASER_SEGMENT_LENGTH}), frame 1 the two-tick muzzle flash at the head.
  * `shots/drone` — the Seeker Drone: eight 7×7 darts, frame `k` facing `k · 45°` clockwise on screen
- * from +x (the {@link DIRECTIONS_8} order the `turn` heading frames use).
+ * from +x (`direct.mjs`'s sub-laser convention — NOT `DIRECTIONS_8`, which walks 22.5° steps for
+ * the enemy bullet art).
  * `shots/chain` — the Chain Arc: frame 0 the bolt's zigzag spark, frame 1 a forked arc's hook.
  * `shots/beacon` — the Sky Marker: a 6×10 thrown stake, frame 0 with its lamp dark and frame 1
  * lit (the stuck marker blinks on `(age >> 2) % 2`).
@@ -26,15 +27,7 @@
  */
 import { createImage, setPixel } from '../image.mjs';
 import { scaleLength } from '../interim.mjs';
-import {
-  DIRECTIONS_8,
-  color,
-  drawLine,
-  fillEllipse,
-  makeSprite,
-  mix,
-  withAlpha,
-} from './common.mjs';
+import { color, drawLine, fillEllipse, makeSprite, mix, withAlpha } from './common.mjs';
 
 /** @typedef {import('../image.mjs').Rgba} Rgba */
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
@@ -95,10 +88,25 @@ function railFrames() {
   return [bolt, flare];
 }
 
+/** Unit steps of the eight headings: frame `k` faces `k · 45°` clockwise on screen from +x. */
+const HEADING_STEPS_8 = (() => {
+  const h = Math.SQRT1_2;
+  return [
+    [1, 0],
+    [h, h],
+    [0, 1],
+    [-h, h],
+    [-1, 0],
+    [-h, -h],
+    [0, -1],
+    [h, -h],
+  ];
+})();
+
 /**
  * The Seeker Drone's eight facing frames: frame `k` points `k · 45°` clockwise on screen from +x
- * (the heading-octant order `core/weapons` writes into `frame`). A dart: a lime body line from its
- * tail to the tip, a bright nose and two swept fins at the tail.
+ * (the heading-octant order `core/weapons` writes into `frame`: 0 right, 2 down, 4 left, 6 up).
+ * A dart: a lime body line from its tail to the tip, a bright nose and two swept fins at the tail.
  *
  * @returns {import('../image.mjs').Image[]} Eight 7×7 frames.
  */
@@ -106,7 +114,7 @@ function droneFrames() {
   const p = shade(color('#9fe860'));
   /** @type {import('../image.mjs').Image[]} */
   const frames = [];
-  for (const [dc, ds] of DIRECTIONS_8) {
+  for (const [dc, ds] of HEADING_STEPS_8) {
     const image = createImage(7, 7);
     const c = 3;
     const tx = c - Math.round(dc * 2);

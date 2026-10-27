@@ -7,7 +7,7 @@
  * @module
  */
 import { describe, expect, it } from 'vitest';
-import { imagesEqual } from '../../../scripts/assets/image.mjs';
+import { getPixel, imagesEqual } from '../../../scripts/assets/image.mjs';
 import * as shots from '../../../scripts/assets/procedural/shots.mjs';
 import { opaqueCount } from './procedural-helpers.js';
 
@@ -39,6 +39,27 @@ describe('scripts/assets/procedural/shots', () => {
     ]);
     expect(drone.frames).toHaveLength(8);
     expect(drone.frames.map((f) => [f.width, f.height])).toEqual(Array(8).fill([7, 7]));
+  });
+
+  it('faces the drone darts right, down, left, up (frame k = k · 45° clockwise)', () => {
+    // F1 pin: each cardinal frame is a dart — its swept fins stand at the tail corners and the
+    // nose-side corners stay empty. DIRECTIONS_8's 22.5° order drew frame 2 toward down-right,
+    // frame 4 downward, frame 6 up-left-ish and frame 7 down-left, failing this on every one.
+    const a = (f: (typeof drone.frames)[number], x: number, y: number) => getPixel(f, x, y)[3];
+    const spec = [
+      { k: 0, nose: [6, 3], finA: [1, 1], finB: [1, 5], emptyA: [5, 1], emptyB: [5, 5] },
+      { k: 2, nose: [3, 6], finA: [1, 1], finB: [5, 1], emptyA: [1, 5], emptyB: [5, 5] },
+      { k: 4, nose: [0, 3], finA: [5, 1], finB: [5, 5], emptyA: [1, 1], emptyB: [1, 5] },
+      { k: 6, nose: [3, 0], finA: [1, 5], finB: [5, 5], emptyA: [1, 1], emptyB: [5, 1] },
+    ] as const;
+    for (const { k, nose, finA, finB, emptyA, emptyB } of spec) {
+      const f = drone.frames[k];
+      expect(a(f, nose[0], nose[1])).toBe(255);
+      expect(a(f, finA[0], finA[1])).toBe(255);
+      expect(a(f, finB[0], finB[1])).toBe(255);
+      expect(a(f, emptyA[0], emptyA[1])).toBe(0);
+      expect(a(f, emptyB[0], emptyB[1])).toBe(0);
+    }
   });
 
   it('draws the chain bolt and hook at 9×5 and the beacon stakes at 6×10', () => {
