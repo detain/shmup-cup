@@ -1,0 +1,397 @@
+{
+  "generatedAt": "2026-10-27T03:05:36.913Z",
+  "lane": "w15-GEN9",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "rows": [
+    {
+      "id": "e-turret",
+      "report": "w15-GEN9",
+      "target": "enemies/turret (2f 12×10 v1 → 18×15 served; ground turret, frame 1 muzzle flash); @flash auto-derived +2f",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-turret/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-turret",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            46,
+            47,
+            191,
+            166
+          ],
+          [
+            276,
+            47,
+            191,
+            166
+          ]
+        ],
+        "xors": [
+          20.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521200000,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-carrier-red",
+      "report": "w15-GEN9",
+      "target": "enemies/carrier-red (2f 14×9 → 21×14 served; red carrier saucer, blinking rim lights); @flash auto-derived +2f",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "e-carrier-red/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-carrier-red",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            41,
+            63,
+            220,
+            160
+          ],
+          [
+            319,
+            63,
+            222,
+            162
+          ]
+        ],
+        "xors": [
+          28.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521201013,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-carrier-blue",
+      "report": "w15-GEN9",
+      "target": "enemies/carrier-blue (2f 14×9 → 21×14 served; blue capsule carrier saucer, blinking rim lights); @flash auto-derived +2f",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "e-carrier-blue/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-carrier-blue",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            41,
+            65,
+            217,
+            128
+          ],
+          [
+            318,
+            65,
+            217,
+            128
+          ]
+        ],
+        "xors": [
+          46.6
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521202026,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-hatch",
+      "report": "w15-GEN9",
+      "target": "enemies/hatch (2f 20×10 → 30×15 served; armoured hatch releases fliers, frame 1 lid open); @flash auto-derived +2f",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "e-hatch/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-hatch",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            32,
+            97,
+            238,
+            120
+          ],
+          [
+            307,
+            40,
+            237,
+            177
+          ]
+        ],
+        "xors": [
+          63
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521203039,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-hunter",
+      "report": "w15-GEN9",
+      "target": "enemies/option-hunter (2f 16×12 → 24×18 served; Option Hunter, grab pulse frames); @flash auto-derived +2f",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-hunter/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-hunter",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            22,
+            48,
+            201,
+            184
+          ],
+          [
+            292,
+            57,
+            172,
+            152
+          ]
+        ],
+        "xors": [
+          59.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521204052,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-spinner",
+      "report": "w15-GEN9",
+      "target": "enemies/spinner (2f 10×10 → 15×15 served; four-bladed spinner, half-turn frames); @flash auto-derived +2f",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-spinner/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-spinner",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            38,
+            36,
+            196,
+            196
+          ],
+          [
+            283,
+            42,
+            185,
+            183
+          ]
+        ],
+        "xors": [
+          54.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521205065,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-cube",
+      "report": "w15-GEN9",
+      "target": "enemies/cube (2f 10×10 → 15×15 served; Direct-mode carrier cube, core spin frames); @flash auto-derived +2f",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-cube/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-cube",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            73,
+            61,
+            130,
+            132
+          ],
+          [
+            302,
+            65,
+            136,
+            124
+          ]
+        ],
+        "xors": [
+          80
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521206078,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-suction",
+      "report": "w15-GEN9",
+      "target": "enemies/suction (2f 16×16 → 24×24 served; suction pod vortex, two spin frames); @flash auto-derived +2f",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-suction/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-suction",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            23,
+            29,
+            217,
+            209
+          ],
+          [
+            274,
+            29,
+            216,
+            209
+          ]
+        ],
+        "xors": [
+          49.3
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521207091,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-bubble",
+      "report": "w15-GEN9",
+      "target": "enemies/bubble (1f 16×16 → 24×24 served; splitting bubble sphere); @flash auto-derived +1f",
+      "grid": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "e-bubble/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-bubble",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            44,
+            47,
+            171,
+            166
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521208104,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-volcano",
+      "report": "w15-GEN9",
+      "target": "enemies/volcano (1f 20×12 → 30×18 served; floor volcano vent with lava crater); @flash auto-derived +1f",
+      "grid": "512x256 cell, 1x1, canvas 512x256, chroma key #51e018",
+      "file": "e-volcano/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-volcano",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            147,
+            43,
+            214,
+            182
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521209117,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    }
+  ]
+}

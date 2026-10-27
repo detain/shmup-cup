@@ -1,0 +1,73 @@
+{
+  "id": "gen9/e-hatch",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two animation frames of the HATCH — an armoured ground hatch about 2:1 wide that snaps open to release small fliers.\n\nDesign identity to keep exactly — a low armoured bay wide as a door: a heavy steel dome lid (#7a8296 body, pale #b8c0d0 top edge, slate #434a60 shadow seams) marked with two red-and-amber hazard chevrons (#d83850 with #f8c838), resting on a darker steel sill frame with a near-black outline (#141026); the bay interior is pitch black (#05030c). Industrial, ground-bolted, menace by hint rather than size.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE hatch in the same ground position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the hatch CLOSED — the steel lid flush on its sill, hazard chevrons centred, no gap. The subject lies within aspect 1.30:1 to 2.35:1.\n  cell 2 = the SAME hatch OPEN — the lid split and raised on two short side struts at the left and right edges, exposing the black bay interior across the middle with a faint amber glow deep inside; the sill and overall width unchanged. The subject lies within aspect 1.30:1 to 2.35:1.\n- The sheet canvas measures EXACTLY 576×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521203039,
+  "width": 576,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:04:44.302Z",
+  "seconds": 7.2,
+  "label": "e-hatch",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen9/e-hatch/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "576x256",
+  "meta": {
+    "job": "w15-GEN9",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN9",
+  "round": "enemies-2",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Quality-regen wave 2 per GEN8 census rec (small-enemy pool, disk-derived: enemies/* sprite maps still interim/upscaled, usage-ranked): enemies/hatch (2f 20×10 → 30×15 served; armoured hatch releases fliers, frame 1 lid open) incl its auto-derived @flash sibling",
+  "gridContract": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "enemies/hatch (2f 20×10 → 30×15 served; armoured hatch releases fliers, frame 1 lid open); @flash auto-derived +2f",
+  "probe": {
+    "id": "e-hatch",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        32,
+        97,
+        238,
+        120
+      ],
+      [
+        307,
+        40,
+        237,
+        177
+      ]
+    ],
+    "xors": [
+      63
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521203039,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}
