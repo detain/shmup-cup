@@ -1,0 +1,80 @@
+{
+  "id": "gen7/c-guard-pod",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two pulse frames of the GUARD POD option chip: an armoured defence pod with a visible rear gunport.\n\nDesign identity to keep exactly — a squat armoured pod: a bevelled steel shell (gunmetal #3a404c/#5a6270 plates, #c8ccd4 rivets and edge highlights, near-black outline) whose front reads as a thick protective cheek, and on its LEFT (rear) side an open gunport muzzle glowing warm amber (#f8b048 core) — the guard that fires rear shots. Frame two: the same pod with the gunport and plate seams pulsing brighter.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the guard pod at REST pulse — gunport dim The subject lies within aspect 0.62:1 to 1.7:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = the SAME pod, pulse BRIGHT — gunport flaring The subject lies within aspect 0.62:1 to 1.7:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521019234,
+  "width": 512,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:45:59.337Z",
+  "seconds": 7,
+  "label": "c-guard-pod",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/c-guard-pod/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x256",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "C",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Owner ask (w15-WB): \"7 option silhouettes at the v2 detail level, 4-frame pulses where sensible ... art-bible palette per mode; pod steel+amber muzzle, wing violet ghost, dish teal phosphor\"",
+  "gridContract": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "c-guard-pod",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        29,
+        67,
+        193,
+        136
+      ],
+      [
+        290,
+        67,
+        194,
+        137
+      ]
+    ],
+    "xors": [
+      72.3
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (18/0/0/0)",
+        "cell 1 margin <12px (0/0/44/0)",
+        "gutter after col 0 ink 50.0%"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

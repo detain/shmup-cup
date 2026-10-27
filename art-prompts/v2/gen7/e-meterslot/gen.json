@@ -1,0 +1,96 @@
+{
+  "id": "gen7/e-meterslot",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the three states of one HUD power-meter slot: an extremely wide and flat bevelled slot box — a thin horizontal strip five times wider than tall.\n\nDesign identity to keep exactly — a single HUD meter slot machined from gunmetal: #3a404c field, #5a6270 bevel faces, #c8ccd4 top-left edge highlight, #0e1014 groove and 1-px outline — the same very flat wide box (about five times wider than tall) drawn three times in the three named states. The box occupies under 70% of the cell width, dead-centre with equal flat margins on all four sides, and is IDENTICAL in size and position in all three cells.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 3 square cells laid out as 1 ROWS OF 3 (3-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the power-meter slot box, NORMAL state — an empty bevelled slot frame The subject lies within aspect 3.2:1 to 6.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = the SAME slot box, HIGHLIGHTED state — the frame's edges lit as the menu cursor sits on it The subject lies within aspect 3.2:1 to 6.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = the SAME slot box, DISABLED state — the frame dimmed and greyed out The subject lies within aspect 3.2:1 to 6.8:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 768×256 px. Produce EXACTLY 3 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521034416,
+  "width": 768,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:51:15.618Z",
+  "seconds": 8.3,
+  "label": "e-meterslot",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/e-meterslot/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "768x256",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "3"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "E",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Owner quality-first ask: HUD slot chrome redrawn at full v2 quality.",
+  "gridContract": "256x256 cells, 3x1, canvas 768x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "e-meterslot",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        19,
+        98,
+        221,
+        62
+      ],
+      [
+        273,
+        98,
+        220,
+        62
+      ],
+      [
+        526,
+        98,
+        221,
+        62
+      ]
+    ],
+    "xors": [
+      84.3,
+      63.1
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.87 outside [3.4,6.8] (s0)",
+        "cell 1 AR=2.89 outside [3.4,6.8] (s1)",
+        "cell 2 AR=2.89 outside [3.4,6.8] (s2)"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.37 outside [3.4,6.8] (s0)",
+        "cell 0 margin <12px (43/106/11/90)",
+        "cell 1 AR=3.35 outside [3.4,6.8] (s1)"
+      ]
+    },
+    {
+      "att": 3,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

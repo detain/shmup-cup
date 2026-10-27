@@ -1,0 +1,103 @@
+{
+  "id": "gen7/b-rail",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frames of the railgun shot: the lance bolt and the muzzle flare star, both in cyan-white energy over dark steel.\n\nDesign identity to keep exactly — the railgun is a lance of pale cyan lightning (#38c8e8 body, white #fff0c0 core) over deep steel grey; the flare frame is the muzzle ring — a small steel torus with bright cyan star spikes, hard-edged, no soft glow.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the rail lance bolt — a needle-thin straight horizontal cyan energy lance, nose pointing right, about five times longer than it is tall: a bright white-hot core line inside a slim cyan glow body with a small swollen charge tip The subject lies within aspect 3.0:1 to 6.4:1, the same style, palette and cell-centred placement as the other cells — only the named subject changes.\n  cell 2 = the rail muzzle flare — a star-burst ring at the firing point: an open metal-grey muzzle ring seen front-on with six hard spikes radiating from it, cyan-white energy inside The subject lies within aspect 0.7:1 to 1.9:1, the same style, palette and cell-centred placement as the other cells — only the named subject changes.\n- The sheet canvas measures EXACTLY 576×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n- Both subjects are built from the same cyan/steel palette.\n- Cell 1's lance is a glowing wire: dead-level, hairline-slim, roughly 5 times longer than tall, centred in the middle of its cell with big empty margins above and below — no glow dripping down, no flare, a fat bar or a filled cell ruins it.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521013130,
+  "width": 576,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:49:49.576Z",
+  "seconds": 7.2,
+  "label": "b-rail",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/b-rail/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "576x256",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "4"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "B",
+  "exit": "STOP",
+  "ownerAsk": "Owner ask (w15-WA §7 art table): real-art v2 twins for the five new weapon families.",
+  "gridContract": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "b-rail",
+    "ok": false,
+    "fails": [
+      "cell 0 AR=1.00 outside [3,6.4] (s0)",
+      "cell 0 margin <12px (32/1/0/0)",
+      "cell 1 margin <12px (0/1/33/0)"
+    ],
+    "boxes": [
+      [
+        32,
+        1,
+        256,
+        255
+      ],
+      [
+        288,
+        1,
+        255,
+        255
+      ]
+    ],
+    "xors": [
+      22.9
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.96 outside [2.8,6.4] (s0)"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (51/109/0/107)",
+        "cell 1 margin <12px (0/63/60/58)"
+      ]
+    },
+    {
+      "att": 3,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.00 outside [2.8,6.4] (s0)",
+        "cell 0 margin <12px (0/0/0/0)",
+        "cell 1 margin <12px (0/0/0/34)"
+      ]
+    },
+    {
+      "att": 4,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.00 outside [3,6.4] (s0)",
+        "cell 0 margin <12px (32/1/0/0)",
+        "cell 1 margin <12px (0/1/33/0)"
+      ]
+    }
+  ]
+}

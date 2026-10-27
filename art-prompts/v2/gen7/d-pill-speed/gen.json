@@ -1,0 +1,103 @@
+{
+  "id": "gen7/d-pill-speed",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame glint cycle of the pill power-up capsule pill: a rounded horizontal glass capsule, three-quarters as tall as wide.\n\nDesign identity to keep exactly — Green glass speed pill: bright green capsule body (#38c838, shadow #14501a, lit #c8ffc0). Its mark: two bold white fast-forward chevrons pointing right (a double arrow). The pill is a PLUMP short capsule, only about 1.5 times as wide as tall — never a slender stick. The pill body itself stays IDENTICAL in silhouette across all four cells: a hard-shaded pixel capsule with a bright top-left specular streak, 1-px near-black outline, and the white mark centred on its face reading crisply even small.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 1 dim — capsule dark, mark steady The subject lies within aspect 1.0:1 to 2.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = frame 2 dim — capsule dark, the small specular glint moved a step along the glass The subject lies within aspect 1.0:1 to 2.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = frame 3 bright — capsule body lit, mark steady The subject lies within aspect 1.0:1 to 2.8:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = frame 4 bright — capsule body lit, glint at its far step The subject lies within aspect 1.0:1 to 2.8:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521026312,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:50:47.963Z",
+  "seconds": 9.5,
+  "label": "d-pill-speed",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/d-pill-speed/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "3"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "D",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Owner ask (w15-WC §8, \"powerups more indicative of what they do\"): the red/blue/gold/green capsule LANGUAGE; the four MARKS must stay distinct — the flavor IS the information.",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "d-pill-speed",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        47,
+        113,
+        185,
+        73
+      ],
+      [
+        282,
+        113,
+        185,
+        73
+      ],
+      [
+        47,
+        343,
+        185,
+        73
+      ],
+      [
+        282,
+        343,
+        185,
+        73
+      ]
+    ],
+    "xors": [
+      12.4,
+      82.1,
+      14
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.35 outside [1,2.2] (s0)",
+        "cell 1 AR=2.36 outside [1,2.2] (s1)",
+        "cell 2 AR=2.31 outside [1,2.2] (s2)"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.68 outside [1,2.45] (s0)",
+        "cell 2 AR=2.71 outside [1,2.45] (s2)",
+        "cell 3 AR=2.70 outside [1,2.45] (s3)"
+      ]
+    },
+    {
+      "att": 3,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

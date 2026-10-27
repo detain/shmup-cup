@@ -1,0 +1,70 @@
+{
+  "id": "gen7/a-planet-c",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the campaign zone-map planet of zone C (DUNE EXPANSE): a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet..\n\nDesign identity to keep exactly — a desert world in amber bands (shadow #2a1c10, #6f5234, #a07840, lit #d8a860, rim #e0b870): long soft dune strata with darker rock-shadow masses (#4a3024), bright sunlit sand crests (#e8cc9e), scattered impact craters drawn as dark pits (#140c06) each rimmed by a lit crescent, and a dark brown polar cap at the top. a single round planet disc viewed straight on (a perfect circle, no rings, no moons, no tilt ellipse). The sphere is shaded in four crisp posterised bands brightening toward a highlight at the top-left, with a thin dark rim-light along the lower-right edge and a clean 1-px near-black outline all around. The disc is fully opaque with hard pixel edges. Nothing else: no starfield, no glow cloud, no text, no letter drawn on or near the planet.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the DUNE EXPANSE zone planet The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.8:1 to 1.25:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n- The planet disc sits exactly in the middle of the canvas and fills only about 65% of its width — a wide, even margin of flat #51e018 all around it; it must not come near any edge or corner.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521003026,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:39:58.703Z",
+  "seconds": 9.8,
+  "label": "a-planet-c",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/a-planet-c/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "A",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Owner planets directive: \"unique planets for each zone ... with the letters\"",
+  "gridContract": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "a-planet-c",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        60,
+        60,
+        391,
+        390
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <8px (0/1/0/1)"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

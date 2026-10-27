@@ -1,0 +1,1911 @@
+{
+  "generatedAt": "2026-10-27T02:14:37.628Z",
+  "lane": "w15-GEN6",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "rows": [
+    {
+      "id": "a-planet-a",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-a/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-a",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            74,
+            74,
+            364,
+            364
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-b",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-b/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-b",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            74,
+            74,
+            365,
+            364
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-c",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-c/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-c",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            60,
+            60,
+            391,
+            390
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <8px (0/1/0/1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-d",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-d/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-d",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            54,
+            54,
+            406,
+            404
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-e",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-e/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-e",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            61,
+            62,
+            389,
+            387
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-f",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-f/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-f",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            94,
+            99,
+            323,
+            318
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-g",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-g/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-g",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            77,
+            77,
+            358,
+            358
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-h",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-h/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-h",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            72,
+            42,
+            368,
+            397
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <8px (0/0/0/1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "a-planet-i",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "a-planet-i/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "a-planet-i",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            90,
+            89,
+            332,
+            333
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-flak",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "b-flak/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-flak",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            111,
+            102,
+            310,
+            250
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-rail",
+      "report": "w15-GEN6",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@4",
+      "mode": "key",
+      "probe": {
+        "id": "b-rail",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=1.00 outside [3,6.4] (s0)",
+          "cell 0 margin <12px (32/1/0/0)",
+          "cell 1 margin <12px (0/1/33/0)"
+        ],
+        "boxes": [
+          [
+            32,
+            1,
+            256,
+            255
+          ],
+          [
+            288,
+            1,
+            255,
+            255
+          ]
+        ],
+        "xors": [
+          22.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.96 outside [2.8,6.4] (s0)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (51/109/0/107)",
+            "cell 1 margin <12px (0/63/60/58)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.00 outside [2.8,6.4] (s0)",
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 margin <12px (0/0/0/34)"
+          ]
+        },
+        {
+          "att": 4,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.00 outside [3,6.4] (s0)",
+            "cell 0 margin <12px (32/1/0/0)",
+            "cell 1 margin <12px (0/1/33/0)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b-drone",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 4x2, canvas 1024x512, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@4",
+      "mode": "key",
+      "probe": {
+        "id": "b-drone",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (77/82/0/64)",
+          "cell 1 margin <12px (0/82/46/53)",
+          "cell 4 margin <12px (77/43/3/104)"
+        ],
+        "boxes": [
+          [
+            77,
+            82,
+            179,
+            110
+          ],
+          [
+            256,
+            82,
+            210,
+            121
+          ],
+          [
+            569,
+            53,
+            108,
+            176
+          ],
+          [
+            782,
+            72,
+            150,
+            123
+          ],
+          [
+            77,
+            299,
+            176,
+            109
+          ],
+          [
+            338,
+            282,
+            110,
+            176
+          ],
+          [
+            569,
+            282,
+            108,
+            176
+          ],
+          [
+            781,
+            293,
+            120,
+            167
+          ]
+        ],
+        "xors": [
+          54.9,
+          43,
+          45.2,
+          45.7,
+          37.3,
+          22.6,
+          55.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.22 outside [1.1,2.2] (s0)",
+            "cell 1 AR=2.22 outside [0.62,1.6] (s1)",
+            "cell 1 margin <12px (8/81/30/77)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.93 outside [1,2.45] (s0)",
+            "cell 0 margin <12px (19/0/0/0)",
+            "cell 1 margin <12px (0/0/0/0)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=1.81 outside [0.55,1.8] (s1)"
+          ]
+        },
+        {
+          "att": 4,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (77/82/0/64)",
+            "cell 1 margin <12px (0/82/46/53)",
+            "cell 4 margin <12px (77/43/3/104)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b-chain",
+      "report": "w15-GEN6",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@3",
+      "mode": "key",
+      "probe": {
+        "id": "b-chain",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=1.08 outside [2.3,5.2] (s0)",
+          "cell 0 margin <12px (11/0/0/0)",
+          "cell 1 margin <12px (0/0/44/0)",
+          "gutter after col 0 ink 12.5%"
+        ],
+        "boxes": [
+          [
+            11,
+            0,
+            277,
+            256
+          ],
+          [
+            288,
+            0,
+            244,
+            256
+          ]
+        ],
+        "xors": [
+          23.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (54/93/0/100)",
+            "cell 1 AR=0.88 outside [0.95,2.1] (s1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.00 outside [2.3,5.2] (s0)",
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 AR=0.86 outside [0.95,2.1] (s1)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.08 outside [2.3,5.2] (s0)",
+            "cell 0 margin <12px (11/0/0/0)",
+            "cell 1 margin <12px (0/0/44/0)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b-beacon",
+      "report": "w15-GEN6",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "b-beacon/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "b-beacon",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            105,
+            25,
+            71,
+            212
+          ],
+          [
+            385,
+            19,
+            77,
+            218
+          ]
+        ],
+        "xors": [
+          48.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=0.34 outside [0.4,0.75] (s1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (96/14/93/11)",
+            "cell 1 AR=0.29 outside [0.3,0.85] (s1)",
+            "cell 1 margin <12px (93/14/96/11)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-beam",
+      "report": "w15-GEN6",
+      "grid": "288x288 cells, 1x2, canvas 288x576, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@3",
+      "mode": "key",
+      "probe": {
+        "id": "b-beam",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=1.00 outside [0.08,0.26] (s0)",
+          "cell 0 margin <8px (0/0/0/1)",
+          "cell 1 AR=1.03 outside [0.07,0.22] (s1)",
+          "cell 1 margin <8px (0/9/0/0)",
+          "border strip ink 99.7%"
+        ],
+        "boxes": [
+          [
+            0,
+            0,
+            288,
+            287
+          ],
+          [
+            0,
+            297,
+            288,
+            279
+          ]
+        ],
+        "xors": [
+          14.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.09 outside [0.1,0.24] (s0)",
+            "cell 1 AR=2.07 outside [0.09,0.2] (s1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.22 outside [0.1,0.24] (s0)",
+            "cell 0 margin <8px (108/35/135/0)",
+            "cell 1 AR=1.28 outside [0.09,0.2] (s1)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.00 outside [0.08,0.26] (s0)",
+            "cell 0 margin <8px (0/0/0/1)",
+            "cell 1 AR=1.03 outside [0.07,0.22] (s1)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c-serpent",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "c-serpent/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "c-serpent",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            38,
+            55,
+            181,
+            170
+          ],
+          [
+            290,
+            45,
+            191,
+            184
+          ]
+        ],
+        "xors": [
+          63
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "c-dart",
+      "report": "w15-GEN6",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@3",
+      "mode": "key",
+      "probe": {
+        "id": "c-dart",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (0/3/5/4)",
+          "cell 1 margin <12px (3/9/0/2)",
+          "border strip ink 5.7%"
+        ],
+        "boxes": [
+          [
+            0,
+            3,
+            283,
+            249
+          ],
+          [
+            291,
+            9,
+            285,
+            245
+          ]
+        ],
+        "xors": [
+          16.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/50/35/4)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (51/0/0/0)",
+            "cell 1 margin <12px (0/0/51/0)",
+            "gutter after col 0 ink 38.4%"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/3/5/4)",
+            "cell 1 margin <12px (3/9/0/2)",
+            "border strip ink 5.7%"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c-gyro",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "c-gyro/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "c-gyro",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            42,
+            43,
+            174,
+            173
+          ],
+          [
+            295,
+            43,
+            175,
+            173
+          ]
+        ],
+        "xors": [
+          38.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "c-guard-pod",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "c-guard-pod/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "c-guard-pod",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            29,
+            67,
+            193,
+            136
+          ],
+          [
+            290,
+            67,
+            194,
+            137
+          ]
+        ],
+        "xors": [
+          72.3
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (18/0/0/0)",
+            "cell 1 margin <12px (0/0/44/0)",
+            "gutter after col 0 ink 50.0%"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "c-echo-wing",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "c-echo-wing/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "c-echo-wing",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            21,
+            34,
+            215,
+            151
+          ],
+          [
+            275,
+            34,
+            216,
+            151
+          ]
+        ],
+        "xors": [
+          46.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "c-aegis-dish",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "c-aegis-dish/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "c-aegis-dish",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            51,
+            60,
+            170,
+            139
+          ],
+          [
+            289,
+            60,
+            170,
+            139
+          ]
+        ],
+        "xors": [
+          35.4
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-pill-weapon",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-pill-weapon/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "d-pill-weapon",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            39,
+            116,
+            188,
+            94
+          ],
+          [
+            285,
+            116,
+            187,
+            92
+          ],
+          [
+            39,
+            308,
+            188,
+            89
+          ],
+          [
+            285,
+            308,
+            188,
+            89
+          ]
+        ],
+        "xors": [
+          20,
+          77.6,
+          27.3
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.22 outside [1,2.2] (s0)",
+            "cell 1 AR=2.21 outside [1,2.2] (s1)",
+            "cell 2 AR=2.24 outside [1,2.2] (s2)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-pill-option",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-pill-option/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "d-pill-option",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            31,
+            99,
+            203,
+            89
+          ],
+          [
+            275,
+            99,
+            204,
+            89
+          ],
+          [
+            31,
+            323,
+            203,
+            92
+          ],
+          [
+            275,
+            323,
+            206,
+            92
+          ]
+        ],
+        "xors": [
+          12.5,
+          77.9,
+          19.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.30 outside [1,2.2] (s0)",
+            "cell 1 AR=2.29 outside [1,2.2] (s1)",
+            "cell 2 AR=2.29 outside [1,2.2] (s2)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-pill-power",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-pill-power/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "d-pill-power",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            27,
+            76,
+            213,
+            112
+          ],
+          [
+            272,
+            76,
+            213,
+            112
+          ],
+          [
+            27,
+            322,
+            214,
+            115
+          ],
+          [
+            271,
+            322,
+            214,
+            115
+          ]
+        ],
+        "xors": [
+          11.4,
+          82.2,
+          13.5
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-pill-speed",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-pill-speed/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "d-pill-speed",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            47,
+            113,
+            185,
+            73
+          ],
+          [
+            282,
+            113,
+            185,
+            73
+          ],
+          [
+            47,
+            343,
+            185,
+            73
+          ],
+          [
+            282,
+            343,
+            185,
+            73
+          ]
+        ],
+        "xors": [
+          12.4,
+          82.1,
+          14
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.35 outside [1,2.2] (s0)",
+            "cell 1 AR=2.36 outside [1,2.2] (s1)",
+            "cell 2 AR=2.31 outside [1,2.2] (s2)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.68 outside [1,2.45] (s0)",
+            "cell 2 AR=2.71 outside [1,2.45] (s2)",
+            "cell 3 AR=2.70 outside [1,2.45] (s3)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-crate-weapon",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-crate-weapon/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "d-crate-weapon",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            53,
+            61,
+            178,
+            162
+          ],
+          [
+            297,
+            61,
+            180,
+            162
+          ],
+          [
+            53,
+            301,
+            178,
+            162
+          ],
+          [
+            290,
+            299,
+            186,
+            162
+          ]
+        ],
+        "xors": [
+          28.6,
+          30,
+          73.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (56/71/18/8)",
+            "cell 1 margin <12px (14/71/60/8)",
+            "cell 3 margin <12px (8/16/53/57)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-crate-mega",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-crate-mega/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "d-crate-mega",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            63,
+            71,
+            133,
+            156
+          ],
+          [
+            316,
+            71,
+            134,
+            156
+          ],
+          [
+            63,
+            319,
+            133,
+            158
+          ],
+          [
+            313,
+            318,
+            138,
+            159
+          ]
+        ],
+        "xors": [
+          16.4,
+          68.3,
+          71.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/1/18/0)",
+            "cell 2 margin <12px (0/0/18/1)",
+            "border strip ink 7.3%"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/4/55/44)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "d-crate-speed",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+      "file": "d-crate-speed/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "d-crate-speed",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            53,
+            57,
+            179,
+            176
+          ],
+          [
+            280,
+            57,
+            180,
+            176
+          ],
+          [
+            53,
+            281,
+            178,
+            178
+          ],
+          [
+            280,
+            280,
+            180,
+            179
+          ]
+        ],
+        "xors": [
+          79,
+          80.3,
+          50
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-round-pink",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "e-round-pink/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "e-round-pink",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            133,
+            134,
+            246,
+            245
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <8px (0/4/34/4)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-round-red",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "e-round-red/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-round-red",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            142,
+            141,
+            226,
+            227
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-round-purple",
+      "report": "w15-GEN6",
+      "grid": "512x512 cells, 1x1, canvas 512x512, chroma key #51e018",
+      "file": "e-round-purple/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "e-round-purple",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            165,
+            164,
+            182,
+            185
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <8px (2/119/113/1)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-missile",
+      "report": "w15-GEN6",
+      "grid": "384x256 cells, 2x1, canvas 768x256, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@3",
+      "mode": "key",
+      "probe": {
+        "id": "e-missile",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
+          "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+        ],
+        "boxes": [
+          [
+            45,
+            109,
+            259,
+            46
+          ],
+          [
+            439,
+            109,
+            233,
+            48
+          ]
+        ],
+        "xors": [
+          54.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=4.55 outside [1.6,3.8] (s0)",
+            "cell 0 margin <12px (10/97/78/94)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.39 outside [1.6,3.8] (s0)",
+            "cell 0 margin <12px (27/0/0/0)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=5.63 outside [1.6,3.8] (s0)",
+            "cell 1 AR=4.85 outside [1.6,3.8] (s1)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e-meterslot",
+      "report": "w15-GEN6",
+      "grid": "256x256 cells, 3x1, canvas 768x256, chroma key #51e018",
+      "file": "e-meterslot/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "e-meterslot",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            19,
+            98,
+            221,
+            62
+          ],
+          [
+            273,
+            98,
+            220,
+            62
+          ],
+          [
+            526,
+            98,
+            221,
+            62
+          ]
+        ],
+        "xors": [
+          84.3,
+          63.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.87 outside [3.4,6.8] (s0)",
+            "cell 1 AR=2.89 outside [3.4,6.8] (s1)",
+            "cell 2 AR=2.89 outside [3.4,6.8] (s2)"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.37 outside [3.4,6.8] (s0)",
+            "cell 0 margin <12px (43/106/11/90)",
+            "cell 1 AR=3.35 outside [3.4,6.8] (s1)"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "f-ridge36",
+      "report": "w15-GEN6",
+      "grid": "opaque full-bleed contact 6x6 of 192px, canvas 1152x1152",
+      "file": null,
+      "exit": "STOP@3",
+      "mode": "opaque",
+      "probe": {
+        "id": "f-ridge36",
+        "ok": false,
+        "fails": [
+          "guide line at col 1 uniformity 100%",
+          "guide line at row 1 uniformity 100%",
+          "guide line at row 2 uniformity 100%",
+          "guide line at row 3 uniformity 100%",
+          "guide line at row 4 uniformity 100%",
+          "guide line at row 5 uniformity 100%"
+        ],
+        "boxes": [
+          [
+            0,
+            0,
+            192,
+            192
+          ],
+          [
+            192,
+            0,
+            192,
+            192
+          ],
+          [
+            384,
+            0,
+            192,
+            192
+          ],
+          [
+            576,
+            0,
+            192,
+            192
+          ],
+          [
+            768,
+            0,
+            192,
+            192
+          ],
+          [
+            960,
+            0,
+            192,
+            192
+          ],
+          [
+            0,
+            192,
+            192,
+            192
+          ],
+          [
+            192,
+            192,
+            192,
+            192
+          ],
+          [
+            384,
+            192,
+            192,
+            192
+          ],
+          [
+            576,
+            192,
+            192,
+            192
+          ],
+          [
+            768,
+            192,
+            192,
+            192
+          ],
+          [
+            960,
+            192,
+            192,
+            192
+          ],
+          [
+            0,
+            384,
+            192,
+            192
+          ],
+          [
+            192,
+            384,
+            192,
+            192
+          ],
+          [
+            384,
+            384,
+            192,
+            192
+          ],
+          [
+            576,
+            384,
+            192,
+            192
+          ],
+          [
+            768,
+            384,
+            192,
+            192
+          ],
+          [
+            960,
+            384,
+            192,
+            192
+          ],
+          [
+            0,
+            576,
+            192,
+            192
+          ],
+          [
+            192,
+            576,
+            192,
+            192
+          ],
+          [
+            384,
+            576,
+            192,
+            192
+          ],
+          [
+            576,
+            576,
+            192,
+            192
+          ],
+          [
+            768,
+            576,
+            192,
+            192
+          ],
+          [
+            960,
+            576,
+            192,
+            192
+          ],
+          [
+            0,
+            768,
+            192,
+            192
+          ],
+          [
+            192,
+            768,
+            192,
+            192
+          ],
+          [
+            384,
+            768,
+            192,
+            192
+          ],
+          [
+            576,
+            768,
+            192,
+            192
+          ],
+          [
+            768,
+            768,
+            192,
+            192
+          ],
+          [
+            960,
+            768,
+            192,
+            192
+          ],
+          [
+            0,
+            960,
+            192,
+            192
+          ],
+          [
+            192,
+            960,
+            192,
+            192
+          ],
+          [
+            384,
+            960,
+            192,
+            192
+          ],
+          [
+            576,
+            960,
+            192,
+            192
+          ],
+          [
+            768,
+            960,
+            192,
+            192
+          ],
+          [
+            960,
+            960,
+            192,
+            192
+          ]
+        ],
+        "xors": [
+          52.3,
+          56.1,
+          54.4,
+          46.3,
+          47.1,
+          67.8,
+          58.3,
+          55.7,
+          55.1,
+          52.2,
+          42.3,
+          59.9,
+          50.9,
+          55.9,
+          58.5,
+          60.8,
+          65.1,
+          70.4,
+          30.8,
+          64.5,
+          55.1,
+          64.4,
+          57.4,
+          66.4,
+          55.2,
+          55.7,
+          47.7,
+          45.9,
+          47.8,
+          60.6,
+          51.9,
+          56.2,
+          54.9,
+          49.9,
+          58.3
+        ],
+        "floor": 0.3
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "ok": false,
+          "fails": [
+            "guide line at col 1 uniformity 100%",
+            "guide line at col 2 uniformity 100%",
+            "guide line at col 3 uniformity 100%"
+          ]
+        },
+        {
+          "att": 2,
+          "ok": false,
+          "fails": [
+            "guide line at col 1 uniformity 100%",
+            "guide line at col 2 uniformity 100%",
+            "guide line at col 3 uniformity 100%"
+          ]
+        },
+        {
+          "att": 3,
+          "ok": false,
+          "fails": [
+            "guide line at col 1 uniformity 100%",
+            "guide line at row 1 uniformity 100%",
+            "guide line at row 2 uniformity 100%"
+          ]
+        }
+      ]
+    }
+  ]
+}

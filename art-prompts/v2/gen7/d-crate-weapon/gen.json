@@ -1,0 +1,94 @@
+{
+  "id": "gen7/d-crate-weapon",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame blink cycle of the crate drop crate: a square ammunition crate.\n\nDesign identity to keep exactly — Red-brown weapon crate: rust-red rim (#e83838), brown body (#6a3a2a dim / #a05838 lit). A squat compact square supply crate filling only about half its cell, lid seam across the upper third, rim-coloured corner braces on all four corners, bold near-black outline, hard top-left pixel shading, floating on flat green key with empty cell border all around — no painted frame, border or shadow behind it. Its face glyph is a bold white W stencil. The crate stays IDENTICAL in silhouette and position across all four cells; only the body brightness blinks.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 1 dim — crate body dark, glyph lit The subject lies within aspect 0.72:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = frame 2 dim — body dark, glyph lit (a hair brighter corner lamps) The subject lies within aspect 0.72:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = frame 3 bright — body lit through, glyph kept The subject lies within aspect 0.72:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = frame 4 bright — body lit, corner braces flaring The subject lies within aspect 0.72:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays small — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521026325,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T01:46:39.648Z",
+  "seconds": 9.9,
+  "label": "d-crate-weapon",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen7/d-crate-weapon/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN6",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Owner planets directive 2026-10-26 (verbatim): \"unique planets for each zone ... with the letters\""
+  ],
+  "lane": "w15-GEN6",
+  "round": "D",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Owner ask (w15-WC §8, \"powerups more indicative of what they do\"): the red/blue/gold/green capsule LANGUAGE; the four MARKS must stay distinct — the flavor IS the information.",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "probe": {
+    "id": "d-crate-weapon",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        53,
+        61,
+        178,
+        162
+      ],
+      [
+        297,
+        61,
+        180,
+        162
+      ],
+      [
+        53,
+        301,
+        178,
+        162
+      ],
+      [
+        290,
+        299,
+        186,
+        162
+      ]
+    ],
+    "xors": [
+      28.6,
+      30,
+      73.8
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (56/71/18/8)",
+        "cell 1 margin <12px (14/71/60/8)",
+        "cell 3 margin <12px (8/16/53/57)"
+      ]
+    },
+    {
+      "att": 2,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}
