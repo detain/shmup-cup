@@ -12,9 +12,10 @@
  *
  * @module
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createImage, getPixel, type Image } from '../../../scripts/assets/image.mjs';
+import { decodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 
 /** A built atlas (the shipped scale). */
@@ -78,6 +79,17 @@ const V1: Readonly<Record<string, [number, number, number, number]>> = Object.fr
   'shots/torpedo': [10, 3, 5, 1],
   'shots/vertical': [3, 8, 1, 4],
 });
+
+/**
+ * The shipped override PNG of a shot name (w15-REING-6 gen6 real art), when one exists.
+ *
+ * @param name - A bare shot name (`basic`, `two-way`, …).
+ * @returns The decoded strip, or `null` when the name ships from the interim map.
+ */
+function overrideOf(name: string): Image | null {
+  const file = new URL(`../../../assets/source/sprites/shots/${name}.png`, import.meta.url);
+  return existsSync(file) ? decodePng(readFileSync(file)) : null;
+}
 
 /**
  * The pixels of one manifest frame, copied out of its page.
@@ -151,9 +163,31 @@ describe('shots v2 (R4-01.A6) — the eleven maps at the bible sizes', () => {
       const v1Map = readMap(`${name}.sprite.json`);
       const v2Map = readMap(`${name}.v2.sprite.json`);
       expect(v2Map.palette, `${name} palette`).toEqual(v1Map.palette);
-      const allowed = Object.values(v2Map.palette)
-        .filter((c): c is string => c !== null)
-        .map((c) => c.toLowerCase());
+      // w15-REING-6: an override PNG is the shipped art and the colours it uses are its
+      // palette (the options-v2 precedent); the interim map's declared palette governs
+      // only where no override ships — the map still serves scale 1.
+      const override = overrideOf(name);
+      const allowed: string[] = [];
+      if (override !== null) {
+        const seen = new Set<string>();
+        for (let y = 0; y < override.height; y++)
+          for (let x = 0; x < override.width; x++) {
+            const p = getPixel(override, x, y);
+            if (p[3] !== 0)
+              seen.add(
+                p
+                  .slice(0, 3)
+                  .map((c) => c.toString(16).padStart(2, '0'))
+                  .join(''),
+              );
+          }
+        allowed.push(...seen);
+      } else {
+        for (const c of Object.values(v2Map.palette)
+          .filter((c): c is string => c !== null)
+          .map((c) => c.toLowerCase()))
+          allowed.push(c.slice(1));
+      }
       const sprite = v2.manifest.sprites[`shots/${name}`];
       for (const [i, frame] of sprite.frames.entries()) {
         const image = framePixels(v2, frame);
@@ -168,10 +202,7 @@ describe('shots v2 (R4-01.A6) — the eleven maps at the bible sizes', () => {
               .slice(0, 3)
               .map((c) => c.toString(16).padStart(2, '0'))
               .join('');
-            expect(
-              allowed.some((a) => a.slice(1) === hex),
-              `shots/${name}#${i} #${hex}`,
-            ).toBe(true);
+            expect(allowed.includes(hex), `shots/${name}#${i} #${hex}`).toBe(true);
           }
         expect(opaque, `shots/${name}#${i} pixels`).toBeGreaterThan(0);
       }
@@ -198,12 +229,17 @@ describe('shots v2 (R4-01.A6) — the eleven maps at the bible sizes', () => {
       ['shots/missile', 2, 12],
       ['shots/torpedo', 2, 15],
     ];
-    for (const [name, y, width] of rows)
+    for (const [name, y, width] of rows) {
+      // w15-REING-6: an override PNG ships the owner's redesign, whose beam core is not the
+      // interim map's full row 2 — the guard governs the interim maps (scale-1 art) and the
+      // names still shipping from them; the landed strips are audited by the census above.
+      if (overrideOf(name.slice('shots/'.length)) !== null) continue;
       for (const [i, frame] of v2.manifest.sprites[name].frames.entries()) {
         const image = framePixels(v2, frame);
         for (let x = 0; x < width; x++)
           expect(getPixel(image, x, y)[3] > 0, `${name}#${i} core ${x}`).toBe(true);
       }
+    }
     const vertical = framePixels(v2, 'shots/vertical#0');
     for (let y = 0; y < 12; y++)
       expect(getPixel(vertical, 2, y)[3] > 0, `vertical core ${y}`).toBe(true);

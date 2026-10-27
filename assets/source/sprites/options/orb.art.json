@@ -6,18 +6,18 @@
   "cleanup": "none",
   "handCleaned": false,
   "reviewed": {
-    "on": "2026-10-23",
-    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
   },
-  "ingestedAt": "2026-10-24",
+  "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
-      "path": "art-prompts/v2/winners/craft/option/frames/winner.png",
-      "sha256": "3e055a6035a81e65fa51e69a0475b0f9d6f0aa47eaab463963d2c58f7504aa96",
+      "path": "art-prompts/v2/gen6/a-orb/gen.png",
+      "sha256": "2a61644ede0e388bb74a537a38861e220d968274610b120a27da9b6f00defb21",
       "format": "png",
-      "width": 1456,
-      "height": 720,
+      "width": 512,
+      "height": 512,
       "model": "black-forest-labs/FLUX.2-dev",
       "modelKey": "flux2",
       "weights": {
@@ -29,50 +29,33 @@
       "prompt": {
         "file": null,
         "entry": null,
-        "text": "Reference image 1 shows the chosen design of OPTION. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same OPTION plasma orb drone, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the orange-red orb's energy shell rolling a quarter turn each with the core pulsing; bottom row, the same four frames drained to a cold grey \"stolen\" state with the core dimmed. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Animation, clearly visible: the flickering flame crest that sits at twelve o'clock on the orb in the first cell of each row sits at three o'clock in the second cell, at six o'clock in the third and at nine o'clock in the fourth, as if the whole orb rolls clockwise. Only empty green space between the cells, no white or dark lines.",
-        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill"
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the OPTION orb — a small glowing plasma orb of guard energy that trails a fighter.\n\nDesign identity to keep exactly — Small glowing plasma orb with a hot orange core, a bright red-orange shell of rolling energy, a dark crimson rim, a tiny pale-yellow specular glint upper-left and a faint ring of tiny sparks; redesigned with visible energy seams in the shell so it reads as guard tech, with a compact core and rim-weighted shell.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 square cells laid out as 2 ROWS OF 2 (2-column by 2-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = pulse low — small core, rolling shell dim The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = pulse high — hot core swollen, bright shell The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 3 = shell roll A — rolling energy shifted upper-left The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n  cell 4 = shell roll B — rolling energy shifted lower-right The subject lies within aspect 0.78:1 to 1.28:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
       },
-      "seed": 84538,
-      "size": "1456x720",
+      "seed": 520505065,
+      "size": "512x512",
       "steps": 40,
       "guidance": 3.5,
-      "generatedAt": "2026-10-17T17:35:28.013Z",
-      "reference": [
-        {
-          "path": "art-prompts/v2/winners/craft/option/winner.png",
-          "from": "art-prompts/v2/candidates/a/craft/option.png",
-          "sha256": "4a801248b5455ab4751e8778855c2b830e5e23b13684512833915bea320e097a",
-          "sidecar": "art-prompts/v2/winners/craft/option/winner.json",
-          "sidecarSha256": "04178d547c423176c9436f532e342d26f7ab505ea9e88ffedd038b15d16e4df8",
-          "model": "black-forest-labs/FLUX.2-dev",
-          "modelKey": "flux2",
-          "weights": {
-            "repo": "black-forest-labs/FLUX.2-dev",
-            "revision": null,
-            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
-          },
-          "licence": "flux-nc-2.1",
-          "reference": []
-        }
-      ],
+      "generatedAt": "2026-10-26T22:54:51.297Z",
+      "reference": [],
       "generator": {
-        "sidecar": "art-prompts/v2/winners/craft/option/frames/winner.json",
-        "sidecarSha256": "76803ff31db6997bdc2281a32ae424657727756f285303654b88417913edcc5f",
-        "id": "craft/option/frames",
+        "sidecar": "art-prompts/v2/gen6/a-orb/gen.json",
+        "sidecarSha256": "cec8abe4c16c2d6596fd2b058273609d7cd5f92a8d3cf24e6e1851d7ff57f72b",
+        "id": "gen6/a-orb",
         "slot": "a",
-        "mode": "edit",
-        "instruction": "Reference image 1 shows the chosen design of OPTION. Redraw the referenced subject as the sheet described below. Keep the exact design, silhouette, proportions, colour palette, materials, top-left lighting, outline weight and rendering style of the reference in every cell; only the pose or state changes from cell to cell, and the layout follows the grid described: Retro 16-bit video game sprite sheet for a horizontal arcade shooter, a regular grid of eight equal cells in two rows of four with even gutters, read left to right and top to bottom, every cell showing the same OPTION plasma orb drone, front-on, at the same scale and position, on a perfectly flat solid pure bright green chroma-key background. The frames in order: top row, four frames of the orange-red orb's energy shell rolling a quarter turn each with the core pulsing; bottom row, the same four frames drained to a cold grey \"stolen\" state with the core dimmed. Follow the established design exactly; only the pose or state changes between cells. Crisp pixel art with a 1-pixel near-black navy outline at the sprite's native pixel scale, flat saturated fills with three-step shading ramps lit from the top-left, identical silhouette and palette in every cell, no anti-aliasing, no scenery, no stars, no cast shadow, no glow bleeding onto the background, no text, no numbers, no cell borders. The background is one perfectly flat solid pure bright green chroma-key colour everywhere around the subject: no gradient, no texture, no floor, no cast or drop shadow, no glow or green spill on the subject. No text, letters, numbers, labels, UI or watermark anywhere.\n Animation, clearly visible: the flickering flame crest that sits at twelve o'clock on the orb in the first cell of each row sits at three o'clock in the second cell, at six o'clock in the third and at nine o'clock in the fourth, as if the whole orb rolls clockwise. Only empty green space between the cells, no white or dark lines."
+        "mode": "generate",
+        "instruction": null
       }
     }
   ],
   "recipe": {
     "path": "assets/source/sprites/options/orb.recipe.json",
-    "sha256": "5299a34f373e98ce2411c8f8ef792b21e93709b2f3a25c0e2cbcd718278bbbab"
+    "sha256": "8763e5fea3072f08c9d3c2eac7bdc481e97b4c76499adee54d4d7fbc825202e6"
   },
   "edit": null,
   "output": {
     "png": "orb.png",
-    "sha256": "c40d9a23a6cdddc44bdc29a9f5b32fd4819a471248cf5a24c37201cfd1d66b01",
+    "sha256": "17c6d34afba36e96bdf10d7dcbaade3bdb29ff068e6115de89b81ed42da9493a",
     "sidecar": "orb.json",
     "sidecarSha256": "87177fdb55f25271b6ff775ce719488a740300d8d27c88de254a1396ee32a753",
     "frames": 4,
@@ -85,5 +68,5 @@
     "name": "shmup-ingest",
     "version": "1.0.0"
   },
-  "notes": "R6-03.S3 cross-zone pass (player crafts): the four pulse frames of the OPTION orb are the top-row cells of the owner-picked frames sheet (the shell rolling a quarter turn with the core pulsing, the sheet's claim) - a shared 262x254 crop box per cell; adjacent cells differ by 4.3-5.8%, a subtle roll kept as designed. The bottom drained row feeds options/stolen. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+  "notes": "w15-REING6 (gen6 row a-orb): the four OPTION orb pulse frames are the cells of the 2x2-of-256px owner-improvement redesign sheet on the flat #51e018 key (probe boxes, a shared 213x214 contain box centered per cell so the shell's size pulse survives as designed). The design carries its own 1-px near-black navy outline, so the outline pass is off. p2 stays absent (no @p2 sibling). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
 }

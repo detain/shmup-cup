@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/double",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-double/gen.png",
+      "sha256": "75bc37ad0de19c17aebdcf5ef28cdfa951c80b9ab40150677da69ed21959f600",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the DOUBLE shot — a paired amber dart projectile.\n\nDesign identity to keep exactly — Two identical amber energy darts stacked one above the other, joined by a thin glowing web, white cores, navy outlines, flying right.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the DOUBLE shot — two parallel amber darts side by side with a shared energy web The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 2.5:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520517221,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:57:03.710Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-double/gen.json",
+        "sidecarSha256": "dac21eedc89b05dd325fc621f69c596cd72c48af6026d348d0ab981ebbf8b52c",
+        "id": "gen6/a-shot-double",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/double.recipe.json",
+    "sha256": "19da8f7549651aac08502159898f3e123a68525824a528a028b069edc60a7bf3"
+  },
+  "edit": null,
+  "output": {
+    "png": "double.png",
+    "sha256": "0ef8eeb9fcd9c458172c140f88716fbb01e1a93c75630b16ab5343866caa96c6",
+    "sidecar": "double.json",
+    "sidecarSha256": "321936c95971812de7f8b26b6a8930b6512b068ec5213e5e8a75a38389497827",
+    "frames": 1,
+    "frameWidth": 7,
+    "frameHeight": 7,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the double shot from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}

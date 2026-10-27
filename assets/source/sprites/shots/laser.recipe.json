@@ -1,0 +1,37 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "shots/laser",
+  "category": "player-shot",
+  "frame": {
+    "width": 12,
+    "height": 5
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen6/a-shot-laser/gen.png",
+      "frames": [
+        [
+          76,
+          50,
+          430,
+          169
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    0,
+    2
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    },
+    "notes": "w15-REING6 (gen6 row a): the Type B laser bolt from the owner-improvement redesign sheet (1 cell of 576x256 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+  }
+}

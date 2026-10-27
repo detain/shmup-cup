@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "shots/vertical 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 5,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 5,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 5,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "vertical.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 5,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 5,
+              "h": 12
+            },
+            "pivot": {
+              "x": 2,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

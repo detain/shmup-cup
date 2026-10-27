@@ -25,8 +25,8 @@ import {
 
 /** The Option Hunter's violet body (`enemies/option-hunter` palette `p`, #8a3ad8) — unique. */
 const HUNTER_VIOLET = [0x8a, 0x3a, 0xd8] as const;
-/** The stolen Option's drained grey (`options/stolen` real art, #b5afb4) — unique. */
-const STOLEN_GREY = [0xb5, 0xaf, 0xb4] as const;
+/** The stolen Option's drained grey (`options/stolen` w15-REING-6 gen6 art, #80516c) — unique. */
+const STOLEN_GREY = [0x80, 0x51, 0x6c] as const;
 
 /** The part of the World the spec touches (item kind 2 = a freed Option, enemy state 1 = live). */
 interface DebugWorld {

@@ -9,31 +9,31 @@
   "frameCount": 4,
   "sources": [
     {
-      "image": "art-prompts/v2/winners/craft/option/frames/winner.png",
+      "image": "art-prompts/v2/gen6/a-orb/gen.png",
       "frames": [
         [
-          88,
-          54,
-          262,
-          254
+          24,
+          26,
+          213,
+          214
         ],
         [
-          432,
-          54,
-          262,
-          254
+          278,
+          19,
+          213,
+          214
         ],
         [
-          773,
-          54,
-          262,
-          254
+          23,
+          274,
+          213,
+          214
         ],
         [
-          1113,
-          54,
-          262,
-          254
+          281,
+          278,
+          213,
+          214
         ]
       ]
     }
@@ -47,9 +47,9 @@
   "provenance": {
     "use": "pixels",
     "reviewed": {
-      "on": "2026-10-23",
-      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1)"
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
     },
-    "notes": "R6-03.S3 cross-zone pass (player crafts): the four pulse frames of the OPTION orb are the top-row cells of the owner-picked frames sheet (the shell rolling a quarter turn with the core pulsing, the sheet's claim) - a shared 262x254 crop box per cell; adjacent cells differ by 4.3-5.8%, a subtle roll kept as designed. The bottom drained row feeds options/stolen. The design carries its own 1-px near-black navy outline, so the outline pass is off."
+    "notes": "w15-REING6 (gen6 row a-orb): the four OPTION orb pulse frames are the cells of the 2x2-of-256px owner-improvement redesign sheet on the flat #51e018 key (probe boxes, a shared 213x214 contain box centered per cell so the shell's size pulse survives as designed). The design carries its own 1-px near-black navy outline, so the outline pass is off. p2 stays absent (no @p2 sibling). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
   }
 }

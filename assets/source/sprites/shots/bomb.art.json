@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/bomb",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-bomb/gen.png",
+      "sha256": "cad3377c065ab22e75a4551de970880999dfbf9b416329991629cc8b1750e9a6",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the BOMB — a charged smart-bomb orb crackling with sparks.\n\nDesign identity to keep exactly — A dense red-orange plasma bomb orb with a hot white-gold core, crackling yellow spark arcs across its shell and a dark crimson rim — clearly 'about to explode', heavier and hotter than any pickup.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the BOMB charge — a swollen crimson-orange plasma orb packed with crackling yellow sparks The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 1.28:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520019247,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:29:43.902Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-bomb/gen.json",
+        "sidecarSha256": "d00c0ad9ec900bcdae6ab061d38db6b6a25a3d284d3b8d7c6e7679a65f3dabdc",
+        "id": "gen6/a-shot-bomb",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/bomb.recipe.json",
+    "sha256": "46613eb7943e576839c99e28459fde0e53a65ea715c16580e22618ed2f995b12"
+  },
+  "edit": null,
+  "output": {
+    "png": "bomb.png",
+    "sha256": "b61948d4d0a43782102b8b9618e3f6ac830499b212138af7648bd70768129723",
+    "sidecar": "bomb.json",
+    "sidecarSha256": "7ffc672f03b6808e824fea93586ba727840cfcd16afa437384a16098f43719bd",
+    "frames": 1,
+    "frameWidth": 9,
+    "frameHeight": 9,
+    "colors": 11,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the screen bomb shot from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}

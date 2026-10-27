@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/vertical",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-vertical/gen.png",
+      "sha256": "022aa526a6c034ca2068afa7c615418e01f695471a6de76eadee4c3abb54fc1e",
+      "format": "png",
+      "width": 256,
+      "height": 576,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the VERTICAL shot — an upward-flying energy dart.\n\nDesign identity to keep exactly — A violet-to-white energy dart oriented VERTICALLY with its nose pointing UP, small side fins near its bottom, navy outline.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the VERTICAL shot — an upward-flying violet dart with a white core, nose at the TOP of the cell The subject fills the cell as ONE large centred figure, aspect ratio about 0.42:1 (0.22:1 to 0.7:1).\n- The sheet canvas measures EXACTLY 256×576 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 20 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520516208,
+      "size": "256x576",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:56:53.912Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-vertical/gen.json",
+        "sidecarSha256": "07b90a744b5c82318fc41307d21b1a8209708a3303f841a20cbeb7ef4ff43a7e",
+        "id": "gen6/a-shot-vertical",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/vertical.recipe.json",
+    "sha256": "03a709b5daa01162d73412a585071691fc7b3ce904e39047339c3bcf85252344"
+  },
+  "edit": null,
+  "output": {
+    "png": "vertical.png",
+    "sha256": "0f238c5c386ca3c7e8430cd1286d1e72544a07da3fb1bee403cf07cf472a3e93",
+    "sidecar": "vertical.json",
+    "sidecarSha256": "649cb99616db950a6d432b1b6c22ae84a0cebd7cafd4a891ccf67f3f59e4fa57",
+    "frames": 1,
+    "frameWidth": 5,
+    "frameHeight": 12,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the vertical shot from the owner-improvement redesign sheet (1 cell of 256x576 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}

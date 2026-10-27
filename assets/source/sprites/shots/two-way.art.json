@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/two-way",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-twoway/gen.png",
+      "sha256": "6b118e40d9bb28838dae14512466d494b61eaa5bf73a86d8a501f84193de0694",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the TWO-WAY shot — a green twin-fin dart that fires up-and-down in mirrored pairs.\n\nDesign identity to keep exactly — A lime-green energy dart with white core and navy twin fins; identical dart in both cells, only the tilt mirrors.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = CLIMB dart — tilted nose-up about 35 degrees, upper fins bright The subject lies within aspect 0.7:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = DIVE dart — same dart tilted nose-down about 35 degrees, lower fins bright The subject lies within aspect 0.7:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.\n- Both cells show the SAME dart at the SAME size, nose to the right, one tilted up one tilted down.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520015195,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:28:13.585Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-twoway/gen.json",
+        "sidecarSha256": "ef6b8f35fc4baec09e75bfde600830ae2d9ff44125778607512a54ef5e6041b0",
+        "id": "gen6/a-shot-twoway",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/two-way.recipe.json",
+    "sha256": "491d286520640945d92c9d292f55a11cd6b9207255da541c503c7b4f12669834"
+  },
+  "edit": null,
+  "output": {
+    "png": "two-way.png",
+    "sha256": "536028347ae93f56497bb8b087cb973b624fb0e13e355ca43f8e8587a1bee669",
+    "sidecar": "two-way.json",
+    "sidecarSha256": "249557ebc86cbf41eed16ecb9c3691d5ac6788e424b58681120ede10afd83ae4",
+    "frames": 2,
+    "frameWidth": 7,
+    "frameHeight": 7,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the two-way shot's climb and dive frames (slot-scale frame diff 44.6% vs the interim pair's 64.7% - a real climb/dive state, probe xors verified by this lane) from the owner-improvement redesign sheet (1 cell of 512x256 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}

@@ -200,18 +200,21 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
   }
 
   it('holds the orb red body in every dark pulse frame (weapons.spec threshold)', () => {
-    // R6-03.S3: the shipped orb is the override, whose bright body `#ec2301` pulses on every
-    // frame (9–11 px). The interim map's amber-only flare frame 2 governs only where no
-    // override ships — that art still serves scale 1, audited by the file tests above.
+    // w15-REING-6: the shipped orb is the gen6 re-land, whose crimson body is the family
+    // `#aa0d19`/`#8d0718`/`#640816` (13–30 px a frame across the roll; a single member is as
+    // thin as 3 px where the shading ramp steps). The interim map's amber-only flare frame 2
+    // governs only where no override ships — that art still serves scale 1.
     const override = overrideOf('options/orb');
-    const [r, g, b] = rgb(override === null ? '#e83838' : '#ec2301');
+    const family =
+      override === null ? [rgb('#e83838')] : [rgb('#aa0d19'), rgb('#8d0718'), rgb('#640816')];
     for (const frame of v2.manifest.sprites['options/orb'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;
       for (let y = 0; y < img.height; y++) {
         for (let x = 0; x < img.width; x++) {
           const p = getPixel(img, x, y);
-          if (p[3] !== 0 && p[0] === r && p[1] === g && p[2] === b) count++;
+          if (p[3] !== 0 && family.some(([r, g, b]) => p[0] === r && p[1] === g && p[2] === b))
+            count++;
         }
       }
       // The pulse's flare frame (index 2) burns amber-only like the v1 bright frame; the
@@ -222,10 +225,11 @@ describe('options v2 (R4-01.A3) — the bible sizes and the four-frame pulse', (
   });
 
   it('holds the stolen light grey in every frame (option-hunter.spec census)', () => {
-    // R6-03.S3: the shipped stolen orb is the override's drained grey `#b5afb4` (7–8 px a
-    // frame); the interim `#a8a8b4` governs only where no override ships.
+    // w15-REING-6: the shipped stolen orb is the gen6 re-land's drained mauve-grey `#80516c`
+    // (3–10 px a frame, the owner's crimson-to-grey corrupted redesign); the interim
+    // `#a8a8b4` and the R6-03.S3 `#b5afb4` govern only where no override ships.
     const override = overrideOf('options/stolen');
-    const [r, g, b] = rgb(override === null ? '#a8a8b4' : '#b5afb4');
+    const [r, g, b] = rgb(override === null ? '#a8a8b4' : '#80516c');
     for (const frame of v2.manifest.sprites['options/stolen'].frames) {
       const img = framePixels(v2, frame);
       let count = 0;

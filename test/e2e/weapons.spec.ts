@@ -22,12 +22,23 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** `shots/basic` rim colour (palette `b`, #1e5a9a) — nothing else on screen uses it. */
-const SHOT_RIM = [0x1e, 0x5a, 0x9a] as const;
-/** `shots/laser` body colour (palette `c`, #9fe8ff). */
-const LASER_BODY = [0x9f, 0xe8, 0xff] as const;
-/** `options/orb` body colour (R6-03.S3 real art, #ec2301). */
-const OPTION_BODY = [0xec, 0x23, 0x01] as const;
+/** `shots/basic` body colour (w15-REING-6 gen6 real art, #0374d3) — nothing else uses it. */
+const SHOT_RIM = [0x03, 0x74, 0xd3] as const;
+/**
+ * `shots/laser`'s bolt lights (w15-REING-6 gen6 real art — the cyan ramp and its core).
+ * Every one belongs to `shots/laser` alone (censed over the whole v2 atlas); a bolt shows
+ * ~2 px of each, so the beam census sums them. The ramp's `#7ff9ff` is deliberately absent:
+ * the sampler's ±3 window reaches `shots/basic`'s `#81f8ff` tip from it, which would poison
+ * the default-loadout negative test with the basic bolts' own glow.
+ */
+const LASER_LIGHTS: readonly (readonly [number, number, number])[] = [
+  [0xd7, 0xfb, 0xff],
+  [0x93, 0xfb, 0xff],
+  [0xec, 0xfa, 0xff],
+  [0x04, 0xae, 0xc3],
+];
+/** `options/orb` body colour (w15-REING-6 gen6 real art, #aa0d19). */
+const OPTION_BODY = [0xaa, 0x0d, 0x19] as const;
 /** KESTREL hull colour (`ships/kestrel` real art, #343154). */
 const KESTREL_HULL = [0x34, 0x31, 0x54] as const;
 
@@ -145,14 +156,25 @@ test.describe('player weapons (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     let found: ColourPixels[] | null = null;
+    let bestOrbs = 0;
+    let bestBeams = 0;
     for (let poll = 0; poll < 60 && found === null; poll++) {
       await waitTicks(page, 10);
-      const pixels = await findColours(page, [OPTION_BODY, LASER_BODY]);
-      // Orbs show their red body (some may still trail off screen, left, after the fly-in); a
-      // full beam ≥ 64 pixels (its top and bottom rows).
-      if (pixels[0].count >= 8 && pixels[1].count >= 64) found = pixels;
+      const pixels = await findColours(page, [OPTION_BODY, ...LASER_LIGHTS]);
+      const beams = pixels.slice(1).reduce((a, b) => a + b.count, 0);
+      const beamHud = pixels.slice(1).reduce((a, b) => a + b.hud, 0);
+      bestOrbs = Math.max(bestOrbs, pixels[0].count);
+      bestBeams = Math.max(bestBeams, beams);
+      // Orbs show their crimson body (some may still trail off screen, left, after the
+      // fly-in); a full beam ≥ 24 light pixels — the gen6 bolt is thinner than the interim
+      // map's, so the census counts the whole cyan ramp (≈ 8 px a bolt, several afield).
+      if (pixels[0].count >= 8 && beams >= 24)
+        found = [pixels[0], { ...pixels[1], count: beams, hud: beamHud }];
     }
-    expect(found, 'no Options and lasers within 600 ticks').not.toBeNull();
+    expect(
+      found,
+      `no Options and lasers within 600 ticks (best orbs ${bestOrbs}, best beams ${bestBeams})`,
+    ).not.toBeNull();
     if (found === null) return;
     expect(found[0].hud).toBe(0);
     expect(found[1].hud).toBe(0);
@@ -181,9 +203,9 @@ test.describe('player weapons (Tizen build via file://)', () => {
     // Still the default loadout: no Options, no laser beams, ever.
     for (let poll = 0; poll < 3; poll++) {
       await waitTicks(page, 10);
-      const [orbs, beams] = await findColours(page, [OPTION_BODY, LASER_BODY]);
-      expect(orbs.count + orbs.hud).toBe(0);
-      expect(beams.count + beams.hud).toBe(0);
+      const pixels = await findColours(page, [OPTION_BODY, ...LASER_LIGHTS]);
+      expect(pixels[0].count + pixels[0].hud).toBe(0);
+      expect(pixels.slice(1).reduce((a, b) => a + b.count + b.hud, 0)).toBe(0);
     }
     expect(errors).toEqual([]);
   });

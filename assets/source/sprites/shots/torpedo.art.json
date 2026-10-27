@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/torpedo",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-torpedo/gen.png",
+      "sha256": "444c18b50141e476b4069ab27f7bb89a1d98e176fe829e28610ed9aa6cf83555",
+      "format": "png",
+      "width": 768,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the TORPEDO — a sleek deep-blue underwater-style dart with swept fins, two run frames.\n\nDesign identity to keep exactly — A navy-and-teal torpedo with a hot cyan core stripe and small tail propeller; identical body in both cells, only the tail propeller and trail differ.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = run frame A — propeller fins aligned, pale bubble trail upper The subject lies within aspect 1.8:1 to 4.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = run frame B — propeller fins crossed, bubble trail lower The subject lies within aspect 1.8:1 to 4.4:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 768×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 18 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.\n- Both cells show the SAME torpedo flying right at the SAME size.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520514182,
+      "size": "768x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:56:45.989Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-torpedo/gen.json",
+        "sidecarSha256": "210b3a8580d738bfde583169e6897f88228331a15f891cbed8c3a39aca112752",
+        "id": "gen6/a-shot-torpedo",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/torpedo.recipe.json",
+    "sha256": "9f9297a082ef26c1eb473661c1247822b9edf3f8362289548aa28e157af211ec"
+  },
+  "edit": null,
+  "output": {
+    "png": "torpedo.png",
+    "sha256": "66538fa9aaa2b0fec32df972b9dd2e81d4c943c97d5e8724bf59cf6f32bb8135",
+    "sidecar": "torpedo.json",
+    "sidecarSha256": "c4b52eceb5b2be5a9a11037447bdd9cd0baa86d691c3c9756677d6598112631a",
+    "frames": 2,
+    "frameWidth": 15,
+    "frameHeight": 5,
+    "colors": 11,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the torpedo's two run frames from the owner-improvement redesign sheet (1 cell of 768x256 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}

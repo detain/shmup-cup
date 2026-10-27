@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "shots/laser",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-shot-laser/gen.png",
+      "sha256": "4a6680bc5c8f8887e15930f55b193a26362d6c595a5f101ad1fb38fbe0997bf1",
+      "format": "png",
+      "width": 576,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the LASER — a piercing beam: a blazing white core blade inside a narrow cyan sheath with tip spark.\n\nDesign identity to keep exactly — Retro 16-bit player projectile detail: crisp two-tone energy look, bright core, navy outline, tiny specular spark — clearly a forward-flying weapon (nose right).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the beam pointing right The subject fills the cell as ONE large centred figure, aspect ratio about 2.6:1 (1.8:1 to 3.6:1).\n- The sheet canvas measures EXACTLY 576×256 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 20 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520511130,
+      "size": "576x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:55:52.668Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-shot-laser/gen.json",
+        "sidecarSha256": "1ed6fa17f1f905b0a1908d2d2c965fa04baa41d51f0a595c5cee5661d8594c68",
+        "id": "gen6/a-shot-laser",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/shots/laser.recipe.json",
+    "sha256": "b0a63334bdc5c14b1dc44ea6855167ed6d08e268b1b8b910044d519ee2037c2c"
+  },
+  "edit": null,
+  "output": {
+    "png": "laser.png",
+    "sha256": "40dcb8688d2c904c384d1f71bc0872bedf9b07ab8d03af873d077f08ce1fa44b",
+    "sidecar": "laser.json",
+    "sidecarSha256": "c485e28771541a88feeabfd2c63e76b22e4459b915664c571b24582d2f1418fa",
+    "frames": 1,
+    "frameWidth": 12,
+    "frameHeight": 5,
+    "colors": 11,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-REING6 (gen6 row a): the Type B laser bolt from the owner-improvement redesign sheet (1 cell of 576x256 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+}
