@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-escape-corridor",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/escape-corridor/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/escape-corridor/poster/winner.json",
+    "sha256": "8a2b91abe48d8eb43b2fc0f9cf5ecae2861585803f3a158d35410a20bf238439",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 17102,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T22:43:42.929Z",
+    "prompt": "Reference image 1 shows the chosen ESCAPE CORRIDOR stage art. Keep the referenced design exactly and show it in this new composition: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The escape rendered as a vertical ascent: looking straight up inside a colossal rectangular shaft that was clearly once a corridor, its four walls of banded rock and buried fortress plating now peeling inward — great shelves of stone and steel curling off the walls and falling toward the viewer, shrinking in the distance as they drop, motion-smeared at their edges. At the very top of the shaft, the exit is a small bright rectangle of pale gold daylight, visibly narrower than it should be, framed by two slabs of the fortress that are sliding together like closing jaws; a few thin fingers of light pierce down the shaft from the gap, each one lit with floating dust. Below the closing exit, the dark of the shaft is not empty: a broad glow of furnace orange and brown smoke is rising up from the bottom of the frame — the collapse has a head here, its light staining the lowest falling debris from beneath, silhouette-ing every tumbling slab in the lower third against the fire. So the image is trapped between two squeezes: fire rising from below, daylight shutting above, and a central lane of still-open shaft where the falling rock and rising smoke refuse to meet. Palette of earth golds, fortress-plate greys, furnace orange below and pale gold above, lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements. No text anywhere.",
+    "negative": "photorealistic, 3d render, mine elevator, ladder, well, sky clouds visible, open wide exit, exit fully closed, pure black background, watermark, text, blurry, horizontal composition, viewer at ground level, frame border, letterboxing",
+    "label": "Escape corridor vertical poster (collapsing shaft)"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-escape-corridor-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

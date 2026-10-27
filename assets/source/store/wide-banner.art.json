@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "wide-banner",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/promo/wide-banner/winner.png",
+    "sidecar": "art-prompts/v2/winners/promo/wide-banner/winner.json",
+    "sha256": "c4fd387ac20bc670f3222843a74b6cb131aacf39781d5a629365cf255a0b2574",
+    "format": "png",
+    "width": 1536,
+    "height": 640,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 675397603,
+    "steps": 50,
+    "guidance": 4,
+    "generatedAt": "2026-10-17T00:53:51.280Z",
+    "prompt": "Extreme widescreen full-bleed marketing banner for a side-scrolling arcade shooter, SNES-era 16-bit pixel art inspired rendering with bold dark outlines, a saturated limited palette, clean vector shapes with pixel-art texture accents and a subtle CRT scanline glow. The artwork fills the entire canvas from the top edge to the bottom edge and from the left edge to the right edge, with no borders, no frames and no letterbox bars. It is one continuous panoramic landscape that gradually morphs through nine worlds from left to right, each world dissolving softly into the next through mist, light and shared horizon lines, never separated by vertical seams or panels, deep navy in every shadow, never pure black. From the left edge: a blue planet rim over green-teal highland hills under star dust; a wavy teal and violet gas sea with a stone reef arch sinking into sand-gold fog; long desert dunes under two suns, a big pale cream sun and a small orange one, in heat haze; jagged black volcanic peaks erupting over a glowing molten lava lake; saw-tooth snowy ridges under a roiling storm deck split by one violet lightning bolt; the curved walls of a living vault of pulsing green cells; a corridor of violet crystal facets with glowing cubes stacked in mid-air; a riveted steel fortress interior with amber running lights and converging pipes; and at the right edge a black-blue abyss of deep-water rock spires dotted with cold cyan lights. One small steel-blue dart fighter with a cyan canopy flies to the right through the fortress world near the right end of the picture, nose pointing right, and behind it, trailing back out of its engine, a single long thin perfectly straight orange contrail stretches level all the way back to the left edge of the image, passing through every one of the worlds behind the ship. Nothing lies ahead of the ship's nose but open space. The contrail is the only perfectly straight line in the picture. No text, no letters, no logo, no UI.",
+    "negative": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+    "label": "Panorama banner — the Verge's nine worlds as one scrolling horizon (21:9)"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/wide-banner-1536x640.png",
+      "width": 1536,
+      "height": 640,
+      "derivation": "native 1536×640, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

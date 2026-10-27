@@ -1,49 +1,68 @@
 #!/usr/bin/env node
 /**
- * `pnpm store:assets` — the icon set and the store-listing placeholders of the release
- * candidate (plan M2-18, R4-05.E5 / RR-3, shmup_feat.md §23 "store", shmup_tech.md §2.6),
- * generated from the game's own placeholder art — the atlas sprites (`collectSprites()` at its
- * default v2 art scale since R4-05.E5: the logo, the two ships, the zone backdrops, the bosses)
- * and the bitmap font — so no image is drawn by hand (plan §1.5):
+ * `pnpm store:assets` — the icon set and the store-listing assets of the release candidate
+ * (plan M2-18, R4-05.E5 / RR-3, shmup_feat.md §23 "store", shmup_tech.md §2.6).
  *
- * - **Icons (committed)** — {@link ICON_TARGETS}: the Tizen widget / Seller Office icon
+ * Since the v20x-A2 round the **icons and the key art** are derived from the art round's chosen
+ * winners — the `art-prompts/v2/winners/` logo, promo and poster stills — by the numeric,
+ * deterministic resampling of `scripts/assets/resample.mjs` (area downscale, contain fit on the
+ * playfield navy, median-cut to ≤ 256 colours, indexed PNG-8). That is the owner's dated §1.5
+ * waiver of **2026-10-27** (ruling "a2"), which covers the **store and icon surfaces only**: every
+ * in-game law stands — the atlas stays the repo's own placeholder generators, and the four
+ * placeholder screenshots below are still drawn from it, captioned `PLACEHOLDER`, until real
+ * captures come off the monitors. {@link KEY_ART_WAIVER} carries the quote into every provenance
+ * record; {@link staleRecords} ties every derived file to the SHA-256 of the source bytes it was
+ * rendered from, so a moved winners file fails `--check` instead of silently shifting the art.
+ *
+ * - **Icons and key art (committed)** — {@link ICON_TARGETS}: the Tizen widget / Seller Office icon
  *   `apps/tizen/public/icon.png` (512 × 423, copied into the widget by Vite), the desktop app's
  *   icon `apps/electron/build/icon.png` (512 × 512, electron-builder's `build/` resources) and the
  *   LG webOS app's `apps/webos/public/icon.png` (80 × 80) and `largeIcon.png` (130 × 130, M3-03,
- *   the sizes `appinfo.json` names). A test
+ *   the sizes `appinfo.json` names) — all fitted from {@link KEY_ART}'s `app-icon` source; and one
+ *   provenance record per source under `assets/source/store/` (schema `shmup-store-art@1`). A test
  *   (`test/scripts/store-assets.test.ts`) renders them again and compares the pixels, so a change
- *   to the art or to this script shows up as a failing test until the files are regenerated.
- * - **Store-listing placeholders (generated, ignored)** — `assets/generated/store/`: the icon,
- *   {@link SCREENSHOTS} placeholder screenshots at 1920 × 1080 (the game's frame — `FRAME_W` ×
- *   `FRAME_H` of `scripts/frame.mjs`, 640 × 360 since R2-01 — at {@link SCREENSHOT_SCALE}, each
- *   captioned `PLACEHOLDER`) and `listing.json` ({@link STORE_LISTING}: the name, the texts,
- *   the category, the image list with its sizes). They stand in until real screenshots are taken
- *   on the monitors; check the sizes against the Seller Office's current requirements before a
- *   submission (the manual checklist, plan §8.6).
+ *   to the sources or to this script shows up as a failing test until the files are regenerated.
+ * - **Store-listing images (generated, ignored)** — `assets/generated/store/`: one product per key
+ *   art source (the capsule, the website hero, the wide banner, the eleven zone posters at half
+ *   size, and the icon's store copy), the {@link SCREENSHOTS} placeholder screenshots at
+ *   1920 × 1080 (the game's frame — `FRAME_W` × `FRAME_H` of `scripts/frame.mjs`, 640 × 360 since
+ *   R2-01 — at {@link SCREENSHOT_SCALE}, each captioned `PLACEHOLDER`) and `listing.json`
+ *   ({@link buildStoreListing}: the name, the texts, the category, the image list with its sizes).
+ *   The products' sizes are derived from the decoded sources, never written down. They stand until
+ *   a store asks for sizes this pipeline does not make; check them against the Seller Office's
+ *   current requirements before a submission (the manual checklist, plan §8.6).
  *
- * Every image is drawn with whole-pixel copies and integer scaling only, so the output is the same
- * on every machine.
+ * Every resample is IEEE-754 reproducible (fixed accumulation order, `Math.round` half up), so the
+ * output bytes are the same on every machine.
  *
  * Usage:
- *   node scripts/store-assets.mjs            write the icons and the store folder
- *   node scripts/store-assets.mjs --check    exit 1 when a committed icon is out of date
+ *   node scripts/store-assets.mjs            write the icons, the records and the store folder
+ *   node scripts/store-assets.mjs --check    exit 1 when a committed icon or record is stale
  *   node scripts/store-assets.mjs --out DIR  write the store folder to DIR
  *
  * @module
  */
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createImage, imagesEqual } from './assets/image.mjs';
 import { REPO_ROOT, collectSprites } from './assets/pipeline.mjs';
 import { decodePng, encodePng } from './assets/png.mjs';
+import { downscaleArea, fitContain, medianCutPalette, quantize } from './assets/resample.mjs';
 import { FRAME_H, FRAME_W, HUD_BAR_HEIGHT, HUD_BOTTOM_Y, WORLD_SCALE } from './frame.mjs';
 
 /** @typedef {import('./assets/image.mjs').Image} Image */
 /** @typedef {import('./assets/image.mjs').Rgba} Rgba */
 
-/** Where `pnpm store:assets` writes the store-listing placeholders. */
+/** Where `pnpm store:assets` writes the store-listing images. */
 export const STORE_DIR = join(REPO_ROOT, 'assets', 'generated', 'store');
+
+/** Where the committed provenance records of the key art live (root-relative). */
+export const KEY_ART_RECORD_DIR = 'assets/source/store';
+
+/** The schema id of those records (this pipeline's own, beside the ingest tool's sprite records). */
+export const STORE_ART_SCHEMA = 'shmup-store-art@1';
 
 /**
  * Whole-number scale of a placeholder screenshot: the largest that fits the frame into the
@@ -93,8 +112,99 @@ export const SCREENSHOTS = Object.freeze([
   }),
 ]);
 
-/** The listing's texts and image list (placeholders — original names only, shmup_feat.md §26). */
-export const STORE_LISTING = Object.freeze({
+/**
+ * The owner's dated §1.5 waiver this pipeline works under (the v20x round, ruling "a2"). The quote
+ * rides into every provenance record: the store and icon surfaces may wear the art round's chosen
+ * stills; nothing in the game's own atlas does.
+ */
+export const KEY_ART_WAIVER = Object.freeze({
+  date: '2026-10-27',
+  ruling: 'a2',
+  scope: 'store and icon surfaces only — every in-game law of plan §1.5 stands untouched',
+  quote:
+    "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY " +
+    '(in-game atlas laws untouched)',
+});
+
+/**
+ * One chosen marketing still and the products derived from it.
+ *
+ * @typedef {{ slug: string, source: string, use: string, kind: 'icons' | 'promo' | 'poster' }}
+ *   KeyArtSource
+ */
+
+/** The eleven zone posters, by their stage-folder slug (alphabetical). */
+const POSTER_ZONES = Object.freeze([
+  'abyssal-throne',
+  'azure-verge',
+  'brine-nebula',
+  'cell-vault',
+  'dune-expanse',
+  'escape-corridor',
+  'high-speed-dimension',
+  'iron-citadel',
+  'magma-deep',
+  'prism-labyrinth',
+  'tempest-ridge',
+]);
+
+/** The root-relative folder the round commits its winners into. */
+const WINNERS_DIR = 'art-prompts/v2/winners';
+
+/**
+ * The key art of the store surfaces: every committed icon and every listing image traces to one of
+ * these sources. `icons` sources also feed the four committed {@link ICON_TARGETS}; `promo` sources
+ * ship at native size; `poster` sources at half.
+ *
+ * @type {ReadonlyArray<KeyArtSource>}
+ */
+export const KEY_ART = Object.freeze([
+  Object.freeze({
+    slug: 'app-icon',
+    source: `${WINNERS_DIR}/logo/app-icon/winner.png`,
+    use: 'app icon',
+    kind: 'icons',
+  }),
+  Object.freeze({
+    slug: 'capsule',
+    source: `${WINNERS_DIR}/promo/store-capsule/winner.png`,
+    use: 'capsule',
+    kind: 'promo',
+  }),
+  Object.freeze({
+    slug: 'capsule-no-text',
+    source: `${WINNERS_DIR}/promo/store-capsule/no-text/winner.png`,
+    use: 'capsule without lettering',
+    kind: 'promo',
+  }),
+  Object.freeze({
+    slug: 'website-hero',
+    source: `${WINNERS_DIR}/promo/website-hero/winner.png`,
+    use: 'website hero',
+    kind: 'promo',
+  }),
+  Object.freeze({
+    slug: 'wide-banner',
+    source: `${WINNERS_DIR}/promo/wide-banner/winner.png`,
+    use: 'wide banner',
+    kind: 'promo',
+  }),
+  ...POSTER_ZONES.map((zone) =>
+    Object.freeze({
+      slug: `poster-${zone}`,
+      source: `${WINNERS_DIR}/stage/${zone}/poster/winner.png`,
+      use: `zone poster (${zone})`,
+      kind: 'poster',
+    }),
+  ),
+]);
+
+/**
+ * The listing's texts (placeholders where the prose still waits — original names only,
+ * shmup_feat.md §26). The image list is never static: {@link buildStoreListing} derives it (and
+ * every size in it) from the decoded sources.
+ */
+export const STORE_TEXTS = Object.freeze({
   name: 'Shmup Cup',
   version: '2.0.0',
   category: 'Games / Action',
@@ -107,20 +217,9 @@ export const STORE_LISTING = Object.freeze({
   keywords: ['shooter', 'shmup', 'arcade', 'retro', 'co-op'],
   ageRating: 'to be decided (fantasy violence, no blood)',
   placeholder: true,
-  images: Object.freeze([
-    Object.freeze({ file: 'icon-512x423.png', use: 'app icon', width: 512, height: 423 }),
-    ...[1, 2, 3, 4].map((k) =>
-      Object.freeze({
-        file: `screenshot-${k}-1920x1080.png`,
-        use: 'screenshot',
-        width: 1920,
-        height: 1080,
-      }),
-    ),
-  ]),
 });
 
-/** Background colour: the deep navy of the playfield. */
+/** Background colour: the deep navy of the playfield (also the icons' pad). */
 const NAVY = /** @type {Rgba} */ ([0x0a, 0x10, 0x2a, 0xff]);
 /** Background colour: the playfield's lighter lower band and the screenshots' frame bars. */
 const NAVY_LIGHT = /** @type {Rgba} */ ([0x1d, 0x2a, 0x5c, 0xff]);
@@ -146,8 +245,8 @@ let art = null;
 function loadArt() {
   if (art !== null) return art;
   // The v2 art: `collectSprites()` at its default interim art scale (R4-05.E5 / RR-3 moved the
-  // icons off `artScale: 1`). The layouts below derive their sizes from the art and from
-  // `scripts/frame.mjs`, never from a literal frame number.
+  // screenshots' scenes off `artScale: 1`). The layouts below derive their sizes from the art and
+  // from `scripts/frame.mjs`, never from a literal frame number.
   const { sprites, fonts, issues } = collectSprites();
   if (issues.length > 0) throw new Error(`asset sources have issues: ${issues[0].message}`);
   const frames = new Map(sprites.map((sprite) => [sprite.name, sprite.frames]));
@@ -155,6 +254,56 @@ function loadArt() {
   if (font === undefined) throw new Error('the bitmap font "pixel" is missing');
   art = { frames, font };
   return art;
+}
+
+/** The decoded key-art stills, one decode per source path per process. */
+const decodedSources = new Map();
+
+/**
+ * Reads one key-art source: its bytes, and the sidecar `winner.json` beside it.
+ *
+ * @param {KeyArtSource} entry - The source.
+ * @returns {{ image: Image, bytes: Buffer, sidecar: Record<string, unknown> }} Decoded still, raw
+ *   bytes and sidecar.
+ * @throws {Error} When a winner or its sidecar is missing or unreadable.
+ */
+function loadSource(entry) {
+  const cached = decodedSources.get(entry.source);
+  if (cached !== undefined) return cached;
+  const file = join(REPO_ROOT, entry.source);
+  if (!existsSync(file)) throw new Error(`key art source ${entry.source} is missing`);
+  const bytes = readFileSync(file);
+  const sidecarFile = join(REPO_ROOT, dirname(entry.source), 'winner.json');
+  if (!existsSync(sidecarFile)) {
+    throw new Error(`the sidecar of ${entry.source} is missing`);
+  }
+  const sidecar = JSON.parse(readFileSync(sidecarFile, 'utf8'));
+  const image = decodePng(bytes);
+  const source = { image, bytes, sidecar };
+  decodedSources.set(entry.source, source);
+  return source;
+}
+
+/**
+ * The model table of the ingest tool (`art-prompts/ingest/models.json`): each model key's served
+ * id and licence id — the records quote it rather than restate it.
+ *
+ * @type {Record<string, { id: string, licence: string | null }> | null}
+ */
+let modelTable = null;
+
+/**
+ * The ingest tool's model table, read once.
+ *
+ * @returns {Record<string, { id: string, licence: string | null }>} The models by key.
+ * @throws {Error} When the table is unreadable.
+ */
+function loadModels() {
+  if (modelTable !== null) return modelTable;
+  const file = join(REPO_ROOT, 'art-prompts', 'ingest', 'models.json');
+  const { models } = JSON.parse(readFileSync(file, 'utf8'));
+  modelTable = models;
+  return models;
 }
 
 /**
@@ -284,43 +433,104 @@ function backdrop(image, scale) {
 }
 
 /**
- * Renders an icon: the playfield, the logo across the top and the two ships.
+ * Resamples the `app-icon` still into an icon of the requested size: contain-fit on the playfield
+ * navy (the 512 × 423 TV aspect pillarboxes; the square targets fill), then the median-cut to the
+ * PNG-8 palette, exactly as {@link writeStoreAssets} encodes it.
  *
- * @param {number} width - Width in pixels (≥ 200).
- * @param {number} height - Height in pixels (≥ 160).
- * @returns {Image} The icon.
- * @throws {Error} When the asset sources have issues or the logo / a ship sprite is missing.
+ * @param {number} width - Width in pixels (a positive integer the source can shrink to).
+ * @param {number} height - Height in pixels (a positive integer the source can shrink to).
+ * @returns {Image} The icon, opaque.
+ * @throws {RangeError} When the box would enlarge the source (see
+ *   {@link fitContain}).
  *
  * @example
  * ```js
- * const png = encodePng(renderIcon(512, 423)); // the Tizen widget icon's pixels
+ * const png = encodePng(renderIcon(512, 423), { indexed: 'auto' }); // the Tizen widget icon
  * ```
  */
 export function renderIcon(width, height) {
-  const image = createImage(width, height);
-  backdrop(image, 2);
-  const logo = sprite('ui/logo');
-  const logoScale = Math.max(1, Math.floor((width * 0.9) / logo.width));
-  const logoY = Math.floor(height * 0.12);
-  draw(image, logo, Math.floor((width - logo.width * logoScale) / 2), logoY, logoScale);
-  const kestrel = sprite('ships/kestrel');
-  const manta = sprite('ships/manta');
-  const shipScale = Math.max(1, Math.floor(width / 4 / kestrel.width));
-  // The ships block: the kestrel row, the stagger below it, the manta row (R4-05.E5 re-measured at
-  // the v2 sprite sizes). Below the logo where it fits; on the small icons the block rides the
-  // bottom edge and overlaps the logo's footer instead of falling off the canvas.
-  const stagger = Math.floor(kestrel.height * shipScale * 1.2);
-  const block = stagger + manta.height * shipScale;
-  const top = Math.min(logoY + logo.height * logoScale + Math.floor(height * 0.08), height - block);
-  draw(image, kestrel, Math.floor(width * 0.14), top, shipScale);
-  draw(image, manta, Math.floor(width * 0.86) - manta.width * shipScale, top + stagger, shipScale);
-  return image;
+  const { image } = loadSource(KEY_ART[0]);
+  return quantizeToPalette(fitContain(image, width, height, NAVY));
+}
+
+/**
+ * Median-cut quantisation of a product: the palette is cut from the image itself, so a flat pad
+ * stays exact and a detailed still lands inside the PNG-8 cap.
+ *
+ * @param {Image} image - The resampled still (not modified).
+ * @returns {Image} The same pixels on at most 256 colours.
+ */
+function quantizeToPalette(image) {
+  return quantize(image, medianCutPalette(image));
+}
+
+/**
+ * The store product one source drives, without rendering it: file name (its size derived from the
+ * decoded source — nothing written down), listing use and dimensions.
+ *
+ * @param {KeyArtSource} entry - The source.
+ * @returns {{ file: string, use: string, width: number, height: number }} The spec.
+ * @throws {Error} When a source or sidecar is missing (see {@link loadSource}).
+ */
+function productSpec(entry) {
+  const { image } = loadSource(entry);
+  if (entry.kind === 'icons') {
+    const tv = ICON_TARGETS[0];
+    return {
+      file: `icon-${tv.width}x${tv.height}.png`,
+      use: entry.use,
+      width: tv.width,
+      height: tv.height,
+    };
+  }
+  if (entry.kind === 'promo') {
+    return {
+      file: `${entry.slug}-${image.width}x${image.height}.png`,
+      use: entry.use,
+      width: image.width,
+      height: image.height,
+    };
+  }
+  const width = Math.floor(image.width / 2);
+  const height = Math.floor(image.height / 2);
+  return { file: `${entry.slug}-${width}x${height}.png`, use: entry.use, width, height };
+}
+
+/**
+ * Renders one product's pixels: the icon copy through {@link renderIcon}, every promo still
+ * quantised at native size, every poster area-downscaled to half first.
+ *
+ * @param {KeyArtSource} entry - The source.
+ * @param {{ width: number, height: number }} spec - Its (already decoded) dimensions.
+ * @returns {Image} The product.
+ */
+function renderProduct(entry, spec) {
+  const { image } = loadSource(entry);
+  if (entry.kind === 'icons') return renderIcon(spec.width, spec.height);
+  if (entry.kind === 'promo') return quantizeToPalette(image);
+  return quantizeToPalette(downscaleArea(image, spec.width, spec.height));
+}
+
+/**
+ * The products derived from {@link KEY_ART} for the store folder, in table order: the icon's store
+ * copy at the Tizen target's size, every promo still native, every poster at half, each quantised.
+ *
+ * @returns {{ file: string, use: string, image: Image }[]} The products.
+ * @throws {Error} When a source or sidecar is missing (see {@link loadSource}).
+ */
+export function renderKeyArtProducts() {
+  return KEY_ART.map((entry) => {
+    const spec = productSpec(entry);
+    return { file: spec.file, use: spec.use, image: renderProduct(entry, spec) };
+  });
 }
 
 /**
  * Renders one placeholder screenshot: a scene the size of the game's frame (the zone's backdrop
  * band, its boss's hull, the ship, the caption `PLACEHOLDER` and the zone's name) scaled by
- * {@link SCREENSHOT_SCALE} — 640 × 360 × 3 = 1920 × 1080 (384 × 216 × 5 in v1).
+ * {@link SCREENSHOT_SCALE} — 640 × 360 × 3 = 1920 × 1080 (384 × 216 × 5 in v1). The screenshots
+ * stay atlas-drawn placeholders: the §1.5 waiver covers the store and icon surfaces, not what the
+ * game itself shows.
  *
  * @param {number} index - Index into {@link SCREENSHOTS}.
  * @returns {Image} The screenshot.
@@ -379,7 +589,7 @@ export function renderScreenshot(index) {
  * Renders every committed icon.
  *
  * @returns {{ path: string, image: Image }[]} The icons with their repository paths.
- * @throws {Error} When the asset sources have issues (see {@link renderIcon}).
+ * @throws {Error} When a key-art source or sidecar is missing (see {@link renderIcon}).
  */
 export function renderIcons() {
   return ICON_TARGETS.map((target) => ({
@@ -389,20 +599,200 @@ export function renderIcons() {
 }
 
 /**
+ * The store listing: {@link STORE_TEXTS} with its image list built from the same products
+ * {@link renderKeyArtProducts} renders and the four placeholder screenshots — every size derived
+ * from the decoded source, never written down.
+ *
+ * @returns {{ name: string, version: string, category: string, shortDescription: string,
+ *   description: string, keywords: string[], ageRating: string, placeholder: boolean,
+ *   images: { file: string, use: string, width: number, height: number }[] }} The listing.
+ * @throws {Error} When a key-art source or sidecar is missing.
+ */
+export function buildStoreListing() {
+  return {
+    ...STORE_TEXTS,
+    images: [
+      ...KEY_ART.map((entry) => {
+        const spec = productSpec(entry);
+        return {
+          file: spec.file,
+          use: spec.use,
+          width: spec.width,
+          height: spec.height,
+        };
+      }),
+      ...SCREENSHOTS.map((_, k) => ({
+        file: `screenshot-${k + 1}-1920x1080.png`,
+        use: 'screenshot',
+        width: FRAME_W * SCREENSHOT_SCALE,
+        height: FRAME_H * SCREENSHOT_SCALE,
+      })),
+    ],
+  };
+}
+
+/**
+ * The SHA-256 of bytes, hex.
+ *
+ * @param {Buffer} bytes - The file's bytes.
+ * @returns {string} The digest.
+ */
+function sha256(bytes) {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+/**
+ * The products one key-art source drives: the committed files and store images rendered from it,
+ * each with the derivation text its record quotes.
+ *
+ * @param {KeyArtSource} entry - The source.
+ * @returns {{ file: string, width: number, height: number, derivation: string }[]} Products in
+ *   {@link ICON_TARGETS} order (icons first for `app-icon`), then the store copy.
+ */
+function recordProducts(entry) {
+  const { image } = loadSource(entry);
+  const size = `${image.width}×${image.height}`;
+  const tail = 'median-cut to ≤ 256 colours, written as an indexed PNG-8';
+  if (entry.kind === 'icons') {
+    const products = ICON_TARGETS.map((target) => ({
+      file: target.path,
+      width: target.width,
+      height: target.height,
+      derivation:
+        `contain-fit ${size} into ${target.width}×${target.height} (exact fractional-box area ` +
+        `downscale, centred on the playfield navy), ${tail}`,
+    }));
+    const tv = ICON_TARGETS[0];
+    products.push({
+      file: `assets/generated/store/icon-${tv.width}x${tv.height}.png`,
+      width: tv.width,
+      height: tv.height,
+      derivation: `the store copy of the Tizen icon — identical pixels: ${products[0].derivation}`,
+    });
+    return products;
+  }
+  if (entry.kind === 'promo') {
+    return [
+      {
+        file: `assets/generated/store/${entry.slug}-${image.width}x${image.height}.png`,
+        width: image.width,
+        height: image.height,
+        derivation: `native ${size}, ${tail}`,
+      },
+    ];
+  }
+  const width = Math.floor(image.width / 2);
+  const height = Math.floor(image.height / 2);
+  return [
+    {
+      file: `assets/generated/store/${entry.slug}-${width}x${height}.png`,
+      width,
+      height,
+      derivation: `half size: exact fractional-box area downscale ${size} → ${width}×${height}, ${tail}`,
+    },
+  ];
+}
+
+/**
+ * The provenance record of one key-art source, in its committed JSON text.
+ *
+ * @param {KeyArtSource} entry - The source.
+ * @returns {{ record: Record<string, unknown>, text: string }} The object and its two-space,
+ *   LF-terminated JSON.
+ * @throws {Error} When a source, sidecar or model row is missing.
+ */
+function recordFor(entry) {
+  const { bytes, sidecar } = loadSource(entry);
+  const models = loadModels();
+  const model = models[String(sidecar.model)];
+  if (model === undefined)
+    throw new Error(`model "${String(sidecar.model)}" is not in models.json`);
+  const record = {
+    schema: STORE_ART_SCHEMA,
+    slug: entry.slug,
+    origin: 'ai-assisted',
+    waiver: KEY_ART_WAIVER,
+    source: {
+      path: entry.source,
+      sidecar: `${dirname(entry.source)}/winner.json`,
+      sha256: sha256(bytes),
+      format: 'png',
+      width: sidecar.width,
+      height: sidecar.height,
+      modelKey: sidecar.model,
+      servedModel: sidecar.servedModel,
+      weights: model.id,
+      licence: model.licence,
+      seed: sidecar.seed,
+      steps: sidecar.steps,
+      guidance: sidecar.guidance,
+      generatedAt: sidecar.generatedAt,
+      prompt: sidecar.prompt,
+      negative: sidecar.negative,
+      label: sidecar.label,
+    },
+    generatedBy: 'scripts/store-assets.mjs (pnpm store:assets)',
+    products: recordProducts(entry),
+  };
+  return { record, text: `${JSON.stringify(record, null, 2)}\n` };
+}
+
+/**
+ * The committed provenance records that are out of date (or missing): re-renders each record from
+ * the current source bytes and sidecar and compares texts. A winners file whose bytes moved fails
+ * here — the products it drives would have moved with them, and `--check` would not see a thing
+ * through re-rendering alone.
+ *
+ * @param {string} [root] - Repository root (default this checkout's).
+ * @returns {string[]} Their repository paths (empty when every record is current).
+ * @throws {Error} When a key-art source or sidecar is missing.
+ */
+export function staleRecords(root = REPO_ROOT) {
+  const stale = [];
+  for (const entry of KEY_ART) {
+    const file = join(root, KEY_ART_RECORD_DIR, `${entry.slug}.art.json`);
+    const { text } = recordFor(entry);
+    if (!existsSync(file) || readFileSync(file, 'utf8') !== text) stale.push(entry.slug);
+  }
+  return stale;
+}
+
+/**
+ * Writes the provenance record of every key-art source into the checkout.
+ *
+ * @param {string} root - Repository root.
+ * @returns {string[]} The files written (absolute paths).
+ * @throws {Error} When a key-art source or sidecar is missing.
+ */
+function writeRecords(root) {
+  const written = [];
+  for (const entry of KEY_ART) {
+    const file = join(root, KEY_ART_RECORD_DIR, `${entry.slug}.art.json`);
+    const { text } = recordFor(entry);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, text);
+    written.push(file);
+  }
+  return written;
+}
+
+/**
  * The committed icons that differ from a fresh rendering (or are missing).
  *
  * @param {string} [root] - Repository root (default this checkout's).
  * @returns {string[]} Their repository paths (empty when every icon is current).
- * @throws {Error} When the asset sources have issues, or a committed file is not a readable PNG.
+ * @throws {Error} When a key-art source or sidecar is missing, or a committed file is not a
+ *   readable PNG.
  *
  * @remarks
  * Compares **decoded pixels**, not PNG bytes: a PNG written on another machine (another zlib)
  * may compress the same pixels differently. `--check` and `test/scripts/store-assets.test.ts` use
- * it.
+ * it. The key art itself is guarded by {@link staleRecords}, which pins the source bytes by
+ * SHA-256 — together they make the whole store surface byte-exact under re-rendering.
  *
  * @example
  * ```js
- * staleIcons(); // → [] when the committed icons match the art
+ * staleIcons(); // → [] when the committed icons match the key art
  * ```
  */
 export function staleIcons(root = REPO_ROOT) {
@@ -415,17 +805,18 @@ export function staleIcons(root = REPO_ROOT) {
 }
 
 /**
- * Writes the committed icons and the store-listing placeholders.
+ * Writes the committed icons, the committed provenance records and the store-listing images.
  *
- * @param {{ root?: string, storeDir?: string }} [options] - Repository root for the icons (default
- *   this checkout's) and the store folder (default {@link STORE_DIR}).
- * @returns {string[]} Every file written (absolute paths): the icons, then the store folder's
- *   `icon-512x423.png`, `screenshot-<n>-1920x1080.png` files and `listing.json`.
- * @throws {Error} When the asset sources have issues, or a file cannot be written.
+ * @param {{ root?: string, storeDir?: string }} [options] - Repository root for the icons and the
+ *   records (default this checkout's) and the store folder (default {@link STORE_DIR}).
+ * @returns {string[]} Every file written (absolute paths): the icons, then the provenance records
+ *   under `assets/source/store/`, then the store folder's key-art products, `screenshot-<n>-
+ *   1920x1080.png` files and `listing.json`.
+ * @throws {Error} When a key-art source or sidecar is missing, or a file cannot be written.
  *
  * @example
  * ```js
- * writeStoreAssets({ storeDir: '/tmp/store' }); // icons into the checkout, placeholders to /tmp
+ * writeStoreAssets({ storeDir: '/tmp/store' }); // icons and records into the checkout, images to /tmp
  * ```
  */
 export function writeStoreAssets(options = {}) {
@@ -444,28 +835,38 @@ export function writeStoreAssets(options = {}) {
     writeFileSync(file, bytes);
     written.push(file);
   };
-  for (const { path, image } of renderIcons()) put(join(root, path), encodePng(image));
-  put(join(storeDir, 'icon-512x423.png'), encodePng(renderIcon(512, 423)));
+  for (const { path, image } of renderIcons())
+    put(join(root, path), encodePng(image, { indexed: 'auto' }));
+  written.push(...writeRecords(root));
+  for (const product of renderKeyArtProducts()) {
+    put(join(storeDir, product.file), encodePng(product.image, { indexed: 'auto' }));
+  }
   SCREENSHOTS.forEach((_, k) => {
     put(join(storeDir, `screenshot-${k + 1}-1920x1080.png`), encodePng(renderScreenshot(k)));
   });
-  put(join(storeDir, 'listing.json'), JSON.stringify(STORE_LISTING, null, 2) + '\n');
+  put(join(storeDir, 'listing.json'), `${JSON.stringify(buildStoreListing(), null, 2)}\n`);
   return written;
 }
 
 /**
  * Command-line entry point.
  *
- * @returns {number} Process exit code: 0 on success, 1 when `--check` found a stale icon, 2 for
- *   an unknown argument list (the usage is printed).
+ * @returns {number} Process exit code: 0 on success, 1 when `--check` found a stale icon or
+ *   record, 2 for an unknown argument list (the usage is printed).
  */
 function main() {
   const args = process.argv.slice(2);
   if (args[0] === '--check' && args.length === 1) {
     const stale = staleIcons();
     for (const path of stale) console.error(`store-assets: ${path} is out of date`);
-    if (stale.length > 0) console.error('run `pnpm store:assets` to regenerate the icons');
-    return stale.length === 0 ? 0 : 1;
+    const staleArt = staleRecords();
+    for (const slug of staleArt) {
+      console.error(`store-assets: ${KEY_ART_RECORD_DIR}/${slug}.art.json is out of date`);
+    }
+    if (stale.length + staleArt.length > 0) {
+      console.error('run `pnpm store:assets` to regenerate the icons and records');
+    }
+    return stale.length + staleArt.length === 0 ? 0 : 1;
   }
   let storeDir;
   if (args[0] === '--out' && args.length === 2) storeDir = resolve(args[1]);

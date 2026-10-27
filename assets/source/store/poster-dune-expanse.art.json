@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-dune-expanse",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/dune-expanse/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/dune-expanse/poster/winner.json",
+    "sha256": "9e087def5e692610293b4f0619ee199661a76efab996bda188c56650b145c9ad",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 18302,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T19:11:02.148Z",
+    "prompt": "Reference image 1 shows the chosen DUNE EXPANSE stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical composition looking up a narrow sandstone canyon toward the twin suns. The canyon walls frame the left and right edges — layered sedimentary rock in rust, clay and burnt amber, striped like a barcode, their tops crumbling into arches. Between them the sky is a vertical gradient from hot pale cream at the top, where the huge flat-bottomed cream sun blazes, down to deep orange near the unseen canyon floor. The whole center column of air shimmers: heat haze drawn as gentle wavy displacement bands, sand streaming downward in thin curtains, a scatter of pebbles orbiting a dust devil that corkscrews up the middle of the frame. Clinging to a ledge at the upper left, the bleached ribcage of some vast old machine, half-buried in a sand slide. Far above, a tiny steel-blue dart fighter with a blue stripe and orange engine glow threads the gap between the walls, flying toward the light. Mood: a furnace with a beautiful exit. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.  Reference image 2 shows the fighter: it flies from left to right in side view exactly as in that picture, its pointed nose and cyan canopy toward the right-hand canyon wall and its orange flame on its left end. On the upper-left ledge lies the wreck of a giant machine: a broken starship hull frame of rusted riveted steel, with no bones and no skull. Both suns appear, the huge cream one and a smaller orange one.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, horizontal composition, green vegetation, water, river, three suns, blurry, pure black background, frame border, letterboxing",
+    "label": "DUNE EXPANSE vertical poster"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-dune-expanse-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

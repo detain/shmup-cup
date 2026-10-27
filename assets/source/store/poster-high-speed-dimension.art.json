@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-high-speed-dimension",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/high-speed-dimension/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/high-speed-dimension/poster/winner.json",
+    "sha256": "deeed2006bea55cc5f2dd3b6c82fe122448ee648c12ffe4854cc429e64282c7d",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 17002,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T22:33:55.704Z",
+    "prompt": "Reference image 1 shows the chosen HIGH-SPEED DIMENSION stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The high-speed dimension folded into a vertical drop: the bottom two-thirds of the frame is a checkerboard plane of violet and indigo squares flying straight down toward the viewer, tiles streaking into long vertical light-rails along the left and right edges of the image while a clean central lane of compressed seam-light runs bottom to top like an exposed filament. Halfway up, the plane curls over itself — a slow wave in the floor of the dimension — and beyond that wave, at the top of the frame, the horizon band burns across horizontally: a hard ribbon of pale lilac with a thin white core, the only stable line in the picture, its light spilling downward and rimming every tile edge above it in silver. Between the curl and the horizon floats the fog, a deep violet-black veil with drifting scanline striations, half-swallowing a procession of enormous tilted checker monoliths that hang inverted above the horizon like a reflected fleet. Rivulets of cyan-white data-light run upward along the lane toward the horizon against the downward rush of the tiles, crossing the image in a double-exposure of conflicting speeds. The composition is one lunging vertical vector: from tumbling floor at the feet, up the filament, into the patient light at the top. Electric violets, indigo shadows, lilac horizon, cyan accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+    "negative": "photorealistic, 3d render, race track perspective, cars, sky and clouds, sun, stars, pure black background, watermark, text, blurry, horizontal composition, bent checker lines, rainbow colors, frame border, letterboxing",
+    "label": "High-speed dimension vertical poster"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-high-speed-dimension-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

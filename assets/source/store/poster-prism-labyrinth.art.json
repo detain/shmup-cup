@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-prism-labyrinth",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/prism-labyrinth/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/prism-labyrinth/poster/winner.json",
+    "sha256": "0bb6efeed373a63b2d7d96761a03b7b744d950d9cb956c7958cc51dc800717db",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 16702,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T21:30:41.603Z",
+    "prompt": "Reference image 1 shows the chosen PRISM LABYRINTH stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Looking up a colossal vertical shaft inside a crystal labyrinth: the shaft wall is built of concentric hexagonal frames of violet crystal, each ring slightly rotated relative to the one below so the tunnel corkscrews out of sight toward a distant lilac glow at the top. From every ring hang clusters of triangular crystal facets like chandeliers, their edges wired with pale light, casting a rain of small rhombus reflections down the shaft. A column of crystal cubes rises along the center in a slow spiral conveyor, each cube a different size, glowing brighter the higher it travels, the topmost ones dissolving into pure light at the far end of the shaft — the maze assembling itself endlessly. The lowest third of the image is darker: heavy shadowed facets, deep navy voids between them, a few lone sparks drifting down against the current. Veins of magenta light run through the crystal like frozen lightning. The whole column reads as a single luminous throat of geometry, inviting the eye upward forever. Deep violets and electric lilacs over a lifted deep-navy base, never pure black. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.",
+    "negative": "photorealistic, 3d render, glass bottle, diamond jewelry, city skyline, pure black background, watermark, text, blurry, messy geometry, warped perspective, hexagon rings melting, frame border, letterboxing",
+    "label": "PRISM LABYRINTH vertical poster"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-prism-labyrinth-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

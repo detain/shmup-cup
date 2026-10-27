@@ -1,0 +1,63 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "app-icon",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/logo/app-icon/winner.png",
+    "sidecar": "art-prompts/v2/winners/logo/app-icon/winner.json",
+    "sha256": "4f5e2c26b7ff9084a84cde6ff3d65fd009e638dbfb1f5561bfe2fb652917e4f9",
+    "format": "png",
+    "width": 1024,
+    "height": 1024,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 2637125255,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T00:19:15.502Z",
+    "prompt": "Square app icon artwork with softly rounded corners, a deep midnight-navy tile that brightens slightly toward its center, a thin arc of a blue planet rim glowing low along the bottom of the tile and a scatter of tiny pixel star specks above it. In the middle, one sleek steel-blue dart-shaped retro space fighter flies toward the upper right, seen from the side and banking slightly toward the viewer, with a bold bright blue stripe running the length of its fuselage, a glowing cyan bubble canopy, swept-back short wings with a small notched tail fin, and a hot orange engine afterglow streaming out behind it toward the lower left as a short tapering flame. A heavy dark navy outline wraps the whole craft, crisp specular highlights along its upper spine, flat saturated 16-bit arcade game art shading with three-step ramps lit from the top left and crisp pixel-cluster texture accents. Bold, minimal, chunky shapes that stay readable at very small sizes, the ship large and filling most of the tile, saturated limited palette of steel blue, cyan, orange and navy, never pure black. No text anywhere, no letters, no frame border.",
+    "negative": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+    "label": "App / store icon — KESTREL dart in a rounded deep-navy tile (TV, desktop and store icon source)"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "apps/tizen/public/icon.png",
+      "width": 512,
+      "height": 423,
+      "derivation": "contain-fit 1024×1024 into 512×423 (exact fractional-box area downscale, centred on the playfield navy), median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    },
+    {
+      "file": "apps/electron/build/icon.png",
+      "width": 512,
+      "height": 512,
+      "derivation": "contain-fit 1024×1024 into 512×512 (exact fractional-box area downscale, centred on the playfield navy), median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    },
+    {
+      "file": "apps/webos/public/icon.png",
+      "width": 80,
+      "height": 80,
+      "derivation": "contain-fit 1024×1024 into 80×80 (exact fractional-box area downscale, centred on the playfield navy), median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    },
+    {
+      "file": "apps/webos/public/largeIcon.png",
+      "width": 130,
+      "height": 130,
+      "derivation": "contain-fit 1024×1024 into 130×130 (exact fractional-box area downscale, centred on the playfield navy), median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    },
+    {
+      "file": "assets/generated/store/icon-512x423.png",
+      "width": 512,
+      "height": 423,
+      "derivation": "the store copy of the Tizen icon — identical pixels: contain-fit 1024×1024 into 512×423 (exact fractional-box area downscale, centred on the playfield navy), median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

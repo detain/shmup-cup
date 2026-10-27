@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-azure-verge",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/azure-verge/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/azure-verge/poster/winner.json",
+    "sha256": "111acd06f5727372fd4e57af298f679657278e9de5e5eb8eea39511f19e91818",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 18102,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T17:55:09.821Z",
+    "prompt": "Reference image 1 shows the chosen AZURE VERGE stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical poster composition. A downward view through orbit: the top of the frame is deep space — black-blue filled with crisp pixel-star clusters and a faint violet nebula thread — and it gives way, band by band, to the limb of a blue planet arcing across the lower two thirds. Along that curve, green-teal continents, white polar caps and swirling weather systems read like a painted map, edged by a luminous cyan atmosphere line that glows brightest where the sun rises over the rim. A single slim steel-blue fighter dart with a bold blue hull stripe, cyan canopy and orange engine afterglow flies right-to-left in the mid-distance, small, casting a thin shadow across a cloud deck far below. Iron Tide debris — a torn gray hull plate, a dead pod with a dim magenta eye — tumbles in the foreground space band, framing the planet like drifted litter. Mood: serene world overhead, cold war in the orbit around it. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. Every player craft faces right: nose pointing to the right, engines and exhaust on the left. No text, letters, numbers, labels, UI or watermark anywhere.  Reference image 2 shows that fighter: draw it in that design, flying left-to-right, its pointed nose toward the right edge of the poster and its orange engine flame streaming out behind it toward the left edge. The painting runs to all four edges of the canvas, with no black frame, border or margin.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, horizontal composition, blurry, distorted ship, frame border, letterboxing",
+    "label": "AZURE VERGE vertical poster"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-azure-verge-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "poster-cell-vault",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/stage/cell-vault/poster/winner.png",
+    "sidecar": "art-prompts/v2/winners/stage/cell-vault/poster/winner.json",
+    "sha256": "e1d47c2a4f0c6dbaa859fd22580f94ee4c3f3db2347e94c00ce954b6635c216e",
+    "format": "png",
+    "width": 896,
+    "height": 1152,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 17602,
+    "steps": 40,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T21:08:22.025Z",
+    "prompt": "Reference image 1 shows the chosen CELL VAULT stage art. Keep the referenced design exactly — silhouette, proportions, colour palette, materials and rendering style — and show it in the new composition described below (framing and background follow the description, not the reference): SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Staring straight down the interior of a vertical organic shaft, the throat of a living fortress: a deep stack of concentric muscle rings, each ring a thick petal-like collar of green tissue with a dark seam where it meets the next, the rings alternating slightly rotated so the shaft reads as a twisted tube disappearing into black-green depths far below. Embedded in each collar, rows of closed pore-valves wait in neat arcs, and fine capillary networks of pale yellow-green light pulse along the inner rims, brighter in the upper rings and dimming ring by ring as the shaft descends. Between the collars hang membranes of stretched tissue, translucent enough to reveal the shadow of further rings behind them, giving the whole throat a layered X-ray depth. From the top of the frame a warm amber biolume drips downward like light poured from a bowl, catching the wet ridges of the first collars in hard pixel-art highlights. Near the bottom, in the darkest visible ring, a single new pair of pore-lights is opening, an amber eye of glow waking in the deep. Committed muted greens, pale nucleus glow, amber accents, lifted deep-navy shadow, never pure black. No text, no letters, no user interface elements. Darks stay a lifted deep navy, never pure black; no letterbox bars, no frame or border around the picture. No text, letters, numbers, labels, UI or watermark anywhere.  The organic tissue fills the whole canvas from the left edge to the right edge and from top to bottom: the outer collars run off both sides of the picture, with no dark side bars, margins or border.",
+    "negative": "photorealistic, 3d render, red gore, blood, tongue, throat anatomy, teeth, human figure, pure black background, watermark, text, blurry, straight untwisted tunnel, rings identical, frame border, letterboxing",
+    "label": "CELL VAULT vertical poster"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/poster-cell-vault-448x576.png",
+      "width": 448,
+      "height": 576,
+      "derivation": "half size: exact fractional-box area downscale 896×1152 → 448×576, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

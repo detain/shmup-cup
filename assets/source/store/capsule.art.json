@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "capsule",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/promo/store-capsule/winner.png",
+    "sidecar": "art-prompts/v2/winners/promo/store-capsule/winner.json",
+    "sha256": "aa48b3cb8ef43ce94324b9fdc65c2723600c4efd6c3e84f7245e7a6fb11772aa",
+    "format": "png",
+    "width": 1024,
+    "height": 1024,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 1889816277,
+    "steps": 45,
+    "guidance": 4,
+    "generatedAt": "2026-10-17T00:39:44.874Z",
+    "prompt": "Square store capsule key art for a retro arcade space shooter, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow, built to stay readable at a small size. Across the very top of the square, centered and perfectly straight-on, the game's title \"SHMUP CUP\" in heavy chunky block capital letters filled with a warm vertical gradient from pale yellow through orange into red, a thick dark navy outline, a white highlight along the top edge of each letter and a generous hard navy drop shadow. Filling the right two-thirds below the title: the forward part of a colossal mechanical sea-creature battleship's head facing left, built of clean riveted iron armor plates: a flared iron jaw along the bottom lined with a neat row of small dark gun turrets, and above the jaw, set into the armored brow of the head, one great round sensor eye glowing hot violet, armor plates stepping back into deep rust and navy shadow. Slicing diagonally up across the lower-left foreground, big and close in dynamic perspective, the polished steel-blue nose cone and swept wing root of a dart-shaped fighter with a bold blue stripe, its cyan canopy edge catching the violet eye-light and a long orange engine flare streaking off the bottom-left corner, the two machines on a collision course one frame before impact. Between them, a handful of small perfectly round glowing pink bullet orbs, each a simple circle with a bright white core and a dark rim, float like angry fireflies, few enough to read one by one. Clean lifted deep-navy starfield background with the faintest breath of violet nebula, never pure black. The only text in the image is \"SHMUP CUP\": no taglines, ratings, other words, numbers, watermark or signature anywhere.",
+    "negative": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+    "label": "Store capsule — square key art with the \"SHMUP CUP\" title, fighter screaming past a burning hull"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/capsule-1024x1024.png",
+      "width": 1024,
+      "height": 1024,
+      "derivation": "native 1024×1024, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

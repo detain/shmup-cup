@@ -1,15 +1,17 @@
 /**
- * Edge cases of `scripts/store-assets.mjs` (plan M2-18, `pnpm store:assets`), beyond
- * `store-assets.test.ts`:
+ * Edge cases of `scripts/store-assets.mjs` (plan M2-18, key art by the owner's dated §1.5 waiver of
+ * 2026-10-27, `pnpm store:assets`), beyond `store-assets.test.ts`:
  *
- * - the command line: `--check` passes on the committed icons, anything but `--check` alone or
- *   `--out DIR` prints the usage and exits 2 (without writing a file);
+ * - the command line: `--check` passes on the committed icons and records, anything but `--check`
+ *   alone or `--out DIR` prints the usage and exits 2 (without writing a file);
  * - `staleIcons` compares decoded pixels, not PNG bytes: an icon re-encoded by another encoder is
  *   fresh, one with a single pixel changed or of another size is stale — and only that one;
+ * - `staleRecords` compares the record texts: one byte of drift flags exactly that slug;
  * - `renderScreenshot` rejects every index outside the list;
  * - the listing agrees with the rest of the repository: its version is the widget's `config.xml`
- *   version, its app icon has the Tizen icon's size, each placeholder screenshot is captioned with a
- *   shipped zone's name; the store folder is ignored by git (generated, never committed).
+ *   version, its app icon has the Tizen icon's size, one image per key-art source names a current
+ *   product, each placeholder screenshot is captioned with a shipped zone's name; the store folder
+ *   is ignored by git (generated, never committed) and the provenance records are not.
  */
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -21,13 +23,18 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { decodePng, encodePng } from '../../scripts/assets/png.mjs';
 import {
   ICON_TARGETS,
+  KEY_ART,
+  KEY_ART_RECORD_DIR,
   SCREENSHOTS,
+  STORE_ART_SCHEMA,
   STORE_DIR,
-  STORE_LISTING,
+  STORE_TEXTS,
+  buildStoreListing,
   renderIcon,
   renderIcons,
   renderScreenshot,
   staleIcons,
+  staleRecords,
 } from '../../scripts/store-assets.mjs';
 
 /** The untyped pngjs module (no @types dependency), loaded through `require` — another encoder. */
@@ -99,7 +106,7 @@ function put(root: string, path: string, bytes: Uint8Array): void {
 }
 
 describe('scripts/store-assets — command line (M2-18 tests)', () => {
-  it('--check passes on the committed icons', () => {
+  it('--check passes on the committed icons and records', () => {
     const result = runScript(['--check']);
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
@@ -156,6 +163,41 @@ describe('scripts/store-assets — staleIcons compares pixels (M2-18 tests)', ()
   });
 });
 
+describe('scripts/store-assets — staleRecords compares texts (v20x-A2)', () => {
+  it('flags exactly the record whose text drifted by one byte', () => {
+    const root = temp('shmup-store-records-');
+    for (const entry of KEY_ART) {
+      const path = join(KEY_ART_RECORD_DIR, `${entry.slug}.art.json`);
+      const file = join(root, path);
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, readFileSync(join(repo, path), 'utf8'));
+    }
+    expect(staleRecords(root)).toEqual([]);
+    const victim = KEY_ART[1];
+    const file = join(root, KEY_ART_RECORD_DIR, `${victim.slug}.art.json`);
+    writeFileSync(file, `${readFileSync(file, 'utf8')}\n`); // one trailing newline
+    expect(staleRecords(root)).toEqual([victim.slug]);
+  });
+
+  it('records name their source and pin its bytes by SHA-256', () => {
+    for (const entry of KEY_ART) {
+      const record = JSON.parse(
+        readFileSync(join(repo, KEY_ART_RECORD_DIR, `${entry.slug}.art.json`), 'utf8'),
+      ) as {
+        schema: string;
+        source: { path: string; sha256: string };
+        waiver: { date: string; ruling: string };
+        products: { file: string }[];
+      };
+      expect(record.schema, entry.slug).toBe(STORE_ART_SCHEMA);
+      expect(record.source.path, entry.slug).toBe(entry.source);
+      expect(record.source.sha256, entry.slug).toMatch(/^[0-9a-f]{64}$/);
+      expect(record.waiver.date, entry.slug).toBe('2026-10-27');
+      expect(record.products.length, entry.slug).toBeGreaterThan(0);
+    }
+  });
+});
+
 describe('scripts/store-assets — rendering (M2-18 tests)', () => {
   it('rejects every screenshot index outside the list', () => {
     for (const index of [-1, SCREENSHOTS.length, 1.5, Number.NaN]) {
@@ -178,26 +220,31 @@ describe('scripts/store-assets — the listing agrees with the repository (M2-18
     const xml = readFileSync(join(repo, 'apps', 'tizen', 'public', 'config.xml'), 'utf8');
     const version = /<widget\b[^>]*\bversion="([^"]+)"/.exec(xml)?.[1];
     expect(version).toBe('2.0.0');
-    expect(STORE_LISTING.version).toBe(version);
+    expect(STORE_TEXTS.version).toBe(version);
     // The numeric core of the manifests' semver (2.0.0 → 2.0.0; a pre-release strips its
     // suffix, the release has none — R0-01).
     const root = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')) as {
       version: string;
     };
-    expect(root.version.split('-')[0]).toBe(STORE_LISTING.version);
+    expect(root.version.split('-')[0]).toBe(STORE_TEXTS.version);
   });
 
-  it('lists the app icon at the Tizen icon’s size and one 1920 × 1080 image per screenshot', () => {
+  it('lists the app icon at the Tizen icon’s size, one image per source, one per screenshot', () => {
+    const listing = buildStoreListing();
     const tv = ICON_TARGETS.find((t) => t.path.startsWith('apps/tizen/'));
-    const icon = STORE_LISTING.images.find((i) => i.use === 'app icon');
+    const icon = listing.images.find((i) => i.use === 'app icon');
     expect([icon?.width, icon?.height]).toEqual([tv?.width, tv?.height]);
-    const shots = STORE_LISTING.images.filter((i) => i.use === 'screenshot');
+    const shots = listing.images.filter((i) => i.use === 'screenshot');
     expect(shots).toHaveLength(SCREENSHOTS.length);
     for (const shot of shots) {
       expect([shot.width, shot.height]).toEqual([1920, 1080]);
       expect(shot.file).toMatch(/^screenshot-\d-1920x1080\.png$/);
     }
-    expect(new Set(STORE_LISTING.images.map((i) => i.file)).size).toBe(STORE_LISTING.images.length);
+    // One product per key-art source, and only the icon carries the Tizen size.
+    expect(listing.images).toHaveLength(KEY_ART.length + SCREENSHOTS.length);
+    expect(new Set(listing.images.map((i) => i.file)).size).toBe(listing.images.length);
+    const uses = new Set(listing.images.map((i) => i.use));
+    for (const entry of KEY_ART) expect(uses, entry.slug).toContain(entry.use);
   });
 
   it('captions each screenshot with a shipped zone’s name', () => {
@@ -213,16 +260,18 @@ describe('scripts/store-assets — the listing agrees with the repository (M2-18
     for (const shot of SCREENSHOTS) expect(names, shot.zone).toContain(shot.zone);
   });
 
-  it('writes the store folder where git ignores it', () => {
+  it('writes the store folder where git ignores it, and commits the records', () => {
     expect(STORE_DIR).toBe(join(repo, 'assets', 'generated', 'store'));
-    for (const file of ['listing.json', 'icon-512x423.png']) {
+    for (const file of ['listing.json', 'icon-512x423.png', 'capsule-1024x1024.png']) {
       const result = spawnSync('git', ['check-ignore', '-q', join(STORE_DIR, file)], { cwd: repo });
       expect(result.status, file).toBe(0);
     }
-    // The committed icons are not ignored.
+    // The committed icons and provenance records are not ignored.
     for (const target of ICON_TARGETS) {
       const result = spawnSync('git', ['check-ignore', '-q', target.path], { cwd: repo });
       expect(result.status, target.path).toBe(1);
     }
+    const record = join(KEY_ART_RECORD_DIR, 'app-icon.art.json');
+    expect(spawnSync('git', ['check-ignore', '-q', record], { cwd: repo }).status).toBe(1);
   });
 });

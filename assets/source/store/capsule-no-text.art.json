@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "capsule-no-text",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/promo/store-capsule/no-text/winner.png",
+    "sidecar": "art-prompts/v2/winners/promo/store-capsule/no-text/winner.json",
+    "sha256": "53af63e9c6a60d057e5183264ad2c5217fa7fe7d35d1b0d3fcdcf2799500b3b8",
+    "format": "png",
+    "width": 1024,
+    "height": 1024,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 21022,
+    "steps": 50,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T17:48:11.640Z",
+    "prompt": "Reference image 1 shows the chosen design of Store capsule. Edit the reference image: keep its exact design, palette, lighting and framing; change only what is described: SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square arcade graphic composition, subtle CRT scanline glow; wordless store capsule artwork designed for overlaid logo type, ultra-detailed clean vector shapes with pixel-art texture accents. An instant-read duel pictogram rendered with maximum craft: on the left edge of the square, a small perfect steel-blue dart fighter in profile — bold blue stripe, cyan canopy bead, orange engine flare stretched straight back off-frame — its whole silhouette crisp against open space. On the right edge, its answer: the frontal hemisphere of a mechanical fish-battleship's open mouth, drawn in concentric rings of dark armor — outer lip of rust-violet plates, mid-ring of barnacle turrets with tiny magenta lights, and at the dead center of that ring a blinding pink-white core of charge-up light, the whole mouth a target reticle that is also a gun that is also a face. Between the two, exactly three pink bright-cored bullets travel left-to-right in a slight arc, the only things connecting the halves, evenly spaced like an ellipsis. The background is the calmest lifted deep-navy in the game, one hand of faint violet nebula behind the mouth so it seems to breathe, sparse cold stars behind the fighter so it seems alone. Composition is pure grammar — small bright thing, three dots, huge hungry thing — legible at forty pixels square and gorgeous at full size. Never pure black. Absolutely no text, no letters, no logo, no UI anywhere: the entire upper center third is deliberately quiet negative space waiting for type to be placed by a human designer. No text anywhere.",
+    "negative": "photorealistic, 3d render, text, letters, numbers, logo, watermark, blurry, busy background, many bullets, explosions, vertical layout, fighter front view, mouth without center glow, pure black",
+    "label": "Store capsule without lettering, for text-over layouts"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/capsule-no-text-1024x1024.png",
+      "width": 1024,
+      "height": 1024,
+      "derivation": "native 1024×1024, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}

@@ -29,7 +29,10 @@ The game itself is ready to be packaged: `pnpm --filter @shmup/tizen build` prod
       §8 decision 1, R6-D4): the game ships free and open-source (MPL-2.0), which the FLUX
       Non-Commercial licences allow, and **a BFL commercial licence (bfl.ai/licensing) must be in
       place before any paid or commercial distribution** — the monetization row of
-      [`outstanding-work.md`](outstanding-work.md) carries it. Fill in the
+      [`outstanding-work.md`](outstanding-work.md) carries it. The same is true of the icons that ship
+      inside the widget and the desktop/webOS bundles, and of the store key art: chosen FLUX.2-dev
+      stills under the owner's dated §1.5 waiver of 2026-10-27 (ruling "a2", store and icon
+      surfaces only), recorded in `assets/source/store/` — see **Store assets** below. Fill in the
       [AI-content disclosure](#ai-content-disclosure-every-store) below for every store.
 - [ ] The **author certificate** is backed up. Every future update needs the same one; losing it
       means the app cannot be updated ever again.
@@ -54,10 +57,18 @@ Run these on both monitors, on a **release** build (`pnpm --filter @shmup/tizen 
 - [ ] **TV Seller Office account.** A *Public Seller* account can sell in the **US only**; other
       regions need a *Partner Seller* contract with Samsung.
 - [ ] **App registration**: name, category, age rating, region, pricing.
-- [ ] **Store assets.** `pnpm store:assets` writes placeholders into `assets/generated/store/`: the
-      icon and four 1920 × 1080 screenshots captioned `PLACEHOLDER`, plus `listing.json` with the
-      texts — drawn from the **v2** art since R4-05.E5 (the build moved off `artScale: 1`, closing
-      the last RR-3 hold-out, so the placeholders wear the game's own remaster).
+- [ ] **Store assets.** `pnpm store:assets` derives the store surfaces from the art round's chosen
+      winners and writes them into `assets/generated/store/`: sixteen key-art products — the app
+      icon's store copy, the capsule (with and without lettering), the website hero, the wide
+      banner and the eleven zone posters at half size — plus four 1920 × 1080 screenshots still
+      captioned `PLACEHOLDER` (atlas-drawn, as in-game law asks, until real captures come off the
+      monitors), and `listing.json` sizing every file from the decoded sources. The committed
+      icons (`apps/tizen/public/icon.png` 512 × 423, `apps/electron/build/icon.png` 512 × 512,
+      `apps/webos/public/icon.png` 80 × 80 and `largeIcon.png` 130 × 130) are the same derivation;
+      `node scripts/store-assets.mjs --check` keeps every one byte-exact against its pinned source.
+      The key art is AI-made (FLUX.2-dev winners) under the owner's dated §1.5 waiver of 2026-10-27
+      (ruling "a2") — store and icon surfaces only — with a SHA-256-pinned `.art.json` record per
+      source in `assets/source/store/` and `LICENSES.md` beside them.
       **Check the sizes against the Seller Office's current requirements before you upload
       them** — they could not be verified from here, and they are written down in
       `scripts/store-assets.mjs` as an assumption, not as a fact. Replace the screenshots with real
@@ -90,6 +101,11 @@ rules were read on **2026-10-17**; check them again at submission.
   resolution, keyed, quantised to its palettes and cleaned up by hand; 142 committed `.art.json`
   records trace every one to its sheet, prompt and seed, and the packer's derived `@flash`, `@p2`
   and `@palette` siblings carry the same origin (`node scripts/art-origins.mjs` is the report).
+  The store and icon surfaces are AI-made too: the icon, capsule, hero, banner and eleven zone
+  posters are the art round's chosen FLUX.2-dev stills, resampled by `pnpm store:assets` under the
+  owner's dated §1.5 waiver of 2026-10-27 (ruling "a2") with sixteen `.art.json` records pinning
+  each source's SHA-256, prompt and seed in `assets/source/store/` — they are not in the 231/619
+  sprite count above, which is the atlas only.
   The remaining 388 sprites — and the font — are drawn by the repo's own generators, pixel maps
   and font sources (itch.io's guideline says self-contained algorithms "don't require the use of
   generative AI tags"). The FLUX licence position was ruled by the owner on **2026-10-23** (open
@@ -119,7 +135,9 @@ rules were read on **2026-10-17**; check them again at submission.
 > of an AI image model (FLUX.2-dev), then reduced to the game's resolution, quantised to its
 > palettes and cleaned up by hand — each carries a committed provenance record — and the rest of
 > the art, every other sprite, tile and the font, is drawn by the game's own committed programs
-> and pixel maps. The Spanish and Japanese translations, much of the in-game text and the
+> and pixel maps. The store icon and key art (capsule, banners, zone posters) are AI-made image
+> art too (FLUX.2-dev stills chosen in the same art round, each with a committed provenance
+> record). The Spanish and Japanese translations, much of the in-game text and the
 > placeholder music and sound data were written with the help of an AI assistant. [Trailer clips
 > marked "machine generated" were made with AI video models.] The game does not generate any
 > content while it runs.

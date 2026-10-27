@@ -1,0 +1,39 @@
+{
+  "schema": "shmup-store-art@1",
+  "slug": "website-hero",
+  "origin": "ai-assisted",
+  "waiver": {
+    "date": "2026-10-27",
+    "ruling": "a2",
+    "scope": "store and icon surfaces only — every in-game law of plan §1.5 stands untouched",
+    "quote": "the owner's a2 pick = dated §1.5 waiver for STORE/ICON surfaces ONLY (in-game atlas laws untouched)"
+  },
+  "source": {
+    "path": "art-prompts/v2/winners/promo/website-hero/winner.png",
+    "sidecar": "art-prompts/v2/winners/promo/website-hero/winner.json",
+    "sha256": "d424dfa7ccad4fc526fb1f3846e311f4a33d45aed3801925c29378c7cc2ed139",
+    "format": "png",
+    "width": 1536,
+    "height": 640,
+    "modelKey": "flux2",
+    "servedModel": "black-forest-labs/FLUX.2-dev",
+    "weights": "black-forest-labs/FLUX.2-dev",
+    "licence": "flux-nc-2.1",
+    "seed": 1643850372,
+    "steps": 50,
+    "guidance": 3.5,
+    "generatedAt": "2026-10-17T00:51:35.987Z",
+    "prompt": "Flagship key art for a game homepage, an ultra-wide horizontal side-scrolling arcade shooter panorama in SNES-era 16-bit pixel art inspired rendering with bold dark outlines, a saturated limited palette, clean vector shapes with pixel-art texture accents and a subtle CRT scanline glow, set in lifted deep-navy space that is never pure black. Left third: a small steel-blue dart fighter with a bold blue hull stripe, a glowing cyan canopy and two long orange engine ribbons flies hard to the right, nose pointing right, firing a tight fan of thin bright cyan-white player shots ahead of it. The upper-left sky above the fighter is calm and empty, just a few faint stars, left clear for a headline. Middle third: the sky is a lattice of crossing enemy fire, curving streams of pink bead bullets, fans of round red orbs and slow violet spiral chains, every bullet a bright core with a dark rim, with narrow gaps the fighter's shots thread through. Right two-fifths: the looming broadside of a colossal mechanical fish-shaped fortress-ship facing left toward the fighter, so huge its hull runs off the top, right and bottom edges of the picture; riveted gunmetal and rust-violet armor plates, a vast hinged jaw of plated teeth hanging open like a harbor gate, a dark red furnace glow building deep in its throat, rows of small turret pods and amber port lights along its seams, one great amber eye. Far background: the curved rim of a blue planet along the bottom edge with tiny dark fortress spires on it, and high up near the boss's shadow the small silhouette of a pale manta-winged second fighter climbing in for scale. Committed cyan-and-orange hero colors against the enemy's rust-violet mass, legible at thumbnail size and rich at full width. No text, no letters, no logo, no UI, no score.",
+    "negative": "photorealistic, 3d render, text, logo, watermark, UI, health bars, title lettering, blurry, vertical composition, ship on the right, boss smaller than ship, cluttered upper left corner, dark unreadable silhouette",
+    "label": "Website hero — fighter vs the Ark across a full bullet sky (ultra-wide)"
+  },
+  "generatedBy": "scripts/store-assets.mjs (pnpm store:assets)",
+  "products": [
+    {
+      "file": "assets/generated/store/website-hero-1536x640.png",
+      "width": 1536,
+      "height": 640,
+      "derivation": "native 1536×640, median-cut to ≤ 256 colours, written as an indexed PNG-8"
+    }
+  ]
+}
