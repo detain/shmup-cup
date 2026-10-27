@@ -55,7 +55,12 @@ import {
   OPTION_SPACING,
   OPTION_SPRITE,
 } from '../../src/options/index.js';
-import { createPlayer, setPlayerState, spawnPlayer } from '../../src/player/index.js';
+import {
+  VERTICAL_RAMP_TICKS,
+  createPlayer,
+  setPlayerState,
+  spawnPlayer,
+} from '../../src/player/index.js';
 import { createRng } from '../../src/rng/index.js';
 import {
   DEFAULT_WEAPON_PRESET,
@@ -1806,6 +1811,9 @@ describe('core/weapons edge cases — Options in the World', () => {
       const speed = w.ship.speeds[level];
       // As many moving ticks as fit above the bottom margin (at most 60).
       const n = Math.min(60, Math.floor(170 / speed));
+      // The ramp charged (w15-MOVE): this test pins the recorded-step spacing at the exact
+      // full-speed step, and the ease-in of the vertical axis is the player suite's subject.
+      w.players[0].verticalTicks = VERTICAL_RAMP_TICKS;
       run(w, n, holding(Action.Down));
       for (let k = 0; k < 4; k++) {
         // Reached options are 12 steps apart; the others still sit on the reset entry.

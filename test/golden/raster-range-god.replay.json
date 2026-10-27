@@ -67,23 +67,23 @@
   "ticks": 3630,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAowSBgAQBAR8ACIGABAEAAYGABAEBCACoEsCAgAIBQAkA+QQ=",
+    "ACiCgAgBAgkAngSBgAQBAAGCgAgBAgIAAYGABAEBCgABgoAIAQIiAJcIgYAEAQABgoAIAQIEAAGCgAgBAhsA7g4=",
     "AK4c"
   ],
   "hashes": [
-    582021009,
-    3458757122,
-    2080761901,
-    1365333848,
-    604963786,
-    3034362969
+    919779646,
+    3242121312,
+    3952394974,
+    3418098416,
+    933211481,
+    1598489310
   ],
-  "finalHash": 3367231557,
+  "finalHash": 312223090,
   "description": "RASTER RANGE with god mode (M2-08): the 4-way bot flies the raster-effect dev stage — its wave, floor, haze and palette cycle are presentation only",
   "expected": {
     "status": "stageClear",
     "ticks": 3630,
-    "score": 1100,
+    "score": 0,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

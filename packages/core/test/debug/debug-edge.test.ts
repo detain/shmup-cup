@@ -86,6 +86,9 @@ function referenceHash(w: World): number {
     word(p.hitCause);
     num(p.hitTick);
     num(p.hits);
+    // w15-MOVE appended the vertical ease-in ramp counter (mirrors mixPlayer's order).
+    num(p.verticalTicks);
+    num(p.verticalIdle);
   }
   for (const entry of w.pools.entries) {
     const count = entry.pool.count;
@@ -586,6 +589,8 @@ describe('core/debug hashWorld — what it ignores, odd values, purity', () => {
       bank: a.players[0].bank,
       moving: a.players[0].moving,
       stateTicks: a.players[0].stateTicks,
+      verticalTicks: a.players[0].verticalTicks, // hashed since w15-MOVE
+      verticalIdle: a.players[0].verticalIdle, // ...and so its grace clock
     });
     // The option trail recorded B's movement too (M1-10).
     const ga = a.weapons.options[0];

@@ -246,8 +246,10 @@ describe('core/world edge cases — players', () => {
     run(w, input, 40);
     expect([p1.state, p2.state]).toEqual(['alive', 'alive']);
     run(w, input, 10, Action.Up, Action.Down);
-    expect(p1.y).toBe(PLAYFIELD_H / 2 - 15);
-    expect(p2.y).toBe(PLAYFIELD_H / 2 + 15);
+    // Both start from standstill, so the 10 first vertical ticks ease in (w15-MOVE):
+    // 1.5 × Σ ease(c=0..9) = 1.5 × 5.375 = 8.0625 each way; the reaction stays symmetric.
+    expect(p1.y).toBeCloseTo(PLAYFIELD_H / 2 - 1.5 * 5.375, 9);
+    expect(p2.y).toBeCloseTo(PLAYFIELD_H / 2 + 1.5 * 5.375, 9);
     expect([p1.x, p2.x]).toEqual([ENTER_END_X, ENTER_END_X]);
     // Both drawn, slot order, each with its own bank frame (up = 1, down = 2).
     expect(w.playerBatch.count).toBe(2);

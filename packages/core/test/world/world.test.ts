@@ -15,7 +15,13 @@ import {
   createInputSnapshot,
   type InputSnapshot,
 } from '../../src/input/index.js';
-import { DIAGONAL_SCALE, ENTER_END_X, ENTER_START_X, SPAWN_Y } from '../../src/player/index.js';
+import {
+  DIAGONAL_SCALE,
+  ENTER_END_X,
+  ENTER_START_X,
+  SPAWN_Y,
+  VERTICAL_START_SCALE,
+} from '../../src/player/index.js';
 import { createSoaPool } from '../../src/pools/index.js';
 import { LayerId, SpriteFlag } from '../../src/presentation/index.js';
 import { createRng } from '../../src/rng/index.js';
@@ -217,7 +223,9 @@ describe('core/world', () => {
     ]);
     run(w, input, Action.Down | Action.Right, 1);
     expect(w.players[0].x).toBe(ENTER_END_X + 1.5 * DIAGONAL_SCALE);
-    expect(w.players[0].y).toBe(SPAWN_Y + 1.5 * DIAGONAL_SCALE);
+    // The w15-MOVE ease-in scales the first controllable vertical tick (verticalTicks starts 0
+    // at the spawn); the horizontal axis is the full normalised diagonal step.
+    expect(w.players[0].y).toBe(SPAWN_Y + 1.5 * DIAGONAL_SCALE * VERTICAL_START_SCALE);
     expect(w.intents[0].moveY).toBe(1);
     expect(w.players[0].device).toBe('none'); // the snapshot's device kind
     // The mirror batch follows, with the banking-down frame.

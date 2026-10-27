@@ -68,21 +68,21 @@
       "blackHole": false
     }
   },
-  "ticks": 1285,
+  "ticks": 1200,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAqQOBgAQBAQIA1QKCgAgBAgkAFIGABAEBAgCHAYKACAECCAASgYAEAQECAFqCgAgBAgIAtgE=",
-    "AIUK"
+    "ACiCgAgBAgUApgOBgAQBAQMA3wKCgAgBAg4ACoGABAEBAgCMAYKACAECDgDCAQ==",
+    "ALAJ"
   ],
   "hashes": [
-    1822222608,
-    156818448
+    2932038869,
+    2675450773
   ],
-  "finalHash": 3306938851,
+  "finalHash": 2675450773,
   "description": "HALCYON BULWARK with an Extra Edit loadout (M3-01): the Hawk Wind rising over the middle and falling below it, god mode",
   "expected": {
     "status": "stageClear",
-    "ticks": 1285,
+    "ticks": 1200,
     "score": 39060,
     "lives": 4,
     "deathTicks": [],

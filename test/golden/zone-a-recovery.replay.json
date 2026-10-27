@@ -64,28 +64,27 @@
       "blackHole": false
     }
   },
-  "ticks": 1889,
+  "ticks": 1647,
   "hashInterval": 600,
   "inputs": [
-    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQII",
-    "AOEO"
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIG",
+    "AO8M"
   ],
   "hashes": [
-    2772914911,
-    583556710,
-    2528598919
+    3297902932,
+    3473611372
   ],
-  "finalHash": 1736443889,
+  "finalHash": 978094023,
   "description": "a weaving pilot with the full loadout and option recovery (M3-01): each death drops the Options it loses, drifting to be caught again",
   "expected": {
     "status": "gameOver",
-    "ticks": 1889,
+    "ticks": 1647,
     "score": 3000,
     "lives": 0,
     "deathTicks": [
-      1117,
-      1399,
-      1796
+      957,
+      1239,
+      1554
     ],
     "bossDefeated": false
   }

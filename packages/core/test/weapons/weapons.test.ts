@@ -30,7 +30,13 @@ import {
   type InputSnapshot,
 } from '../../src/input/index.js';
 import { OPTION_SPACING } from '../../src/options/index.js';
-import { ENTER_END_X, ENTER_START_X, SPAWN_Y, spawnPlayer } from '../../src/player/index.js';
+import {
+  ENTER_END_X,
+  ENTER_START_X,
+  SPAWN_Y,
+  VERTICAL_RAMP_TICKS,
+  spawnPlayer,
+} from '../../src/player/index.js';
 import { LayerId } from '../../src/presentation/index.js';
 import { createRng } from '../../src/rng/index.js';
 import {
@@ -446,6 +452,10 @@ describe('core/weapons', () => {
     }
     const input = createInputSnapshot();
     commitPlayerInput(input.players[0], Action.Down);
+    // This test pins the trail spacings at the exact full-speed step (w15-MOVE's vertical
+    // ease-in is the player suite's subject): start the spread run with the ramp charged, as
+    // if the ship had been flying vertically — every one of the 50 steps is then a full step.
+    ship.verticalTicks = VERTICAL_RAMP_TICKS;
     run(w, 50, input);
     const speed = w.ship.speeds[0];
     for (let k = 0; k < 4; k++) {

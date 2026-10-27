@@ -67,24 +67,24 @@
   "ticks": 3615,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA5wSCgAgBAgYAkQKCgAgBAgUAfYKACAECBQBMgYAEAQESAMMIgYAEAQEFAEeCgAgBAgwAvgKCgAgBAgsA/QOBgAQBAQUAggGBgAQBAQwAlAI=",
+    "ACiCgAgBAgUA5ASCgAgBAgsAggKCgAgBAgUAAYGABAEBBAACgoAIAQIIAGCCgAgBAgsAXIGABAEBHQCcBoKACAECCgCRAoGABAEBHQDqBYKACAECLQDJAYGABAEBHgCsAg==",
     "AJ8c"
   ],
   "hashes": [
-    1645727650,
-    2009114801,
-    192006010,
-    2049307506,
-    1639711305,
-    1279507055
+    3982602920,
+    1439489384,
+    800614196,
+    3449683569,
+    146273298,
+    2988925130
   ],
-  "finalHash": 904451765,
+  "finalHash": 3666746796,
   "description": "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13, v2 layout R5-10): the 5,400-px cache through three cube rushes and two cube walls, its carriers' bonus capsules collected to the end",
   "expected": {
     "status": "stageClear",
     "ticks": 3615,
-    "score": 18410,
-    "lives": 4,
+    "score": 21905,
+    "lives": 5,
     "deathTicks": [],
     "bossDefeated": false
   }

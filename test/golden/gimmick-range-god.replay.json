@@ -67,21 +67,21 @@
   "ticks": 2906,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAkwSCgAgBAhUAU4KACAECBwABgYAEAQEFAAGCgAgBAAGBgAQBAAGCgAgBAAGBgAQBAQIAAoGABAEBCgATgoAIAQIDAAGBgAQBAQMA3AGCgAgBAB+BgAQBAOoCgoAIAQIKAEOBgAQBAR8ALYKACAECHwALwICAAgFACQDUA4iAIAEA6QKBgAQBAQcA/AKCgAgBAHU=",
+    "ACiCgAgBAgkAjgSCgAgBAiAASIKACAECBwABgYAEAQEFAAGCgAgBAAGBgAQBAAGCgAgBAAGBgAQBAQIAAYKACAEAAYGABAEBDQAPgoAIAQIDAAGBgAQBAQMA2gGCgAgBAI0DgoAIAQIRADuBgAQBAS0AH4KACAECKQACwICAAgFACYKACAECAgDQA4iAIAEAGYGABAEBDQDGBYKACAEAAYKACAEAcw==",
     "ANoW"
   ],
   "hashes": [
-    913101154,
-    328457905,
-    15109227,
-    8527176
+    229668353,
+    2956431495,
+    997775554,
+    3345584217
   ],
-  "finalHash": 1264835747,
+  "finalHash": 829791801,
   "description": "GIMMICK RANGE with god mode (M2-07): the high branch, moving blocks, suction, a tentacle, the cube rush",
   "expected": {
     "status": "stageClear",
     "ticks": 2906,
-    "score": 1830,
+    "score": 1780,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

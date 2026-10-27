@@ -500,6 +500,10 @@ function mixPlayer(p: World['players'][number]): void {
   mixWord(p.hitCause);
   mixNumber(p.hitTick);
   mixNumber(p.hits);
+  // w15-MOVE appended the vertical ease-in ramp counter and its grace clock (appended, like every
+  // earlier field).
+  mixNumber(p.verticalTicks);
+  mixNumber(p.verticalIdle);
 }
 
 /**

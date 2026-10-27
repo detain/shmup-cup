@@ -64,27 +64,27 @@
       "blackHole": false
     }
   },
-  "ticks": 1672,
+  "ticks": 1686,
   "hashInterval": 600,
   "inputs": [
-    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIf",
-    "AIgN"
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEF",
+    "AJYN"
   ],
   "hashes": [
-    321475785,
-    1334312095
+    3143625644,
+    3892425274
   ],
-  "finalHash": 142317284,
+  "finalHash": 1254135246,
   "description": "GIMMICK RANGE, a weaving pilot that never dodges, Arcade penalty (M2-07): checkpoint restarts roll the terrain back",
   "expected": {
     "status": "gameOver",
-    "ticks": 1672,
-    "score": 850,
+    "ticks": 1686,
+    "score": 310,
     "lives": 0,
     "deathTicks": [
-      459,
-      1027,
-      1579
+      470,
+      1032,
+      1593
     ],
     "bossDefeated": false
   }

@@ -19,6 +19,8 @@ import {
   ENTER_START_X,
   PLAYER_STATES,
   SPAWN_Y,
+  VERTICAL_RAMP_TICKS,
+  VERTICAL_START_SCALE,
   createPlayer,
   createPlayerIntent,
   playerBankFrame,
@@ -73,19 +75,43 @@ function hold(intent: PlayerIntent, held: number, device: InputDeviceKind = 'key
   readPlayerIntent(intent, { held, pressed: 0, released: 0, device });
 }
 
+/**
+ * Walks the vertical ease-in ramp (w15-MOVE) to its cap: 60 up ticks, each immediately undone by
+ * the test so the height never reaches a margin — the charge counts the movement, the teleport
+ * only hides its cost. After it the ship steps vertically at the full speed.
+ *
+ * @param ship - The ship (alive).
+ * @param intent - Reused intent (held up during the walk, neutralised at the end).
+ * @param camera - The static camera.
+ */
+function saturateVertical(ship: PlayerShip, intent: PlayerIntent, camera: TestCamera): void {
+  hold(intent, Action.Up);
+  for (let t = 0; t < VERTICAL_RAMP_TICKS; t++) {
+    const y0 = ship.y;
+    updatePlayer(ship, SPEC, intent, camera);
+    ship.y = y0;
+  }
+  hold(intent, 0);
+}
+
 describe('core/player edge cases — movement', () => {
-  it('SOCD: a cancelled axis leaves a straight move at full speed, not a scaled diagonal', () => {
+  it('SOCD: a cancelled axis leaves a straight move (not a scaled diagonal), vertical eased', () => {
     const { ship, camera, intent } = aliveShip();
     hold(intent, Action.Left | Action.Right | Action.Up);
     updatePlayer(ship, SPEC, intent, camera);
-    expect([ship.x, ship.y]).toEqual([150, 100 - 1.5]);
+    // Full speed, not speed × DIAGONAL_SCALE — but the w15-MOVE ease-in scales the first tick.
+    expect([ship.x, ship.y]).toEqual([150, 100 - 1.5 * VERTICAL_START_SCALE]);
     hold(intent, Action.Up | Action.Down | Action.Right);
     updatePlayer(ship, SPEC, intent, camera);
-    expect([ship.x, ship.y]).toEqual([150 + 1.5, 100 - 1.5]);
+    expect([ship.x, ship.y]).toEqual([150 + 1.5, 100 - 1.5 * VERTICAL_START_SCALE]);
     // All four arrows: no movement and not "moving" (the option trail does not record).
     hold(intent, Action.Up | Action.Down | Action.Left | Action.Right);
     updatePlayer(ship, SPEC, intent, camera);
-    expect([ship.x, ship.y, ship.moving]).toEqual([150 + 1.5, 100 - 1.5, false]);
+    expect([ship.x, ship.y, ship.moving]).toEqual([
+      150 + 1.5,
+      100 - 1.5 * VERTICAL_START_SCALE,
+      false,
+    ]);
   });
 
   it('a diagonal step never out-runs the straight speed (D4), at every speed level', () => {
@@ -99,10 +125,13 @@ describe('core/player edge cases — movement', () => {
       ]) {
         const { ship, camera, intent } = aliveShip(200, 100);
         ship.speedLevel = level;
+        saturateVertical(ship, intent, camera); // the ramp must be full to measure the diagonal
+        const x0 = ship.x;
+        const y0 = ship.y;
         hold(intent, held);
         updatePlayer(ship, SPEC, intent, camera);
-        const dx = ship.x - 200;
-        const dy = ship.y - 100;
+        const dx = ship.x - x0;
+        const dy = ship.y - y0;
         expect(Math.abs(dx)).toBeCloseTo(speed * DIAGONAL_SCALE, 12);
         expect(Math.abs(dy)).toBeCloseTo(speed * DIAGONAL_SCALE, 12);
         const step = Math.sqrt(dx * dx + dy * dy);
@@ -343,6 +372,8 @@ describe('core/player edge cases — fly-in and state', () => {
       speedLevel: 0,
       invulnTicks: 0,
       bank: 0,
+      verticalTicks: 0,
+      verticalIdle: 0,
       device: 'none',
       lives: 5,
       moving: false,

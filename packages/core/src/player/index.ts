@@ -20,6 +20,17 @@
  *   8-way devices never out-dodge the 4-way remote.
  * - Speed = `spec.speeds[speedLevel]` px/tick (decision D3, `content/player/*.player.json`); no
  *   inertia — the ship stops the tick the input stops.
+ * - Vertical movement **eases in** (w15-MOVE, owner improvement "start off a bit slower … after
+ *   maybe a second go full speed"): a vertical move started from a stopped vy begins at
+ *   {@link VERTICAL_START_SCALE} of the axis speed and rises linearly to full over
+ *   {@link VERTICAL_RAMP_TICKS} ticks of actual vertical movement. The ramp counts displacement,
+ *   not intent, and a tick that moved the ship nowhere (idle, held straight into a margin, or a
+ *   pure scroll ride) only starts the grace clock: a standstill under {@link VERTICAL_HOLD_TICKS}
+ *   is a dodge tap and the charge holds — quick-release steering and the 4-way zig-zag diagonal
+ *   (D4) stay full-speed, as on every tick moving only on the other axis — while a standstill at
+ *   or past the grace was "not moving at all", so the next push eases in again, off a wall as in
+ *   the open. The horizontal axis never ramps (the ask named vertical fine-tuning; lateral
+ *   reaction stays exact).
  * - The ship rides along with the camera (`x += camera.dx`, `y += camera.dy` before input), then
  *   is clamped to the camera view minus `spec.margins` (world-space coordinates, D26).
  * - The bank frame follows the vertical intent, one bank step per tick up to `spec.bankFrames`.
@@ -76,6 +87,7 @@
  * {@link readPlayerIntent}, {@link spawnPlayer}, {@link setPlayerState}, {@link updatePlayer},
  * {@link playerBankFrame}, {@link resolvePlayerShip}, {@link DEFAULT_PLAYER_SHIP},
  * {@link DIAGONAL_SCALE}, {@link ENTER_START_X}, {@link ENTER_END_X}, {@link SPAWN_Y},
+ * {@link VERTICAL_RAMP_TICKS}, {@link VERTICAL_START_SCALE}, {@link VERTICAL_HOLD_TICKS},
  * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}, {@link killPlayer},
  * {@link respawnPlayer}, {@link playerOut}, {@link PLAYER_DYING_TICKS}, {@link PLAYER_DEAD_TICKS};
  * the fly-out (M2-10) {@link flyOutPlayer}, {@link LEAVE_ACCELERATION}, {@link LEAVE_MAX_SPEED},
@@ -163,6 +175,32 @@ export const LEAVE_MAX_SPEED = 8 * WORLD_SCALE;
  */
 export const LEAVE_END_X = PLAYFIELD_W + 32 * WORLD_SCALE;
 
+/**
+ * Ticks of actual vertical movement for the vertical ease-in ({@link updatePlayer}) to reach full
+ * speed from {@link VERTICAL_START_SCALE} (w15-MOVE, owner improvement). 60 ticks = one second —
+ * the owner's "after maybe a second go full speed". A count of ticks, never a world distance, so
+ * it does not scale with {@link WORLD_SCALE}.
+ */
+export const VERTICAL_RAMP_TICKS = 60;
+
+/**
+ * The fraction of the vertical step the ship takes on the tick control starts moving it vertically
+ * from a stop (w15-MOVE): the first tick moves at half speed, and the ramp adds an equal share of
+ * the remaining half every tick up to full at {@link VERTICAL_RAMP_TICKS}. A dimensionless ratio,
+ * so it scales neither with the world nor with the frame.
+ */
+export const VERTICAL_START_SCALE = 0.5;
+
+/**
+ * How many completely stopped ticks let the vertical ease-in reset (w15-MOVE).
+ *
+ * A standstill shorter than this is a dodge tap — the ship keeps the ramp it charged, so
+ * quick-release steering stays full-speed and the 4-way zig-zag diagonal walk (D4) keeps its
+ * parity. Once the ship has moved nowhere at all for this many ticks it was genuinely "not
+ * moving", and the next vertical push eases in from `VERTICAL_START_SCALE` again.
+ */
+export const VERTICAL_HOLD_TICKS = 20;
+
 /** Runtime state of one player ship. */
 export interface PlayerShip {
   /** 0 = player 1, 1 = player 2. */
@@ -189,6 +227,19 @@ export interface PlayerShip {
   invulnTicks: number;
   /** Bank (tilt) step: negative = banking up, positive = down, 0 = level. */
   bank: number;
+  /**
+   * The vertical ease-in ramp (w15-MOVE): the ticks of actual vertical input movement counted
+   * since the ship last made no input move at all, capped at {@link VERTICAL_RAMP_TICKS} — see
+   * {@link VERTICAL_START_SCALE} and the module's movement rules. Reset by {@link spawnPlayer}
+   * and {@link killPlayer}; the ship's only velocity-shaped state.
+   */
+  verticalTicks: number;
+  /**
+   * Ticks of complete standstill behind the vertical ramp (w15-MOVE): while it stays under
+   * {@link VERTICAL_HOLD_TICKS} the ship only tapped its controls and keeps its ramp charge;
+   * at the grace the ship stands still and the ramp resets — see {@link updatePlayer}.
+   */
+  verticalIdle: number;
   /** Device that last produced input for this player (prompts and glyphs). */
   device: InputDeviceKind;
   /** Ships left including the one in play ({@link killPlayer} takes one; HUD: `lives − 1`). */
@@ -351,6 +402,8 @@ export function createPlayer(slot: number, lives: number, invincible = false): P
     speedLevel: 0,
     invulnTicks: 0,
     bank: 0,
+    verticalTicks: 0,
+    verticalIdle: 0,
     device: 'none',
     lives,
     moving: false,
@@ -443,6 +496,8 @@ export function killPlayer(ship: PlayerShip): number {
   ship.invulnTicks = 0;
   ship.bank = 0;
   ship.moving = false;
+  ship.verticalTicks = 0;
+  ship.verticalIdle = 0;
   return ship.lives;
 }
 
@@ -551,6 +606,8 @@ export function spawnPlayer(
   ship.y = camera.y + SPAWN_Y;
   ship.bank = 0;
   ship.moving = false;
+  ship.verticalTicks = 0;
+  ship.verticalIdle = 0;
   setPlayerState(ship, state);
 }
 
@@ -573,6 +630,8 @@ export function flyOutPlayer(ship: PlayerShip): void {
   ship.invulnTicks = 0;
   ship.bank = 0;
   ship.moving = false;
+  ship.verticalTicks = 0;
+  ship.verticalIdle = 0;
 }
 
 /**
@@ -658,6 +717,10 @@ export function updatePlayer(
   ship.y += camera.dy;
   const mx = intent.moveX;
   const my = intent.moveY;
+  // The ship's screen position after the ride: the ramp's motion test is relative to it, so a
+  // scrolling stage never counts as the ship's own vertical movement (w15-MOVE).
+  const xRidden = ship.x;
+  const yRidden = ship.y;
   if (mx !== 0 || my !== 0) {
     const speeds = spec.speeds;
     const top = speeds.length - 1;
@@ -665,8 +728,14 @@ export function updatePlayer(
     // Always a product (× 1 is exact): a branch returning the bare array element would merge
     // a tagged value with a computed double, which V8 boxes on diagonal ticks (an allocation).
     const speed = speeds[level] * (mx !== 0 && my !== 0 ? DIAGONAL_SCALE : 1);
+    // The vertical ease-in (w15-MOVE): VERTICAL_START_SCALE at the ramp's start, an equal share
+    // of the rest every counted tick, and an exact 1 at the cap — a saturated ramp is bit-exactly
+    // the step without it, and the factor rides the same always-a-product path as the diagonal.
+    const ease =
+      VERTICAL_START_SCALE +
+      (1 - VERTICAL_START_SCALE) * (ship.verticalTicks / VERTICAL_RAMP_TICKS);
     ship.x += mx * speed;
-    ship.y += my * speed;
+    ship.y += my * speed * ease;
     ship.moving = true;
   }
 
@@ -680,6 +749,25 @@ export function updatePlayer(
   else if (ship.x > maxX) ship.x = maxX;
   if (ship.y < minY) ship.y = minY;
   else if (ship.y > maxY) ship.y = maxY;
+
+  // The ramp's transition (w15-MOVE): it counts ticks the input really moved the ship vertically.
+  // A tick that moved the ship nowhere at all (no input, a direction held straight into a wall or
+  // a corner, or a pure scroll ride) only starts the grace clock — a standstill under
+  // VERTICAL_HOLD_TICKS is a dodge tap and the charge holds (quick-release steering keeps full
+  // speed, and the 4-way zig-zag diagonal of D4 still walks its vertical axis to full, here and on
+  // every horizontal-only flight tick); a standstill at or past the grace was "not moving at all",
+  // so the next vertical push eases in again — reversing off a stop, at a wall as in the open.
+  // A mid-air reversal keeps the ramp it had (vy was not near zero); the bank follows the intent,
+  // untouched.
+  if (my !== 0 && ship.y !== yRidden) {
+    if (ship.verticalTicks < VERTICAL_RAMP_TICKS) ship.verticalTicks++;
+    ship.verticalIdle = 0;
+  } else if (ship.x !== xRidden || ship.y !== yRidden) {
+    ship.verticalIdle = 0; // horizontal flight holds the charge
+  } else {
+    if (ship.verticalIdle < VERTICAL_HOLD_TICKS) ship.verticalIdle++;
+    if (ship.verticalIdle >= VERTICAL_HOLD_TICKS) ship.verticalTicks = 0;
+  }
 
   // Bank one step per tick towards the vertical intent.
   const target = my * spec.bankFrames;

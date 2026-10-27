@@ -67,14 +67,14 @@
   "ticks": 1502,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAsws=",
+    "ACiCgAgBAgUAsAs=",
     "AN4L"
   ],
   "hashes": [
-    2398943319,
-    899876109
+    800300709,
+    2451849165
   ],
-  "finalHash": 4244425175,
+  "finalHash": 1235877260,
   "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",

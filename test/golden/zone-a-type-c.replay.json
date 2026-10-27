@@ -64,20 +64,20 @@
       "blackHole": false
     }
   },
-  "ticks": 1063,
+  "ticks": 1067,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA/Ac=",
-    "AKcI"
+    "ACiCgAgBAgUA/Qc=",
+    "AKsI"
   ],
   "hashes": [
-    123509329
+    3853382692
   ],
-  "finalHash": 1240792948,
+  "finalHash": 4203123484,
   "description": "HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`",
   "expected": {
     "status": "stageClear",
-    "ticks": 1063,
+    "ticks": 1067,
     "score": 39120,
     "lives": 4,
     "deathTicks": [],

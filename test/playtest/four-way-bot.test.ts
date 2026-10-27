@@ -1080,6 +1080,10 @@ describe('playtest four-way bot: the moving floors (zone H)', () => {
 
   it('rides the sweeping slot (a run that can die)', () => {
     const run = runStage('fixture', fourWayBot(), { content: slabDb(SLAB_SWING) });
+    // w15-MOVE: the ease-in's first vertical second shifts this ride's timing, but the grace
+    // hold (VERTICAL_HOLD_TICKS) keeps the bot's dodge taps at full speed — so the run still
+    // crosses clean. (The pre-grace shape cost it one terrain DEATH at camera x 1585, tick
+    // 1320; that pin is gone with the grace. The stage-clear rule below must hold either way.)
     expect(run.deaths.map((d) => d.cause + '@x' + String(d.cameraX))).toEqual([]);
     expect(run.status).toBe('stageClear');
   });

@@ -200,10 +200,11 @@ describe('core/stage: a stage of 12-px tiles (R1-04)', () => {
     }
     expect(ship.hits).toBe(1);
     expect(ship.hitCause).toBe(PlayerHitCause.Terrain);
-    // The KESTREL's terrain box (half height 3) touched the surface on its last step down. A
-    // faster step (the ported world) snaps the box right onto the surface, so the bottom edge
-    // reaches `top` exactly rather than strictly past it.
-    expect(ship.y + 3).toBeGreaterThanOrEqual(top);
+    // The KESTREL's terrain box (half height 3) touched the surface on its last step down.
+    // `boxHitsTerrain` tests whole-pixel bounds, so the touch fires once the bottom edge is
+    // within a pixel of the surface — the eased step (w15-MOVE) can die there, where the old
+    // full-speed grid snapped the edge right onto `top`.
+    expect(ship.y + 3).toBeGreaterThanOrEqual(top - 1);
     expect(ship.y + 3).toBeLessThan(top + v1rel(8));
   });
 

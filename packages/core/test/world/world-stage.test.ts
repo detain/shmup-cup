@@ -219,7 +219,9 @@ describe('core/world with a stage — terrain hits', () => {
     // The floor top is 52 px below the ship's fly-in row (y 152 and 100 at 384×216).
     run(w, input, Action.Down, 20); // still flying in: ignored
     expect(ship.hits).toBe(0);
-    run(w, input, Action.Down, 60);
+    // 90 controlled ticks: the vertical ease-in (w15-MOVE) spends ~65 of them crossing the
+    // 78 px to the floor where the old full-speed grid needed ~55.
+    run(w, input, Action.Down, 90);
     // One hit: the ship died there (M1-12) and a `dying` ship is not tested any more.
     expect(ship.state).toBe('dying');
     expect(ship.hits).toBe(1);

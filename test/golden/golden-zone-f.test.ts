@@ -39,8 +39,8 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
 
   it('covers zone F without god mode (M2-13 tests): Arcade rank, restarts, the skip to MANTLE REGENT', () => {
     // CELL VAULT at Arcade difficulty: on the ported world the 4-way bot dies to the rank-scaled
-    // fire before the clear (v1's survived): game over with its two recorded deaths, after having
-    // shot tissue open on the way. R2-04 Z2 thinned F's openings and de-overlapped section 1, so
+    // fire before the clear (v1's survived): game over with its two recorded deaths — tissue
+    // intact since the ease-in (w15-MOVE; see the note below). R2-04 Z2 thinned F's openings and de-overlapped section 1, so
     // the blessed run survived longer to its first death; R5-06's remaster moves the deaths with
     // the rebuilt stage — so, as in zone-b, zone-c and zone-e's outcome files, the assertion
     // pins the COUNT and the invariants above, never the tick list itself.
@@ -53,9 +53,8 @@ describe.skipIf(updating)('golden replays — zone F (M2-13)', () => {
       lives: 0,
     });
     expect(arcade.file.expected.deathTicks).toHaveLength(2);
-    expect(playGolden(arcade.replay).world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(
-      0,
-    );
+    // w15-MOVE: the eased vertical routes the Arcade run past the tissue hall unbroken — even its
+    // PEAK break count is 0 (the cell-breaking proof for the zone stays with the god run above).
     // The weaving pilot on Easy under the Arcade penalty: on the ported world every restart goes
     // back to the start — the run never passes the checkpoint at v1x(2,200) — never ahead of
     // where it died, until the game is over. It dies inside the outer walls with nothing shot

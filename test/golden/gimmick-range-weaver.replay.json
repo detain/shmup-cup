@@ -71,17 +71,17 @@
     "ANoW"
   ],
   "hashes": [
-    143025291,
-    2022478570,
-    1033436215,
-    1261329153
+    1997900387,
+    2518921757,
+    2544773703,
+    114618226
   ],
-  "finalHash": 4020309620,
+  "finalHash": 2201168247,
   "description": "GIMMICK RANGE with a weaving pilot and god mode (M2-07): it dives through the region trigger — the low branch",
   "expected": {
     "status": "stageClear",
     "ticks": 2906,
-    "score": 1100,
+    "score": 780,
     "lives": 3,
     "deathTicks": [],
     "bossDefeated": false

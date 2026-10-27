@@ -67,23 +67,23 @@
   "ticks": 3615,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIA5wSCgAgBAgYAaoKACAECCwDQAYGABAEBEgD0A4KACAECDACiA4GABAEBGQAbgoAIAQIGACKBgAQBAQYAqQGCgAgBAhMA+QSBgAQBAQYAyQOCgAgBAhIAMYGABAEBEgDIAQ==",
+    "ACiCgAgBAgUA5ASCgAgBAgsAZYKACAECFACfAYGABAEBHQCPBIKACAECFACcA4GABAEBJQAPgoAIAQIGABOBgAQBAQYApwGCgAgBAh4AuAiBgAQBAQoAK4KACAECCQABgYAEAQEIAOwB",
     "AJ8c"
   ],
   "hashes": [
-    2812083077,
-    1414914692,
-    1863410743,
-    1383482439,
-    3249107535,
-    3969295424
+    541576863,
+    2097735610,
+    2413782218,
+    1904483183,
+    2343428741,
+    1423652638
   ],
-  "finalHash": 2143762895,
+  "finalHash": 1286853706,
   "description": "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11, v2 layout R5-10): the 5,400-px grotto through the coral gallery and two brick walls, its carriers' bonus capsules and the 1UP collected to the end",
   "expected": {
     "status": "stageClear",
     "ticks": 3615,
-    "score": 25950,
+    "score": 24000,
     "lives": 5,
     "deathTicks": [],
     "bossDefeated": false

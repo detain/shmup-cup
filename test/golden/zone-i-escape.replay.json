@@ -71,17 +71,17 @@
     "ANIu"
   ],
   "hashes": [
-    631585520,
-    3825766312,
-    1229749913,
-    1735510511,
-    2199087322,
-    4280576945,
-    3039659521,
-    3420798947,
-    1381100664
+    2795480697,
+    533539702,
+    416063979,
+    175920643,
+    1811226668,
+    482175461,
+    1053986668,
+    1605782385,
+    3727973876
   ],
-  "finalHash": 2353493228,
+  "finalHash": 3786623701,
   "description": "the stage skip to the ABYSS ARK with a weaving pilot, god mode and no power-ups (M2-14 tests): the ARK outlasts it and sails off after its 90-s time limit — EndingFlag.BossEscaped, THE HOLLOW KING never revealed, stageClear",
   "expected": {
     "status": "stageClear",

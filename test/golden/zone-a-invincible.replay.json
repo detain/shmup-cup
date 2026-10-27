@@ -64,23 +64,23 @@
       "blackHole": false
     }
   },
-  "ticks": 2083,
+  "ticks": 1851,
   "hashInterval": 600,
   "inputs": [
-    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEC",
-    "AKMQ"
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEK",
+    "ALsO"
   ],
   "hashes": [
-    3870458637,
-    1697623994,
-    3178669177
+    3834045998,
+    565601393,
+    3166617410
   ],
-  "finalHash": 3251822388,
+  "finalHash": 3717046624,
   "description": "HALCYON BULWARK with the invincibility assist (M3-01): hits ignored like god mode, the replay header flags it in `assists` (not as god mode)",
   "expected": {
     "status": "stageClear",
-    "ticks": 2083,
-    "score": 39060,
+    "ticks": 1851,
+    "score": 39110,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

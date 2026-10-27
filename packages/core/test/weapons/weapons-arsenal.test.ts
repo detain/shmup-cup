@@ -603,7 +603,10 @@ describe('core/weapons arsenal (M2-03): laser slot', () => {
       most = Math.max(most, beams.length);
       const ship = w.players[0];
       for (const beam of beams) {
-        expect(Math.abs(beam.y - ship.y)).toBe(v1rel(4));
+        // Close rather than exact: the eased steps (w15-MOVE) sum through different fraction
+        // patterns than the old grid, so the offset carries float noise — 6 is the structural
+        // value either way.
+        expect(Math.abs(beam.y - ship.y)).toBeCloseTo(v1rel(4), 9);
         expect(beam.length).toBeLessThanOrEqual(v1rel(16));
       }
     }

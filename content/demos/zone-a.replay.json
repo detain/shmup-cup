@@ -70,14 +70,14 @@
   "ticks": 2400,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAwgOBgAQBARQAGIGABAEBCgCrCMCAgAIBQAkAhAY=",
+    "ACiCgAgBAgkAvQOBgAQBASAADIGABAEBDACLCMCAgAIBQAkAogY=",
     "AOAS"
   ],
   "hashes": [
-    1565351684,
-    2782228101,
-    4058628603,
-    2562787084
+    3984689649,
+    2406614251,
+    1384184807,
+    646754013
   ],
-  "finalHash": 2562787084
+  "finalHash": 646754013
 }

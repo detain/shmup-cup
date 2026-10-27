@@ -67,16 +67,16 @@
   "ticks": 2782,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgQAsRU=",
+    "ACiCgAgBAgkArBU=",
     "AN4V"
   ],
   "hashes": [
-    2965152960,
-    2849412500,
-    906299310,
-    181417146
+    832691882,
+    35136458,
+    2399063941,
+    397791704
   ],
-  "finalHash": 387821902,
+  "finalHash": 3448297372,
   "description": "HALCYON BULWARK on loop 2 without power-ups or god mode (M3-01): the loop-2 rank, bullet speed and revenge bullets against the 4-way bot",
   "expected": {
     "status": "stageClear",

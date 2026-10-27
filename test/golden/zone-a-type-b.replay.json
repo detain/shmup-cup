@@ -64,20 +64,20 @@
       "blackHole": false
     }
   },
-  "ticks": 1013,
+  "ticks": 1012,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAygc=",
-    "APUH"
+    "ACiCgAgBAgUAxgc=",
+    "APQH"
   ],
   "hashes": [
-    4074810914
+    1176750269
   ],
-  "finalHash": 517106887,
+  "finalHash": 2166261075,
   "description": "HALCYON BULWARK with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts, Options",
   "expected": {
     "status": "stageClear",
-    "ticks": 1013,
+    "ticks": 1012,
     "score": 39060,
     "lives": 4,
     "deathTicks": [],

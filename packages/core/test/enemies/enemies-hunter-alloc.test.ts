@@ -12,6 +12,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState } from '../../src/enemies/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
+import { VERTICAL_RAMP_TICKS } from '../../src/player/index.js';
 import { ItemFlag, ItemKind } from '../../src/powerups/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
@@ -103,6 +104,10 @@ function world(): World {
 describe('M2-04 Option Hunter allocation', () => {
   it('allocates nothing over steals, carried hauls, screen clears and freed Options', () => {
     const w = world();
+    // The scenario ship zig-zags vertically the whole run, so with the ramp charged (w15-MOVE)
+    // every step is a full step and its path is the pre-ramp grid: the counts this scenario
+    // expects (steals, hauls, freed Options near the ship) stay the measured ones.
+    w.players[0].verticalTicks = VERTICAL_RAMP_TICKS;
     const hunterIndex = w.content.enemyIndex.get('hunter')!;
     const group = w.weapons.options[0];
     const loadout = w.weapons.loadouts[0];
