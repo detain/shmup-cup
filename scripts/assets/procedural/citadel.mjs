@@ -27,7 +27,9 @@
  *   `tiles/terrain-citadel-v2` (the terrain sprite `tiles/terrain-citadel`'s twenty frames
  *   verbatim, then the four §9 variants {@link CITADEL_V2_TILES}). The parade's echoes and the
  *   rebuilt Sovereign draw **no new sprites** — they reuse the existing ones (§7); the v1 set is
- *   byte for byte untouched at scale 1 (RR-1).
+ *   byte for byte untouched at scale 1 (RR-1). Since w15-GROUNDBG one v1 name also **redraws**
+ *   above scale 1: `enemies/hatch-bay`'s stepped floor-plate {@link hatchBayFrameV2} (the flush v1
+ *   plate scaled interim served a full-bleed opaque rectangle — the owner's solid background).
  *
  * Gunmetal greys with amber hazard trim — low in saturation next to the pink / red / purple bullets
  * and the capsules (shmup_feat.md §12, §18); the v2 cloth deepens the blue into the greys. Every
@@ -202,10 +204,16 @@ export function generate(options = {}) {
       hitFlash: true,
       animations: { spin: [0, 1] },
     }),
-    makeSprite('enemies/hatch-bay', [hatchBayFrame(false), hatchBayFrame(true)], 'citadel', {
-      hitFlash: true,
-      animations: { open: [0, 1] },
-    }),
+    makeSprite(
+      'enemies/hatch-bay',
+      v2
+        ? [hatchBayFrameV2(false), hatchBayFrameV2(true)]
+        : [hatchBayFrame(false), hatchBayFrame(true)],
+      'citadel',
+      v2
+        ? { hitFlash: true, native: true, animations: { open: [0, 1] } }
+        : { hitFlash: true, animations: { open: [0, 1] } },
+    ),
     makeSprite('enemies/hatch-mite', [miteFrame(0), miteFrame(1)], 'citadel', {
       hitFlash: true,
       animations: { crawl: [0, 1] },
@@ -398,6 +406,73 @@ function hatchBayFrame(open) {
     }
   }
   return image;
+}
+
+/**
+ * The v2 rebuild of the floor hatch (w15-GROUNDBG): the interim ×1.5 of the flush v1 plate served a
+ * **full-bleed opaque rectangle** (ink 100 % — the owner's "solid background"), so the housing is
+ * redrawn at its final 24×12 size as a stepped floor plate — transparent corners and side columns,
+ * the rim outlining the object, the floor contact row kept, and the amber hazard checker, the
+ * centre seam and the retracted-door shaft the nearest-neighbour upscale had decimated rebuilt by
+ * hand. Same name, size, default-centre anchor and frame count as the interim frame it replaces;
+ * the v1 branch stays byte for byte (RR-1). Colours are the module's existing constants only — no
+ * new palette entry (the enemies are not palette-cycled, and the wall/tile ramps stand untouched).
+ *
+ * @param {boolean} open - The open frame: a dark shaft between the retracted doors.
+ * @returns {Image} The frame at the final v2 pixel size.
+ */
+function hatchBayFrameV2(open) {
+  const w = 24;
+  const h = 12;
+  const paint = {
+    rim: color(RIM),
+    base: color(STEEL_DARK),
+    door: color(STEEL),
+    lit: color(STEEL_LIT),
+    amber: color(AMBER),
+    shaft: color('#08090c'),
+  };
+  /** Left edge of each row; the housing steps out toward the floor (the right edge mirrors it). */
+  const left = [5, 4, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1];
+  const image = createImage(w, h);
+  for (let y = 0; y < h; y++) {
+    const x0 = left[y];
+    const x1 = w - 1 - x0;
+    for (let x = x0; x <= x1; x++) {
+      const edge = y === 0 || y === h - 1 || x === x0 || x === x1;
+      setPixel(image, x, y, edge ? paint.rim : hatchBayPixelV2(open, x, y, paint));
+    }
+  }
+  return image;
+}
+
+/**
+ * The interior colour of the v2 hatch plate below its top rim and above its base pad.
+ *
+ * @param {boolean} open - The open frame.
+ * @param {number} x - Column (an interior pixel of the row span).
+ * @param {number} y - Row (1 … 10; the caller draws the rim rows and the pad rows itself).
+ * @param {Readonly<{rim: Rgba, base: Rgba, door: Rgba, lit: Rgba, amber: Rgba, shaft: Rgba}>}
+ *   paint - The citadel colours of {@link hatchBayFrameV2}.
+ * @returns {Rgba} The colour of the pixel.
+ */
+function hatchBayPixelV2(open, x, y, paint) {
+  if (y === 1) {
+    if (open) return x >= 7 && x <= 16 ? paint.shaft : paint.amber;
+    return x % 4 < 2 ? paint.amber : paint.door;
+  }
+  if (y <= 5) {
+    if (open) return x >= 7 && x <= 16 ? paint.shaft : paint.door;
+    return x === 11 || x === 12 ? paint.rim : paint.door;
+  }
+  if (y === 6) {
+    if (open) return paint.base;
+    return x === 11 || x === 12 ? paint.rim : paint.base;
+  }
+  if (y === 7) {
+    return x === 5 || x === 8 || x === 15 || x === 18 ? paint.lit : paint.base;
+  }
+  return paint.base;
 }
 
 /**
