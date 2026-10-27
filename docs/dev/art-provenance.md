@@ -399,7 +399,7 @@ and R3-02's staged output (`art-prompts/v2/ingested/`) are scanned as committed 
 | Where | Hit | Status |
 |---|---|---|
 | the whole committed library | no game, series, studio, artist or character name | — |
-| kernel K1 (`art-prompts/images/00-style-kernel.md`), so most prompts — ~1,400 uses, 138 in the v2 manifest | **"SNES"** as an era word ("SNES-era 16-bit pixel art …") — a console trademark, not a game, studio or character | allowed in the test, pending open decision 6 |
+| kernel K1 (`art-prompts/images/00-style-kernel.md`), so most prompts — ~1,400 uses, 138 in the v2 manifest | **"SNES"** as an era word ("SNES-era 16-bit pixel art …") — a console trademark, not a game, studio or character | allowed in the test; open decision 6 resolved 2026-10-26 (R6-D5) — no library-wide edit, see §8 |
 | `art-prompts/v2/manifest.json`, item `boss/facet-monarch` | **"crystal core"** in the picker *label* ("the crystal core with an orbiting crown"), not in the prompt; also a boss name in the series (feat appendix A) | pinned in the test (`KNOWN_HITS`); `art-prompts/v2/` is the art round's, so it is reported, not edited — open decision 7 |
 | `art-prompts/v2/candidates/a/video/zone-montage-a.json` (unversioned, not scanned) | "in the style of a side-scrolling arcade game" in the prompt that was sent | names no game; reword if the clip is regenerated — open decision 7 |
 | `art-prompts/v2/winners/boss/cinder-bastion/winner.json` (committed with the winners, 2026-10-23) | "huge battleship" in the prompt that was sent ("A single huge battleship boss …") — a phrase §26's legal notes name; it names no game, studio or character | pinned in the test (`KNOWN_HITS`); reword if the item is regenerated — open decision 7 |
@@ -451,6 +451,12 @@ is exact, so a pinned hit that disappears fails too, and its row is removed then
 6. **"SNES" in the prompts.** About 1,400 uses as an era word. It names Nintendo's console, not a
    game; the art bible's own rule is to describe the look ("16-bit era"). Keep it, or change the
    kernels to "16-bit era" for round 2 (and then remove the allowance from the test).
+   **Resolved 2026-10-26 (owner, decision R6-D5):** neither branch as posed. The era look itself
+   left the doctrine — the ruling is quality-first at native resolution — so the era wording has
+   nothing left to polish, and the owner's no-new-rounds clause rules out a library-wide rewrite
+   round: the committed prompts and the names test's allowance stay as they are, and each GEN
+   round's asks simply drop the era clauses and ask for the work as detailed as the target grid
+   can show ([art-bible-v2.md](art-bible-v2.md) §2.2).
 7. **Two wordings in the art round's files:** the FACET MONARCH label "the crystal core …" in
    `art-prompts/v2/manifest.json`, and the zone-montage clip's "in the style of a side-scrolling
    arcade game" (in the candidates). Neither names a game; both are cheap to reword after round 2.

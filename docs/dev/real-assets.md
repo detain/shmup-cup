@@ -484,11 +484,15 @@ Census on `master`: **79 `.art.json` records; 130 FLUX.2-dev-served sprites** (t
 49 `@flash` and 2 `@p2` siblings), 461 procedural, zero failures — `node scripts/art-origins.mjs`,
 pinned by `test/scripts/art-origins.test.ts`.
 
-**Three provenance stores**, each with its own governance: `art-prompts/v2/winners/` — the owner's
+**Four provenance stores**, each with its own governance: `art-prompts/v2/winners/` — the owner's
 picker picks (299 images, 35 clips, the choice records); `gen3/` — approved derivatives of those
 winners, every row an edit of a committed pick (62 rows, 52 exit-0); `gen5/` — the owner-waived
 batch, generated without a pick (68 rows, 42 exit-0; the 26 exit-1 sheets stand as re-ask
-candidates). `models.json` gained a **`code`** group — a deterministic re-lay of FLUX.2 output by a
+candidates); `gen6/` — the GEN-5 owner-improvement round, generated under the owner's improvement
+ask of 2026-10-26 with **no picker round** (33 rows: ROUND A redesign sheets — ships, options,
+items, the player-shot family — and ROUND B proven-contract retries; 20 PROBE-OK sheets + the
+`INDEX.json` ledger, committed `6feb4e9c`, not yet ingested — REING-5's work). `models.json`
+gained a **`code`** group — a deterministic re-lay of FLUX.2 output by a
 committed script (no new model), the row that unblocked `enemies/halo-crystal`.
 
 **What generation cannot make** — measured, not assumed, in the wave-15 reports
@@ -503,3 +507,35 @@ lightbird, steed-mane, prism-glint, deep-tender, `items/point`, `fx/sparkle` —
 the GEN-4 report). Re-posing an **animation frame count** moves the simulation, so it was never a
 lane's call: the six hull bosses' part kits and the deferred anim rows stand as owner pool
 decisions under the pool-paid rule.
+
+**Update of the same day — the tileset class was cured while this page printed.** GEN-5's ROUND B
+(2026-10-26, store `gen6/`) retried the terrain tilesets under the **opaque contact-grid** ask
+shape — the prism win's style: explicit per-row state lists, no guide lines between cells — and
+**five sheets landed PROBE-OK** (reef, magma, ridge, vault, citadel; `t-abyss` alone still STOPs,
+six attempts, on the model's 1-px guide-line ink). The green-anchor paragraph above stays as the
+measurement of the *old ask shape*; it is no longer the ceiling for tilesets. REING-5 crops the
+five landed sheets. The other not-generable classes (wrap and flat-band backdrops, merged
+multi-pose kit rows, wide silhouettes, the ten-row STOP list) were not disproved this round and
+stand until a GEN row disproves one.
+
+## The detail-regeneration program (owner ruling 2026-10-26, decision R6-D5) — OPEN
+
+The era ceiling is gone from the doctrine: art is made **as good as it can be at the resolution it
+is at** ([art-bible-v2.md](art-bible-v2.md) §2.2) — *"i want the graphics to look as good as they
+can at the resolution they are at"*. Delivery, per the same ruling: *"if non pixelated means
+regenerating graphics then do it"*, and *"no need to do new decision rounds i think just use the
+same model to generate better images w/ updated prompts where applicable"* — the **same served
+model** (FLUX.2-dev), prompts updated per ask to drop the era clauses and ask for maximum detail
+at the target grid, **no new picker rounds and no new decision rounds**; the grid, key and
+cell-contract law of the asks stands untouched (it is what makes sheets ingestable).
+
+State of program: **79 names ship real art today** (the census above); the rest of the atlas is
+**re-queued, not settled** — GEN-6 (queued; store `art-prompts/v2/gen7/`) carries the first
+quality-first batches: the nine **zone-map planets** (`map/planet-a…i`, behind the map's letters —
+the owner's ask of 2026-10-26), the **weapon-family** shot art, new **Option** silhouettes,
+item flavours, and quality-regen wave 1 over the most-visible interim families (enemy bullet
+families, HUD icons, player-shot stragglers). REING-5 ingests the landed `gen6/` sheets first.
+Nothing in the program waits on FLUX any more — the non-commercial ruling (R6-D4, 2026-10-23) and
+the picker waiver of 2026-10-26 cover every batch; the only FLUX condition that stands is the BFL
+commercial licence before any paid distribution (the monetization row of
+[outstanding-work.md](../client/outstanding-work.md)).

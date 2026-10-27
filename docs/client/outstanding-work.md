@@ -15,6 +15,11 @@ half a dozen client pages, and it says of each item **what it blocks**. The deta
 where they were — each entry links to its page — because they are long and they belong next to the
 thing they describe.
 
+**Status note (2026-10-26):** the art round below is closed and a *new* art program is open — the
+owner's quality-first ruling (decision R6-D5) retired the SNES-era ceiling, and the
+detail-regeneration lanes are re-queuing the still-interim names. That program blocks nothing on
+this page; its state reads in [real-assets.md](../dev/real-assets.md) and the art rows of §3.
+
 ## How to read the three groups
 
 | Group | Meaning |
@@ -28,8 +33,10 @@ Spanish and Japanese translations are placeholders** — original, deliberate an
 sound and all 365 strings in three languages exist), but written by an agent, not composed by a
 musician or read by a native speaker. **The art is no longer one.** The R6-03.S3 real-art round
 closed on 2026-10-26: **79 sprite names ship real AI-assisted art** with `.art.json` provenance
-records; the rest of the atlas is the build's own procedural v2 kit by design, the classes the
-round proved generation cannot make. See [what "placeholder" means here](#what-placeholder-means-here).
+records; the rest of the atlas is the build's own procedural v2 kit **today** — no longer by
+settled design: the owner's ruling of 2026-10-26 (decision R6-D5) lifted the SNES-era ceiling and
+opened the detail-regeneration program, which re-queues the interim names under quality-first
+prompts. See [what "placeholder" means here](#what-placeholder-means-here).
 
 ---
 
@@ -239,21 +246,37 @@ archive in a browser before you publish it.
   stays procedural is **evidence, not caution** (the era's reports, `w15-GEN4/REING1/REING2-report.md`
   in the run record): terrain tilesets beyond prism die on the **green-anchor pathology** (cells read
   back at the key-green itself or near it, ≈ (68,254,0)–(93,194,37), with boundary ink 35–100 %,
-  three attempts per sheet) —
-  the `terrain-*-v2` sets stay hand pixel-maps; backdrop **wrap and flat bands** never wrap or flatten
+  three attempts per sheet) — the tileset half of that verdict was cured the same day: GEN-5's
+  ROUND B retried the proven contact-grid ask shape and five sheets came PROBE-OK (reef, magma,
+  ridge, vault, citadel; only abyss still stops, on guide-line ink), REING-5's to crop; the
+  `terrain-*-v2` sets ship as hand pixel-maps until those crops land; backdrop **wrap and flat
+  bands** never wrap or flatten
   (edge-reach ≤ 6/256 rows in six tries) — the raster bands stay generators; **merged kit rows and
   wide silhouettes** fail the frame probes (aspect ratios 1.0–1.2 against slots ≥ 1.75); and the
   waiver's ten never-designed rows stopped with per-name probe numbers (gnat / dune-lance / skiff /
   skipper / lightbird / steed-mane / prism-glint / deep-tender / `items/point` / `fx/sparkle` — the
   STOP table). The six kit bosses whose re-poses would move anim frame **counts** (maw, widow,
   bastion, steed, sovereign, ark) stay owner pool decisions under the pool-paid rule — nothing of
-  theirs moved. The three provenance stores stay committed:
+  theirs moved. The four provenance stores stay committed:
   `winners/` (299 images + the 35 owner clips since wave 15), `gen3/` (62 approved-derivative rows,
-  52 clean), `gen5/` (68 waived rows, 42 clean). Two governance lines ride the whole set: the FLUX
+  52 clean), `gen5/` (68 waived rows, 42 clean), `gen6/` — the owner-improvement round, 33 rows
+  with 20 PROBE-OK sheets (the ship / option / item / player-shot redesigns and the five landed
+  tilesets), generated without a pick under the same waiver, `6feb4e9c`). Three governance lines
+  ride the whole set: the FLUX
   non-commercial basis of 2026-10-23 (§8 decision 1) — **before any paid distribution a BFL
   commercial licence (bfl.ai/licensing) must be in place**, the monetization row below carries it —
   and the 2026-10-26 picker waiver, with the halo-crystal's code re-lay owning the `code` row of
-  `models.json` (own licence, section 2). **Still open as taste, not as work:** zone F/G's shared
+  `models.json` (own licence, section 2), and the 2026-10-26 quality-first ruling (R6-D5), which
+  retires the SNES-era ceiling and governs every prompt the detail-regen rounds send. Nothing
+  waits on FLUX any more — that gate was ruled on 2026-10-23. **The detail-regeneration program is
+  open (2026-10-26):** today's shipped census is the 79 names above; REING-5 ingests the landed
+  `gen6/` improvement sheets, and queued GEN-6 generates the nine **zone-map planets** (*"unique
+  planets for each zone ... with the letters"*, 2026-10-26 — interim procedural art ships behind
+  the map's letters first), the **weapon-family** art, new **Option** silhouettes, item flavours
+  and quality-regen wave 1 over the most-visible interim families — same served model, prompts
+  updated to the doctrine, **no new picker or decision rounds**. State:
+  [`real-assets.md`](../dev/real-assets.md) § The detail-regeneration program. **Still open as
+  taste, not as work:** zone F/G's shared
   regent / captain part-art families are an owner style call — GEN-4 landed only the zone-specific
   azure captain-shell. **Music, whenever it exists** — the hand-off is [`real-assets.md`](../dev/real-assets.md)
   and every replacement keeps the name of what it replaces, so nothing else has to change.
@@ -317,7 +340,7 @@ human*:
 
 | What | State | Where it is described |
 |---|---|---|
-| Sprites, tiles, effects, the UI font | 79 names ship AI-assisted real art with `.art.json` provenance (the wave-14/15 round, closed 2026-10-26); the rest of the atlas is the build's pixel maps and procedural rules — complete, consistent, original programmer art, and the classes the round measured as not generable. | [`real-assets.md`](../dev/real-assets.md), [`asset-pipeline.md`](../dev/asset-pipeline.md) |
+| Sprites, tiles, effects, the UI font | 79 names ship AI-assisted real art with `.art.json` provenance (the wave-14/15 round, closed 2026-10-26); the rest of the atlas is the build's pixel maps and procedural rules — complete, consistent, original programmer art — today **re-queued** under the detail-regeneration program the owner opened the same day (decision R6-D5: quality-first at native resolution, same model, updated prompts, no new decision rounds). | [`real-assets.md`](../dev/real-assets.md), [`asset-pipeline.md`](../dev/asset-pipeline.md) |
 | Music and sound effects | Deterministic synthesis plus a small sample bank. Every cue exists; none was composed. | [`audio.md`](../dev/audio.md), [`content/audio/README.md`](../../content/audio/README.md) |
 | The English text | Written for the game and read by the people who built it. | [`content/strings/README.md`](../../content/strings/README.md) |
 | The Spanish and Japanese text | Written by the build agent. **Nobody who speaks either language has read a line of it.** | [`content/strings/README.md`](../../content/strings/README.md) |
@@ -344,7 +367,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | 240 fps latency video, two pads at once, the `rp-` render capture (§8.2, §8.4) | Nothing — but the release's boot ≤ 10 s and whole-process memory figures ride the capture (kit built, R6-02.P2) | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
 | The v2 TV-bench run on the M7 — **run 2026-10-19 on monitor 10.0.0.224, budgets met, P4a–d not needed** (R6-02.P3); open: the second monitor, firmware context loss, W5-2 / W5-15 | Nothing — the measured zone-load verdict is in | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
-| Real art — **DONE 2026-10-26: 79 sprite names ship AI-assisted art** (33 harvest + 4 re-ingest/capsules + 42 owner-waived; FLUX on the non-commercial basis of 2026-10-23 — §8 decision 1, R6-D4 — and the picker waiver of 2026-10-26). What did not land stays procedural **on measured evidence**: the terrain tilesets past prism, wrap/flat backdrop bands, merged kit rows, wide silhouettes, and the ten-row STOP list — `w15-GEN4-report.md`. Music remains uncomposed. | Nothing — every batch landed on master | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
+| Real art — **the round CLOSED 2026-10-26 (79 sprite names ship AI-assisted art: 33 harvest + 4 re-ingest/capsules + 42 owner-waived; FLUX on the non-commercial basis of 2026-10-23 — §8 decision 1, R6-D4 — and the picker waiver of 2026-10-26)** and **the detail-regen program OPENED the same day (R6-D5)**: quality-first at native resolution replaces the SNES-era ceiling; REING-5 ingests the `gen6/` improvement sheets (20 PROBE-OK, incl. five terrain tilesets — the old not-generable verdict cured for that class), queued GEN-6 generates the zone-map planets + weapon/option families + quality-regen wave 1 under updated prompts, no new decision rounds. What still stands not-generable: wrap/flat backdrop bands, merged kit rows, wide silhouettes, the ten-row STOP list — `w15-GEN4/GEN5-report.md`. Music remains uncomposed. | Nothing — every batch landed on master; the regen program is delivery, not a gate | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
 | **Paid/commercial distribution of the game (monetization)** — art made with FLUX.2-dev / FLUX.1-dev requires a **BFL commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing)) in place before any paid distribution ships** (the 2026-10-23 ruling stands on the non-commercial basis alone — art-provenance.md §8 decision 1); the same re-check covers SD3.5's USD 1 M and LTX-2.5's USD 10 M revenue ceilings | Nothing while the game stays free, open-source (MPL-2.0) distribution | [`art-provenance.md`](../dev/art-provenance.md) |
 | The eight remasters of zones B … I (waves 11–13) played on the M7 (§1.1) | The v2 TV submission — none has been seen on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check) |
 | Zone I's remaster — **discharged at the I-LAND** (`2d35a7a5`); its `R5-09.S3` art drop landed in the wave-14/15 round (the abyss roster names carry real art); the owner part that remains: the M7 play and sign-off of the remastered abyss | Nothing — the remastered abyss ships; R5-10's T2 escape art and T8 grouped pages stand open as run steps of their own | plan_resolution.md §17 / R5-D13 |

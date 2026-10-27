@@ -83,11 +83,30 @@ the same round, shows a KESTREL with a bubble canopy; R4-05 redraws it from the 
 
 ### 2.2 The style in words
 
-What the winners share, and what in-game art keeps:
+**The doctrine first — quality-first at native resolution (owner ruling 2026-10-26, decision
+R6-D5).** The early round read the brief as a SNES-era look; that era ceiling is no longer the
+target: *"i want the graphics to look as good as they can at the resolution they are at .. in case
+we're intentionally pixelating things that otherwise wouldnt be"*. The pixel grid is this game's
+format, not a vintage effect: every sprite is as detailed and as full of colour as its own pixels
+can show — on the native 640×360 grid (3.1) and on every pixel of its section 5 slot, exactly as
+5.1 already asks: *"Detail goes into those pixels — more colours, more frames — not into a bigger
+footprint."* What does not move: the frame still upscales to the TV by whole numbers (3.1), the
+grid, anchor, size and palette-cap contracts of sections 3 to 5 stand untouched — they are what
+makes art shippable, not era ceilings — and the retro picture **passes** that the game runs *on
+purpose* (raster effects, palette cycles, the CRT filter, the slowdown) also stay: they are the
+intentional pixelating the ruling keeps. The delivery is the detail-regeneration program (see
+[real-assets.md](real-assets.md) — Closeout): the same served model with prompts updated to this
+doctrine, no new picker rounds and no new decision rounds.
 
-- **Chunky, crisp pixel rendering.** Hard silhouettes, no soft edges against the background,
-  clusters of a few colours rather than gradients. (The AI's "pixels" are a texture of about 3–5
-  source pixels, not a real grid — section 8 handles that.)
+What the winners share, and what in-game art keeps — their design language; their era ceilings are
+R6-D5's to lift:
+
+- **Crisp pixel rendering on the real grid.** Hard silhouettes and no soft edges against the
+  background stay — they are the outline (3.4) and binary alpha (3.6) contracts, not era rules.
+  The era's ceiling, clusters of a few colours rather than gradients, is gone: use the colours and
+  ramp steps the slot reads better with, inside 4.3's caps and clear of the 4.4 reserved ramps.
+  (The AI's "pixels" are a texture of about 3–5 source pixels, not a real grid — section 8 handles
+  that.)
 - **A dark outline around every subject.** Measured on the 48 key-green winners, the median colour
   just inside the silhouette is mostly a very dark, slightly saturated navy-violet (about `#140c20`
   … `#1b1a2e`) — never black. The MANTA's is near-black green, a dark tone of its own hue, as the
@@ -99,8 +118,10 @@ What the winners share, and what in-game art keeps:
   plating with rivets and panel seams; the colour lives in small self-lit details — amber running
   lights, magenta and red eye slits and cores, cyan engine glows. Organic subjects are deep greens,
   teals and violets with glossy highlights and one bright "eye" or core.
-- **Saturated, limited palettes with hue-shifted ramps** — shadows lean to navy and violet,
-  highlights to warm white.
+- **Saturated palettes with hue-shifted ramps** — shadows lean to navy and violet, highlights to
+  warm white. Since R6-D5 the word *limited* is no longer the rule: a sprite runs as full a ramp
+  as its section 4.3 cap and its size read well — the caps are the consistency and ingest
+  contract, not an era budget.
 - **Stage scenes are painted pixel panoramas** with strong horizontal bands (sky, horizon, far
   forms, mid forms, ground), dark navy space or cave darks — except DUNE EXPANSE (a pale twin-sun
   sky) and TEMPEST RIDGE (bright cloud decks), which section 4.1 regrades for play.
@@ -729,8 +750,10 @@ For the prompt library (`art-prompts/`), the round-2 followups and any later gen
 
 - **No named games, studios, publishers, characters or artists** — not in prompts, notes, recipes
   or this bible. Describe the look in plain words (outline, light, palette, key) as the kernels do;
-  "16-bit era" is a description, a title is not. [`shmup_feat.md`](../old/shmup_feat.md) §26 lists
-  the names that must never appear, and R3-05 adds a test that greps the library.
+  an era word is a description, a title is not — and since R6-D5 the era is not the house
+  descriptor anyway: ask for the work as detailed as the target grid can show.
+  [`shmup_feat.md`](../old/shmup_feat.md) §26 lists the names that must never appear, and R3-05
+  adds a test that greps the library.
 - **One subject per sheet** when its frames must match. Say the count twice — as a number and as
   the pose list — and read cells left to right, top to bottom. The frame counts are section 5's,
   not the model's.
@@ -860,6 +883,15 @@ on every machine.
 
 ## 10. Still open
 
+**Status 2026-10-26.** The two needs listed under this heading both exist — the ingest tool (R3-02)
+and the committed winners — and the proof ran: the R6-03.S3 round closed with **79 real
+AI-assisted names** on `master` ([real-assets.md](real-assets.md) — Closeout). What is open now is
+the owner's on-hardware and taste sign-offs, collected in the single list
+([outstanding-work.md](../client/outstanding-work.md)), and the **detail-regeneration program**
+the owner's ruling of 2026-10-26 opened (decision R6-D5, section 2.2): the same served model,
+prompts updated to the quality-first doctrine, no new picker or decision rounds. The bullets
+below stand as what R3-01 left open on 2026-10-17.
+
 R3-01's acceptance also asks for **a sample sheet per category generated and ingested as a proof**.
 That needs:
 
@@ -873,9 +905,10 @@ So R3-01 is *done (owner parts pending)*. Still owner work:
   their layers are made;
 - the font cell (R4-03);
 - the readability sign-off (R4-02);
-- **the licence reading of R3-05 before any winner ships.** 84 of the 91 winners were made by
-  FLUX.2-dev, whose weights are under a non-commercial licence, so its terms for outputs decide
-  whether those images may be ingested as pixels or only used as design references. R3-05 has read
-  them: [art-provenance.md](art-provenance.md) puts both FLUX models on **hold** until Black Forest
-  Labs answers or a commercial licence covers them, and lists the owner's open decisions
-  ([section 8](art-provenance.md#8-open-decisions-for-the-owner)).
+- **the licence reading of R3-05 before any winner ships — ruled 2026-10-23, decision R6-D4.**
+  The game ships free and open-source (MPL-2.0), a non-commercial distribution the FLUX
+  Non-Commercial Licences allow, and the winners and GEN rounds have shipped on that basis (the
+  R6-03.S3 round, closed 2026-10-26). The one condition that stands: before any paid or commercial
+  distribution, a BFL commercial licence (bfl.ai/licensing) must be in place
+  ([art-provenance.md](art-provenance.md) §8 decision 1; the monetization row of
+  [outstanding-work.md](../client/outstanding-work.md)).
