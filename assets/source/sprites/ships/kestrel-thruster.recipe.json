@@ -1,0 +1,60 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "ships/kestrel-thruster",
+  "category": "ship",
+  "frame": {
+    "width": 9,
+    "height": 5
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/code-frames/kestrel-thruster/gen.png",
+      "frames": [
+        [
+          120,
+          88,
+          144,
+          80
+        ],
+        [
+          504,
+          88,
+          144,
+          80
+        ],
+        [
+          120,
+          344,
+          144,
+          80
+        ],
+        [
+          504,
+          344,
+          144,
+          80
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "outline": false,
+  "anchor": [
+    9,
+    2
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the GEN12 Wave-6 rec 1 zero-GPU derivation (w15-REING123)"
+    },
+    "notes": "s-kestrel-thruster (gen12, STOP@8 — w15-GEN12-report §Wave-6 rec 1): ships/kestrel-thruster v2 (4 flicker frames 9x5 native, burn loop LOW/HIGH/SPARK/SURGE grammar; nozzle on the RIGHT edge, the anchor [9,2] keeps the attachment point; hitFlash false, no @flash sibling). No generated sheet passed the probe, so the flame is the ingested ships/manta-thruster frames recoloured in code by the committed art-prompts/v2/code-frames/make_kestrel_thruster.mjs (model code, deterministic byte-exact re-run, --check proven): every pixel keeps its alpha and position, each colour maps to the nearest KESTREL design colour in Rec.601 integer luma — the ask names exactly three (body #e84818, inner glow #f8c030, white-hot heart #fff8d0), the interim map palette, so no colour is invented and no step is improvised. The per-ship p2 byte-reverse convention applies (the sidecar map is the three served colours byte-reversed, identical to the interim map p2 pairs). The design carries its own outline, so the outline pass is off."
+  },
+  "p2": {
+    "#e84818": "#1848e8",
+    "#f8c030": "#30c0f8",
+    "#fff8d0": "#d0f8ff"
+  }
+}

@@ -6,18 +6,18 @@
   "cleanup": "none",
   "handCleaned": false,
   "reviewed": {
-    "on": "2026-10-26",
-    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
   },
   "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
-      "path": "art-prompts/v2/gen6/a-shot-double/gen.png",
-      "sha256": "75bc37ad0de19c17aebdcf5ef28cdfa951c80b9ab40150677da69ed21959f600",
+      "path": "art-prompts/v2/gen13/sh-double/gen.png",
+      "sha256": "dccda3c36f23e9bec951c26a1bdbefe34195d847f2a6b0c09e8253e3a381d721",
       "format": "png",
-      "width": 512,
-      "height": 512,
+      "width": 256,
+      "height": 256,
       "model": "black-forest-labs/FLUX.2-dev",
       "modelKey": "flux2",
       "weights": {
@@ -29,19 +29,19 @@
       "prompt": {
         "file": null,
         "entry": null,
-        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the DOUBLE shot — a paired amber dart projectile.\n\nDesign identity to keep exactly — Two identical amber energy darts stacked one above the other, joined by a thin glowing web, white cores, navy outlines, flying right.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the DOUBLE shot — two parallel amber darts side by side with a shared energy web The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 2.5:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
-        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the one frame(s) of the DOUBLE diagonal shot bolt — a short thick energy dash travelling up and to the right at 45 degrees — one clean diagonal bolt seen whole. The sheet is one cell holding this one bolt.\n\nDesign identity to keep exactly — the DOUBLE SHOT bolt: a short THICK diagonal dash of energy slanting up to the right at 45 degrees, about 140 px across its square footprint, centred in its 256×256 cell with a wide even band of flat key on every side. A bright cyan casing (#38c8e8) along both long edges with a solid white-hot core line (#ffffff) down the middle two pixels wide. Chunky capsule shape with blunt rounded ends — a fat bold slash stroke, heavy in body. Its bounding box is roughly square (as wide as tall); the stroke stays compact, never a thin needle and never a long streak.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cells laid out as 1 ROW OF 1 (1-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = THE BOLT — the thick 45-degree dash pointing up-right. The subject lies within aspect 0.70:1 to 1.30:1.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
       },
-      "seed": 520517221,
-      "size": "512x512",
+      "seed": 521601013,
+      "size": "256x256",
       "steps": 40,
       "guidance": 3.5,
-      "generatedAt": "2026-10-26T22:57:03.710Z",
+      "generatedAt": "2026-10-27T04:26:40.662Z",
       "reference": [],
       "generator": {
-        "sidecar": "art-prompts/v2/gen6/a-shot-double/gen.json",
-        "sidecarSha256": "dac21eedc89b05dd325fc621f69c596cd72c48af6026d348d0ab981ebbf8b52c",
-        "id": "gen6/a-shot-double",
+        "sidecar": "art-prompts/v2/gen13/sh-double/gen.json",
+        "sidecarSha256": "b50d2332628b63626043432907166b14720f41a1c71237411742799323e1d86a",
+        "id": "gen13/sh-double",
         "slot": "a",
         "mode": "generate",
         "instruction": null
@@ -50,12 +50,12 @@
   ],
   "recipe": {
     "path": "assets/source/sprites/shots/double.recipe.json",
-    "sha256": "19da8f7549651aac08502159898f3e123a68525824a528a028b069edc60a7bf3"
+    "sha256": "9ca10ae693c5bb9a26754fae6a7cc92d6e9207e92e2a5d0ab10114b99c0309e2"
   },
   "edit": null,
   "output": {
     "png": "double.png",
-    "sha256": "0ef8eeb9fcd9c458172c140f88716fbb01e1a93c75630b16ab5343866caa96c6",
+    "sha256": "b2796e4e5d241a3126674c6d9c10e3aab3f465b89225fe8f874cae35a8e15aec",
     "sidecar": "double.json",
     "sidecarSha256": "321936c95971812de7f8b26b6a8930b6512b068ec5213e5e8a75a38389497827",
     "frames": 1,
@@ -68,5 +68,5 @@
     "name": "shmup-ingest",
     "version": "1.0.0"
   },
-  "notes": "w15-REING6 (gen6 row a): the double shot from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+  "notes": "sh-double (gen13 quality-regen wave 6, PROBE-OK@1 seed 521601013; w15-REING123): shots/double v2 re-land (1 frame 7x7 = 5x5 v1 x1.5, native; the Double diagonal bolt travelling up-right — the 45 deg orientation of v1 semantics; hitFlash false, no @flash). Replaces the w15-REING-6 gen6 cut; cell 165x166 cropped + 6 px. v1 twin unchanged (RR-1)."
 }

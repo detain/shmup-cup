@@ -300,8 +300,10 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     expect(kinds.flash).toBe(
       sprites.filter((s) => s.origin.startsWith('flash:') && baseIsProcedural(s.origin)).length,
     );
-    // Likewise the @p2 of a recorded base (R6-03.S3: the crafts' @p2 ride their overrides).
-    expect(kinds.p2).toBe(
+    // Likewise the @p2 of a recorded base (R6-03.S3: the crafts' @p2 ride their overrides;
+    // w15-REING123: the kestrel-thruster's and the life icon's @p2 joined them, so the
+    // procedural p2 key left the report entirely — the same `?? 0` guard as the palette row).
+    expect(kinds.p2 ?? 0).toBe(
       sprites.filter((s) => s.origin.startsWith('p2:') && baseIsProcedural(s.origin)).length,
     );
     // Likewise the colour-blind @palette siblings of a recorded base (w15-REING7: the three
@@ -411,9 +413,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // records join (the gimmick-range chips — bubble-small, lava, rock, rush-cube and the
     // tentacle claw — of the re-probed PROBE-OK harvest) and w15-REING11's six gen11
     // records join (the manta-thruster and the five option rows that never held art; the
-    // four re-asked rows keep their own), so the copy lands one hundred forty-five live
-    // plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(145);
+    // four re-asked rows keep their own) and w15-REING123's eight join (the gyro, the four
+    // HALCYON BULWARK chips, the chain link, the life stock icon and the zero-GPU
+    // kestrel-thruster recolor), so the copy lands one hundred fifty-three live plus five
+    // minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(153);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -455,8 +459,13 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // join with the manta-thruster's derived @p2 sibling (the four re-asked rows keep
       // their sprites, and no @flash rides with any of the ten gen11 rows — none of them
       // flashes on hit): two hundred twenty-four live, and the fixture tree lands two
-      // hundred twenty-four again.
-      sprites: 224,
+      // hundred twenty-four again. w15-REING123's eight harvest sprites join with four
+      // derived @flash siblings (the four HALCYON BULWARK chips flash; the gyro, the chain
+      // link, the life icon and the thruster do not) and the two @p2 siblings — the
+      // kestrel-thruster's and the life icon's — now ride the records instead of the
+      // procedural maps: two hundred thirty-eight live, and the fixture tree lands two
+      // hundred thirty-eight again.
+      sprites: 238,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

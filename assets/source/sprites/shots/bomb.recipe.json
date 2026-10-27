@@ -9,18 +9,19 @@
   "frameCount": 1,
   "sources": [
     {
-      "image": "art-prompts/v2/gen6/a-shot-bomb/gen.png",
+      "image": "art-prompts/v2/gen13/sh-bomb/gen.png",
       "frames": [
         [
-          86,
-          121,
-          323,
-          283
+          54,
+          55,
+          148,
+          147
         ]
       ]
     }
   ],
   "fit": "contain",
+  "holes": "auto",
   "outline": false,
   "anchor": [
     4,
@@ -29,9 +30,9 @@
   "provenance": {
     "use": "pixels",
     "reviewed": {
-      "on": "2026-10-26",
-      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
     },
-    "notes": "w15-REING6 (gen6 row a): the screen bomb shot from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+    "notes": "sh-bomb (gen13 quality-regen wave 6, PROBE-OK@2 seed 521601000 — the a1 oversized first seed fixed by the absolute-125 px BALL LAW per w15-GEN13 Laws; w15-REING123): shots/bomb v2 re-land (1 frame 9x9 = 6x6 v1 x1.5, native; the falling Spread Bomb shell, bursts into shots/blast — untouched; hitFlash false, no @flash). This REPLACES the w15-REING-6 gen6 cut of the same name (the quality-regen ask); cell 136x135 centred cropped + 6 px. The interim v2 map stays the code source and the v1 twin the scale-1 build (RR-1)."
   }
 }

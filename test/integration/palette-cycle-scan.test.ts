@@ -74,13 +74,10 @@ const CYCLE_ART: Readonly<Record<string, readonly string[]>> = Object.freeze({
  * ramp it sits on no layer cycling): one line per sprite; later subtasks delete the line when
  * they replace the sprite, and an entry that no longer trips fails the scan. */
 const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  STORM: [
-    'bosses/shield-plate',
-    'enemies/facet-turret',
-    'enemies/prism-cube',
-    'enemies/prism-lens',
-    'bg/storm-flash',
-  ],
+  // w15-REING123: the shield-plate's STORM line went — the gen12 ingested plate is native art
+  // that keeps the STORM margin on its own (its lavender interim inks are gone), and the list
+  // cannot rot (same class as the REING89 hopper line above).
+  STORM: ['enemies/facet-turret', 'enemies/prism-cube', 'enemies/prism-lens', 'bg/storm-flash'],
   DUNE: ['bosses/widow-head'],
   VAULT: ['bosses/regent-eye'],
   // w15-REING89: the hopper's PRISM line went — its native gen8 palette keeps the margin

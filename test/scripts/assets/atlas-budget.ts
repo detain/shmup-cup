@@ -81,8 +81,19 @@
  * the AREA law holds: 619 sprites, 2,200 frames unchanged, so the stand-in band, the TV
  * residency budget and the bundle's gzip and dist rows do not move. Headroom 3,884 B
  * kept — a bulk colour regression still trips this cap loudly.
+ *
+ * **w15-REING123 (the same owner re-add ruling, dated 2026-10-26): raised 335,000 →
+ * 337,000.** Measured first: the merged gen12 + gen13 harvest — the gyro option, the four
+ * HALCYON BULWARK boss chips, the four replaced shot families, the chain link, the life
+ * stock icon — plus the zero-GPU kestrel-thruster recolor took the REING11 page
+ * 331,116 → **335,794 B** (+4,678 B; the 3,884 B REING11 headroom was spent by design —
+ * ~2 kB a round was the warned rate and this is a twelve-row final round). Every row
+ * replaces an existing interim frame in place: the AREA law holds again — 619 sprites,
+ * 2,200 frames unchanged — so the stand-in band, the TV residency budget and the
+ * bundle's gzip rows track the page, not the cap. Headroom 1,206 B kept — a bulk colour
+ * regression still trips this cap loudly.
  */
-export const ATLAS_COMMON_PNG_CAP = 335_000;
+export const ATLAS_COMMON_PNG_CAP = 337_000;
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
  * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a

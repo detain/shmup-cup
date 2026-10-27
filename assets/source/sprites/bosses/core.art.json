@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/core",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen12/b-core/gen.png",
+      "sha256": "dd2c542c328eac3b584a7049bedbe5624ef1d42cd3e99b653aff07d0fd02e5e7",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frame(s) of the boss weak-point CORE — a round energy heart mounted in a short steel collar, seen head-on — the glowing weak point every zone boss exposes. The two cells are the SAME core pulsing its light — draw it as one clear subject.\n\nDesign identity to keep exactly — the glowing weak-point CORE of a boss seen head-on: a round energy heart set inside a short gunmetal collar. A pale blue-white blaze at its centre (#e8ffff), a bright cyan ring around it (#38c8e8), a deep-navy blue energy field beyond (#1858c8), all held in a steel mount (#4a5a78 with #8898b8 lit edges) on a 1-px near-black navy outline (#0a1020). Its two pulse steps: 0 the BLAZE — white-hot centre, vivid cyan ring; 1 the DIM — the white centre settles to pale cyan, the blue field cools, the steel collar unchanged.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 BLAZE — the core at full light: white centre, bright cyan ring, blue field. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = FRAME 1 DIM — the SAME core, same pixels, recoloured: the centre dims toward pale cyan, the blue field deepens. The subject lies within aspect 0.70:1 to 1.30:1.\n- COLOUR-ONLY STATE LAW: frames 1 to 1 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521502026,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T04:13:53.471Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen12/b-core/gen.json",
+        "sidecarSha256": "023ffae46283aa71e0c5bc605827a3918aaea53124059222afb5e9eb67f5096d",
+        "id": "gen12/b-core",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/core.recipe.json",
+    "sha256": "0f5e260111073e850193061ea49b5c5bb8c19e18e60462b5cf4700646448cc17"
+  },
+  "edit": null,
+  "output": {
+    "png": "core.png",
+    "sha256": "5c50e461579f7317864a823da115e7153932cc4753d956772377f450c0caec70",
+    "sidecar": "core.json",
+    "sidecarSha256": "4081e14ede744144b6bb8b5d19ac1bcc339637230aaa60a7ec7cb68025df94c2",
+    "frames": 2,
+    "frameWidth": 24,
+    "frameHeight": 24,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "b-core (gen12 quality-regen wave 5, PROBE-OK@1 seed 521502026; w15-REING123): bosses/core v2 (2 pulse frames 24x24 served = 16x16 v1 x1.5, native; the boss weak-point core, f0 BLAZE / f1 DIM — shape-diff 0, colour-only state law; hitFlash true, the @flash sibling pipeline-derived from these pixels). Both cells cropped to their stored probe boxes + 6 px key (1x2-of-256x256, both 189x220 AR 0.86, xor 21.7 — the square-chip grammar). The v1 pixel map stays the scale-1 build (RR-1); the interim v2 art (upscaled v1) is replaced in place — 2 frames, no count change."
+}

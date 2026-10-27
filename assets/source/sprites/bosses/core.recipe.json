@@ -1,0 +1,44 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/core",
+  "category": "boss-part",
+  "frame": {
+    "width": 24,
+    "height": 24
+  },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen12/b-core/gen.png",
+      "frames": [
+        [
+          33,
+          11,
+          201,
+          232
+        ],
+        [
+          278,
+          11,
+          201,
+          232
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    12,
+    12
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+    },
+    "notes": "b-core (gen12 quality-regen wave 5, PROBE-OK@1 seed 521502026; w15-REING123): bosses/core v2 (2 pulse frames 24x24 served = 16x16 v1 x1.5, native; the boss weak-point core, f0 BLAZE / f1 DIM — shape-diff 0, colour-only state law; hitFlash true, the @flash sibling pipeline-derived from these pixels). Both cells cropped to their stored probe boxes + 6 px key (1x2-of-256x256, both 189x220 AR 0.86, xor 21.7 — the square-chip grammar). The v1 pixel map stays the scale-1 build (RR-1); the interim v2 art (upscaled v1) is replaced in place — 2 frames, no count change."
+  }
+}

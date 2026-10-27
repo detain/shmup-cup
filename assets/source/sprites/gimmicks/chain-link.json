@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "gimmicks/chain-link 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 9
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 9,
+        "h": 9
+      },
+      "sourceSize": {
+        "w": 9,
+        "h": 9
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "chain-link.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 9,
+      "h": 9
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 9,
+              "h": 9
+            },
+            "pivot": {
+              "x": 4,
+              "y": 4
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

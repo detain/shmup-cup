@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "gimmicks/chain-link",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen13/g-chain-link/gen.png",
+      "sha256": "01158634c0147aaba23c02965c15be775fbdf0bc8dfe076ab4f63dd46524b9b1",
+      "format": "png",
+      "width": 256,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the one frame(s) of a CHAIN-LINK segment of a boss tentacle arm — one chunky articulated link bead of an organic machine arm — a single connector block seen whole, face-on. The sheet is one cell holding this one link.\n\nDesign identity to keep exactly — the CHAIN-LINK bead: one chunky segment of a tentacle arm, a rounded-square link about 150 px across sitting dead-centre in its 256×256 cell with a wide even band of flat key all around it. A deep plum near-black casing outline (#3a0a2a) around a bold magenta body (#c04890), with a pale pink lit face (#f090c8) running along the top and left inner edge — lit from the top-left. Symmetrical, blunt-cornered, mechanical-organic: a bead that butts against identical beads to form an arm. Drawn straight-on, flat, no perspective, no chain trailing out, no hooks — one self-contained link plate.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cells laid out as 1 ROW OF 1 (1-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = THE LINK — one rounded-square plum-magenta bead, face-on. The subject lies within aspect 0.70:1 to 1.30:1.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521604052,
+      "size": "256x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T04:26:59.194Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen13/g-chain-link/gen.json",
+        "sidecarSha256": "503d7e4f9060937536de22d580df140bc83191fd0f838f2f6b56e661216fdc23",
+        "id": "gen13/g-chain-link",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/gimmicks/chain-link.recipe.json",
+    "sha256": "30261a6f1e0ee8a585fc7918c317b70e050df06e051ec31c22e1bfc31db6e61a"
+  },
+  "edit": null,
+  "output": {
+    "png": "chain-link.png",
+    "sha256": "fb962437bfb6489a4abd6846bea4e2272410c51c1be12aae4a84945be72978e9",
+    "sidecar": "chain-link.json",
+    "sidecarSha256": "f2f4b1357c0650956ff85456622c641245f578e5ecf39fa2f432fa3f5953e4e1",
+    "frames": 1,
+    "frameWidth": 9,
+    "frameHeight": 9,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "g-chain-link (gen13 quality-regen wave 6, PROBE-OK@1 seed 521604052; w15-REING123): gimmicks/chain-link v2 (1 frame 9x9 served = 6x6 v1 x1.5, native; the tentacle-arm link bead of the stage gimmicks — a tiling bead, blunt-cornered and symmetric; hitFlash false, no @flash). First real art for this name; cell 112x94 cropped + 6 px. The v1 map stays the scale-1 build (RR-1) — this name had no v2 interim map, so the upscaled v1 art is replaced in place."
+}

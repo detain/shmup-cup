@@ -28,8 +28,13 @@ import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
-/** `bosses/hull-block` palette `m` (#3a4a68). */
-const HULL = [0x3a, 0x4a, 0x68] as const;
+/**
+ * `bosses/hull-block` body navy (#2a3d70 — w15-REING123 gen12 real art; census: 85 px of the
+ * 480-opaque 24×24 block, the frame's dominant colour, present in its only frame; censed
+ * holder-exclusive over every shipped sprite PNG and ±3-clean against all 93 e2e pin colours;
+ * the interim `m` #3a4a68 is retired with the v1 upscale).
+ */
+const HULL = [0x2a, 0x3d, 0x70] as const;
 /**
  * Screen row of the band's top edge (the flight scene's `WARNING_BAND_Y`, like the game scene's:
  * the 48-row band centred 8 px above the frame's centre row, both at the art's scale — 76 at

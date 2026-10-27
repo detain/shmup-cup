@@ -6,18 +6,18 @@
   "cleanup": "none",
   "handCleaned": false,
   "reviewed": {
-    "on": "2026-10-26",
-    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
   },
   "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
-      "path": "art-prompts/v2/gen6/a-shot-bomb/gen.png",
-      "sha256": "cad3377c065ab22e75a4551de970880999dfbf9b416329991629cc8b1750e9a6",
+      "path": "art-prompts/v2/gen13/sh-bomb/gen.png",
+      "sha256": "15eefe2ac7f01dc0bfa7eca7c43b3c63716167da0e572bf4dd78050733498dfa",
       "format": "png",
-      "width": 512,
-      "height": 512,
+      "width": 256,
+      "height": 256,
       "model": "black-forest-labs/FLUX.2-dev",
       "modelKey": "flux2",
       "weights": {
@@ -29,19 +29,19 @@
       "prompt": {
         "file": null,
         "entry": null,
-        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the BOMB — a charged smart-bomb orb crackling with sparks.\n\nDesign identity to keep exactly — A dense red-orange plasma bomb orb with a hot white-gold core, crackling yellow spark arcs across its shell and a dark crimson rim — clearly 'about to explode', heavier and hotter than any pickup.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the BOMB charge — a swollen crimson-orange plasma orb packed with crackling yellow sparks The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 1.28:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
-        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the one frame(s) of the falling SPREAD BOMB shot — a round orange-brown bomb shell plunging through the air before it bursts — one clear ball-shaped subject seen whole. The sheet is one cell holding this one bomb.\n\nDesign identity to keep exactly — the SPREAD BOMB: a round cartoon bomb shell, a perfect sphere of exactly 125 px across sitting dead-centre in its 256×256 cell with a wide even band of flat key all around it. A hot orange body (#e86018) with a broad amber-yellow lit face toward the upper-left (#f8c030), a small white specular glint (#ffffff) high on that lit side, and a deep brown-black casing line and rim (#5a3010) as a 1-px outline around the whole ball. A short dark fuse nub lies INSIDE the top of the ball's round silhouette, adding no height. Chunky, bold, readable at a glance — a heavy falling bomb, not a grenade and not a bomb burst (no fireball, no explosion, no smoke).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cells laid out as 1 ROW OF 1 (1-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = THE BOMB — the round shell whole, fuse nub on top. The subject lies within aspect 0.70:1 to 1.30:1.\n- ABSOLUTE BALL LAW: the whole subject spans exactly 125 px wide and 125 px tall — the ball is a 125 px circle centred in the cell, leaving at least 55 px of flat key on every side, more than the gate needs on all four borders.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
       },
-      "seed": 520019247,
-      "size": "512x512",
+      "seed": 521601000,
+      "size": "256x256",
       "steps": 40,
       "guidance": 3.5,
-      "generatedAt": "2026-10-26T22:29:43.902Z",
+      "generatedAt": "2026-10-27T04:27:29.716Z",
       "reference": [],
       "generator": {
-        "sidecar": "art-prompts/v2/gen6/a-shot-bomb/gen.json",
-        "sidecarSha256": "d00c0ad9ec900bcdae6ab061d38db6b6a25a3d284d3b8d7c6e7679a65f3dabdc",
-        "id": "gen6/a-shot-bomb",
+        "sidecar": "art-prompts/v2/gen13/sh-bomb/gen.json",
+        "sidecarSha256": "c27ab0879d04895d9151fb2ce746863a079a70cd1152a6b98f838f81ba97a21f",
+        "id": "gen13/sh-bomb",
         "slot": "a",
         "mode": "generate",
         "instruction": null
@@ -50,12 +50,12 @@
   ],
   "recipe": {
     "path": "assets/source/sprites/shots/bomb.recipe.json",
-    "sha256": "46613eb7943e576839c99e28459fde0e53a65ea715c16580e22618ed2f995b12"
+    "sha256": "806209eb001dd04aeaad950efc7f9e462686709674e18e846055cd5567c741f2"
   },
   "edit": null,
   "output": {
     "png": "bomb.png",
-    "sha256": "b61948d4d0a43782102b8b9618e3f6ac830499b212138af7648bd70768129723",
+    "sha256": "8562f4aaa3ddc9d85c472f8c098a6fc68354b991e87cdda66b2d44d4aa61c381",
     "sidecar": "bomb.json",
     "sidecarSha256": "7ffc672f03b6808e824fea93586ba727840cfcd16afa437384a16098f43719bd",
     "frames": 1,
@@ -68,5 +68,5 @@
     "name": "shmup-ingest",
     "version": "1.0.0"
   },
-  "notes": "w15-REING6 (gen6 row a): the screen bomb shot from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+  "notes": "sh-bomb (gen13 quality-regen wave 6, PROBE-OK@2 seed 521601000 — the a1 oversized first seed fixed by the absolute-125 px BALL LAW per w15-GEN13 Laws; w15-REING123): shots/bomb v2 re-land (1 frame 9x9 = 6x6 v1 x1.5, native; the falling Spread Bomb shell, bursts into shots/blast — untouched; hitFlash false, no @flash). This REPLACES the w15-REING-6 gen6 cut of the same name (the quality-regen ask); cell 136x135 centred cropped + 6 px. The interim v2 map stays the code source and the v1 twin the scale-1 build (RR-1)."
 }

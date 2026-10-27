@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "bosses/hull-block 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 24
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "hull-block.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 24,
+      "h": 24
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 24
+            },
+            "pivot": {
+              "x": 12,
+              "y": 12
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

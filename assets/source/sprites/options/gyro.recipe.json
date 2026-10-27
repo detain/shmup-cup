@@ -1,0 +1,56 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "options/gyro",
+  "category": "option",
+  "frame": {
+    "width": 12,
+    "height": 12
+  },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen12/o-gyro/gen.png",
+      "frames": [
+        [
+          56,
+          55,
+          177,
+          177
+        ],
+        [
+          280,
+          55,
+          176,
+          177
+        ],
+        [
+          56,
+          280,
+          177,
+          177
+        ],
+        [
+          279,
+          280,
+          177,
+          179
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    6,
+    6
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+    },
+    "notes": "o-gyro (gen12 quality-regen wave 5, PROBE-OK@1 seed 521501013; w15-REING123): options/gyro v2 (4 pulse frames 12x12 native — plus, X, flare, far-rim lit; the Rotate gyro rotor, spokes turn per OPTION_FRAMES; hitFlash false, no @flash sibling). The four cells cropped to their stored probe boxes + 6 px key (2x2-of-256x256 grid): the absolute-150 px wheel cap ask landed all four wheels 164-167 px uniform, killing the three-wave plus-cross inflation class on the first seed (w15-GEN12 report Laws). holes:auto keys the enclosed spoke gaps. The v1 2-frame twin stays the scale-1 build (RR-1); the interim 4-frame v2 map remains the code source (anchor, animations, hitFlash false) with its pixels served by this override. The design carries its own outline, so the outline pass is off."
+  }
+}

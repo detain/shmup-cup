@@ -1,0 +1,38 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/hull-block",
+  "category": "boss-part",
+  "frame": {
+    "width": 24,
+    "height": 24
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen12/b-hull-block/gen.png",
+      "frames": [
+        [
+          57,
+          57,
+          142,
+          143
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    12,
+    12
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+    },
+    "notes": "b-hull-block (gen12 quality-regen wave 5, PROBE-OK@1 seed 521504052; w15-REING123): bosses/hull-block v2 (1 frame 24x24 served = 16x16 v1 x1.5, native; the riveted hull tile of the big boss walls; hitFlash true, @flash pipeline-derived). A TILING tile — single 130x131 ink cell (1x1@256) cropped to the probe box + 6 px, scaled 1:1 in aspect so the block stays square and symmetric. The v1 map stays scale-1 (RR-1)."
+  }
+}

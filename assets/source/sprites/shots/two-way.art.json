@@ -6,15 +6,15 @@
   "cleanup": "none",
   "handCleaned": false,
   "reviewed": {
-    "on": "2026-10-26",
-    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
   },
   "ingestedAt": "2026-10-27",
   "author": null,
   "sources": [
     {
-      "path": "art-prompts/v2/gen6/a-shot-twoway/gen.png",
-      "sha256": "6b118e40d9bb28838dae14512466d494b61eaa5bf73a86d8a501f84193de0694",
+      "path": "art-prompts/v2/gen13/sh-two-way/gen.png",
+      "sha256": "6a467ef80523b42aa0d805da2703fa69b73da7e77483ecf848a8a4c3426ea284",
       "format": "png",
       "width": 512,
       "height": 256,
@@ -29,19 +29,19 @@
       "prompt": {
         "file": null,
         "entry": null,
-        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the TWO-WAY shot — a green twin-fin dart that fires up-and-down in mirrored pairs.\n\nDesign identity to keep exactly — A lime-green energy dart with white core and navy twin fins; identical dart in both cells, only the tilt mirrors.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROWS OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = CLIMB dart — tilted nose-up about 35 degrees, upper fins bright The subject lies within aspect 0.7:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n  cell 2 = DIVE dart — same dart tilted nose-down about 35 degrees, lower fins bright The subject lies within aspect 0.7:1 to 1.4:1, identical scale and position as the other cells — only the named state changes.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 40 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.\n- Both cells show the SAME dart at the SAME size, nose to the right, one tilted up one tilted down.",
-        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frame(s) of the 2-WAY MISSILE rocket — a compact steel rocket that alternates climbing up-to-the-right and diving down-to-the-right — one clear missile subject. The two cells are the SAME rocket in its two flight attitudes.\n\nDesign identity to keep exactly — the 2-WAY MISSILE: a compact chunky rocket about 150 px across its square footprint, centred in its 256×256 cell with a wide even band of flat key on every side. A light steel-grey body (#a0a8b8) with a 1-px dark navy-blue outline (#2a3a4a), a bright white nose cap (#ffffff) at its front tip, two short fins at the tail, and a small orange-red exhaust flare (#e84818) burning right at the tail — the exhaust stays tight against the rocket, inside the same footprint. Frame 0 slants up to the right at 45 degrees (nose upper-right); frame 1 is that SAME rocket slanted down to the right at 45 degrees (nose lower-right, the picture flipped top-to-bottom).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 CLIMBING — the rocket slanted up to the right, white nose at the upper-right corner of its slant, orange exhaust at the lower-left tail. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = FRAME 1 DIVING — the SAME rocket drawn again, its exact top-to-bottom mirror: slanted down to the right, white nose at the lower-right, orange exhaust at the upper-left tail. The subject lies within aspect 0.70:1 to 1.30:1.\n- MIRROR LAW: cell 2 is cell 1 turned upside-down — same rocket, same length, same thickness, same colours, same dead-centre position; only the slant direction flips (climb becomes dive). Both rockets share one square footprint of about 150 px inside their cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
       },
-      "seed": 520015195,
+      "seed": 521603039,
       "size": "512x256",
       "steps": 40,
       "guidance": 3.5,
-      "generatedAt": "2026-10-26T22:28:13.585Z",
+      "generatedAt": "2026-10-27T04:26:53.435Z",
       "reference": [],
       "generator": {
-        "sidecar": "art-prompts/v2/gen6/a-shot-twoway/gen.json",
-        "sidecarSha256": "ef6b8f35fc4baec09e75bfde600830ae2d9ff44125778607512a54ef5e6041b0",
-        "id": "gen6/a-shot-twoway",
+        "sidecar": "art-prompts/v2/gen13/sh-two-way/gen.json",
+        "sidecarSha256": "06c236b9b880cc1a4adcec3499ebd063c50c7102ed9e0eed5b8d667bca86e704",
+        "id": "gen13/sh-two-way",
         "slot": "a",
         "mode": "generate",
         "instruction": null
@@ -50,12 +50,12 @@
   ],
   "recipe": {
     "path": "assets/source/sprites/shots/two-way.recipe.json",
-    "sha256": "491d286520640945d92c9d292f55a11cd6b9207255da541c503c7b4f12669834"
+    "sha256": "3d05171480383644685c559be8c2a481d4269e193f4be41993e610446fb493be"
   },
   "edit": null,
   "output": {
     "png": "two-way.png",
-    "sha256": "536028347ae93f56497bb8b087cb973b624fb0e13e355ca43f8e8587a1bee669",
+    "sha256": "c78311f9fcdb487d1cd24bcc63e4fcc73805311264768d76d6688f6f2ed2a84e",
     "sidecar": "two-way.json",
     "sidecarSha256": "249557ebc86cbf41eed16ecb9c3691d5ac6788e424b58681120ede10afd83ae4",
     "frames": 2,
@@ -68,5 +68,5 @@
     "name": "shmup-ingest",
     "version": "1.0.0"
   },
-  "notes": "w15-REING6 (gen6 row a): the two-way shot's climb and dive frames (slot-scale frame diff 44.6% vs the interim pair's 64.7% - a real climb/dive state, probe xors verified by this lane) from the owner-improvement redesign sheet (1 cell of 512x256 on the flat #51e018 key, probe box +6px pad, contain to the slot). FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution); gen6 was the owner-improvement redesign round (ask + retry per the 2026-10-26 improvement ask)."
+  "notes": "sh-two-way (gen13 quality-regen wave 6, PROBE-OK@1 seed 521603039 — the MIRROR LAW landed the real pose pair first seed; w15-REING123): shots/two-way v2 re-land (2 frames 7x7 native; the 2-Way Missile f0 CLIMB / f1 DIVE — a genuine vertical mirror pose pair (v1 shape-diff 16), NOT collapsed to one frame — do not; hitFlash false, no @flash). Replaces the w15-REING-6 gen6 cut; cells 155x157 + 154x158, xor 17.7, cropped + 6 px. v1 twin unchanged (RR-1)."
 }

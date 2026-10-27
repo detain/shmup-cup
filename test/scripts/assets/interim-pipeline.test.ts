@@ -233,7 +233,15 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // pool, −12: 346 measured on the landing tree, frames replaced 1:1 at the same served sizes.
     // The floor follows the natives to 340 — headroom for the next restored wave, loud on a bulk
     // regression.
-    expect(scaled).toBeGreaterThan(340);
+    // w15-REING123 (owner re-add ruling of 2026-10-26): the merged gen12/gen13 harvest's twelve
+    // rows — the gyro, the four HALCYON BULWARK chips, the four re-asked shot families, the
+    // chain link, the life stock icon and the zero-GPU kestrel-thruster recolor — land as
+    // natives. Twelve compared interim names leave the pool (343 measured at base de19310d —
+    // three fewer than REING10's note, its own landing's unrecorded thruster/p2 v2-only rows —
+    // and 331 measured on this tree), frames replaced 1:1 at the same served sizes: 619
+    // sprites, 2,200 frames unchanged. The floor follows the natives to 320 — headroom for the
+    // next restored wave, loud on a bulk regression.
+    expect(scaled).toBeGreaterThan(320);
     expect(wrongPixels).toEqual([]);
   });
 

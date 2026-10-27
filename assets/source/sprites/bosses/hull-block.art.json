@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/hull-block",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen12/b-hull-block/gen.png",
+      "sha256": "bd7f083d1225419282c77f90bbdb92a181ccf752464a4125e36730a691ed0630",
+      "format": "png",
+      "width": 256,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the one frame(s) of the boss HULL BLOCK — a single square riveted armour tile that copies of build the big boss walls — a flat frontal plate, no perspective. The sheet is one cell holding this one block.\n\nDesign identity to keep exactly — a single BOSS HULL BLOCK: a square riveted armour tile. A navy-steel face (#3a4a68) with a lit upper-left bevel (#5a6a90) and a deep shadowed lower-right bevel (#26324a), four round corner rivets with lit heads, a short seam line across the middle, all on a 1-px near-black outline (#0c1424). Seen straight on, square and symmetrical so many copies read as one wall — a heavy machine-cut block of armour.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cells laid out as 1 ROW OF 1 (1-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = THE BLOCK — one riveted steel armour tile, frontal view. The subject lies within aspect 0.70:1 to 1.30:1.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521504052,
+      "size": "256x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T04:14:06.357Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen12/b-hull-block/gen.json",
+        "sidecarSha256": "c20e6e39f38c5a927e67a4003f07113c600ca73bab14286747b5ef3d155d2f0c",
+        "id": "gen12/b-hull-block",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/hull-block.recipe.json",
+    "sha256": "0b961c3aecceadfe371600fa86650fae749ba69d4fea1959c0ba1eba46990ade"
+  },
+  "edit": null,
+  "output": {
+    "png": "hull-block.png",
+    "sha256": "75589b5dd0738fb8c5c9f888c2faaf106b4a8ac2cd697210661dd7932ca050dd",
+    "sidecar": "hull-block.json",
+    "sidecarSha256": "209c4423d92fc2b858f6c06098395bdf162c87bc6bd6439763866e13dd440e96",
+    "frames": 1,
+    "frameWidth": 24,
+    "frameHeight": 24,
+    "colors": 23,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "b-hull-block (gen12 quality-regen wave 5, PROBE-OK@1 seed 521504052; w15-REING123): bosses/hull-block v2 (1 frame 24x24 served = 16x16 v1 x1.5, native; the riveted hull tile of the big boss walls; hitFlash true, @flash pipeline-derived). A TILING tile — single 130x131 ink cell (1x1@256) cropped to the probe box + 6 px, scaled 1:1 in aspect so the block stays square and symmetric. The v1 map stays scale-1 (RR-1)."
+}

@@ -1,0 +1,56 @@
+{
+  "id": "gen12/s-kestrel-thruster/frames",
+  "slot": "a",
+  "prompt": "No model and no prompt: made in code from the ingested ships/manta-thruster frames (the GEN10 s-manta-thruster winner, shipped as the v2 override PNG). The GEN12 ask s-kestrel-thruster STOP@8d (no generated sheet passed its probe; w15-GEN12-report section Wave-6 recommendation 1), so the KESTREL flame is the proven MANTA flame recoloured by the nearest-luma law onto the three warm design colours the ask names (body #e84818, inner glow #f8c030, white-hot heart #fff8d0) — same geometry, same four-frame flicker ladder, same nozzle-right placement, the interim map palette.",
+  "negative": null,
+  "model": "code",
+  "origin": "derived in code from the ingested manta-thruster frames: no AI model, no GPU, no server",
+  "seed": null,
+  "width": 768,
+  "height": 512,
+  "steps": null,
+  "guidance": null,
+  "generatedAt": "2026-10-27T12:00:00.000Z",
+  "seconds": null,
+  "label": "KESTREL THRUSTER animation sheet, four frames (v2: 4 flicker frames 9x5)",
+  "source": "v2-target",
+  "file": "art-prompts/v2/code-frames/kestrel-thruster/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": null,
+  "endpoint": null,
+  "negativeSent": null,
+  "mode": "code",
+  "derivedFrom": "art-prompts/v2/gen11/s-manta-thruster/gen.png",
+  "derivedFromSha256": "0a7b338b85233d8955fbf8e4e249eca7a12689150fb3360c5e6604bbb518b1dd",
+  "editFrom": [
+    "art-prompts/v2/gen11/s-manta-thruster/gen.png"
+  ],
+  "editFromSha256": [
+    "0a7b338b85233d8955fbf8e4e249eca7a12689150fb3360c5e6604bbb518b1dd"
+  ],
+  "derivedFromSidecar": "art-prompts/v2/gen11/s-manta-thruster/gen.json",
+  "instruction": null,
+  "transform": {
+    "frames": 4,
+    "layout": "2 rows x 2, read left to right, row-major; one continuous key",
+    "cell": "384x256",
+    "key": "RGB 81,224,24 (the GEN12 ask key #51e018); every non-subject pixel is exactly this",
+    "recolour": "each shipped manta pixel maps to the nearest KESTREL design colour in Rec.601 integer luma (floors), ties to the darker neighbour; the warm anchor lumas are 113, 191, 244; the cool ramp lumas span 66..230",
+    "geometry": "alpha and pixel positions byte-identical to the shipped manta strip (opaque per frame 9/16/8/12)",
+    "upscale": "nearest x16 onto the key, each frame centred in its cell (the subject box is exactly 144x80)"
+  },
+  "script": "art-prompts/v2/code-frames/make_kestrel_thruster.mjs",
+  "scriptSha256": "52e05ce33991c02eaba631e32a2c3489283808ea99cfe94f1347c97a55d12c60",
+  "command": "node art-prompts/v2/code-frames/make_kestrel_thruster.mjs",
+  "outputSize": "768x512",
+  "pins": {
+    "model": "code",
+    "seed": null,
+    "targetGrid": "ships/kestrel-thruster 4f 9×5 a9,2 (the KESTREL engine flame, burn [0,1,2,3], p2 true)",
+    "sheetContract": "key RGB 81,224,24; 2×2 cells 384×256 read row-major; crop boxes [120,88,144,80] [504,88,144,80] [120,344,144,80] [504,344,144,80] (exact upscaled subject boxes, gutters ≥ 12 px of flat key)",
+    "rowCite": "w15-GEN12-report.md §Wave-6 rec 1 (s-kestrel-thruster STOP@8 — recolor the proven manta frames)",
+    "sourceWinners": "assets/source/sprites/ships/manta-thruster.png — the ingested ships/manta-thruster override (cropped from art-prompts/v2/gen11/s-manta-thruster/gen.png, gen11 PROBE-OK@4); the script reads the shipped strip bytes directly",
+    "generatedAt": "2026-10-27T12:00:00.000Z"
+  }
+}

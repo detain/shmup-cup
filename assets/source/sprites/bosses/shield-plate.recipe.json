@@ -1,0 +1,44 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/shield-plate",
+  "category": "boss-part",
+  "frame": {
+    "width": 12,
+    "height": 24
+  },
+  "frameCount": 2,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen12/b-shield-plate/gen.png",
+      "frames": [
+        [
+          104,
+          13,
+          91,
+          231
+        ],
+        [
+          318,
+          13,
+          90,
+          231
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    6,
+    12
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+    },
+    "notes": "b-shield-plate (gen12 quality-regen wave 5, PROBE-OK@2 seed 521506065 — the a1 portrait-class death fixed by the SAME-PLATE bar law per w15-GEN12 Laws; w15-REING123): bosses/shield-plate v2 (2 frames 12x24 served = 8x16 v1 x1.5, native; the armour plate before a boss core, f0 INTACT / f1 CRACKED — colour-only, xor 41; hitFlash true, @flash pipeline-derived). Portrait cells 79x219 + 78x219 cropped + 6 px; fit contain scales width and height from the same ink. The v1 map stays scale-1 (RR-1)."
+  }
+}

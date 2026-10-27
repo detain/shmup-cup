@@ -1,0 +1,72 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "hud/life",
+  "category": "ui",
+  "frame": {
+    "width": 12,
+    "height": 8
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen13/h-life/gen.png",
+      "frames": [
+        [
+          30,
+          48,
+          226,
+          156
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    0,
+    0
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
+    },
+    "notes": "h-life (gen13 quality-regen wave 6, PROBE-OK@3 seed 521607065 — the CELL-SHRINK lever, 288x256 cell + STUBBY WEDGE LAW, after two wide-flat AR deaths per w15-GEN13 Laws; w15-REING123): hud/life v2 (1 frame 12x8 served = 8x5 v1 x1.5, native; the HUD remaining-ships icon, a miniature right-facing KESTREL; anchor top-left [0,0] as the interim map names it; hitFlash false, no @flash; the @p2 sibling pipeline-derived — the sidecar p2 map is written in pass 2 over the served palette, byte-reverse convention). Cell 214x144 @288x256 cropped + 6 px. v1 twin unchanged (RR-1)."
+  },
+  "p2": {
+    "#000085": "#850000",
+    "#0083e9": "#e98300",
+    "#00d0ff": "#ffd000",
+    "#01005c": "#5c0001",
+    "#0100a6": "#a60001",
+    "#010ef1": "#f10e01",
+    "#020042": "#420002",
+    "#0200d7": "#d70002",
+    "#02052c": "#2c0502",
+    "#020efc": "#fc0e02",
+    "#0210fa": "#fa1002",
+    "#03003b": "#3b0003",
+    "#030092": "#920003",
+    "#030211": "#110203",
+    "#03031f": "#1f0303",
+    "#030324": "#240303",
+    "#040130": "#300104",
+    "#04054f": "#4f0504",
+    "#070b0b": "#0b0b07",
+    "#0c374b": "#4b370c",
+    "#0e0d40": "#400d0e",
+    "#0f0f8a": "#8a0f0f",
+    "#100d26": "#260d10",
+    "#34343b": "#3b3434",
+    "#353b75": "#753b35",
+    "#3a3757": "#57373a",
+    "#5d5b6d": "#6d5b5d",
+    "#5e536a": "#6a535e",
+    "#73708a": "#8a7073",
+    "#74718d": "#8d7174",
+    "#796c8b": "#8b6c79",
+    "#9e95ab": "#ab959e"
+  }
+}

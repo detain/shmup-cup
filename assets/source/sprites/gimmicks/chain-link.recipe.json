@@ -1,0 +1,38 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "gimmicks/chain-link",
+  "category": "item",
+  "frame": {
+    "width": 9,
+    "height": 9
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen13/g-chain-link/gen.png",
+      "frames": [
+        [
+          66,
+          75,
+          124,
+          106
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "holes": "auto",
+  "outline": false,
+  "anchor": [
+    4,
+    4
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-27",
+      "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen13 harvest (w15-GEN13 quality-regen wave 6 closing ask round, the PROBE-OK rows of the art-prompts/v2/gen13 store)"
+    },
+    "notes": "g-chain-link (gen13 quality-regen wave 6, PROBE-OK@1 seed 521604052; w15-REING123): gimmicks/chain-link v2 (1 frame 9x9 served = 6x6 v1 x1.5, native; the tentacle-arm link bead of the stage gimmicks — a tiling bead, blunt-cornered and symmetric; hitFlash false, no @flash). First real art for this name; cell 112x94 cropped + 6 px. The v1 map stays the scale-1 build (RR-1) — this name had no v2 interim map, so the upscaled v1 art is replaced in place."
+  }
+}

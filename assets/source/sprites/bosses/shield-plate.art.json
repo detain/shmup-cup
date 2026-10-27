@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/shield-plate",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen12 harvest (w15-GEN12 quality-regen wave 5 ask round, the PROBE-OK rows of the art-prompts/v2/gen12 store)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen12/b-shield-plate/gen.png",
+      "sha256": "c7f2e255935a66ba8d9ab75a69c25c74cad3cc5d03279ec2846826e454c8e7b1",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frame(s) of the boss SHIELD PLATE — a tall narrow armour slab bolted in front of a boss core, seen from the side edge-on — a vertical plate twice as tall as wide. The two cells are the SAME plate taking the cracks — draw it as one clear subject.\n\nDesign identity to keep exactly — a boss SHIELD PLATE: a tall narrow armour slab seen straight on, exactly 100 px wide and 200 px tall (its height is exactly twice its width — a vertical bar, centred in its cell with tall flat-key margins left and right). A light steel face (#9aa4b8) with a bright lit bevel down its left edge (#d8e0f0), a shaded column along its right (#5a6478), a rivet line down the centre and bolt caps top and bottom, all on a 1-px near-black outline (#101828). Its two damage steps: 0 INTACT — the clean plate; 1 CRACKED — the SAME plate with thin dark crack lines branching through the steel face; only the cracks change.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 INTACT — the clean vertical steel slab. The subject lies within aspect 0.32:1 to 0.72:1.\n  cell 2 = FRAME 1 CRACKED — the SAME slab, same pixels, thin dark cracks drawn through the face. The subject lies within aspect 0.32:1 to 0.72:1.\n- COLOUR-ONLY STATE LAW: frames 1 to 1 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- PLATE SHAPE LAW: both cells show the SAME plate drawn twice at the SAME size — a narrow vertical bar exactly twice as tall as wide: 100 px wide and 200 px tall in each 256×256 cell, dead-centre, with at least 75 px of flat key to its left and right and 25 px above and below. The plate is a bar, not a square; a wide or fat plate ruins the sheet.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521506065,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T04:14:52.056Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen12/b-shield-plate/gen.json",
+        "sidecarSha256": "2fdfd2c6ab54b427a263df50c3ed84f15c41ea924b4adf220727e24bbc375b80",
+        "id": "gen12/b-shield-plate",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/bosses/shield-plate.recipe.json",
+    "sha256": "dc313f48cbc94b773fbce2eefc5cb2cbac74577fb2602c493549e8305cb16bc5"
+  },
+  "edit": null,
+  "output": {
+    "png": "shield-plate.png",
+    "sha256": "b254ce60fb79f13c3bc9525858ed059d725d349b20b3ae4c1197ec3cc053a269",
+    "sidecar": "shield-plate.json",
+    "sidecarSha256": "a3e137a23b6a9e157698899958391c2ac2e2585324af758c9f3a4daef164a5d8",
+    "frames": 2,
+    "frameWidth": 12,
+    "frameHeight": 24,
+    "colors": 24,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "b-shield-plate (gen12 quality-regen wave 5, PROBE-OK@2 seed 521506065 — the a1 portrait-class death fixed by the SAME-PLATE bar law per w15-GEN12 Laws; w15-REING123): bosses/shield-plate v2 (2 frames 12x24 served = 8x16 v1 x1.5, native; the armour plate before a boss core, f0 INTACT / f1 CRACKED — colour-only, xor 41; hitFlash true, @flash pipeline-derived). Portrait cells 79x219 + 78x219 cropped + 6 px; fit contain scales width and height from the same ink. The v1 map stays scale-1 (RR-1)."
+}

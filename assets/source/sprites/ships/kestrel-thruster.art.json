@@ -1,0 +1,89 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "ships/kestrel-thruster",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-27",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the GEN12 Wave-6 rec 1 zero-GPU derivation (w15-REING123)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/code-frames/kestrel-thruster/gen.png",
+      "sha256": "dbcf6634bc7fd74e903f2e6a4251e97bd9483508d60ed2ba6e4aa10177387aef",
+      "format": "png",
+      "width": 768,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "code",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "No model and no prompt: made in code from the ingested ships/manta-thruster frames (the GEN10 s-manta-thruster winner, shipped as the v2 override PNG). The GEN12 ask s-kestrel-thruster STOP@8d (no generated sheet passed its probe; w15-GEN12-report section Wave-6 recommendation 1), so the KESTREL flame is the proven MANTA flame recoloured by the nearest-luma law onto the three warm design colours the ask names (body #e84818, inner glow #f8c030, white-hot heart #fff8d0) — same geometry, same four-frame flicker ladder, same nozzle-right placement, the interim map palette.",
+        "negative": null
+      },
+      "seed": null,
+      "size": "768x512",
+      "steps": null,
+      "guidance": null,
+      "generatedAt": "2026-10-27T12:00:00.000Z",
+      "reference": [
+        {
+          "path": "art-prompts/v2/gen11/s-manta-thruster/gen.png",
+          "from": "art-prompts/v2/gen11/s-manta-thruster/gen.png",
+          "sha256": "0a7b338b85233d8955fbf8e4e249eca7a12689150fb3360c5e6604bbb518b1dd",
+          "sidecar": "art-prompts/v2/gen11/s-manta-thruster/gen.json",
+          "sidecarSha256": "109c9546d865a8822f69606db7c966dd49853dd6a47a44de2659f36194348a39",
+          "model": "black-forest-labs/FLUX.2-dev",
+          "modelKey": "flux2",
+          "weights": {
+            "repo": "black-forest-labs/FLUX.2-dev",
+            "revision": null,
+            "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+          },
+          "licence": "flux-nc-2.1",
+          "reference": []
+        }
+      ],
+      "generator": {
+        "sidecar": "art-prompts/v2/code-frames/kestrel-thruster/gen.json",
+        "sidecarSha256": "92159a65772422d3fa4a64e044b321edfa3af092e9de6986439cfc479a729a62",
+        "id": "gen12/s-kestrel-thruster/frames",
+        "slot": "a",
+        "mode": "code",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/ships/kestrel-thruster.recipe.json",
+    "sha256": "5eb8fd03ac183f6133b357a8eb60e1dde77093d878c411a640690c2f34d5bdb0"
+  },
+  "edit": null,
+  "output": {
+    "png": "kestrel-thruster.png",
+    "sha256": "97658c280b696607bd05234bd33ecff7bcd4dcb6dff3bd7a87073bffa26de6ee",
+    "sidecar": "kestrel-thruster.json",
+    "sidecarSha256": "42225f1ba074b8029bbe2d6c8581bba162f34e06951b5998bcc5c58e8f9ba5a3",
+    "frames": 4,
+    "frameWidth": 9,
+    "frameHeight": 5,
+    "colors": 3,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "s-kestrel-thruster (gen12, STOP@8 — w15-GEN12-report §Wave-6 rec 1): ships/kestrel-thruster v2 (4 flicker frames 9x5 native, burn loop LOW/HIGH/SPARK/SURGE grammar; nozzle on the RIGHT edge, the anchor [9,2] keeps the attachment point; hitFlash false, no @flash sibling). No generated sheet passed the probe, so the flame is the ingested ships/manta-thruster frames recoloured in code by the committed art-prompts/v2/code-frames/make_kestrel_thruster.mjs (model code, deterministic byte-exact re-run, --check proven): every pixel keeps its alpha and position, each colour maps to the nearest KESTREL design colour in Rec.601 integer luma — the ask names exactly three (body #e84818, inner glow #f8c030, white-hot heart #fff8d0), the interim map palette, so no colour is invented and no step is improvised. The per-ship p2 byte-reverse convention applies (the sidecar map is the three served colours byte-reversed, identical to the interim map p2 pairs). The design carries its own outline, so the outline pass is off."
+}

@@ -19,8 +19,13 @@ import { BOOT_TIMEOUT_MS, SHIP_ENTER_TICKS, waitTicks } from './ticks.js';
 
 /** KESTREL deck colour in the playfield (w15-REING-11 gen11 art, #909bd8) — only the ship uses it. */
 const HULL = [0x90, 0x9b, 0xd8] as const;
-/** The stock-icon grey (`hud/life` palette `h`, #c8d0e0 — interim art, shared with the old hull). */
-const LIFE_ICON = [0xc8, 0xd0, 0xe0] as const;
+/**
+ * The stock-icon navy (`hud/life` #03003b — w15-REING123 gen13 real art; census: 4 px of the
+ * 44-opaque 12×8 icon, present in its only frame, so every drawn slot shows it; censed
+ * holder-exclusive over every shipped sprite PNG — the icon sits alone in its stock-row slots;
+ * the interim `h` grey #c8d0e0 is retired with the v1 upscale).
+ */
+const LIFE_ICON = [0x03, 0x03, 0x3b] as const;
 /** `GAME OVER`'s colour in the flight HUD (0xf85858) — nothing else in the top bar uses it. */
 const GAME_OVER_RED = [0xf8, 0x58, 0x58] as const;
 /**
