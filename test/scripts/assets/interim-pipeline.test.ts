@@ -227,7 +227,13 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
     // the pipeline now derives from native art leave the pool, −54: 358 measured on the landing
     // tree, frames replaced 1:1 at the same served sizes. The floor follows the natives to 350 —
     // headroom for the next restored wave, loud on a bulk regression.
-    expect(scaled).toBeGreaterThan(350);
+    // w15-REING10 (owner re-add ruling of 2026-10-26): the gen10 harvest's five gimmick chips —
+    // bubble-small, lava, rock, rush-cube, the tentacle claw — land as natives; their 6 v1-scale
+    // base frames and the 6 @flash siblings the pipeline now derives from native art leave the
+    // pool, −12: 346 measured on the landing tree, frames replaced 1:1 at the same served sizes.
+    // The floor follows the natives to 340 — headroom for the next restored wave, loud on a bulk
+    // regression.
+    expect(scaled).toBeGreaterThan(340);
     expect(wrongPixels).toEqual([]);
   });
 

@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/lava",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen10 harvest (w15-GEN10 ask round, the re-probed PROBE-OK rows of the art-prompts/v2/gen10 store, the w15-GEN10-FIX salvage)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen10/e-lava/gen.png",
+      "sha256": "2801d818f91c7fa3d19f67b0e7df753ea1d67e3f892bb88bb2de24605acbfd5b",
+      "format": "png",
+      "width": 512,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two glowing frames of the LAVA STONE — a small molten rock a floor volcano lobs on an arc, which shatters where it lands.\n\nThe chip stays SMALL: a single compact subject of roughly 80×80 px — ALL its ink together covers only about 10% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a round-hot pebble about as wide as tall: a dark basalt crust rim (#4a1000) enclosing a molten body — hot orange (#e83818) with brighter amber-yellow veins (#f8a030) and one tiny white-hot spark core (#fff0a0) near the middle, all on a 1-px near-black outline. Glowing, dense, thrown.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 0, GLOW DIM — the amber veins are thin, most of the body is deep orange, the white spark small. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = frame 1, GLOW BRIGHT — the SAME stone recoloured: the amber veins widen and the white-hot spark grows; silhouette, size and position identical to cell 1. The subject lies within aspect 0.70:1 to 1.30:1.\n- COLOUR-ONLY STATE LAW: frame 1 is frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays SMALL — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet. The other cell holds its subject at the same scale and position — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521301013,
+      "size": "512x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T03:13:41.603Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen10/e-lava/gen.json",
+        "sidecarSha256": "7a106a0a14e51c7fcb5c52605ba58fe09357962636e7fdd08066fb1557be7d77",
+        "id": "gen10/e-lava",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/lava.recipe.json",
+    "sha256": "6874cc8e56a1380c8072b0dd21962ba5118129af93a0126ed1a47eef9a7708d1"
+  },
+  "edit": null,
+  "output": {
+    "png": "lava.png",
+    "sha256": "8666967e29727ce466733e72461a41081bf21e2062ce41bc5373cd5bed13a8a1",
+    "sidecar": "lava.json",
+    "sidecarSha256": "19d95765ee35720d4b68059cc1d12bcd1e397f43cda41b067dda68f187d84ea7",
+    "frames": 2,
+    "frameWidth": 9,
+    "frameHeight": 9,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/lava (2f 6×6 → 9×9 served; volcano lava stone, colour-only glow pulse) — enemies finish (GEN9 wave-3 rec #1, c-dart small-chip clause); @flash auto-derived +2f — the 2 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; state xors 69.7% over the interim animation floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two glowing frames of the LAVA STONE — a small molten rock a floor volcano lobs on an arc, which shatters where it lands.\n\nThe chip stays SMALL: a single compact subject of roughly 80×80 px — ALL its ink together covers only about 10% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a round-hot pebble about as wide as tall: a dark basalt crust rim (#4a1000) enclosing a molten body — hot orange (#e83818) with brighter amber-yellow veins (#f8a030) and one tiny white-hot spark core (#fff0a0) near the middle, all on a 1-px near-black outline. Glowing, dense, thrown.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 0, GLOW DIM — the amber veins are thin, most of the body is deep orange, the white spark small. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = frame 1, GLOW BRIGHT — the SAME stone recoloured: the amber veins widen and the white-hot spark grows; silhouette, size and position identical to cell 1. The subject lies within aspect 0.70:1 to 1.30:1.\n- COLOUR-ONLY STATE LAW: frame 1 is frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays SMALL — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet. The other cell holds its subject at the same scale and position — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}

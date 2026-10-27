@@ -407,8 +407,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // casing and the 36-tile ridge sheet), so the copy lands one hundred thirteen live
     // plus five minus one. w15-REING89's seventeen gen8/gen9 records join (the twelve
     // enemy rows and the five HALCYON BULWARK pieces of the PROBE-OK harvest), so the copy
-    // lands one hundred thirty-four live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(134);
+    // lands one hundred thirty-four live plus five minus one. w15-REING10's five gen10
+    // records join (the gimmick-range chips — bubble-small, lava, rock, rush-cube and the
+    // tentacle claw — of the re-probed PROBE-OK harvest), so the copy lands one hundred
+    // thirty-nine live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(139);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -445,7 +448,10 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // tree lands one hundred seventy-three again. w15-REING89's seventeen gen8/gen9
       // override sprites join with their seventeen derived @flash siblings (every row
       // flashes) — two hundred seven live, and the fixture tree lands two hundred seven again.
-      sprites: 207,
+      // w15-REING10's five gen10 override sprites join with their five derived @flash
+      // siblings (every row flashes) — two hundred seventeen live, and the fixture tree
+      // lands two hundred seventeen again.
+      sprites: 217,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

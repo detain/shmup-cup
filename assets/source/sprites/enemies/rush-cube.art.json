@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/rush-cube",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18 and the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1), applied to the gen10 harvest (w15-GEN10 ask round, the re-probed PROBE-OK rows of the art-prompts/v2/gen10 store, the w15-GEN10-FIX salvage)"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen10/e-rush-cube/gen.png",
+      "sha256": "031c151772ad4c4fa18895bb5d7f6e8929f6f1623cc606f8c3edf7d8c6e5dba1",
+      "format": "png",
+      "width": 256,
+      "height": 256,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the single frame of the RUSH CUBE — a violet crystal cube of the seeded cube rush; where it stops it becomes a terrain cube.\n\nThe chip stays SMALL: a single compact subject of roughly 90×90 px — ALL its ink together covers only about 12% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a bevelled crystal cube seen face-on, as wide as tall: a vivid violet body (#8a48e8) with a pale lilac lit bevel along the top-left (#c8a0ff) and a deep indigo shadow bevel at the lower-right (#4a2090), inner dark seam facets, a 1-px near-black outline (#1a0a2e). Solid, square, crystalline.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell laid out as 1 ROW OF 1 (one single cell = the whole canvas) holding exactly ONE subject; the canvas IS one cell.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the subject seen whole. The subject lies within aspect 0.70:1 to 1.30:1.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: the subject sits at the exact centre of the canvas and stays SMALL — a compact chip leaving a wide flat-key margin on every side; if the cell looks painted rather than a small chip on green key, the sheet is ruined.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+        "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge"
+      },
+      "seed": 521303039,
+      "size": "256x256",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-27T03:13:52.904Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen10/e-rush-cube/gen.json",
+        "sidecarSha256": "2173a96d65ef96e04333a7871851a65eb232f61a126e5f1cc048ddd908bb40a5",
+        "id": "gen10/e-rush-cube",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/enemies/rush-cube.recipe.json",
+    "sha256": "b8f1a68cab74833445bd1139fa722d78e765c9ddc61d82c29efbbc2e81c994ac"
+  },
+  "edit": null,
+  "output": {
+    "png": "rush-cube.png",
+    "sha256": "55287c39dd820161a4c30990bcf84e45ca2982bf20dcab89562735b43701765c",
+    "sidecar": "rush-cube.json",
+    "sidecarSha256": "428a60afc102bc0250e4e8fb049dea34715fac36093f8b76e809270165e6d067",
+    "frames": 1,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 16,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "enemies/rush-cube (1f 8×8 → 12×12 served; cube-rush crystal cube) — enemies finish (GEN9 wave-3 rec #1, c-dart small-chip clause); @flash auto-derived +1f — the 1 cells cropped to their measured subject boxes with the 6-px key border clamped inside each cell; single frame; the sheet state probe floor 0.4%. The design carries its own 1-px outline, so the outline pass is off.\n\nPixel-art sprite sheet for a horizontal arcade shoot-'em-up: the single frame of the RUSH CUBE — a violet crystal cube of the seeded cube rush; where it stops it becomes a terrain cube.\n\nThe chip stays SMALL: a single compact subject of roughly 90×90 px — ALL its ink together covers only about 12% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a bevelled crystal cube seen face-on, as wide as tall: a vivid violet body (#8a48e8) with a pale lilac lit bevel along the top-left (#c8a0ff) and a deep indigo shadow bevel at the lower-right (#4a2090), inner dark seam facets, a 1-px near-black outline (#1a0a2e). Solid, square, crystalline.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell laid out as 1 ROW OF 1 (one single cell = the whole canvas) holding exactly ONE subject; the canvas IS one cell.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the subject seen whole. The subject lies within aspect 0.70:1 to 1.30:1.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: the subject sits at the exact centre of the canvas and stays SMALL — a compact chip leaving a wide flat-key margin on every side; if the cell looks painted rather than a small chip on green key, the sheet is ruined.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\nOwner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.\n\nOwner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"\n\nOwner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"\n\nOwner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"\n\nArt-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+}
