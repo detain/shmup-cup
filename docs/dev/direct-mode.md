@@ -105,6 +105,7 @@ ticks and phase 7 for the tick's own):
 | `capsule` | a power capsule | the stage's **next planned item** (the direct ship has no meter) |
 | `powerup` | a power capsule | the stage's next planned item |
 | `blueCapsule` | the blue capsule | the blue capsule (it clears the screen's enemies in both modes) |
+| `freeOption` | a drifting freed Option — the pickup regains an escort (`regainOption`, M2-04 rules) | the MANTA has no Options to regain: the pickup sound, points only (w15-C LAND amend, owner-standard doctrine 2026-10-26) |
 
 `dropDirect(x, y)` spawns `plan[planCursor % plan.length]` and advances `planCursor` (hashed). The
 plan **cycles and never rewinds**: a checkpoint restart or a continue keeps the cursor, so the

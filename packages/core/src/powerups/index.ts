@@ -72,8 +72,10 @@
  * (`DropKind.FreeOption`) becomes a grey item that drifts with the view
  * ({@link FREE_OPTION_DRIFT}, bouncing off the playfield's top and bottom, the magnet pulls it
  * too) and vanishes after {@link FREE_OPTION_TICKS} ticks (blinking for the last
- * {@link ITEM_EXPIRY_BLINK_TICKS}); collecting one gives an Option back
- * ({@link PowerUpSystem.regainOption}), whoever grabs it.
+ * {@link ITEM_EXPIRY_BLINK_TICKS}); in meter mode collecting one gives an Option back
+ * ({@link PowerUpSystem.regainOption}), whoever grabs it, and in Direct mode the MANTA has no
+ * Options to regain so it reads like the speed crate — the pickup sound, points only (w15-C LAND
+ * amend, review w15-WC-RV Law 6).
  *
  * **Capsule sources** — every drop in the enemy system's tick outcomes (`drop: 'capsule'` enemies
  * and completed formations, M1-08) becomes a capsule where it happened, at the end of phase 7 (and,
@@ -2144,7 +2146,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
       const kind = o.pickupKind[k];
       if (kind === ItemKind.Capsule) this.collect(o.pickupPlayer[k]);
       else if (kind === ItemKind.BlueCapsule) this.clearScreen(o.pickupPlayer[k]);
-      else if (kind === ItemKind.FreeOption) this.regainOption(o.pickupPlayer[k]);
+      else if (kind === ItemKind.FreeOption) this.collectFreeOption(o.pickupPlayer[k]);
       else if (kind >= ItemKind.DirectRed && kind <= ItemKind.DirectOctagon) {
         this.collectDirect(o.pickupPlayer[k], kind - ItemKind.DirectRed);
       } else if (kind === ItemKind.OneUp) this.collectOneUp(o.pickupPlayer[k]);
@@ -2273,6 +2275,24 @@ class PowerUpSystemImpl implements PowerUpSystem {
       return;
     }
     this.parkMeter(player, MeterSlot.Speed);
+  }
+
+  /**
+   * A freed Option was collected (w15-C LAND amend, owner-standard doctrine 2026-10-26 — review
+   * w15-WC-RV Law 6): meter mode regains the escort ({@link PowerUpSystem.regainOption}, the M2-04
+   * hunter rule unchanged); Direct mode reads it like {@link collectSpeedOnly} — the pickup sound,
+   * points only (its item score is 0), because the MANTA has no Options to escort her, a fact
+   * M2-05 defined and the explicit `freeOption` formations of w15-C V2 must not silently break.
+   *
+   * @param player - The collector's slot.
+   */
+  private collectFreeOption(player: number): void {
+    if (!this.valid(player)) return;
+    if (this.direct) {
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, this.host.players[player], 0);
+      return;
+    }
+    this.regainOption(player);
   }
 
   /** See {@link PowerUpSystem.clearScreen}. */

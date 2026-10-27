@@ -29,7 +29,7 @@ import {
   MeterSlot,
   firstWeaponStop,
 } from '../../src/powerups/index.js';
-import { MainWeapon } from '../../src/weapons/index.js';
+import { MainWeapon, WeaponRole } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -119,6 +119,8 @@ function dropDb(exclude: readonly string[] = []): ContentDb {
       shipped('player/kestrel.player.json'),
       shipped('player/manta.player.json'),
       shipped('weapons/type-a.weapons.json'),
+      // The W15-A Extra guns, for the crate seam (w15-C LAND): the slot tables are content-wide.
+      shipped('weapons/types-e.weapons.json'),
       shipped('weapons/direct.weapons.json'),
       {
         path: 'enemies/t.enemies.json',
@@ -284,6 +286,21 @@ describe('w15-C V2 — the crate pickups in meter mode', () => {
     expect(w.powerups.meters[0].cursor).toBe(MeterSlot.Laser);
   });
 
+  it('grants the arsenal’s own role weapons on the W15-A preset (crate seam, w15-C LAND)', () => {
+    // The Extra guns (FLAK CONE on the DOUBLE role, SEEKER DRONE on MISSILE) ride the same slot
+    // enums: the crate walks unchanged and an equip on a walked stop fires the preset's weapon.
+    const w = world({ weaponPreset: 'type-e' });
+    expect(w.weapons.roleWeapons[WeaponRole.Double]?.id).toBe('shot.flak');
+    expect(w.weapons.roleWeapons[WeaponRole.Missile]?.id).toBe('shot.drone');
+    pickUp(w, ItemKind.WeaponPick);
+    expect(w.powerups.meters[0].cursor).toBe(MeterSlot.Missile);
+    expect(w.powerups.equipHighlighted(0)).toBe(true); // arms the MISSILE role (the drone)
+    pickUp(w, ItemKind.WeaponPick);
+    expect(w.powerups.meters[0].cursor).toBe(MeterSlot.Double);
+    expect(w.powerups.equipHighlighted(0)).toBe(true);
+    expect(w.weapons.loadouts[0].main).toBe(MainWeapon.Double); // the FLAK fires as the main
+  });
+
   it('parks SPEED from any stop', () => {
     const w = world();
     w.powerups.meters[0].cursor = MeterSlot.Option;
@@ -322,12 +339,32 @@ describe('w15-C V2 — the crate pickups in Direct mode', () => {
 
   it('never touches the (unused) meter: no ding, no parked cursor', () => {
     const w = world(DIRECT);
-    for (const kind of [ItemKind.Mega, ItemKind.WeaponPick, ItemKind.SpeedOnly]) {
+    for (const kind of [
+      ItemKind.Mega,
+      ItemKind.WeaponPick,
+      ItemKind.SpeedOnly,
+      ItemKind.FreeOption,
+    ]) {
       const events = pickUp(w, kind);
       expect(w.powerups.meters[0].cursor).toBe(-1);
       expect(hasSfx(events, SFX_CUES.MeterAdvance)).toBe(false);
     }
     expect(w.powerups.count).toBe(0);
+  });
+
+  it('reads the freed Option like the speed crate — the sound, points only, never an orb (LAND amend)', () => {
+    // The MANTA has no Options to regain (WDESIGN §1.6: escort orbs are the meter model); an
+    // explicit `freeOption` drop or a table roll must not arm the orb system for it
+    // (review w15-WC-RV Law 6, owner-standard doctrine 2026-10-26).
+    const w = world(DIRECT);
+    const events = pickUp(w, ItemKind.FreeOption);
+    expect(hasSfx(events, SFX_CUES.CapsulePickup)).toBe(true);
+    expect(w.weapons.loadouts[0].options).toBe(0);
+    // In meter mode the same pickup still regains an escort orb (whoever grabs it): the loadout
+    // option count is the state the Option system follows.
+    const k = world();
+    pickUp(k, ItemKind.FreeOption);
+    expect(k.weapons.loadouts[0].options).toBe(1);
   });
 });
 
