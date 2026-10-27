@@ -281,25 +281,27 @@ test.describe('front end (web build)', () => {
 test.describe('front end (Tizen build from disk)', () => {
   test('HELP opens the AboutScene, turns its pages and closes', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('./');
+    await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
     await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitTicks(page, 10);
-    await tap(page, 'Enter'); // PRESS OK
-    for (let i = 0; i < 6; i++) await tap(page, 'ArrowDown'); // EXTRA, then HELP
-    await tap(page, 'Enter');
+    // The Tizen build reads the remote path: keydowns of the legacy key codes (the profile's
+    // menu context binds 13 / 37–40 / 10009) — as every other Tizen walk here does.
+    await remoteTap(page, 13); // PRESS OK
+    for (let i = 0; i < 6; i++) await remoteTap(page, 40); // EXTRA, then HELP
+    await remoteTap(page, 13);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'about');
     await waitTicks(page, 4); // the open lock
     const pageOf = () =>
       page.evaluate(() => (window as unknown as DebugWindow).__shmupDebug.game.scenes.about.page);
-    await tap(page, 'ArrowRight');
+    await remoteTap(page, 39);
     await expect.poll(pageOf, { timeout: 5_000 }).toBe(1);
-    await tap(page, 'ArrowLeft');
+    await remoteTap(page, 37);
     await expect.poll(pageOf, { timeout: 5_000 }).toBe(0);
-    await tap(page, 'Escape');
+    await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     expect(errors).toEqual([]);
   });
