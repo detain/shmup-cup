@@ -20,7 +20,7 @@ import {
 } from '../../scripts/check-bundle.mjs';
 import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
-import { videoShippedFiles } from '../../../../vite.shared.js';
+import { stillsShippedFiles, videoShippedFiles } from '../../../../vite.shared.js';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
 let outDir = '';
@@ -71,6 +71,9 @@ describe('tizen build output (vite build → dist/)', () => {
         // What the `shmupVideos()` plugin ships — the kit's outputs on disk, none on a host
         // without ffmpeg (the degraded build variant, v2 R7-VID).
         ...videoShippedFiles(),
+        // What the `shmupStills()` plugin ships — the stills kit's outputs on disk, none
+        // before it ran (the still-less build variant, plan v20x A4).
+        ...stillsShippedFiles(),
       ].sort(),
     );
   });
