@@ -213,6 +213,33 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     });
   });
 
+  it('floors a zero or absent display read to a 1×1 buffer at init (P0-4)', async () => {
+    await createPixiRenderer({ canvas, displayWidth: 0, displayHeight: 0 });
+    expect([record.init?.width, record.init?.height]).toEqual([1, 1]);
+    const absent = {
+      canvas,
+      displayWidth: undefined,
+      displayHeight: undefined,
+    } as unknown as Parameters<typeof createPixiRenderer>[0];
+    await createPixiRenderer(absent);
+    expect([record.init?.width, record.init?.height]).toEqual([1, 1]);
+  });
+
+  it('floors a fractional display read and leaves every nonzero one otherwise unchanged', async () => {
+    await createPixiRenderer({ canvas, displayWidth: 1280.7, displayHeight: 720.25 });
+    expect([record.init?.width, record.init?.height]).toEqual([1280, 720]);
+  });
+
+  it('keeps Pixi EventSystem features fully off — nothing is interactive and the shell listens for the audio unlock itself (P0-5)', async () => {
+    await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
+    expect(record.init?.eventFeatures).toEqual({
+      globalMove: false,
+      move: false,
+      click: false,
+      wheel: false,
+    });
+  });
+
   it('can be asked to try WebGL2 first and reports the version obtained', async () => {
     record.webGLVersion = 2;
     const renderer = await createPixiRenderer({
