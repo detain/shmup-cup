@@ -32,7 +32,7 @@ import {
   type ShellOptions,
 } from '../../src/boot/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
-import type { LoadableImage } from '../../src/loader/index.js';
+import { createPageImageFactory, type LoadableImage } from '../../src/loader/index.js';
 
 const fakes = vi.hoisted(() => ({
   /** What the renderer was asked, in order: `upload` (with the source), `warmUp`, `render`. */
@@ -252,7 +252,7 @@ async function bootOnce(overrides: Partial<ShellOptions> = {}): Promise<Held> {
         },
       },
     }),
-    createImage: () => new GatedImage() as unknown as LoadableImage & HTMLImageElement,
+    createImage: createPageImageFactory({ createElement: () => new GatedImage() }),
     overlay,
     scene: 'game',
     gameConfig: { stage: 'zone-b' },

@@ -24,7 +24,11 @@ import {
   type ShellOptions,
 } from '../../src/boot/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
-import { manifestDigest, type LoadableImage } from '../../src/loader/index.js';
+import {
+  createPageImageFactory,
+  manifestDigest,
+  type LoadableImage,
+} from '../../src/loader/index.js';
 
 const fakes = vi.hoisted(() => ({
   /** Renderers created (none when boot fails before step 4). */
@@ -235,7 +239,12 @@ function boot(overrides: Partial<ShellOptions> = {}) {
     input,
     audio,
     platform: (): Platform => platform,
-    createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+    createImage: createPageImageFactory({
+      createElement: () => new FakeImage(),
+      // The page factory carries its own clock now (plan v20x P0-1): the window's when a test
+      // installs one (the boot's atlas clock reads the same object), 0 where the window has none.
+      now: () => win.performance?.now() ?? 0,
+    }),
     overlay,
     scene: 'flight',
     ...overrides,
@@ -407,7 +416,7 @@ describe('shell/boot — the fetched atlas manifest (R1-05)', () => {
   it('pages of another size than the fetched manifest says are ATLAS DOES NOT MATCH ITS MANIFEST', async () => {
     const { error } = await bootFails({
       atlasPages: 'eager',
-      createImage: () => new FakeImage([16, 16]) as unknown as LoadableImage & HTMLImageElement,
+      createImage: createPageImageFactory({ createElement: () => new FakeImage([16, 16]) }),
     });
     expect(error.message).toMatch(/^ATLAS DOES NOT MATCH ITS MANIFEST\n/);
     expect(fakes.renderers).toBe(0);

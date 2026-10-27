@@ -25,7 +25,7 @@ import {
   type ShellOptions,
 } from '../../src/boot/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
-import type { LoadableImage } from '../../src/loader/index.js';
+import { createPageImageFactory, type LoadableImage } from '../../src/loader/index.js';
 
 const fakes = vi.hoisted(() => ({
   rendererOptions: null as Record<string, unknown> | null,
@@ -216,7 +216,7 @@ function boot(overrides: Partial<ShellOptions> = {}) {
     input,
     audio,
     platform: (): Platform => platform,
-    createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+    createImage: createPageImageFactory({ createElement: () => new FakeImage() }),
     overlay,
     ...overrides,
   });
@@ -338,7 +338,7 @@ describe('shell/boot failure cleanup (edge)', () => {
       input,
       audio,
       platform: () => platform,
-      createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+      createImage: createPageImageFactory({ createElement: () => new FakeImage() }),
       overlay: null,
     });
     const error = await failure(promise);
@@ -369,7 +369,7 @@ describe('shell/boot running (edge)', () => {
       input,
       audio,
       platform: () => platform,
-      createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+      createImage: createPageImageFactory({ createElement: () => new FakeImage() }),
       overlay: null,
       preferWebGLVersion: 2,
     });

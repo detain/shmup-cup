@@ -56,7 +56,7 @@ import {
 import type { DebugToolsFactory, DebugToolsHost } from '../../src/debug/index.js';
 import { VSYNC_LOCK_MAX_HZ, VSYNC_LOCK_MIN_HZ } from '../../src/frame-loop/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
-import type { LoadableImage } from '../../src/loader/index.js';
+import { createPageImageFactory, type LoadableImage } from '../../src/loader/index.js';
 import { FLIGHT_SPRITES } from '../../src/flight/index.js';
 import { SCENE_VIEW_SPRITES } from '../../src/scene-view/index.js';
 import { SHOWCASE_SPRITES } from '../../src/showcase/index.js';
@@ -316,7 +316,7 @@ function boot(overrides: Partial<ShellOptions> = {}) {
         },
       },
     }),
-    createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+    createImage: createPageImageFactory({ createElement: () => new FakeImage() }),
     overlay,
     scene: 'flight',
     ...overrides,
@@ -803,7 +803,7 @@ describe('shell/boot failures (boot error screen)', () => {
 
   it('reports a stale atlas page (size differs from the manifest)', async () => {
     const { promise, shown } = boot({
-      createImage: () => new FakeImage([8, 8]) as unknown as LoadableImage & HTMLImageElement,
+      createImage: createPageImageFactory({ createElement: () => new FakeImage([8, 8]) }),
     });
     await expect(promise).rejects.toThrow(/ATLAS DOES NOT MATCH ITS MANIFEST/);
     expect(shown[shown.length - 1]).toMatch(/stale atlas/);

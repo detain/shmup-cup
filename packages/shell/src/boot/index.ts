@@ -13,9 +13,11 @@
  * 3. fetches the atlas manifest (`assets/atlas/main.json`, plan R1-05) with `XMLHttpRequest` —
  *    `fetch()` fails on `file://` (D25), XHR works there with status 0 — and checks its digest and
  *    format version (`loader` `loadAtlasManifest`; an inlined manifest — `virtual:shmup-assets-inline`
- *    — skips this), loads the atlas pages with `new Image()` from their relative URLs (decoded with
- *    `decode()` where the engine has it, each page timed — {@link Shell.atlasTiming}) and builds
- *    the atlas (`@shmup/render-pixi` `createAtlas`);
+ *    — skips this), loads the atlas pages — by default decoded to an `ImageBitmap` (plan v20x
+ *    P0-1: the page bytes on the same XHR path, `createImageBitmap` where the engine has it —
+ *    Chromium 50+; the proven `new Image()` load from the relative URLs is its fallback branch
+ *    and the whole path on older engines), each page timed ({@link Shell.atlasTiming}) — and
+ *    builds the atlas (`@shmup/render-pixi` `createAtlas`);
  * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform; **reads
  *    the save** (`core/save` `loadSave`, M1-17) and applies its volumes and input profile; then
  *    creates the core game with the validated content and the save;
@@ -256,13 +258,13 @@ import {
   AssetLoadError,
   AtlasManifestError,
   atlasPageUrls,
+  createPageImageFactory,
   loadAtlasManifest,
   loadGameContent,
-  loadImageTimed,
-  loadImagesTimed,
+  loadPageImagesTimed,
   type ContentOwners,
   type ImageTiming,
-  type LoadableImage,
+  type PageImageFactory,
 } from '../loader/index.js';
 import { createFlightScene, type FlightScene } from '../flight/index.js';
 import { createFxGallery, type FxGallery } from '../fx-gallery/index.js';
@@ -893,15 +895,19 @@ export interface ShellOptions {
    * and the frame loop redraws the last frame while the shown World's pages are in flight — no
    * tick, no input consumed (decision W5-16); `'eager'` (the pre-R3-04 behaviour, the one-line
    * switch back) — every page is fetched, decoded and attached at boot
-   * ({@link loadImagesTimed}) and the residency only moves GPU copies.
+   * ({@link loadPageImagesTimed}) and the residency only moves GPU copies.
    */
   readonly atlasPages?: 'eager' | 'lazy';
   /**
-   * Image factory for the atlas pages (default `() => new Image()`).
-   *
-   * @returns A fresh, unloaded image.
+   * Page-image factory for the atlas pages. The default is the shell's {@link
+   * createPageImageFactory} built on the window's own pieces (plan v20x P0-1, the owner's
+   * `tizen_optimize.md` §7.6): pages decode to an `ImageBitmap` through `createImageBitmap`
+   * where the engine has it (Chromium 50+), each with the proven `Image` decode as the factory's
+   * fallback branch — and `Atlas.unloadPage` closes a detached bitmap. Inject a factory (tests
+   * pass {@link createPageImageFactory} over fakes, or any function of the same shape) to drive
+   * the page load directly.
    */
-  readonly createImage?: () => LoadableImage & AtlasPageImage;
+  readonly createImage?: PageImageFactory;
   /**
    * Boot overlay for the progress bar and error screen. Defaults to a 2D canvas inserted
    * after the game canvas; `null` disables it.
@@ -1348,7 +1354,6 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const scene = options.scene ?? 'game';
   const flowMode = scene === 'game';
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
-  const createImage = options.createImage ?? ((): HTMLImageElement => new Image());
   /** Atlas pages load on demand and release their images (plan R3-04; M3e flips the default). */
   const lazyPages = (options.atlasPages ?? 'lazy') === 'lazy';
   markState(canvas, 'loading');
@@ -1424,6 +1429,24 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   // 3. The atlas: its manifest — fetched with XHR since R1-05 (`virtual:shmup-assets`), or
   // inlined —, then its pages. Timed with the window's clock (W3-6: the M7's decode figures).
   const atlasClock = windowClock(win);
+  /**
+   * The page-image factory (plan v20x P0-1, the owner's `tizen_optimize.md` §7.6): the injected
+   * one, or the default built on the window's own pieces — `createImageBitmap` (Chromium 50+,
+   * feature-detected on this window, never called with an options dictionary) decoding the pages
+   * from bytes fetched on the manifest's proven `file://`-safe XHR path, with the pure-`Image`
+   * factory as its fallback branch. Timed on the atlas clock like the page loads before it.
+   */
+  const createImage: PageImageFactory =
+    options.createImage ??
+    createPageImageFactory({
+      createBitmap:
+        typeof win.createImageBitmap === 'function'
+          ? (blob: Blob): Promise<ImageBitmap> => win.createImageBitmap(blob)
+          : undefined,
+      createElement: () => new Image(),
+      createRequest: options.createRequest,
+      now: atlasClock,
+    });
   const assets = options.assets;
   let manifest: AtlasManifest;
   let pageUrls: readonly string[];
@@ -1455,7 +1478,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     manifestMs = (atlasClock === undefined ? 0 : atlasClock()) - fetchStart;
     pageUrls = atlasPageUrls(assets.atlasDir, manifest);
   }
-  let images: Array<(LoadableImage & AtlasPageImage) | null>;
+  let images: Array<AtlasPageImage | null>;
   let pageTimings: readonly ImageTiming[];
   let pagesMs: number;
   if (lazyPages) {
@@ -1468,14 +1491,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   } else {
     const pagesStart = atlasClock === undefined ? 0 : atlasClock();
     try {
-      const loaded = await loadImagesTimed(
-        pageUrls,
-        createImage,
-        (count, total) => {
-          overlay?.showProgress(total === 0 ? 1 : count / total, 'LOADING');
-        },
-        atlasClock,
-      );
+      const loaded = await loadPageImagesTimed(pageUrls, createImage, (count, total) => {
+        overlay?.showProgress(total === 0 ? 1 : count / total, 'LOADING');
+      });
       images = loaded.images;
       pageTimings = loaded.timings;
     } catch (error) {
@@ -1714,12 +1732,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
           loadImage: (page) => {
             const url = pageUrls[page];
             // A missing / non-string URL is a malformed injection (a `pageUrls` shorter than
-            // the manifest): reject at once — never hand `undefined` to `createImage`, whose
-            // image may never settle the fetch (review M3RV F1).
+            // the manifest): reject at once — never hand `undefined` to the page factory, whose
+            // load may never settle (review M3RV F1).
             if (typeof url !== 'string') {
               return Promise.reject(new AtlasPageUrlError(page));
             }
-            return loadImageTimed(url, createImage, atlasClock)
+            return createImage(url)
               .then((loaded) => loaded.image)
               .catch((error: unknown) => {
                 // Tag the page URL onto the rejection (the loader error is fresh per load) so
@@ -1754,7 +1772,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       const url = pageUrls[page];
       if (typeof url !== 'string') continue; // Malformed injection: the page stays detached (F1).
       attaching.push(
-        loadImageTimed(url, createImage, atlasClock)
+        createImage(url)
           .then((loaded) => {
             readyAtlas.loadPage(page, loaded.image);
           })
@@ -1810,7 +1828,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       const url = pageUrls[p];
       try {
         if (typeof url !== 'string') throw new AtlasPageUrlError(p); // Malformed injection (F1).
-        const loaded = await loadImageTimed(url, createImage, atlasClock);
+        const loaded = await createImage(url);
         readyAtlas.loadPage(p, loaded.image);
       } catch (_error) {
         // The old image stands in: it still decodes from its bytes, and the next prepare of a

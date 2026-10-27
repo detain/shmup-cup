@@ -196,8 +196,16 @@ async function trackGpuPages(page: Page): Promise<void> {
       hook('texImage2D', (_gl, args) => {
         const source = args[args.length - 1];
         const texture = bound.get(unit);
-        if (source instanceof HTMLImageElement && texture instanceof WebGLTexture) {
+        if (!(texture instanceof WebGLTexture)) return;
+        if (source instanceof HTMLImageElement) {
           names.set(texture, source.src.split('?')[0].split('/').pop() ?? '');
+        } else if (source instanceof ImageBitmap) {
+          // The bitmap branch of plan v20x P0-1 (the shipped page decoder): a bitmap carries the
+          // shell's `pageUrl` tag (`tagPageImageUrl`) where an element carries its `src`.
+          const url = (source as ImageBitmap & { pageUrl?: string }).pageUrl;
+          if (typeof url === 'string') {
+            names.set(texture, url.split('?')[0].split('/').pop() ?? '');
+          }
         }
       });
     };

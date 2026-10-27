@@ -144,7 +144,13 @@ export interface AtlasManifest {
   readonly fonts: { readonly [font: string]: AtlasFontInfo };
 }
 
-/** A decoded atlas page as the host loaded it (normally an `HTMLImageElement`). */
+/**
+ * A decoded atlas page as the host loaded it: the `ImageBitmap` of the shell's bitmap branch
+ * (plan v20x P0-1 — the page's image is closed by {@link Atlas.unloadPage} and on replacement,
+ * never by {@link Atlas.destroy}, whose images stay the host's), falling back to an
+ * `HTMLImageElement` where the engine has no `createImageBitmap` (or on a page whose bitmap
+ * load failed).
+ */
 export type AtlasPageImage = HTMLImageElement | HTMLCanvasElement | ImageBitmap;
 
 /** Options of {@link createAtlas}. */
@@ -205,7 +211,8 @@ export interface Atlas {
   /**
    * Loads (or reloads) one page's image and points its frames back at it. Idempotent for the
    * image already set; replacing the image of a loaded page is legal (the context-loss recovery
-   * of plan R3-04 re-fetches). Everything it touches is the cold path — no per-frame cost.
+   * of plan R3-04 re-fetches) and **closes the `ImageBitmap` it replaces** (plan v20x P0-1).
+   * Everything it touches is the cold path — no per-frame cost.
    *
    * @param page - Page index.
    * @param image - The decoded page image; its size must match the manifest entry.
@@ -214,10 +221,11 @@ export interface Atlas {
    */
   loadPage(page: number, image: AtlasPageImage): void;
   /**
-   * Frees one page: unloads its GPU copy (Pixi's `unload()`), drops the decoded image and points
-   * its frames at the empty texture until the next {@link Atlas.loadPage}. Idempotent. While a
-   * page is unloaded its `pages` entry must not be passed to `uploadTextureSource` — load it
-   * first. A cold path.
+   * Frees one page: unloads its GPU copy (Pixi's `unload()`), drops the decoded image — closing
+   * an `ImageBitmap`, whose backing would otherwise hold GPU memory until the GC runs it (plan
+   * v20x P0-1, the residency's leak class) — and points its frames at the empty texture until
+   * the next {@link Atlas.loadPage}. Idempotent. While a page is unloaded its `pages` entry must
+   * not be passed to `uploadTextureSource` — load it first. A cold path.
    *
    * @param page - Page index.
    * @throws {RangeError} When the index is not a page of this atlas.
@@ -279,6 +287,21 @@ function imageSize(image: AtlasPageImage): [number, number] {
     return [natural.naturalWidth, natural.naturalHeight ?? 0];
   }
   return [image.width, image.height];
+}
+
+/**
+ * Releases a page image the atlas drops (plan v20x P0-1): an `ImageBitmap` keeps its backing
+ * alive until `close()` — the GC runs it late, and late bytes are exactly the VRAM the residency
+ * frees when it detaches a page inside the atlas share. An `HTMLImageElement` or canvas has
+ * nothing to close. Cold path (page attach/detach only); called by {@link applyPage} on the
+ * release and the replace arm — never for an image still in use.
+ *
+ * @param image - The image the atlas just let go of, when one was attached.
+ */
+function closePageImage(image: AtlasPageImage | null | undefined): void {
+  const bitmap = image as ImageBitmap | null | undefined;
+  if (bitmap === null || bitmap === undefined || typeof bitmap.close !== 'function') return;
+  bitmap.close();
 }
 
 /**
@@ -470,7 +493,9 @@ export function createAtlas(
   /**
    * Moves one page's frame textures onto the page source (with the manifest rectangles restored)
    * or onto the empty source with a 0×0 frame. A cold path — the work of {@link Atlas.loadPage}
-   * and {@link Atlas.unloadPage}; per-frame code never sees it.
+   * and {@link Atlas.unloadPage}; per-frame code never sees it. Either arm releases the image the
+   * page held before (plan v20x P0-1: a detached or replaced `ImageBitmap` is closed at once, so
+   * its backing leaves the GPU with the page — the residency's leak class).
    *
    * @param page - Page index (validated by the caller).
    * @param image - The decoded page image, or `null` to free the page.
@@ -479,6 +504,7 @@ export function createAtlas(
     const source = pages[page];
     const ids = pageFrames[page];
     if (image !== null) {
+      if (pageLoaded[page]) closePageImage(source.resource as AtlasPageImage | null);
       source.resource = image;
       source.update();
       for (let i = 0; i < ids.length; i++) {
@@ -502,7 +528,10 @@ export function createAtlas(
         texture.source = UNLOADED_SOURCE;
         texture.update();
       }
-      if (pageLoaded[page]) source.unload();
+      if (pageLoaded[page]) {
+        source.unload();
+        closePageImage(source.resource as AtlasPageImage | null);
+      }
       source.resource = null;
     }
     pageLoaded[page] = image !== null;

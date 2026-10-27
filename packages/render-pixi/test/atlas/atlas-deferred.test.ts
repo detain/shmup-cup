@@ -5,7 +5,7 @@
  */
 import { Texture } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
-import { createAtlas } from '../../src/atlas/index.js';
+import { createAtlas, type AtlasPageImage } from '../../src/atlas/index.js';
 import { fakeImage, pageImages, testManifest } from '../helpers.js';
 
 describe('render-pixi/atlas deferred pages', () => {
@@ -119,5 +119,87 @@ describe('render-pixi/atlas deferred pages', () => {
       RangeError,
     );
     expect(() => createAtlas(manifest, [fakeImage(64, 32)])).toThrow(/1 image\(s\)/);
+  });
+});
+
+describe('render-pixi/atlas bitmap release (plan v20x P0-1)', () => {
+  /**
+   * A fake decoded `ImageBitmap` (no `naturalWidth`, so `imageSize` reads the width arm) with a
+   * counted `close()`.
+   *
+   * @param w - Page width.
+   * @param h - Page height.
+   * @returns The bitmap fake, typed for the atlas and with its `closes` counter.
+   */
+  function bitmapOf(w: number, h: number): AtlasPageImage & { closes: number } {
+    return {
+      width: w,
+      height: h,
+      closes: 0,
+      close(this: AtlasPageImage & { closes: number }) {
+        this.closes++;
+      },
+    };
+  }
+
+  it('unloadPage closes the attached bitmap exactly once; a second unload changes nothing', () => {
+    const manifest = testManifest();
+    const bitmap = bitmapOf(32, 16);
+    const atlas = createAtlas(manifest, [fakeImage(64, 32), bitmap]);
+    atlas.unloadPage(1);
+    expect(bitmap.closes).toBe(1);
+    expect(atlas.pages[1].resource).toBeNull();
+    atlas.unloadPage(1);
+    expect(bitmap.closes).toBe(1);
+  });
+
+  it('replacing a loaded page through loadPage closes the old bitmap and keeps the new one', () => {
+    const manifest = testManifest();
+    const oldBitmap = bitmapOf(32, 16);
+    const newBitmap = bitmapOf(32, 16);
+    const atlas = createAtlas(manifest, [fakeImage(64, 32), oldBitmap]);
+    atlas.loadPage(1, newBitmap); // the context-loss recovery shape
+    expect(oldBitmap.closes).toBe(1);
+    expect(newBitmap.closes).toBe(0);
+    expect(atlas.pages[1].resource).toBe(newBitmap);
+    atlas.unloadPage(1);
+    expect(newBitmap.closes).toBe(1);
+  });
+
+  it('loadPage with the image already set is idempotent and closes nothing', () => {
+    const manifest = testManifest();
+    const bitmap = bitmapOf(32, 16);
+    const atlas = createAtlas(manifest, [fakeImage(64, 32), bitmap]);
+    atlas.loadPage(1, bitmap);
+    expect(bitmap.closes).toBe(0);
+    expect(atlas.isPageLoaded(1)).toBe(true);
+  });
+
+  it('an image without close() (the HTMLImageElement fallback) releases without a fuss', () => {
+    const manifest = testManifest();
+    const image = fakeImage(32, 16);
+    const atlas = createAtlas(manifest, [fakeImage(64, 32), image]);
+    expect(() => atlas.unloadPage(1)).not.toThrow();
+    const replacement = fakeImage(32, 16);
+    expect(() => atlas.loadPage(1, replacement)).not.toThrow();
+  });
+
+  it('loadPage onto an unloaded page attaches without closing anything', () => {
+    const manifest = testManifest();
+    const kept = bitmapOf(64, 32);
+    const attached = bitmapOf(32, 16);
+    const atlas = createAtlas(manifest, [kept, null]);
+    atlas.loadPage(1, attached);
+    expect(kept.closes).toBe(0);
+    expect(attached.closes).toBe(0);
+    expect(atlas.isPageLoaded(1)).toBe(true);
+  });
+
+  it('destroy() releases nothing it was handed — the images stay the host’s (unchanged contract)', () => {
+    const manifest = testManifest();
+    const bitmap = bitmapOf(64, 32);
+    const atlas = createAtlas(manifest, [bitmap, fakeImage(32, 16)]);
+    atlas.destroy();
+    expect(bitmap.closes).toBe(0);
   });
 });

@@ -319,16 +319,20 @@ export interface MemoryInputs {
   /** The atlas pages resident on the GPU. */
   readonly atlasPages: readonly PageSize[];
   /**
-   * Whether the decoded page images stay in memory next to their GPU copies (default `true` —
-   * Pixi keeps the `HTMLImageElement` to re-upload after a context loss).
+   * Whether the decoded page images stay in memory next to their GPU copies (default `true`).
+   * Since plan v20x P0-1 a held image is normally an `ImageBitmap` — the texture's re-upload
+   * source after a context loss — whose backing costs the same `w × h × 4` bytes this estimate
+   * charges, on the GPU side until it is dropped; a detached page's bitmap is closed by
+   * `Atlas.unloadPage` the moment the residency releases the page, so an unclosed bitmap never
+   * piles up inside the atlas share (the leak class that decision W5-15 dropped images for).
    */
   readonly keepPageImages?: boolean;
   /**
    * The pages whose decoded images stay in memory (R1-05; default `atlasPages`). The eager
    * residency keeps every image even of a page whose GPU copy was unloaded, so an estimate for it
    * passes every page here ({@link estimateStageMemory} does under the `all` policy); the shipped
-   * lazy residency drops a detached page's image with it, so the default charges the stage's own
-   * pages only. Ignored when `keepPageImages` is `false`.
+   * lazy residency drops a detached page's image with it — and closes an `ImageBitmap` — so the
+   * default charges the stage's own pages only. Ignored when `keepPageImages` is `false`.
    */
   readonly imagePages?: readonly PageSize[];
   /** Bytes of the SFX bank's buffers. */
@@ -908,13 +912,15 @@ export interface AtlasLazyPages {
 }
 
 /**
- * One page image fetched and decoded — the bound single-page `loadImageTimed` of the shell's
- * loader (plan R3-04.M3b).
+ * One page image fetched and decoded — the shell's page-image factory bound to the page index
+ * (plan R3-04.M3b; since plan v20x P0-1 the boot binds its `createImage` factory, which decodes
+ * through `createImageBitmap` with an `Image` fallback).
  *
  * @param page - The page index.
  * @returns A promise that resolves with the decoded image once the fetch and the decode are done;
  *   rejects with the loader's `AssetLoadError` naming the page's URL when the fetch or the load
- *   fails (a rejected decode still counts as loaded, as in {@link loadImagesTimed}).
+ *   fails (a rejected decode still counts as loaded, as in {@link loadImagesTimed}). A returned
+ *   `ImageBitmap` is closed by `Atlas.unloadPage` when the residency detaches its page.
  */
 export type AtlasPageImageLoader = (page: number) => Promise<AtlasPageImage>;
 
@@ -922,7 +928,7 @@ export type AtlasPageImageLoader = (page: number) => Promise<AtlasPageImage>;
 export interface AtlasResidencyLazy {
   /** The atlas's deferred-page API (`Atlas.loadPage` / `unloadPage` / `isPageLoaded`). */
   readonly atlas: AtlasLazyPages;
-  /** Fetches and decodes one page's image (the loader's single-page timed load). */
+  /** Fetches and decodes one page's image (the boot's timed page-image factory, bound). */
   readonly loadImage: AtlasPageImageLoader;
 }
 
@@ -1297,7 +1303,7 @@ export function createAtlasResidency(
  * // The atlas was built with `null` images (R3-04.M3a); the residency loads what it needs.
  * const residency = createLazyAtlasResidency(atlas.pages, needs, {
  *   upload: (p) => renderer.uploadTextureSource(atlas.pages[p]),
- *   lazy: { atlas, loadImage: (p) => loadImageTimed(urls[p], createImage).then((r) => r.image) },
+ *   lazy: { atlas, loadImage: (p) => createPageImage(urls[p]).then((r) => r.image) },
  * });
  * await residency.prepare(content.stageIndex.get('zone-b') ?? -1);
  * ```

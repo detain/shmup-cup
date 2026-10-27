@@ -14,6 +14,15 @@
  *   progress; where the engine has `HTMLImageElement.decode()` (Chromium 64+) each page is also
  *   decoded before it counts as loaded, and {@link loadImagesTimed} reports every page's load and
  *   decode time (plan R1-05 — the zone-load numbers the M7 owner reads).
+ * - {@link createPageImageFactory} is the shipped page decoder of plan v20x P0-1 (the owner's
+ *   `tizen_optimize.md` §7.6, measured on the M7 TVs): where the engine has
+ *   `window.createImageBitmap` (Chromium 50+), a page's bytes are fetched with the same
+ *   `file://`-safe XHR path as the manifest and turned into an `ImageBitmap` — `texImage2D`
+ *   uploads that without re-converting the decoded image (≈ 8–15× less upload time than an
+ *   `HTMLImageElement`, about half the total file→GPU cost). The `Image` path above stays as the
+ *   factory's fallback branch — every page whose bitmap fetch or decode fails decodes from its
+ *   URL through {@link loadImageTimed} instead — and {@link loadPageImagesTimed} runs a list of
+ *   URLs through such a factory in parallel.
  * - {@link loadGameContent} validates the inlined `virtual:shmup-content` files: the core
  *   kinds through `loadContent()` (script ids checked against the engine's registry,
  *   `KNOWN_SCRIPT_IDS`, and enemies against their behaviours, `checkEnemyBehaviors` — M1-08;
@@ -33,7 +42,10 @@
  *
  * **Public API.** {@link loadImages}, {@link loadImagesTimed}, {@link loadImageTimed},
  * {@link ImageTiming},
- * {@link ImageFactory}, {@link LoadableImage}, {@link AssetLoadError}, {@link loadAtlasManifest},
+ * {@link ImageFactory}, {@link LoadableImage}, {@link AssetLoadError},
+ * {@link createPageImageFactory}, {@link PageImageFactory}, {@link PageImageFactoryOptions},
+ * {@link LoadedPageImage}, {@link loadPageImagesTimed}, {@link tagPageImageUrl},
+ * {@link loadAtlasManifest},
  * {@link LoadedAtlasManifest}, {@link parseAtlasManifest}, {@link manifestDigest},
  * {@link atlasPageUrls}, {@link AtlasManifestError}, {@link AtlasManifestFailure},
  * {@link ATLAS_MANIFEST_VERSIONS}, {@link loadGameContent}, {@link ContentOwner},
@@ -62,7 +74,12 @@ import {
   type XhrLike,
 } from '@shmup/audio-web';
 import { INPUT_PROFILES_KIND, loadInputProfiles } from '@shmup/input-web';
-import { FX_CONTENT_KIND, loadFxContent, type AtlasManifest } from '@shmup/render-pixi';
+import {
+  FX_CONTENT_KIND,
+  loadFxContent,
+  type AtlasManifest,
+  type AtlasPageImage,
+} from '@shmup/render-pixi';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -254,6 +271,151 @@ export async function loadImageTimed<T extends LoadableImage>(
   // loadImagesTimed fills both for every URL it settles; a hole would be a bug, not a miss.
   if (image === undefined || timing === undefined) throw new AssetLoadError(url);
   return { image, timing };
+}
+
+/**
+ * One decoded atlas page and the timing of the load that produced it — either branch of
+ * {@link createPageImageFactory} (plan v20x P0-1).
+ */
+export interface LoadedPageImage {
+  /** The decoded page: an `ImageBitmap` from the bitmap branch, an `HTMLImageElement` from the fallback. */
+  readonly image: AtlasPageImage;
+  /**
+   * The load's times on the factory's clock: the bitmap branch's are its fetch and its
+   * `createImageBitmap` call; the fallback branch times its own `Image` load (an already-failed
+   * bitmap attempt is not charged to the page).
+   */
+  readonly timing: ImageTiming;
+}
+
+/** Loads one atlas page image and reports it with its timing (the unit of {@link loadPageImagesTimed}). */
+export type PageImageFactory = (url: string) => Promise<LoadedPageImage>;
+
+/**
+ * Injections of {@link createPageImageFactory} — the boot passes the window's own pieces, tests
+ * pass fakes. Everything is optional: a factory with no `createBitmap` is the pure `Image` path.
+ */
+export interface PageImageFactoryOptions {
+  /**
+   * The engine's `createImageBitmap` (`window.createImageBitmap`, Chromium 50+) — its presence
+   * is the feature detection that selects the bitmap branch. Never called with an options
+   * dictionary (plan v20x P0-1): the default `premultiply-alpha-on-upload` texture alpha is
+   * verified pixel-identical for both sources by `test/e2e/atlas-bitmap-identity.spec.ts`.
+   */
+  readonly createBitmap?: (blob: Blob) => Promise<ImageBitmap>;
+  /** Element factory for the `HTMLImageElement` branch (normally `() => new Image()`). */
+  readonly createElement?: ImageFactory;
+  /** XHR factory for the bitmap branch's byte fetch (default `() => new XMLHttpRequest()`). */
+  readonly createRequest?: () => XhrLike;
+  /** Optional clock in milliseconds (normally `performance.now`). Without it every timing is 0. */
+  readonly now?: () => number;
+}
+
+/**
+ * Records where a decoded page image came from (cold path, plan v20x P0-1): the boot error screen
+ * and `test/e2e/atlas-bitmap-identity.spec.ts` name an uploaded texture by its page URL, and an
+ * `ImageBitmap` carries no `src` — the shell tags it at load instead. A plain own property.
+ *
+ * @param image - The decoded page image.
+ * @param url - The URL it was loaded from.
+ * @returns The same image, tagged (for call-site chaining).
+ */
+export function tagPageImageUrl<T extends object>(image: T, url: string): T {
+  (image as T & { pageUrl?: string }).pageUrl = url;
+  return image;
+}
+
+/**
+ * Builds the shell's page-image factory (plan v20x P0-1, the owner's `tizen_optimize.md` §7.6).
+ *
+ * @remarks
+ * With a `createBitmap` the factory decodes each page on the **bitmap branch**: bytes through
+ * `loadArrayBuffer` (the same `file://`-safe XHR path as the manifest, status 0 accepted, D25),
+ * one `image/png` `Blob`, one option-less `createImageBitmap` call — whose result `texImage2D`
+ * uploads without the re-conversion an `HTMLImageElement` costs (8–15× on the M7 TVs). A page
+ * whose fetch **or** bitmap decode fails falls back to the **`Image` branch** for that URL (the
+ * TV bench's proven URL-decode case), so the factory is only ever as strict as the loader it
+ * wraps. Without `createBitmap` (an engine below Chromium 50, or `atlasDecode` forced in tests)
+ * the factory is exactly {@link loadImageTimed} behind this signature. The caller releases an
+ * `ImageBitmap` it drops: `Atlas.unloadPage` closes it (the residency's release hook).
+ *
+ * @param options - The engine pieces to branch on (see {@link PageImageFactoryOptions}).
+ * @returns A factory loading every URL once (no caching here — the residency owns page lifetimes).
+ *
+ * @example
+ * ```ts
+ * const createPageImage = createPageImageFactory({
+ *   createBitmap: typeof win.createImageBitmap === 'function' ? (blob) => win.createImageBitmap(blob) : undefined,
+ *   now: () => performance.now(),
+ * });
+ * const { image, timing } = await createPageImage('assets/atlas/main-3.png');
+ * ```
+ */
+export function createPageImageFactory(options: PageImageFactoryOptions = {}): PageImageFactory {
+  const { createBitmap, now, createRequest } = options;
+  const createElement = options.createElement ?? ((): HTMLImageElement => new Image());
+  const loadFromElement: PageImageFactory = (url) =>
+    loadImageTimed(url, createElement, now).then((loaded) => ({
+      image: loaded.image as AtlasPageImage,
+      timing: loaded.timing,
+    }));
+  if (typeof createBitmap !== 'function') return loadFromElement;
+  const openRequest = createRequest ?? ((): XhrLike => new XMLHttpRequest());
+  return async (url: string): Promise<LoadedPageImage> => {
+    const startMs = now === undefined ? 0 : now();
+    try {
+      const bytes = await loadArrayBuffer(url, openRequest);
+      const fetchedMs = now === undefined ? 0 : now();
+      const bitmap = await createBitmap(new Blob([bytes], { type: 'image/png' }));
+      const decodedMs = now === undefined ? 0 : now();
+      return {
+        image: tagPageImageUrl(bitmap, url),
+        timing: { loadMs: fetchedMs - startMs, decodeMs: decodedMs - fetchedMs },
+      };
+    } catch (_error) {
+      // The unproven leg of the path (a `file://` XHR, a rejected bitmap) is the fallback's
+      // proven one: decode from the URL exactly as before this plan (the bench's URL case).
+      return loadFromElement(url);
+    }
+  };
+}
+
+/**
+ * Loads atlas pages in parallel through a {@link PageImageFactory} and times each one — the
+ * eager boot's page load (the replacement of {@link loadImagesTimed} once the boot switched to
+ * the factory; plan v20x P0-1).
+ *
+ * @remarks
+ * Every URL's load starts at once; `onProgress` gets `(0, total)` first and one call per page as
+ * it settles, mirroring {@link loadImagesTimed}. The result order is `urls` order. Rejects with
+ * the first failure — which only a fallback branch can still raise (an {@link AssetLoadError}
+ * from the `HTMLImageElement` path).
+ *
+ * @param urls - Page URLs (relative to the page).
+ * @param createPageImage - The factory loading each page.
+ * @param onProgress - Optional progress callback `(loaded, total)`.
+ * @returns A promise of the images and their timings, both in `urls` order.
+ * @throws Rejects with {@link AssetLoadError} naming the first URL that failed.
+ */
+export async function loadPageImagesTimed(
+  urls: readonly string[],
+  createPageImage: PageImageFactory,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<{ readonly images: AtlasPageImage[]; readonly timings: ImageTiming[] }> {
+  const total = urls.length;
+  onProgress?.(0, total);
+  let settled = 0;
+  const timings: ImageTiming[] = urls.map(() => ({ loadMs: 0, decodeMs: 0 }));
+  const pending = urls.map((url, index) =>
+    createPageImage(url).then((loaded) => {
+      timings[index] = loaded.timing;
+      settled++;
+      onProgress?.(settled, total);
+      return loaded.image;
+    }),
+  );
+  const images = await Promise.all(pending);
+  return { images, timings };
 }
 
 /** Manifest format versions this shell reads: 1, and 2 since plan R1-05 (pages carry `group`). */

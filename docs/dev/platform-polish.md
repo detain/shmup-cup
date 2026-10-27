@@ -452,8 +452,11 @@ Two gates read them: `test/integration/cjk-budget.test.ts` (the shipped zone-spl
 `ATLAS_PNG_BYTES_CAP < DIST_BUDGET`.
 
 **The estimator.** `estimateMemory(inputs)` adds up what stays resident: the atlas pages on the GPU
-(`w × h × 4`, `pageBytes`) plus the decoded images (Pixi keeps each page's `HTMLImageElement` as the
-texture's resource, to re-upload it; the estimate charges the images of the `imagePages` it is
+(`w × h × 4`, `pageBytes`) plus the decoded images (the texture's resource, kept to re-upload it —
+an `ImageBitmap` since plan v20x P0-1 on engines with `createImageBitmap`, an `HTMLImageElement`
+on the fallback, the charge's `w × h × 4` shape unchanged and now GPU-side; a detached page's
+bitmap is closed by `Atlas.unloadPage` at once, so only attached images are ever charged; the
+estimate charges the images of the `imagePages` it is
 given, default the GPU pages themselves — the `resident` set, the estimator's default since MF10
 `66e54bcb` — and the shipped runtime reports its real policy from the residency, see below; the
 conservative `all`, every page's image, is the explicit charge of the eager `atlasPages: 'eager'`
@@ -581,7 +584,9 @@ art came: with the stand-in measurement showing images of every page cannot fit 
   object identity across load/unload, only their contents move.
 - **M3b — `createLazyAtlasResidency`** (above): pages start detached; a stage change fetches,
   decodes, attaches and uploads what the stage needs and drops the rest **with their decoded
-  images** — the bytes leave memory, policy "resident".
+  images** — the bytes leave memory, policy "resident"; since plan v20x P0-1 the image is an
+  `ImageBitmap` and leaving means `Atlas.unloadPage` **closing** it, so its GPU-side backing goes
+  with the page instead of waiting for the GC (the leak class W5-15's numbers assumed away).
 - **M3c/M3e — the boot switch**: `ShellOptions.atlasPages` (`'eager' | 'lazy'`) defaults to
   `'lazy'` since M3e. No page is fetched at boot; boot awaits its own prepare, so the first frame
   draws the boot stage. While the shown World's pages are in flight the frame loop **holds the
@@ -595,8 +600,9 @@ art came: with the stand-in measurement showing images of every page cannot fit 
 - **M3d — context loss**: because a dropped image's bytes are gone, recovery re-fetches. On
   `webglcontextlost` the shell calls `preventDefault` (Pixi's own listener agrees — the two calls
   are one intention); on `webglcontextrestored`, after Pixi has cleared its texture bookkeeping,
-  `recoverAtlasPages` walks the resident pages: re-fetch (`loadImageTimed`), swap the image
-  (`Atlas.loadPage`), `unload()` the dead GPU copy, `uploadTextureSource`. A failed re-fetch keeps
+  `recoverAtlasPages` walks the resident pages: re-fetch (the boot's page-image factory —
+  `loadImageTimed`'s bitmap successor since plan v20x P0-1), swap the image (`Atlas.loadPage`,
+  which **closes the replaced bitmap**), `unload()` the dead GPU copy, `uploadTextureSource`. A failed re-fetch keeps
   the old image standing in (it still decodes from its bytes; the next prepare retries), and a
   failed upload leaves Pixi's own lazy re-creation to heal the page on its next drawn frame.
 

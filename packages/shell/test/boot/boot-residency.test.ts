@@ -42,7 +42,7 @@ import {
 } from '../../src/boot/index.js';
 import type { DebugToolsFactory, DebugToolsHost } from '../../src/debug/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
-import type { LoadableImage } from '../../src/loader/index.js';
+import { createPageImageFactory, type LoadableImage } from '../../src/loader/index.js';
 
 const fakes = vi.hoisted(() => ({
   /** What the renderer was asked, in order: `upload` (with the source), `warmUp`, `render`. */
@@ -230,7 +230,12 @@ function boot(overrides: Partial<ShellOptions> = {}) {
     input,
     audio,
     platform: (): Platform => platform,
-    createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
+    createImage: createPageImageFactory({
+      createElement: () => new FakeImage(),
+      // The page factory carries its own clock now (plan v20x P0-1): the window's when a test
+      // installs one (the boot's atlas clock reads the same object), 0 where the window has none.
+      now: () => win.performance?.now() ?? 0,
+    }),
     overlay,
     scene: 'game',
     gameConfig: { stage: 'zone-b' },

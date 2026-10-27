@@ -1176,12 +1176,23 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   build ships a synthetic page any more.) Each repetition (8 on the TV, 2 headless, `?reps=`
   1–50) times the stages apart: the **fetch** by XHR (audio-web `loadArrayBuffer`, the request
   the game fetches its manifest with — `file://`, status 0), the **decode** by an
-  `HTMLImageElement` from a **blob URL** with a guarded `decode()` (the game's decoder; a second
+  `HTMLImageElement` from a **blob URL** with a guarded `decode()` (the game's fallback decoder;
+  a second
   load of the file URL would be a memory-cache hit), and the **upload** through `createAtlas` and
   `uploadTextureSource`, as CPU time and again with `gl.finish()`. For comparison it also decodes
-  with **`createImageBitmap`** (Chromium 50+, feature-detected; the game does not use it) and
-  uploads that — headless, the RGBA image upload took about 5× the bitmap's, which suggests
-  `texImage2D(HTMLImageElement)` converts the image again; the M7 run settles it. Every texture,
+  with **`createImageBitmap`** (Chromium 50+, feature-detected) and uploads that — headless, the
+  RGBA image upload took about 5× the bitmap's, which suggested `texImage2D(HTMLImageElement)`
+  converts the image again. **The M7 run settled it** (plan v20x P0-1, owner decision in
+  `tizen_optimize.md` §7.6): the image upload re-converts — its measured cost is in the decode's
+  class (~389 ms a page against the bitmap's ~50 ms upload, 8–15×) — and the bitmap's total
+  file→GPU is about half the image's (−47…−56 % a page), which is why **the game decodes its
+  atlas pages through `createImageBitmap` since plan v20x P0-1** (the shell's
+  `createPageImageFactory`; the `HTMLImageElement` path above is its fallback branch and the
+  whole path on engines without the API); `test/e2e/atlas-bitmap-identity.spec.ts` gates the two
+  sources pixel-identical one upload at a time and on drawn frames (the `@flash`, `@p2` and
+  bullet-palette pages included), and `Atlas.unloadPage` closes a detached bitmap so its backing
+  leaves the GPU with the page. P2-11's open question is folded into this row — no future lane
+  re-asks it. Every texture,
   blob URL and bitmap is released between repetitions, and every stage times out after 30 s. If
   the XHR fails (the unverified `file://` case) the page is decoded from its URL instead and its
   `error` says so. The results: a `DECODE (R1-05)` table under the matrix table (median / p95 per
