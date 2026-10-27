@@ -60,9 +60,13 @@ Run these on both monitors, on a **release** build (`pnpm --filter @shmup/tizen 
 - [ ] **Store assets.** `pnpm store:assets` derives the store surfaces from the art round's chosen
       winners and writes them into `assets/generated/store/`: sixteen key-art products — the app
       icon's store copy, the capsule (with and without lettering), the website hero, the wide
-      banner and the eleven zone posters at half size — plus four 1920 × 1080 screenshots still
-      captioned `PLACEHOLDER` (atlas-drawn, as in-game law asks, until real captures come off the
-      monitors), and `listing.json` sizing every file from the decoded sources. The committed
+      banner and the eleven zone posters at half size — plus four 1920 × 1080 screenshots —
+      real captures exist now: `pnpm docs:screens` (`scripts/doc-screenshots.mjs`) plays the shipped
+      build headlessly in Chromium, frozen and stepped to an exact tick, and commits eighteen
+      1280 × 720 captures (the frame at `CAPTURE_SCALE` ×2) under `docs/images/screens/` (`title.png`, `mode-select.png`,
+      `ship-select.png`, `weapon-select.png`, `difficulty.png`, `boss.png`, `warning.png`,
+      `stage-clear.png`, zone shots and more), and `listing.json` sizing every file from the
+      decoded sources. The committed
       icons (`apps/tizen/public/icon.png` 512 × 423, `apps/electron/build/icon.png` 512 × 512,
       `apps/webos/public/icon.png` 80 × 80 and `largeIcon.png` 130 × 130) are the same derivation;
       `node scripts/store-assets.mjs --check` keeps every one byte-exact against its pinned source.
@@ -71,8 +75,8 @@ Run these on both monitors, on a **release** build (`pnpm --filter @shmup/tizen 
       source in `assets/source/store/` and `LICENSES.md` beside them.
       **Check the sizes against the Seller Office's current requirements before you upload
       them** — they could not be verified from here, and they are written down in
-      `scripts/store-assets.mjs` as an assumption, not as a fact. Replace the screenshots with real
-      captures from a monitor.
+      `scripts/store-assets.mjs` as an assumption, not as a fact. Replace the four screenshots with four of
+      the `docs/images/screens/` captures (or new ones off a monitor).
 - [ ] **Alpha test**: up to **50 DUIDs**. Both M7 monitors are in the 2020 model group, so they can
       be on the list; collect the DUIDs the same way you did for the distributor certificate.
 - [ ] Upload the signed `.wgt`, run the alpha test, then submit for review.
@@ -83,7 +87,10 @@ The game was built by AI agents and its v2 art round works with generative AI (p
 store gets a disclosure. What 2.0.0 **ships** includes AI-made image art — 231 of the atlas's 619
 sprites are served from FLUX.2-dev real art under 142 committed `.art.json` provenance records
 (`node scripts/art-origins.mjs` is the report), the rest drawn by the repo's committed programs and
-pixel maps — and the agents wrote much of the text, the translations and the audio data. The owner
+pixel maps — and the agents wrote much of the text, the translations and the audio data. The
+player sees the same disclosure in-game: the title menu's HELP row opens the paged AboutScene
+(AI art, AI video, AI sound, AI code and the licence posture, one page each, in all three shipped
+languages). The owner
 ruled the FLUX licence position on **2026-10-23** (R6-D4,
 [`art-provenance.md`](../dev/art-provenance.md) §8 decision 1): this free open-source (MPL-2.0)
 distribution is what the FLUX Non-Commercial licences allow, and a BFL commercial licence

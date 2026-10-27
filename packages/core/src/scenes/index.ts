@@ -281,8 +281,9 @@
  * constants are the built-in table's). The flow re-arms the next games' configs with the save's
  * sim-affecting options and remembers the difficulty menu's choice in the save.
  *
- * **Extra modes and replays (M3-01).** The title's EXTRA ({@link TitleItem}.Extra 5, EXIT 6) opens
- * the {@link ExtraScene} ({@link ExtraItem}): BOSS RUSH ({@link BOSS_RUSH_STAGE}), CARAVAN (a zone
+ * **Extra modes and replays (M3-01).** The title's EXTRA ({@link TitleItem}.Extra 5, HELP 6 —
+ * EXIT 7 since 2026-10-27) opens the {@link ExtraScene} ({@link ExtraItem}): BOSS RUSH
+ * ({@link BOSS_RUSH_STAGE}), CARAVAN (a zone
  * against {@link CARAVAN_TICKS}), ARCADE (the looping campaign) and REPLAYS; the flow plays the
  * chosen {@link RunMode} ({@link SceneFlow.chooseMode}, `RunState.mode` / `loop` / `timeLimit` —
  * `./run.ts` {@link RUN_MODES}, {@link WorldStart}, {@link prepareWorldStart}). Every run is
@@ -572,7 +573,8 @@ export const moduleInfo = defineModule({
  * placeholder ids `attract` and `select` of the skeleton became `demo` / `story` and the title's
  * mode select), the Options pages of M2-16 — CONTROLS, DISPLAY, GAME, the rebind screen and the
  * input test —, and M3-01's EXTRA menu, replay browser and replay playback (`extra`, `replays`,
- * `replay`).
+ * `replay`), and the title's HELP row and its AboutScene with the AI-content disclosures (owner
+ * order 2026-10-27: `about`).
  */
 export type SceneId =
   | 'boot'
@@ -606,7 +608,8 @@ export type SceneId =
   | 'inputTest'
   | 'extra'
   | 'replays'
-  | 'replay';
+  | 'replay'
+  | 'about';
 
 /** A scene on the stack. */
 export interface Scene {
@@ -1114,8 +1117,10 @@ export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose
  * exists when the platform can quit — the TV): `1 PLAYER` (`Start`), `2 PLAYERS` (a co-op game —
  * M2-06; both open the difficulty menu), PRACTICE (the {@link PracticeScene} — M2-15; disabled
  * without a campaign), OPTIONS (the {@link OptionsScene}), SOUND TEST (the {@link SoundTestScene} —
- * M2-15), EXTRA (the {@link ExtraScene} — M3-01), EXIT. OPTIONS and EXIT moved down one row in
- * M2-06 and again (OPTIONS 3, EXIT 5) in M2-15; EXIT moved to 6 in M3-01.
+ * M2-15), EXTRA (the {@link ExtraScene} — M3-01), HELP (the {@link AboutScene} — the AI-content
+ * disclosures, owner order 2026-10-27), EXIT. OPTIONS and EXIT moved down one row in
+ * M2-06 and again (OPTIONS 3, EXIT 5) in M2-15; EXIT moved to 6 in M3-01 and to 7 when HELP
+ * opened the {@link AboutScene} after EXTRA.
  */
 export const TitleItem = {
   Start: 0,
@@ -1125,8 +1130,10 @@ export const TitleItem = {
   SoundTest: 4,
   /** EXTRA (M3-01): the {@link ExtraScene} — boss rush, caravan, arcade, replays. */
   Extra: 5,
-  /** EXIT (only where the platform can quit — the TV, the desktop app): 6 since M3-01. */
-  Exit: 6,
+  /** HELP (owner order 2026-10-27): the {@link AboutScene} — the AI-content disclosures. */
+  Help: 6,
+  /** EXIT (only where the platform can quit — the TV, the desktop app): 7 since 2026-10-27. */
+  Exit: 7,
 } as const;
 
 /**
@@ -1803,8 +1810,12 @@ const UI_STRINGS = 512;
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
 
-/** The title menu's first row: just below the frame's centre row. */
-const TITLE_MENU_Y = FRAME_CY + uiPx(10);
+/**
+ * The title menu's first row. Raised 9 px from `FRAME_CY + uiPx(10)` when HELP made the menu
+ * eight rows (owner order 2026-10-27): the last row — EXIT — must stay clear of the `HI` line
+ * 18 px above the frame's bottom (`test/ui/ui-layout-frame.test.ts` walks it).
+ */
+const TITLE_MENU_Y = FRAME_CY + uiPx(4);
 
 /**
  * The title menu's cursor sits left of the centred labels, by half the longest label at least
@@ -2303,6 +2314,8 @@ interface FlowControl {
   lastReplay: RunReplay | null;
   /** The EXTRA menu (M3-01). */
   readonly extra: ExtraScene;
+  /** The AboutScene of the title's HELP row (owner order 2026-10-27). */
+  readonly about: AboutScene;
   /** The replay browser (M3-01). */
   readonly replaysScreen: ReplaysScene;
   /** The replay playback screen (M3-01). */
@@ -2504,7 +2517,8 @@ function hidesTitleHi(id: SceneId): boolean {
  * save's best at start). OK opens the menu (locked for 2 ticks, focus on 1 PLAYER). 1 PLAYER /
  * 2 PLAYERS open the difficulty menu ({@link DifficultyScene}) over the title, which starts the
  * game; PRACTICE opens the {@link PracticeScene}, OPTIONS the {@link OptionsScene}, SOUND TEST the
- * {@link SoundTestScene} — all over the title; EXIT and Back open the exit confirmation when the
+ * {@link SoundTestScene} and HELP the {@link AboutScene} — all over the title; EXIT and Back open
+ * the exit confirmation when the
  * platform can exit — otherwise Back returns from the menu to `PRESS OK` (and does nothing on
  * `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title music.
  *
@@ -2518,8 +2532,9 @@ export class TitleScene extends SceneBase {
   readonly id = 'title' as const;
   /**
    * The title menu — the mode select ({@link TitleItem} order): 1 PLAYER / 2 PLAYERS / PRACTICE /
-   * OPTIONS / SOUND TEST / EXIT — EXIT only when the platform can quit, PRACTICE disabled without
-   * a campaign (M2-06 added 2 PLAYERS, M2-15 PRACTICE and SOUND TEST).
+   * OPTIONS / SOUND TEST / EXTRA / HELP / EXIT — EXIT only when the platform can quit, PRACTICE
+   * disabled without a campaign (M2-06 added 2 PLAYERS, M2-15 PRACTICE and SOUND TEST, M3-01
+   * EXTRA, the 2026-10-27 owner order HELP).
    */
   readonly menu: ListMenu;
   /** Where {@link TitleScene.menu} is drawn: its cursor clears the session language's labels. */
@@ -2543,7 +2558,7 @@ export class TitleScene extends SceneBase {
     super(flow);
     const t = flow.text;
     const items = [t.titleOnePlayer, t.titleTwoPlayers, t.titlePractice, t.titleOptions];
-    items.push(t.titleSoundTest, t.titleExtra);
+    items.push(t.titleSoundTest, t.titleExtra, t.titleHelp);
     if (flow.host.exit !== null) items.push(t.titleExit);
     const content = flow.host.content;
     // EXTRA (M3-01) needs something to offer: the boss rush stage, a campaign or the replays.
@@ -2671,6 +2686,9 @@ export class TitleScene extends SceneBase {
       } else if (menu.focus === TitleItem.Extra) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.extra);
+      } else if (menu.focus === TitleItem.Help) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.about);
       } else if (menu.focus === TitleItem.Exit) {
         flow.ask(ConfirmPurpose.Exit);
       }
@@ -9337,6 +9355,18 @@ const EXTRA_MENU_LAYOUT: MenuLayout = Object.freeze({
   valueX: FRAME_CX - uiPx(32),
 });
 
+/** The AboutScene's panel: the EXTRA menu's (same size, centred) — owner order 2026-10-27. */
+const ABOUT_PANEL = EXTRA_PANEL;
+
+/** The AboutScene's body rows per page, under the section headline ({@link ABOUT_PANEL} room). */
+const ABOUT_MAX_LINES = 4;
+
+/** The AboutScene's line advance: one row and 4 px. */
+const ABOUT_LINE_H = LINE_H + uiPx(4);
+
+/** From the AboutScene panel's top to its section headline (22). */
+const ABOUT_SECTION_DY = uiPx(22);
+
 /**
  * The EXTRA menu (M3-01 — shmup_feat.md §16 "boss rush", "score attack / caravan
  * (time-limited)", "Loop 2 / Arcade mode"; §21 "replay browser"): EXTRA on the mode select.
@@ -9510,6 +9540,132 @@ export class ExtraScene extends SceneBase {
     drawMenu(list, this.menu, base + 2, EXTRA_MENU_LAYOUT, t);
     const hintY = p.y + p.h - MENU_PANEL_HINT_DY;
     list.text(base + 1, FRAME_CX, hintY, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
+/**
+ * The HELP screen (owner order 2026-10-27 — the legal disclosures live at MAIN MENU → HELP →
+ * ABOUT): six paged screens, one AI-content class each — art, video, sound, code, the licences,
+ * and a thanks line.
+ *
+ * @remarks
+ * An overlay over the title (dim {@link PAUSE_DIM}) with {@link ExtraScene}'s panel
+ * ({@link ABOUT_PANEL}). There is no menu: `←`/`→` (also `↑`/`↓`, and `OK` turns forward) move one
+ * page and the pages wrap; Back closes. The lock ({@link MENU_OPEN_LOCK_TICKS}) keeps the HELP
+ * press from turning the first page. Every drawn word is a UI string id (the M2-16 law, all three
+ * shipped tables carry it); the one built string is the `PAGE n/m` label, filled on entry and on
+ * a page turn only, never per frame. The video page carries the LTX-2.5 machine-content
+ * disclaimer (`docs/dev/art-provenance.md`, the licence rows in `assets/source/store/LICENSES.md`).
+ */
+export class AboutScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'about' as const;
+  /** An overlay over the title. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /**
+   * The six pages — each `[section headline, row, row, row, row]` of table strings; empty rows
+   * draw nothing. Built once from {@link SceneFlow.text} at construction, like every other menu's
+   * frozen labels (the language cannot change while a scene is open).
+   */
+  private readonly pages: readonly (readonly string[])[];
+  /** The page on screen (dev bridge: `__shmupDebug.game.scenes.about.page`). */
+  page = 0;
+  /** The filled `PAGE {0}/{1}` label — rebuilt on a page turn only. */
+  private pageLabel = '';
+  /** The open lock: counts down the press that opened the screen away. */
+  private lock = 0;
+
+  /**
+   * Creates the screen.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    this.pages = Object.freeze([
+      Object.freeze([t.aboutSectionArt, t.aboutArt1, t.aboutArt2, t.aboutArt3, t.aboutArt4]),
+      Object.freeze([
+        t.aboutSectionVideo,
+        t.aboutVideo1,
+        t.aboutVideo2,
+        t.aboutVideo3,
+        t.aboutVideo4,
+      ]),
+      Object.freeze([t.aboutSectionSound, t.aboutSound1, t.aboutSound2, t.aboutSound3, '']),
+      Object.freeze([t.aboutSectionCode, t.aboutCode1, t.aboutCode2, t.aboutCode3, '']),
+      Object.freeze([
+        t.aboutSectionLicence,
+        t.aboutLicence1,
+        t.aboutLicence2,
+        t.aboutLicence3,
+        t.aboutLicence4,
+      ]),
+      Object.freeze([t.aboutSectionThanks, t.thankYou, t.aboutThanks1, '', '']),
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}: title, hint, page label, headline and four rows. */
+  get stringSlots(): number {
+    return 8;
+  }
+
+  /** Opens on the first page, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    this.page = 0;
+    this.pageLabel = formatUiText(flow.text.aboutPage, 1, this.pages.length);
+    this.lock = MENU_OPEN_LOCK_TICKS;
+  }
+
+  /** Turns the pages and closes; idles without allocating. */
+  tick(): void {
+    const flow = this.flow;
+    if (this.lock > 0) {
+      this.lock--;
+      return;
+    }
+    const pressed = flow.menuInput.pressed;
+    if ((pressed & Action.Back) !== 0) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    const forward = (pressed & (Action.Confirm | Action.Right | Action.Down)) !== 0;
+    const reverse = (pressed & (Action.Left | Action.Up)) !== 0;
+    if (!forward && !reverse) return;
+    const count = this.pages.length;
+    this.page = forward ? (this.page + 1) % count : (this.page + count - 1) % count;
+    this.pageLabel = formatUiText(flow.text.aboutPage, this.page + 1, count);
+    this.uiRevision++;
+    flow.sfx(SFX_CUES.MenuMove);
+  }
+
+  /** Draws the panel, `ABOUT`, the page's headline and rows, the page label and the hint. */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = ABOUT_PANEL;
+    const t = this.flow.text;
+    const page = this.pages[this.page];
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.aboutTitle);
+    list.setString(base + 1, t.aboutHint);
+    list.setString(base + 2, this.pageLabel);
+    list.setString(base + 3, page[0]);
+    for (let r = 0; r < ABOUT_MAX_LINES; r++) list.setString(base + 4 + r, page[1 + r]);
+    list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
+    list.text(base + 3, FRAME_CX, p.y + ABOUT_SECTION_DY, UI_COLORS.focus, TextAlign.Center);
+    const rowY = p.y + ABOUT_SECTION_DY + ABOUT_LINE_H;
+    for (let r = 0; r < ABOUT_MAX_LINES; r++) {
+      if (page[1 + r].length === 0) continue;
+      list.text(base + 4 + r, FRAME_CX, rowY + r * ABOUT_LINE_H, UI_COLORS.text, TextAlign.Center);
+    }
+    const hintY = p.y + p.h - MENU_PANEL_HINT_DY;
+    list.text(base + 1, FRAME_CX, hintY, UI_COLORS.disabled, TextAlign.Center);
+    list.text(base + 2, p.x + p.w - uiPx(6), hintY, UI_COLORS.disabled, TextAlign.Right);
   }
 }
 
@@ -10146,6 +10302,8 @@ export interface SceneFlow {
   readonly inputTest: InputTestScene;
   /** The EXTRA menu (M3-01). */
   readonly extra: ExtraScene;
+  /** The HELP row's AboutScene — the AI-content disclosures (owner order 2026-10-27). */
+  readonly about: AboutScene;
   /** The replay browser (M3-01). */
   readonly replaysScreen: ReplaysScene;
   /** The replay playback screen (M3-01). */
@@ -10911,6 +11069,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.rebind = new RebindScene(control);
   control.inputTest = new InputTestScene(control);
   control.extra = new ExtraScene(control);
+  control.about = new AboutScene(control);
   control.replaysScreen = new ReplaysScene(control);
   control.replayScreen = new ReplayScene(control);
   // The save's sim-affecting options (M2-16) reach the first game too.
@@ -10951,6 +11110,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.rebind,
     control.inputTest,
     control.extra,
+    control.about,
     control.replaysScreen,
     control.replayScreen,
   ];
@@ -11015,6 +11175,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     rebind: control.rebind,
     inputTest: control.inputTest,
     extra: control.extra,
+    about: control.about,
     replaysScreen: control.replaysScreen,
     replayScreen: control.replayScreen,
     recorder: control.recorder,

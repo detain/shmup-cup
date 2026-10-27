@@ -1599,6 +1599,7 @@ export {
 } from './replay/index.js';
 
 export {
+  AboutScene,
   BOSS_RUSH_STAGE,
   CARAVAN_TICKS,
   ExtraItem,

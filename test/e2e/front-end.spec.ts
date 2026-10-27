@@ -66,6 +66,7 @@ interface DebugWindow {
         readonly nameEntry: { readonly entry: { readonly name: string } };
         readonly hiScores: { readonly key: string; readonly ticks: number };
         readonly soundTest: { readonly music: { readonly labels: readonly string[] } };
+        readonly about: { readonly page: number };
         readonly save: { hiScores(key: string): readonly SavedRow[] };
       };
     };
@@ -278,6 +279,31 @@ test.describe('front end (web build)', () => {
 });
 
 test.describe('front end (Tizen build from disk)', () => {
+  test('HELP opens the AboutScene, turns its pages and closes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('./');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await waitTicks(page, 10);
+    await tap(page, 'Enter'); // PRESS OK
+    for (let i = 0; i < 6; i++) await tap(page, 'ArrowDown'); // EXTRA, then HELP
+    await tap(page, 'Enter');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'about');
+    await waitTicks(page, 4); // the open lock
+    const pageOf = () =>
+      page.evaluate(() => (window as unknown as DebugWindow).__shmupDebug.game.scenes.about.page);
+    await tap(page, 'ArrowRight');
+    await expect.poll(pageOf, { timeout: 5_000 }).toBe(1);
+    await tap(page, 'ArrowLeft');
+    await expect.poll(pageOf, { timeout: 5_000 }).toBe(0);
+    await tap(page, 'Escape');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    expect(errors).toEqual([]);
+  });
+
   test('the remote`s arrows and OK enter a name after a game over', async ({ page }) => {
     test.setTimeout(120_000);
     const errors = watchErrors(page);

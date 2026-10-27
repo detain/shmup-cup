@@ -821,6 +821,15 @@ function frontEnd(w: LayoutWalk): void {
   w.press(Action.Back);
   w.hold(0, 4);
   w.at('title');
+  w.focus(flow.title.menu, TitleItem.Help);
+  w.press(Action.Confirm);
+  w.at('about');
+  w.hold(0, 2);
+  w.presses(Action.Right, Action.Right, Action.Right, Action.Right, Action.Right);
+  w.hold(0, 2);
+  w.press(Action.Back);
+  w.hold(0, 4);
+  w.at('title');
 }
 
 /**
@@ -1064,6 +1073,7 @@ const SCENES: Readonly<Record<SceneId, true>> = {
   extra: true,
   replays: true,
   replay: true,
+  about: true,
 };
 
 /** Every scene id of the flow, sorted: what the walks must show. */

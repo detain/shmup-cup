@@ -838,7 +838,7 @@ rate, the game options) reach a World only through the config the flow resolves 
 | A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 512 string slots (384 before M2-16, 256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
 | The zone map loses nodes or its panel on a big campaign | The UI list has 384 commands; the map thins its edge dots to a 160-command budget (`MapScene.edgeDots`) — a new map element must fit what is left |
 | The renderer shows a World while no game runs | The weapon select's live preview (M2-03) or the attract loop's demo play (M2-15) — `SceneFlowView.world` is its view while that screen is visible |
-| A spec walking the title menu opens the wrong screen | M2-15 inserted PRACTICE before OPTIONS and SOUND TEST before EXIT (`TitleItem.Options` 3, `Exit` 5) — count with `TitleItem` |
+| A spec walking the title menu opens the wrong screen | Rows were inserted over time (PRACTICE, EXTRA, and HELP before EXIT since 2026-10-27 — `TitleItem.Help` 6, `Exit` 7) — count with `TitleItem`, never with presses |
 | A test expecting the title after GAME OVER finds `nameEntry` | Since M2-15 an end screen goes through `finishGame()`: a score that entered its table opens the name entry, then the result table — pass both (OK on `END`, then OK after the table's 30-tick lock) |
 | The title leaves by itself after 12 s in a test | The attract loop (M2-15): `TITLE_ATTRACT_TICKS` without input on `PRESS OK` — open the menu (OK) or keep a key held |
 | The HUD never updates | Something else clears the scores' dirty flags (another HUD over the same World), or the new state is not in `Hud.update`'s comparison |
@@ -919,3 +919,7 @@ rate, the game options) reach a World only through the config the flow resolves 
   ([above](#laying-screens-out-from-the-frame-r1-01)); the fingerprint re-pinned on purpose.
   Next: **R4-03** redraws the font, the HUD and the UI kit (the line caps re-derive); **R4-05** the
   title, the ending scenes and their panels.
+- **2026-10-27** (v2, owner order) — the title's HELP (`TitleItem.Help` 6, EXIT moved to 7) opens the
+  `AboutScene` (id `about`): six pages of AI-art / AI-video / AI-sound / AI-code / licence / thanks
+  disclosure over the title — ←/→ turn with wrap, BACK closes, every line a UI string id (29 new ids
+  in all three tables); `TITLE_MENU_Y` raised so eight rows clear the HI line.

@@ -460,6 +460,8 @@ describe('web/boot bootWebApp wiring', () => {
     tap('Escape', 27);
     expect(app.game.scenes?.stack.top?.id).toBe('pause');
     expect(app.game.platform.exit).toBeNull(); // no EXIT item in a browser
+    // 2026-10-27 (owner order): the title menu gained HELP before EXIT — the browser
+    // list ends at HELP (EXIT stays TV-only). Disclosed pin update, menu composition.
     expect(app.game.scenes?.title.menu.items.map((item) => item.label)).toEqual([
       '1 PLAYER',
       '2 PLAYERS',
@@ -467,6 +469,7 @@ describe('web/boot bootWebApp wiring', () => {
       'OPTIONS',
       'SOUND TEST',
       'EXTRA',
+      'HELP',
     ]);
   });
 

@@ -63,6 +63,7 @@ describe('core/game edge: the scene flow', () => {
       'OPTIONS',
       'SOUND TEST',
       'EXTRA',
+      'HELP',
       'EXIT',
     ]);
     const browser = Object.assign(createHeadlessPlatform(), { exit: null });
@@ -73,6 +74,7 @@ describe('core/game edge: the scene flow', () => {
       'OPTIONS',
       'SOUND TEST',
       'EXTRA',
+      'HELP',
     ]);
   });
 

@@ -190,6 +190,7 @@ describe('core/scenes flow: boot and title', () => {
       'OPTIONS',
       'SOUND TEST',
       'EXTRA',
+      'HELP',
       'EXIT',
       'HI',
     ]);
@@ -202,10 +203,13 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.SoundTest);
+    s.press(Action.Down); // EXTRA is skipped: disabled
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Help);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.Exit);
     expect(s.sounds()).toEqual([
       SFX_CUES.MenuSelect,
+      SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
@@ -223,6 +227,7 @@ describe('core/scenes flow: boot and title', () => {
       'OPTIONS',
       'SOUND TEST',
       'EXTRA',
+      'HELP',
     ]);
     s.press(Action.Back);
     expect([s.top, s.flow.title.menuOpen]).toEqual(['title', false]);

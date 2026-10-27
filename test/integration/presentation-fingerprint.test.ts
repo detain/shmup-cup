@@ -445,6 +445,7 @@ const SCENE_IDS = [
   'extra',
   'replays',
   'replay',
+  'about',
 ] as const;
 
 /** Two keyboard profiles for the CONTROLS page's PROFILE row. */
@@ -1021,6 +1022,15 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     w.press(Action.Back);
     w.hold(0, 4);
     w.at('extra');
+    w.press(Action.Back);
+    w.hold(0, 4);
+    w.at('title');
+    w.begin('about');
+    w.focus(flow.title.menu, TitleItem.Help);
+    w.press(Action.Confirm);
+    w.at('about');
+    w.hold(0, 2);
+    w.presses(Action.Right, Action.Right, Action.Right, Action.Right, Action.Right);
     w.press(Action.Back);
     w.hold(0, 4);
     w.at('title');
@@ -1709,24 +1719,25 @@ const PINNED: Record<string, Record<string, string>> = {
     boot: '9c8573d9 b004d6e1 05544aa6 ec3e6705',
     'title.prompt': '6d9d1305 9c557965 80a26cf5 2873a7c5',
     'title.exit': '46be5271 c94e24e5 2eab2015 87baae65',
-    'title.menu': '0dbe686d a5b509f9 82b34cc6 24482885',
-    options: 'ebd2d36d 843dc42d 059d18d9 cb1bc225',
-    'options.controls': '7ef0939d 843dc42d d5e32d81 99f2b285',
-    rebind: 'a68b21e5 23be0ddd f7ced5e2 43fd3c05',
-    inputTest: '0204b3f1 fc5910b5 88228dd5 414cb545',
-    'options.display': '0b38486d b1382dc9 423730ea eb493265',
-    'options.graphics': '732def45 7431bd9d 216feead a4aa6605',
-    'options.game': 'ad29c97d aa52f245 c3740400 952881c5',
-    'options.extras': '6a25f625 ddb53aa9 c005afe6 8a90b305',
-    soundTest: 'add34afd ddb53aa9 608569b2 b02f3ee5',
-    practice: '7dc6536d 843dc42d 9ebd5109 88a2cb85',
-    extra: '865199d1 0e2b37d5 84194cf5 2d0859e5',
-    'replays.empty': '97185f15 0e2b37d5 e873ed45 a31a93e5',
+    'title.menu': '2371e9d5 0e2b37d5 729cb7fd 3314a0c5',
+    options: '030139f9 843dc42d 7cc060a1 cb1bc225',
+    'options.controls': 'e98119a5 843dc42d 45c6dad9 99f2b285',
+    rebind: '9bfd5245 23be0ddd d41307e6 43fd3c05',
+    inputTest: 'f03dfbb9 fc5910b5 63ad08c5 414cb545',
+    'options.display': '07a3fa1d b1382dc9 5964a8d2 eb493265',
+    'options.graphics': '13e10fe1 7431bd9d 50b6aa45 a4aa6605',
+    'options.game': '83a36969 aa52f245 3af1a174 952881c5',
+    'options.extras': '7f52c679 ddb53aa9 d9239cf2 8a90b305',
+    soundTest: '91e16c59 ddb53aa9 5718fe26 b02f3ee5',
+    practice: '8479bb75 378e5719 d88358e2 d19553c5',
+    extra: 'bafe4645 0e2b37d5 b14cbd65 2d0859e5',
+    'replays.empty': 'bc080631 0e2b37d5 83c30875 a31a93e5',
+    about: '219569f9 0e2b37d5 06286725 33fad7c5',
   },
   game: {
-    difficulty: '9799c4d5 c94e24e5 c8498595 6d5b6685',
-    shipSelect: 'fa79a561 7fa3520d b768f6f1 82623985',
-    weaponSelect: '5372cbc1 78c5388d 80cb1b4e 0f7c1465',
+    difficulty: '43d13a55 c94e24e5 c8498595 6d5b6685',
+    shipSelect: '553649a9 7fa3520d b768f6f1 82623985',
+    weaponSelect: 'a4507305 78c5388d 80cb1b4e 0f7c1465',
     autoOrder: 'a5ee0285 b1382dc9 746c0a4e 3a21ce85',
     'game.card': '3d5f1aad 11d9cba1 80c04580 6cdc9245',
     'game.play': '0cfccb05 1ed352c0 5c0b0832 b952d9c5',
@@ -1739,13 +1750,13 @@ const PINNED: Record<string, Record<string, string>> = {
     gameOver: '1a078253 90ab57a1 678dce8f 71c564ba',
     nameEntry: 'f5f13525 b1382dc9 56caab8a 70a36b85',
     'hiScore.result': 'c937966d 3bd76f29 ac4eb872 4cf8f185',
-    'replays.lastGame': '2b94aa61 9a5e9019 27d877dd 3f198b25',
-    replay: '6b35e1a1 d6f2e833 e76d8946 4e80eaa8',
+    'replays.lastGame': '22ac67d5 9a5e9019 27d877dd 3f198b25',
+    replay: 'fb0f2c84 d6f2e833 e76d8946 4e80eaa8',
   },
   coopDirect: {
     'coop.waiting': '063595c5 71908532 3eb68cd1 2786acc5',
     'coop.join': 'd17ecad0 5fe5b450 946c11fc 6cdc9245',
-    'coop.continue': '3918ce28 778b624e a022051c 8a5296aa',
+    'coop.continue': '4b48d2fc 778b624e a022051c 8a5296aa',
     direct: 'd1710dac 0698b8cd 76e8f494 15723ac5',
   },
   attract: {
@@ -1756,7 +1767,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'attract.demo2': 'e53b9244 fe3d4f40 05ce29af a3a65905',
   },
   single: {
-    'single.title': '3136c0a2 752eb13a d24a64a8 aca532e5',
+    'single.title': '32e5edba 752eb13a d24a64a8 aca532e5',
     'single.game': 'a1e2b9b5 eeced6a5 e89b3185 157bb6c5',
     'single.stageClear': 'a3f1b0d8 7903743f eff1eb4f 3d4db705',
     'single.nameEntry': '580fc260 25d9e681 5e0d08f4 4207f105',
@@ -1806,18 +1817,18 @@ const PINNED: Record<string, Record<string, string>> = {
     'runB.nameEntry': '8961696c 16eb6249 9d58c8aa 9f7d7385',
   },
   extraModes: {
-    'extra.weaponTypes': '06082105 02773c71 3cfa240e bf9340c5',
-    'extra.bossRush': 'a90a9780 9a133fd2 87492cd8 e9642425',
-    'extra.caravan': '528ecbb7 f6be0744 5f6e3b98 68aa3e85',
-    'extra.arcade': 'e2b0568c 0edf3aee 9d421535 cfa20445',
+    'extra.weaponTypes': '92e56b19 02773c71 3cfa240e bf9340c5',
+    'extra.bossRush': '60688f38 9a133fd2 87492cd8 e9642425',
+    'extra.caravan': 'da98698f f6be0744 5f6e3b98 68aa3e85',
+    'extra.arcade': '772af60c 0edf3aee 9d421535 cfa20445',
   },
   languages: {
-    'es.title': '7f60c2d9 b4f60d95 fdb07ead 9e6aa4c5',
-    'es.options': '41505b3d c0e67b3d 62df1c99 1c1e6065',
-    'es.game': '7a2c5f68 83bf4270 47673907 445802e5',
-    'ja.title': '5e745238 b4f60d95 fdb07ead 9e6aa4c5',
-    'ja.options': 'aa558125 c0e67b3d 62df1c99 1c1e6065',
-    'ja.game': '15515918 83bf4270 47673907 445802e5',
+    'es.title': '8e93ff41 63a638c1 1a21862a 09b4ed05',
+    'es.options': 'bd8ebd89 c0e67b3d dba2cff9 1c1e6065',
+    'es.game': 'ae6772d4 b288817c 080098f4 9666b125',
+    'ja.title': '2a823104 63a638c1 1a21862a 09b4ed05',
+    'ja.options': 'c8095a09 c0e67b3d dba2cff9 1c1e6065',
+    'ja.game': '50bb58c4 b288817c 080098f4 9666b125',
   },
   bare: {
     bare: '4d3bfc25 4d3bfc25 b2061eae 0e5dbbc5',

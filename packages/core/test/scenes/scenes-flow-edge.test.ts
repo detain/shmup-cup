@@ -321,7 +321,7 @@ describe('core/scenes flow edge: construction', () => {
       expect(next).toBeLessThanOrEqual(flow.view.ui.stringCapacity);
       // PRESS OK, HI, the logo's text, the cursor and the items (2 PLAYERS since M2-06, PRACTICE
       // and SOUND TEST since M2-15, EXTRA and the secret codes' message since M3-01).
-      expect(flow.title.stringSlots).toBe(canExit ? 14 : 13);
+      expect(flow.title.stringSlots).toBe(canExit ? 15 : 14);
     }
   });
 
@@ -432,8 +432,9 @@ describe('core/scenes flow edge: title', () => {
     expect(s.sounds(from)).toEqual([SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
   });
 
-  it('without EXIT the menu moves between 1 PLAYER, 2 PLAYERS, OPTIONS and SOUND TEST only', () => {
-    // No campaign in this content: PRACTICE is disabled and skipped (M2-15).
+  it('without EXIT the menu moves between 1 PLAYER, 2 PLAYERS, OPTIONS, SOUND TEST and HELP only', () => {
+    // No campaign in this content: PRACTICE is disabled and skipped (M2-15); EXTRA is disabled too
+    // (nothing to offer), HELP is the last row on a platform that cannot quit (2026-10-27).
     const s = new Session('title', false);
     s.press(Action.Confirm);
     const from = s.events.length;
@@ -443,9 +444,12 @@ describe('core/scenes flow edge: title', () => {
     expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.SoundTest);
+    s.press(Action.Down); // EXTRA is skipped
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Help);
     s.press(Action.Down); // wraps
     expect(s.flow.title.menu.focus).toBe(TitleItem.Start);
     expect(s.sounds(from)).toEqual([
+      SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
