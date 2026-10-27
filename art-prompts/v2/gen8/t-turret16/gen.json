@@ -1,0 +1,276 @@
+{
+  "id": "gen8/t-turret16",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the sixteen heading frames of a boss gun turret — a round armoured mount, sixteen copies, barrel direction the only difference, steel.\n\nDesign identity to keep exactly — a circular armoured gun mount: dark navy outer rim (#1a2030), steel-blue body (#5a6078) with its upper-left quarter lit pale (#9aa4c0), a short thick light-grey barrel (#c8d0e0) from the centre to the rim on ONE side, capped by a bright amber muzzle block (#f8d030), 1-px near-black outline (#101820). The mount is ROUND and nearly as tall as wide in every frame — the disc dominates, the barrel is SHORT (it must not stretch the silhouette).\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 16 square cells laid out as 4 ROWS OF 4 (4-column by 4-row grid) — every cell holding exactly ONE mount. Reading order left-right then top-bottom:\n  cell 1 = barrel heading 0.0° (E )\n  cell 2 = barrel heading 22.5° (ESE )\n  cell 3 = barrel heading 45.0° (SE-south-east )\n  cell 4 = barrel heading 67.5° (SSE )\n  cell 5 = barrel heading 90.0° (S )\n  cell 6 = barrel heading 112.5° (SSW )\n  cell 7 = barrel heading 135.0° (SW-south-west )\n  cell 8 = barrel heading 157.5° (WSW )\n  cell 9 = barrel heading 180.0° (W )\n  cell 10 = barrel heading 202.5° (WNW )\n  cell 11 = barrel heading 225.0° (NW-north-west )\n  cell 12 = barrel heading 247.5° (NNW )\n  cell 13 = barrel heading 270.0° (N )\n  cell 14 = barrel heading 292.5° (NNE )\n  cell 15 = barrel heading 315.0° (NE-north-east )\n  cell 16 = barrel heading 337.5° (ENE )\n- HEADING LAW: heading = cell index k × 22.5° measured CLOCKWISE ON SCREEN from +x (cell 1 = 0° points RIGHT, cell 5 = 90° straight DOWN, cell 9 = 180° LEFT, cell 13 = 270° UP). The mount body is IDENTICAL in all 16 cells — same size, dead-centre; ONLY the barrel rotates one step per cell.\n- THE SIXTEEN MOUNTS ARE SIXTEEN ISOLATED GAME ICONS. NOTHING connects them: no shared armour band, no plating row, no wall, no touching or overlapping rims. Each mount is a TINY stamp: the disc is about 45 px wide and the SHORT stub barrel stops AT the disc rim — no pixel of any mount further than 35 px from its cell's exact centre; leave about 90 px of flat green above AND below every mount. ALL 16 mounts together cover barely 8% of the sheet; flat green covers the rest, unbroken between every pair of neighbours. If any band of ink crosses a cell border, the sheet is ruined. Every mount's whole silhouette (disc plus barrel) lies within aspect 0.70:1 to 1.40:1 — round, never an elongated banner.\n- Each mount sits at the exact centre of its own cell with at least 90 px of unbroken flat #51e018 between it and every cell edge, above and below included; clean flat gutters everywhere; no subject may touch or cross a cell edge.\n- The sheet canvas measures EXACTLY 1024×1024 px: produce EXACTLY 16 subject cells and nothing else.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere — the cell list above is ordering instructions only, never drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible at that low resolution (rivets, panel seams, a shaded rim ramp), crisp hard-edged square pixels, chunky bold forms, four-to-six step shading lit from the top-left, clean saturated colours, 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521095000,
+  "width": 1024,
+  "height": 1024,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T02:55:11.290Z",
+  "seconds": 28.6,
+  "label": "t-turret16",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen8/t-turret16/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1024x1024",
+  "meta": {
+    "job": "w15-GEN8",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN8",
+  "round": "bosses-1",
+  "exit": "STOP",
+  "ownerAsk": "Quality-regen wave 1 per GEN6 census rec: bosses/turret 16-frame heading ring (24×24 served; frame k = heading k×22.5° clockwise on screen from +x) at the v2 detail level",
+  "gridContract": "256x256 cells, 4x4, canvas 1024x1024, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "bosses/turret (16f 24×24 served; @flash auto-derived +16f)",
+  "probe": {
+    "id": "t-turret16",
+    "ok": false,
+    "fails": [
+      "cell 0 margin <12px (76/90/0/0)",
+      "cell 1 AR=1.42 outside [0.7,1.4] (h1)",
+      "cell 1 margin <12px (0/90/21/0)",
+      "cell 2 AR=1.45 outside [0.7,1.4] (h2)",
+      "cell 2 margin <12px (15/90/0/0)",
+      "cell 3 margin <12px (0/90/81/0)",
+      "cell 4 margin <12px (76/0/0/26)",
+      "cell 5 margin <12px (0/0/21/26)",
+      "cell 6 margin <12px (15/0/0/26)",
+      "cell 7 margin <12px (0/0/81/26)",
+      "cell 8 margin <12px (76/32/0/55)",
+      "cell 9 margin <12px (0/32/21/56)",
+      "cell 10 AR=1.43 outside [0.7,1.4] (h10)",
+      "cell 10 margin <12px (15/32/0/56)",
+      "cell 11 margin <12px (0/32/81/56)",
+      "cell 12 margin <12px (76/2/0/85)",
+      "cell 13 margin <12px (0/2/21/85)",
+      "cell 14 AR=1.43 outside [0.7,1.4] (h14)",
+      "cell 14 margin <12px (15/2/0/85)",
+      "cell 15 margin <12px (0/2/81/85)",
+      "gutter after col 0 ink 24.9%",
+      "gutter after col 2 ink 16.5%",
+      "gutter after row 2 ink 12.8%"
+    ],
+    "boxes": [
+      [
+        76,
+        90,
+        180,
+        166
+      ],
+      [
+        256,
+        90,
+        235,
+        166
+      ],
+      [
+        527,
+        90,
+        241,
+        166
+      ],
+      [
+        768,
+        90,
+        175,
+        166
+      ],
+      [
+        76,
+        256,
+        180,
+        230
+      ],
+      [
+        256,
+        256,
+        235,
+        230
+      ],
+      [
+        527,
+        256,
+        241,
+        230
+      ],
+      [
+        768,
+        256,
+        175,
+        230
+      ],
+      [
+        76,
+        544,
+        180,
+        169
+      ],
+      [
+        256,
+        544,
+        235,
+        168
+      ],
+      [
+        527,
+        544,
+        241,
+        168
+      ],
+      [
+        768,
+        544,
+        175,
+        168
+      ],
+      [
+        76,
+        770,
+        180,
+        169
+      ],
+      [
+        256,
+        770,
+        235,
+        169
+      ],
+      [
+        527,
+        770,
+        241,
+        169
+      ],
+      [
+        768,
+        770,
+        175,
+        169
+      ]
+    ],
+    "xors": [
+      74.7,
+      73.3,
+      52.4,
+      77.4,
+      54.8,
+      53.7,
+      38.2,
+      77.1,
+      73.9,
+      73,
+      51.7,
+      65.4,
+      74.7,
+      73,
+      52.1
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521088000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (48/38/0/10)",
+        "cell 1 margin <12px (0/38/0/10)",
+        "cell 2 margin <12px (0/38/0/10)",
+        "cell 3 margin <12px (0/38/0/10)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521089000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (80/31/0/9)",
+        "cell 1 margin <12px (0/31/0/9)",
+        "cell 2 margin <12px (0/31/0/9)",
+        "cell 3 margin <12px (0/31/0/9)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521090000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (71/38/0/20)",
+        "cell 1 AR=1.44 outside [0.72,1.4] (h1)",
+        "cell 1 margin <12px (0/39/0/20)",
+        "cell 2 AR=1.43 outside [0.72,1.4] (h2)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521091000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (61/56/0/24)",
+        "cell 1 AR=1.93 outside [0.92,1.52] (h1)",
+        "cell 1 margin <12px (0/68/14/32)",
+        "cell 2 AR=1.98 outside [0.78,1.26] (h2)"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521092000,
+      "ok": false,
+      "fails": [
+        "cell 1 margin <12px (44/48/7/17)",
+        "cell 2 margin <12px (43/48/3/17)",
+        "cell 6 margin <12px (36/49/1/15)"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521093000,
+      "ok": false,
+      "fails": [
+        "cell 2 margin <12px (14/24/19/11)",
+        "cell 3 margin <12px (11/24/21/11)",
+        "cell 7 margin <12px (11/23/34/49)",
+        "cell 9 margin <12px (24/11/21/58)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521094000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (53/63/6/0)",
+        "cell 1 margin <12px (38/63/22/0)",
+        "cell 2 margin <12px (3/63/32/0)",
+        "cell 3 margin <12px (6/63/54/0)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521095000,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (76/90/0/0)",
+        "cell 1 AR=1.42 outside [0.7,1.4] (h1)",
+        "cell 1 margin <12px (0/90/21/0)",
+        "cell 2 AR=1.45 outside [0.7,1.4] (h2)"
+      ]
+    }
+  ]
+}

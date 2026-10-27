@@ -1,0 +1,849 @@
+{
+  "generatedAt": "2026-10-27T02:56:32.388Z",
+  "lane": "w15-GEN8",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "rows": [
+    {
+      "id": "t-turret16",
+      "report": "w15-GEN8",
+      "target": "bosses/turret (16f 24×24 served; @flash auto-derived +16f)",
+      "grid": "256x256 cells, 4x4, canvas 1024x1024, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "t-turret16",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (76/90/0/0)",
+          "cell 1 AR=1.42 outside [0.7,1.4] (h1)",
+          "cell 1 margin <12px (0/90/21/0)",
+          "cell 2 AR=1.45 outside [0.7,1.4] (h2)",
+          "cell 2 margin <12px (15/90/0/0)",
+          "cell 3 margin <12px (0/90/81/0)",
+          "cell 4 margin <12px (76/0/0/26)",
+          "cell 5 margin <12px (0/0/21/26)",
+          "cell 6 margin <12px (15/0/0/26)",
+          "cell 7 margin <12px (0/0/81/26)",
+          "cell 8 margin <12px (76/32/0/55)",
+          "cell 9 margin <12px (0/32/21/56)",
+          "cell 10 AR=1.43 outside [0.7,1.4] (h10)",
+          "cell 10 margin <12px (15/32/0/56)",
+          "cell 11 margin <12px (0/32/81/56)",
+          "cell 12 margin <12px (76/2/0/85)",
+          "cell 13 margin <12px (0/2/21/85)",
+          "cell 14 AR=1.43 outside [0.7,1.4] (h14)",
+          "cell 14 margin <12px (15/2/0/85)",
+          "cell 15 margin <12px (0/2/81/85)",
+          "gutter after col 0 ink 24.9%",
+          "gutter after col 2 ink 16.5%",
+          "gutter after row 2 ink 12.8%"
+        ],
+        "boxes": [
+          [
+            76,
+            90,
+            180,
+            166
+          ],
+          [
+            256,
+            90,
+            235,
+            166
+          ],
+          [
+            527,
+            90,
+            241,
+            166
+          ],
+          [
+            768,
+            90,
+            175,
+            166
+          ],
+          [
+            76,
+            256,
+            180,
+            230
+          ],
+          [
+            256,
+            256,
+            235,
+            230
+          ],
+          [
+            527,
+            256,
+            241,
+            230
+          ],
+          [
+            768,
+            256,
+            175,
+            230
+          ],
+          [
+            76,
+            544,
+            180,
+            169
+          ],
+          [
+            256,
+            544,
+            235,
+            168
+          ],
+          [
+            527,
+            544,
+            241,
+            168
+          ],
+          [
+            768,
+            544,
+            175,
+            168
+          ],
+          [
+            76,
+            770,
+            180,
+            169
+          ],
+          [
+            256,
+            770,
+            235,
+            169
+          ],
+          [
+            527,
+            770,
+            241,
+            169
+          ],
+          [
+            768,
+            770,
+            175,
+            169
+          ]
+        ],
+        "xors": [
+          74.7,
+          73.3,
+          52.4,
+          77.4,
+          54.8,
+          53.7,
+          38.2,
+          77.1,
+          73.9,
+          73,
+          51.7,
+          65.4,
+          74.7,
+          73,
+          52.1
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521088000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (48/38/0/10)",
+            "cell 1 margin <12px (0/38/0/10)",
+            "cell 2 margin <12px (0/38/0/10)",
+            "cell 3 margin <12px (0/38/0/10)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521089000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (80/31/0/9)",
+            "cell 1 margin <12px (0/31/0/9)",
+            "cell 2 margin <12px (0/31/0/9)",
+            "cell 3 margin <12px (0/31/0/9)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521090000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (71/38/0/20)",
+            "cell 1 AR=1.44 outside [0.72,1.4] (h1)",
+            "cell 1 margin <12px (0/39/0/20)",
+            "cell 2 AR=1.43 outside [0.72,1.4] (h2)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521091000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (61/56/0/24)",
+            "cell 1 AR=1.93 outside [0.92,1.52] (h1)",
+            "cell 1 margin <12px (0/68/14/32)",
+            "cell 2 AR=1.98 outside [0.78,1.26] (h2)"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521092000,
+          "ok": false,
+          "fails": [
+            "cell 1 margin <12px (44/48/7/17)",
+            "cell 2 margin <12px (43/48/3/17)",
+            "cell 6 margin <12px (36/49/1/15)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521093000,
+          "ok": false,
+          "fails": [
+            "cell 2 margin <12px (14/24/19/11)",
+            "cell 3 margin <12px (11/24/21/11)",
+            "cell 7 margin <12px (11/23/34/49)",
+            "cell 9 margin <12px (24/11/21/58)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521094000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (53/63/6/0)",
+            "cell 1 margin <12px (38/63/22/0)",
+            "cell 2 margin <12px (3/63/32/0)",
+            "cell 3 margin <12px (6/63/54/0)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521095000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (76/90/0/0)",
+            "cell 1 AR=1.42 outside [0.7,1.4] (h1)",
+            "cell 1 margin <12px (0/90/21/0)",
+            "cell 2 AR=1.45 outside [0.7,1.4] (h2)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t-ark16",
+      "report": "w15-GEN8",
+      "target": "bosses/ark-turret (16f 24×24 served; @flash auto-derived +16f)",
+      "grid": "256x256 cells, 4x4, canvas 1024x1024, chroma key #51e018",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "t-ark16",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (18/55/11/20)",
+          "cell 1 margin <12px (7/55/21/21)",
+          "cell 2 AR=1.42 outside [0.7,1.4] (h2)",
+          "cell 2 margin <12px (1/56/0/21)",
+          "cell 3 margin <12px (0/56/36/20)",
+          "cell 4 margin <12px (18/47/11/28)",
+          "cell 5 margin <12px (8/47/21/28)",
+          "cell 6 AR=1.41 outside [0.7,1.4] (h6)",
+          "cell 6 margin <12px (0/47/0/28)",
+          "cell 7 margin <12px (0/47/36/28)",
+          "cell 8 margin <12px (18/34/11/40)",
+          "cell 9 margin <12px (8/34/21/40)",
+          "cell 10 AR=1.41 outside [0.7,1.4] (h10)",
+          "cell 10 margin <12px (0/34/0/40)",
+          "cell 11 margin <12px (0/34/36/40)",
+          "cell 12 margin <12px (18/29/11/46)",
+          "cell 13 margin <12px (8/29/21/46)",
+          "cell 14 AR=1.41 outside [0.7,1.4] (h14)",
+          "cell 14 margin <12px (1/29/0/46)",
+          "cell 15 margin <12px (0/29/36/46)",
+          "gutter after col 2 ink 8.0%"
+        ],
+        "boxes": [
+          [
+            18,
+            55,
+            227,
+            181
+          ],
+          [
+            263,
+            55,
+            228,
+            180
+          ],
+          [
+            513,
+            56,
+            255,
+            179
+          ],
+          [
+            768,
+            56,
+            220,
+            180
+          ],
+          [
+            18,
+            303,
+            227,
+            181
+          ],
+          [
+            264,
+            303,
+            227,
+            181
+          ],
+          [
+            512,
+            303,
+            256,
+            181
+          ],
+          [
+            768,
+            303,
+            220,
+            181
+          ],
+          [
+            18,
+            546,
+            227,
+            182
+          ],
+          [
+            264,
+            546,
+            227,
+            182
+          ],
+          [
+            512,
+            546,
+            256,
+            182
+          ],
+          [
+            768,
+            546,
+            220,
+            182
+          ],
+          [
+            18,
+            797,
+            227,
+            181
+          ],
+          [
+            264,
+            797,
+            227,
+            181
+          ],
+          [
+            513,
+            797,
+            255,
+            181
+          ],
+          [
+            768,
+            797,
+            220,
+            181
+          ]
+        ],
+        "xors": [
+          32.3,
+          31,
+          46.7,
+          51.5,
+          30.1,
+          27.1,
+          46.4,
+          51.6,
+          30,
+          27.5,
+          46,
+          52.5,
+          29.6,
+          26.9,
+          45.6
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521089013,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (68/27/0/16)",
+            "cell 1 margin <12px (0/27/0/16)",
+            "cell 2 margin <12px (0/27/0/16)",
+            "cell 3 margin <12px (0/27/24/15)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521090013,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.61 outside [0.72,1.4] (h0)",
+            "cell 0 margin <12px (108/44/0/11)",
+            "cell 1 AR=1.40 outside [0.72,1.4] (h1)",
+            "cell 1 margin <12px (0/44/0/11)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521091013,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (42/42/4/27)",
+            "cell 1 margin <12px (42/42/11/27)",
+            "cell 5 margin <12px (8/41/47/27)",
+            "cell 6 AR=1.55 outside [0.72,1.4] (h6)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521092013,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.84 outside [0.92,1.52] (h0)",
+            "cell 0 margin <12px (80/38/0/21)",
+            "cell 1 margin <12px (0/38/0/21)",
+            "cell 2 AR=1.44 outside [0.78,1.26] (h2)"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521093013,
+          "ok": false,
+          "fails": [
+            "cell 1 margin <12px (32/42/16/0)",
+            "cell 2 margin <12px (30/42/18/0)",
+            "cell 3 AR=1.06 outside [0.62,1.06] (h3)",
+            "cell 4 AR=1.06 outside [0.62,1.06] (h4)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521094013,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (42/68/11/21)",
+            "cell 2 AR=1.51 outside [0.7,1.4] (h2)",
+            "cell 2 margin <12px (5/69/0/21)",
+            "cell 3 margin <12px (0/68/65/21)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521095013,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (0/0/0/0)",
+            "cell 1 margin <12px (0/0/0/0)",
+            "cell 2 margin <12px (0/0/0/0)",
+            "cell 3 margin <12px (0/0/0/0)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521096013,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (18/55/11/20)",
+            "cell 1 margin <12px (7/55/21/21)",
+            "cell 2 AR=1.42 outside [0.7,1.4] (h2)",
+            "cell 2 margin <12px (1/56/0/21)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e-darter",
+      "report": "w15-GEN8",
+      "target": "enemies/darter (2f 21×12 served; @flash auto-derived +2f)",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "e-darter/gen.png",
+      "exit": "PROBE-OK@4",
+      "mode": "key",
+      "probe": {
+        "id": "e-darter",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            69,
+            90,
+            169,
+            90
+          ],
+          [
+            319,
+            90,
+            198,
+            91
+          ]
+        ],
+        "xors": [
+          41.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521090026,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=3.37 outside [1.35,2.3] (f1)",
+            "cell 1 margin <12px (18/94/7/84)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521091026,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=2.32 outside [1.35,2.3] (f1)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521092026,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=2.35 outside [1.35,2.3] (f1)",
+            "cell 1 margin <12px (16/71/2/70)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521093026,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-hopper",
+      "report": "w15-GEN8",
+      "target": "enemies/hopper (2f 18×18 served; @flash auto-derived +2f)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-hopper/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-hopper",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            80,
+            77,
+            127,
+            133
+          ],
+          [
+            317,
+            76,
+            132,
+            112
+          ]
+        ],
+        "xors": [
+          53.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521091039,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-hull",
+      "report": "w15-GEN8",
+      "target": "bosses/bulwark-hull (1f 72×48 served; @flash auto-derived +1f)",
+      "grid": "512x384 cell, 1x1, canvas 512x384, chroma key #51e018",
+      "file": "b-hull/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-hull",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            72,
+            79,
+            368,
+            225
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521092052,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-emitter",
+      "report": "w15-GEN8",
+      "target": "bosses/bulwark-emitter (2f 27×15 served; @flash auto-derived +2f)",
+      "grid": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+      "file": "b-emitter/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "b-emitter",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            39,
+            66,
+            214,
+            129
+          ],
+          [
+            315,
+            54,
+            223,
+            152
+          ]
+        ],
+        "xors": [
+          80
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521093065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.39 outside [1.4,2.3] (idle)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521094065,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-plate",
+      "report": "w15-GEN8",
+      "target": "bosses/bulwark-plate (1f 9×27 served; @flash auto-derived +1f)",
+      "grid": "256x512 cell, 1x1, canvas 256x512, chroma key #51e018",
+      "file": "b-plate/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "b-plate",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            64,
+            26,
+            131,
+            460
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521094078,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.21 outside [0.26,0.45] (plate)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521095078,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-wing-t",
+      "report": "w15-GEN8",
+      "target": "bosses/bulwark-wing-top (1f 84×21 served; @flash +1f)",
+      "grid": "512x256 cell, 1x1, canvas 512x256, chroma key #51e018",
+      "file": "b-wing-t/gen.png",
+      "exit": "PROBE-OK@7",
+      "mode": "key",
+      "probe": {
+        "id": "b-wing-t",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            61,
+            70,
+            390,
+            110
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521095091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=5.52 outside [2.9,5.4] (wing-top)",
+            "cell 1 AR=5.48 outside [2.9,5.4] (wing-bottom)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521096091,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <10px (122/31/0/23)",
+            "cell 1 margin <10px (0/18/127/17)",
+            "gutter after col 0 ink 58.2%"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521097091,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=5.55 outside [2.9,5.4] (wing-bottom)",
+            "cell 1 margin <10px (15/37/31/7)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521098091,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <10px (12/23/0/3)",
+            "cell 1 AR=5.58 outside [2.9,5.4] (wing-bottom)",
+            "cell 1 margin <10px (0/30/10/8)",
+            "gutter after col 0 ink 64.1%"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521099091,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <10px (86/28/0/10)",
+            "cell 1 AR=5.60 outside [2.9,5.4] (wing-bottom)",
+            "cell 1 margin <10px (0/33/109/23)",
+            "gutter after col 0 ink 55.9%"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521100091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.18 outside [2.9,5.4] (wing-top)",
+            "cell 0 margin <12px (23/33/0/26)",
+            "cell 1 AR=1.10 outside [2.9,5.4] (wing-bottom)",
+            "cell 1 margin <12px (0/30/36/26)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521101091,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "b-wing-b",
+      "report": "w15-GEN8",
+      "target": "bosses/bulwark-wing-bottom (1f 84×21 served; @flash +1f)",
+      "grid": "512x256 cell, 1x1, canvas 512x256, chroma key #51e018",
+      "file": "b-wing-b/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "b-wing-b",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            75,
+            96,
+            361,
+            70
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521096104,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    }
+  ]
+}

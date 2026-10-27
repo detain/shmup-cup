@@ -1,0 +1,65 @@
+{
+  "id": "gen8/b-hull",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the single frame of the HALCYON BULWARK boss main hull — the huge armoured slab that carries its core and shield plates.\n\nDesign identity to keep exactly — a massive rectangular armour slab, wider than tall (about 3:2), with chamfered corners: mid steel-blue armour field (#2e5082) built from bold vertical panel seams and recessed channels in deep blue (#1e3458), a lit pale-blue top edge ramp (#4a78b0 into #8ab8e8) as if lit from upper left, scattered cyan sensor lights (#38d8f8) set into the panels, and a cluster of small amber warning lights (#e8c048) in its lower-right field, all wrapped in a 1-px near-black outline (#0a1428). Chunky, industrial, unbreakable — heavy bolted plate armour with visible rivet rows.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell laid out as 1 ROW OF 1 (one single cell = the whole canvas) holding exactly ONE hull; the canvas IS one cell.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the full hull seen head-on: its broad face fills the cell. The subject lies within aspect 1.20:1 to 1.90:1.\n- The sheet canvas measures EXACTLY 512×384 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: the hull sits at the exact centre of the canvas, sized to fill most of it while keeping at least 12 px of flat key to every edge.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521092052,
+  "width": 512,
+  "height": 384,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T02:43:52.815Z",
+  "seconds": 8.3,
+  "label": "b-hull",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen8/b-hull/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x384",
+  "meta": {
+    "job": "w15-GEN8",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN8",
+  "round": "bosses-1",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Zone A boss kit (HALCYON BULWARK, the most-seen boss): bosses/bulwark-hull (1f 72×48 served; main hull behind the core, armour)",
+  "gridContract": "512x384 cell, 1x1, canvas 512x384, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "bosses/bulwark-hull (1f 72×48 served; @flash auto-derived +1f)",
+  "probe": {
+    "id": "b-hull",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        72,
+        79,
+        368,
+        225
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521092052,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

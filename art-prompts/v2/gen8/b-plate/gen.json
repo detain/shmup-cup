@@ -1,0 +1,73 @@
+{
+  "id": "gen8/b-plate",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the single frame of a HALCYON BULWARK shield plate — one of the tall armour slabs stacked vertically in front of the boss core.\n\nDesign identity to keep exactly — a TALL, NARROW vertical armour bar about one-third as wide as it is high: pale steel face (#7a9cc8) with a bright white highlight edge (#d0e4ff) running down its left side, a darker slate shadow channel (#3e5a86) down its right third, small bolted seams, chamfered caps on top and bottom, all on a 1-px near-black outline (#0a1428). A solid, heavy, full-height shield lamella that is WIDE, not a blade: its width is a generous 35 to 45 percent of its height (about 2 bars could almost sit side by side in the cell) — NEVER a thin spear, sword, wire or needle silhouette.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell laid out as 1 ROW OF 1 (one single cell = the whole canvas) holding exactly ONE plate; the canvas IS one cell.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the plate standing upright, full height — a wide, solid vertical bar. The subject lies within aspect 0.26:1 to 0.45:1.\n- The sheet canvas measures EXACTLY 256×512 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: the plate stands upright at the exact centre of the canvas, nearly full cell height, keeping at least 12 px of flat key to every edge.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521095078,
+  "width": 256,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T02:45:38.738Z",
+  "seconds": 7,
+  "label": "b-plate",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen8/b-plate/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "256x512",
+  "meta": {
+    "job": "w15-GEN8",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN8",
+  "round": "bosses-1",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Zone A boss kit: bosses/bulwark-plate (1f 9×27 served; one of the four shield plates stacked in front of the core)",
+  "gridContract": "256x512 cell, 1x1, canvas 256x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "bosses/bulwark-plate (1f 9×27 served; @flash auto-derived +1f)",
+  "probe": {
+    "id": "b-plate",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        64,
+        26,
+        131,
+        460
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521094078,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=0.21 outside [0.26,0.45] (plate)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521095078,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

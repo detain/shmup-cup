@@ -1,0 +1,81 @@
+{
+  "id": "gen8/b-emitter",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two frames of the HALCYON BULWARK lane laser emitter — a squat armoured cannon block pointing LEFT that charges and fires lane lasers.\n\nDesign identity to keep exactly — a clearly WIDER-THAN-TALL horizontal armoured cannon block, its body a broad slab about 1.8 times as wide as tall (never a square), with a flat muzzle face on its LEFT end: steel-blue armour body (#2e5082) with a lit top ramp (#4a78b0/#8ab8e8), dark under-plate (#1e3458), bold outline (#0a1428), and its muzzle dominated by a vertical cyan charge aperture (#38d8f8) set in the left face with a matching cyan power strip running down its body.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE emitter; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the emitter IDLE: the cyan aperture dim and flat, just an open muzzle slit. The subject lies within aspect 1.40:1 to 2.30:1.\n  cell 2 = the SAME emitter CHARGED: the aperture and strip flaring hot white-cyan (#e8ffff cores with #38d8f8 halos) — ready to fire, armour unchanged. The subject lies within aspect 1.40:1 to 2.30:1.\n- The sheet canvas measures EXACTLY 576×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521094065,
+  "width": 576,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T02:45:31.413Z",
+  "seconds": 7.3,
+  "label": "b-emitter",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen8/b-emitter/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "576x256",
+  "meta": {
+    "job": "w15-GEN8",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN8",
+  "round": "bosses-1",
+  "exit": "PROBE-OK",
+  "ownerAsk": "Zone A boss kit: bosses/bulwark-emitter (2f 27×15 served; lane laser emitter pointing left, frame 1 glows; armour)",
+  "gridContract": "288x256 cells, 2x1, canvas 576x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "bosses/bulwark-emitter (2f 27×15 served; @flash auto-derived +2f)",
+  "probe": {
+    "id": "b-emitter",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        39,
+        66,
+        214,
+        129
+      ],
+      [
+        315,
+        54,
+        223,
+        152
+      ]
+    ],
+    "xors": [
+      80
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521093065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.39 outside [1.4,2.3] (idle)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521094065,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}
