@@ -94,7 +94,11 @@ export const LayerId = {
   PlayerShots: 7,
   /** Player ships, Options and shields. */
   Player: 8,
-  /** Hitbox marker (shown while focusing / in debug). */
+  /**
+   * The ships' hitbox markers — drawn only while the DISPLAY page's HITBOX option is on
+   * (`UserOptions.display.showHitbox`, off by default since M2-08); the dev builds' debug
+   * overlay draws its own outlines on the {@link LayerId.Debug} layer under its own flag.
+   */
   Hitbox: 9,
   /** Capsules and other pickups. */
   Items: 10,
