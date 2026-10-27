@@ -33,6 +33,7 @@ export {
   BOOT_STATE_ATTRIBUTE,
   SCENE_ATTRIBUTE,
   BOOT_MS_ATTRIBUTE,
+  VIDEO_ATTRIBUTE,
   DEFAULT_STAGE_ID,
   SHELL_SCENES,
   ShellBootError,
@@ -114,6 +115,24 @@ export {
   type StagePreparationTarget,
   type VolumeTarget,
 } from './dispatch/index.js';
+export {
+  VIDEO_CLIPS,
+  VIDEO_DEFAULT_ON,
+  VIDEO_SETTING_KEY,
+  VIDEO_URL_DIR,
+  createCutsceneDirector,
+  resolveVideoSetting,
+  videoProbeFromSearch,
+  videoSettingFromWindow,
+  type CutsceneDirector,
+  type CutsceneDirectorOptions,
+  type CutsceneFlow,
+  type CutsceneSurface,
+  type VideoBand,
+  type VideoClip,
+  type VideoSettingHost,
+  type VideoWindowLike,
+} from './cutscene/index.js';
 export {
   BOOT_SCREEN_COLORS,
   createBootOverlay,

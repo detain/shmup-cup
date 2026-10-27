@@ -214,6 +214,7 @@ import {
   type SaveStore,
   type LoadContentResult,
   type DrawList,
+  type InputSnapshot,
   type Platform,
   type PlatformInput,
   type RenderFrame,
@@ -247,6 +248,12 @@ import {
 } from '../dispatch/index.js';
 import type { CaptureKind, InputProfile } from '@shmup/input-web';
 import { createShellControls, type ShellCaptureInput } from '../controls/index.js';
+import {
+  createCutsceneDirector,
+  videoProbeFromSearch,
+  videoSettingFromWindow,
+  type CutsceneDirector,
+} from '../cutscene/index.js';
 import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import {
@@ -288,6 +295,13 @@ import {
   type ResidencyWorldLike,
 } from '../memory/index.js';
 
+/**
+ * The `SHMUP_NO_VIDEO=1` baked kill switch (v2 R7-VID): defined by `shmupBuildInfo()` in every
+ * app bundle. Declared locally (not in `types/build-info.d.ts`, which only the apps include) so
+ * the `typeof` guard at the renderer also compiles in Node, where the global simply is absent.
+ */
+declare const __SHMUP_NO_VIDEO__: boolean;
+
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'boot',
@@ -313,6 +327,13 @@ export const BOOT_STATE_ATTRIBUTE = 'data-shmup-state';
  * remote inspector.
  */
 export const SCENE_ATTRIBUTE = 'data-shmup-scene';
+
+/**
+ * Attribute on the game canvas naming the cutscene clip the director shows right now
+ * (v2 R7-VID — the `cutscene` module's `onClipChange` mirror), or `'none'` when nothing plays.
+ * Written only when the clip changes — a cold path. For the browser spec's state probe.
+ */
+export const VIDEO_ATTRIBUTE = 'data-shmup-video';
 
 /**
  * Attribute on the game canvas holding the launch-to-ready time in whole milliseconds
@@ -845,6 +866,13 @@ export interface ShellOptions {
   /** Scene to show (default `'game'` — the scene flow). */
   readonly scene?: ShellScene;
   /**
+   * v2 R7-VID: explicit decision for the cutscene video feature — wins over every other switch.
+   * Unset: `SHMUP_NO_VIDEO`, the `?novid=1` / `?video=<id>` search, the stored `'on'/'off'`
+   * choice and the shipped default resolve it (see `cutscene` `resolveVideoSetting`). Off costs
+   * nothing: no surface, no poll wrapper, no director.
+   */
+  readonly video?: boolean;
+  /**
    * When to unlock audio: `'gesture'` (default — first key or pointer press, the browser
    * autoplay policy) or `'immediate'` (TV: no gesture needed).
    */
@@ -965,6 +993,11 @@ export interface Shell {
   readonly showcase: Showcase | null;
   /** The fx gallery when `scene === 'fx-gallery'`, else `null`. */
   readonly fxGallery: FxGallery | null;
+  /**
+   * v2 R7-VID: the cutscene director when the scene flow runs, else `null` (dev scenes).
+   * `clip` reports what shows; `playClip` forces one (the debug probe).
+   */
+  readonly cutscene: CutsceneDirector | null;
   /** The particle presets and triggers of `content/fx/` handed to the renderer. */
   readonly fx: FxContent;
   /**
@@ -1526,6 +1559,14 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     // The probe is `auto`'s safety net — asked for only when `auto` is the answer's decider.
     hasWebGL2: glPin === null && bootDisplay.renderer === 'auto' ? probeWebGL2(win) : false,
   });
+  // v2 R7-VID: the video kill switch resolves before the renderer exists — off costs nothing
+  // (no surface, no texture, no poll wrapper); `?video=<id>` forces a clip for the browser spec.
+  // A build made with `SHMUP_NO_VIDEO=1` bakes the switch in (the define folds to `true`; in a
+  // bundle built without the plugin — and in Node tests — the global simply does not exist).
+  const videoBakedOff = typeof __SHMUP_NO_VIDEO__ === 'boolean' && __SHMUP_NO_VIDEO__;
+  const videoSearch = win.location?.search ?? '';
+  const videoOn = videoSettingFromWindow(win, videoBakedOff ? false : options.video);
+  const videoProbe = videoProbeFromSearch(videoSearch);
   try {
     renderer = await createPixiRenderer({
       canvas,
@@ -1543,6 +1584,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       // The debug overlay's draw-call and structure-rebuild figures (dev / test builds only).
       countDrawCalls: options.debugTools !== undefined && options.debugTools !== null,
       countStructureRebuilds: options.debugTools !== undefined && options.debugTools !== null,
+      ...(videoOn ? { video: {} } : {}),
     });
   } catch (error) {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);
@@ -1552,6 +1594,19 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     platform = options.platform(renderer);
   } catch (error) {
     throw fail('SHMUP CUP FAILED TO START', [describe(error)], [], error);
+  }
+  // v2 R7-VID (cutscene skip): one pressed-action latch under the video switch — the adapter's
+  // poll wrapped once at boot (cold), OR-ing both players' pressed edges into a number the
+  // director reads and clears every drawn frame. The snapshot object itself passes through
+  // untouched; nothing else sees the wrapper. With video off the adapter is not wrapped at all.
+  let pressedLatch = 0;
+  if (videoOn) {
+    const innerPoll = platform.input.poll.bind(platform.input);
+    platform.input.poll = (): InputSnapshot => {
+      const snapshot = innerPoll();
+      pressedLatch |= snapshot.players[0].pressed | snapshot.players[1].pressed;
+      return snapshot;
+    };
   }
   // The save (plan M1-17): read before the title; a bad one falls back to defaults (never fails).
   const loadedSave = await loadSave(platform.storage);
@@ -1958,6 +2013,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   readyRenderer.warmUp();
   const calibration = createCalibrationFrame(game.renderFrame());
   const events = createEventDispatcher();
+  /** The cutscene director of the scene-flow boot, `null` for the dev scenes (v2 R7-VID). */
+  let cutscene: CutsceneDirector | null = null;
   // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
   // audio engine (M1-15) — in the scene flow and free flight: the other scenes do not show the
   // World.
@@ -1999,6 +2056,27 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         ? null
         : () => profiles.customize?.(save.options.input),
     );
+    // v2 R7-VID: the cutscene director — presentation only. It watches the drained events and
+    // the flow state, shows a clip inside a fixed window, skips on any pressed action and
+    // forgets any failure; the simulation never waits on media and never reads anything here.
+    const scenes = game.scenes;
+    if (scenes !== null) {
+      cutscene = createCutsceneDirector({
+        flow: scenes,
+        enabled: videoOn,
+        surface: readyRenderer.video,
+        anyPressed: () => {
+          const pressed = pressedLatch !== 0;
+          pressedLatch = 0;
+          return pressed;
+        },
+        probeClip: videoProbe,
+        onClipChange: (clip) => {
+          markCanvas(canvas, VIDEO_ATTRIBUTE, clip ?? 'none');
+        },
+      });
+      cutscene.connect(events);
+    }
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, game.world.view.camera);
@@ -2166,6 +2244,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       }
       markScene();
       worldShown = frame.world !== null;
+      // v2 R7-VID: clip windows and the skip, on presentation time, after the events drained.
+      if (cutscene !== null) cutscene.update(frame.tick);
     } else {
       shown = sceneView !== null ? sceneView.update(frame) : calibration.update(frame);
       worldShown = flight !== null;
@@ -2213,6 +2293,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     flight,
     showcase,
     fxGallery,
+    cutscene,
     fx,
     audioEngine: engine,
     loadedSave,
@@ -2238,6 +2319,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         canvas.removeEventListener('webglcontextrestored', onContextRestored);
       }
       input.destroy();
+      cutscene?.destroy();
       readyRenderer.destroy();
       readyAtlas.destroy();
       engine.destroy();
