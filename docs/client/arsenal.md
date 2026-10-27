@@ -38,7 +38,15 @@ about getting stronger.
 | ![](../images/items/capsule-blue.png) | **BLUE CAPSULE**<br>300 pts | Rare. Destroys every enemy on screen the moment you pick it up — and frees any Options an Option Hunter is carrying. |
 | ![](../images/items/1up.png) | **1UP** | A spare ship, up to nine. Found in the hidden bonus stages. |
 | ![](../images/items/capsule-bonus.png) | **BONUS CAPSULE**<br>1,000 pts | Points, nothing else. The bonus stages are full of them. |
+| ![](../images/items/crate-weapon.png) | **WEAPON CRATE**<br>300 pts | The red crate. Moves the meter's highlight to the **next weapon slot** — MISSILE → DOUBLE → LASER → OPTION, wrapping — instead of a single step. From a bare meter it lights MISSILE. On the MANTA it reads as a RED item. |
+| ![](../images/items/crate-mega.png) | **MEGA CRATE**<br>300 pts | The yellow crate. Parks the highlight straight on the **!** slot, armed and ready — it never fires it for you. On the MANTA it reads as a YELLOW item. |
+| ![](../images/items/crate-speed.png) | **SPEED CRATE**<br>300 pts | The blue crate: parks the highlight on SPEED. On the MANTA there is nothing to park — it is worth points and the pickup sound, nothing else. |
 | ![](../images/items/point.png) | **POINT ITEM**<br>10 pts each | What a cancelled bullet becomes when a boss dies, a Mega Crash goes off or a black hole swallows it. They fly to whoever earned them. |
+
+The plain POWER CAPSULE wears its next stop: its icon is **green** when the meter's highlight
+would come to rest on SPEED, **red** for a weapon slot, **blue** for OPTION and **gold** for the
+`?` / `!` power stops. Purely how it looks — touching any capsule always just advances the
+highlight one step.
 
 ## The seven slots
 
@@ -62,7 +70,7 @@ never needs a press. It is off by default.
 
 ---
 
-## The four weapon types
+## The six weapon types
 
 Every type keeps the same main **SHOT**; the MISSILE, DOUBLE and LASER slots are what change. Pick
 a type on the weapon select, or choose **EDIT** and build your own out of any weapon in any slot.
@@ -100,6 +108,22 @@ a type on the weapon select, or choose **EDIT** and build your own out of any we
 | ![](../images/shots/free.png) | **FREE WAY** | A forward shot plus one in the last direction you were *holding*. Let go of the stick and it keeps that angle: you aim by flying. |
 | ![](../images/shots/twin.png) | **TWIN LASER** | Two short beams 12 px apart that follow your row. Four beams on screen — two pairs — and every Option fires its own. |
 
+### Type E — the shotgun and the lance
+
+| | | |
+|---|---|---|
+| ![](../images/shots/flak.png) | **FLAK CONE** | The DOUBLE slot: eight short-lived pellets in a wide cone at once. Nothing survives close range — and nothing reaches far either. |
+| ![](../images/shots/rail.png) | **RAIL LANCE** | The LASER slot: a stiff piercing bolt. Its first touch ignores armour, and it flies on through everything it kills; only rock stops it dead. |
+| ![](../images/shots/drone.png) | **SEEKER DRONE** | The MISSILE slot: two darts that leave straight ahead and turn towards the nearest thing they can damage. They steer by turning, never by snapping. |
+
+### Type F — the web and the marker
+
+| | | |
+|---|---|---|
+| ![](../images/shots/flak.png) | **FLAK CONE** | The same eight-pellet cone as Type E's — this type carries it too. |
+| ![](../images/shots/chain.png) | **CHAIN ARC** | The LASER slot: a bolt that spends itself on its hit — and when that hit destroys a regular enemy, it forks arcs at the two nearest others. The chain walks through a crowd. Boss parts do not pass it on. |
+| ![](../images/shots/beacon.png) | **SKY MARKER** | The MISSILE slot: a pair of markers lobbed forward and up. Each sticks to the first surface it lands on, waits, and erupts into a full-height vertical beam — through armour, through everything. |
+
 ### EXTRA EDIT
 
 Seven more weapons unlocked by a secret code on the title screen
@@ -125,6 +149,9 @@ How they fly is a choice on the weapon select:
 | **SNAKE** | A pulled chain: each link hangs 24 px from the one ahead and only ever moves when it is pulled. Stop, and the shape you made stays exactly where it is. |
 | **FORMATION** | Fixed offsets: a tight `>` behind you, opening into a wide `V` when you spread them. |
 | **ROTATE** | A ring orbiting your ship, one turn every 1.4 seconds, widening from 30 px to 60 px when you extend them. |
+| **GUARD** | Two pods parked fixed behind the ship, in the `>` formation — nothing steers them out. Besides copying your fire they run a steady **rear volley** straight back, every other main shot. Type B's answer to rear attackers, made permanent. |
+| **ECHO** | Wingmen flying a half-step-lagged **mirror image** of the line you flew — your hedges become a flock. Where the rock would swallow one, it folds into the ship until it can fly again. |
+| **AEGIS** | Dishes on a close fixed orbit that **swallow enemy bullets**: anything crossing near a dish in front of the ship becomes a point item. Lasers are beams, not bullets — they are not swallowed. |
 
 **Spread and retract** (FORMATION and ROTATE): tap **Special** — Channel-up on the remote, **V**
 on a keyboard, **Y** on a pad — to toggle, or simply *hold* the power-up button for a quarter of a

@@ -247,15 +247,22 @@ column per depth between `MAP_LEFT` = `uiPx(40)` and `FRAME_W − uiPx(40)` (x 6
 today's 640×360, 40 and 344 at v1), the zones of a depth spread between `MAP_TOP` = `uiPx(40)`
 and `MAP_BOTTOM` (10 px, `uiPx(10)`, above the preview panel — y 60 and 240 today, 40 and 136
 at v1) in file order (`nodeX` / `nodeY`, `Int16Array`s), a `uiPx(18) × uiPx(12)` node box (27×18
-today) per zone with its label, the edges as dotted lines (`edgeDots` dots each), and a preview
-panel `uiPx(24)` from the sides and `uiPx(10)` off the bottom edge (36, 255, 568 × 90 today;
+today) per zone with its label — and, since w15-PLANETS, a procedurally generated planet behind
+that label for every zone whose `id` is a campaign letter `a`–`i` (`nodePlanet`, an `Int16Array`
+slot per node into `core/ui` `MAP_PLANET_SPRITES`, `-1` where the id is not a lone letter; the
+art is v2-only, decision RR-1a, so at the interim scale the ids resolve to `-1` and every node
+still draws the plain panel), the edges as dotted lines (`edgeDots` dots each, from a budget the
+planets trimmed 160 → 151 to reserve one UI command each — even the largest map the content
+validation accepts still fits the list exactly: 151 + 32 · 6 nodes + 9 planets + 12 + 2 + 18
+dialog = the 384 `UI_COMMANDS`), and a preview panel `uiPx(24)` from the sides and `uiPx(10)` off the bottom edge (36, 255, 568 × 90 today;
 v1's 24, 146, 336 × 60) with `ZONE`, the
 label, the name and the preview lines of the focused zone. One `ListMenu` per zone over its exits
 sorted top to bottom (`exits`), so Up / Down move between them with wrap and the UI kit's
 auto-repeat.
 
 - **Look**: the route so far lit (title colour), the zone just cleared yellow, its exits outlined,
-  the focused one blinking (16-tick half period), the edge towards it in the focus colour.
+  the focused one blinking (16-tick half period), the edge towards it in the focus colour; every
+  node draws panel → planet → letter, the w15 planet behind its label.
 - **Input**: Up / Down choose; **OK** pushes `SimEventKind.PrepareStage` for the chosen zone's
   stage (see below) and `LAUNCH` blinks for `MAP_LAUNCH_TICKS` (60); then
   `FlowControl.advanceZone(next)` (the run moves on, `pendingStart`) and `stack.reset(game)` — the

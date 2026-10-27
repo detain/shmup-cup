@@ -16,11 +16,14 @@ four-minute caravan; and the `matchAll` hotfix that keeps both TVs' engines (Chr
 booting after the dependency bumps. The step record is
 [`plan_resolution.md`](plan_resolution.md), its §17 the ledger.
 
-**The art status, honestly:** the game ships v2's own art as the committed pipeline draws it —
-the R4 native redraws and the R5 zones' stand-in kit, every sprite at the new density — **not**
-the AI round's candidates. The real-art drops (`R5-0n.S3`) stay the owner-gated step that awaits
-the FLUX licence decision, with the ingest tool and its provenance records ready for them
-([art-provenance.md](docs/dev/art-provenance.md), [real-assets.md](docs/dev/real-assets.md)).
+**The art, honestly:** the game ships v2's own art as the committed pipeline draws it — the R4
+native redraws and the R5 zones' stand-in kit, every sprite at the new density — **and the
+harvested real art too**, since waves 14–15: FLUX.2-dev sheets re-ingested as PNG overrides with
+`.art.json` provenance, 239 of the atlas's 619 sprites served from them (the closeout below and
+[real-assets.md](docs/dev/real-assets.md)). The licence basis is the owner's ruling of
+**2026-10-23**: the art ships in the free, open-source (MPL-2.0) non-commercial distribution, and
+a BFL commercial licence is in place before any paid distribution
+([art-provenance.md](docs/dev/art-provenance.md)).
 What still waits on an account, a device or a human is collected in
 [`docs/client/outstanding-work.md`](docs/client/outstanding-work.md). v1 is released as **1.0.0**
 (below) and its **`v1.x`** branch takes security and crash fixes only — for one year after this
@@ -892,31 +895,108 @@ heading into the release section above.
 
 ### The real art arrives (the R6-03.S3 era, waves 14–15)
 
-**79 sprite names now ship AI-assisted real art** with `.art.json` provenance records — 130 of the
-atlas's 591 sprites are served from FLUX.2-dev (the 79 records plus the 49 `@flash` and 2 `@p2`
-siblings the packer derives), the rest stays the build's own procedural v2 kit. The program closed
-on 2026-10-26 as it ran: the S3 harvest cut **33 names** from the owner's 299 committed picker
-winners (every zone plus the palette round); the GEN-1/GEN-2 derivative sheets fed re-ingests that
-added **4 names** (the prism tilesheet, the black-hole fx, and the two capsules 8 frames); and the
-owner-waived GEN-4 batch landed **42 never-picked names in one commit** — 16 enemies, 12 boss
-parts (among them the azure captain's shell and the storm-eye's cloud, core and ring), 8 decor,
-4 fx glows and the two shield pods. What stayed procedural is
-measured, not cautious: terrain tilesets past prism (the green-anchor pathology), backdrop wrap and
-flat bands, merged kit rows and wide silhouettes fail the frame probes with per-row numbers in the
-wave-15 reports, and the waiver's ten never-designed rows sit on a final STOP list. Re-posing an
-animation's frame count moves the simulation — the six hull bosses' part kits and the deferred anim
-rows are owner pool decisions, never lane calls. The three stores are committed: `winners/`
-(299 images + 35 owner clips), `gen3/` (62 approved-derivative rows), `gen5/` (68 waived rows);
-`models.json` carries the deterministic re-lay's `code` row. The era's two owner rulings, by date:
-**2026-10-23** — FLUX art ships in the free, open-source (MPL-2.0) non-commercial distribution
-(*"the images are fine to use its currently an opensource game after all not commercial work"*);
-before any paid distribution a BFL commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing))
-must be in place. **2026-10-26** — the picker gate is waived for the never-designed slots
-(*"ai generate those other things too"*), with the frame probes unchanged. Music was never part of
-it: nothing composed has landed. Full closeout:
+**239 of the atlas's 619 sprites (2,200 frames) are served from FLUX.2-dev real art** — 150
+`.art.json` records plus the 75 `@flash`, 5 `@p2` and 9 `@palette` siblings the packer derives;
+the remaining 380 stay the build's own procedural v2 kit. The S3 harvest had cut **33 names**
+from the owner's 299 committed picker winners; the GEN-1/GEN-2 derivative sheets fed re-ingests
+of 4 names; the owner-waived GEN-4 batch landed **42 never-designed names in one commit** ("ai
+generate those other things too"); the follow-up rounds — REING6 → REING123 and PIXMAP1 over the
+committed `gen6/`–`gen13/` stores — carried the tally from 79 records and 130 served sprites to
+the era-final 150 and 239. What the gate proved along the way is as much the result as the art:
+
+- **The interim class closed at zero.** The names still served from an upscaled
+  `*.v2.sprite.json` pixel map stood at **118** after the REING8/9 round; the rounds cut that
+  pool to **1** — at `bd98a196` a disk probe found exactly one of the 24 v2 maps without a PNG
+  override, `shots/missile` — and PIXMAP1 landed it, so the class is **0**: empty on the live
+  tree for the first time (the arc 118 → … → 1 → 0).
+- **Two zero-GPU code-frame wins** closed rows no generation could: `ships/kestrel-thruster`,
+  banked-impossible after three STOP@8 rounds (24 attempts), was recoloured from the proven
+  manta-thruster sheet to the kestrel's design colours by the wave-6 rec-1 law (Rec.601 integer
+  luma, ties to darker), committed as `art-prompts/v2/code-frames/make_kestrel_thruster.mjs`
+  with `--check` byte-exact and origin `code` derived from the sha-pinned sheet; and
+  `shots/missile` — never even a store row — landed the same way from its own committed v2 map
+  rows (`make_missile.mjs`, ×16 nearest onto a keyed sheet), a full redraw at native resolution
+  rather than a stretched v1 sprite, zero new colours, per the quality law below.
+- **A wide-canvas cure law** (REING7): the 36-cell terrain-ridge tileset — every square 6×6
+  attempt failed the frame probes with 100 %-uniform guide-line seams — ingests as one opaque
+  full-bleed contact grid, 9 columns × 4 rows of 192-px cells on a 1728×768 canvas.
+- **The honest gates kept working.** REING6 stopped 3 pool-law rows and 1 count mismatch;
+  REING7 pre-empted a beacon row whose shipped look predated the owner's restored elements
+  (dropping restored art is a downgrade); ENRICH-A's six option-silhouette twins were a bug
+  fix — the runtime pulses frames 0..3 while the 2-frame v1 maps rendered magenta at v2 scale;
+  and the option-hunter override, landed once, was dropped by its own screen census (sparse
+  violet drew 0 pixels where the e2e test looks) and re-landed in REING8/9 at the exact design
+  colour — the census loop closing on itself.
+- **The classes FLUX will not draw are banked, not hidden:** tall-grid first/last rows, the
+  wide subject in a square cell, flat colour bands (the storm-flash: 9 attempts), wrap
+  edge-reach (the storm-gust: 6), and the tileset green-anchor with guide-line ink on every
+  non-prism set — the contact cure does not transfer there. The turrets' heading rings left the
+  pool **by law, not by ingest**: the rings-as-code adjudication keeps those 64 frames
+  procedural and asks no sheet.
+
+Two owner rulings shaped the round's second half, both dated **2026-10-26**. The quality-first
+doctrine (decision R6-D5) retired the era's soft ceiling — *"i want the graphics to look as good
+as they can at the resolution they are at"*, *"if non pixelated means regenerating graphics then
+do it"* — the art bible's §2.2 flipped to it while every grid, anchor and palette contract
+stands. And the art-budget carve-out — *"tell the subagent its ok to go over the budget and to
+readd that stuff it removed"* — let the frame and pool floors rise for **restored** art with a
+measured disclosure at every step: the common-page cap walked 300,000 → 301,000 → 307,000 →
+309,500 → 320,000 → 330,000 → 335,000 → **337,000** with the page's own byte count at each raise
+(the last, 335,815 B, needed no further raise), the upscaled-pool floor 400 → 350 → 340 →
+**320** — and no gameplay cap ever moved. The three earlier stores stand as committed
+(`winners/` 299 + 35 clips, `gen3/` 62 rows, `gen5/` 68 rows) beside `gen6/`–`gen13/`. What
+stayed procedural is measured, not cautious; the per-row numbers ride the wave-15 reports. The
+six hull bosses' part kits and the deferred anim rows stayed owner pool decisions — re-posing an
+animation's frame count moves the simulation, never a lane call. Music was never part of it:
+nothing composed has landed. Full closeout:
 [`docs/dev/real-assets.md`](docs/dev/real-assets.md) and
 [`docs/dev/art-provenance.md`](docs/dev/art-provenance.md).
 
+### The variety program (wave 15 — five weapons, three Options, new drops, gentler vertical, map planets)
+
+Six design lanes widened the game itself between the flip and the release lines, each landed
+with its own pins and review.
+
+- **Five new weapon types, Types E and F** (w15-WA, `94690230` … `275b0fc2`): **FLAK CONE**
+  (`shot.flak`) throws an 8-pellet cone with a short life, **RAIL LANCE** (`shot.rail`) is a
+  piercing bolt that passes armour on first touch, **SEEKER DRONE** (`shot.drone`) flies two
+  homing darts that steer to the nearest enemy, **CHAIN ARC** (`laser.chain`) forks its bolt
+  into up to two arcs — on hits against enemies, not boss parts (the disclosed limitation) —
+  and **SKY MARKER** (`missile.beacon`) lobs two markers that erupt into full-height vertical
+  beams. The preset **Type E** pairs basic/flak/rail/drone and **Type F** basic/flak/chain/
+  beacon; the meter arsenal grows to 27 script ids and 28 label frames, the shot-kind codes
+  append 14–20, and the menu glyphs FK/RL/SK/CH/BK arrive in English, Spanish and Japanese.
+  The weapon sprites themselves came from a new generator, `scripts/assets/procedural/shots.mjs`
+  (6 sprites, 17 frames), restored under the owner's art-budget ruling (the section above).
+- **Three new Option modes** (w15-WB, `add6f1fa` + pins `60276479`): **GUARD** (code 4) parks
+  fixed pods behind the ship that copy the main weapon and fire a rear volley, **ECHO** (5)
+  flies wingmen on a half-lagged mirror of the line you flew, folding into the ship, and
+  **AEGIS** (6) orbits close dishes that swallow enemy bullets ahead of the ship into point
+  items — a sweep the world runs in its phase-5 pass through a new `TerrainProbe`. The modes
+  append to `OptionMode` and never renumber, the debug weapon-mix hashes the rear and folded
+  geometry only while a ship uses them, and the six silhouettes join `OPTION_SPRITES`.
+- **A richer drop program** (w15-C, `09f82019` … `245b6b6b`): capsules now repaint by what
+  they do (presentation-only, cursor-derived, never hashed — green speed, red weapon, blue
+  option, gold power), `ENEMY_DROPS` grows from 5 names to 9 with **free option** (points and
+  the pickup sound — the MANTA has no Options to regain), **mega** (a yellow crate that parks
+  the cursor on `!`), **weapon pick** (a red crate walking the meter to the next stop,
+  `firstWeaponStop` for a cold meter) and **speed only** (a blue crate, points in Direct
+  mode), and every shipped stage may carry a `dropWeights` table of 1–12 weighted rows drawn
+  from the gameplay RNG stream — all nine zones shipped one, Direct mode ignores it.
+- **Vertical movement eases in** (w15-MOVE, `69d9b985`): up and down start at half speed from
+  a standstill and reach full after 60 ticks; the grace rule is a 20-tick stillness before the
+  ramp may charge again, so a held tap keeps its bite. The two counters ride the world hash
+  appended at the end of `mixPlayer`, and the 62 goldens and 10 demos re-blessed. On the sweep
+  pass of zone E the gentler start now loses one ship to terrain at camera x 1585 where the old
+  physics crossed clean; the run still clears.
+- **The zone map draws its planets** (w15-PLANETS, `67b1fc8b` + pins `ce474c1a`): each zone
+  node gets its procedurally generated planet — nine 27-px `map/planet-<letter>` sprites from
+  the new `scripts/assets/procedural/planets.mjs`, v2-only per RR-1a, drawn panel → planet →
+  letter behind the label. The edges' dot budget moved 160 → 151 to pay for them; the shipped
+  16-edge map is unchanged.
+
+v2.0.0 release-candidate polish round: shield translucency, hitbox fade, ground-enemy background
+fix, weapon silhouette differentiation (see wave-15 reports).
 ### Engine and tooling
 
 Nothing here changes what the game shows or does: the golden replays, the attract demos and the

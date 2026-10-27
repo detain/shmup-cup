@@ -252,13 +252,13 @@ describe('integration: the six places that repeat the figures agree (M3-03)', ()
 
   it('carries the recomputed numbers in the places that state them', () => {
     const pipeline = read('docs/dev/asset-pipeline.md');
-    expect(pipeline).toContain('480,273');
+    expect(pipeline).toContain('487,176');
     expect(pipeline).toContain('993,600');
     expect(pipeline).toContain('1,048,576');
     expect(pipeline).toContain('4,194,304');
     expect(pipeline).toContain('6900 × 12 × 12');
     expect(pipeline).toContain('46 %');
-    expect(pipeline).toContain('137.6');
+    expect(pipeline).toContain('140.6');
     // `core/ui` and the plan repeat the two that matter most: the area and the ratio.
     expect(read('packages/core/src/ui/strings.ts')).toContain('480,273');
     const plan = read('docs/old/shmup_plan.md');

@@ -2,7 +2,8 @@
 
 How meter mode got its full Gradius III–style loadout choice in plan step **M2-03**: nine new
 weapon **behaviours** (Spread Bomb, 2-Way Missile, Photon Torpedo, Tail Gun, Vertical, Free Way,
-Ripple Laser, Cyclone Laser, Twin Laser), the **presets** Type A–D and **Weapon Edit** as
+Ripple Laser, Cyclone Laser, Twin Laser) and, since w15-WA, the **Flak Cone, Rail Lance, Seeker
+Drone, Chain Arc and Sky Marker**, the **presets** Type A–F and **Weapon Edit** as
 `GameConfig` fields, the **`!` choices** (Mega Crash, NORMAL, SPEED DOWN, LIFE OPTION, FULL
 BARRIER) and the **`?` choice**, the HUD meter naming its slots after the arsenal, and the
 **weapon select** screen after the difficulty menu — with an editable Auto Power-Up order and a
@@ -93,8 +94,10 @@ weapon select's AUTO.
 ## Content: presets and weapons
 
 `content/weapons/types-b-d.weapons.json` holds the nine Types B–D weapons and the presets
-`type-b`, `type-c`, `type-d`; `type-a.weapons.json` keeps Type A. Content files load sorted by
-path, and `type-a…` sorts before `types-b-d…`, so the weapon select lists the presets A → D.
+`type-b`, `type-c`, `type-d`; `type-a.weapons.json` keeps Type A; w15-WA's
+`content/weapons/types-e.weapons.json` holds the five new weapons and the presets `type-e` and
+`type-f` (its rows below). Content files load sorted by path, and `type-a…` sorts before
+`types-b-d…` before `types-e…`, so the weapon select lists the presets A → F.
 
 | Preset | MISSILE | DOUBLE | LASER |
 |---|---|---|---|
@@ -102,6 +105,8 @@ path, and `type-a…` sorts before `types-b-d…`, so the weapon select lists th
 | `type-b` | `missile.spread` SPREAD BOMB (`missile.spreadBomb`) | `shot.tail` TAIL GUN (`shot.tailGun`) | `laser.ripple` RIPPLE LASER (`laser.ripple`) |
 | `type-c` | `missile.twoWay` 2-WAY MISSILE (`missile.twoWay`) | `shot.vertical` VERTICAL (`shot.vertical`) | `laser.cyclone` CYCLONE LASER (`laser.cyclone`) |
 | `type-d` | `missile.torpedo` PHOTON TORPEDO (`missile.torpedo`) | `shot.free` FREE WAY (`shot.freeWay`) | `laser.twin` TWIN LASER (`laser.twin`) |
+| `type-e` | `shot.drone` SEEKER DRONE (`shot.drone`) | `shot.flak` FLAK CONE (`shot.flak`) | `shot.rail` RAIL LANCE (`shot.rail`) |
+| `type-f` | `missile.beacon` SKY MARKER (`missile.beacon`) | `shot.flak` FLAK CONE (`shot.flak`) | `laser.chain` CHAIN ARC (`laser.chain`) |
 
 Every preset keeps `shot.basic` as its main shot. Weapons gained an optional **`name`** (upper
 case `A–Z 0–9 space . -`, ≤ 16 characters — the weapon select's label; omitted = the id in upper
@@ -142,13 +147,21 @@ named weapons. It allocates (load time) and throws `RangeError`
   It is a cold path that a recorded session must never call — a replay header only
   knows the config's arsenal.
 
-## The nine behaviours
+## The fourteen behaviours
 
 `ShotKind` codes 4–9 were **appended** (the kind is hashed): `SpreadBomb` 4, `TwoWay` 5,
 `Torpedo` 6, `FreeWay` 7, `Ripple` 8, `Twin` 9. Three behaviours reuse an existing kind with other
-defaults: `shot.tailGun` and `shot.vertical` are `Double` pairs, `laser.cyclone` is a `Laser`. New
+defaults: `shot.tailGun` and `shot.vertical` are `Double` pairs, `laser.cyclone` is a `Laser`.
+w15-WA appended the five new weapons' kinds and their two internal ones — `Flak` 14, `Rail` 15,
+`Drone` 16, `Chain` 17, `Arc` 18, `Beacon` 19, `Strike` 20 — the M3-01 Extra Edit kinds 10–13 are
+the codes between ([extra-modes-and-replays.md](extra-modes-and-replays.md)); `Arc` and `Strike`
+spawn only from their parents, never from content. New
 tunables (defaults in `WEAPON_BEHAVIOR_PARAMS`, compiled into new `RoleTables` arrays): `gravity`,
-`blastRadius`, `blastTicks`, `startSize`, `maxSize`, `growth`, `aspect`, `gap`. Angles are binary
+`blastRadius`, `blastTicks`, `startSize`, `maxSize`, `growth`, `aspect`, `gap`. w15-WA added
+`pellets`, `coneAngle`, `lifeTicks`, `drones`, `turnRate`, `seekRadius`, `forks`,
+`forkRange`, `forkTicks`, `beacons`, `lobSpeed`, `delayTicks`, `beamTicks` and `beamWidth`
+(`speed` / `maxLength` / `gap` / `hitCooldownTicks` / `gravity` were already tunables, and
+`passArmour` — the Direct bolt's M2-18 flag — now also tunes the Rail Lance). Angles are binary
 units (1024 per turn, 0 = forward, 256 = down). Since R2-02 every **world** tunable of this arsenal
 reads `v1 · WORLD_SCALE` — in the defaults, in the shipped `content/weapons/` values below, and in
 `SHOT_CULL_MARGIN` (24) and `LASER_SEGMENT_LENGTH` (12) — ratios (`aspect`) and angles never scale
@@ -165,6 +178,11 @@ reads `v1 · WORLD_SCALE` — in the defaults, in the shipped `content/weapons/`
 | `laser.ripple` (`Ripple`) | A ring flying forward at `speed` 9; its half height grows from `startSize` 6 by `growth` 0.75 per tick to `maxSize` 30, its half width is `aspect` 0.5 × that; the sprite frame follows the size | Non-piercing; the **ring**, not the box, is the hitbox (below) |
 | `laser.cyclone` (`Laser`) | A `laser.beam` 120 px long, 12 px thick (`hh` 6); its 12-px segments step `frames` 4 swirl frames along the beam and over time | Piercing with the 6-tick hit cooldown, like Type A's laser |
 | `laser.twin` (`Twin`) | Two short beams (`maxLength` 24) `gap` 12 px apart that follow their shooter's row | Non-piercing in the shipped content; a pair fires while two more beams fit under the cap (cap 4 = two pairs) |
+| `shot.flak` (`Flak`) | One volley of `pellets` 8 straight pellets fanned across the cone (`coneAngle` is the binary-angle step between neighbours, the fan centred on forward); the next volley waits until every pellet is gone and the cap holds the whole volley | Dies at `lifeTicks` 26; non-piercing (it lives in the Double slot) |
+| `shot.rail` (`Rail`) | A bolt of fixed length `maxLength` 144, born extended, flying straight — its head scans the columns it crosses; rock stops it dead; its 2-frame sprite shows the launch flash its first two ticks | Piercing with the 8-tick per-target cooldown; `passArmour` 1 — the bolt flies on through armour, the clink does not put it out |
+| `shot.drone` (`Drone`) | A volley of `drones` 2 darts spread vertically, born flying straight from their lanes; the update turns each toward the nearest damageable enemy within `seekRadius` 180 px at most `turnRate` 6 binary units per tick, showing the heading's octant — 8 frames, never rotated at run time | Non-piercing — one target per dart (off-screen flight ends it like every shot's cull); lives in the Missile slot |
+| `laser.chain` (`Chain`) | A fast straight bolt (`shots/chain`, 2 frames); when it hits, the bolt spends itself and forks up to `forks` 2 internal `Arc` bolts at the two nearest other enemies around the victim, born at it, flying straight, dying at `forkTicks` 6 | Non-piercing — one target per bolt, and the forks fire even when the victim survives; **limitation (disclosed at landing): forks trigger on bolt hits against enemies, not against boss parts** |
+| `missile.beacon` (`Beacon`) | Two markers (`beacons` 2, `gap` 18) lobbed forward and up at `lobSpeed` 4.5 under `gravity` 0.27; a marker sticks on the first surface it falls onto (a wall breaks it there) and waits `delayTicks` 40, then turns into its beam **in the same slot**: the internal `Strike` is the full-height piercing beam column, world-anchored in x, drawn as four `shots/beacon-beam` segments of `PLAYFIELD_H / 4`, striking `beamTicks` 12 ticks at `beamWidth` 24 | Beam piercing with `hitCooldownTicks` 16 per target, armour never putting it out (Pierce ∥ PassArmour); lives in the Missile slot |
 
 **The Spread Bomb's blast.** `detonate()` sets `ShotFlag.Blast` (new, 16) and `Pierce` on the
 slot, stops it, makes its box `blastRadius` (21 px half size, both axes), restarts `age` (ticks
@@ -245,7 +263,7 @@ left (184×192 from x 4, y 12) and the live preview behind it.
 
 | Row (`WeaponSelectItem`) | Value | Notes |
 |---|---|---|
-| TYPE (0) | `TYPE A` … `TYPE D` (each preset id upper-cased, `-` → space), then `EDIT` | `EDIT` is offered only when every Missile / Double / Laser slot has a weapon; a content without presets shows `DEFAULT` |
+| TYPE (0) | `TYPE A` … `TYPE F` (each preset id upper-cased, `-` → space; six since w15-WA), then `EDIT` | `EDIT` is offered only when every Missile / Double / Laser slot has a weapon; a content without presets shows `DEFAULT` |
 | MISSILE / DOUBLE / LASER (1–3) | the slot's weapons by `weaponLabel` (`SPREAD BOMB` …) | **disabled** unless TYPE is `EDIT`; they show the type's weapons, and entering EDIT starts from the last type's |
 | OPTION (4, M2-04) | `OPTION_CHOICE_LABELS`: `TRAIL`, `SNAKE`, `FORMATION`, `ROTATE` | the preview flies the chosen type; while focused it spreads / retracts every `PREVIEW_SPREAD_TICKS` (90) |
 | `? SLOT` (5) | `SHIELD_CHOICE_LABELS`: `FORCE FIELD`, and since M2-04 `SHIELD`, `FREE SHIELD`, `ROTATE`, `REDUCE` | |

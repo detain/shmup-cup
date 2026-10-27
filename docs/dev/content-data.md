@@ -754,3 +754,15 @@ owns" ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibil
   `extras.enemies.json` (the three P2 bosses), `escape.music.json` and the new `graze` /
   `black.hole` fx presets. Every field is optional, so the format version stayed 1
   ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).
+- **w15 (done)** — `ENEMY_DROPS` grew to **nine names** (w15-C: `freeOption`, `mega`,
+  `weaponPick`, `speedOnly` appended — codes 6–9; the `s.enum` on the enemy's `drop` and a
+  formation event's `drop` now accepts them), a stage gained the optional **`dropWeights`**
+  (`DropWeight[]`, 1–`MAX_DROP_WEIGHT_ROWS` 12 `{ drop, weight }` rows, weights whole 1–
+  `MAX_DROP_WEIGHT` 1000, a repeated `drop` name rejected — the schema is `DROP_WEIGHT_SCHEMA`;
+  all nine zones shipped one and Direct mode ignores the table), `content/weapons/types-e.weapons.json`
+  arrived (w15-WA: the five new weapons and the presets `type-e` / `type-f` — content only, the
+  select lists A → F), and the `strings` tables carried the new labels (w15-WA's five weapon
+  short labels and w15-WB's `GUARD` / `ECHO` / `AEGIS`, en / es / ja — the en table stood at 379
+  rows for w15-WB's carry and 382 after it). No format
+  version change; the goldens and demos re-blessed where the simulation moved
+  ([powerups-and-shields.md](powerups-and-shields.md), [meter-arsenal.md](meter-arsenal.md)).

@@ -109,6 +109,29 @@ meter itself only sets the loadout fields.
 - **A capsule** advances the cursor (`advanceMeter`): `-1 → Speed`, then one slot per capsule,
   wrapping after `!` back to Speed. A cursor that is not a slot or `-1` (a debug tool wrote it,
   `NaN` included) comes back to Speed.
+- **Flavored capsule icons** (w15-C): the meter-mode capsule repaints by the cursor's next stop —
+  green `items/capsule-speed` for SPEED, red `items/capsule-weapon` for a weapon stop, blue
+  `items/capsule-option` for OPTION, gold `items/capsule-power` for `?` / `!`
+  (`CAPSULE_FLAVOR_SPRITES`, indexed by `MeterSlot`). Presentation of state through the art and
+  nothing else: the item stays `ItemKind.Capsule`, only the drawn sprite changes in the system's
+  `sync`, the change is derived from the cursor and **never hashed**, and the pickup behaviour is
+  the same capsule.
+- **Three new crates** (w15-C): `mega`, `weaponPick` and `speedOnly` join the five old
+  `ENEMY_DROPS` names (`DropKind` `Mega` 7 / `WeaponPick` 8 / `SpeedPick` 9, `ItemKind` `Mega` 11
+  / `WeaponPick` 12 / `SpeedOnly` 13 — appended, never renumbered; the crates shimmer over six
+  frames, an owner art-budget ruling of 2026-10-26). In meter mode the **mega crate**
+  (`items/crate-mega`) parks the cursor on `!` — the slot itself, not some `!` choice; the
+  **weapon crate** (`items/crate-weapon`) parks it on the next **weapon stop** walking
+  `MISSILE → DOUBLE → LASER → OPTION` (`firstWeaponStop`, wrapping to `MISSILE` from a cold or
+  non-stop cursor); the **speed crate** (`items/crate-speed`) parks it on `SPEED`. A crate never
+  equips — the press stays the equip — and pays `CAPSULE_SCORE`. In Direct mode they read as the
+  yellow / red / points items ([direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
+- **Weighted drops** (w15-C): a stage may ship a `dropWeights` table of 1–12
+  `{ drop, weight }` rows (weights integers 1–1000, repeated names rejected by the loader); the
+  roll runs in the **gameplay RNG stream** (`PowerUpSystem` `spawnWeighted`, off the host's `rng`)
+  when a kill's drop turns into an item, so every replay stays deterministic. Without a table the flat capsule economy is exactly as before; Direct
+  mode ignores the table. All nine zones shipped one (zone A's was retuned after the arcade
+  outcome pass).
 - **The press.** Phase 2, right after the ships moved and before the weapons fire, reads the
   `pressed` mask of every active ship that is not `dying` / `dead` (fly-ins may press). A
   `PowerUp` press runs `equipHighlighted(p)`: an empty cursor or a greyed slot is **denied** —

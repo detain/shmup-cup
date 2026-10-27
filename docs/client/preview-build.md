@@ -1509,7 +1509,10 @@ its own music — a whole run of five zones takes about twenty minutes.
    every player still in the game — you can see the score jump — and can earn an extra ship. After
    five seconds, or **OK**, the map opens.
 5. **The ZONE MAP.** The music fades out. The top says **ZONE MAP** and `CHOOSE YOUR COURSE`;
-   the zones are small boxes with their letters, left to right, joined by dotted lines. The zones
+   the zones are small boxes with their letters, left to right, joined by dotted lines — and since
+   the wave-15 round every letter now sits over its own **planet**: nine procedurally generated
+   zone planets, one per letter, drawn behind the label (remaster art — at the browser's scale-1
+   preview the boxes are still plain). The zones
    you have flown are lit, the one you just cleared is yellow, and the two you can go to next have
    a white outline — the chosen one blinks yellow, and so does the dotted line to it. The panel at
    the bottom shows the chosen zone's letter and name and two lines about it, and

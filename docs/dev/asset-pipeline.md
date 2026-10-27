@@ -245,8 +245,10 @@ v2 sources arrive through R4-01.A2, R4-03 and R4-05.E2.
 ### Procedural generators (`scripts/assets/procedural/`)
 
 Each module exports `generate(options?: GeneratorOptions): SpriteDef[]` and is registered in
-`procedural/index.mjs` (`PROCEDURAL_GENERATORS`, the entries sorted by id — **35** since R5-01.S2's `azure` joined the 34 R4-P.P1
-split the four shared modules below into `direct-items` / `arm` / `blackhole` / `logo` and
+`procedural/index.mjs` (`PROCEDURAL_GENERATORS`, the entries sorted by id — **38** since W15-A's
+`shots` and w15-PLANETS' `planets` joined R4-P.P1's 34 split — the sentence previously said 35
+after R5-01.S2's `azure`, having silently missed R5-10's `escape`; both counts are now told
+honestly — the split put the four shared modules below into `direct-items` / `arm` / `blackhole` / `logo` and
 pre-registered the stubs `thrusters` / `title` / `ui-kit` / `decor`, so no later R4 or R3-06
 step edits the registry (wave-07 rule 6); the stubs generate nothing until the step that fills
 them — R3-06.L6 already filled `decor`). Since R2-01 `GeneratorOptions` is
@@ -281,6 +283,8 @@ the `native` sprites the interim stage never upscales (the "Never upscaled" list
 | `ending` | M2-14 (`shmup_feat.md` §17): `ENDING_SPRITES` (6) — the ending scenes' UI sprites, anchored at their centres (`core/ui` `UI_SPRITES`, so part of `ENGINE_SPRITES`): `ui/ending-citadel` (128×72: stepped towers and walls with amber windows), `ui/ending-ark` (112×36: the ARK's silhouette with a tail fluke), `ui/ending-blast` (24×24 × 4: flash → ring → smoke), `ui/ending-bubble` (6×6), `ui/ending-sun` (64×32: the upper half of a pale-gold sun with rays), `ui/ending-surface` (64×8: the sea's surface from below; its period divides its width, so it tiles) |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 — the 7 slot labels in meter order, then since M2-03 the Types B–D weapon names `SPREAD 2-WAY TORPEDO TAIL VERTICAL FREE WAY RIPPLE CYCLONE TWIN`: 16 frames in the order of `@shmup/core` `METER_LABEL_FRAMES`, which a test keeps equal to `METER_LABELS`; original 3×5 micro glyphs, M2-03 added `C F V W Y 2 - space`) |
 | `weapons` | M2-03 (`shmup_feat.md` §7A): `shots/blast` (32×32 × 4, centred — the Spread Bomb's blast: a hot disc opening into a ring, cooling white-yellow → orange → red; an engine sprite), `shots/ripple` (24×44 × 6, centred — the Ripple's upright ring at half heights 4 → 20 with half the width; the engine picks the frame from the ring's size), `shots/cyclone` (8×9 × 4, anchored at the left end of the middle row — one Cyclone Laser segment, two violet strands twisting round a white core, one wave period per segment so it tiles; the engine steps the frames along the beam). Triangle waves and square roots only |
+| `shots` | W15-A: the Types E / F player shots — six sprites, 17 frames: `shots/flak` (5×5 pellet — rim / body / core like a round bullet), `shots/rail` (2 frames), `shots/drone` (8 heading frames — never rotated at run time), `shots/chain` (2 frames), `shots/beacon` and the beam column `shots/beacon-beam` (tiled four to a playfield height) | generator; ordinary interim art upscaled at the build's art scale, except `shots/beacon-beam`, the only `native` sprite there (it draws at the playfield's quarter height whatever the scale) |
+| `planets` | w15-PLANETS: the nine zone-map planets `map/planet-a` … `map/planet-i` — one 27-px native frame each (the map node's class, `scaleLength(18, artScale)`), seeded from the sprite name, every colour through the module's ramp; **v2-only** (RR-1a — nothing at scale 1, the map draws plain panels there) | generator |
 | `ui` | `ui/pixel` (1×1 white, for rectangles) and `ui/missing` (8×8 magenta checker the renderer shows for an unknown name); `ui/logo` (M1-16) left for `logo` in R4-P.P1 (below) |
 | `direct-items` | R4-P.P1 (out of `direct`): the six colour items — `items/direct-{red,green,blue,orange,yellow}` (10×10 × 2 glossy orbs, `blink`) and `items/direct-octagon` |
 | `arm` | R4-P.P1 (out of `direct`): the Arm `shields/arm` (26×18 × 9: per tier — green, silver, gold — fresh / worn / critical; animations `arm`, `superArm`, `hyperArm`) |
@@ -416,23 +420,23 @@ The number that made this decision is the one a **real kanji set** would cost �
 *and* 2, plus the kana and symbols) is about **6,900 characters**; at a legible 12×12 that is
 `6900 × 12 × 12` = **993,600 pixels** (≈ 1.0 M). Measured against this build:
 
-- the game's **whole** atlas occupies **480,273 pixels** — the sum of every frame in
+- the game's **whole** atlas occupies **487,176 pixels** — the sum of every frame in
   `assets/generated/atlas/main.json` — which packed as **one 1024² page** (1,048,576 px, 46 % full)
-  encodes to **137.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
+  encodes to **140.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
   these figures are computed on the **v1-scale** art: `test/integration/cjk-budget.test.ts` rebuilds
   `buildAtlas({ ungrouped: true, artScale: 1 })` — decision W4-6, so the interim ×1.5 atlas (2.25×
   the area) does not move them and the six documents that quote them stand. That is the landed
   decision (RR-1, kept through the R4 art rounds): the documents quote the v1-scale figures
   whatever the shipped atlas is drawn at, and what holds the shipped atlas is the **live budget** —
   every page inside the packer's limit and every group under its `ATLAS_PNG_BYTES_CAP` share, which
-  the same test checks beside these figures. Grouped or ungrouped, the area is the same.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
+  the same test checks beside these figures. Grouped or ungrouped, the area is the same.) So a kanji set is about **2.0× the pixels the entire sprite set uses**,
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
 - `apps/tizen/dist` measured **1,676.1 KB** on 2026-09-16, against the 8,192 KB `DIST_BUDGET` of
   that day; the budget doubled to **16,384 KB** in R3-04.M2b (`DIST_BUDGET` in
   `apps/tizen/scripts/check-bundle.mjs`, imported by the webOS check), and the page above encodes
-  to 137.6 KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
+  to 140.6 KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
 
 A kanji language is therefore **feasible** — do not read this section as saying it is impossible.
 What rules it out *here* is that an extra page of that size roughly **doubles the atlas download
@@ -492,7 +496,7 @@ oversize report skips generated siblings ([coop.md](coop.md)).
 | Group | Sprites | Source |
 |---|---|---|
 | Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`), since M2-04 `options/stolen` (the grey Option a hunter carries or that drifts free, 2 frames, no `@flash`), since M2-05 `ships/manta` (the Direct-mode ship: a flat ray-winged hull with a green canopy, 3 frames — level, banking up / down, no `@flash`) | pixel maps |
-| Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`); since M2-03 the Types B–D shots `shots/bomb` (the Spread Bomb), `shots/two-way` (2 frames: climbing / diving), `shots/torpedo` (2 frames, violet), `shots/tail`, `shots/vertical`, `shots/free` (cyan darts), `shots/twin` (a green beam segment) | pixel maps; `shots/blast`, `shots/ripple`, `shots/cyclone` generated (`weapons`) |
+| Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`); since M2-03 the Types B–D shots `shots/bomb` (the Spread Bomb), `shots/two-way` (2 frames: climbing / diving), `shots/torpedo` (2 frames, violet), `shots/tail`, `shots/vertical`, `shots/free` (cyan darts), `shots/twin` (a green beam segment); since W15-A the Types E / F shots `shots/flak`, `shots/rail`, `shots/drone` (8 heading frames), `shots/chain`, `shots/beacon` and the beam column `shots/beacon-beam` | pixel maps; `shots/blast`, `shots/ripple`, `shots/cyclone` generated (`weapons`), the six new ones generated (`shots`) |
 | Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns), and since M2-04 the violet `option-hunter` and the blue `carrier-blue`, and since M2-05 the violet Direct-mode carrier `cube` — 2 frames each, all with `@flash`; since M2-07 the stage gimmicks `rock`, `lava` (2 frames, `glow`), `volcano`, `bubble`, `bubble-small`, `suction` (2 frames, `spin`), `tentacle` and `rush-cube`, all with `@flash`, and the engine sprite `gimmicks/chain-link` (a tentacle's arm segment, no flash — `core/stage` `GIMMICK_SPRITES`) | pixel maps; since M2-11 the zone B / C enemies (`froth`, `froth-bead`, `brood-bubble`, `gill-dart`, `reef-jelly`, `urchin`, `maw-rocket`; `dune-worm`, `husk-crawler`, `sand-skimmer`, `dust-devil`, `sand-geyser`, `sand-clod`, `widow-drone`) generated (`brine`, `dune`); since M2-12 the zone D / E enemies (`ember-wisp`, `cinder-bat`, `magma-cone`, `magma-bomb`, `cinder-rock`, `slag-crawler`, `basalt-turret`; `hail-drifter`, `gale-kite`, `squall-jumper`, `crag-turret`, `thunderhead`, `steed-foal`) generated (`magma`, `tempest`); since M2-13 the zone F / G enemies (`lymph-mote`, `chaser-cell`, `mitosis-cell`, `vault-claw`, `polyp-turret`, `spore-sac`; `glint-mote`, `prism-cube`, `facet-turret`, `halo-crystal`, `prism-lens`, `geode`, `geode-shard`) generated (`vault`, `prism`); since M2-14 the zone H / I enemies (`bolt-drone`, `hatch-bay`, `hatch-mite`, `laser-emitter`, `sentinel-walker`, `rail-turret`; `lumen-mote`, `depth-mine`, `trench-eel`, `gulper`, `abyss-turret`, `ark-hook`) generated (`citadel`, `abyss`); since R5-01.S2 the zone A remaster's azure enemies (`skiff`, `gale`, `gnat`, `warden`, `matron`) generated (`azure`) on the art-scale path, so scale 1 still counts 72 |
 | Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), and since M1-18 HALCYON BULWARK's `bulwark-hull` (48×32), `bulwark-wing-top` / `-bottom` (56×14), `bulwark-emitter` (18×10, 2 frames — it glows) and `bulwark-plate` (6×18) — all with `@flash` | pixel maps; since M2-09 / M2-11 the generated `bosses`, `brine` (GALVANIC MAW, SPUME HERALD) and `dune` (SANDGRAVE WIDOW) parts, since M2-12 `magma` (CINDER BASTION) and `tempest` (SQUALL STEED), since M2-13 `vault` (MANTLE REGENT) and `prism` (FACET MONARCH), since M2-14 `citadel` (IRON SOVEREIGN) and `abyss` (the ABYSS ARK, THE HOLLOW KING), since R5-01.S2 `azure` (the AZURE MARSHAL's shell, on the art-scale path) |
 | Items | `items/capsule`, `items/point` (M2-02), `items/capsule-blue` (M2-04), the six `items/direct-*` colour items (M2-05), `items/capsule-bonus` and `items/1up` (M2-10) (generated) | both |

@@ -71,7 +71,8 @@ resolves to `trail` — exactly what it played. `OPTION_CHOICES`' index is `core
 
 One `OptionGroup` per player, created with the session's type (`createOptionGroup(formation)`,
 `setFormation` — the weapon select's preview changes it on a live group). `formation` is the name,
-`mode` the numeric `OptionMode` (`Trail 0, Snake 1, Formation 2, Rotate 3` — hashed, append only).
+`mode` the numeric `OptionMode` (`Trail 0, Snake 1, Formation 2, Rotate 3`, w15-WB appending
+`Guard 4, Echo 5, Aegis 6` — hashed, append only).
 
 | Type | Placement (`follow` → `place`) | Constants |
 |---|---|---|
@@ -79,6 +80,9 @@ One `OptionGroup` per player, created with the session's type (`createOptionGrou
 | **Snake** | A chain in **screen space** (`snakeX` / `snakeY`): link `k` hangs `SNAKE_LINK` px from its leader (the ship, then link `k − 1`) and is only *pulled* — when the leader is farther than a link it moves straight towards it until it is exactly one link away. So the chain swings out opposite to the ship's motion and **keeps its shape** when the ship stops or pushes against an edge; scrolling does not string it out (screen space, like the trail) | `SNAKE_LINK` 16 |
 | **Formation** | Fixed offsets from the ship, interpolated by the spread: a tight `>` behind it (`FORMATION_RETRACTED`) → a wide `V` (`FORMATION_SPREAD`) | `[-14,-8, -14,8, -26,-14, -26,14]` → `[-6,-24, -6,24, -16,-44, -16,44]` |
 | **Rotate** | An even orbit round the ship: `angle` turns `ROTATE_SPEED` binary units per tick, Option `k` at `angle + k × 1024 / n`; the radius grows with the spread | `ROTATE_SPEED` 12 (a turn in ≈ 1.4 s), `ROTATE_RADIUS` 20 → `ROTATE_RADIUS_EXTENDED` 40 |
+| **Guard** (w15-WB) | The pods sit on the Formation's retracted `>` offsets behind the ship — **fixed**, spread never moves them; besides copying the main weapon, each pod fires a rear-facing volley of its own every `GUARD_REAR_INTERVAL` main intervals at `GUARD_REAR_ANGLE` (straight back along the scroll axis) — the firing is `core/weapons`, the per-pod countdown is `OptionGroup.rear` | `GUARD_REAR_ANGLE` 512 (binary units), `GUARD_REAR_INTERVAL` 2 |
+| **Echo** (w15-WB) | A reflection of the flown path: each wingman rides the trail record `ECHO_SPACING` steps back (half the trail's spacing), mirrored across the ship's horizontal line by `ECHO_MIRROR`; a wingman whose reflected point lies inside terrain **folds into the ship** for the tick (`folded`, probed through the group's `TerrainProbe`) and its fire is suppressed — an Echo that flew into a wall goes quiet until the reflection is in open air again | `ECHO_SPACING` 6, `ECHO_MIRROR` 1 |
+| **Aegis** (w15-WB) | The dishes orbit like Rotate at the fixed `AEGIS_ORBIT_RADIUS` (spread never moves them), and each swallows enemy bullets that come within `AEGIS_SWALLOW_RADIUS` px inside the forward `AEGIS_ARC`-unit wedge — `core/bullets`' `aegisSweep` in phase 5; a swallowed bullet leaves a point item exactly like a cancelled one (lasers are not swallowed) | `AEGIS_ORBIT_RADIUS` 24, `AEGIS_SWALLOW_RADIUS` 30, `AEGIS_ARC` 128 (± 22.5°) |
 
 **Spread / extend** (`OptionGroup.steer(intent)`, phase 2, before `follow`, for every type — only
 Formation and Rotate place by it):

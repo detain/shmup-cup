@@ -583,6 +583,11 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   same commit** with `pnpm golden:update`, and the commit message says why; never edit the files
   by hand (Prettier skips them). An unintended golden failure is a bug, not a re-bless
   ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
+- **Hashed state is appended, never renumbered** (w15-MOVE): when a sim change adds state the
+  world hash must carry, its read is appended **at the end** of the mixer that owns it — the
+  vertical ease-in's `verticalTicks` / `verticalIdle` went at the end of `core/debug` `mixPlayer`
+  — so every older field keeps its place in the hash order; only the hashes themselves move, and
+  the step that intended them re-blesses (`pnpm golden:update`, reason in the commit message).
 - **A zone content change re-blesses one zone** (R5-P.P3, `c284b78`): each zone's outcome checks
   live in their own file, `test/golden/golden-zone-<letter>.test.ts` (`golden.test.ts` still plays
   every recording and keeps the dev-stage and extra-mode blocks), and

@@ -513,7 +513,10 @@ code units with `Math.imul`, the FNV constants duplicated in `data/index.ts` to 
 acyclic, equality pinned by the test) plus a 128 B/call allocation guard in
 `debug-hash-keys-alloc.test.ts`. Known raw remainders, accepted on purpose: the Direct mode's
 `l.family` in `mixWeapons` (a fifth `familyKeys` column lands only if R5 grows `content/weapons/`)
-and the bending lasers' `spriteId`, which the hash does not mix at all (benign).
+and the bending lasers' `spriteId`, which the hash does not mix at all (benign). The w15-WB
+option state follows the older rule of gating on use: `mixWeapons` mixes a group's Guard `rear`
+countdowns and Echo `folded` bits only while the group actually flies that mode, so no golden
+moved for the three new types — their state rides only the runs that use them.
 
 | File | Who plays | Covers | Ends |
 |---|---|---|---|
