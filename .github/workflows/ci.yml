@@ -95,7 +95,11 @@ jobs:
     name: build · benchmark
     runs-on: ubuntu-latest
     # The render bench (plan M3-02c) adds ~5 minutes of Chromium time to the simulation benches.
-    timeout-minutes: 25
+    # Raised 25 → 35 on 2026-10-27: the GitHub runner wall-cut the job at exactly its timeout
+    # (run 40477157216) while the same suite completed green in 23m04s on the host, install and
+    # build sharing the window (w15-D6; zero budget violations). Wall-clock headroom on CI runners
+    # — not a bench budget change; the budgets live in test/bench/render-harness/bench-gates.ts.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
 
