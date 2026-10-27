@@ -1,0 +1,40 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "items/one-up",
+  "category": "item",
+  "frame": {
+    "width": 18,
+    "height": 12
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen6/a-oneup/gen.png",
+      "frames": [
+        [
+          147,
+          70,
+          153,
+          156
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    9,
+    6
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    },
+    "notes": "w15-ENRICH-A (gen6 rows REING6-4, the owner re-add ruling of 2026-10-26): the 1-UP ship-icon item from the owner-improvement redesign sheet (1 cell of 448x288 on the flat #51e018 key, probe box +6px pad, contain to the 18x12 slot the upscaled v1 map drew today). REING6 audited the sheet probe-clean; its landing was blocked by the upscaled-pool floor, which the owner's ruling now carries. The design carries its own 1-px near-black navy outline, so the outline pass is off. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution)."
+  }
+}

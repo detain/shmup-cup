@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "items/one-up",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-oneup/gen.png",
+      "sha256": "9329c10604043c51f188edf445ebb80b7f644af5a1ad95465664b0a6de3b9542",
+      "format": "png",
+      "width": 448,
+      "height": 288,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the ONE-UP item — an extra life.\n\nDesign identity to keep exactly — A miniature white-and-cyan fighter silhouette (nose right) hovering above a small glowing green life-essence capsule with a white cross spark — instantly reads as 'another ship'.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the ONE-UP — a tiny white spare-fighter silhouette above a glowing green capsule base The subject fills the cell as ONE large centred figure, aspect ratio about 1.5:1 (0.9:1 to 2.2:1).\n- The sheet canvas measures EXACTLY 448×288 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 32 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520510104,
+      "size": "448x288",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:55:22.047Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-oneup/gen.json",
+        "sidecarSha256": "49e3712686961318748bc168985febcf490e279a6b8042f6ec3ca6b59e1e6065",
+        "id": "gen6/a-oneup",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/items/one-up.recipe.json",
+    "sha256": "d1d87651d83a452a4464a3df7c242fc92f52bc277e46d8f83c85529b62a0e6ca"
+  },
+  "edit": null,
+  "output": {
+    "png": "one-up.png",
+    "sha256": "e8c61c341cdc30eb050d18a1235f770e71cb9122408a19e3cc52596fcb6c9ed9",
+    "sidecar": "one-up.json",
+    "sidecarSha256": "83fada9962b956e2938345a900313873bf77f27cdf5ff0cdea95733dd97aa2f2",
+    "frames": 1,
+    "frameWidth": 18,
+    "frameHeight": 12,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-ENRICH-A (gen6 rows REING6-4, the owner re-add ruling of 2026-10-26): the 1-UP ship-icon item from the owner-improvement redesign sheet (1 cell of 448x288 on the flat #51e018 key, probe box +6px pad, contain to the 18x12 slot the upscaled v1 map drew today). REING6 audited the sheet probe-clean; its landing was blocked by the upscaled-pool floor, which the owner's ruling now carries. The design carries its own 1-px near-black navy outline, so the outline pass is off. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution)."
+}

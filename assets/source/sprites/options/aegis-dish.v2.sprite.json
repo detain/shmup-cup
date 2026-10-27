@@ -1,0 +1,87 @@
+{
+  "name": "options/aegis-dish",
+  "description": "Aegis dish (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 parabola radar dish redrawn deeper at 12 \u00d7 12 with a feed arm across the aperture, breathing over the four OPTION_FRAMES pulse steps \u2014 0 calm steel dish, 1 the phosphor face lights teal, 2 the flare peak (the beam fires amber across the feed arm), 3 the beam dies back to sparks on the feed. Same palette as the v1 silhouette.",
+  "palette": {
+    ".": null,
+    "o": "#123a3a",
+    "d": "#2aa0a0",
+    "f": "#7adada",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oo.....",
+        "....oddo....",
+        "...oddd.o...",
+        "..oddd...o..",
+        ".oddd....o..",
+        ".oddd....oo.",
+        ".oddd....oo.",
+        ".oddd....o..",
+        "..oddd...o..",
+        "...oddd.o...",
+        "....oddo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....oddo....",
+        "...oddf.o...",
+        "..oddf...o..",
+        ".oddff...o..",
+        ".oddff...oo.",
+        ".oddff...oo.",
+        ".oddff...o..",
+        "..oddf...o..",
+        "...oddf.o...",
+        "....oddo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....oddo....",
+        "...oddf.y...",
+        "..oddf..yy..",
+        ".oddff...yy.",
+        ".oddf...fyyo",
+        ".oddf...fyyo",
+        ".oddff...yy.",
+        "..oddf..yy..",
+        "...oddf.y...",
+        "....oddo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....oddo....",
+        "...oddf.o...",
+        "..oddf..y...",
+        ".oddff...y..",
+        ".oddff...yy.",
+        ".oddff...y..",
+        ".oddff..y...",
+        "..oddf..y...",
+        "...oddf.o...",
+        "....oddo....",
+        ".....oo....."
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

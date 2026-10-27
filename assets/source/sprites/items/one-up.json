@@ -1,0 +1,59 @@
+{
+  "frames": [
+    {
+      "filename": "items/one-up 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 18,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "one-up.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 18,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 18,
+              "h": 12
+            },
+            "pivot": {
+              "x": 9,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

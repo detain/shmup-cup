@@ -1,0 +1,86 @@
+{
+  "name": "options/gyro",
+  "description": "Gyro option (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 spinning rotor redrawn at 12 \u00d7 12 as an amber ring with a red spoke hub that turns over the four OPTION_FRAMES steps \u2014 0 the plus, 1 the X, 2 the flare peak with the spokes thick, 3 the X again with the far rim lit. Same palette as the v1 silhouette.",
+  "palette": {
+    ".": null,
+    "o": "#6a1a1a",
+    "r": "#e83838",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "..ooyyyyoo..",
+        ".oyyyyyyyyo.",
+        ".oyy.rr.yyo.",
+        "oyyrrrrrryyo",
+        "oyy..rr..yyo",
+        "oyy..rr..yyo",
+        "oyyrrrrrryyo",
+        ".oyy.rr.yyo.",
+        ".oyyyyyyyyo.",
+        "..ooyyyyoo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..ooyyyyoo..",
+        ".oyyyyyyyyo.",
+        ".oyyr..ryyo.",
+        "oyyr....ryyo",
+        "oyy..rr..yyo",
+        "oyy..rr..yyo",
+        "oyyr....ryyo",
+        ".oyyr..ryyo.",
+        ".oyyyyyyyyo.",
+        "..ooyyyyoo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..ooyyyyoo..",
+        ".oyyyyyyyyo.",
+        ".oyyrrrryyo.",
+        "oyyrrrrrryyo",
+        "oyy.rrrr.yyo",
+        "oyy.rrrr.yyo",
+        "oyyrrrrrryyo",
+        ".oyyrrrryyo.",
+        ".oyyyyyyyyo.",
+        "..ooyyyyoo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..ooyyyyoo..",
+        ".oyyrrrryyo.",
+        ".oyyr..ryyo.",
+        "oyyr....ryyo",
+        "oyy..rr..yyo",
+        "oyy..rr..yyo",
+        "oyyr....ryyo",
+        ".oyyr..ryyo.",
+        ".oyyrrrryyo.",
+        "..ooyyyyoo..",
+        "....oooo...."
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

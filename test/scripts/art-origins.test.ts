@@ -394,8 +394,11 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
     // record joins too: its recorded source is still FLUX.2-dev, so it is
     // ai-assisted like the rest) — the fixture gyre stands in for the
     // ingested one; REING-6's fourteen gen6 records joined (the two re-landed options kept
-    // their own), so the copy lands ninety-three live plus five minus one.
-    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(97);
+    // their own), so the copy lands ninety-three live plus five minus one. w15-ENRICH-A's three
+    // records joined (items/bonus and items/one-up — gen6 rows REING6 stopped at the pool floor; the
+    // option hunter went with them and was dropped in review, see the w15-ENRICH-A report), so the
+    // copy lands ninety-five live plus five minus one.
+    expect(report.counts.shipped.byOriginKind['ai-assisted'].record).toBe(99);
   });
 
   it('tallies the served models with their licence and verdicts', () => {
@@ -417,15 +420,17 @@ describe("R3-05 — the ingest tool's fixtures as shipped overrides", () => {
       // stolen, explosion-small, debris and spark, REING1's terrain-prism-v2 and
       // black-hole, REING2's capsule and capsule-blue, GEN4's forty-two
       // never-designed drops and REING-6's fourteen gen6 sprites (the re-landed orb and
-      // stolen keep their records; the ten shots and the four terrain-v2 sheets are new) —
+      // stolen keep their records; the ten shots and the four terrain-v2 sheets are new) plus
+      // w15-ENRICH-A's two re-landed gen6 rows (the bonus jewel and the one-up — what REING6
+      // stopped at the pool floor; the hunter was dropped in this lane's screen check) —
       // with forty-nine derived @flash
       // sprites (the interim tail has none, the S3 drops are player/option/item/fx art
       // that never flashes; the capsules never flash either; GEN4's enemies, bosses,
       // decor and glow vents flash) and the two crafts' derived
-      // @p2 sprites: one hundred forty-four live sprites, and the fixture tree lands
-      // one hundred forty-four again — its pair adds the drone and the glow while the
+      // @p2 sprites: one hundred forty-six live sprites, and the fixture tree lands
+      // one hundred forty-six again — its pair adds the drone and the glow while the
       // fixture gyre supersedes zone H's ingested pair.
-      sprites: 144,
+      sprites: 146,
       licence: 'flux-nc-2.1',
       pixels: 'ship',
     });

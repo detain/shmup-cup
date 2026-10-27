@@ -14,6 +14,13 @@
  * Every shipped pixel stays fully opaque or fully transparent (binary alpha); the colour census
  * of each frame stays inside its own art's palette — the override's own colours where one ships.
  *
+ * w15-ENRICH-A (owner re-add ruling of 2026-10-26): the six option silhouettes w15-WB shipped as
+ * 8 × 8 two-frame v1 interim maps get their 12 × 12 four-frame v2 twins, so the OPTION_FRAMES
+ * pulse lands on real art at the shipped scale instead of running off the end of a two-frame
+ * sprite into the magenta missing frame. They join the NAMES census here; each twin keeps its v1
+ * file's palette colour for colour, and no twin carries an override — the v1 maps stay the
+ * scale-1 build untouched.
+ *
  * Sizes, anchors and frame counts are the bible's (§ 5); the frame count is core's
  * `OPTION_FRAMES` through the barrel (the same value the sync masks with). Test files hold
  * literal sizes by convention (`docs/dev/conventions.md` § Frame numbers: scans do not read
@@ -35,8 +42,17 @@ const v2 = buildAtlas();
 /** The scale-1 build — the v1 maps, untouched by this subtask (RR-1). */
 const v1 = buildAtlas({ artScale: 1 });
 
-/** The two engine option sprites. */
-const NAMES: readonly string[] = ['options/orb', 'options/stolen'];
+/** The engine option sprites: the two orbs of R4-01.A3 and the six w15-ENRICH-A silhouette twins. */
+const NAMES: readonly string[] = [
+  'options/orb',
+  'options/stolen',
+  'options/serpent',
+  'options/dart',
+  'options/gyro',
+  'options/guard-pod',
+  'options/echo-wing',
+  'options/aegis-dish',
+];
 
 /** A sprite source file, parsed. */
 interface SourceFile {

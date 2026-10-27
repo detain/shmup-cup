@@ -1,0 +1,86 @@
+{
+  "name": "options/dart",
+  "description": "Dart option (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 fletched dart-head redrawn right-facing at 12 \u00d7 12 with a stepped nose cone, breathing over the four OPTION_FRAMES pulse steps \u2014 0 calm red head, 1 the tail edge burns amber, 2 the flare peak (the whole head amber), 3 the flame dies to the tail and nose edges. Same palette as the v1 silhouette.",
+  "palette": {
+    ".": null,
+    "o": "#6a1a1a",
+    "r": "#e83838",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "............",
+        "...o........",
+        "..oro.......",
+        ".orrrro.....",
+        "orrrrrrrro..",
+        "orrrrrrrrrro",
+        "orrrrrrrrrro",
+        "orrrrrrrro..",
+        ".orrrro.....",
+        "..oro.......",
+        "...o........",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "...o........",
+        "..oro.......",
+        ".orrrro.....",
+        "yrrrrrrrro..",
+        "yrrrrrrrrrro",
+        "yrrrrrrrrrro",
+        "yrrrrrrrro..",
+        ".orrrro.....",
+        "..oro.......",
+        "...o........",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "...y........",
+        "..oyo.......",
+        ".oyyyyy.....",
+        "oyyyyyyyyo..",
+        "oyyyyyyyyyyo",
+        "oyyyyyyyyyyo",
+        "oyyyyyyyyo..",
+        ".oyyyyy.....",
+        "..oyo.......",
+        "...y........",
+        "............"
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "...o........",
+        "..oro.......",
+        ".orrrro.....",
+        "orrrrrrrro..",
+        "yrrrrrrrrryo",
+        "yrrrrrrrrryo",
+        "orrrrrrrro..",
+        ".orrrro.....",
+        "..oro.......",
+        "...o........",
+        "............"
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

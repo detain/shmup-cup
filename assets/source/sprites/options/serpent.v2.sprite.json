@@ -1,0 +1,86 @@
+{
+  "name": "options/serpent",
+  "description": "Snake option (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 hollow chain link at 12 \u00d7 12 with a bevelled rim, breathing over the four OPTION_FRAMES pulse steps \u2014 0 calm red ring with one white glint at the top rim, 1 the glint widens along the rim, 2 the flare peak (the upper ring white, the red foot kept), 3 the light contracts through the rim sides. Same palette as the v1 silhouette, so the shipped colour census of this name holds.",
+  "palette": {
+    ".": null,
+    "o": "#6a1a1a",
+    "r": "#e83838",
+    "w": "#fff0c0"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "..oorrrwwo..",
+        ".orrrwrrrro.",
+        ".orr....rro.",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        ".orr....rro.",
+        ".orrrrrrrro.",
+        "..oorrrroo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oorwwwoo..",
+        ".orwwwwrrro.",
+        ".oww....wwo.",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        ".orr....rro.",
+        ".orrrrrrrro.",
+        "..oorrrroo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oowwwwoo..",
+        ".owwwwwwwwo.",
+        ".oww....wwo.",
+        "oww......wwo",
+        "oww......wwo",
+        "orr......rro",
+        "orr......rro",
+        ".orr....rro.",
+        ".orrrrrrrro.",
+        "..oorrrroo..",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oooo....",
+        "..oorrrwwo..",
+        ".orrwwwwrro.",
+        ".ow......wo.",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        "orr......rro",
+        ".orr....rro.",
+        ".orrrrrrrro.",
+        "..oorrrroo..",
+        "....oooo...."
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "name": "options/echo-wing",
+  "description": "Echo wing (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 ghost chevron redrawn at 12 \u00d7 12 as a hollow wing-ring, breathing over the four OPTION_FRAMES pulse steps \u2014 0 calm violet ring, 1 the lit echo edge lines the upper rim, 2 the flare peak (the ring itself is light), 3 the echo edge sweeps down the lower rim as the glow contracts. Same palette as the v1 silhouette.",
+  "palette": {
+    ".": null,
+    "o": "#3a1a4a",
+    "v": "#8a5ac0",
+    "l": "#c8a8f0"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oo.....",
+        "....ovvo....",
+        "...ov..vo...",
+        "..ov....vo..",
+        ".ov......vo.",
+        "ov........vo",
+        "ov........vo",
+        ".ov......vo.",
+        "..ov....vo..",
+        "...ov..vo...",
+        "....ovvo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....ovvo....",
+        "...ovllvo...",
+        "..ovl..lvo..",
+        ".ovl....lvo.",
+        "ovl......lvo",
+        "ov........vo",
+        ".ov......vo.",
+        "..ov....vo..",
+        "...ov..vo...",
+        "....ovvo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....ollo....",
+        "...ol..lo...",
+        "..ol....lo..",
+        ".ol......lo.",
+        "ol........lo",
+        "ol........lo",
+        ".ov......vo.",
+        "..ov....vo..",
+        "...ov..vo...",
+        "....ovvo....",
+        ".....oo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oo.....",
+        "....ovvo....",
+        "...ov..vo...",
+        "..ov....vo..",
+        ".ov......vo.",
+        "ovl......lvo",
+        "ovl......lvo",
+        ".ovl....lvo.",
+        "..ovl..lvo..",
+        "...ovllvo...",
+        "....ovvo....",
+        ".....oo....."
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

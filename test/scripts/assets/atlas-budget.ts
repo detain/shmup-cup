@@ -36,9 +36,18 @@
  * the common page measures **306,128 B** with them (+5,460 B over W15-A's 300,668 B). The same
  * arithmetic as the row above: a discipline figure, not a firmware wall — the TV's real ceilings
  * keep their headroom, and the gameplay caps (the 32-slot item pool first of all) stand untouched.
+ *
+ * **w15-ENRICH-A (the same owner re-add ruling, riding on w15-C's row): raised 307,000 →
+ * 309,500.** The six option-silhouette v2 twins and the two gen6 rows REING6 stopped (the bonus
+ * jewel and the one-up; the third, the option hunter, this lane dropped at its e2e screen check)
+ * land as native art whose richer palettes compress worse than the flat upscaled frames they
+ * replace; the page measures **308,475 B** on this merge (+2,347 B over w15-C's 306,128 B). The
+ * page's AREA, the quantity the stand-in band and the TV residency budget actually model, does
+ * not move: every new native draws in the slot the upscaled frame held, and the bundle's gzip
+ * and dist rows still stand under their real ceilings. Headroom 1,025 B kept — a bulk colour
+ * regression still trips this cap loudly.
  */
-export const ATLAS_COMMON_PNG_CAP = 307_000;
-
+export const ATLAS_COMMON_PNG_CAP = 309_500;
 /**
  * Cap on one campaign zone's atlas PNG bytes (its **own** pages summed — the quantity both gate
  * tests pass to it; R3-04.M2b): the RR-7 band's top, 0.6 MB per 2048×1024 page — the page a

@@ -1,0 +1,88 @@
+{
+  "name": "options/guard-pod",
+  "description": "Guard pod (w15-ENRICH-A v2 twin, art bible v2 \u00a7 5): the v1 steel capsule redrawn at 12 \u00d7 12 with a six-row glass lens over a vented knee, breathing over the four OPTION_FRAMES pulse steps \u2014 0 calm cyan glass, 1 the lens core lights amber, 2 the flare peak (the lens and the vents burn amber), 3 the charge settles to a single amber row. Same palette as the v1 silhouette.",
+  "palette": {
+    ".": null,
+    "o": "#243444",
+    "g": "#5a7a9a",
+    "c": "#9ac0e0",
+    "k": "#141c24",
+    "y": "#f8a030"
+  },
+  "hitFlash": false,
+  "native": true,
+  "frames": [
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggccccccggo",
+        "ogccccccccgo",
+        "ogccccccccgo",
+        "ogccccccccgo",
+        "ogccccccccgo",
+        "oggccccccggo",
+        ".ogkcccckgo.",
+        ".oggkkkkkgo.",
+        "..ogkkkkgo..",
+        "...oooooo..."
+      ]
+    },
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggccccccggo",
+        "ogccyyyyccgo",
+        "ogccyyyyccgo",
+        "ogccyyyyccgo",
+        "ogccyyyyccgo",
+        "oggccccccggo",
+        ".ogkcccckgo.",
+        ".oggkkkkkgo.",
+        "..ogkkkkgo..",
+        "...oooooo..."
+      ]
+    },
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggcyyyycggo",
+        "ogcyyyyyycgo",
+        "ogcyyyyyycgo",
+        "ogcyyyyyycgo",
+        "ogcyyyyyycgo",
+        "oggcyyyycggo",
+        ".ogkyyyykgo.",
+        ".oggkyykkgo.",
+        "..ogkyykgo..",
+        "...oooooo..."
+      ]
+    },
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggccccccggo",
+        "ogccccccccgo",
+        "ogccccccccgo",
+        "ogccyyyyccgo",
+        "ogccccccccgo",
+        "oggccccccggo",
+        ".ogkcccckgo.",
+        ".oggkkkkkgo.",
+        "..ogkkkkgo..",
+        "...oooooo..."
+      ]
+    }
+  ],
+  "animations": {
+    "pulse": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

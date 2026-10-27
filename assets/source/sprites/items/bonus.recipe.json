@@ -1,0 +1,40 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "items/bonus",
+  "category": "item",
+  "frame": {
+    "width": 15,
+    "height": 15
+  },
+  "frameCount": 1,
+  "sources": [
+    {
+      "image": "art-prompts/v2/gen6/a-bonus/gen.png",
+      "frames": [
+        [
+          136,
+          137,
+          239,
+          237
+        ]
+      ]
+    }
+  ],
+  "fit": "contain",
+  "key": {
+    "mode": "green"
+  },
+  "outline": false,
+  "anchor": [
+    7,
+    7
+  ],
+  "provenance": {
+    "use": "pixels",
+    "reviewed": {
+      "on": "2026-10-26",
+      "by": "owner \u2014 picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+    },
+    "notes": "w15-ENRICH-A (gen6 rows REING6-3, the owner re-add ruling of 2026-10-26): the BONUS score jewel from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the 15x15 slot the upscaled v1 map drew today). REING6 audited the sheet probe-clean; its landing was blocked by the upscaled-pool floor, which the owner's ruling now carries. The design carries its own 1-px near-black navy outline, so the outline pass is off. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution)."
+  }
+}

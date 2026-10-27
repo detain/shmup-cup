@@ -1,0 +1,72 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "items/bonus",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": {
+    "on": "2026-10-26",
+    "by": "owner — picker ruling 2026-10-18, the FLUX ruling of 2026-10-23 (art-provenance.md section 8, decision 1) and the gen6 owner-improvement redesign round (waiver: \"ai generate those other things too\")"
+  },
+  "ingestedAt": "2026-10-27",
+  "author": null,
+  "sources": [
+    {
+      "path": "art-prompts/v2/gen6/a-bonus/gen.png",
+      "sha256": "bb6f7a4285201c7f11b1e5e1233725a4d564698ec2a7029e5f42370d86f478bb",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": null,
+        "entry": null,
+        "text": "SNES-era 16-bit pixel art inspired sprite sheet for a horizontal arcade shoot-'em-up: the BONUS item — a score treasure jewel.\n\nDesign identity to keep exactly — A single large faceted golden gem with an inner white star spark and a navy outline — instantly reads as a valuable score bonus pickup, NOT a plain circle.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- The sheet holds exactly ONE cell — the WHOLE canvas is the single subject's frame; an empty sheet ruins it.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the BONUS jewel — a brilliant-cut golden gem coin with a white star glint, floating on its own The subject fills the cell as ONE large centred figure, aspect ratio about 1.0:1 (0.78:1 to 1.28:1).\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 1 subject cell — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 48 px of unbroken flat #51e018 around it and clean flat gutters between cells.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: retro 16-bit pixel art, chunky visible square pixels, flat saturated fills with a three-step shading ramp lit from the top-left, crisp 1-px near-black navy outline on every silhouette edge, no anti-aliasing, no motion blur.",
+        "negative": "photorealistic, 3d render, text, labels, numbers, cell borders, guide lines, grid lines, watermark, blurry, anti-aliasing, gradient background, scenery, stars, cast shadow, multiple subjects per cell, empty cell"
+      },
+      "seed": 520007091,
+      "size": "512x512",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-26T22:25:29.674Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "art-prompts/v2/gen6/a-bonus/gen.json",
+        "sidecarSha256": "670ea798ff33715d8dbc86ba049c72f10b165a16cb7a92387dbf26f9fd91287f",
+        "id": "gen6/a-bonus",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "assets/source/sprites/items/bonus.recipe.json",
+    "sha256": "162808cf1bea787ec6fc2d357dcc4330d0708bb4f2df10cfc0b83879ea3bb720"
+  },
+  "edit": null,
+  "output": {
+    "png": "bonus.png",
+    "sha256": "2790857fadc66dd726ac0f10d33f35bc4edb66c448e65f34aedc38e09d13c27e",
+    "sidecar": "bonus.json",
+    "sidecarSha256": "34eef4aad9c7e4f7bff6435d8646ec2d528c652613dc85367fd5e6b7812c94dd",
+    "frames": 1,
+    "frameWidth": 15,
+    "frameHeight": 15,
+    "colors": 12,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "w15-ENRICH-A (gen6 rows REING6-3, the owner re-add ruling of 2026-10-26): the BONUS score jewel from the owner-improvement redesign sheet (1 cell of 512x512 on the flat #51e018 key, probe box +6px pad, contain to the 15x15 slot the upscaled v1 map drew today). REING6 audited the sheet probe-clean; its landing was blocked by the upscaled-pool floor, which the owner's ruling now carries. The design carries its own 1-px near-black navy outline, so the outline pass is off. FLUX.2-dev non-commercial ruling 2026-10-23 (BFL tier before any paid distribution)."
+}
