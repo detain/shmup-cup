@@ -10,11 +10,17 @@
  * tools) and `__SHMUP_BUILD__` (the git SHA).
  */
 import { defineConfig } from 'vite';
-import { clientConditions, shmupAssets, shmupBuildInfo, shmupContent } from '../../vite.shared.js';
+import {
+  clientConditions,
+  shmupAssets,
+  shmupBuildInfo,
+  shmupContent,
+  shmupVideos,
+} from '../../vite.shared.js';
 
 export default defineConfig({
   base: './',
-  plugins: [shmupContent(), shmupAssets(), shmupBuildInfo()],
+  plugins: [shmupContent(), shmupAssets(), shmupVideos(), shmupBuildInfo()],
   resolve: {
     conditions: clientConditions,
   },

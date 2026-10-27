@@ -29,7 +29,13 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { clientConditions, shmupAssets, shmupBuildInfo, shmupContent } from '../../vite.shared.js';
+import {
+  clientConditions,
+  shmupAssets,
+  shmupBuildInfo,
+  shmupContent,
+  shmupVideos,
+} from '../../vite.shared.js';
 
 /**
  * Source of the Tizen app's `globalThis` polyfill, prepended to `app.js` as the post-minify
@@ -85,7 +91,7 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupContent(), shmupAssets(), shmupBuildInfo(), classicScriptTag()],
+  plugins: [shmupContent(), shmupAssets(), shmupVideos(), shmupBuildInfo(), classicScriptTag()],
   server: {
     host: true,
     port: 5175,

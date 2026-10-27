@@ -25,6 +25,14 @@ declare const __SHMUP_BUILD__: string;
 declare const __SHMUP_REPORT_URL__: string;
 
 /**
+ * `true` when the build was made with `SHMUP_NO_VIDEO=1` (v2 R7-VID): the cutscene director is
+ * compiled out and no clips ship. `false` in every other build, where the saved setting, the
+ * `?novid=1` parameter and the `SHMUP_NO_VIDEO` window global decide. The shell's `boot` module
+ * reads it through its own guarded `declare` (unit tests never define it).
+ */
+declare const __SHMUP_NO_VIDEO__: boolean;
+
+/**
  * The live-reload WebSocket URL of a `tizen:watch` dev build (`ws://<desktop>:<port>`, M2-17 —
  * `apps/tizen/scripts/tizen-watch.mjs` sets `SHMUP_LIVE_RELOAD_URL`); `''` in every other build.
  * Defined by `apps/tizen/vite.config.ts` only — the Tizen entry point reads it.

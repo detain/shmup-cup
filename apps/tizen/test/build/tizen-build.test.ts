@@ -20,6 +20,7 @@ import {
 } from '../../scripts/check-bundle.mjs';
 import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
+import { videoShippedFiles } from '../../../../vite.shared.js';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
 let outDir = '';
@@ -57,10 +58,20 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(checkTizenBundle(outDir).problems).toEqual([]);
   });
 
-  it('contains exactly the widget files plus the atlas: one script, index.html, config.xml, icon.png, assets/atlas/*.png and main.json', () => {
+  it('contains exactly the widget files plus the atlas and the shipped clip set: one script, index.html, config.xml, icon.png, assets/atlas/*.png and main.json, and the cutscene files under assets/video/ (v2 R7-VID)', () => {
     const pages = manifest.pages.map((page) => `assets/atlas/${page.file}`);
     expect(checkTizenBundle(outDir).files.sort()).toEqual(
-      ['app.js', 'config.xml', 'icon.png', 'index.html', 'assets/atlas/main.json', ...pages].sort(),
+      [
+        'app.js',
+        'config.xml',
+        'icon.png',
+        'index.html',
+        'assets/atlas/main.json',
+        ...pages,
+        // What the `shmupVideos()` plugin ships — the kit's outputs on disk, none on a host
+        // without ffmpeg (the degraded build variant, v2 R7-VID).
+        ...videoShippedFiles(),
+      ].sort(),
     );
   });
 

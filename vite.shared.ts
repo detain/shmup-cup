@@ -24,7 +24,7 @@
  *
  * @module
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -514,6 +514,159 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
   };
 }
 
+// ----------------------------------------------------------------------------- video (R7-VID)
+
+/**
+ * Where the encoded cutscene clips live before the build ships them
+ * (`assets/generated/video/` — the encode kit's output, git-ignored like the atlas).
+ */
+export const VIDEO_SOURCE_DIR = fileURLToPath(new URL('./assets/generated/video', import.meta.url));
+
+/**
+ * The encode kit (`scripts/v20x/video-encode.mjs`): deterministic ffmpeg passes from the
+ * art-prompts winners into the shipped clips.
+ */
+const VIDEO_KIT = fileURLToPath(new URL('./scripts/v20x/video-encode.mjs', import.meta.url));
+
+/**
+ * Where the built app serves the clips (`dist/assets/video/`); the shell's `cutscene`
+ * `VIDEO_URL_DIR` is the same string — pinned by `test/integration/video-plugin.test.ts`.
+ */
+export const VIDEO_URL_DIR = 'assets/video';
+
+/** A shippable video file: a clip, its provenance sidecar, the ledger or the licences. */
+export const VIDEO_FILE_PATTERN =
+  /^([a-z0-9-]+\.mp4|[a-z0-9-]+\.art\.json|video-ledger\.json|LICENSES-videos\.md)$/;
+
+/**
+ * The video files a default-directory build emits into `dist/${VIDEO_URL_DIR}/` — empty when
+ * the kit shipped nothing (a machine without ffmpeg — the degraded shape). The three
+ * build-output tests (`tizen-build`, `webos-build`, `bench-build`) derive their exact file
+ * lists from this, so the lists track the plugin's own reads on either host (v2 R7-VID).
+ *
+ * @param only - When set, ship only these names (the bench's one looped clip).
+ * @returns The dist-relative paths, sorted.
+ */
+export function videoShippedFiles(only: readonly string[] | null = null): string[] {
+  if (!existsSync(VIDEO_SOURCE_DIR)) return [];
+  return readdirSync(VIDEO_SOURCE_DIR)
+    .filter((name) => VIDEO_FILE_PATTERN.test(name) && (only === null || only.includes(name)))
+    .map((name) => `${VIDEO_URL_DIR}/${name}`)
+    .sort();
+}
+
+/**
+ * Vite plugin serving and shipping the cutscene clips (v2 R7-VID, plan §18).
+ *
+ * - **`buildStart` (both commands):** runs the encode kit's `--check`; when it fails, runs the
+ *   full kit (which loud-skips with exit 0 when the machine has no ffmpeg — then there is no
+ *   video directory and the app simply has no clips: the director degrades silently, the same
+ *   shape as an atlas without pages).
+ * - **Build:** emits every kit output into `assets/video/` under fixed names (the shell's
+ *   manifest table refers to files by name, like the atlas pages).
+ * - **Dev server:** serves `<base>assets/video/<file>` from the kit's directory with no caching
+ *   (a re-encode shows on reload). The production `vite preview` (what the browser specs use)
+ *   serves the emitted files statically with range requests.
+ *
+ * @param options - The plugin options.
+ * @param options.sourceDir - The clips' directory (default the kit's output,
+ *   `assets/generated/video`).
+ * @param options.only - When set, ship only these files (the bench build takes the one looped
+ *   clip the video knob plays — 198 KB, not the 6.5 MB set). The kit still checks the full set.
+ * @returns The plugin.
+ */
+export function shmupVideos(
+  options: { sourceDir?: string; only?: readonly string[] } = {},
+): Plugin {
+  const sourceDir = options.sourceDir ?? VIDEO_SOURCE_DIR;
+  const only = options.only ?? null;
+  // A custom directory is the test's fixture — the kit only ever feeds the real one.
+  const runsKit = options.sourceDir === undefined;
+  let command: 'build' | 'serve' = 'build';
+
+  /** Runs the kit when the shipped files do not match the ledger (loud-skip without ffmpeg). */
+  const ensure = (): void => {
+    if (!runsKit) return;
+    const check = spawnSync(process.execPath, [VIDEO_KIT, '--check'], { stdio: 'ignore' });
+    if (check.status === 0) return;
+    spawnSync(process.execPath, [VIDEO_KIT], { stdio: 'inherit' });
+  };
+
+  /** The shippable files now in the directory (empty when the kit shipped nothing). */
+  const videoFiles = (): string[] => {
+    if (!existsSync(sourceDir)) return [];
+    return readdirSync(sourceDir).filter(
+      (name) => VIDEO_FILE_PATTERN.test(name) && (only === null || only.includes(name)),
+    );
+  };
+
+  return {
+    name: 'shmup:videos',
+    /**
+     * Remembers whether this is a build or the dev server.
+     *
+     * @param config - The resolved Vite config.
+     */
+    configResolved(config) {
+      command = config.command;
+    },
+    /**
+     * Encodes what is missing and, in builds, emits the clips into `assets/video/`.
+     *
+     * @remarks
+     * A machine without ffmpeg encodes nothing and the game ships without clips (the encode kit
+     * prints why and exits 0); CI's ubuntu runners carry ffmpeg, so there the clips are
+     * generated exactly like the atlas is.
+     */
+    buildStart() {
+      if (process.env.SHMUP_NO_VIDEO === '1') return; // the baked kill switch: ship no clips
+      ensure();
+      if (command !== 'build') return;
+      for (const name of videoFiles()) {
+        this.emitFile({
+          type: 'asset',
+          fileName: `${VIDEO_URL_DIR}/${name}`,
+          source: readFileSync(join(sourceDir, name)),
+        });
+      }
+    },
+    /**
+     * Dev server only: serves `<base>assets/video/<file>` from the kit's directory, no cache.
+     *
+     * @param server - The Vite dev server.
+     */
+    configureServer(server) {
+      const prefix = `${server.config.base}${VIDEO_URL_DIR}/`;
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? '').split('?')[0] ?? '';
+        if (!url.startsWith(prefix)) {
+          next();
+          return;
+        }
+        let file: string;
+        try {
+          file = decodeURIComponent(url.slice(prefix.length));
+        } catch {
+          next();
+          return;
+        }
+        const path = join(sourceDir, file);
+        if (
+          !VIDEO_FILE_PATTERN.test(file) ||
+          (only !== null && !only.includes(file)) ||
+          !existsSync(path)
+        ) {
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', file.endsWith('.mp4') ? 'video/mp4' : 'application/json');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.end(readFileSync(path));
+      });
+    },
+  };
+}
+
 // ------------------------------------------------------------------------------ build info
 
 /**
@@ -609,6 +762,8 @@ export function shmupBuildInfo(): Plugin {
           __SHMUP_DEV__: JSON.stringify(isDevBuild(env)),
           __SHMUP_BUILD__: JSON.stringify(buildId()),
           __SHMUP_REPORT_URL__: JSON.stringify(reportUrl),
+          // v2 R7-VID: `SHMUP_NO_VIDEO=1` bakes the kill switch in (no surface, no clips).
+          __SHMUP_NO_VIDEO__: JSON.stringify(process.env.SHMUP_NO_VIDEO === '1'),
         },
       };
     },

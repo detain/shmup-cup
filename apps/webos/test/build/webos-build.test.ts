@@ -19,6 +19,7 @@ import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MATCH_ALL_BANNER, POLYFILL_BANNER } from '../../../tizen/scripts/check-bundle.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
+import { videoShippedFiles } from '../../../../vite.shared.js';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../scripts/check-bundle.mjs';
 import { validateAppInfo } from '../../scripts/appinfo.mjs';
 
@@ -60,10 +61,17 @@ describe('webos build output (vite build → dist/) — M3-03', () => {
     expect(result.gzipBytes).toBeGreaterThan(0);
   });
 
-  it('contains exactly the app files plus the atlas pages and its manifest (R1-05)', () => {
+  it('contains exactly the app files plus the atlas pages, its manifest and the shipped clip set (R1-05, v2 R7-VID)', () => {
     const pages = manifest.pages.map((page) => `assets/atlas/${page.file}`);
     expect(checkWebosBundle(outDir).files.sort()).toEqual(
-      [...WEBOS_APP_FILES, 'assets/atlas/main.json', ...pages].sort(),
+      [
+        ...WEBOS_APP_FILES,
+        'assets/atlas/main.json',
+        ...pages,
+        // The same MP4 set the Tizen widget ships (webOS reads the Tizen budgets and the
+        // `shmupVideos()` plugin's outputs; no webm anywhere — v2 R7-VID).
+        ...videoShippedFiles(),
+      ].sort(),
     );
     const shipped = JSON.parse(
       readFileSync(join(outDir, 'assets', 'atlas', 'main.json'), 'utf8'),

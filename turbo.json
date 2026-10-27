@@ -36,6 +36,11 @@
     "build:bench": {
       "dependsOn": ["^build", "//#assets"],
       "env": ["VITE_REPORT_URL", "SHMUP_BUILD_ID"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/assets/generated/video/**",
+        "$TURBO_ROOT$/scripts/v20x/**"
+      ],
       "outputs": ["dist-bench/**"]
     },
     "@shmup/webos#build:bench": {
@@ -43,6 +48,8 @@
       "env": ["VITE_REPORT_URL", "SHMUP_BUILD_ID"],
       "inputs": [
         "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/assets/generated/video/**",
+        "$TURBO_ROOT$/scripts/v20x/**",
         "$TURBO_ROOT$/apps/tizen/bench/**",
         "$TURBO_ROOT$/apps/tizen/src/**",
         "$TURBO_ROOT$/apps/tizen/scripts/**",
