@@ -177,7 +177,11 @@
  * {@link DIRECT_ITEM_SPRITES}, {@link DIRECT_ITEM_SCORE}, {@link DIRECT_ITEM_TICKS},
  * {@link DIRECT_ITEM_DRIFT}, {@link DEFAULT_DIRECT_ITEM_PLAN}, {@link DIRECT_POWER_UP_EVENT_BASE},
  * {@link applyDirectDeathPenalty}, {@link directMaxLevel}. M2-10: {@link ONE_UP_SPRITE},
- * {@link BONUS_CAPSULE_SPRITE}, {@link BONUS_CAPSULE_SCORE}.
+ * {@link BONUS_CAPSULE_SPRITE}, {@link BONUS_CAPSULE_SCORE}. w15-C: {@link firstWeaponStop},
+ * {@link CAPSULE_FLAVOR_SPRITES}, {@link WEAPON_CRATE_SPRITE}, {@link MEGA_CRATE_SPRITE},
+ * {@link SPEED_CRATE_SPRITE} and the {@link ItemKind} `Mega` / `WeaponPick` / `SpeedOnly` codes —
+ * the flavored capsule icon, the three new drop crates and the stage's weighted drop table
+ * (`dropWeights`, read in the constructor).
  *
  * **Spread Gun (M3-01).** The Extra Edit's Spread Gun (`core/weapons` `SPREAD_GUN_BEHAVIOR`) on the
  * Double role may be equipped twice ({@link MeterChoices.doubleLevels} 2, set from
@@ -212,6 +216,7 @@ import {
 } from '../config/index.js';
 import {
   DIRECT_ITEMS,
+  ENEMY_DROPS,
   type ContentDb,
   type DirectItemName,
   type PlayerShipSpec,
@@ -233,6 +238,7 @@ import {
 } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
+import type { RngStreams } from '../rng/index.js';
 import { MAX_LIVES } from '../scoring/index.js';
 import {
   ShieldKind,
@@ -446,6 +452,33 @@ export const ONE_UP_SPRITE = 'items/1up';
 /** The bonus capsule's sprite (an engine sprite, M2-10 — the bonus stages). */
 export const BONUS_CAPSULE_SPRITE = 'items/capsule-bonus';
 
+/** The weapon crate's sprite (an engine sprite, w15-C — {@link ItemKind.WeaponPick}). */
+export const WEAPON_CRATE_SPRITE = 'items/crate-weapon';
+
+/** The mega crate's sprite (an engine sprite, w15-C — {@link ItemKind.Mega}). */
+export const MEGA_CRATE_SPRITE = 'items/crate-mega';
+
+/** The speed capsule's sprite (an engine sprite, w15-C — {@link ItemKind.SpeedOnly}). */
+export const SPEED_CRATE_SPRITE = 'items/crate-speed';
+
+/**
+ * The flavored capsule icons (w15-C V1): the meter-mode capsule drawn by the cursor's next stop —
+ * presentation of state through the art, the same pickup behaviour. Indexed by
+ * {@link MeterSlot}: a capsule whose next stop is SPEED is green, a weapon stop (MISSILE /
+ * DOUBLE / LASER) red, OPTION blue, `?` / `!` (the power stops) gold. Part of the World's
+ * `ENGINE_SPRITES`; never a kind's own sprite — the item stays {@link ItemKind.Capsule}, only the
+ * drawn sprite changes ({@link PowerUpSystem} `sync`).
+ */
+export const CAPSULE_FLAVOR_SPRITES: readonly string[] = Object.freeze([
+  'items/capsule-speed', // SPEED
+  'items/capsule-weapon', // MISSILE
+  'items/capsule-weapon', // DOUBLE
+  'items/capsule-weapon', // LASER
+  'items/capsule-option', // OPTION
+  'items/capsule-power', // ?
+  'items/capsule-power', // !
+]);
+
 /** Points a bonus capsule is worth (shmup_feat.md §14 / §15 "bonus capsule 1,000"). */
 export const BONUS_CAPSULE_SCORE = 1000;
 
@@ -542,6 +575,23 @@ export const ItemKind = {
   OneUp: 9,
   /** A bonus capsule (M2-10): {@link BONUS_CAPSULE_SCORE} points, nothing else. World-space. */
   BonusCapsule: 10,
+  /**
+   * The mega crate (w15-C): in meter mode it parks the cursor on `!` (the slot itself, not the
+   * next one); in Direct mode it is the yellow item — the smart bomb or a black-hole stock.
+   * World-space, no drift.
+   */
+  Mega: 11,
+  /**
+   * The weapon crate (w15-C): in meter mode it parks the cursor on the next weapon stop
+   * (MISSILE / DOUBLE / LASER / OPTION, {@link firstWeaponStop}) instead of advancing by one; in
+   * Direct mode it is the red item — main shot + 1 level. World-space, no drift.
+   */
+  WeaponPick: 12,
+  /**
+   * The speed capsule (w15-C): in meter mode it parks the cursor on SPEED; in Direct mode it is
+   * worth its points and the pickup sound only (the Speed toggle is a key there). World-space.
+   */
+  SpeedOnly: 13,
 } as const;
 
 /** An {@link ItemKind} code. */
@@ -593,10 +643,32 @@ export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
   ),
   Object.freeze({ sprite: ONE_UP_SPRITE, frames: 4, score: 0 }),
   Object.freeze({ sprite: BONUS_CAPSULE_SPRITE, frames: 4, score: BONUS_CAPSULE_SCORE }),
+  Object.freeze({ sprite: MEGA_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: WEAPON_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: SPEED_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */
 export const ITEM_SPRITES: readonly string[] = Object.freeze(ITEM_KINDS.map((kind) => kind.sprite));
+
+/**
+ * The {@link ItemKind} each {@link DropKind} code's content drop spawns in meter mode (w15-C V3,
+ * indexed by the code): the table rows of a stage hold `ENEMY_DROPS` names, whose `DropKind` code
+ * is the index + 1 (`core/enemies`), and the roll needs the item. `powerup` is the capsule's
+ * alias here as in {@link PowerUpSystem} `takeDrops`; `None` (−1) never enters a table.
+ */
+const DROP_KIND_TO_ITEM: readonly number[] = Object.freeze([
+  -1,
+  ItemKind.Capsule,
+  ItemKind.BlueCapsule,
+  ItemKind.Capsule,
+  ItemKind.OneUp,
+  ItemKind.BonusCapsule,
+  ItemKind.FreeOption,
+  ItemKind.Mega,
+  ItemKind.WeaponPick,
+  ItemKind.SpeedOnly,
+]);
 
 /** Flag bits of an item ({@link ITEM_SCHEMA} `flags`). */
 export const ItemFlag = {
@@ -666,6 +738,26 @@ export function advanceMeter(meter: PowerMeter): number {
   // "Not a slot", so a NaN cursor recovers too.
   meter.cursor = next >= 0 && next < METER_SLOT_COUNT ? next : 0;
   return meter.cursor;
+}
+
+/**
+ * The first weapon stop strictly after a meter cursor (the weapon crate's jump, w15-C): the walk
+ * MISSILE → DOUBLE → LASER → OPTION → MISSILE wraps ({@link MeterSlot.Missile} again after
+ * OPTION, and from any non-weapon stop — SPEED, `?`, `!`, none — it enters at MISSILE).
+ *
+ * @param cursor - The meter's current cursor (-1 for none, a slot code, or anything a debug tool
+ *   wrote — a NaN comes back to MISSILE).
+ * @returns A weapon stop: {@link MeterSlot.Missile}, {@link MeterSlot.Double},
+ *   {@link MeterSlot.Laser} or {@link MeterSlot.Option}.
+ *
+ * @example
+ * ```ts
+ * firstWeaponStop(MeterSlot.Speed); // → MeterSlot.Missile
+ * firstWeaponStop(MeterSlot.Option); // → MeterSlot.Missile (the walk wraps)
+ * ```
+ */
+export function firstWeaponStop(cursor: number): number {
+  return cursor >= MeterSlot.Missile && cursor < MeterSlot.Option ? cursor + 1 : MeterSlot.Missile;
 }
 
 /**
@@ -1129,6 +1221,11 @@ export interface PowerUpHost {
      */
     readonly freeWayHeading?: Int32Array;
   };
+  /**
+   * The World's RNG streams (w15-C V3): a stage's weighted drop table rolls on the gameplay
+   * stream, so replays of the same seed replay the same drop kinds.
+   */
+  readonly rng: RngStreams;
 }
 
 /** The meter-mode power-ups of one World (see the module docs). */
@@ -1418,6 +1515,16 @@ class PowerUpSystemImpl implements PowerUpSystem {
   private readonly boxHw: number;
   /** Pickup box half height. */
   private readonly boxHh: number;
+  /** Weighted drop table kinds (w15-C V3): {@link ItemKind} per table row (load-time array). */
+  private readonly weightKinds: Int32Array;
+  /** Weighted drop table cumulative weights: row `i` holds the sum through `i`. */
+  private readonly weightCum: Int32Array;
+  /** The table's total weight (0 = no table: a capsule drop is the plain capsule, no roll). */
+  private readonly weightTotal: number;
+  /** Scratch of the drop roll (a fraction in a typed array, never a boxed local, M2-02). */
+  private readonly rollScratch: Float64Array;
+  /** Capsule flavour sprites by next {@link MeterSlot} (w15-C V1; −1 = the base icon). */
+  private readonly flavorSprites: Int32Array;
   /** The World. */
   private readonly host: PowerUpHost;
 
@@ -1453,6 +1560,11 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.itemLife[k] =
         k === ItemKind.FreeOption ? FREE_OPTION_TICKS : drifts ? DIRECT_ITEM_TICKS : 0;
     }
+    // The capsule flavours (w15-C V1): one sprite id per next stop, −1 falls back to the base.
+    this.flavorSprites = new Int32Array(METER_SLOT_COUNT).fill(-1);
+    for (let s = 0; s < METER_SLOT_COUNT; s++) {
+      this.flavorSprites[s] = sprites.get(CAPSULE_FLAVOR_SPRITES[s]) ?? -1;
+    }
     const config = host.config;
     this.coopExtra = config.coopExtra > 0 ? config.coopExtra : 0;
     this.choices = meterChoicesOf(config);
@@ -1470,6 +1582,34 @@ class PowerUpSystemImpl implements PowerUpSystem {
       const index = DIRECT_ITEMS.indexOf(plan[i]);
       this.plan[i] = index >= 0 ? index : 0;
     }
+    // The weighted drop table (w15-C V3): compiled in meter mode only — Direct mode's variety is
+    // the item plan. Rows the loader validated carry a known `ENEMY_DROPS` name; a hand-made row
+    // without one is dropped here (fail silent on the cold path would hide it, so it throws).
+    const rows = this.direct || stage === null ? null : (stage.dropWeights ?? null);
+    const kindsIn: number[] = [];
+    const cumOut: number[] = [];
+    let total = 0;
+    if (rows !== null) {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const drop = ENEMY_DROPS.indexOf(row.drop);
+        if (drop < 0) {
+          throw new Error(
+            'dropWeights: unknown drop name "' + String(row.drop) + '" (an ENEMY_DROPS member)',
+          );
+        }
+        if (!(row.weight > 0)) {
+          throw new Error('dropWeights: row "' + row.drop + '" needs a positive weight');
+        }
+        total += row.weight;
+        kindsIn.push(DROP_KIND_TO_ITEM[drop + 1]);
+        cumOut.push(total);
+      }
+    }
+    this.weightKinds = Int32Array.from(kindsIn);
+    this.weightCum = Int32Array.from(cumOut);
+    this.weightTotal = kindsIn.length > 0 ? total : 0;
+    this.rollScratch = new Float64Array(1);
     const shieldKinds = SHIELD_SPECS.length;
     this.shieldSprites = new Int32Array(shieldKinds).fill(-1);
     this.shieldFrames = new Int32Array(shieldKinds).fill(1);
@@ -1769,34 +1909,78 @@ class PowerUpSystemImpl implements PowerUpSystem {
     for (let d = this.dropsTaken; d < n; d++) {
       const kind = o.dropKind[d];
       if (kind === DropKind.Capsule || kind === DropKind.PowerUp) {
-        // Mode-agnostic (M2-05): a capsule for the meter, the next planned item in Direct mode.
+        // Mode-agnostic (M2-05): a capsule for the meter — of the stage's weighted table when it
+        // has one (w15-C V3) — the next planned item in Direct mode.
         if (this.direct) this.dropDirect(o.dropX[d], o.dropY[d]);
-        else this.spawnItem(ItemKind.Capsule, o.dropX[d], o.dropY[d]);
+        else this.spawnWeighted(o.dropX[d], o.dropY[d]);
         if (!scaled) continue;
         credit[0] += this.coopExtra;
         while (credit[0] >= 1) {
           credit[0] -= 1;
           const y = o.dropY[d] + COOP_EXTRA_OFFSET;
           if (this.direct) this.dropDirect(o.dropX[d], y);
-          else this.spawnItem(ItemKind.Capsule, o.dropX[d], y);
+          else this.spawnWeighted(o.dropX[d], y);
         }
       } else if (kind === DropKind.BlueCapsule) {
-        this.spawnItem(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
+        this.spawnDrop(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.OneUp) {
-        this.spawnItem(ItemKind.OneUp, o.dropX[d], o.dropY[d]);
+        this.spawnDrop(ItemKind.OneUp, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.BonusCapsule) {
-        this.spawnItem(ItemKind.BonusCapsule, o.dropX[d], o.dropY[d]);
+        this.spawnDrop(ItemKind.BonusCapsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.FreeOption) {
-        const i = this.spawnItem(ItemKind.FreeOption, o.dropX[d], o.dropY[d]);
-        if (i >= 0) {
-          const k = (this.freed & 7) * 2;
-          this.pool.fields.vx[i] = FREE_OPTION_DRIFT[k];
-          this.pool.fields.vy[i] = FREE_OPTION_DRIFT[k + 1];
-          this.freed++;
-        }
+        this.spawnDrop(ItemKind.FreeOption, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.Mega) {
+        this.spawnDrop(ItemKind.Mega, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.WeaponPick) {
+        this.spawnDrop(ItemKind.WeaponPick, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.SpeedPick) {
+        this.spawnDrop(ItemKind.SpeedOnly, o.dropX[d], o.dropY[d]);
       }
     }
     if (n > this.dropsTaken) this.dropsTaken = n;
+  }
+
+  /**
+   * Spawns an item of the dropped kind, giving the drifting kinds their drift (w15-C: freed
+   * Options ride {@link FREE_OPTION_DRIFT} whether an explicit hunter clear or a table roll put
+   * them down).
+   *
+   * @param kind - The {@link ItemKind}.
+   * @param x - World x.
+   * @param y - World y.
+   */
+  private spawnDrop(kind: ItemKind, x: number, y: number): void {
+    const i = this.spawnItem(kind, x, y);
+    if (kind === ItemKind.FreeOption && i >= 0) {
+      const k = (this.freed & 7) * 2;
+      this.pool.fields.vx[i] = FREE_OPTION_DRIFT[k];
+      this.pool.fields.vy[i] = FREE_OPTION_DRIFT[k + 1];
+      this.freed++;
+    }
+  }
+
+  /**
+   * Spawns the item of one power-up drop in meter mode (w15-C V3): the plain capsule while the
+   * stage holds no `dropWeights`, else one draw of the gameplay stream over the compiled table —
+   * the same seed replays the same kinds. Whole-pixel coordinates travel as numbers; the rolled
+   * fraction lives in {@link rollScratch} (a boxed local would allocate per drop, M2-02).
+   *
+   * @param x - World x.
+   * @param y - World y.
+   */
+  private spawnWeighted(x: number, y: number): void {
+    const total = this.weightTotal;
+    if (total === 0) {
+      this.spawnDrop(ItemKind.Capsule, x, y);
+      return;
+    }
+    const scratch = this.rollScratch;
+    this.host.rng.gameplay.nextFloatInto(scratch, 0);
+    scratch[0] = scratch[0] * total;
+    const cum = this.weightCum;
+    let lo = 0;
+    while (scratch[0] >= cum[lo]) lo++;
+    this.spawnDrop(this.weightKinds[lo] as ItemKind, x, y);
   }
 
   /** See {@link PowerUpSystem.dropDirect}. */
@@ -1962,6 +2146,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
         this.collectDirect(o.pickupPlayer[k], kind - ItemKind.DirectRed);
       } else if (kind === ItemKind.OneUp) this.collectOneUp(o.pickupPlayer[k]);
       else if (kind === ItemKind.BonusCapsule) this.collectBonus(o.pickupPlayer[k]);
+      else if (kind === ItemKind.Mega) this.collectMega(o.pickupPlayer[k]);
+      else if (kind === ItemKind.WeaponPick) this.collectWeaponPick(o.pickupPlayer[k]);
+      else if (kind === ItemKind.SpeedOnly) this.collectSpeedOnly(o.pickupPlayer[k]);
     }
     const pending = this.megaPending;
     for (let p = 0; p < pending.length; p++) {
@@ -2013,6 +2200,76 @@ class PowerUpSystemImpl implements PowerUpSystem {
   private collectBonus(player: number): void {
     if (!this.valid(player)) return;
     this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, this.host.players[player], 0);
+  }
+
+  /**
+   * Parks the meter cursor on a slot without advancing it (the crates' jump, w15-C V2): the
+   * advance ding, and — exactly as {@link PowerUpSystem.collect} — the slot is auto-equipped when
+   * the Auto Power-Up order wants it next.
+   *
+   * @param player - The collector's slot (valid).
+   * @param slot - The {@link MeterSlot} to park on.
+   */
+  private parkMeter(player: number, slot: number): void {
+    this.meters[player].cursor = slot;
+    this.pushAtShip(SimEventKind.Sfx, SFX_CUES.MeterAdvance, this.host.players[player], 0);
+    if (this.auto && slot === this.nextAutoSlot(player) && this.canEquip(player, slot)) {
+      this.equip(player, slot);
+    }
+  }
+
+  /**
+   * A mega crate was collected (w15-C V2): Direct mode spends its yellow item (smart bomb /
+   * black-hole stock); meter mode parks the cursor on `!` — its {@link BONUS_CAPSULE_SCORE} parity
+   * aside, the guarantee is the highlight itself (a plain capsule needs seven pickups to walk
+   * there).
+   *
+   * @param player - The collector's slot.
+   */
+  private collectMega(player: number): void {
+    if (!this.valid(player)) return;
+    if (this.direct) {
+      this.collectDirect(player, 4);
+      return;
+    }
+    this.parkMeter(player, MeterSlot.Mega);
+  }
+
+  /**
+   * A weapon crate was collected (w15-C V2): Direct mode gets the red item (main shot + 1
+   * level); meter mode jumps the cursor to the next stop of the MISSILE → DOUBLE → LASER →
+   * OPTION walk ({@link firstWeaponStop}) that can still be equipped — the first of them when
+   * every weapon slot is maxed, where the ding still tells the cursor moved.
+   *
+   * @param player - The collector's slot.
+   */
+  private collectWeaponPick(player: number): void {
+    if (!this.valid(player)) return;
+    if (this.direct) {
+      this.collectDirect(player, 0);
+      return;
+    }
+    let stop = firstWeaponStop(this.meters[player].cursor);
+    for (let t = 0; t < 4; t++) {
+      if (this.canEquip(player, stop)) break;
+      stop = firstWeaponStop(stop);
+    }
+    this.parkMeter(player, stop);
+  }
+
+  /**
+   * A speed capsule was collected (w15-C V2): meter mode parks the cursor on SPEED; Direct mode
+   * takes the points and the sound only (speed there is the Speed toggle's, never an item's).
+   *
+   * @param player - The collector's slot.
+   */
+  private collectSpeedOnly(player: number): void {
+    if (!this.valid(player)) return;
+    if (this.direct) {
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, this.host.players[player], 0);
+      return;
+    }
+    this.parkMeter(player, MeterSlot.Speed);
   }
 
   /** See {@link PowerUpSystem.clearScreen}. */
@@ -2125,10 +2382,25 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const f = this.pool.fields;
     const n = this.pool.count;
     const blink = this.host.tick;
+    // The capsule flavour of the tick (w15-C V1): the icon of the next stop the shown meter is
+    // heading to — the lowest-numbered active alive ship (co-op shows P1); the base icon when no
+    // ship is shown or the flavour sprite is absent from the content. Pure presentation: the
+    // cursor itself is hashed, the flavour reads from it and is not state.
+    let capsuleSprite = this.itemSprite[ItemKind.Capsule];
+    const ships = this.host.players;
+    for (let p = 0; p < ships.length && p < MAX_PLAYERS; p++) {
+      const ship = ships[p];
+      if (!ship.active || ship.state !== 'alive') continue;
+      const next = this.meters[p].cursor + 1;
+      const stop = next >= 0 && next < METER_SLOT_COUNT ? next : 0;
+      const flavor = this.flavorSprites[stop];
+      if (flavor >= 0) capsuleSprite = flavor;
+      break;
+    }
     for (let i = 0; i < n; i++) {
       if ((f.flags[i] & ItemFlag.Dead) !== 0) continue;
       const kind = f.kind[i];
-      const sprite = this.itemSprite[kind];
+      const sprite = kind === ItemKind.Capsule ? capsuleSprite : this.itemSprite[kind];
       if (sprite < 0) continue;
       const slot = items.count;
       if (slot >= items.capacity) break;
@@ -2210,7 +2482,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
  * meter per player, the item and shield batches, the compiled Auto Power-Up order, the session's
  * `?` / `!` choices ({@link meterChoicesOf} of the config — M2-03) and the sprite ids of the item
  * kinds and the `?` shield, and the Direct-mode item plan (the stage's `directItems`, else
- * {@link DEFAULT_DIRECT_ITEM_PLAN} — M2-05).
+ * {@link DEFAULT_DIRECT_ITEM_PLAN} — M2-05) and the stage's weighted drop table (its
+ * `dropWeights`, w15-C — meter mode only; the roll draws the gameplay stream).
  *
  * @param host - The World (read at every call — pass the World itself).
  * @param stage - The stage the World plays (its item plan), or `null` (default — free flight).

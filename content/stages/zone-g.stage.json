@@ -877,6 +877,40 @@
     "red",
     "octagon"
   ],
+  "dropWeights": [
+    {
+      "drop": "capsule",
+      "weight": 59
+    },
+    {
+      "drop": "weaponPick",
+      "weight": 14
+    },
+    {
+      "drop": "speedOnly",
+      "weight": 8
+    },
+    {
+      "drop": "mega",
+      "weight": 6
+    },
+    {
+      "drop": "freeOption",
+      "weight": 6
+    },
+    {
+      "drop": "blueCapsule",
+      "weight": 3
+    },
+    {
+      "drop": "bonusCapsule",
+      "weight": 2
+    },
+    {
+      "drop": "oneUp",
+      "weight": 2
+    }
+  ],
   "raster": [
     {
       "layer": "mid",

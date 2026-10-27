@@ -107,8 +107,10 @@ describe('core/powerups Direct mode — the tables', () => {
     expect(DIRECT_ITEM_KINDS).toEqual([3, 4, 5, 6, 7, 8]);
     expect([ItemKind.DirectRed, ItemKind.DirectOctagon]).toEqual([3, 8]);
     // M2-10 appended the bonus stages' 1UP and bonus capsule after the colour items.
-    expect(ITEM_KINDS).toHaveLength(ItemKind.BonusCapsule + 1);
+    expect(ITEM_KINDS).toHaveLength(ItemKind.SpeedOnly + 1);
     expect([ItemKind.OneUp, ItemKind.BonusCapsule]).toEqual([9, 10]);
+    // The w15-C V2 crates append after the bonus capsule: codes are hashed, never renumbered.
+    expect([ItemKind.Mega, ItemKind.WeaponPick, ItemKind.SpeedOnly]).toEqual([11, 12, 13]);
     for (let i = 0; i < DIRECT_ITEMS.length; i++) {
       const spec = ITEM_KINDS[DIRECT_ITEM_KINDS[i]];
       expect(spec).toEqual({ sprite: 'items/direct-' + DIRECT_ITEMS[i], frames: 4, score: 300 });
@@ -130,12 +132,19 @@ describe('core/powerups Direct mode — the tables', () => {
     }
   });
 
-  it('keeps the content drop codes before the Option Hunter`s freed Option', () => {
+  it('maps every content drop name to its DropKind code (w15-C: all nine)', () => {
     // The enemy tables store `ENEMY_DROPS.indexOf(drop) + 1`: the codes must line up.
     expect(ENEMY_DROPS.indexOf('capsule') + 1).toBe(DropKind.Capsule);
     expect(ENEMY_DROPS.indexOf('blueCapsule') + 1).toBe(DropKind.BlueCapsule);
     expect(ENEMY_DROPS.indexOf('powerup') + 1).toBe(DropKind.PowerUp);
-    expect(DropKind.FreeOption).toBe(ENEMY_DROPS.length + 1);
+    // Since w15-C V2 all nine codes are content drops (the freed Option shares `freeOption`).
+    expect(ENEMY_DROPS.indexOf('oneUp') + 1).toBe(DropKind.OneUp);
+    expect(ENEMY_DROPS.indexOf('bonusCapsule') + 1).toBe(DropKind.BonusCapsule);
+    expect(ENEMY_DROPS.indexOf('freeOption') + 1).toBe(DropKind.FreeOption);
+    expect(ENEMY_DROPS.indexOf('mega') + 1).toBe(DropKind.Mega);
+    expect(ENEMY_DROPS.indexOf('weaponPick') + 1).toBe(DropKind.WeaponPick);
+    expect(ENEMY_DROPS.indexOf('speedOnly') + 1).toBe(DropKind.SpeedPick);
+    expect(DropKind.SpeedPick).toBe(ENEMY_DROPS.length);
   });
 
   it('plans every colour in the default plan and keeps the effect ids above the meter slots', () => {

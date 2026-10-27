@@ -776,6 +776,36 @@
     "yellow",
     "octagon"
   ],
+  "dropWeights": [
+    {
+      "drop": "capsule",
+      "weight": 72
+    },
+    {
+      "drop": "weaponPick",
+      "weight": 10
+    },
+    {
+      "drop": "speedOnly",
+      "weight": 6
+    },
+    {
+      "drop": "mega",
+      "weight": 2
+    },
+    {
+      "drop": "freeOption",
+      "weight": 5
+    },
+    {
+      "drop": "blueCapsule",
+      "weight": 1
+    },
+    {
+      "drop": "bonusCapsule",
+      "weight": 4
+    }
+  ],
   "remix": [
     {
       "x": 330,

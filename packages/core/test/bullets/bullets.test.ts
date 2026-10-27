@@ -242,6 +242,15 @@ describe('core/bullets', () => {
       // The bonus stages' 1UP and bonus capsule (M2-10).
       'items/1up',
       'items/capsule-bonus',
+      // The mega / weapon / speed crates (w15-C V2).
+      'items/crate-mega',
+      'items/crate-weapon',
+      'items/crate-speed',
+      // The flavored capsule icons (w15-C V1, deduped by `world` — the table is cursor-indexed).
+      'items/capsule-speed',
+      'items/capsule-weapon',
+      'items/capsule-option',
+      'items/capsule-power',
       'shields/force-field',
       'shields/pod',
       'shields/reduce',

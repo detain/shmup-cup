@@ -424,7 +424,7 @@
       "count": 6,
       "interval": 7,
       "bonus": 650,
-      "drop": "capsule"
+      "drop": "weaponPick"
     },
     {
       "x": 5400,
@@ -563,7 +563,7 @@
       "interval": 12,
       "y": 216,
       "bonus": 500,
-      "drop": "capsule"
+      "drop": "speedOnly"
     },
     {
       "x": 10050,
@@ -784,6 +784,40 @@
     "green",
     "blue",
     "yellow"
+  ],
+  "dropWeights": [
+    {
+      "drop": "capsule",
+      "weight": 55
+    },
+    {
+      "drop": "weaponPick",
+      "weight": 15
+    },
+    {
+      "drop": "speedOnly",
+      "weight": 8
+    },
+    {
+      "drop": "mega",
+      "weight": 7
+    },
+    {
+      "drop": "freeOption",
+      "weight": 6
+    },
+    {
+      "drop": "blueCapsule",
+      "weight": 4
+    },
+    {
+      "drop": "bonusCapsule",
+      "weight": 3
+    },
+    {
+      "drop": "oneUp",
+      "weight": 2
+    }
   ],
   "raster": [
     {

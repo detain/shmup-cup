@@ -336,6 +336,17 @@ three orange 1UPs, three yellow bombs, two octagons); the release audit reads it
 bounds (`octagons` 2, `maxRare` 3) from the zone-A contract (`test/integration/zones/zone-a.contract.ts`,
 R5-01 `1f3040c`) instead of a literal.
 
+**The weighted drop table (w15-C V3).** `dropWeights` (optional, 1–12 rows of
+`{ "drop": <an ENEMY_DROPS name>, "weight": 1–1000 }`, one row per drop name) is the **meter
+mode** variety: with rows, every `capsule` or `powerup` the enemies let fall rolls its item over
+the table on the gameplay RNG stream (the same seed replays the same kinds — goldens included).
+Weights are relative, so they sum to 100 by convention; without the field (or empty) a capsule
+drop stays the plain capsule, byte for byte. Only the rolls change, never the **volume** — one
+drop still spawns one item (the owner's 2×-volume experiment was reverted: volumes stay shipped).
+Explicit `drop` values other than `capsule`/`powerup` (`blueCapsule`, `oneUp`, … the four new
+kinds) are never re-rolled, and Direct mode ignores the table — its variety is the item plan
+above. The nine zones carry tables from 72 % capsule on Zone A down to 55 % on Zone I.
+
 ## Format (formatVersion 1)
 
 ```jsonc
@@ -382,6 +393,11 @@ R5-01 `1f3040c`) instead of a literal.
     { "x": 6144, "type": "end" }
   ],
   "directItems": ["red", "blue", "green", "octagon"], // optional: the Direct-mode item plan (M2-05)
+  "dropWeights": [                   // optional (w15-C V3): meter-mode roll for capsule/powerup drops
+    { "drop": "capsule", "weight": 70 }, { "drop": "weaponPick", "weight": 12 },
+    { "drop": "speedOnly", "weight": 8 }, { "drop": "mega", "weight": 5 },
+    { "drop": "freeOption", "weight": 5 }
+  ],
   "raster": [                      // optional (M2-08): per-scanline offsets of a layer
     { "layer": "mid", "kind": "wave", "top": 243, "bottom": 336, "amplitude": 4.5,
       "wavelength": 30 },
@@ -471,7 +487,7 @@ tick, in file order.
 | `type` | Fields | Effect |
 |---|---|---|
 | `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
-| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, `"blueCapsule"` — M2-04 —, `"powerup"` — M2-05, the mode-agnostic power-up — or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
+| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, `"blueCapsule"` — M2-04 —, `"powerup"` — M2-05, the mode-agnostic power-up —, `"oneUp"` / `"bonusCapsule"` — M2-10 —, `"freeOption"` / `"mega"` / `"weaponPick"` / `"speedOnly"` — w15-C V2 — or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
 | `warning` | `enemy` (a boss) | the WARNING (M1-13): the camera brakes to a scroll lock, 3 s of siren and text, then the boss flies in with the boss theme; its death clears the stage and releases the lock |
 | `boss` | `enemy` (a boss) | the boss flies in at once (no WARNING, no brake) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |

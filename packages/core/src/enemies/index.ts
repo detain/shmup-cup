@@ -316,8 +316,9 @@ export const EnemyFlag = {
 } as const;
 
 /**
- * What an enemy or a completed formation leaves behind: the codes of `ENEMY_DROPS` + 1, then the
- * engine's own drops.
+ * What an enemy or a completed formation leaves behind: the codes of `ENEMY_DROPS` + 1 since
+ * w15-C (all content drops; the engine's own freed Options share the `freeOption` code), 0 for
+ * nothing.
  */
 export const DropKind = {
   /** Nothing. */
@@ -336,10 +337,16 @@ export const DropKind = {
   /** A bonus capsule worth 1,000 points (content `bonusCapsule`, M2-10 — the bonus stages). */
   BonusCapsule: 5,
   /**
-   * One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04; code 6
-   * since M2-10 — the content drops come first).
+   * One Option drifting free to be re-collected: a dead Option Hunter's carried Option (M2-04) or
+   * a content `freeOption` drop (w15-C V2 — code 6, the sixth content name's +1).
    */
   FreeOption: 6,
+  /** The mega crate (content `mega`, w15-C V2): the `!` stop / the Direct yellow item. */
+  Mega: 7,
+  /** The weapon crate (content `weaponPick`, w15-C V2): the next weapon stop / the Direct red. */
+  WeaponPick: 8,
+  /** The speed capsule (content `speedOnly`, w15-C V2): the SPEED stop; Direct points. */
+  SpeedPick: 9,
 } as const;
 
 /**

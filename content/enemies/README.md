@@ -62,7 +62,7 @@ or falling; `land` = `pass` / `stop` (default) / `shatter`).
       "anim": { "frames": 2, "ticks": 8 }, // optional: loop frames 0…1, 8 ticks each (default: frame 0)
       "params": { "amp": 30 },         // optional: behaviour tunables by name (defaults in core/behaviors)
       "mover": { "type": "sine", "vx": -1.5, "amp": 24, "period": 90 }, // optional starting mover
-      "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | "oneUp" | "bonusCapsule" | null
+      "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | "oneUp" | "bonusCapsule" | "freeOption" | "mega" | "weaponPick" | "speedOnly" | null
       "ground": null,                  // optional: "floor" | "ceiling" | null (flying, default)
       "settleTicks": 30,               // optional: ticks on screen before it may fire (default 30)
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
@@ -284,6 +284,16 @@ The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, 
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the
 capsule, in both power-up modes. `bonus.enemies.json` holds the bonus vault's carriers
 (`vault-carrier` → a bonus capsule, `vault-carrier-1up` → a 1UP).
+
+The w15-C V2 drops: `"drop": "freeOption"` leaves a free Option drifting like a hunter-freed one
+(collect it for an extra escort orb, capped at four), `"drop": "mega"` the gold mega crate that
+parks the meter on `!` (or spends the Direct-mode yellow item), `"drop": "weaponPick"` the red
+weapon crate that jumps the meter cursor to the next MISSILE → DOUBLE → LASER → OPTION stop that
+can still be equipped (the Direct-mode red item there), and `"drop": "speedOnly"` the green speed
+capsule that parks the cursor on SPEED (points-only in Direct mode). All four are world-space
+crates that blink like the capsules; like them they keep the item radius — the icon says what is
+inside, the pickup reach never changes. A stage's `dropWeights` table (`stages/README.md`,
+w15-C V3) rolls plain `capsule`/`powerup` drops into any of the nine names in meter mode.
 
 Formation-kill drops and bonuses are configured on the stage event (`formation`), not here.
 

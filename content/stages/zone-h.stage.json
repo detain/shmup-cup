@@ -955,6 +955,40 @@
     "orange",
     "green"
   ],
+  "dropWeights": [
+    {
+      "drop": "capsule",
+      "weight": 57
+    },
+    {
+      "drop": "weaponPick",
+      "weight": 15
+    },
+    {
+      "drop": "speedOnly",
+      "weight": 8
+    },
+    {
+      "drop": "mega",
+      "weight": 6
+    },
+    {
+      "drop": "freeOption",
+      "weight": 6
+    },
+    {
+      "drop": "blueCapsule",
+      "weight": 4
+    },
+    {
+      "drop": "bonusCapsule",
+      "weight": 2
+    },
+    {
+      "drop": "oneUp",
+      "weight": 2
+    }
+  ],
   "raster": [
     {
       "layer": "mid",

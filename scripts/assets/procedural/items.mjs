@@ -21,6 +21,14 @@
  * fades (frame 3) before the cycle restarts — `blink: [0, 1, 2, 3]`, the count `core/powerups`
  * indexes through `ITEM_KINDS`. v1's colours only; at art scale 1 the v1 pills, byte for byte.
  *
+ * w15-C adds the variety art. The four flavoured capsules (`items/capsule-weapon` `-option`
+ * `-power` `-speed`) are the red / blue / gold / green pill with a white `W` / `O` / `!` / `»`
+ * mark — the icon `core/powerups` picks by the meter cursor's next stop, presentation only, the
+ * pickup stays the plain capsule. The three drop crates (`items/crate-weapon`, `items/crate-mega`,
+ * `items/crate-speed`) are square 12×12 (v2 18×18) ammunition boxes in the same three languages
+ * with the matching glyph, and they blink on the pills' cycle. Both sets are interim marks:
+ * GEN-6's item asks carry the real designs (the lane report's art-ask list).
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
@@ -131,6 +139,159 @@ function oneUp(bright, v2 = false, spark = bright) {
 }
 
 /**
+ * The white marks of the flavoured capsule pills (w15-C V1), as v1 `[x, y]` pixels on the 12×8
+ * pill: `W` (a weapon stop), `O` (the OPTION stop), `!` (the `?` / `!` power stops) and `»`
+ * (SPEED). The v2 path shifts the mark by (3, 2) into the wider pill rather than rescaling it —
+ * interim art at its simplest, the real flavoured capsules are GEN-6 asks (the lane report).
+ */
+const FLAVOR_MARKS = {
+  weapon: [
+    [4, 1],
+    [8, 1],
+    [4, 2],
+    [8, 2],
+    [4, 3],
+    [6, 3],
+    [8, 3],
+    [5, 4],
+    [7, 4],
+  ],
+  option: [
+    [5, 1],
+    [6, 1],
+    [7, 1],
+    [8, 1],
+    [5, 2],
+    [8, 2],
+    [5, 3],
+    [8, 3],
+    [5, 4],
+    [8, 4],
+    [5, 5],
+    [6, 5],
+    [7, 5],
+    [8, 5],
+  ],
+  power: [
+    [6, 1],
+    [7, 1],
+    [6, 2],
+    [7, 2],
+    [6, 3],
+    [7, 3],
+    [6, 5],
+    [7, 5],
+  ],
+  speed: [
+    [4, 1],
+    [5, 2],
+    [5, 3],
+    [4, 4],
+    [6, 1],
+    [7, 2],
+    [7, 3],
+    [6, 4],
+  ],
+};
+
+/**
+ * Paints a white mark over an image (see {@link FLAVOR_MARKS} for the v1-to-v2 shift).
+ *
+ * @param {Image} image - The frame to mark in place.
+ * @param {number[][]} pixels - `[x, y]` pixels in v1 coordinates.
+ * @param {boolean} v2 - Shift by (3, 2) instead of drawing at the given pixels.
+ */
+function paintMark(image, pixels, v2) {
+  const white = color('#ffffff');
+  const ox = v2 ? 3 : 0;
+  const oy = v2 ? 2 : 0;
+  for (const [x, y] of pixels) setPixel(image, x + ox, y + oy, white);
+}
+
+/** Colours of a drop crate (w15-C V2): rim and body (dim / lit) — a wooden ammunition box. */
+const CRATE_COLORS = {
+  weapon: { rim: '#40100a', body: ['#8a2414', '#b03820'] },
+  mega: { rim: '#4a3408', body: ['#b07818', '#d8a030'] },
+  speed: { rim: '#0a3a10', body: ['#20842c', '#38ac44'] },
+};
+
+/**
+ * The white glyphs of the crates' faces (w15-C V2), as v1 `[x, y]` pixels on the 12×12 box:
+ * `W` (weapons), `!` (the `!` slot) and `›` (the speed arrow). The v2 path shifts them by (3, 4)
+ * onto its larger face — interim art, GEN-6 will draw the real crates.
+ */
+const CRATE_GLYPHS = {
+  weapon: [
+    [3, 5],
+    [7, 5],
+    [3, 6],
+    [7, 6],
+    [3, 7],
+    [5, 7],
+    [7, 7],
+    [4, 8],
+    [6, 8],
+  ],
+  mega: [
+    [5, 5],
+    [6, 5],
+    [5, 6],
+    [6, 6],
+    [5, 7],
+    [6, 7],
+    [5, 9],
+    [6, 9],
+  ],
+  speed: [
+    [4, 5],
+    [5, 6],
+    [6, 6],
+    [5, 7],
+    [4, 8],
+    [6, 7],
+  ],
+};
+
+/**
+ * Draws one drop-crate frame (w15-C V2): a square box (12×12, the v2 path 18×18 native), rim
+ * outline, a lid seam across the upper third, rim-coloured corner braces and a white glyph on the
+ * face. It blinks like the pills (the `bright` half lights the body).
+ *
+ * @param {boolean} bright - The lit blink frame (the v2 cycle's frames 2–3).
+ * @param {'weapon' | 'mega' | 'speed'} tone - The crate's colours.
+ * @param {boolean} v2 - Draw at 18×18 instead of 12×12.
+ * @param {boolean} glyph - Whether the white glyph is drawn (lit on every frame it shows: crates
+ *   keep their glyph through the blink, only the body lights and dims).
+ * @returns {Image} 12×12 frame (18×18 at `v2`).
+ */
+function crate(bright, tone, v2 = false, glyph = true) {
+  const w = v2 ? 18 : 12;
+  const h = v2 ? 18 : 12;
+  const c = CRATE_COLORS[tone];
+  const rim = color(c.rim);
+  const body = color(c.body[bright ? 1 : 0]);
+  const white = color('#ffffff');
+  const image = createImage(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const edge = x === 0 || y === 0 || x === w - 1 || y === h - 1;
+      const lid = v2 ? y === 4 || y === 5 : y === 3;
+      const corner =
+        (x === 1 || x === w - 2) &&
+        (y === 1 || y === h - 2 || (v2 && (y === 2 || y === h - 3))) &&
+        !edge;
+      setPixel(image, x, y, edge || lid || corner ? rim : body);
+    }
+  }
+  if (glyph) {
+    const ox = v2 ? 3 : 0;
+    const oy = v2 ? 4 : 0;
+    for (const [x, y] of CRATE_GLYPHS[tone]) setPixel(image, x + ox, y + oy, white);
+  }
+  return image;
+}
+
+/**
  * Draws one point item frame: a gold diamond (|dx| + |dy| ≤ 2), rim on its outline.
  *
  * @param {boolean} twinkle - The bright frame (white centre and tips).
@@ -197,7 +358,9 @@ const V2_STAGES = [0, 1, 2, 3];
  * @param {GeneratorOptions} [options] - `artScale`, the art scale the pills and the point item
  *   are drawn at (default 1; from `R4-02.B3` the point's v2 art is native 7×7 over four frames).
  * @returns {SpriteDef[]} `items/capsule`, `items/point`, `items/capsule-blue`,
- *   `items/capsule-bonus` and `items/1up`.
+ *   `items/capsule-bonus` and `items/1up`; the w15-C flavoured capsules `items/capsule-weapon`,
+ *   `-option`, `-power` and `-speed` (the pill with a `W` / `O` / `!` / `»` mark) and the drop
+ *   crates `items/crate-weapon`, `items/crate-mega` and `items/crate-speed`.
  * @throws {RangeError} When `options.artScale` is not a valid art scale — thrown by the
  *   caller's `parseArtScale` (`scripts/assets/interim.mjs`) before `generate()` runs;
  *   `generate()` itself does not validate the scale.
@@ -215,6 +378,29 @@ export function generate(options = {}) {
     v2
       ? V2_STAGES.map((stage) => frame(stage >= 2, true, stage === 1 || stage === 2))
       : [frame(false, false, false), frame(true, false, true)];
+  /**
+   * One flavoured capsule (w15-C V1): the tinted pill with its white mark.
+   *
+   * @param {'red' | 'blue' | 'gold' | 'green'} tint - The pill's colours.
+   * @param {'weapon' | 'option' | 'power' | 'speed'} mark - The mark (see {@link FLAVOR_MARKS}).
+   * @returns {Image[]} The sprite's frames.
+   */
+  const marked = (tint, mark) =>
+    pill((b, n, s) => {
+      const image = capsule(b, tint, n, s);
+      paintMark(image, FLAVOR_MARKS[mark], n);
+      return image;
+    });
+  /**
+   * One drop crate (w15-C V2): the box blinks like the pills (the glyph always shows).
+   *
+   * @param {'weapon' | 'mega' | 'speed'} tone - The crate's colours.
+   * @returns {Image[]} The sprite's frames.
+   */
+  const crateFrames = (tone) =>
+    v2
+      ? V2_STAGES.map((stage) => crate(stage >= 2, tone, true))
+      : [crate(false, tone), crate(true, tone)];
   return [
     makeSprite(
       'items/capsule',
@@ -261,5 +447,33 @@ export function generate(options = {}) {
         native: v2,
       },
     ),
+    makeSprite('items/capsule-weapon', marked('red', 'weapon'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/capsule-option', marked('blue', 'option'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/capsule-power', marked('gold', 'power'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/capsule-speed', marked('green', 'speed'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/crate-weapon', crateFrames('weapon'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/crate-mega', crateFrames('mega'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
+    makeSprite('items/crate-speed', crateFrames('speed'), 'items', {
+      animations: blink,
+      native: v2,
+    }),
   ];
 }

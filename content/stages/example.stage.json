@@ -12,6 +12,13 @@
     { "x": 5760, "speed": 1.5, "lock": true }
   ],
   "checkpoints": [{ "x": 0 }, { "x": 3072 }],
+  "dropWeights": [
+    { "drop": "capsule", "weight": 70 },
+    { "drop": "weaponPick", "weight": 12 },
+    { "drop": "speedOnly", "weight": 8 },
+    { "drop": "mega", "weight": 5 },
+    { "drop": "freeOption", "weight": 5 }
+  ],
   "parallax": [
     {
       "layer": "far",

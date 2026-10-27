@@ -340,7 +340,8 @@ describe('core/powerups — in the World', () => {
     tick(w, input);
     const items = w.powerups.itemBatch;
     expect(items.count).toBe(1);
-    expect(w.content.sprites.names[items.spriteId[0]]).toBe('items/capsule');
+    // The fresh cursor (-1) heads to SPEED, so the capsule draws the green speed flavor (w15-C V1).
+    expect(w.content.sprites.names[items.spriteId[0]]).toBe('items/capsule-speed');
     const shields = w.powerups.shieldBatch;
     expect(shields.count).toBe(1);
     expect(w.content.sprites.names[shields.spriteId[0]]).toBe('shields/force-field');

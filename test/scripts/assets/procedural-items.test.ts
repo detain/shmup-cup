@@ -6,7 +6,7 @@
  * @module
  */
 import { describe, expect, it } from 'vitest';
-import { ITEM_KINDS, ItemKind } from '@shmup/core';
+import { CAPSULE_FLAVOR_SPRITES, CAPSULE_SCORE, ITEM_KINDS, ItemKind } from '@shmup/core';
 import { getPixel, imagesEqual } from '../../../scripts/assets/image.mjs';
 import * as items from '../../../scripts/assets/procedural/items.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
@@ -53,6 +53,206 @@ describe('scripts/assets/procedural/items', () => {
     }
     const h = hue(getPixel(blue.frames[0], 6, 5));
     expect(h > 190 && h < 250, `hue ${h}`).toBe(true);
+  });
+
+  describe('the w15-C variety art (flavored capsules and drop crates)', () => {
+    const [weapon, option, power, speed] = items.generate().slice(5, 9);
+    const [crateW, crateM, crateS] = items.generate().slice(9, 12);
+    const WHITE = color('#ffffff');
+
+    /** The crate tones: `items.mjs` `CRATE_COLORS` — rim and body, and the body hue window. */
+    const CRATES: ReadonlyArray<{
+      sprite: typeof crateW;
+      name: string;
+      rim: string;
+      dim: string;
+      lit: string;
+      hueMin: number;
+      hueMax: number;
+      glyph: [number, number];
+    }> = [
+      {
+        sprite: crateW,
+        name: 'items/crate-weapon',
+        rim: '#40100a',
+        dim: '#8a2414',
+        lit: '#b03820',
+        hueMin: 0,
+        hueMax: 30,
+        glyph: [3, 5],
+      },
+      {
+        sprite: crateM,
+        name: 'items/crate-mega',
+        rim: '#4a3408',
+        dim: '#b07818',
+        lit: '#d8a030',
+        hueMin: 30,
+        hueMax: 60,
+        glyph: [5, 5],
+      },
+      {
+        sprite: crateS,
+        name: 'items/crate-speed',
+        rim: '#0a3a10',
+        dim: '#20842c',
+        lit: '#38ac44',
+        hueMin: 90,
+        hueMax: 150,
+        glyph: [4, 5],
+      },
+    ];
+
+    it('names the seven new sprites in the order the atlas registers them', () => {
+      expect(items.generate().map((s) => s.name)).toEqual([
+        'items/capsule',
+        'items/point',
+        'items/capsule-blue',
+        'items/capsule-bonus',
+        'items/1up',
+        'items/capsule-weapon',
+        'items/capsule-option',
+        'items/capsule-power',
+        'items/capsule-speed',
+        'items/crate-weapon',
+        'items/crate-mega',
+        'items/crate-speed',
+      ]);
+    });
+
+    it('draws the four flavored pills as the capsule with a white mark in its tint (V1)', () => {
+      const flavors = [
+        { sprite: weapon, name: 'items/capsule-weapon', mark: [4, 1], hMin: 0, hMax: 30 },
+        { sprite: option, name: 'items/capsule-option', mark: [5, 1], hMin: 190, hMax: 250 },
+        { sprite: power, name: 'items/capsule-power', mark: [6, 1], hMin: 30, hMax: 60 },
+        { sprite: speed, name: 'items/capsule-speed', mark: [4, 1], hMin: 90, hMax: 150 },
+      ];
+      for (const f of flavors) {
+        expect(f.sprite.name, f.name).toBe(f.name);
+        expect(f.sprite.animations, f.name).toEqual({ blink: [0, 1] });
+        expect(f.sprite.frames, f.name).toHaveLength(2);
+        for (let k = 0; k < 2; k++) {
+          const a = f.sprite.frames[k];
+          const b = capsule.frames[k];
+          expect([a.width, a.height], f.name).toEqual([12, 8]);
+          for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 12; x++)
+              expect(opaque(a, x, y), `${f.name} ${x},${y}`).toBe(opaque(b, x, y));
+          }
+          // The mark paints white inside the silhouette.
+          expect(getPixel(a, f.mark[0], f.mark[1]), f.name).toEqual(WHITE);
+          // A body pixel away from mark and spark keeps the tint.
+          const h = hue(getPixel(a, 1, 4));
+          expect(h > f.hMin && h < f.hMax, `${f.name} hue ${h}`).toBe(true);
+        }
+      }
+      // The four flavors sit at CAPSULE_FLAVOR_SPRITES' names (the table repeats weapon and power
+      // across the stops — `world` spreads it through a Set into ENGINE_SPRITES).
+      expect([...new Set(CAPSULE_FLAVOR_SPRITES)]).toEqual([
+        'items/capsule-speed',
+        'items/capsule-weapon',
+        'items/capsule-option',
+        'items/capsule-power',
+      ]);
+    });
+
+    it('pins the three crate kinds to ITEM_KINDS (spec, four blink frames, capsule score)', () => {
+      expect(ITEM_KINDS.length).toBe(ItemKind.SpeedOnly + 1);
+      expect(ITEM_KINDS[ItemKind.Mega]).toEqual({
+        sprite: 'items/crate-mega',
+        frames: 4,
+        score: CAPSULE_SCORE,
+      });
+      expect(ITEM_KINDS[ItemKind.WeaponPick]).toEqual({
+        sprite: 'items/crate-weapon',
+        frames: 4,
+        score: CAPSULE_SCORE,
+      });
+      expect(ITEM_KINDS[ItemKind.SpeedOnly]).toEqual({
+        sprite: 'items/crate-speed',
+        frames: 4,
+        score: CAPSULE_SCORE,
+      });
+    });
+
+    it('gives the shipped scale-1 atlas every new sprite with its blink frames', () => {
+      const built = buildAtlas();
+      for (const name of [
+        'items/capsule-weapon',
+        'items/capsule-option',
+        'items/capsule-power',
+        'items/capsule-speed',
+        'items/crate-weapon',
+        'items/crate-mega',
+        'items/crate-speed',
+      ]) {
+        expect(built.manifest.sprites[name], name).toBeDefined();
+        expect(built.manifest.sprites[name].frames.length, name).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    it('draws the same art native on the v2 path (pills 18×12, crates 18×18, four frames)', () => {
+      const v2 = items.generate({ artScale: 1.5 });
+      const marks: Record<string, [number, number]> = {
+        // The v1 mark coordinates shifted by (3, 2) — `items.mjs` `paintMark`.
+        'items/capsule-weapon': [7, 3],
+        'items/capsule-option': [8, 3],
+        'items/capsule-power': [9, 3],
+        'items/capsule-speed': [7, 3],
+        // The crate glyphs shifted by (3, 4) — `items.mjs` `CRATE_GLYPHS`.
+        'items/crate-weapon': [6, 9],
+        'items/crate-mega': [8, 9],
+        'items/crate-speed': [7, 9],
+      };
+      for (const sprite of v2.slice(5, 12)) {
+        const [w, h] = sprite.name.startsWith('items/capsule-') ? [18, 12] : [18, 18];
+        expect([sprite.frames.length, sprite.native, sprite.animations], sprite.name).toEqual([
+          4,
+          true,
+          { blink: [0, 1, 2, 3] },
+        ]);
+        const [mx, my] = marks[sprite.name];
+        for (const frame of sprite.frames) {
+          expect([frame.width, frame.height], sprite.name).toEqual([w, h]);
+          expect(getPixel(frame, mx, my), sprite.name).toEqual(WHITE);
+        }
+      }
+    });
+
+    it('draws the three drop crates as fully-opaque square boxes with rim, lid and glyph (V2)', () => {
+      for (const c of CRATES) {
+        expect(c.sprite.name, c.name).toBe(c.name);
+        expect(c.sprite.animations, c.name).toEqual({ blink: [0, 1] });
+        expect(c.sprite.frames, c.name).toHaveLength(2);
+        for (let f = 0; f < 2; f++) {
+          const frame = c.sprite.frames[f];
+          expect([frame.width, frame.height], c.name).toEqual([12, 12]);
+          for (let y = 0; y < 12; y++) {
+            for (let x = 0; x < 12; x++)
+              expect(opaque(frame, x, y), `${c.name} ${x},${y}`).toBe(true);
+          }
+          // The box's outline and its lid seam are the rim; the lit blink frame lights the body.
+          for (let x = 0; x < 12; x++) {
+            expect(getPixel(frame, x, 0), c.name).toEqual(color(c.rim));
+            expect(getPixel(frame, x, 11), c.name).toEqual(color(c.rim));
+            expect(getPixel(frame, x, 3), c.name).toEqual(color(c.rim));
+          }
+          for (let y = 1; y < 11; y++) {
+            expect(getPixel(frame, 0, y), c.name).toEqual(color(c.rim));
+            expect(getPixel(frame, 11, y), c.name).toEqual(color(c.rim));
+          }
+          // The white glyph survives both blink frames; the body beside it dims and lights.
+          expect(getPixel(frame, c.glyph[0], c.glyph[1]), c.name).toEqual(WHITE);
+          expect(getPixel(frame, 2, 7), `${c.name} f${f} body`).toEqual(
+            color(f === 0 ? c.dim : c.lit),
+          );
+        }
+        // The two blink frames differ (the body brightness), the glyph and rim do not.
+        expect(Buffer.from(c.sprite.frames[0].data)).not.toEqual(
+          Buffer.from(c.sprite.frames[1].data),
+        );
+      }
+    });
   });
 
   it('draws the 5×5 two-frame gold point item diamond of cancelled bullets (M2-02)', () => {

@@ -37,6 +37,8 @@ describe('playtest: zone F with the 4-way bot (M2-13)', () => {
     const captains = new Set<string>();
     let broken = 0;
     let lunges = 0;
+    let tentacles = 0;
+    let nearPx = Number.POSITIVE_INFINITY;
     let peakEnemies = 0;
     let peakParts = 0;
     const run = runStage('zone-f', fourWayBot(), {
@@ -49,8 +51,15 @@ describe('playtest: zone F with the 4-way bot (M2-13)', () => {
         for (const e of world.enemies.enemies) {
           if (e.state !== EnemyState.Live) continue;
           live++;
-          if (e.mover === MoverKind.Homing && enemies[e.specIndex].script === 'tentacle.grab') {
-            lunges++;
+          if (enemies[e.specIndex].script === 'tentacle.grab') {
+            tentacles++;
+            if (e.mover === MoverKind.Homing) {
+              lunges++;
+            }
+            const dx = Math.abs(world.players[0].x - e.x);
+            const dy = Math.abs(world.players[0].y - e.y);
+            const d = dx > dy ? dx : dy;
+            if (d < nearPx) nearPx = d;
           }
         }
         if (live > peakEnemies) peakEnemies = live;
@@ -70,8 +79,9 @@ describe('playtest: zone F with the 4-way bot (M2-13)', () => {
     console.info(
       '[playtest] ' +
         describeRun(run) +
-        ` — captain(s) ${String(captains.size)}, peak live enemies ${String(peakEnemies)}, ` +
-        `peak boss parts ${String(peakParts)}`,
+        ` — captain(s) ${String(captains.size)}, tentacle ticks ${String(tentacles)} ` +
+        `(lunging ${String(lunges)}, closest ${String(Math.round(nearPx))} px), ` +
+        `peak live enemies ${String(peakEnemies)}, peak boss parts ${String(peakParts)}`,
     );
     expect(run.status).toBe('stageClear');
     expect(run.bossDefeated).toBe(true);
@@ -79,10 +89,15 @@ describe('playtest: zone F with the 4-way bot (M2-13)', () => {
     expect(run.seconds).toBeLessThanOrEqual(botRun[1]);
     // The warden circled, the boss went through its three phases, and the walls and the
     // tentacles met the ship — all inside §12's peaks law (80 % of the live pool, 24 parts).
+    // w15-C V3: the claw's lunge itself is load-timed (the bot must still be in the default
+    // 144 px reach while the tentacle is settled and live — the weighted pickup streams move
+    // that), so the invariant is the garden meeting the ship: live tentacle ticks and a
+    // pass inside its reach. The lunge count rides along in the log.
     expect([...captains].sort()).toEqual(['nucleus-warden']);
     expect([...phases].sort((a, b) => a - b)).toEqual([0, 1, 2]);
     expect(broken).toBeGreaterThan(0);
-    expect(lunges).toBeGreaterThan(0);
+    expect(tentacles).toBeGreaterThan(0);
+    expect(nearPx).toBeLessThanOrEqual(144);
     expect(peakEnemies).toBeLessThanOrEqual(Math.floor(MAX_ENEMIES * 0.8));
     expect(peakParts).toBeLessThanOrEqual(MAX_BOSS_PARTS);
     // A remote player: never two directions at once, parked at x ≈ 96.

@@ -358,6 +358,10 @@ describe('core/powerups edge — meter helpers', () => {
       // The bonus stages' items (M2-10).
       'items/1up',
       'items/capsule-bonus',
+      // The mega / weapon / speed crates (w15-C V2).
+      'items/crate-mega',
+      'items/crate-weapon',
+      'items/crate-speed',
     ]);
     expect(ENGINE_SPRITES).toContain(CAPSULE_SPRITE);
     expect(Object.keys(ITEM_SCHEMA).sort()).toEqual(['age', 'flags', 'kind', 'vx', 'vy', 'x', 'y']);

@@ -640,6 +640,12 @@ export type DirectItemName = (typeof DIRECT_ITEMS)[number];
 /** Most entries of a stage's `directItems` plan. */
 export const MAX_DIRECT_ITEM_PLAN = 256;
 
+/** Most rows of a stage's weighted drop table (w15-C V3 — the whole {@link ENEMY_DROPS} set). */
+export const MAX_DROP_WEIGHT_ROWS = 12;
+
+/** Largest relative weight of one drop-table row (a whole count; the sum is never 2^31). */
+export const MAX_DROP_WEIGHT = 1000;
+
 /** One player weapon (`content/weapons/*.weapons.json`, shmup_feat.md §7C). */
 export interface WeaponSpec {
   /** Unique id, e.g. `shot.basic`. */
@@ -769,9 +775,20 @@ export const ENEMY_EXPLOSIONS = Object.freeze(['small', 'medium', 'large'] as co
  * What an enemy (or a completed formation) leaves behind: a power capsule (M1-11), the rare blue
  * capsule that clears the screen's enemies (meter mode, M2-04), or `powerup` (M2-05) — the
  * mode-agnostic power-up: a capsule in meter mode, the stage's next planned item in Direct mode
- * (the direct ship has no meter, so a `capsule` becomes that item too).
+ * (the direct ship has no meter, so a `capsule` becomes that item too) — plus the w15-C V2 kinds:
+ * `freeOption` (a free Option drifting like a hunter-freed one), `mega` (the `!` crate),
+ * `weaponPick` (the weapon-cursor crate) and `speedOnly` (the SPEED capsule).
  */
-export type EnemyDrop = 'capsule' | 'blueCapsule' | 'powerup' | 'oneUp' | 'bonusCapsule';
+export type EnemyDrop =
+  | 'capsule'
+  | 'blueCapsule'
+  | 'powerup'
+  | 'oneUp'
+  | 'bonusCapsule'
+  | 'freeOption'
+  | 'mega'
+  | 'weaponPick'
+  | 'speedOnly';
 
 /** Every {@link EnemyDrop}, in code order (the index + 1 is the drop code; 0 = none). */
 export const ENEMY_DROPS = Object.freeze([
@@ -780,7 +797,23 @@ export const ENEMY_DROPS = Object.freeze([
   'powerup',
   'oneUp',
   'bonusCapsule',
+  'freeOption',
+  'mega',
+  'weaponPick',
+  'speedOnly',
 ] as const);
+
+/**
+ * One row of a stage's weighted drop table (w15-C V3): a {@link EnemyDrop} the roll can land on
+ * and its relative weight (the rows' sum need not be 100 — every row is as likely as rows of the
+ * same weight).
+ */
+export interface DropWeight {
+  /** The drop this row stands for. */
+  readonly drop: EnemyDrop;
+  /** Relative weight, a whole count ≥ 1. */
+  readonly weight: number;
+}
 
 /** Default {@link EnemySpec.settleTicks}: half a second on screen before an enemy may fire. */
 export const DEFAULT_SETTLE_TICKS = 30;
@@ -2100,6 +2133,12 @@ export interface StageSpec {
    * `DEFAULT_DIRECT_ITEM_PLAN`. Meter mode ignores it, so the stage data stays mode-agnostic.
    */
   readonly directItems: readonly DirectItemName[];
+  /**
+   * The weighted drop table (w15-C V3): with rows, every `capsule` / `powerup` drop of a meter-mode
+   * run rolls its item among them on the gameplay stream (seed-deterministic); empty (omitted) =
+   * the plain capsule. Direct mode ignores it — its variety is the {@link directItems} plan.
+   */
+  readonly dropWeights: readonly DropWeight[];
   /** The expanded tile grid (`null` without a tilemap or when it failed to expand). */
   readonly terrain: StageTerrain | null;
 }
@@ -3194,6 +3233,16 @@ const MODE7_SCHEMA = s.object(
   { optional: ['bottom', 'scroll', 'sway', 'turn', 'fogDepth', 'alpha', 'from', 'to'] },
 );
 
+/**
+ * One row of a stage's `dropWeights` table (w15-C V3, {@link DropWeight}): the `drop` is an
+ * {@link ENEMY_DROPS} name, the `weight` a relative whole count — no bare id, the reference law
+ * wrapped in an object.
+ */
+const DROP_WEIGHT_SCHEMA = s.object({
+  drop: s.enumOf(ENEMY_DROPS),
+  weight: s.int({ min: 1, max: MAX_DROP_WEIGHT, unit: 'count' }),
+});
+
 /** A `content/stages/*.stage.json` file. */
 const STAGE_FILE_SCHEMA = s.object(
   {
@@ -3262,6 +3311,7 @@ const STAGE_FILE_SCHEMA = s.object(
     tilemap: s.nullable(TILEMAP_SCHEMA),
     events: s.array(STAGE_EVENT_SCHEMA),
     directItems: s.array(s.enumOf(DIRECT_ITEMS), { min: 1, max: MAX_DIRECT_ITEM_PLAN }),
+    dropWeights: s.array(DROP_WEIGHT_SCHEMA, { min: 1, max: MAX_DROP_WEIGHT_ROWS }),
     branches: s.array(
       s.object({ id: STAGE_NAME, flag: STAGE_NAME, value: s.bool() }, { optional: ['value'] }),
       { max: MAX_STAGE_BRANCHES },
@@ -3286,6 +3336,7 @@ const STAGE_FILE_SCHEMA = s.object(
   {
     optional: [
       'directItems',
+      'dropWeights',
       'branches',
       'raster',
       'cycles',
@@ -5118,6 +5169,7 @@ type MutableStage = Omit<
   | 'terrain'
   | 'events'
   | 'directItems'
+  | 'dropWeights'
   | 'branches'
   | 'raster'
   | 'cycles'
@@ -5148,6 +5200,8 @@ type MutableStage = Omit<
   mode7?: { -readonly [K in keyof StageMode7]?: StageMode7[K] } | null;
   /** See {@link StageSpec.directItems} (optional in the file). */
   directItems?: DirectItemName[];
+  /** See {@link StageSpec.dropWeights} (optional in the file; the loader defaults it). */
+  dropWeights?: DropWeight[];
   /** See {@link StageSpec.branches} (optional in the file; the loader resolves the flags). */
   branches?: Array<{ id: string; flag: string; value?: boolean; flagId?: number }>;
   /** See {@link StageSpec.events}. */
@@ -5359,6 +5413,28 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   if (!checkStageRemix(stage, file, issues)) ok = false;
   // Optional since M2-05: an empty plan means the engine's default one.
   if (stage.directItems === undefined) stage.directItems = [];
+  // Optional since w15-C V3: an empty table keeps the plain capsule. One row per drop name — a
+  // table naming a drop twice is an ambiguous design, not a doubled weight.
+  if (stage.dropWeights === undefined) stage.dropWeights = [];
+  {
+    const table = stage.dropWeights;
+    for (let i = 0; i < table.length; i++) {
+      let first = -1;
+      for (let j = 0; j < i; j++) {
+        if (table[j].drop === table[i].drop) {
+          first = j;
+          break;
+        }
+      }
+      if (first >= 0) {
+        ok = issue(
+          issues,
+          at(file, 'dropWeights[' + String(i) + '].drop'),
+          'names "' + table[i].drop + '" twice (row ' + String(first) + ' has it)',
+        );
+      }
+    }
+  }
   // Boss rushes (M2-09).
   if (!checkStageRush(stage, file, issues)) ok = false;
   // Presentation effects (M2-08).

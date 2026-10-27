@@ -441,7 +441,7 @@
       "interval": 14,
       "y": 171,
       "bonus": 400,
-      "drop": "capsule"
+      "drop": "weaponPick"
     },
     {
       "x": 4750,
@@ -562,7 +562,7 @@
       "interval": 40,
       "y": 201,
       "bonus": 0,
-      "drop": "capsule"
+      "drop": "mega"
     },
     {
       "x": 10300,
@@ -674,7 +674,7 @@
       "interval": 12,
       "y": 246,
       "bonus": 0,
-      "drop": "capsule"
+      "drop": "speedOnly"
     },
     {
       "x": 12950,
@@ -794,7 +794,7 @@
       "interval": 12,
       "y": 150,
       "bonus": 0,
-      "drop": "capsule"
+      "drop": "freeOption"
     },
     {
       "x": 17300,
@@ -872,6 +872,40 @@
     "yellow",
     "red",
     "octagon"
+  ],
+  "dropWeights": [
+    {
+      "drop": "capsule",
+      "weight": 62
+    },
+    {
+      "drop": "weaponPick",
+      "weight": 12
+    },
+    {
+      "drop": "speedOnly",
+      "weight": 7
+    },
+    {
+      "drop": "mega",
+      "weight": 6
+    },
+    {
+      "drop": "freeOption",
+      "weight": 5
+    },
+    {
+      "drop": "blueCapsule",
+      "weight": 3
+    },
+    {
+      "drop": "bonusCapsule",
+      "weight": 3
+    },
+    {
+      "drop": "oneUp",
+      "weight": 2
+    }
   ],
   "branches": [
     {

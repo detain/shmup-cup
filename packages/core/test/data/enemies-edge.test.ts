@@ -165,7 +165,17 @@ describe('core/data enemies — defaults and references', () => {
   it('keeps the code tables frozen and in the order the enemy system encodes them', () => {
     expect(ENEMY_GROUNDS).toEqual(['floor', 'ceiling']);
     expect(ENEMY_EXPLOSIONS).toEqual(['small', 'medium', 'large']);
-    expect(ENEMY_DROPS).toEqual(['capsule', 'blueCapsule', 'powerup', 'oneUp', 'bonusCapsule']);
+    expect(ENEMY_DROPS).toEqual([
+      'capsule',
+      'blueCapsule',
+      'powerup',
+      'oneUp',
+      'bonusCapsule',
+      'freeOption',
+      'mega',
+      'weaponPick',
+      'speedOnly',
+    ]);
     expect(MOVER_TYPES).toEqual([
       'straight',
       'sine',
@@ -334,7 +344,8 @@ describe('core/data stage events — enemy spawn fields', () => {
       at(8, 'drop'),
     ]);
     expect(issues[5].message).toBe(
-      'must be one of: capsule, blueCapsule, powerup, oneUp, bonusCapsule',
+      'must be one of: capsule, blueCapsule, powerup, oneUp, bonusCapsule, ' +
+        'freeOption, mega, weaponPick, speedOnly',
     );
     expect(issues[8].message).toBe('unknown field');
   });

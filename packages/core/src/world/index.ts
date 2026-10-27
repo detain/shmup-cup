@@ -337,6 +337,7 @@ import { OPTION_SPRITE } from '../options/index.js';
 import { createPatternVm, type PatternVm } from '../patterns/index.js';
 import {
   ITEM_SPRITES,
+  CAPSULE_FLAVOR_SPRITES,
   MeterSlot,
   applyDeathPenalty,
   applyDirectDeathPenalty,
@@ -1766,7 +1767,9 @@ type WorldUnderConstruction = Omit<
  * `BULLET_SPRITES`; the last two since M2-02), the Spread Bomb's blast (`core/weapons`
  * `WEAPON_SPRITES`, M2-03), the Option (`core/options` `OPTION_SPRITE`), the
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule, the blue capsule and the grey stolen
- * Option — M2-04, also the Option Hunter's carried ones) and the shields (`core/shields`
+ * Option — M2-04, also the Option Hunter's carried ones, and the mega / weapon / speed crates and
+ * the `dropWeights` kinds' art — w15-C, plus the four flavored capsule icons
+ * `CAPSULE_FLAVOR_SPRITES` the meter-mode capsule is drawn with) and the shields (`core/shields`
  * `SHIELD_SPRITES`: the Force Field, the shield pod and Reduce's shimmer — M2-04), plus the
  * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16) and the
  * stage gimmicks' chain link (`core/stage` `GIMMICK_SPRITES`, M2-07). Hosts pass
@@ -1779,6 +1782,9 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   ...WEAPON_SPRITES,
   OPTION_SPRITE,
   ...ITEM_SPRITES,
+  // The flavor table is cursor-indexed and names the same pill for several stops — the engine's
+  // sprite list holds each name once (w15-C V1).
+  ...new Set(CAPSULE_FLAVOR_SPRITES),
   ...SHIELD_SPRITES,
   ...UI_SPRITES,
   ...GIMMICK_SPRITES,
