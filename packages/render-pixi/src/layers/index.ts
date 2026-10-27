@@ -914,12 +914,21 @@ export function createBendingLaserBinding(
 
 /**
  * Colour of the hitbox marker's outline (M2-08 — the pink-red that reads on any background).
- * Since the w15-HBOX re-style the marker is outline-only, so this is its only tint, and since
- * w15-HBDIM it sits at half that brightness (the owner's "less noticeable" note): the same
- * pink-red hue at 50% per channel, kept fully opaque so one known colour reaches the screen
- * (a quad alpha would blend with whatever is under the rim and scatter the pixel checks).
+ * Since the w15-HBOX re-style the marker is outline-only, so this is its only tint; w15-HBDIM
+ * halved its brightness (the owner's "less noticeable" note) and the owner still read it in
+ * play, so w15-HBDIM2 halves it again — a quarter of w15-HBDIM's rim, one eighth of the
+ * original, the same pink-red hue at (32, 6, 10) and still fully opaque so one known colour
+ * reaches the screen (a quad alpha would blend with whatever is under the rim and scatter the
+ * pixel checks). The fade stops at the arithmetic floor: against the sixteen common darks of
+ * the shipped frame — the thirteen darkest band colours of `content/stages` (channel sum ≤
+ * 150) plus `palette`'s letterbox, space and grid, the table pinned by the layers-hitbox test
+ * — its worst Chebyshev distance is 20 (to zone H's dark rock `0x2e1a06`), 2.5× the floor of 8
+ * under which a 1-px line would vanish from a paused frame. On the dark playfield it now drops
+ * below what the eye picks from a moving picture at TV distance, while as a dark ring around
+ * the hurt core — over the ship's far brighter body — it stays findable wherever someone pauses
+ * to look.
  */
-export const HITBOX_RIM_TINT = 0x7f1828;
+export const HITBOX_RIM_TINT = 0x20060a;
 
 /** Options of {@link createHitboxBinding}. */
 export interface HitboxBindingOptions {

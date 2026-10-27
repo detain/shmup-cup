@@ -32,8 +32,8 @@ const TIZEN_INDEX = pathToFileURL(
 /** The letterbox colour around the scaled frame (render-pixi `PALETTE.letterbox`). */
 const LETTERBOX = [0x05, 0x07, 0x0f];
 
-/** The rim colour of the hitbox markers (render-pixi `HITBOX_RIM_TINT`; the dimmer rim of w15-HBDIM). */
-const RIM = [0x7f, 0x18, 0x28] as const;
+/** The rim colour of the hitbox markers (render-pixi `HITBOX_RIM_TINT`; the dimmed rim of w15-HBDIM2). */
+const RIM = [0x20, 0x06, 0x0a] as const;
 
 /** The display options as the renderer holds them. */
 interface RendererDisplay {

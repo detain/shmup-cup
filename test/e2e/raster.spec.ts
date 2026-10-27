@@ -47,8 +47,8 @@ const DRAW_CALL_BUDGET = 16;
 const FAR_BIT = 1;
 const MID_BIT = 2;
 
-/** The rim colour of the hitbox markers (render-pixi `HITBOX_RIM_TINT`; the dimmer rim of w15-HBDIM). */
-const RIM = [0x7f, 0x18, 0x28] as const;
+/** The rim colour of the hitbox markers (render-pixi `HITBOX_RIM_TINT`; the dimmed rim of w15-HBDIM2). */
+const RIM = [0x20, 0x06, 0x0a] as const;
 
 /** The parts of the renderer the spec touches. */
 interface DebugRenderer {

@@ -1,11 +1,12 @@
 /**
  * The hitbox markers of the "show hitbox" option (plan M2-08): since the w15-HBOX re-style each
  * marker is the *outline* of the hurt core — four 1-px `HITBOX_RIM_TINT` strips tracing the old
- * filled marker's boundary, interior left open so the ship shows through; since w15-HBDIM the rim
- * sits at half brightness (the owner's "less noticeable" note) — the presence pin below. The tests
- * below are the draw census: they expand every visible quad into painted pixels and require the
- * set to equal the old rim's perimeter exactly — zero interior pixels, unchanged box extent. Unused
- * slots hidden; no allocation.
+ * filled marker's boundary, interior left open so the ship shows through; w15-HBDIM halved the
+ * rim's brightness (the owner's "less noticeable" note) and w15-HBDIM2 halved it again to a
+ * quarter, at the visibility floor computed below — the presence and floor pins are the checks.
+ * The tests below are the draw census: they expand every visible quad into painted pixels and
+ * require the set to equal the old rim's perimeter exactly — zero interior pixels, unchanged box
+ * extent. Unused slots hidden; no allocation.
  */
 import { PLAYFIELD_Y, createHitboxBatch } from '@shmup/core';
 import type { Sprite } from 'pixi.js';
@@ -65,6 +66,45 @@ function ringKeys(x0: number, y0: number, span: number): Set<number> {
   return keys;
 }
 
+/**
+ * The common darks of the shipped frame a rim can sit on (w15-HBDIM2): the thirteen darkest band
+ * colours scraped from `content/stages/*.stage.json` (channel sum ≤ 150) plus the three darks of
+ * render-pixi `PALETTE`. A rim dimmed toward any of them would vanish into that background.
+ */
+const COMMON_DARKS: readonly number[] = [
+  0x05070f, // PALETTE.letterbox
+  0x10173a, // PALETTE.space
+  0x1d2a5c, // PALETTE.grid
+  0x08141c, // zone-i abyss band
+  0x101e18, // zone-f vault rock
+  0x2e1a06, // zone-h citadel rock — the binding dark: worst distance 20
+  0x10182a, // zone-e ridge sky
+  0x0e1a2e, // zone-g / glimmer-cache crystal haze
+  0x18261e, // zone-f vault rock, lifted
+  0x4a1206, // zone-d magma ember
+  0x0e2a34, // zone-i abyss current
+  0x20124a, // dimension void
+  0x203428, // zone-f tissue moss
+  0x10323e, // zone-b / brine-grotto brine deep
+  0x4a2c10, // zone-h citadel rust
+  0x1d2c46, // zone-e storm cloud
+];
+
+/**
+ * The Chebyshev distance of two 0xRRGGBB colours: the largest per-channel difference.
+ *
+ * @param a - The first colour.
+ * @param b - The second colour.
+ * @returns The distance, 0 … 255.
+ */
+function chebyshev(a: number, b: number): number {
+  return Math.max(
+    Math.abs(((a >> 16) & 0xff) - ((b >> 16) & 0xff)),
+    Math.abs(((a >> 8) & 0xff) - ((b >> 8) & 0xff)),
+    Math.abs((a & 0xff) - (b & 0xff)),
+  );
+}
+
 describe('render-pixi/layers hitbox markers', () => {
   it('outlines the hurt core at the camera-converted centre, rim tint, interior open', () => {
     const binding = createHitboxBinding({ atlas: atlas(), capacity: 2 });
@@ -86,10 +126,11 @@ describe('render-pixi/layers hitbox markers', () => {
       HITBOX_RIM_TINT,
       HITBOX_RIM_TINT,
     ]);
-    // The w15-HBDIM presence pin: the rim is the half-brightness pink-red (0xff3050 × 1/2 per
-    // channel), kept fully opaque so one known colour reaches the screen (the pixel-checked
-    // marker must not blend with whatever the ring happens to sit on).
-    expect(HITBOX_RIM_TINT).toBe(0x7f1828);
+    // The w15-HBDIM2 presence pin: the rim is a quarter of the half-brightness pink-red (one
+    // eighth of the original 0xff3050 per channel), kept fully opaque so one known colour
+    // reaches the screen (the pixel-checked marker must not blend with whatever the ring
+    // happens to sit on).
+    expect(HITBOX_RIM_TINT).toBe(0x20060a);
     // Radius 1.5 → a 3-px core surrounded at ±2: centre (90, 50 + PLAYFIELD_Y).
     expect([top0.x, top0.y, top0.scale.x, top0.scale.y]).toEqual([88, 48 + PLAYFIELD_Y, 5, 1]);
     expect([bottom0.x, bottom0.y, bottom0.scale.x, bottom0.scale.y]).toEqual([
@@ -191,5 +232,21 @@ describe('render-pixi/layers hitbox markers', () => {
       20_000,
     ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
+  });
+
+  it('stays past the dark-background visibility floor (the w15-HBDIM2 arithmetic)', () => {
+    // A 1-px line needs more than 8 per-channel distance from a background to survive on a
+    // paused frame at TV viewing distance — the floor this rim was dimmed down to. w15-HBDIM2's
+    // 0x20060a clears every common dark; its worst distance is 20, to zone H's dark rock
+    // (0x2e1a06), 2.5× the floor. The per-dark assertion is the standing law — any rim dimmed
+    // or any band darkened past it fails here, naming nothing else; the worst-value pin moves
+    // only with a re-run of the scrape over the shipped stages.
+    let worst = 255;
+    for (const dark of COMMON_DARKS) {
+      const distance = chebyshev(HITBOX_RIM_TINT, dark);
+      expect(distance).toBeGreaterThan(8);
+      if (distance < worst) worst = distance;
+    }
+    expect(worst).toBe(20);
   });
 });
