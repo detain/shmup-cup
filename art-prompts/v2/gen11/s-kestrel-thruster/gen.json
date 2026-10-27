@@ -1,0 +1,171 @@
+{
+  "id": "gen11/s-kestrel-thruster",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame engine-flame loop of the KESTREL thruster — the small fire that flickers behind the hero fighter, drawn as one clear subject.\n\nDesign identity to keep exactly — a single solid engine flame-plume of horizontal fire about 1.4-1.8:1 wider than tall: one continuous tapered tongue of fire with real body, anchored broad at its nozzle mouth and flowing to a soft rounded tip. The plume is warm fire itself: a deep-orange body (#e84818) with a broad amber-yellow inner glow (#f8c030) and a pale white-hot heart (#fff8d0) at the nozzle root. The flame sits alone on flat key — no ship, no hardware, no smoke.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as a 2×2 GRID (2-column by 2-row, reading left-right then top-bottom) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 LOW BURN — a short stocky plume, compact and rounded: mostly deep orange with a small amber-yellow inner glow and a pale white-hot heart at the nozzle root. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 2 = FRAME 1 HIGH BURN — the SAME plume at the SAME length, only brighter and fuller: the amber-yellow inner glow broadens across the body and the white-hot heart blazes toward the rounded tip. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 3 = FRAME 2 SPARK — the short stocky plume again but flickering: a bright bead of spark-light swells at the nozzle root and the tail narrows a little. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 4 = FRAME 3 SURGE — the plume swollen taller at its base: a wide hot root with a broad amber-yellow mantle around the white heart before it tapers to its single rounded tip. The subject lies within aspect 1.20:1 to 2.10:1.\n- FLAME GEOMETRY LAW: the flame-plume's NOZZLE mouth sits well INSET — leave at least 25% of the cell width (about 95 px) as flat key to the RIGHT of the nozzle, and the plume trails LEFT a SHORT distance (the whole flame is stubby, never reaching the left edge — stop 40 px short of it too). The white-hot heart hugs the nozzle. All four cells share the same inset nozzle position, scale and vertical centre.\n- SOLID PLUME LAW: each frame shows ONE continuous, THICK flame-plume — a squat, volumetric tongue of fire that fills 60-70% of the cell HEIGHT: a broad round nozzle root, a fat rounded mantle of colour steps, and a single soft blunt tip. The flame is WIDE IN BODY and SHORT IN LENGTH (roughly as tall as it is long, never a long thin streak). Keep a generous flat-key border on all four sides.\n- FIRE DROP LAW: every plume is one SMALL compact fire drop of roughly 200 px long and 140 px tall, centred inside its 384×256 cell with a wide even band of flat key all around it — the same modest size in all four cells. All four plumes share the same dead-centre placement: equal bands of flat key to the left and right, equal bands above and below, the nozzle mouth on the exact vertical centre line of its cell. Even the brightest frame keeps this scale: its soft tip stops at the cell midline, about 50 px short of the LEFT border. Thick and compact beats long every time.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 768×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521409026,
+  "width": 768,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T04:06:08.271Z",
+  "seconds": 12.3,
+  "label": "s-kestrel-thruster",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen11/s-kestrel-thruster/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "768x512",
+  "meta": {
+    "job": "w15-GEN11",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN11",
+  "round": "ships-4",
+  "exit": "STOP@8",
+  "ownerAsk": "Quality-regen wave 4 per GEN11 brief, disk-derived: ships/kestrel-thruster (4 flicker frames 9x5 v2 native, nozzle on right edge; KESTREL flame loop; hitFlash false, no @flash sibling) — ships hero re-ask under the GEN10 aspect-fill calibration law (wide-matched cells, brief row 1-3)",
+  "gridContract": "384x256 cells, 2x2, canvas 768x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "ships/kestrel-thruster (4 flicker frames 9x5 v2 native, nozzle on right edge; KESTREL flame loop; hitFlash false, no @flash sibling)",
+  "probe": {
+    "id": "s-kestrel-thruster",
+    "ok": false,
+    "fails": [
+      "cell 0 margin <12px (0/0/0/0)",
+      "cell 1 margin <12px (0/0/1/0)",
+      "cell 2 margin <12px (0/0/0/0)",
+      "cell 3 margin <12px (0/0/0/0)",
+      "gutter after col 0 ink 25.6%",
+      "gutter after row 0 ink 48.6%"
+    ],
+    "boxes": [
+      [
+        0,
+        0,
+        384,
+        256
+      ],
+      [
+        384,
+        0,
+        383,
+        256
+      ],
+      [
+        0,
+        256,
+        384,
+        256
+      ],
+      [
+        384,
+        256,
+        384,
+        256
+      ]
+    ],
+    "xors": [
+      19.2,
+      23.9,
+      20.8
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521402026,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (75/25/0/60)",
+        "cell 1 margin <12px (0/25/52/60)",
+        "cell 2 AR=2.24 outside [1.2,2.1] (f2)",
+        "cell 2 margin <12px (1/25/0/60)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521403026,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.63 outside [1.2,2.1] (f0)",
+        "cell 0 margin <12px (54/90/0/75)",
+        "cell 1 AR=3.56 outside [1.2,2.1] (f1)",
+        "cell 1 margin <12px (0/80/0/68)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521404026,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.07 outside [1.2,2.1] (f0)",
+        "cell 1 AR=3.24 outside [1.2,2.1] (f1)",
+        "cell 2 AR=2.73 outside [1.2,2.1] (f2)",
+        "cell 3 AR=2.93 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521405026,
+      "ok": false,
+      "fails": [
+        "cell 3 margin <12px (0/15/103/40)"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521406026,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (55/0/0/0)",
+        "cell 1 margin <12px (0/0/25/0)",
+        "cell 2 margin <12px (0/0/0/0)",
+        "cell 3 margin <12px (0/0/0/0)"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521407026,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (0/0/0/0)",
+        "cell 1 margin <12px (0/0/0/0)",
+        "cell 2 margin <12px (0/0/0/0)",
+        "cell 3 margin <12px (0/0/0/0)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521408026,
+      "ok": false,
+      "fails": [
+        "cell 1 AR=2.78 outside [1.2,2.3] (f1)",
+        "cell 2 margin <12px (0/69/36/1)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521409026,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (0/0/0/0)",
+        "cell 1 margin <12px (0/0/1/0)",
+        "cell 2 margin <12px (0/0/0/0)",
+        "cell 3 margin <12px (0/0/0/0)"
+      ]
+    }
+  ]
+}

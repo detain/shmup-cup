@@ -1,0 +1,97 @@
+{
+  "id": "gen11/o-stolen",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame pulse loop of the STOLEN OPTION — one of the player's orbiting Option pods, a COMPACT roughly SQUARE glowing module (never a long ellipse, never stretched wide, never a capsule lying on its side) that trails the ship in formation. The four cells are the SAME pod breathing its light over four steps.\n\nDesign identity to keep exactly — a stolen Option: the ORB gone GREY, a sphere as wide as tall: a mid-grey body (#6c6c78) on a near-black outline (#26262e) with a light-grey ring (#a8a8b4) inside the rim and a pale grey-white core (#e8e8f0) near its centre — the same little sun, its colour drained. No green, no red — pure greys. Its four pulse steps breathe the grey glow exactly like the red orb: 0 calm; 1 the light-grey glow widens; 2 the flare peak (light-grey body, big pale core); 3 the glow contracts back.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as a 2×2 GRID (2-column by 2-row, reading left-right then top-bottom) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 CALM — grey body, light-grey ring, pale core. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = FRAME 1 — the SAME orb: the light-grey glow widened. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 3 = FRAME 2 FLARE — the SAME orb: light-grey body, big pale core. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 4 = FRAME 3 — the SAME orb: the glow contracting. The subject lies within aspect 0.70:1 to 1.30:1.\n- POD SHAPE LAW: the pod is a compact, near-square blob filling its cell's inner box EQUALLY in width and height (about 1:1, never wider than 1.4:1, never taller than 1.4:1). If the pod looks stretched, flattened, or off-centre the sheet is ruined. The four cells sit in a 2x2 grid, each pod alone in its cell.\n- SAME-SIZE LAW: the pod's metalwork and circle diameter are IDENTICAL in all four cells, at the identical position of each cell — only the named light changes. A bigger or smaller pod in any cell ruins the sheet.\n- COLOUR-ONLY STATE LAW: frames 1 to 3 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521412143,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:53:09.574Z",
+  "seconds": 9.5,
+  "label": "o-stolen",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen11/o-stolen/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN11",
+    "attempt": "2"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN11",
+  "round": "options-1",
+  "exit": "PROBE-OK@2",
+  "ownerAsk": "Quality-regen wave 4 per GEN11 brief, disk-derived: options/stolen (4 pulse frames 12x12 v2 native; stolen Option, the orb gone grey; v1 already real art (stolen.png) — v2 twin only; hitFlash false, no @flash sibling) — options pool, the 14 interim files = 8 subjects, disk-derived (brief row 4, AR windows from the shipped maps)",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "options/stolen (4 pulse frames 12x12 v2 native; stolen Option, the orb gone grey; v1 already real art (stolen.png) — v2 twin only; hitFlash false, no @flash sibling)",
+  "probe": {
+    "id": "o-stolen",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        78,
+        79,
+        118,
+        122
+      ],
+      [
+        317,
+        79,
+        117,
+        122
+      ],
+      [
+        78,
+        313,
+        118,
+        121
+      ],
+      [
+        317,
+        313,
+        117,
+        121
+      ]
+    ],
+    "xors": [
+      47.7,
+      58.6,
+      49.9
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521411143,
+      "ok": false,
+      "fails": [
+        "dup 0-1 material-mean-diff 238 > 90",
+        "dup 1-2 material-mean-diff 190.6 > 90",
+        "dup 2-3 material-mean-diff 279.3 > 90"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521412143,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

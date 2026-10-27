@@ -1,0 +1,87 @@
+{
+  "id": "gen11/o-serpent",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame pulse loop of the SERPENT — one of the player's orbiting Option pods, a COMPACT roughly SQUARE glowing module (never a long ellipse, never stretched wide, never a capsule lying on its side) that trails the ship in formation. The four cells are the SAME pod breathing its light over four steps.\n\nDesign identity to keep exactly — a hollow chain-link SERPENT pod seen face-on, as wide as tall: a thick red ring (#e83838) with a bevelled rim on a deep crimson outline (#6a1a1a), its centre hollow flat key; one small warm-white glint (#fff0c0) on the top rim. Its four pulse steps move the white light along the ring only: 0 calm red ring with one white glint at the top; 1 the glint widens along the upper rim; 2 the flare peak (the upper ring white-hot, a red foot kept below); 3 the light contracts through the rim's sides.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as a 2×2 GRID (2-column by 2-row, reading left-right then top-bottom) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 CALM — red ring, one white glint on top. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = FRAME 1 — the SAME ring: the white widened along the upper rim. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 3 = FRAME 2 FLARE — the SAME ring: upper band white, red foot kept. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 4 = FRAME 3 — the SAME ring: the white contracted to the sides. The subject lies within aspect 0.70:1 to 1.30:1.\n- POD SHAPE LAW: the pod is a compact, near-square blob filling its cell's inner box EQUALLY in width and height (about 1:1, never wider than 1.4:1, never taller than 1.4:1). If the pod looks stretched, flattened, or off-centre the sheet is ruined. The four cells sit in a 2x2 grid, each pod alone in its cell.\n- SAME-SIZE LAW: the pod's metalwork and circle diameter are IDENTICAL in all four cells, at the identical position of each cell — only the named light changes. A bigger or smaller pod in any cell ruins the sheet.\n- COLOUR-ONLY STATE LAW: frames 1 to 3 are frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 512×512 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521410130,
+  "width": 512,
+  "height": 512,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:52:59.689Z",
+  "seconds": 9.8,
+  "label": "o-serpent",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen11/o-serpent/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x512",
+  "meta": {
+    "job": "w15-GEN11",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN11",
+  "round": "options-1",
+  "exit": "PROBE-OK@1",
+  "ownerAsk": "Quality-regen wave 4 per GEN11 brief, disk-derived: options/serpent (4 pulse frames 12x12 v2 native, v1 twin 8x8 2f; Snake chain-link pod; hitFlash false, no @flash sibling) — options pool, the 14 interim files = 8 subjects, disk-derived (brief row 4, AR windows from the shipped maps)",
+  "gridContract": "256x256 cells, 2x2, canvas 512x512, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "options/serpent (4 pulse frames 12x12 v2 native, v1 twin 8x8 2f; Snake chain-link pod; hitFlash false, no @flash sibling)",
+  "probe": {
+    "id": "o-serpent",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        45,
+        43,
+        173,
+        193
+      ],
+      [
+        294,
+        42,
+        173,
+        194
+      ],
+      [
+        45,
+        282,
+        173,
+        192
+      ],
+      [
+        295,
+        282,
+        172,
+        192
+      ]
+    ],
+    "xors": [
+      40.8,
+      44.9,
+      19.7
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521410130,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}
