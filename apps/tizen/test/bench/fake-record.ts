@@ -1,6 +1,6 @@
 /**
  * Fake TV render-bench records for the bench's tests (plan R0-02; the decode record — R1-05 B4;
- * the stand-in record — R3-04.M4a).
+ * the stand-in record — R3-04.M4a; the rewind record — R2 TL-3).
  *
  * @module
  */
@@ -9,8 +9,12 @@ import {
   BENCH_SCENARIOS,
   BENCH_V2_SIZE,
   DECODE_SCENARIO_INDEX,
+  REWIND_SCENARIO_ID,
+  REWIND_SCENARIO_INDEX,
+  REWIND_STAGE,
   STANDIN_SCENARIO_ID,
   STANDIN_SCENARIO_INDEX,
+  type RewindBenchRecord,
 } from '../../src/bench/index.js';
 
 /**
@@ -150,8 +154,8 @@ export function fakeDecode(over: Partial<DecodeBenchRecord> = {}): DecodeBenchRe
 }
 
 /**
- * The fake record of the run's last page load (plan R3-04.M4a): one 640×360 frame drawn from the
- * stand-in pages, measured like a render scenario.
+ * The fake record of the run's stand-in page load (plan R3-04.M4a): one 640×360 frame drawn from
+ * the stand-in pages, measured like a render scenario.
  *
  * @param over - What differs.
  * @returns The record.
@@ -177,4 +181,30 @@ export function fakeStandinRecord(over: Partial<RenderBenchRecord> = {}): Render
     load: { bullets: 0, points: 0, enemies: 20, particles: 0, tiles: 110 },
     ...over,
   });
+}
+
+/**
+ * The fake record of the run's rewind page (plan R2 TL-3): the resume's rebuild-loop numbers,
+ * stored for the results table and never POSTed.
+ *
+ * @param over - What differs.
+ * @returns The record.
+ */
+export function fakeRewind(over: Partial<RewindBenchRecord> = {}): RewindBenchRecord {
+  return {
+    scenario: REWIND_SCENARIO_ID,
+    index: REWIND_SCENARIO_INDEX,
+    startedAt: 1_700_000_000_000,
+    endedAt: 1_700_000_006_000,
+    buildId: 'rb-x',
+    ticks: 6_000,
+    stepsPerSecond: 9_000,
+    worldBuildMs: 2.5,
+    hashMs: 0.3,
+    hashChecks: 10,
+    estCapTicks: 3_000,
+    stage: REWIND_STAGE,
+    error: null,
+    ...over,
+  };
 }

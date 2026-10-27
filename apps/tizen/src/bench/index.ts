@@ -52,10 +52,14 @@
  * shipped `common` and zone A pages) are fetched with XHR, decoded by an `HTMLImageElement` and
  * uploaded through the renderer's `uploadTextureSource` — and decoded by `createImageBitmap` too —
  * eight times each, every stage timed (median / p95) and every texture released between
- * repetitions: the page-decode figure plan R3-04 estimates its zone-load time from. The run's
- * last page load is `standin-zone`: one 640×360 frame drawn from the stand-in pages through the
+ * repetitions: the page-decode figure plan R3-04 estimates its zone-load time from. Another page
+ * load is `standin-zone`: one 640×360 frame drawn from the stand-in pages through the
  * real bindings, measured like a render scenario (`./scene.ts` `createStandinScene`, `./run.ts`
- * `measureStandinScenario`). R0-02's 18
+ * `measureStandinScenario`). The run's last page load is `rewind` (`./rewind.ts`, R2 TL-3): the
+ * resume's rebuild loop measured headlessly — World build, `stepWorld` tick after tick,
+ * `hashWorld` every `REPLAY_HASH_INTERVAL` — on the bench's own synthetic open stage, no renderer,
+ * no GL, never POSTed: the steps/sec the title's CONTINUE? rewinding is budgeted against (the
+ * Node proxy at `test/bench/rewind.perf.ts` carries the shipped-golden-density figures). R0-02's 18
  * scenarios keep their ids in the larger matrix, so R0-02's and R0-03's numbers stay comparable.
  *
  * **Implements.**
@@ -217,11 +221,13 @@ export {
   createRunState,
   decodeUnsent,
   isDecodeRecord,
+  isRewindRecord,
   markSent,
   nextSeq,
   parseRunState,
   recordDecode,
   recordResult,
+  recordRewind,
   rerunScenario,
   resumeRun,
   serializeRunState,
@@ -277,6 +283,22 @@ export {
   type DecodeWindow,
   type DecodedPage,
 } from './decode.js';
+export {
+  HEADLESS_REWIND_TICKS,
+  M7_SLOWDOWN_ESTIMATE,
+  MAX_REWIND_BENCH_TICKS,
+  MIN_REWIND_BENCH_TICKS,
+  REWIND_PATIENCE_S,
+  REWIND_SCENARIO_ID,
+  REWIND_SCENARIO_INDEX,
+  REWIND_STAGE,
+  REWIND_WARMUP_TICKS,
+  TV_REWIND_TICKS,
+  estimateRewindCap,
+  measureRewindScenario,
+  rewindTicksFromSearch,
+  type RewindBenchRecord,
+} from './rewind.js';
 export {
   BENCH_KEY_CODES,
   benchKeyOf,

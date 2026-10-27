@@ -3,7 +3,8 @@
  * load, the cursor and the records in `localStorage` between reloads, the Red re-run, the
  * acknowledged records — and the per-frame statistics the records are folded from. Since R1-05 B4
  * a run appends the decode scenario, whose record the state keeps beside the render records;
- * since R3-04.M4a its last page load is the stand-in draw, recorded like a render scenario.
+ * since R3-04.M4a the stand-in draw follows, recorded like a render scenario; since R2 TL-3 the
+ * run closes with the rewind page, whose record the state keeps and never posts.
  */
 import type { RenderBenchRecord } from '@shmup/shell';
 import { describe, expect, it } from 'vitest';
@@ -25,6 +26,7 @@ import {
   parseRunState,
   recordDecode,
   recordResult,
+  recordRewind,
   rerunScenario,
   roundTo,
   serializeRunState,
@@ -33,7 +35,8 @@ import {
   summarizeSeries,
   unsentRecords,
 } from '../../src/bench/index.js';
-import { fakeDecode, fakeStandinRecord, recordFor } from './fake-record.js';
+import { REWIND_SCENARIO_INDEX } from '../../src/bench/index.js';
+import { fakeDecode, fakeRewind, fakeStandinRecord, recordFor } from './fake-record.js';
 
 /**
  * A complete record for scenario `index`.
@@ -88,7 +91,7 @@ describe('bench run state', () => {
     expect(messy?.sent).toEqual([1]);
   });
 
-  it('works through the matrix, then decode and the stand-in load, and stops', () => {
+  it('works through the matrix, then decode, the stand-in load and the rewind page, and stops', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
       expect(state.running).toBe(true);
@@ -106,9 +109,14 @@ describe('bench run state', () => {
     expect(state.decode).toEqual(fakeDecode());
     expect(state.records).toHaveLength(BENCH_SCENARIOS.length);
     state = recordResult(state, fakeStandinRecord());
+    // The stand-in hands on to the rewind page (plan R2 TL-3): the run goes on.
+    expect(state.running).toBe(true);
+    expect(state.cursor).toBe(REWIND_SCENARIO_INDEX);
+    state = recordRewind(state, fakeRewind());
     expect(state.running).toBe(false);
     expect(state.cursor).toBe(BENCH_RUN_LENGTH);
     expect(state.records).toHaveLength(BENCH_SCENARIOS.length + 1);
+    expect(state.rewind).toEqual(fakeRewind());
   });
 
   it('re-runs the current scenario during a run (Red) and carries on afterwards', () => {
@@ -137,24 +145,32 @@ describe('bench run state', () => {
     expect(unsentRecords(state).map((r) => r.index)).toContain(171);
   });
 
-  it('re-runs the last page load from the results page after a whole run (R3-04.M4a)', () => {
+  it('re-runs the last page load from the results page after a whole run (R3-04.M4a, R2 TL-3)', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
     state = markSent(recordDecode(state, fakeDecode()), [DECODE_SCENARIO_INDEX]);
     expect(decodeUnsent(state)).toBe(false);
-    // The run is not over: the stand-in load is its last. Finish it, then re-run that one.
+    // The run is not over: the stand-in load and the rewind page follow. Finish it, re-run the
+    // last page load (the rewind, since R2 TL-3).
     expect([state.running, state.cursor]).toEqual([true, 173]);
     state = recordResult(state, fakeStandinRecord());
     state = markSent(state, [STANDIN_SCENARIO_INDEX]);
-    expect([state.running, state.cursor]).toEqual([false, 174]);
+    expect([state.running, state.cursor]).toEqual([true, REWIND_SCENARIO_INDEX]);
+    state = recordRewind(state, fakeRewind());
+    expect([state.running, state.cursor]).toEqual([false, 175]);
     state = rerunScenario(state);
-    expect([state.running, state.single, state.cursor]).toEqual([true, true, 173]);
-    state = recordResult(state, fakeStandinRecord({ drawCalls: 3 }));
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 174]);
+    expect([state.running, state.single, state.cursor]).toEqual([
+      true,
+      true,
+      REWIND_SCENARIO_INDEX,
+    ]);
+    state = recordRewind(state, fakeRewind({ stepsPerSecond: 999 }));
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, 175]);
+    expect(state.rewind.stepsPerSecond).toBe(999);
     expect(state.records).toHaveLength(173);
-    expect(state.records[172].drawCalls).toBe(3);
-    // The new stand-in record is not acknowledged yet; the decode record is untouched.
-    expect(unsentRecords(state).map((r) => r.index)).toContain(STANDIN_SCENARIO_INDEX);
+    expect(state.records[172].drawCalls).toBe(96);
+    // The rewind is never POSTed: nothing new joins the acknowledged set, the decode stays acked.
+    expect(unsentRecords(state).map((r) => r.index)).not.toContain(REWIND_SCENARIO_INDEX);
     expect(decodeUnsent(state)).toBe(false);
   });
 

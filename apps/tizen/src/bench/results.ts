@@ -13,7 +13,8 @@
  *
  * Below the table, once the run's `decode` scenario has run (plan R1-05 B4 — `./decode.ts`), a
  * second table: per page its size, encoding and file bytes, and the median / p95 of each stage from
- * file to GPU ({@link formatDecodeTable}).
+ * file to GPU ({@link formatDecodeTable}) and the rewind scenario (plan R2 TL-3,
+ * {@link formatRewindTable}).
  *
  * Pure string building plus one draw-list writer; the bench draws the lines on its results page
  * (`run.ts`), unit-tested against fake records in `apps/tizen/test/bench/`.
@@ -24,6 +25,7 @@ import type { DrawList } from '@shmup/core';
 import { RAF_BUCKET_EDGES_MS } from '@shmup/render-pixi';
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
 import { DECODE_SCENARIO_INDEX } from './decode.js';
+import { M7_SLOWDOWN_ESTIMATE, REWIND_PATIENCE_S, type RewindBenchRecord } from './rewind.js';
 import { BENCH_SIZES, findBenchScenario, type BenchScenario, type BenchTiming } from './matrix.js';
 import { BENCH_OUTPUT_SCALE_MODE } from './output.js';
 import type { BenchRunState } from './state.js';
@@ -360,6 +362,54 @@ export function formatDecodeTable(record: DecodeBenchRecord): BenchLine[] {
   return lines;
 }
 
+/**
+ * Digit-grouped decimal for the results page (a cold-path format; no locale dependency).
+ *
+ * @param value - The number.
+ * @returns Its decimal with `,` groups.
+ */
+function groupDigits(value: number): string {
+  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * The rewind scenario's lines (plan R2 TL-3): the measured rebuild rate a CONTINUE? resume pays,
+ * its World build, the every-600 hash cost, and the honest ESTIMATE line for the tail cap — the
+ * M7 slowdown figure stays an assumption until the owner's measured row replaces it.
+ *
+ * @param record - The rewind scenario's record.
+ * @returns The lines (text and colour).
+ *
+ * @example
+ * ```ts
+ * formatRewindTable(state.rewind); // → [{ text: 'REWIND (R2 TL-3) …' }, …]
+ * ```
+ */
+export function formatRewindTable(record: RewindBenchRecord): BenchLine[] {
+  const lines: BenchLine[] = [
+    {
+      text: `REWIND (R2 TL-3) ${record.stage} ${record.ticks} ticks - the resume's rebuild loop`,
+      color: NOTE_COLOR,
+    },
+    {
+      text:
+        `  STEPS/S ${groupDigits(record.stepsPerSecond)}  BUILD ${record.worldBuildMs} ms  ` +
+        `HASH ${record.hashMs} ms x ${record.hashChecks}`,
+      color: ROW_COLOR,
+    },
+    {
+      text:
+        `  cap ${groupDigits(record.estCapTicks)} ticks [ESTIMATE: ${REWIND_PATIENCE_S} s ` +
+        `patience / M7 ${M7_SLOWDOWN_ESTIMATE} - measured M7 row pending]  build ${record.buildId}`,
+      color: ROW_COLOR,
+    },
+  ];
+  if (record.error !== null) {
+    lines.push({ text: `ERROR rewind: ${record.error}`, color: ERROR_COLOR });
+  }
+  return lines;
+}
+
 /** What the results page says (see {@link benchPageLines}). */
 export interface BenchPageInput {
   /** The stored run, or `null` before the first one. */
@@ -483,9 +533,10 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     },
     {
       text:
-        `ENTER run the matrix: ${input.scenarios} scenarios + decode + stand-in, ~${minutes} min ` +
-        `(${seconds(t.warmupMs)} s warm-up, ${seconds(t.measureMs)} s measured, ` +
-        `${seconds(t.syncMs)} s synced)`,
+        `ENTER run: ${input.scenarios} scenarios + decode + stand-in + rewind, ` +
+        `~${minutes} min ` +
+        `(${seconds(t.warmupMs)} s warm, ${seconds(t.measureMs)} s measure, ` +
+        `${seconds(t.syncMs)} s sync)`,
       color: NOTE_COLOR,
     },
     {
@@ -510,7 +561,10 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     state !== null && state.lastError !== null
       ? { text: `ERROR ${state.lastError}`, color: ERROR_COLOR }
       : null;
-  if (state === null || (state.records.length === 0 && state.decode === null)) {
+  if (
+    state === null ||
+    (state.records.length === 0 && state.decode === null && state.rewind === null)
+  ) {
     lines.push({ text: 'No results yet.', color: ROW_COLOR });
     if (error !== null) lines.push(error);
     return { lines, pages: 1 };
@@ -523,14 +577,17 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   const table = formatResultsTable(state.records);
   const rows = table.length - 1;
   const decode = state.decode === null ? null : formatDecodeTable(state.decode);
-  // Without a line limit one page holds everything: the table, then the decode table below it.
+  const rewind = state.rewind === null ? null : formatRewindTable(state.rewind);
+  // Without a line limit one page holds everything: the table, then the decode table below it,
+  // then the rewind lines (plan R2 TL-3).
   const unlimited = input.maxLines === undefined;
   // Room for the rows on one page: the head, the RUN line, the table's header and the error line.
   const room = unlimited
     ? Math.max(1, rows)
     : Math.max(1, (input.maxLines ?? 0) - lines.length - 3);
   const tablePages = rows === 0 ? 0 : Math.ceil(rows / room);
-  const pages = unlimited ? 1 : Math.max(1, tablePages + (decode === null ? 0 : 1));
+  const extraPages = (decode === null ? 0 : 1) + (rewind === null ? 0 : 1);
+  const pages = unlimited ? 1 : Math.max(1, tablePages + extraPages);
   const page = Math.max(0, Math.min(pages - 1, Math.floor(input.page ?? 0)));
   lines.push({
     text:
@@ -549,6 +606,10 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   }
   if (decode !== null && (unlimited || page >= tablePages)) {
     for (let i = 0; i < decode.length; i++) lines.push(decode[i]);
+  }
+  const rewindPage = tablePages + (decode === null ? 0 : 1);
+  if (rewind !== null && (unlimited || page >= rewindPage)) {
+    for (let i = 0; i < rewind.length; i++) lines.push(rewind[i]);
   }
   if (error !== null) lines.push(error);
   if (input.maxLines !== undefined && lines.length > input.maxLines) {

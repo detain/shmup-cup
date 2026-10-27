@@ -9,15 +9,17 @@
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
  * A run is the render scenarios of the matrix (172 since the resolution sweep), then the `decode` scenario (plan R1-05 B4 —
- * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`): the cursor
- * runs to {@link BENCH_RUN_LENGTH}, the render records (the stand-in load's among them) go to
- * `records` and the decode record to `decode`. A state stored by a bench from before B4 (no
- * `decode`) still reads — its record is `null`.
+ * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`) and the
+ * `rewind` scenario (plan R2 TL-3 — `./rewind.ts`): the cursor runs to {@link BENCH_RUN_LENGTH},
+ * the render records (the stand-in load's among them) go to `records`, the decode record to
+ * `decode` and the rewind record to `rewind`. A state stored by a bench from before B4 (no
+ * `decode`) or before TL-3 (no `rewind`) still reads — its record is `null`.
  *
  * @module
  */
 import type { DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
 import { BENCH_RUN_LENGTH, DECODE_SCENARIO_INDEX } from './decode.js';
+import { REWIND_SCENARIO_INDEX, type RewindBenchRecord } from './rewind.js';
 import { type BenchTiming } from './matrix.js';
 
 /** `localStorage` key of the run state (the game's `shmup-cup:` prefix). */
@@ -53,6 +55,8 @@ export interface BenchRunState {
   readonly records: readonly RenderBenchRecord[];
   /** The decode scenario's record (plan R1-05 B4), or `null` before it ran. */
   readonly decode: DecodeBenchRecord | null;
+  /** The rewind scenario's record (plan R2 TL-3), or `null` before it ran. */
+  readonly rewind: RewindBenchRecord | null;
   /**
    * Scenario indexes whose record the log server has acknowledged (`DECODE_SCENARIO_INDEX` for the
    * decode record).
@@ -89,6 +93,7 @@ export function createRunState(
     timing,
     records: [],
     decode: null,
+    rewind: null,
     sent: [],
     lastError: null,
   };
@@ -194,6 +199,33 @@ export function isRecord(value: unknown): value is RenderBenchRecord {
 }
 
 /**
+ * Whether a stored value is a rewind record the results page can show (plan R2 TL-3 — the
+ * fields its rewind table reads).
+ *
+ * @param value - The value.
+ * @returns `true` for a usable record.
+ */
+export function isRewindRecord(value: unknown): value is RewindBenchRecord {
+  if (value === null || typeof value !== 'object') return false;
+  const r = value as Record<string, unknown>;
+  return (
+    r.scenario === 'rewind' &&
+    isNumber(r.index) &&
+    isNumber(r.startedAt) &&
+    isNumber(r.endedAt) &&
+    typeof r.buildId === 'string' &&
+    isNumber(r.ticks) &&
+    isNumber(r.stepsPerSecond) &&
+    isNumber(r.worldBuildMs) &&
+    isNumber(r.hashMs) &&
+    isNumber(r.hashChecks) &&
+    isNumber(r.estCapTicks) &&
+    typeof r.stage === 'string' &&
+    (r.error === null || typeof r.error === 'string')
+  );
+}
+
+/**
  * Reads a stored state defensively.
  *
  * @param text - The stored JSON, or `null` when nothing is stored.
@@ -249,6 +281,7 @@ export function parseRunState(text: string | null): BenchRunState | null {
     },
     records,
     decode: isDecodeRecord(o.decode) ? o.decode : null,
+    rewind: isRewindRecord(o.rewind) ? o.rewind : null,
     sent: (o.sent as unknown[]).filter(isNumber),
     lastError: typeof o.lastError === 'string' ? o.lastError : null,
   };
@@ -302,6 +335,27 @@ export function recordDecode(state: BenchRunState, record: DecodeBenchRecord): B
     ...state,
     decode: record,
     sent: state.sent.filter((index) => index !== DECODE_SCENARIO_INDEX),
+    cursor,
+    running: state.running && !state.single && cursor < BENCH_RUN_LENGTH,
+    single: false,
+    lastError: null,
+  };
+}
+
+/**
+ * Stores the rewind scenario's record (plan R2 TL-3) and moves the cursor past it — the run is
+ * done. The record never reaches the log server (the payload protocol stays what it was); only
+ * the results page shows it, so the POST bookkeeping skips it entirely.
+ *
+ * @param state - The state.
+ * @param record - The record (replaces an earlier one).
+ * @returns The new state — the rewind scenario done, the run closed by its cursor.
+ */
+export function recordRewind(state: BenchRunState, record: RewindBenchRecord): BenchRunState {
+  const cursor = Math.max(state.cursor, REWIND_SCENARIO_INDEX + 1);
+  return {
+    ...state,
+    rewind: record,
     cursor,
     running: state.running && !state.single && cursor < BENCH_RUN_LENGTH,
     single: false,

@@ -55,8 +55,12 @@ export const STANDIN_SCENARIO_ID = 'standin-zone';
 /** Its position in a TV run: after the decode scenario. */
 export const STANDIN_SCENARIO_INDEX = DECODE_SCENARIO_INDEX + 1;
 
-/** Page loads of a whole TV run: the render matrix, the decode scenario, the stand-in load. */
-export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 2;
+/**
+ * Page loads of a whole TV run: the render matrix, the decode scenario, the stand-in load and —
+ * since plan R2 TL-3 — the rewind scenario (its own index and length live in `./rewind.js`,
+ * which extends this line's run by its page).
+ */
+export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 3;
 
 /** Repetitions per page on the TV (about 20 s for the pages on the M7, by estimate). */
 export const TV_DECODE_REPETITIONS = 8;

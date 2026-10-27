@@ -200,7 +200,7 @@ describe('bench results page', () => {
       'SHMUP CUP TV RENDER BENCH (R0-02)  build abc1234  host tizen  GL 1  display 1920x1080' +
         '  output 960x540',
     );
-    expect(lines[1].text).toMatch(/^ENTER run the matrix: 90 scenarios \+ decode/);
+    expect(lines[1].text).toMatch(/^ENTER run: 90 scenarios \+ decode/);
     const out = formatOutputLines('960x540', skipped);
     expect(out.map((line) => line.text)).toEqual([
       "OUTPUT backbuffer 960x540 ('fit' upscale), 82 scenario(s) skipped: frame larger than the output",
@@ -227,8 +227,8 @@ describe('bench results page', () => {
       color: HEADER_COLOR,
     });
     expect(lines[1].text).toBe(
-      'ENTER run the matrix: 172 scenarios + decode + stand-in, ~92 min (10 s warm-up, 14 s' +
-        ' measured, 6 s synced)',
+      'ENTER run: 172 scenarios + decode + stand-in + rewind, ~92 min (10 s warm, 14 s measure, ' +
+        '6 s sync)',
     );
     expect(lines[2]).toEqual({
       text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',

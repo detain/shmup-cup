@@ -102,6 +102,15 @@ import {
   type DecodeWindow,
 } from './decode.js';
 import {
+  REWIND_SCENARIO_ID,
+  REWIND_SCENARIO_INDEX,
+  HEADLESS_REWIND_TICKS,
+  TV_REWIND_TICKS,
+  measureRewindScenario,
+  rewindTicksFromSearch,
+  type RewindBenchRecord,
+} from './rewind.js';
+import {
   BENCH_CAMPAIGN_KEY,
   CAMPAIGN_RESUME_MS,
   campaignFor,
@@ -152,6 +161,7 @@ import {
   nextSeq,
   parseRunState,
   recordDecode,
+  recordRewind,
   recordResult,
   rerunScenario,
   resumeRun,
@@ -213,6 +223,8 @@ export interface TvBenchOutcome {
   readonly record: RenderBenchRecord | null;
   /** The decode scenario's record (`?scenario=decode`, plan R1-05 B4); absent otherwise. */
   readonly decode?: DecodeBenchRecord;
+  /** The rewind scenario's record (`?scenario=rewind`, plan R2 TL-3); absent otherwise. */
+  readonly rewind?: RewindBenchRecord;
   /** Why it failed, or `null`. */
   readonly error: string | null;
 }
@@ -995,6 +1007,18 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
     );
     return;
   }
+  if (scenarioId === REWIND_SCENARIO_ID) {
+    // The rewind scenario (R2 TL-3) needs no renderer and no GL: one synchronous sim loop.
+    const ticks = rewindTicksFromSearch(search, HEADLESS_REWIND_TICKS);
+    const rewind = measureRewindScenario(
+      options.buildId,
+      ticks,
+      () => Date.now(),
+      () => win.performance.now(),
+    );
+    publish({ record: null, rewind, error: rewind.error });
+    return;
+  }
   const scenario = findBenchScenario(scenarioId);
   if (scenario === null) {
     publish({ record: null, error: `unknown scenario "${scenarioId}"` });
@@ -1232,6 +1256,22 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
         reload();
       },
     );
+    return;
+  }
+  if (mode === 'scenario' && state !== null && state.cursor === REWIND_SCENARIO_INDEX) {
+    // The run's fourth special page (R2 TL-3): the rewind loop, stored for the results table and
+    // never POSTed (the payload protocol is the render records and the decode record — rule: the
+    // server's schema does not move for a scenario that is a bench-build-local number).
+    mark(win, 'scenario');
+    const record = measureRewindScenario(
+      options.buildId,
+      rewindTicksFromSearch(search, TV_REWIND_TICKS),
+      () => Date.now(),
+      () => win.performance.now(),
+    );
+    const next = recordRewind(state, record);
+    save(next);
+    post([], next.cursor >= BENCH_RUN_LENGTH, reload);
     return;
   }
   if (mode === 'scenario' && state !== null) {

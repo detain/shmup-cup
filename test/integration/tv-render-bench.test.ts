@@ -47,6 +47,7 @@ import {
   measureDecode,
   type DecodeHost,
 } from '../../apps/tizen/src/bench/decode.js';
+import { REWIND_SCENARIO_ID, REWIND_SCENARIO_INDEX } from '../../apps/tizen/src/bench/rewind.js';
 import { DECODE_PAGE_IDS, decodeArtImage } from '../../apps/tizen/scripts/bench-decode.mjs';
 // Relative source imports, as `render-telemetry-pipeline.test.ts` does: the root suite does not
 // depend on `@shmup/shell`.
@@ -363,14 +364,16 @@ describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-
 });
 
 describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () => {
-  it('appends one page load to the run, and the stand-in load follows it (R3-04.M4a)', () => {
+  it('appends one page load to the run; stand-in and rewind follow it (R3-04.M4a, R2 TL-3)', () => {
     expect([
       DECODE_SCENARIO_ID,
       DECODE_SCENARIO_INDEX,
       STANDIN_SCENARIO_ID,
       STANDIN_SCENARIO_INDEX,
+      REWIND_SCENARIO_ID,
+      REWIND_SCENARIO_INDEX,
       BENCH_RUN_LENGTH,
-    ]).toEqual(['decode', 172, 'standin-zone', 173, 174]);
+    ]).toEqual(['decode', 172, 'standin-zone', 173, 'rewind', 174, 175]);
   });
 
   it('draws its synthetic pages the same on every machine (integer maths only)', () => {

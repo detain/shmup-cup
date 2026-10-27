@@ -11,6 +11,8 @@ import {
   BENCH_SCENARIOS,
   DECODE_SCENARIO_ID,
   DECODE_SCENARIO_INDEX,
+  REWIND_SCENARIO_ID,
+  REWIND_SCENARIO_INDEX,
   HEADLESS_DECODE_REPETITIONS,
   MAX_DECODE_REPETITIONS,
   STANDIN_SCENARIO_ID,
@@ -142,16 +144,18 @@ function scriptedHost(
 }
 
 describe('decode scenario: its place in the run', () => {
-  it('follows the 172-scenario matrix, and the stand-in load follows it (R3-04.M4a)', () => {
+  it('follows the 172-scenario matrix, then the stand-in load and the rewind page (R3-04.M4a, R2 TL-3)', () => {
     expect(BENCH_SCENARIOS).toHaveLength(172);
     expect(DECODE_SCENARIO_ID).toBe('decode');
     expect(DECODE_SCENARIO_INDEX).toBe(172);
-    expect(BENCH_RUN_LENGTH).toBe(174);
+    expect(BENCH_RUN_LENGTH).toBe(175);
     expect(BENCH_SCENARIOS.some((s) => s.id === DECODE_SCENARIO_ID)).toBe(false);
     expect(STANDIN_SCENARIO_ID).toBe('standin-zone');
     expect(STANDIN_SCENARIO_INDEX).toBe(DECODE_SCENARIO_INDEX + 1);
-    expect(STANDIN_SCENARIO_INDEX + 1).toBe(BENCH_RUN_LENGTH);
+    expect(REWIND_SCENARIO_INDEX).toBe(STANDIN_SCENARIO_INDEX + 1);
+    expect(REWIND_SCENARIO_INDEX + 1).toBe(BENCH_RUN_LENGTH);
     expect(BENCH_SCENARIOS.some((s) => s.id === STANDIN_SCENARIO_ID)).toBe(false);
+    expect(BENCH_SCENARIOS.some((s) => s.id === REWIND_SCENARIO_ID)).toBe(false);
     expect([TV_DECODE_REPETITIONS, HEADLESS_DECODE_REPETITIONS]).toEqual([8, 2]);
   });
 

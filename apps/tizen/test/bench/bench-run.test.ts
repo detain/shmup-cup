@@ -20,6 +20,7 @@ import {
   parseRunState,
   recordDecode,
   recordResult,
+  recordRewind,
   serializeRunState,
   startRenderBench,
   parseBenchOutput,
@@ -28,7 +29,7 @@ import {
   type BenchOutput,
   type TvBenchOutcome,
 } from '../../src/bench/index.js';
-import { fakeDecode, fakeStandinRecord, recordFor } from './fake-record.js';
+import { fakeDecode, fakeRewind, fakeStandinRecord, recordFor } from './fake-record.js';
 import { shippedAtlas } from './shipped-atlas.js';
 import type { AtlasManifest } from '@shmup/render-pixi';
 
@@ -167,14 +168,14 @@ function decodeDone(): string {
 }
 
 /**
- * A complete run: the matrix, the decode scenario, the stand-in load.
+ * A complete run: the matrix, the decode scenario, the stand-in load and the rewind page.
  *
  * @returns Its stored text.
  */
 function completeRun(): string {
   const state = parseRunState(decodeDone());
   if (state === null) throw new Error('unreadable run');
-  return serializeRunState(recordResult(state, fakeStandinRecord()));
+  return serializeRunState(recordRewind(recordResult(state, fakeStandinRecord()), fakeRewind()));
 }
 
 /** {@link ASSETS} with the decode scenario's pages (which never load in Node either). */
@@ -222,8 +223,9 @@ describe('bench page (TV mode)', () => {
     const done = fakePage('', completeRun());
     done.start();
     done.press(403);
-    // The last page load of a whole run is the stand-in load (plan R3-04.M4a).
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 173 });
+    // The last page load of a whole run is the rewind page (plan R2 TL-3, after the stand-in of
+    // plan R3-04.M4a).
+    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 174 });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -301,7 +303,7 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 
-  it('pages a whole run’s results: the table first, the decode table on the last page', async () => {
+  it('pages a whole run’s results: the table first, decode and rewind on the last pages', async () => {
     const first = fakePage('', completeRun());
     first.start();
     expect(first.attributes[TV_BENCH_MARKER]).toBe('results');
@@ -311,7 +313,8 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(text).toContain('384x216 busy');
     expect(text).not.toContain('DECODE (R1-05)');
 
-    // Left on the first page wraps round to the last one: the decode table.
+    // Left on the first page wraps round to the last one: the special pages share it (the decode
+    // table above the rewind lines, plan R2 TL-3).
     const last = fakePage('', completeRun());
     last.start();
     last.press(37);
@@ -323,8 +326,15 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(decode).toContain('DECODE (R1-05) 8 reps GL1');
     expect(decode).toContain('standin-zone-a');
     expect(decode).toContain('PNG8');
+    expect(decode).toContain('REWIND (R2 TL-3)');
     expect(decode).not.toContain('384x216 busy');
     expect(last.reload).not.toHaveBeenCalled();
+    // One page back: the decode table alone, before the rewind page.
+    last.press(37);
+    await settle();
+    const middle = last.appended[last.appended.length - 1].textContent;
+    expect(middle).toContain('DECODE (R1-05) 8 reps GL1');
+    expect(middle).not.toContain('REWIND (R2 TL-3)');
   });
 
   it('publishes the stand-in outcome headlessly (?scenario=standin-zone)', async () => {
@@ -407,7 +417,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(text).toContain('output 1280x720');
     expect(text).toContain('22 scenario(s) skipped: frame larger than the output');
     expect(text).toContain('SKIPPED 1024x768n 1280x960n 1920x1080n 1920x1080n-interp');
-    expect(text).toContain('ENTER run the matrix: 150 scenarios + decode + stand-in');
+    expect(text).toContain('ENTER run: 150 scenarios + decode + stand-in + rewind');
   });
 
   it('reports a null output without one', async () => {
@@ -422,7 +432,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(payload.env.output).toBeNull();
     expect(page.appended[0].textContent).not.toContain('OUTPUT');
     expect(page.appended[0].textContent).toContain(
-      'ENTER run the matrix: 172 scenarios + decode + stand-in',
+      'ENTER run: 172 scenarios + decode + stand-in + rewind',
     );
   });
 
