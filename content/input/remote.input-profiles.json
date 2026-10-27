@@ -38,7 +38,17 @@
       "diagonals": "combine",
       "socd": "neutral",
       "singleKey": true,
-      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown", "Guide", "Extra"],
+      "register": [
+        "MediaPlayPause",
+        "ChannelUp",
+        "ChannelDown",
+        "Guide",
+        "Extra",
+        "ColorF0Red",
+        "ColorF1Green",
+        "ColorF2Yellow",
+        "ColorF3Blue"
+      ],
       "hosts": ["tizen"]
     },
     {

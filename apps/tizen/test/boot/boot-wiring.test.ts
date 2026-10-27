@@ -116,8 +116,18 @@ vi.mock('@shmup/audio-web', async (importOriginal) => {
 
 const STEP = 1000 / 60;
 
-/** The remote keys `tizen-remote-safe` registers (M3-02b added Guide and Extra). */
-const REGISTERED_KEYS = ['MediaPlayPause', 'ChannelUp', 'ChannelDown', 'Guide', 'Extra'];
+/** The keys `tizen-remote-safe` registers (M3-02b Guide/Extra; P0-2 the ColorF*). */
+const REGISTERED_KEYS = [
+  'MediaPlayPause',
+  'ChannelUp',
+  'ChannelDown',
+  'Guide',
+  'Extra',
+  'ColorF0Red',
+  'ColorF1Green',
+  'ColorF2Yellow',
+  'ColorF3Blue',
+];
 const { manifest } = buildAtlas();
 const resources: TizenAppResources = {
   contentFiles: readContentFiles(),

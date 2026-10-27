@@ -11,7 +11,7 @@ boot error screen, and `pnpm content:check` checks the shipped file and the exam
 
 | Profile | Used | Notes |
 |---|---|---|
-| `tizen-remote-safe` | default on the TV (the only remote profile) | no debounce, `singleKey`, registers Play/Pause, Ch±, Guide and Extra |
+| `tizen-remote-safe` | default on the TV (the only remote profile) | no debounce, `singleKey`, registers Play/Pause, Ch±, Guide, Extra and the four colour keys |
 | `keyboard-default` | default on the web | arrows / WASD, Z Shot, X Sub, C / Enter PowerUp, V Special, Shift Speed, P / Esc Pause |
 | `keyboard-remote-emulation` | `?profile=keyboard-remote-emulation` | only the remote's keys, with its `singleKey` model: arrows, Enter = OK, Backspace = Back, P = Play/Pause, PgUp/PgDn = Ch± |
 | `keyboard-split` | Options → CONTROLS (web), `?profile=keyboard-split` | two players on one keyboard (M2-06): player 1 WASD, F = OK / PowerUp, G = Back / Special + Speed, Esc / Q = Pause; player 2 (`split`) arrows, K = OK / PowerUp, L = Back / Special + Speed, Enter = START (join) |
@@ -115,6 +115,12 @@ Actions: `Up`, `Down`, `Left`, `Right`, `Shot`, `Sub`, `PowerUp`, `Special`, `Sp
   (pads are polled and report every button at once); key profiles never bind `buttons`.
 - Only `remote` profiles list `register` keys, and never the system keys `Exit`, `VolumeUp`,
   `VolumeDown`, `VolumeMute`.
+- The colour keys register as `ColorF0Red` (403), `ColorF1Green` (404), `ColorF2Yellow` (405),
+  `ColorF3Blue` (406) — the web names; the `XF86*` spellings are ElmSharp/Ecore names and
+  `registerKey` refuses them (`InvalidValuesError`). They are registered with no default binding
+  (tizen_optimize.md §9.2 — the action choice is an owner UX call), which already makes them
+  capturable in REBIND, in parity with the webOS magic remote, where `webos-remote-safe` binds
+  403 → `Special` and 404 → `Speed`.
 - `hosts` (M3-03) names the `Platform.id`s whose Options screen may offer the profile; an empty
   list (or no field at all) means every host, which is what the keyboard and gamepad profiles use.
   It exists because the two TV hosts read the same `content/input/`: Tizen's Back is **10009** and

@@ -273,7 +273,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.foreign': '9cfb0258b044a523',
     sfx: '1e5b84de8ac2d037',
     music: '35f49c705273d5ef',
-    'input-profiles': '3349be80a0dd2b8f',
+    'input-profiles': 'bb4946245970b8dc',
     fx: '110c6250dedf116b',
   },
   examples: {

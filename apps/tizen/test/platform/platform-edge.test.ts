@@ -89,7 +89,7 @@ describe('tizen/platform registerRemoteKeys failure modes', () => {
     expect(registered).toEqual([]);
 
     failBatch?.({ name: 'InvalidValuesError' });
-    expect(registered).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    expect(registered).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown', 'Guide', 'Extra']);
   });
 
   it('does not register anything again when the batch succeeds', () => {

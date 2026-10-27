@@ -71,6 +71,21 @@ describe('input-web/web-input rebinding capture (M2-16)', () => {
     expect(input.capture.code).toBe('ArrowUp');
   });
 
+  it('a registered Tizen colour key reaches the armed capture (P0-2 rebind proof)', () => {
+    // The Tizen remote delivers a registered colour key as a keydown with the empty `code`
+    // and keyCode 403 (ColorF0Red) — registering it is what lets the event reach the page.
+    const { input } = setup();
+    input.beginCapture('keys');
+    input.keyboard.handleEvent(key('keydown', '', 403));
+    input.poll();
+    expect([
+      input.capture.status,
+      input.capture.code,
+      input.capture.keyCode,
+      input.capture.button,
+    ]).toEqual([CaptureStatus.Captured, '', 403, -1]);
+  });
+
   it('a key held when the capture began does not count', () => {
     const { input } = setup();
     input.keyboard.handleEvent(key('keydown', 'Enter', 13));

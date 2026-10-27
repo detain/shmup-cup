@@ -23,6 +23,7 @@ import {
   REQUIRED_CONTEXT_ACTIONS,
   RESERVED_BINDING_TOKENS,
   SYSTEM_REMOTE_KEYS,
+  bindingTokenLabel,
   captureToken,
   chooseInputProfile,
   createInputProfileRegistry,
@@ -157,7 +158,17 @@ describe('input-web/rebind the shipped profiles (content/input)', () => {
       diagonals: 'combine',
       singleKey: true,
     });
-    expect(safe.register).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown', 'Guide', 'Extra']);
+    expect(safe.register).toEqual([
+      'MediaPlayPause',
+      'ChannelUp',
+      'ChannelDown',
+      'Guide',
+      'Extra',
+      'ColorF0Red',
+      'ColorF1Green',
+      'ColorF2Yellow',
+      'ColorF3Blue',
+    ]);
     expect(profiles.map((p) => p.id)).not.toContain('tizen-remote-diagonal');
     // The keyboard emulation models the single-key remote instead of a `lastWins` D-pad ring.
     expect(byId('keyboard-remote-emulation')).toMatchObject({
@@ -199,6 +210,35 @@ describe('input-web/rebind the shipped profiles (content/input)', () => {
         message: '"VolumeUp" is a system key and must never be registered',
       },
     ]);
+  });
+
+  it('lets REBIND capture the colour keys — registered, unbound, named (P0-2)', () => {
+    const remote = byId('tizen-remote-safe');
+    // Registered with the web names (the XF86* spellings are ElmSharp key names and
+    // registerKey rejects those with InvalidValuesError — tizen_optimize.md §8.2).
+    for (const name of ['ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue']) {
+      expect(remote.register).toContain(name);
+    }
+    // … the shipped default is register-only: no default binding (red→Special, green→Speed,
+    // yellow→palette, blue→CRT stay an owner UX call) …
+    for (const keyCode of ['403', '404', '405', '406']) {
+      expect(remote.context.game.byKeyCode[keyCode]).toBeUndefined();
+      expect(remote.context.menu.byKeyCode[keyCode]).toBeUndefined();
+    }
+    // … and the capture path resolves each colour keydown through the remote profile to a
+    // plain bindable token the REBIND screen can offer.
+    const labels: Record<number, string> = {
+      403: 'RED',
+      404: 'GREEN',
+      405: 'YELLOW',
+      406: 'BLUE',
+    };
+    for (const keyCode of [403, 404, 405, 406]) {
+      const token = captureToken(remote, { code: '', keyCode, button: -1 });
+      expect(token).toBe('key:' + String(keyCode));
+      expect(RESERVED_BINDING_TOKENS).not.toContain(token);
+      if (token !== null) expect(bindingTokenLabel(token)).toBe(labels[keyCode]);
+    }
   });
 
   it('resolve every action they name, in both contexts', () => {
