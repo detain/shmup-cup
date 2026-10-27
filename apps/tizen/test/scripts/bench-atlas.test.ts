@@ -171,7 +171,11 @@ describe('bench-atlas on the shipped atlas', () => {
       atlases.map((atlas) => atlas.manifest.pages.map((page) => `${page.w}x${page.h}`)),
     ).toEqual([
       ['1024x1024'],
-      ['1024x1024'],
+      // The ×1.33 page re-packed to 512×2048 (owner 2026-10-26, w15-FIX-BENCH): the w15-WB
+      // option silhouettes' +12 frames of 8×8 (commit add6f1fa) tipped the re-pack out of the
+      // square. Area-neutral — still 1,048,576 px — and every other density page stands. The
+      // R5-10.T3 shared-kit gate WB's land missed; re-pinned to the measured build, not raised.
+      ['512x2048'],
       ['2048x1024'],
       ['2048x2048'],
       ['2048x1024', '2048x1024'],
