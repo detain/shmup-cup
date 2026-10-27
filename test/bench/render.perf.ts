@@ -38,9 +38,9 @@
  *
  * **The TV render bench's scenes (plan R0-02).** The second suite builds the bench widget exactly
  * as `pnpm bench:tv` does (`apps/tizen/vite.bench.config.ts`, mode `bench`) and opens each of its
- * 172 scenarios headlessly (`?scenario=<id>` — the resolution sweep's 25 frame sizes, from 384×216
+ * 174 scenarios headlessly (`?scenario=<id>` — the resolution sweep's 25 frame sizes, from 384×216
  * to 1920×1080 in the `scaled` and `native` art modes, each busy, with a filtered layer, Mode-7,
- * CRT light / full and all at once, then the 22 knob rows) on a 1280×720 display. It gates
+ * CRT light / full and all at once, then the 24 knob rows) on a 1280×720 display. It gates
  * **counts only** (`tvBenchViolations`: the load, draw calls, pooled render targets, the atlas
  * pages of the density — {@link TV_BENCH_PAGES} —, the heap) — the milliseconds are for the TV
  * (R0-03). Since plan
@@ -312,6 +312,7 @@ const MIME: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
+  '.mp4': 'video/mp4',
 };
 
 /**
@@ -385,6 +386,9 @@ beforeAll(async () => {
       // `performance.memory` in bytes rather than 100 KB buckets, and a real `gc()`.
       '--enable-precise-memory-info',
       '--js-flags=--expose-gc',
+      // The video knob's rows (v2 R7-VID): like the TV and the e2e config, a muted clip starts
+      // without a gesture (the bench measures the media path, not the desktop autoplay policy).
+      '--autoplay-policy=no-user-gesture-required',
     ],
     env,
   });
@@ -703,7 +707,8 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       records.set(scenario.id, record);
       console.info(
         `[bench] tv ${scenario.id}: render p95 ${record.renderMs[2].toFixed(2)} ms, synced p95 ` +
-          `${record.syncedMs[2].toFixed(2)} ms (SwiftShader — not the M7), ${record.drawCalls} ` +
+          `${record.syncedMs[2].toFixed(2)} ms (SwiftShader — not the M7), two-tick ` +
+          `${(record.twoTickShare * 100).toFixed(1)}%, ${record.drawCalls} ` +
           `draw calls, ${(record.renderTargetBytes / 1024).toFixed(0)} KB pooled targets, ` +
           `${(record.textureBytes / 1024).toFixed(0)} KB atlas in ${record.atlasPages} page(s), ` +
           `heap ${(record.heapDeltaBytes / 1024).toFixed(0)} KB, ${record.frames}+` +

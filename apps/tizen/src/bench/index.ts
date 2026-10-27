@@ -12,7 +12,7 @@
  * upscaled ×s at bench-build time (`scripts/bench-atlas.mjs` — eight densities from 1 to 2.67,
  * one or two atlas pages each; nothing is added to the game's atlas). Six variants per size
  * (`./matrix.ts`: busy, a filtered layer, Mode-7, CRT light, CRT full, all of them) over 25 sizes,
- * then 22 knob rows, make the 172-scenario matrix.
+ * then 24 knob rows, make the 174-scenario matrix.
  *
  * **One scenario per page load** (Pixi's `TexturePool` is global and never shrinks): the cursor
  * and the results live in `localStorage` (`./state.ts`) and the page reloads between scenarios.

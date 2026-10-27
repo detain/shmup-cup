@@ -170,17 +170,17 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     file: 'apps/tizen/src/bench/matrix.ts',
     symbol: 'BENCH_KNOBS.sizes',
     value: 640,
-    count: 4,
+    count: 5,
     reason:
-      "the knob rows' size id '640x360' (stretch, interp, out720, out540): bench data (R0-02)",
+      "the knob rows' size id '640x360' (stretch, interp, out720, out540, video): bench data (R0-02, R7-VID)",
   },
   {
     file: 'apps/tizen/src/bench/matrix.ts',
     symbol: 'BENCH_KNOBS.sizes',
     value: 360,
-    count: 4,
+    count: 5,
     reason:
-      "the knob rows' size id '640x360' (stretch, interp, out720, out540): bench data (R0-02)",
+      "the knob rows' size id '640x360' (stretch, interp, out720, out540, video): bench data (R0-02, R7-VID)",
   },
   // HTTP status codes: 200 = OK.
   {

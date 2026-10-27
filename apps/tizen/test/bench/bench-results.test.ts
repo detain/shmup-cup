@@ -200,7 +200,7 @@ describe('bench results page', () => {
       'SHMUP CUP TV RENDER BENCH (R0-02)  build abc1234  host tizen  GL 1  display 1920x1080' +
         '  output 960x540',
     );
-    expect(lines[1].text).toMatch(/^ENTER run: 90 scenarios \+ decode/);
+    expect(lines[1].text).toMatch(/^ENTER run: 92 scenarios \+ decode/);
     const out = formatOutputLines('960x540', skipped);
     expect(out.map((line) => line.text)).toEqual([
       "OUTPUT backbuffer 960x540 ('fit' upscale), 82 scenario(s) skipped: frame larger than the output",
@@ -227,7 +227,7 @@ describe('bench results page', () => {
       color: HEADER_COLOR,
     });
     expect(lines[1].text).toBe(
-      'ENTER run: 172 scenarios + decode + stand-in + rewind, ~92 min (10 s warm, 14 s measure, ' +
+      'ENTER run: 174 scenarios + decode + stand-in + rewind, ~93 min (10 s warm, 14 s measure, ' +
         '6 s sync)',
     );
     expect(lines[2]).toEqual({
@@ -251,7 +251,7 @@ describe('bench results page', () => {
     );
     const texts = lines.map((line) => line.text);
     expect(texts[3]).toBe('LOG http://10.0.0.2:8787/report  all results acknowledged');
-    expect(texts).toContain('RUN rb-test-0001  2/173 measured  sent 0/2  PAGE 1/1');
+    expect(texts).toContain('RUN rb-test-0001  2/175 measured  sent 0/2  PAGE 1/1');
     expect(texts).toContain(formatResultsHeader());
     expect(texts.filter((text) => text.startsWith('640x360 busy'))).toHaveLength(1);
     expect(lines[lines.length - 1]).toEqual({ text: 'ERROR Error: no WebGL', color: ERROR_COLOR });
@@ -262,7 +262,7 @@ describe('bench results page', () => {
     state = recordDecode(recordResult(state, fakeRecord()), fakeDecode());
     let texts = benchPageLines(input({ state })).map((line) => line.text);
     expect(texts).toContain(
-      'RUN rb-test-0002  1/173 measured  sent 0/1  decode not sent  (still running)  PAGE 1/1',
+      'RUN rb-test-0002  1/175 measured  sent 0/1  decode not sent  (still running)  PAGE 1/1',
     );
     const header = texts.indexOf(formatDecodeHeader());
     expect(header).toBeGreaterThan(texts.indexOf(formatResultsHeader()));
@@ -272,7 +272,7 @@ describe('bench results page', () => {
     state = markSent(state, [0, DECODE_SCENARIO_INDEX]);
     texts = benchPageLines(input({ state })).map((line) => line.text);
     expect(texts).toContain(
-      'RUN rb-test-0002  1/173 measured  sent 1/1  decode sent  (still running)  PAGE 1/1',
+      'RUN rb-test-0002  1/175 measured  sent 1/1  decode sent  (still running)  PAGE 1/1',
     );
     // A decode record alone (a re-run of a run whose records were cleared) is still a result.
     const alone = recordDecode(createRunState('rb-test-0003', 1, 1, TV_BENCH_TIMING), fakeDecode());
@@ -281,7 +281,7 @@ describe('bench results page', () => {
     );
   });
 
-  describe('paging (the resolution sweep’s 172 rows)', () => {
+  describe('paging (the resolution sweep’s 174 rows)', () => {
     /** A whole run: every scenario of the matrix measured, then the decode scenario. */
     const whole = (() => {
       let state = createRunState('rb-test-0004', 1, 1, TV_BENCH_TIMING);
@@ -294,7 +294,7 @@ describe('bench results page', () => {
     it('splits the rows over pages of at most maxLines lines, in matrix order', () => {
       // 35 lines: the 5-line head, the RUN line, the table header and the error line leave 27 rows.
       const pages = benchResultPages(input({ state: whole, maxLines: 35 }));
-      expect(pages).toBe(Math.ceil(172 / 27) + 1);
+      expect(pages).toBe(Math.ceil(174 / 27) + 1);
       const shown: string[] = [];
       for (let page = 0; page < pages - 1; page++) {
         const lines = benchPageLines(input({ state: whole, maxLines: 35, page }));
@@ -302,7 +302,7 @@ describe('bench results page', () => {
         expect(lines[5].text).toContain(`  PAGE ${page + 1}/${pages}`);
         expect(lines[6]).toEqual({ text: formatResultsHeader(), color: HEADER_COLOR });
         const pageRows = lines.slice(7).filter((line) => line.color === ROW_COLOR);
-        expect(pageRows.length).toBe(page < pages - 2 ? 27 : 172 - 27 * (pages - 2));
+        expect(pageRows.length).toBe(page < pages - 2 ? 27 : 174 - 27 * (pages - 2));
         for (const line of pageRows) shown.push(line.text);
         expect(lines.map((line) => line.text)).not.toContain(formatDecodeHeader());
       }
@@ -310,6 +310,7 @@ describe('bench results page', () => {
       expect(shown).toEqual(rows);
       expect(rows[0].startsWith('384x216 busy')).toBe(true);
       expect(rows[171].startsWith('640x360 worst-out540')).toBe(true);
+      expect(rows[173].startsWith('640x360 worst-video')).toBe(true);
     });
 
     it('puts the decode table on the last page, and clamps a page out of range', () => {
@@ -354,7 +355,7 @@ describe('bench results page', () => {
     it('keeps everything on one page without a line limit', () => {
       expect(benchResultPages(input({ state: whole }))).toBe(1);
       const texts = benchPageLines(input({ state: whole, page: 3 })).map((line) => line.text);
-      expect(texts.filter((text) => rows.indexOf(text) >= 0)).toHaveLength(172);
+      expect(texts.filter((text) => rows.indexOf(text) >= 0)).toHaveLength(174);
       expect(texts.indexOf(formatDecodeHeader())).toBeGreaterThan(
         texts.indexOf(formatResultsHeader()),
       );

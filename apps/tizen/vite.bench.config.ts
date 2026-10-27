@@ -6,7 +6,9 @@
  * (the game's, rewritten to the bench's own app id `ShmpCupBnc.RenderBench` by
  * `scripts/config-xml.mjs` `benchConfigXml`, so the bench installs next to the game) +
  * `icon.png` + the density atlases in `assets/atlas/` (`scripts/bench-atlas.mjs` — the real atlas
- * ×1 / ×1.5 / ×2.25, nearest-neighbour; nothing is added to the game's atlas).
+ * ×1 / ×1.5 / ×2.25, nearest-neighbour; nothing is added to the game's atlas) + the video knob's
+ * one looped clip `assets/video/attract-ambient.mp4` (v2 R7-VID — `shmupVideos({ only })`, not the
+ * game's 15-clip set).
  *
  * **The Tizen build contract, unchanged:** `chrome69` + `es2018` (so the emitted syntax is ES2018 —
  * inside webOS 5's Chromium 68 too), one IIFE with no code splitting and no module preload, the
@@ -24,7 +26,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { buildId, clientConditions, shmupBuildInfo } from '../../vite.shared.js';
+import { buildId, clientConditions, shmupBuildInfo, shmupVideos } from '../../vite.shared.js';
 import { shmupRenderBench } from './scripts/bench-atlas.mjs';
 import { benchBuildId, parseBenchOutput } from './src/bench/output.js';
 import { benchConfigXml } from './scripts/config-xml.mjs';
@@ -92,7 +94,14 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupRenderBench(), shmupBuildInfo(), classicScriptTag(), benchConfigXmlPlugin()],
+  plugins: [
+    shmupRenderBench(),
+    shmupBuildInfo(),
+    // The video knob's one looped clip (v2 R7-VID) — not the game's 15-clip set.
+    shmupVideos({ only: ['attract-ambient.mp4'] }),
+    classicScriptTag(),
+    benchConfigXmlPlugin(),
+  ],
   server: {
     host: true,
     port: 5176,

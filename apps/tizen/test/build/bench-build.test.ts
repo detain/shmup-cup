@@ -21,6 +21,7 @@ import {
   checkTizenBundle,
 } from '../../scripts/check-bundle.mjs';
 import { BENCH_APP_ID } from '../../scripts/config-xml.mjs';
+import { videoShippedFiles } from '../../../../vite.shared.js';
 import {
   DECODE_BYTE_BANDS,
   DECODE_PAGE_IDS,
@@ -94,6 +95,9 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
       'assets/atlas/decode-common.png',
       'assets/atlas/decode-standin-zone-a.png',
       'assets/atlas/decode-zone-a.png',
+      // The video knob's one looped clip (v2 R7-VID) — the bench config ships `only` it; empty
+      // on a host without ffmpeg, exactly as the plugin emits.
+      ...videoShippedFiles(['attract-ambient.mp4']),
       'config.xml',
       'icon.png',
       'index.html',

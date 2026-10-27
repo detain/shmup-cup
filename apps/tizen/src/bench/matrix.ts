@@ -235,11 +235,17 @@ export interface BenchKnob {
   readonly outputWidth: number;
   /** Canvas height in CSS pixels, or 0 for the window's. */
   readonly outputHeight: number;
+  /**
+   * v2 R7-VID: whether the row builds the renderer with the cutscene video surface and plays a
+   * looping clip for the whole session — the panel cost of decode plus one texture pull a frame.
+   */
+  readonly video: boolean;
 }
 
 /**
- * The knobs (see the module docs): the two non-default upscale modes, render interpolation and two
- * output resolutions below the display's — 22 rows in all, each with `busy` and `worst`.
+ * The knobs (see the module docs): the two non-default upscale modes, render interpolation, two
+ * output resolutions below the display's and the cutscene video surface — 24 rows in all, each
+ * with `busy` and `worst`.
  *
  * @remarks
  * `fit` and `stretch` only differ from `integer` when the frame's aspect ratio is not the
@@ -248,7 +254,9 @@ export interface BenchKnob {
  * a 1080p panel — the control that says what the knob itself costs. Interpolation and the output
  * resolutions run at the v2 frame and at the biggest native frames, where a per-sprite lerp or an
  * upscale has the most to do. The output knobs keep the canvas's CSS size (the whole window), so
- * the browser scales the smaller backbuffer up to the panel.
+ * the browser scales the smaller backbuffer up to the panel. `video` runs at the v2 frame alone —
+ * the surface is a 640×360 quad of the game's own size — read against the plain `640x360` rows
+ * like every other knob.
  */
 export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
   Object.freeze<BenchKnob>({
@@ -260,6 +268,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     interpolation: false,
     outputWidth: 0,
     outputHeight: 0,
+    video: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'stretch',
@@ -270,6 +279,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     interpolation: false,
     outputWidth: 0,
     outputHeight: 0,
+    video: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'interp',
@@ -280,6 +290,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     interpolation: true,
     outputWidth: 0,
     outputHeight: 0,
+    video: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out720',
@@ -290,6 +301,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     interpolation: false,
     outputWidth: 1280,
     outputHeight: 720,
+    video: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out540',
@@ -300,6 +312,18 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     interpolation: false,
     outputWidth: 960,
     outputHeight: 540,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'video',
+    what: 'cutscene video surface: clip decode plus a texture pull every rendered frame (v2 R7-VID)',
+    sizes: Object.freeze(['640x360']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: true,
   }),
 ]);
 
@@ -384,7 +408,7 @@ function buildScenarios(): BenchScenario[] {
 /**
  * Every scenario: the plain matrix first — sizes outer, variants inner, so a session measures its
  * 384×216 baseline before anything else and a run cut short still holds whole resolutions — then
- * the knob rows (150 + 22 = 172).
+ * the knob rows (150 + 24 = 174).
  */
 export const BENCH_SCENARIOS: readonly BenchScenario[] = Object.freeze(buildScenarios());
 

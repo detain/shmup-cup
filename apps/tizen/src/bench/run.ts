@@ -77,6 +77,7 @@ import {
   type PixiRenderer,
 } from '@shmup/render-pixi';
 import {
+  VIDEO_URL_DIR,
   buildRenderBenchPayload,
   makeRenderBenchSessionId,
   renderReportEndpoint,
@@ -503,11 +504,25 @@ function measureScenario(
       particleCapacity: BENCH_LOAD.particles,
       // The floor tile may sit on the second page of the ×2.25 atlas.
       createMode7Shader: (w, h) => createMode7Shader(atlas.pages[floorPage], w, h),
+      // The video knob's row draws through the cutscene surface (v2 R7-VID).
+      ...(scenario.knob !== null && scenario.knob.video ? { video: {} } : {}),
     });
     try {
       renderer.setSpriteNames(sprites.names);
       renderer.setFxContent(fx);
       renderer.setCrtFilter(variant.crt);
+      if (scenario.knob !== null && scenario.knob.video) {
+        // The looped ambient clip plays through the whole scenario; every rendered frame pulls a
+        // texImage2D when the decoder advanced (the shell's exact play path — the director in
+        // `@shmup/shell` starts clips the same way).
+        const surface = renderer.video;
+        if (surface === null)
+          throw new Error('the video knob needs a renderer built with the video option');
+        const started = await surface.play(`${VIDEO_URL_DIR}/attract-ambient.mp4`, true);
+        if (!started) {
+          throw new Error(`${VIDEO_URL_DIR}/attract-ambient.mp4 is missing from the bench build`);
+        }
+      }
       const tables = createSpriteTables(atlas, sprites.names);
       // The backdrops and the terrain at the scenario's width (the renderer's own bindings still
       // cover the v1 frame's).

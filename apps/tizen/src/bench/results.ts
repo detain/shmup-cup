@@ -5,7 +5,7 @@
  * session — are the ones plan §13 decides by. A knob row (`640x360-busy-stretch`) is read against
  * its own plain row instead (`640x360-busy`), so its relative columns say what the knob cost.
  *
- * **Paged.** The resolution sweep's 172 rows do not fit one screen, so {@link benchPageLines}
+ * **Paged.** The resolution sweep’s 174 rows do not fit one screen, so {@link benchPageLines}
  * returns one page — the head, then as many rows as fit — and **Left / Right** turn the page; the
  * decode table is the last page. (R0-03's 18-row table already lost the end of its last row on the
  * TV: the page's text overran the renderer's 1024-glyph UI pool, which the results page now sizes

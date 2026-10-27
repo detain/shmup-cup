@@ -111,8 +111,8 @@ describe('bench matrix (plan R0-02, §13)', () => {
     ]);
   });
 
-  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 22 knob rows', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(172);
+  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 24 knob rows', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(174);
     expect(BENCH_SCENARIOS.slice(0, 6).every((s) => s.size.id === '384x216')).toBe(true);
     BENCH_SCENARIOS.forEach((scenario, index) => {
       expect(scenario.index).toBe(index);
@@ -127,7 +127,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
         expect([scenario.outputWidth, scenario.outputHeight]).toEqual([0, 0]);
       }
     });
-    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(172);
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(174);
     expect(Object.isFrozen(BENCH_SCENARIOS)).toBe(true);
     // R0-02's and R0-03's 18 ids are still there, byte for byte.
     for (const size of ['384x216', '640x360', '960x540']) {
@@ -144,9 +144,10 @@ describe('bench matrix (plan R0-02, §13)', () => {
       ['interp', 6],
       ['out720', 4],
       ['out540', 2],
+      ['video', 2],
     ]);
     const knobRows = BENCH_SCENARIOS.filter((s) => s.knob !== null);
-    expect(knobRows).toHaveLength(22);
+    expect(knobRows).toHaveLength(24);
     expect(knobRows[0].id).toBe('800x600-busy-fit');
     expect(findBenchScenario('640x360-busy-stretch')).toMatchObject({
       row: 'busy-stretch',
@@ -169,7 +170,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     expect(findBenchScenario('640x360-nope')).toBeNull();
   });
 
-  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 86 minutes', () => {
+  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 87 minutes', () => {
     expect(TV_BENCH_TIMING).toEqual({
       warmupMs: 10_000,
       measureMs: 14_000,
@@ -178,7 +179,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     });
     const perScenario =
       TV_BENCH_TIMING.warmupMs + TV_BENCH_TIMING.measureMs + TV_BENCH_TIMING.syncMs;
-    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(86);
+    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(87);
     expect(HEADLESS_BENCH_TIMING.measureMs).toBeGreaterThan(0);
   });
 });
