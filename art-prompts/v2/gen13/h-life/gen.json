@@ -1,0 +1,81 @@
+{
+  "id": "gen13/h-life",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the one frame of the HUD remaining-ships icon — a miniature hero fighter — the tiny ship badge the HUD draws once per life left — one clear little fighter seen whole, broadside facing right. The sheet is one cell holding this one icon.\n\nDesign identity to keep exactly — the LIFE ICON: a miniature hero fighter drawn broadside facing RIGHT, shaped as a STUBBY WEDGE: a blunt tall tail edge on the LEFT (running the icon's full height), the silhouette narrowing in straight taper to a blunt nose tip on the right. Its footprint is exactly 180 px wide and 120 px tall — barely wider than it is tall — centred in its 288×256 cell with wide even bands of flat key on every side. A deep navy-blue hull (#1b2a4a) as a 1-px outline and casing, a pale steel-grey canopy line and upper spine (#c8d0e0), a bold royal-blue flank and engine cowl (#3858f0) across the lower body, and a cyan nose sensor light (#38c8e8) glowing at the front tip. A solid, chunky, angular arrow badge: thick body, tall tail, blunt nose — the hero ship read at a glance in five colour steps. Simple, bold, iconic.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cells laid out as 1 ROW OF 1 (1-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = THE ICON — the little right-facing wedge fighter, whole, blunt tail left, nose right. The subject lies within aspect 1.15:1 to 1.95:1.\n- STUBBY WEDGE LAW: the icon is only 1.5 times wider than it is tall: exactly 180 px wide and 120 px tall, the tall blunt tail spanning the full 120 px height at the left end. The body is THICK top to bottom across its whole length — a bold chevron stamp, never a long thin dash.\n- The sheet canvas measures EXACTLY 288×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521607065,
+  "width": 288,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T04:28:22.697Z",
+  "seconds": 6,
+  "label": "h-life",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen13/h-life/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "288x256",
+  "meta": {
+    "job": "w15-GEN13",
+    "attempt": "3"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN13",
+  "round": "wave6-closing",
+  "exit": "PROBE-OK@3",
+  "ownerAsk": "Quality-regen wave 6 (GPU closing wave), disk-derived: hud/life (1 frame 8x5 v1 -> 12x8 served v2; HUD remaining-ships icon, miniature right-facing KESTREL; hitFlash false — no @flash sibling; @p2 sibling pipeline-derived from the map's p2 palette — no ask) — closing wave per GEN12 brief item 2 — hud pool, single-cell chip class",
+  "gridContract": "288x256 cells, 1x1, canvas 288x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "hud/life (1 frame 8x5 v1 -> 12x8 served v2; HUD remaining-ships icon, miniature right-facing KESTREL; hitFlash false — no @flash sibling; @p2 sibling pipeline-derived from the map's p2 palette — no ask)",
+  "probe": {
+    "id": "h-life",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        36,
+        54,
+        214,
+        144
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521605065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.10 outside [1.15,1.95] (f0)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521606065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.81 outside [1.15,1.95] (f0)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521607065,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

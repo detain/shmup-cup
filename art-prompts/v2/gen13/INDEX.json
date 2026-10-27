@@ -1,0 +1,237 @@
+{
+  "generatedAt": "2026-10-27T04:28:55.020Z",
+  "lane": "w15-GEN13",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "rows": [
+    {
+      "id": "sh-bomb",
+      "report": "w15-GEN13",
+      "target": "shots/bomb (1 frame 6x6 v1 -> 9x9 served v2; falling Spread Bomb shell, bursts into shots/blast; hitFlash false — no @flash sibling)",
+      "grid": "256x256 cells, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "sh-bomb/gen.png",
+      "exit": "PROBE-OK@2",
+      "mode": "key",
+      "probe": {
+        "id": "sh-bomb",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            60,
+            61,
+            136,
+            135
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521600000,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (66/29/0/4)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521601000,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "sh-double",
+      "report": "w15-GEN13",
+      "target": "shots/double (1 frame 5x5 v1 -> 7x7 served v2; Double diagonal bolt travelling up-right; hitFlash false — no @flash sibling)",
+      "grid": "256x256 cells, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "sh-double/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "sh-double",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            45,
+            45,
+            165,
+            166
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521601013,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "sh-free",
+      "report": "w15-GEN13",
+      "target": "shots/free (1 frame 5x5 v1 -> 7x7 served v2; Free Way round energy ball, fires last-held direction; hitFlash false — no @flash sibling)",
+      "grid": "256x256 cells, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "sh-free/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "sh-free",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            45,
+            54,
+            165,
+            161
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521602026,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "sh-two-way",
+      "report": "w15-GEN13",
+      "target": "shots/two-way (2 frames 5x5 v1 -> 7x7 served v2; 2-Way Missile f0 climb / f1 dive — REAL pose pair (v1 shape-diff 16), NOT colour-only; hitFlash false — no @flash sibling)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "sh-two-way/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "sh-two-way",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            66,
+            45,
+            155,
+            157
+          ],
+          [
+            298,
+            45,
+            154,
+            158
+          ]
+        ],
+        "xors": [
+          17.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521603039,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "g-chain-link",
+      "report": "w15-GEN13",
+      "target": "gimmicks/chain-link (1 frame 6x6 v1 -> 9x9 served at v2 scale; tentacle-arm link bead; hitFlash false — no @flash sibling)",
+      "grid": "256x256 cells, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "g-chain-link/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "g-chain-link",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            72,
+            81,
+            112,
+            94
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521604052,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "h-life",
+      "report": "w15-GEN13",
+      "target": "hud/life (1 frame 8x5 v1 -> 12x8 served v2; HUD remaining-ships icon, miniature right-facing KESTREL; hitFlash false — no @flash sibling; @p2 sibling pipeline-derived from the map's p2 palette — no ask)",
+      "grid": "288x256 cells, 1x1, canvas 288x256, chroma key #51e018",
+      "file": "h-life/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "h-life",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            36,
+            54,
+            214,
+            144
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521605065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.10 outside [1.15,1.95] (f0)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521606065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.81 outside [1.15,1.95] (f0)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521607065,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    }
+  ]
+}
