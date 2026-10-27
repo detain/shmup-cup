@@ -84,7 +84,9 @@ const EXEMPT: Readonly<Record<string, readonly string[]>> = Object.freeze({
   DUNE: ['bosses/widow-head'],
   VAULT: ['bosses/regent-eye'],
   PRISM: ['enemies/hopper'],
-  CITADEL: ['items/capsule-bonus'],
+  // w15-C: the gold `capsule-power` flavor pill speaks capsule-bonus's colour language on
+  // purpose (the shared gold band #f8d878) — the same no-cycling-layer exemption as its sibling.
+  CITADEL: ['items/capsule-bonus', 'items/capsule-power'],
   ABYSS: [
     'bg/brine-sea',
     'bosses/king-lure',

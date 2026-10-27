@@ -183,7 +183,10 @@ describe('integration: the power meter on the test range', () => {
     expect(dropped).toBe(true);
     const batch = w.powerups.itemBatch;
     expect(batch.layer).toBe(LayerId.Items);
-    expect(DB.sprites.names[batch.spriteId[0]]).toBe('items/capsule');
+    // The capsule draws with the flavor of the cursor's next stop (w15-C V1): the meter is
+    // fresh, so the first stop SPEED shows through the green speed pill — the item is still
+    // ItemKind.Capsule with the plain behaviour.
+    expect(DB.sprites.names[batch.spriteId[0]]).toBe('items/capsule-speed');
     expect(g.renderFrame().world?.batches).toContain(batch);
   });
 

@@ -73,6 +73,18 @@ const ZONES = [
   },
 ] as const;
 
+/** The explicit drops beside the plan (w15-C LAND turn): a formation row naming a crate or the
+ * freed Option hands that item out directly, exactly like the blue capsule always did — they
+ * never join the plan order this test owns, and the MANTA's readings of them (points, the sound,
+ * the yellow/red item effects) are pinned in `core/powerups` (powerups-drops.test). */
+const EXPLICIT_DROPS: readonly number[] = [
+  ItemKind.BlueCapsule,
+  ItemKind.FreeOption,
+  ItemKind.Mega,
+  ItemKind.WeaponPick,
+  ItemKind.SpeedOnly,
+];
+
 describe('integration: zones D and E in Direct mode (M2-12)', () => {
   it.each(ZONES)(
     'the MANTA clears $stage, the carriers handing out its own item plan in order',
@@ -111,11 +123,11 @@ describe('integration: zones D and E in Direct mode (M2-12)', () => {
         for (let i = 0; i < items.count; i++) {
           if ((f.flags[i] & ItemFlag.Dead) !== 0) continue;
           const kind = f.kind[i];
-          if (kind !== ItemKind.BlueCapsule && KINDS.indexOf(kind) < 0) {
+          if (!EXPLICIT_DROPS.includes(kind) && KINDS.indexOf(kind) < 0) {
             wrong.push(`tick ${String(w.tick)}: item kind ${String(kind)}`);
           }
           alive.add(i);
-          if (seen.has(i) || f.age[i] > 1 || kind === ItemKind.BlueCapsule) continue;
+          if (seen.has(i) || f.age[i] > 1 || EXPLICIT_DROPS.includes(kind)) continue;
           fresh.push(DIRECT_ITEMS[KINDS.indexOf(kind)]);
         }
         // This tick's drops are the plan's entries from the old cursor to the new one, in order;

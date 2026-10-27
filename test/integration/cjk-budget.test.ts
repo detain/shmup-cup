@@ -172,21 +172,24 @@ describe('integration: the atlas the CJK arithmetic is measured against (M3-03)'
     expect(atlas.pages[0].w).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
   });
 
-  it('occupies 483,048 pixels — 46 % of its page — and encodes to 138.5 KB', () => {
+  it('occupies 487,176 pixels — 46 % of its page — and encodes to 140.6 KB', () => {
     // Re-pinned by W15-A (2026-10-26): the six shots.mjs sprites and the five new meter-label
-    // frames (480,273 px / 137.6 KB before).
-    expect(OCCUPIED_PIXELS).toBe(483_048);
+    // frames (480,273 px / 137.6 KB before). Re-pinned again by w15-C the same day: the four
+    // flavored pills and three drop crates of `items.mjs` (+7 sprites, +4,128 px; ENRICH holds
+    // the counts — the new frames ride the v2 side, the ungrouped v1 page gains only the 7).
+    expect(OCCUPIED_PIXELS).toBe(487_176);
     const page = atlas.pages[0].w * atlas.pages[0].h;
     expect(page).toBe(1_048_576);
     expect(Math.round((OCCUPIED_PIXELS / page) * 100)).toBe(46);
-    expect((PNG_BYTES / 1000).toFixed(1)).toBe('138.5');
+    expect((PNG_BYTES / 1000).toFixed(1)).toBe('140.6');
   });
 });
 
 describe('integration: what a real kanji set would cost (M3-03)', () => {
-  it('is 993,600 pixels — 2.1× the atlas, 0.95 of its page, under a quarter of a 2048² one', () => {
+  it('is 993,600 pixels — 2.0× the atlas, 0.95 of its page, under a quarter of a 2048² one', () => {
     expect(JIS_PIXELS).toBe(993_600);
-    expect((JIS_PIXELS / OCCUPIED_PIXELS).toFixed(1)).toBe('2.1');
+    // 2.1 → 2.0 with the w15-C re-pin above (the atlas grew, the kanji set did not).
+    expect((JIS_PIXELS / OCCUPIED_PIXELS).toFixed(1)).toBe('2.0');
     expect((JIS_PIXELS / (atlas.pages[0].w * atlas.pages[0].h)).toFixed(2)).toBe('0.95');
     const bigPage = ATLAS_PAGE_MAX_SIZE * ATLAS_PAGE_MAX_SIZE;
     expect(bigPage).toBe(4_194_304);

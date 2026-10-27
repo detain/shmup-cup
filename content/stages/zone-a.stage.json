@@ -779,23 +779,23 @@
   "dropWeights": [
     {
       "drop": "capsule",
-      "weight": 72
+      "weight": 84
     },
     {
       "drop": "weaponPick",
-      "weight": 10
+      "weight": 5
     },
     {
       "drop": "speedOnly",
-      "weight": 6
-    },
-    {
-      "drop": "mega",
       "weight": 2
     },
     {
+      "drop": "mega",
+      "weight": 1
+    },
+    {
       "drop": "freeOption",
-      "weight": 5
+      "weight": 3
     },
     {
       "drop": "blueCapsule",

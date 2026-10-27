@@ -68,6 +68,9 @@ describe.skipIf(updating)('golden replays — zone A (M1-18 … M2-06)', () => {
     // w15-MOVE: player 1's dodges ride the eased vertical now — it falls once, late, before the
     // end (pre-ramp it played on clean). The scenario's subject — p2's many deaths and continue —
     // is the two assertions above, both unchanged.
-    expect(coopDeaths.deathTicks).toEqual([13022]);
+    // w15-C LAND re-pin: the capsule-dominant zone-a table moves this route's equipment stream,
+    // so the one late player-1 fall lands 32 ticks earlier — 13022 → 12990 (2026-10-26,
+    // measured off the re-recorded replay; the fall itself, its lateness and p2's story hold).
+    expect(coopDeaths.deathTicks).toEqual([12990]);
   });
 });

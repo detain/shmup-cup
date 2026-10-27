@@ -76,10 +76,10 @@
     4283044636,
     3598907951,
     403857025,
-    3980107373,
-    3654100107
+    4160599964,
+    3426854231
   ],
-  "finalHash": 3840127304,
+  "finalHash": 4258262464,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

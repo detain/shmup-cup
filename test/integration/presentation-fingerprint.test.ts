@@ -1750,7 +1750,7 @@ const PINNED: Record<string, Record<string, string>> = {
   },
   attract: {
     'attract.idle': 'e9718e93 3408a8b5 5d9e7b34 b9fbf7c5',
-    'attract.demo': 'd787eedf e93b6eac 50bd0859 7e4bc9c5',
+    'attract.demo': 'd787eedf c32671c4 0d8a6029 7e4bc9c5',
     'attract.hiScores': '57341649 e5de0f9d 21e55742 4a222345',
     'attract.story': 'b141bcbd 0f56de91 543ba9fe f7412c05',
     'attract.demo2': 'e53b9244 fe3d4f40 05ce29af a3a65905',

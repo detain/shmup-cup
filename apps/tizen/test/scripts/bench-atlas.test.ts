@@ -171,11 +171,13 @@ describe('bench-atlas on the shipped atlas', () => {
       atlases.map((atlas) => atlas.manifest.pages.map((page) => `${page.w}x${page.h}`)),
     ).toEqual([
       ['1024x1024'],
-      // The ×1.33 page re-packed to 512×2048 (owner 2026-10-26, w15-FIX-BENCH): the w15-WB
-      // option silhouettes' +12 frames of 8×8 (commit add6f1fa) tipped the re-pack out of the
-      // square. Area-neutral — still 1,048,576 px — and every other density page stands. The
-      // R5-10.T3 shared-kit gate WB's land missed; re-pinned to the measured build, not raised.
-      ['512x2048'],
+      // The ×1.33 page re-packed back to 2048×1024 (owner 2026-10-26, w15-C LAND): the w15-WB
+      // option silhouettes had tipped it to 512×2048 (add6f1fa, w15-FIX-BENCH) and the w15-C
+      // item frames (+34 ungrouped frames: the flavored pills' 4-frame cycle and the crates'
+      // 6-stage shimmer) moved the re-pack's row layout back to the wide page. Area-neutral —
+      // still 1,048,576 px — and every other density page stands. Re-pinned to the measured
+      // build, not raised (the same shared-kit gate R5-10.T3 wrote).
+      ['2048x1024'],
       ['2048x1024'],
       ['2048x2048'],
       ['2048x1024', '2048x1024'],
