@@ -55,21 +55,31 @@ describe('scripts/assets/procedural/items', () => {
     expect(h > 190 && h < 250, `hue ${h}`).toBe(true);
   });
 
-  describe('the w15-C variety art (flavored capsules and drop crates)', () => {
+  describe('the w15-C variety art (flavored capsules and drop crates, ENRICH pass)', () => {
     const [weapon, option, power, speed] = items.generate().slice(5, 9);
     const [crateW, crateM, crateS] = items.generate().slice(9, 12);
     const WHITE = color('#ffffff');
 
-    /** The crate tones: `items.mjs` `CRATE_COLORS` — rim and body, and the body hue window. */
+    /** The six crate blink stages' body brightness (`items.mjs` `stageBright`). */
+    const CRATE_LIT = [0, 0, 1, 1, 1, 0];
+
+    /**
+     * The crate tones: `items.mjs` `CRATE_COLORS` — rim and body, the spark and glyph pixels
+     * (v1 coordinates; the v2 ones rescaled ×1.5), and the body hue window.
+     */
     const CRATES: ReadonlyArray<{
       sprite: typeof crateW;
       name: string;
       rim: string;
       dim: string;
       lit: string;
-      hueMin: number;
-      hueMax: number;
+      hMin: number;
+      hMax: number;
       glyph: [number, number];
+      /** A corner-pip pixel (white on blink stages 1–2). */
+      corner: [number, number];
+      /** A lid-seam pip pixel (white on blink stages 4–5), clear of the corner stamps. */
+      lidPip: [number, number];
     }> = [
       {
         sprite: crateW,
@@ -77,9 +87,11 @@ describe('scripts/assets/procedural/items', () => {
         rim: '#40100a',
         dim: '#8a2414',
         lit: '#b03820',
-        hueMin: 0,
-        hueMax: 30,
+        hMin: 0,
+        hMax: 30,
         glyph: [3, 5],
+        corner: [2, 2],
+        lidPip: [3, 3],
       },
       {
         sprite: crateM,
@@ -87,9 +99,11 @@ describe('scripts/assets/procedural/items', () => {
         rim: '#4a3408',
         dim: '#b07818',
         lit: '#d8a030',
-        hueMin: 30,
-        hueMax: 60,
+        hMin: 30,
+        hMax: 60,
         glyph: [5, 5],
+        corner: [9, 2],
+        lidPip: [8, 3],
       },
       {
         sprite: crateS,
@@ -97,9 +111,11 @@ describe('scripts/assets/procedural/items', () => {
         rim: '#0a3a10',
         dim: '#20842c',
         lit: '#38ac44',
-        hueMin: 90,
-        hueMax: 150,
+        hMin: 90,
+        hMax: 150,
         glyph: [4, 5],
+        corner: [2, 9],
+        lidPip: [3, 3],
       },
     ];
 
@@ -120,7 +136,7 @@ describe('scripts/assets/procedural/items', () => {
       ]);
     });
 
-    it('draws the four flavored pills as the capsule with a white mark in its tint (V1)', () => {
+    it('draws the four flavored pills over the full four-stage glint at scale 1 (V1, ENRICH)', () => {
       const flavors = [
         { sprite: weapon, name: 'items/capsule-weapon', mark: [4, 1], hMin: 0, hMax: 30 },
         { sprite: option, name: 'items/capsule-option', mark: [5, 1], hMin: 190, hMax: 250 },
@@ -129,22 +145,30 @@ describe('scripts/assets/procedural/items', () => {
       ];
       for (const f of flavors) {
         expect(f.sprite.name, f.name).toBe(f.name);
-        expect(f.sprite.animations, f.name).toEqual({ blink: [0, 1] });
-        expect(f.sprite.frames, f.name).toHaveLength(2);
-        for (let k = 0; k < 2; k++) {
+        expect(f.sprite.animations, f.name).toEqual({ blink: [0, 1, 2, 3] });
+        expect(f.sprite.frames, f.name).toHaveLength(4);
+        for (let k = 0; k < 4; k++) {
           const a = f.sprite.frames[k];
-          const b = capsule.frames[k];
           expect([a.width, a.height], f.name).toEqual([12, 8]);
+          // The silhouette is the capsule's on every stage (the glint never moves pixels).
           for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 12; x++)
-              expect(opaque(a, x, y), `${f.name} ${x},${y}`).toBe(opaque(b, x, y));
+              expect(opaque(a, x, y), `${f.name} ${x},${y}`).toBe(opaque(capsule.frames[0], x, y));
           }
-          // The mark paints white inside the silhouette.
+          // The mark paints white on every stage; a body pixel away keeps the tint.
           expect(getPixel(a, f.mark[0], f.mark[1]), f.name).toEqual(WHITE);
-          // A body pixel away from mark and spark keeps the tint.
           const h = hue(getPixel(a, 1, 4));
           expect(h > f.hMin && h < f.hMax, `${f.name} hue ${h}`).toBe(true);
         }
+        // The glint travels the pill exactly as the v2 cycle: dim, dim+spark, lit+spark, lit.
+        // The spark pixel (3, 2) is absent, white, white, the lit band; the body dims and lights.
+        const f0 = weapon.frames;
+        expect(getPixel(f0[0], 3, 2)).toEqual(color('#f89850'));
+        expect(getPixel(f0[1], 3, 2)).toEqual(WHITE);
+        expect(getPixel(f0[2], 3, 2)).toEqual(WHITE);
+        expect(getPixel(f0[3], 3, 2)).toEqual(color('#ffd080'));
+        expect(getPixel(f0[0], 1, 4)).toEqual(color('#e04a18'));
+        expect(getPixel(f0[2], 1, 4)).toEqual(color('#ff7a30'));
       }
       // The four flavors sit at CAPSULE_FLAVOR_SPRITES' names (the table repeats weapon and power
       // across the stops — `world` spreads it through a Set into ENGINE_SPRITES).
@@ -156,101 +180,164 @@ describe('scripts/assets/procedural/items', () => {
       ]);
     });
 
-    it('pins the three crate kinds to ITEM_KINDS (spec, four blink frames, capsule score)', () => {
+    it('pins the three crate kinds to ITEM_KINDS (spec, six blink stages, capsule score)', () => {
       expect(ITEM_KINDS.length).toBe(ItemKind.SpeedOnly + 1);
       expect(ITEM_KINDS[ItemKind.Mega]).toEqual({
         sprite: 'items/crate-mega',
-        frames: 4,
+        frames: 6,
         score: CAPSULE_SCORE,
       });
       expect(ITEM_KINDS[ItemKind.WeaponPick]).toEqual({
         sprite: 'items/crate-weapon',
-        frames: 4,
+        frames: 6,
         score: CAPSULE_SCORE,
       });
       expect(ITEM_KINDS[ItemKind.SpeedOnly]).toEqual({
         sprite: 'items/crate-speed',
-        frames: 4,
+        frames: 6,
         score: CAPSULE_SCORE,
       });
     });
 
-    it('gives the shipped scale-1 atlas every new sprite with its blink frames', () => {
+    it('gives the shipped scale-1 atlas every new sprite with its ENRICH frames', () => {
       const built = buildAtlas();
-      for (const name of [
-        'items/capsule-weapon',
-        'items/capsule-option',
-        'items/capsule-power',
-        'items/capsule-speed',
-        'items/crate-weapon',
-        'items/crate-mega',
-        'items/crate-speed',
-      ]) {
+      const EXPECTED: Record<string, number> = {
+        'items/capsule-weapon': 4,
+        'items/capsule-option': 4,
+        'items/capsule-power': 4,
+        'items/capsule-speed': 4,
+        'items/crate-weapon': 6,
+        'items/crate-mega': 6,
+        'items/crate-speed': 6,
+      };
+      for (const [name, frames] of Object.entries(EXPECTED)) {
         expect(built.manifest.sprites[name], name).toBeDefined();
-        expect(built.manifest.sprites[name].frames.length, name).toBeGreaterThanOrEqual(2);
+        expect(built.manifest.sprites[name].frames.length, name).toBe(frames);
       }
     });
 
-    it('draws the same art native on the v2 path (pills 18×12, crates 18×18, four frames)', () => {
+    it('draws the same art native on the v2 path, marks rescaled ×1.5 (ENRICH)', () => {
       const v2 = items.generate({ artScale: 1.5 });
-      const marks: Record<string, [number, number]> = {
-        // The v1 mark coordinates shifted by (3, 2) — `items.mjs` `paintMark`.
-        'items/capsule-weapon': [7, 3],
-        'items/capsule-option': [8, 3],
-        'items/capsule-power': [9, 3],
-        'items/capsule-speed': [7, 3],
-        // The crate glyphs shifted by (3, 4) — `items.mjs` `CRATE_GLYPHS`.
-        'items/crate-weapon': [6, 9],
-        'items/crate-mega': [8, 9],
-        'items/crate-speed': [7, 9],
+      const marks: Record<string, { px: [number, number]; frames: number }> = {
+        // The v1 mark coordinates rescaled ⌊1.5·p⌋ with a 2×2 stamp — `items.mjs`
+        // `scalePixels` (the flavor weapon's (4, 1) → (6, 1), the option's (5, 1) → (7, 1),
+        // the power's (6, 1) → (9, 1), the speed's (4, 1) → (6, 1)).
+        'items/capsule-weapon': { px: [6, 1], frames: 4 },
+        'items/capsule-option': { px: [7, 1], frames: 4 },
+        'items/capsule-power': { px: [9, 1], frames: 4 },
+        'items/capsule-speed': { px: [6, 1], frames: 4 },
+        // The crate glyphs (3, 5) → (4, 7), (5, 5) → (7, 7), (4, 5) → (6, 7).
+        'items/crate-weapon': { px: [4, 7], frames: 6 },
+        'items/crate-mega': { px: [7, 7], frames: 6 },
+        'items/crate-speed': { px: [6, 7], frames: 6 },
       };
       for (const sprite of v2.slice(5, 12)) {
         const [w, h] = sprite.name.startsWith('items/capsule-') ? [18, 12] : [18, 18];
-        expect([sprite.frames.length, sprite.native, sprite.animations], sprite.name).toEqual([
-          4,
-          true,
-          { blink: [0, 1, 2, 3] },
-        ]);
-        const [mx, my] = marks[sprite.name];
+        const spec = marks[sprite.name];
+        expect(sprite.frames.length, sprite.name).toBe(spec.frames);
+        expect(sprite.native, sprite.name).toBe(true);
+        expect(sprite.animations, sprite.name).toEqual({
+          blink: Array.from({ length: spec.frames }, (_, k) => k),
+        });
+        const [mx, my] = spec.px;
         for (const frame of sprite.frames) {
           expect([frame.width, frame.height], sprite.name).toEqual([w, h]);
           expect(getPixel(frame, mx, my), sprite.name).toEqual(WHITE);
         }
       }
+      // A deep stamp pixel of the option mark ((8, 5) → (12, 7)) sits on the v2 body, in white.
+      const option2 = v2[6];
+      expect(getPixel(option2.frames[0], 12, 7)).toEqual(WHITE);
     });
 
-    it('draws the three drop crates as fully-opaque square boxes with rim, lid and glyph (V2)', () => {
+    it('shimmers the three crates over six stages at scale 1: box, rim, sparks, glyph (V2)', () => {
       for (const c of CRATES) {
         expect(c.sprite.name, c.name).toBe(c.name);
-        expect(c.sprite.animations, c.name).toEqual({ blink: [0, 1] });
-        expect(c.sprite.frames, c.name).toHaveLength(2);
-        for (let f = 0; f < 2; f++) {
+        expect(c.sprite.animations, c.name).toEqual({ blink: [0, 1, 2, 3, 4, 5] });
+        expect(c.sprite.frames, c.name).toHaveLength(6);
+        for (let f = 0; f < 6; f++) {
           const frame = c.sprite.frames[f];
           expect([frame.width, frame.height], c.name).toEqual([12, 12]);
           for (let y = 0; y < 12; y++) {
             for (let x = 0; x < 12; x++)
               expect(opaque(frame, x, y), `${c.name} ${x},${y}`).toBe(true);
           }
-          // The box's outline and its lid seam are the rim; the lit blink frame lights the body.
+          // The box's outline and its lid seam are the rim; the body lights 2–4.
           for (let x = 0; x < 12; x++) {
+            // The lid seam's shimmer: every crate sparkles its pips at (3,3) and (8,3) on
+            // stages 4–5, the rim shows the plain seam otherwise.
+            expect(getPixel(frame, x, 3), `${c.name} lid f${f}`).toEqual(
+              (f === 4 || f === 5) && (x === 3 || x === 8) ? color('#ffffff') : color(c.rim),
+            );
             expect(getPixel(frame, x, 0), c.name).toEqual(color(c.rim));
             expect(getPixel(frame, x, 11), c.name).toEqual(color(c.rim));
-            expect(getPixel(frame, x, 3), c.name).toEqual(color(c.rim));
           }
           for (let y = 1; y < 11; y++) {
             expect(getPixel(frame, 0, y), c.name).toEqual(color(c.rim));
             expect(getPixel(frame, 11, y), c.name).toEqual(color(c.rim));
           }
-          // The white glyph survives both blink frames; the body beside it dims and lights.
+          // The white glyph survives every stage; the body beside it dims and lights.
           expect(getPixel(frame, c.glyph[0], c.glyph[1]), c.name).toEqual(WHITE);
           expect(getPixel(frame, 2, 7), `${c.name} f${f} body`).toEqual(
-            color(f === 0 ? c.dim : c.lit),
+            color(CRATE_LIT[f] === 1 ? c.lit : c.dim),
+          );
+          // The spark pips: corners on stages 1–2, the lid seam on stages 4–5, nothing else.
+          const bodyHere = CRATE_LIT[f] === 1 ? c.lit : c.dim;
+          expect(getPixel(frame, c.corner[0], c.corner[1]), `${c.name} corner f${f}`).toEqual(
+            f === 1 || f === 2 ? WHITE : color(bodyHere),
+          );
+          expect(getPixel(frame, c.lidPip[0], c.lidPip[1]), `${c.name} lid f${f}`).toEqual(
+            f === 4 || f === 5 ? WHITE : color(c.rim),
           );
         }
-        // The two blink frames differ (the body brightness), the glyph and rim do not.
+        // The stages differ where the cycle says they must: the spark arrives on stage 1, the
+        // body lights on stage 2, the spark leaves on 3, the lid spark joins on 4, the body dims
+        // on 5 (f0 plain-dim and f5 dim+lid-spark differ too).
         expect(Buffer.from(c.sprite.frames[0].data)).not.toEqual(
+          Buffer.from(c.sprite.frames[5].data),
+        );
+        expect(Buffer.from(c.sprite.frames[1].data)).not.toEqual(
+          Buffer.from(c.sprite.frames[0].data),
+        );
+        expect(Buffer.from(c.sprite.frames[2].data)).not.toEqual(
           Buffer.from(c.sprite.frames[1].data),
         );
+        expect(Buffer.from(c.sprite.frames[3].data)).not.toEqual(
+          Buffer.from(c.sprite.frames[2].data),
+        );
+      }
+    });
+
+    it('shimmers the v2 crates with the scaled sparks (ENRICH, 18×18 six stages)', () => {
+      const v2 = items.generate({ artScale: 1.5 });
+      for (const [k, sprite] of v2.slice(9, 12).entries()) {
+        const c = CRATES[k];
+        expect(sprite.frames.length, c.name).toBe(6);
+        expect([sprite.frames[0].width, sprite.frames[0].height], c.name).toEqual([18, 18]);
+        // The corner pip's stamp origin ⌊1.5·p⌋ and the second lid pip (8, 3) → (12, 4) —
+        // pixels clear of each other's stamps.
+        const corner: [number, number] = [
+          Math.floor(1.5 * c.corner[0]),
+          Math.floor(1.5 * c.corner[1]),
+        ];
+        const lid: [number, number] = [12, 4];
+        for (let f = 0; f < 6; f++) {
+          const frame = sprite.frames[f];
+          // fully opaque, rim border
+          for (let y = 0; y < 18; y++) {
+            for (let x = 0; x < 18; x++) expect(opaque(frame, x, y), `${c.name} f${f}`).toBe(true);
+          }
+          for (let x = 0; x < 18; x++) {
+            expect(getPixel(frame, x, 0), `${c.name} top`).toEqual(color(c.rim));
+            expect(getPixel(frame, x, 17), `${c.name} bot`).toEqual(color(c.rim));
+          }
+          expect(getPixel(frame, corner[0], corner[1]), `${c.name} corner f${f}`).toEqual(
+            f === 1 || f === 2 ? WHITE : color(CRATE_LIT[f] === 1 ? c.lit : c.dim),
+          );
+          expect(getPixel(frame, lid[0], lid[1]), `${c.name} lid f${f}`).toEqual(
+            f === 4 || f === 5 ? WHITE : color(c.rim),
+          );
+        }
       }
     });
   });

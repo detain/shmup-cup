@@ -601,7 +601,7 @@ export type ItemKind = (typeof ItemKind)[keyof typeof ItemKind];
 export interface ItemKindSpec {
   /** Sprite name. */
   readonly sprite: string;
-  /** Animation frames (a blink when 2). */
+  /** Animation frames: 2 (v1 pills), 4 (v2 pills, flavors) or 6 (the crate shimmer). */
   readonly frames: number;
   /** Points recorded when collected. */
   readonly score: number;
@@ -643,9 +643,12 @@ export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
   ),
   Object.freeze({ sprite: ONE_UP_SPRITE, frames: 4, score: 0 }),
   Object.freeze({ sprite: BONUS_CAPSULE_SPRITE, frames: 4, score: BONUS_CAPSULE_SCORE }),
-  Object.freeze({ sprite: MEGA_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
-  Object.freeze({ sprite: WEAPON_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
-  Object.freeze({ sprite: SPEED_CRATE_SPRITE, frames: 4, score: CAPSULE_SCORE }),
+  // The crates shimmer over the six blink stages of `items.mjs` (owner art-budget ruling
+  // 2026-10-26: frames 4 → 6 — the sole authorized art-budget raise of the era; the kinds are
+  // w15-C's own, so no older recording or pin reads the old count).
+  Object.freeze({ sprite: MEGA_CRATE_SPRITE, frames: 6, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: WEAPON_CRATE_SPRITE, frames: 6, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: SPEED_CRATE_SPRITE, frames: 6, score: CAPSULE_SCORE }),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */

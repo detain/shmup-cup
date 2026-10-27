@@ -26,8 +26,11 @@
  * mark — the icon `core/powerups` picks by the meter cursor's next stop, presentation only, the
  * pickup stays the plain capsule. The three drop crates (`items/crate-weapon`, `items/crate-mega`,
  * `items/crate-speed`) are square 12×12 (v2 18×18) ammunition boxes in the same three languages
- * with the matching glyph, and they blink on the pills' cycle. Both sets are interim marks:
- * GEN-6's item asks carry the real designs (the lane report's art-ask list).
+ * with the matching glyph. Per the owner's art-budget ruling of 2026-10-26 (the ENRICH pass) both
+ * sets animate at full size: the flavored pills run the four-stage glint cycle at either scale
+ * (the v2 marks rescaled ×1.5) and the crates shimmer over six blink stages with corner and lid
+ * spark pulses (their v2 glyphs and pips rescaled ×1.5). GEN-6's item asks carry the real
+ * designs (the lane report's art-ask list); the interim art is now budget-free and complete.
  *
  * @module
  */
@@ -141,8 +144,9 @@ function oneUp(bright, v2 = false, spark = bright) {
 /**
  * The white marks of the flavoured capsule pills (w15-C V1), as v1 `[x, y]` pixels on the 12×8
  * pill: `W` (a weapon stop), `O` (the OPTION stop), `!` (the `?` / `!` power stops) and `»`
- * (SPEED). The v2 path shifts the mark by (3, 2) into the wider pill rather than rescaling it —
- * interim art at its simplest, the real flavoured capsules are GEN-6 asks (the lane report).
+ * (SPEED). The v2 path draws them rescaled ×1.5 with {@link scalePixels} — the owner's
+ * art-budget ruling of 2026-10-26 (ENRICH): a mark at the pill's own scale, bold enough to read
+ * on a TV at ×3 (it was a (3,2)-shifted v1 mark before, interim at art-scale 1's size).
  */
 const FLAVOR_MARKS = {
   weapon: [
@@ -195,17 +199,32 @@ const FLAVOR_MARKS = {
 };
 
 /**
- * Paints a white mark over an image (see {@link FLAVOR_MARKS} for the v1-to-v2 shift).
+ * Rescales v1 `[x, y]` pixels to the v2 canvas: every pixel becomes a 2×2 stamp at its
+ * ⌊1.5·p⌋ grid position (the art bible's ×1.5 with nearest-neighbour growth — the w15-C
+ * ENRICH pass; stamps of neighbouring pixels merge, so strokes stay solid).
+ *
+ * @param {number[][]} pixels - Pixels in v1 coordinates.
+ * @returns {number[][]} The v2 pixels.
+ */
+function scalePixels(pixels) {
+  const out = [];
+  for (const [x, y] of pixels) {
+    const sx = Math.floor(1.5 * x);
+    const sy = Math.floor(1.5 * y);
+    out.push([sx, sy], [sx + 1, sy], [sx, sy + 1], [sx + 1, sy + 1]);
+  }
+  return out;
+}
+
+/**
+ * Paints a white mark over an image (see {@link FLAVOR_MARKS}).
  *
  * @param {Image} image - The frame to mark in place.
- * @param {number[][]} pixels - `[x, y]` pixels in v1 coordinates.
- * @param {boolean} v2 - Shift by (3, 2) instead of drawing at the given pixels.
+ * @param {number[][]} pixels - `[x, y]` pixels (v2 marks pre-rescaled by {@link scalePixels}).
  */
-function paintMark(image, pixels, v2) {
+function paintMark(image, pixels) {
   const white = color('#ffffff');
-  const ox = v2 ? 3 : 0;
-  const oy = v2 ? 2 : 0;
-  for (const [x, y] of pixels) setPixel(image, x + ox, y + oy, white);
+  for (const [x, y] of pixels) setPixel(image, x, y, white);
 }
 
 /** Colours of a drop crate (w15-C V2): rim and body (dim / lit) — a wooden ammunition box. */
@@ -217,8 +236,9 @@ const CRATE_COLORS = {
 
 /**
  * The white glyphs of the crates' faces (w15-C V2), as v1 `[x, y]` pixels on the 12×12 box:
- * `W` (weapons), `!` (the `!` slot) and `›` (the speed arrow). The v2 path shifts them by (3, 4)
- * onto its larger face — interim art, GEN-6 will draw the real crates.
+ * `W` (weapons), `!` (the `!` slot) and `›` (the speed arrow). The v2 path draws them rescaled
+ * ×1.5 with {@link scalePixels} — the owner's art-budget ruling of 2026-10-26 (ENRICH), the
+ * glyph at the crate's own scale (it was a (3,4)-shifted v1 glyph before).
  */
 const CRATE_GLYPHS = {
   weapon: [
@@ -253,23 +273,73 @@ const CRATE_GLYPHS = {
 };
 
 /**
+ * The crate blink's spark pulses (w15-C ENRICH, the owner's art-budget ruling of 2026-10-26):
+ * white glint pips inside the corner braces and on the lid seam, alternating through the six
+ * stages so a crate shimmers as it falls. v1 coordinates; the v2 path scales them with
+ * {@link scalePixels} like the glyphs.
+ */
+const CRATE_SPARKS = {
+  /** The four inside-corner pips (stages 1–2). */
+  corner: [
+    [2, 2],
+    [9, 2],
+    [2, 9],
+    [9, 9],
+  ],
+  /** Two pips on the lid seam (stages 4–5). */
+  lid: [
+    [3, 3],
+    [8, 3],
+  ],
+};
+
+/**
+ * The six blink stages of every item sprite the ENRICH pass grew (w15-C): 0 dim, 1 dim + corner
+ * spark, 2 lit + corner spark, 3 lit, 4 lit + lid spark, 5 dim + lid spark. The pills' cycle is
+ * the first four (their spark is the pill glint), the crates run all six.
+ */
+const BLINK_STAGES = [0, 1, 2, 3, 4, 5];
+
+/**
+ * Whether blink stage `stage` draws its frame lit (frames 2–4 of the six; the pills' four-frame
+ * cycle lights 2–3 — the same rule cut at stage 4).
+ *
+ * @param {number} stage - The blink stage (0–5).
+ * @returns {boolean} The bright half of the cycle.
+ */
+function stageBright(stage) {
+  return stage >= 2 && stage <= 4;
+}
+
+/**
+ * Which spark a crate's blink stage shows: 1 the corner pips (stages 1–2), 2 the lid pips
+ * (stages 4–5), 0 none.
+ *
+ * @param {number} stage - The blink stage (0–5).
+ * @returns {0 | 1 | 2} The spark.
+ */
+function crateSpark(stage) {
+  if (stage === 1 || stage === 2) return 1;
+  return stage === 4 || stage === 5 ? 2 : 0;
+}
+
+/**
  * Draws one drop-crate frame (w15-C V2): a square box (12×12, the v2 path 18×18 native), rim
  * outline, a lid seam across the upper third, rim-coloured corner braces and a white glyph on the
- * face. It blinks like the pills (the `bright` half lights the body).
+ * face. It blinks over the six stages of {@link BLINK_STAGES} (the ENRICH pass — four before
+ * 2026-10-26), the corner and lid sparks travelling the cycle while the glyph always shows.
  *
- * @param {boolean} bright - The lit blink frame (the v2 cycle's frames 2–3).
+ * @param {number} stage - The blink stage (0–5).
  * @param {'weapon' | 'mega' | 'speed'} tone - The crate's colours.
  * @param {boolean} v2 - Draw at 18×18 instead of 12×12.
- * @param {boolean} glyph - Whether the white glyph is drawn (lit on every frame it shows: crates
- *   keep their glyph through the blink, only the body lights and dims).
  * @returns {Image} 12×12 frame (18×18 at `v2`).
  */
-function crate(bright, tone, v2 = false, glyph = true) {
+function crate(stage, tone, v2 = false) {
   const w = v2 ? 18 : 12;
   const h = v2 ? 18 : 12;
   const c = CRATE_COLORS[tone];
   const rim = color(c.rim);
-  const body = color(c.body[bright ? 1 : 0]);
+  const body = color(c.body[stageBright(stage) ? 1 : 0]);
   const white = color('#ffffff');
   const image = createImage(w, h);
   for (let y = 0; y < h; y++) {
@@ -283,11 +353,17 @@ function crate(bright, tone, v2 = false, glyph = true) {
       setPixel(image, x, y, edge || lid || corner ? rim : body);
     }
   }
-  if (glyph) {
-    const ox = v2 ? 3 : 0;
-    const oy = v2 ? 4 : 0;
-    for (const [x, y] of CRATE_GLYPHS[tone]) setPixel(image, x + ox, y + oy, white);
+  const spark = crateSpark(stage);
+  const glyphs = v2 ? scalePixels(CRATE_GLYPHS[tone]) : CRATE_GLYPHS[tone];
+  if (spark !== 0) {
+    const pips = v2
+      ? scalePixels(spark === 1 ? CRATE_SPARKS.corner : CRATE_SPARKS.lid)
+      : spark === 1
+        ? CRATE_SPARKS.corner
+        : CRATE_SPARKS.lid;
+    for (const [x, y] of pips) setPixel(image, x, y, white);
   }
+  for (const [x, y] of glyphs) setPixel(image, x, y, white);
   return image;
 }
 
@@ -368,8 +444,14 @@ const V2_STAGES = [0, 1, 2, 3];
 export function generate(options = {}) {
   const v2 = (options.artScale ?? 1) !== 1;
   const blink = v2 ? { blink: [0, 1, 2, 3] } : { blink: [0, 1] };
+  // The ENRICH blink (owner art-budget ruling 2026-10-26): the flavored pills run the full
+  // four-stage glint cycle at BOTH scales (v1's base pills keep their two frames — the flavor
+  // is drawn for `ItemKind.Capsule`, whose frame index cycles %4) and the crates shimmer over
+  // six stages.
+  const flavorBlink = { blink: [0, 1, 2, 3] };
+  const crateBlink = { blink: [0, 1, 2, 3, 4, 5] };
   /**
-   * The four v2 frames of one pill (or the two v1 ones).
+   * The four frames of one pill (or the two v1 ones).
    *
    * @param {(bright: boolean, v2: boolean, spark: boolean) => Image} frame - Draws one frame.
    * @returns {Image[]} The sprite's frames.
@@ -379,28 +461,29 @@ export function generate(options = {}) {
       ? V2_STAGES.map((stage) => frame(stage >= 2, true, stage === 1 || stage === 2))
       : [frame(false, false, false), frame(true, false, true)];
   /**
-   * One flavoured capsule (w15-C V1): the tinted pill with its white mark.
+   * One flavoured capsule (w15-C V1): the tinted pill with its white mark over the full glint
+   * cycle at both scales; the v2 mark is the v1 one rescaled ×1.5 (the ENRICH pass).
    *
    * @param {'red' | 'blue' | 'gold' | 'green'} tint - The pill's colours.
    * @param {'weapon' | 'option' | 'power' | 'speed'} mark - The mark (see {@link FLAVOR_MARKS}).
-   * @returns {Image[]} The sprite's frames.
+   * @returns {Image[]} The sprite's four frames.
    */
-  const marked = (tint, mark) =>
-    pill((b, n, s) => {
-      const image = capsule(b, tint, n, s);
-      paintMark(image, FLAVOR_MARKS[mark], n);
+  const marked = (tint, mark) => {
+    const pixels = v2 ? scalePixels(FLAVOR_MARKS[mark]) : FLAVOR_MARKS[mark];
+    return V2_STAGES.map((stage) => {
+      const image = capsule(stage >= 2, tint, v2, stage === 1 || stage === 2);
+      paintMark(image, pixels);
       return image;
     });
+  };
   /**
-   * One drop crate (w15-C V2): the box blinks like the pills (the glyph always shows).
+   * One drop crate (w15-C V2): the box blinks over the six ENRICH stages, corner and lid
+   * sparks alternating; the v2 glyph and pips are the v1 ones rescaled ×1.5.
    *
    * @param {'weapon' | 'mega' | 'speed'} tone - The crate's colours.
-   * @returns {Image[]} The sprite's frames.
+   * @returns {Image[]} The sprite's six frames.
    */
-  const crateFrames = (tone) =>
-    v2
-      ? V2_STAGES.map((stage) => crate(stage >= 2, tone, true))
-      : [crate(false, tone), crate(true, tone)];
+  const crateFrames = (tone) => BLINK_STAGES.map((stage) => crate(stage, tone, v2));
   return [
     makeSprite(
       'items/capsule',
@@ -448,31 +531,31 @@ export function generate(options = {}) {
       },
     ),
     makeSprite('items/capsule-weapon', marked('red', 'weapon'), 'items', {
-      animations: blink,
+      animations: flavorBlink,
       native: v2,
     }),
     makeSprite('items/capsule-option', marked('blue', 'option'), 'items', {
-      animations: blink,
+      animations: flavorBlink,
       native: v2,
     }),
     makeSprite('items/capsule-power', marked('gold', 'power'), 'items', {
-      animations: blink,
+      animations: flavorBlink,
       native: v2,
     }),
     makeSprite('items/capsule-speed', marked('green', 'speed'), 'items', {
-      animations: blink,
+      animations: flavorBlink,
       native: v2,
     }),
     makeSprite('items/crate-weapon', crateFrames('weapon'), 'items', {
-      animations: blink,
+      animations: crateBlink,
       native: v2,
     }),
     makeSprite('items/crate-mega', crateFrames('mega'), 'items', {
-      animations: blink,
+      animations: crateBlink,
       native: v2,
     }),
     makeSprite('items/crate-speed', crateFrames('speed'), 'items', {
-      animations: blink,
+      animations: crateBlink,
       native: v2,
     }),
   ];
