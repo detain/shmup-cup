@@ -1,0 +1,73 @@
+{
+  "id": "gen10/e-lava",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the two glowing frames of the LAVA STONE — a small molten rock a floor volcano lobs on an arc, which shatters where it lands.\n\nThe chip stays SMALL: a single compact subject of roughly 80×80 px — ALL its ink together covers only about 10% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a round-hot pebble about as wide as tall: a dark basalt crust rim (#4a1000) enclosing a molten body — hot orange (#e83818) with brighter amber-yellow veins (#f8a030) and one tiny white-hot spark core (#fff0a0) near the middle, all on a 1-px near-black outline. Glowing, dense, thrown.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 2 square cells laid out as 1 ROW OF 2 (2-column by 1-row) — every cell holding exactly ONE subject; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = frame 0, GLOW DIM — the amber veins are thin, most of the body is deep orange, the white spark small. The subject lies within aspect 0.70:1 to 1.30:1.\n  cell 2 = frame 1, GLOW BRIGHT — the SAME stone recoloured: the amber veins widen and the white-hot spark grows; silhouette, size and position identical to cell 1. The subject lies within aspect 0.70:1 to 1.30:1.\n- COLOUR-ONLY STATE LAW: frame 1 is frame 0 drawn AGAIN at the exact same pixels in the exact same places and then only recoloured — same silhouette, same size, same position; only light changes between cells.\n- The sheet canvas measures EXACTLY 512×256 px. Produce EXACTLY 2 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell and stays SMALL — at least one quarter of the cell width is empty flat key to its left AND right, and the same above and below; a subject leaning on, touching or crossing a cell border ruins the whole sheet. The other cell holds its subject at the same scale and position — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521301013,
+  "width": 512,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:13:41.603Z",
+  "seconds": 6.7,
+  "label": "e-lava",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/e-lava/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "512x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "enemies-3",
+  "exit": "PROBE-OK@1",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: enemies/lava (2f 6×6 → 9×9 served; volcano lava stone, colour-only glow pulse) — enemies finish (GEN9 wave-3 rec #1, c-dart small-chip clause); @flash auto-derived +2f",
+  "gridContract": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "enemies/lava (2f 6×6 → 9×9 served; volcano lava stone, colour-only glow pulse)",
+  "probe": {
+    "id": "e-lava",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        76,
+        70,
+        123,
+        119
+      ],
+      [
+        313,
+        70,
+        126,
+        120
+      ]
+    ],
+    "xors": [
+      69.7
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521301013,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

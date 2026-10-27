@@ -1,0 +1,171 @@
+{
+  "id": "gen10/s-manta-thruster",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame engine-flame loop of the MANTA thruster — the twin-flame grammar of the ray-winged hero ship, in its own green-to-cyan engine ramp.\n\nDesign identity to keep exactly — a short horizontal engine flame, about 1.4-1.8:1 wider than tall, in the MANTA's cool ramp: a spring-green body (#30c870) with a bright mint inner lane (#a8f8c0) and a near-white core streak (#f0fff4) hugging the nozzle at the right, tapering left to a point. The flame sits on flat key with no ship drawn with it.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as 1 ROW OF 4 (4-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 THIN — a short slim flame, mostly spring green, small mint lane, thin white core. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 2 = FRAME 1 LONG — the flame stretched longer and brighter: full mint two-tone lane with a long white core streak trailing left. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 3 = FRAME 2 SPARK — the short flame again but flickering: the white core breaks into a bright spark bead at the nozzle and the tail thins. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 4 = FRAME 3 THICK SURGE — the flame swollen taller at its base: a wide hot root with a broad mint mantle around the white core before it tapers left. The subject lies within aspect 1.20:1 to 2.10:1.\n- FLAME GEOMETRY LAW: every flame is anchored at the NOZZLE on the RIGHT edge of its cell and trails LEFT, tapering to a soft tip on the left; the white-hot core hugs the nozzle. Nothing but flat key to the right of the nozzle. All four cells share the same nozzle position, scale and vertical centre.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 1024×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\n- ATTEMPT-2 REFINEMENT (attempt 1 died gates: margins <12px with flames crossing cell edges, border-strip ink 17.1% above the 5% cap — art ran to the sheet border; cell 4 aspect 0.95 too round; material-mean-diff 145+ — nozzles drifted): the green flames must be SMALL and strictly HORIZONTAL — each about 100–120 px wide and 60–75 px tall (width at least 1.4× height), dead-centre of its 256×256 cell with at least 50 px of flat #51e018 key on every side and nothing at all within 20 px of the sheet border; the nozzle bead sits in the same spot (right of centre) in all four frames; one green flame repeated four times with only the flicker changing. Everything else in this ask is unchanged.\n\n- ATTEMPT-3 REFINEMENT (attempt 2 died gates: cell 2 aspect 3.01 above the window with left margin 2px — one flame stretched into a long thin streak crossing into the gutter — cell 2 2.12 just above cap, cell 4 1.15 below floor, and material drift 218+ — the four cells became four different drawings): paint ONE green flame about 110 px wide and 75 px tall and REPEAT it four times in the same centre of each cell — the flicker changes only its inner brightness pattern (core bead, lane width, mantle swell), never the outer silhouette: no flame longer than 125 px, no flame taller than 90 px, every edge at least 45 px from every cell edge and none crossing a gutter.\n\n- ATTEMPT-4 GEOMETRY (the cell is now a wide 256×128 px band): the green flame is a horizontal lance centred in the band, ~110–130 px wide and 55–75 px tall, at least 20 px of flat key above and below and 60 px to each side.\n\n- ATTEMPT-5 GEOMETRY (the ATTEMPT-4 bullets are void: minimum canvas height 256, so cells are 320×256): draw the green flame as a SHORT THICK horizontal lance centred in the cell — about 140–165 px wide and 75–95 px tall, at least 40 px of flat key above and below and 75 px to each side; width never below 1.5× its height; the four cells repeat one flame with only the inner brightness pattern flickering.\n\n- ATTEMPT-7 GEOMETRY (ATTEMPT-4/5 bullets void: cells back to 256×256; attempt 5's \"lance\" again drew wires and a vertical fireball): the green flame is a SHORT FAT match-flame — about 95–115 px wide and 60–75 px tall — horizontal, nozzle bead just right of centre, tip tapering left, floating dead-centre with at least 50 px of key above and below and 65 px at each side; at least 1.4 times as wide as tall in every frame; the thick-surge cell swells sideways, never upward.\n\n- ATTEMPT-8 GEOMETRY (cells are now 320×256; earlier draws smeared into the left gutter and stood too tall): draw a SHORT STUBBY green flame blob, about 1.5 times as wide as high, roughly 110 px wide and 75 px tall, nozzle bead right of centre, fat rounded body, centred with 60 px of key above and below and 90 px left and right; nothing crosses into a gutter. The long and thick frames grow sideways to ~130 px wide; the spark frame keeps the same blob with only the core beading.\n\n- ATTEMPT-8 FINAL (the ATTEMPT-7 GEOMETRY bullet above is void — cells are 384×256; your attempt-7 frames swung between wires and a fireball): draw the SAME fat horizontal green torch in all four cells — band about 195–210 px tall and 280–320 px wide (ratio 1.4–1.65:1), nozzle bead right of centre, tapering left, centred, ≥30 px key above and below, ≥32 px at the sides, nothing in the gutters; the long frame grows only the white core streak INSIDE the same silhouette, the thick surge swells only sideways within the same width cap.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521315104,
+  "width": 1536,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:27:25.833Z",
+  "seconds": 11.8,
+  "label": "s-manta-thruster",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/s-manta-thruster/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1536x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "ships-3",
+  "exit": "STOP@8",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: ships/manta-thruster (4 flicker frames 9×5 v2 native, anchor right edge; MANTA green flame loop) — ships hero pool (GEN9 wave-3 rec #2, quality-first full force, contracts from shipped v2 maps); hitFlash false, no @flash sibling",
+  "gridContract": "384x256 cells, 4x1, canvas 1536x256, chroma key #51e018 (cells widened on the aspect-fill hypothesis after a7 blob filled 204px height; dup dropped a5)",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "ships/manta-thruster (4 flicker frames 9×5 v2 native, anchor right edge; MANTA green flame loop)",
+  "probe": {
+    "id": "s-manta-thruster",
+    "ok": false,
+    "fails": [
+      "cell 0 AR=3.72 outside [1.35,1.9] (f0)",
+      "cell 1 AR=3.84 outside [1.4,2.1] (f1)",
+      "cell 1 margin <12px (4/83/11/77)",
+      "cell 2 AR=1.88 outside [1.3,1.85] (f2)"
+    ],
+    "boxes": [
+      [
+        67,
+        99,
+        264,
+        71
+      ],
+      [
+        388,
+        83,
+        369,
+        96
+      ],
+      [
+        850,
+        63,
+        261,
+        139
+      ],
+      [
+        1164,
+        24,
+        296,
+        206
+      ]
+    ],
+    "xors": [
+      62,
+      47.5,
+      51.8
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521308104,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (49/115/0/0)",
+        "cell 1 margin <12px (0/111/47/18)",
+        "cell 2 margin <12px (14/79/0/0)",
+        "cell 3 AR=0.95 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521309104,
+      "ok": false,
+      "fails": [
+        "cell 1 AR=3.01 outside [1.2,2.1] (f1)",
+        "cell 1 margin <12px (2/113/19/65)",
+        "cell 2 AR=2.12 outside [1.2,2.1] (f2)",
+        "cell 3 AR=1.15 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521310104,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=0.89 outside [1.2,2.1] (f0)",
+        "cell 1 AR=1.07 outside [1.2,2.1] (f1)",
+        "cell 2 margin <12px (0/27/0/23)",
+        "cell 3 AR=1.17 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521311104,
+      "ok": false,
+      "fails": [
+        "dims 1024x256 != 1024x128"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521312104,
+      "ok": false,
+      "fails": [
+        "cell 1 margin <12px (8/94/32/25)",
+        "cell 3 AR=0.87 outside [1.2,2.1] (f3)",
+        "dup 0-2 material-mean-diff 170.3 > 90",
+        "dup 1-3 material-mean-diff 192.7 > 90"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521313104,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (26/124/0/21)",
+        "cell 1 margin <12px (0/111/21/21)",
+        "cell 2 margin <12px (1/71/0/21)",
+        "cell 3 AR=1.02 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521314104,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.25 outside [1.35,1.9] (f0)",
+        "cell 1 AR=3.17 outside [1.4,2.1] (f1)",
+        "cell 2 AR=2.61 outside [1.3,1.85] (f2)",
+        "cell 3 AR=1.16 outside [1.35,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521315104,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.72 outside [1.35,1.9] (f0)",
+        "cell 1 AR=3.84 outside [1.4,2.1] (f1)",
+        "cell 1 margin <12px (4/83/11/77)",
+        "cell 2 AR=1.88 outside [1.3,1.85] (f2)"
+      ]
+    }
+  ]
+}

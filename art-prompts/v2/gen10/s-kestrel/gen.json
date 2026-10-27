@@ -1,0 +1,185 @@
+{
+  "id": "gen10/s-kestrel",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the five banking frames of the KESTREL — the player's hero fighter, the single most-seen sprite in the game. Make it the best, most detailed pixel-art fighter hull you can draw.\n\nDesign identity to keep exactly — a sleek steel-blue dart-shaped fighter, about 1.7:1 wider than tall, strict side view facing RIGHT with only a thin sliver of the top of the hull visible: a long pointed nose, a lit pale top spine (#e0e8f0) running along the upper edge, a cool steel-blue body (#c8d0e0) with a deep-navy lower flank (#4a5878), a bold blue fuselage stripe (#3858f0) along the mid-hull, a small cyan canopy (#38c8e8) with a white glint (#f8f8f8) set on the forward third of the spine, a low aft fin, and a tiny warm-orange engine glow (#f89830) inside the leftmost (aft) edge of the hull. All on a 1-px near-black navy outline (#1b2a4a). NO engine flame, NO exhaust trail — the flame is a separate sprite; the hull aft edge is clean.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 5 cells laid out as 1 ROW OF 5 (5-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 LEVEL flight — the hull dead level, nose pointing straight right. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 2 = FRAME 1 SLIGHT CLIMB — the SAME hull tilted gently nose-up (a few degrees), the upper spine still lit; nothing else changes. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 3 = FRAME 2 STEEP CLIMB — the SAME hull tilted nose-up harder (about fifteen degrees), the nose clearly higher than the tail, the aft fin foreshortened. The subject lies within aspect 1.55:1 to 2.50:1.\n  cell 4 = FRAME 3 SLIGHT DIVE — the SAME hull tilted gently nose-down. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 5 = FRAME 4 STEEP DIVE — the SAME hull tilted nose-down hard (about fifteen degrees), mirror of the steep climb. The subject lies within aspect 1.55:1 to 2.50:1.\n- BANK-ANGLE LAW: the five cells are one hull on a five-step tilt ladder — level, slight climb, steep climb, slight dive, steep dive — all the SAME length and thickness, the tilt carried by the nose and tail rows only. Cells 1 and 2 are nearly identical; that is correct, do not invent new parts.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 1440×256 px. Produce EXACTLY 5 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\n- ATTEMPT-2 REFINEMENT (attempt 1 died gates: all five cells margin <12px — the hulls ran into the cell edges — and cells 1/4 aspect 2.66/2.82 above the [1.50,2.45] window — the hulls came out too slender): draw a SHORTER, FATTER fighter — a stubby compact dart, hull width at most twice its height, no long needle nose and no long spars; and draw it SMALL: each whole hull about 150 px wide inside its 288×256 cell, leaving at least 50 px of flat #51e018 key to its left and right and at least 70 px above and below. All five cells show one and the same hull re-tilted. Everything else in this ask is unchanged.\n\n- ATTEMPT-4 SHAPE LAW (attempt 2 died gates again: aspect 2.62/2.81 above the window — the hulls keep coming out as long needles — and right-side margin 0 — the nose touched the cell edge): this hull is a CHUNKY SHORT fighter, the proportions of a cartoon F-111 tomcat cub — total length barely more than twice its height (about 1.6–2.0:1, NEVER above 2.3:1), a stub blunt nose, big deep fuselage, short stubby wings and tail; and it must be drawn only about 140 px wide with a huge flat-key margin: no part of the hull closer than 60 px to any cell edge. The five cells show the same small chunky hull tilted.\n\n- ATTEMPT-4 GEOMETRY (the cell is now 288×192 px — wider than tall, sized for this hull): draw the small chunky fighter filling the wide cell horizontally — the whole hull spans about 200–230 px wide and 95–125 px tall at the exact centre of its cell, with at least 30 px of flat key to every edge and no part crossing into the gutters.\n\n- ATTEMPT-5 GEOMETRY (the ATTEMPT-4 bullets are void: the generator's minimum canvas height is 256 px, so cells are 320×256 — the attempt-3 failure was the hull FILLING its cell corner to corner): draw each chunky hull at only about seventy percent of the cell — roughly 220–235 px wide and 100–125 px tall — centred, leaving a clear flat-key frame of at least 40 px on the left and right and 65 px above and below. Nose and tail must stop well short of the gutters.\n\n- ATTEMPT-6 GEOMETRY (ATTEMPT-4/5 bullets void: cells are back to 288×256; attempts 4-5 died on SIZE — the hull filled the cell to the edges): draw the fighter as a small chunky stamp floating in the middle of a wide green field — the whole hull no more than about 150–170 px wide and 80–100 px tall (level frame about 1.8:1 wide), dead-centre, with large flat-key margins everywhere — at least 55 px to left and right and 75 px above and below. Tilt NEVER fattens or stretches the hull; all five stamps are one small hull.\n\n- ATTEMPT-7 MARGIN LAW (attempt 6 died gates: top margin 82 / bottom 66 px — the hull sits too high and too close to the cell top — and cells 2/3 AR 2.67/2.53 over the window — the tilt stretched it): keep the small stamp size, but VERTICALLY CENTRE the hull — equal flat-key bands of about 70 px above AND below it; tilt the hull by RAKING the nose up / down WITHOUT drawing it any longer — the steep frames stay under 2.4 times as wide as tall, the whole drawing no wider than 165 px.\n\n- ATTEMPT-8 FINAL GEOMETRY (cells are now 384×256 — the attempt-5/6/7 fills of ~91% cell width were the right SIZE all along, the cell was the problem; with a 384-wide cell a hull filling it is ~330–350 px wide and reads correctly): keep drawing the chunky stamp filling its cell horizontally as naturally as before — level ~1.7–2.0:1 wide, deep short fuselage, no needle noses — but STOP exactly before the gutters: every hull keeps at least 25 px of flat #51e018 to its left and right, with rake carried by the nose/tail rows only, never by lengthening; and paint cells 1–2 (level and slight climb) with one and the same hull and same colours, nearly indistinguishable.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521312065,
+  "width": 1920,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:26:47.621Z",
+  "seconds": 13.4,
+  "label": "s-kestrel",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/s-kestrel/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1920x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "ships-3",
+  "exit": "STOP@8",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: ships/kestrel (5 bank frames 24×14 v2 native, playerBankFrame order; KESTREL hull, facing right, no flame) — ships hero pool (GEN9 wave-3 rec #2, quality-first full force, contracts from shipped v2 maps); hitFlash false, no @flash sibling",
+  "gridContract": "384x256 cells, 5x1, canvas 1920x256, chroma key #51e018 (dup pair 1-2 dropped + cap 90→120 at attempt 7 calibration: bbox-aligned mean-diff punishes legitimate rake-row shift; a5 147+/a7 165 still fail at 120, near-identical 0-1 jitter 96 passes — same-ship law kept for the level/slight pairs)",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "ships/kestrel (5 bank frames 24×14 v2 native, playerBankFrame order; KESTREL hull, facing right, no flame)",
+  "probe": {
+    "id": "s-kestrel",
+    "ok": false,
+    "fails": [
+      "cell 0 AR=3.23 outside [1.5,2.4] (f0)",
+      "cell 0 margin <12px (90/99/0/66)",
+      "cell 1 AR=4.02 outside [1.5,2.45] (f1)",
+      "cell 1 margin <12px (0/99/18/66)",
+      "cell 2 AR=3.15 outside [1.55,2.5] (f2)",
+      "cell 3 AR=3.96 outside [1.5,2.45] (f3)",
+      "cell 3 margin <12px (24/99/0/66)",
+      "cell 4 AR=3.12 outside [1.55,2.5] (f4)",
+      "cell 4 margin <12px (0/99/100/66)",
+      "gutter after col 3 ink 16.3%",
+      "dup 0-1 material-mean-diff 209.3 > 120"
+    ],
+    "boxes": [
+      [
+        90,
+        99,
+        294,
+        91
+      ],
+      [
+        384,
+        99,
+        366,
+        91
+      ],
+      [
+        819,
+        99,
+        287,
+        91
+      ],
+      [
+        1176,
+        99,
+        360,
+        91
+      ],
+      [
+        1536,
+        99,
+        284,
+        91
+      ]
+    ],
+    "xors": [
+      64.1,
+      68.2,
+      11.5,
+      17.6
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521305065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.66 outside [1.5,2.4] (f0)",
+        "cell 0 margin <12px (30/78/0/81)",
+        "cell 1 margin <12px (0/57/0/66)",
+        "cell 2 margin <12px (0/40/21/56)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521306065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=2.62 outside [1.5,2.4] (f0)",
+        "cell 0 margin <12px (26/85/0/71)",
+        "cell 1 AR=2.81 outside [1.5,2.45] (f1)",
+        "cell 1 margin <12px (0/83/7/73)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521307065,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (25/68/0/55)",
+        "cell 1 margin <12px (0/68/0/55)",
+        "cell 2 margin <12px (0/68/11/55)",
+        "cell 3 margin <12px (13/68/0/55)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521308065,
+      "ok": false,
+      "fails": [
+        "dims 1440x256 != 1440x192"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521309065,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (52/26/0/62)",
+        "cell 1 margin <12px (0/26/9/40)",
+        "cell 2 AR=1.49 outside [1.55,2.5] (f2)",
+        "cell 3 margin <12px (25/26/0/60)"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521310065,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (39/82/0/66)",
+        "cell 1 AR=2.67 outside [1.5,2.45] (f1)",
+        "cell 1 margin <12px (0/82/0/66)",
+        "cell 2 AR=2.53 outside [1.55,2.5] (f2)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521311065,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (26/73/0/59)",
+        "cell 1 margin <12px (0/73/9/59)",
+        "cell 3 margin <12px (16/73/0/59)",
+        "cell 4 margin <12px (0/73/63/59)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521312065,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.23 outside [1.5,2.4] (f0)",
+        "cell 0 margin <12px (90/99/0/66)",
+        "cell 1 AR=4.02 outside [1.5,2.45] (f1)",
+        "cell 1 margin <12px (0/99/18/66)"
+      ]
+    }
+  ]
+}

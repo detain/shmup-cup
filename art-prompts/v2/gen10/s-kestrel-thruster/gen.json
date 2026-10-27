@@ -1,0 +1,175 @@
+{
+  "id": "gen10/s-kestrel-thruster",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the four-frame engine-flame loop of the KESTREL thruster — the small flame that flickers behind the hero fighter.\n\nDesign identity to keep exactly — a short horizontal engine flame, about 1.4-1.8:1 wider than tall: a deep-orange body (#e84818) with a bright amber-yellow inner lane (#f8c030) and a white-hot core streak (#fff8d0) hugging the nozzle at the right, tapering left to a point. The flame sits on flat key with no ship drawn with it.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 4 cells laid out as 1 ROW OF 4 (4-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 THIN — a short slim flame, mostly deep orange, small amber lane, thin white core. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 2 = FRAME 1 LONG — the flame stretched longer and brighter: full amber-yellow two-tone lane with a long white-hot core streak trailing left. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 3 = FRAME 2 SPARK — the short flame again but flickering: the white core breaks into a bright spark bead at the nozzle and the tail thins. The subject lies within aspect 1.20:1 to 2.10:1.\n  cell 4 = FRAME 3 THICK SURGE — the flame swollen taller at its base: a wide hot root with a broad amber mantle around the white core before it tapers left. The subject lies within aspect 1.20:1 to 2.10:1.\n- FLAME GEOMETRY LAW: every flame is anchored at the NOZZLE on the RIGHT edge of its cell and trails LEFT, tapering to a soft tip on the left; the white-hot core hugs the nozzle. Nothing but flat key to the right of the nozzle. All four cells share the same nozzle position, scale and vertical centre.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 1024×256 px. Produce EXACTLY 4 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\n- ATTEMPT-2 REFINEMENT (attempt 1 died gates: cells 1/3/4 aspect 1.12/1.14/0.90 below the [1.20,2.10] window — the flames came out too round; cell 4 margin <12px; material-mean-diff 139/180 — the nozzles and colours drifted between cells): draw a HORIZONTAL flame lance clearly WIDER than tall — width at least 1.4× height in every frame including the short thin one; keep every flame SMALL: about 100–120 px wide and 60–75 px tall, dead-centre in its 256×256 cell with at least 40 px of flat #51e018 key all round; the white-hot nozzle bead sits in the SAME spot (right of centre) in all four frames; the four flames are one flame re-flickering — same colours, same size family, same materials. Everything else in this ask is unchanged.\n\n- ATTEMPT-3 REFINEMENT (attempt 2 died gates: bottom margins of 9–10px in cells 1–4 — the flames sit too LOW in their cells, crowding the cell floor and bleeding into the gutter — cell 4 aspect 1.15 below the window — and material drift 90+): FLOAT each flame at the exact VERTICAL centre of its cell with at least 45 px of flat key ABOVE and BELOW — the flame is a short horizontal band across the middle of the cell, nothing in its top or bottom quarters; every frame stays wider than 1.4× its height, the thick surge growing WIDER not downward; the four flames keep the same colours in the same proportions so cells read as one flame flickering.\n\n- ATTEMPT-4 GEOMETRY (the cell is now a wide 256×128 px band): the flame is a horizontal lance centred in the band, ~110–130 px wide and 55–75 px tall, at least 20 px of flat key above and below and 60 px to each side.\n\n- ATTEMPT-5 GEOMETRY (the ATTEMPT-4 bullets are void: minimum canvas height 256, so cells are 320×256 — and the attempt-2/3 bottom-sink means the flame crowds the cell floor): draw the flame as a SHORT THICK horizontal lance centred in the cell — about 140–165 px wide and 75–95 px tall, at least 40 px of flat key above and below (nothing at all in the top or bottom sixths of the cell) and 75 px to left and right; width never below 1.5× its height.\n\n- ATTEMPT-7 GEOMETRY (ATTEMPT-4/5 bullets void: cells back to 256×256; attempt 5 died because \"lance\" made the flames span the whole cell as thin wires): the flame is a SHORT FAT match-flame — about 95–115 px wide and 60–75 px tall — lying horizontally with its nozzle bead just right of the cell centre and the tapered tip to the left, floating dead-centre: at least 50 px of flat key above and below, 65 px left and right; at least 1.4 times as wide as tall in every one of the four frames.\n\n- ATTEMPT-8 GEOMETRY (cells are now 320×256; the lance/match wording drew 3.5:1 wires — dead rules now): draw a SHORT STUBBY flame blob — clearly wider than tall but NOT elongated, about 1.5 times as wide as high, roughly 110 px wide and 75 px tall, with the nozzle bead right of centre and a fat rounded body, floating with 60 px of key above and below and 90 px at the sides. The long frame reaches ~130 px wide, the thick surge grows sideways to ~130 px too — never taller than 95 px, never thinner than a 1.3:1 ratio.\n\n- ATTEMPT-8 FINAL (the ATTEMPT-7 GEOMETRY bullet above is void — cells are 384×256; your attempt-7 blob was 200–210 px TALL which is the right height now): draw a fat horizontal TORCH FLAME filling a band about 195–210 px tall and 280–320 px wide (ratio 1.4–1.65:1), nozzle bead right of centre, body tapering left, centred with ≥30 px of key above and below and ≥32 px at each side; all four frames keep this same outer size family, flickering only the inner brightness.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521314091,
+  "width": 1536,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:27:13.656Z",
+  "seconds": 11.5,
+  "label": "s-kestrel-thruster",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/s-kestrel-thruster/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1536x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "ships-3",
+  "exit": "STOP@8",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: ships/kestrel-thruster (4 flicker frames 9×5 v2 native, anchor right edge; KESTREL flame loop) — ships hero pool (GEN9 wave-3 rec #2, quality-first full force, contracts from shipped v2 maps); hitFlash false, no @flash sibling",
+  "gridContract": "384x256 cells, 4x1, canvas 1536x256, chroma key #51e018 (cells widened on the aspect-fill hypothesis after a7 blob filled 204px height; dup dropped a5)",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "ships/kestrel-thruster (4 flicker frames 9×5 v2 native, anchor right edge; KESTREL flame loop)",
+  "probe": {
+    "id": "s-kestrel-thruster",
+    "ok": false,
+    "fails": [
+      "cell 0 AR=3.84 outside [1.35,1.9] (f0)",
+      "cell 1 AR=3.14 outside [1.4,2.1] (f1)",
+      "cell 1 margin <12px (3/81/58/72)",
+      "cell 2 AR=3.01 outside [1.3,1.85] (f2)",
+      "cell 2 margin <12px (29/76/0/62)",
+      "cell 3 AR=1.18 outside [1.35,2.1] (f3)",
+      "cell 3 margin <12px (0/28/143/24)",
+      "gutter after col 2 ink 19.5%"
+    ],
+    "boxes": [
+      [
+        139,
+        108,
+        196,
+        51
+      ],
+      [
+        387,
+        81,
+        323,
+        103
+      ],
+      [
+        797,
+        76,
+        355,
+        118
+      ],
+      [
+        1152,
+        28,
+        241,
+        204
+      ]
+    ],
+    "xors": [
+      62.9,
+      48.5,
+      53.2
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521307091,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.12 outside [1.2,2.1] (f0)",
+        "cell 2 AR=1.14 outside [1.2,2.1] (f2)",
+        "cell 3 AR=0.90 outside [1.2,2.1] (f3)",
+        "cell 3 margin <12px (8/10/43/17)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521308091,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (67/112/15/10)",
+        "cell 1 margin <12px (25/101/0/10)",
+        "cell 2 margin <12px (0/86/0/10)",
+        "cell 3 AR=1.15 outside [1.2,2.1] (f3)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521309091,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (43/112/29/10)",
+        "cell 1 margin <12px (31/105/6/10)",
+        "cell 2 AR=1.15 outside [1.2,2.1] (f2)",
+        "cell 2 margin <12px (39/87/34/10)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521310091,
+      "ok": false,
+      "fails": [
+        "dims 1024x256 != 1024x128"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521311091,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=6.92 outside [1.2,2.1] (f0)",
+        "cell 0 margin <12px (43/115/0/101)",
+        "cell 1 AR=3.37 outside [1.2,2.1] (f1)",
+        "cell 1 margin <12px (0/87/0/74)"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521312091,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.55 outside [1.2,2.1] (f0)",
+        "cell 0 margin <12px (50/99/0/99)",
+        "cell 1 AR=3.54 outside [1.2,2.1] (f1)",
+        "cell 1 margin <12px (0/96/15/92)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521313091,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.06 outside [1.35,1.9] (f0)",
+        "cell 1 AR=1.37 outside [1.4,2.1] (f1)",
+        "cell 1 margin <12px (4/28/37/24)",
+        "cell 2 AR=1.10 outside [1.3,1.85] (f2)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521314091,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=3.84 outside [1.35,1.9] (f0)",
+        "cell 1 AR=3.14 outside [1.4,2.1] (f1)",
+        "cell 1 margin <12px (3/81/58/72)",
+        "cell 2 AR=3.01 outside [1.3,1.85] (f2)"
+      ]
+    }
+  ]
+}

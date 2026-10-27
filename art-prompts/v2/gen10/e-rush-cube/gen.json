@@ -1,0 +1,65 @@
+{
+  "id": "gen10/e-rush-cube",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the single frame of the RUSH CUBE — a violet crystal cube of the seeded cube rush; where it stops it becomes a terrain cube.\n\nThe chip stays SMALL: a single compact subject of roughly 90×90 px — ALL its ink together covers only about 12% of the sheet area — floating dead-centre inside its cell so that most of every cell is EMPTY flat #51e018 key, with at least 60 px of unbroken flat key between the chip and every cell edge. The background must dominate: if the cell looks painted rather than a small chip on green key, the sheet is ruined. Design identity to keep exactly — a bevelled crystal cube seen face-on, as wide as tall: a vivid violet body (#8a48e8) with a pale lilac lit bevel along the top-left (#c8a0ff) and a deep indigo shadow bevel at the lower-right (#4a2090), inner dark seam facets, a 1-px near-black outline (#1a0a2e). Solid, square, crystalline.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 1 cell laid out as 1 ROW OF 1 (one single cell = the whole canvas) holding exactly ONE subject; the canvas IS one cell.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = the subject seen whole. The subject lies within aspect 0.70:1 to 1.30:1.\n- The sheet canvas measures EXACTLY 256×256 px. Produce EXACTLY 1 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: the subject sits at the exact centre of the canvas and stays SMALL — a compact chip leaving a wide flat-key margin on every side; if the cell looks painted rather than a small chip on green key, the sheet is ruined.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521303039,
+  "width": 256,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:13:52.904Z",
+  "seconds": 5.3,
+  "label": "e-rush-cube",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/e-rush-cube/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "256x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "1"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "enemies-3",
+  "exit": "PROBE-OK@1",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: enemies/rush-cube (1f 8×8 → 12×12 served; cube-rush crystal cube) — enemies finish (GEN9 wave-3 rec #1, c-dart small-chip clause); @flash auto-derived +1f",
+  "gridContract": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "enemies/rush-cube (1f 8×8 → 12×12 served; cube-rush crystal cube)",
+  "probe": {
+    "id": "e-rush-cube",
+    "ok": true,
+    "fails": [],
+    "boxes": [
+      [
+        78,
+        82,
+        98,
+        95
+      ]
+    ],
+    "xors": [],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521303039,
+      "ok": true,
+      "fails": []
+    }
+  ]
+}

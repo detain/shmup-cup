@@ -1,0 +1,171 @@
+{
+  "id": "gen10/s-manta",
+  "slot": "a",
+  "prompt": "Pixel-art sprite sheet for a horizontal arcade shoot-'em-up: the five banking frames of the MANTA — the second player hero ship, a ray-winged interceptor, the single most-seen sprite of Direct mode. Make it the best, most detailed pixel-art fighter hull you can draw.\n\nDesign identity to keep exactly — a flat ray-winged interceptor, about 1.6:1 wider than tall, strict side view facing RIGHT: broad swept delta wings whose upper edges catch the light, a pale mint-lit upper wing face (#f0fff4) over a sage-green body (#c8e0d0) with deeper shadowed under-wings (#3a5a48), a smooth mid-green canopy (#40d070) edged in bright mint (#a8f8c0) with a small white-green glint at its upper left sitting on the centreline, deep panel seams aft and on the folded lower wing, twin orange thruster vents (#f8b030) at the aft (left) edge between the wing roots, and a long forked tail ray. All on a 1-px near-black green outline (#10281e). NO engine flame, NO exhaust trail — the flame is a separate sprite; the aft edge is clean.\n\nRebuild it as a sprite sheet under this strict contract:\n- On a CONTINUOUS flat pure bright green chroma-key background, exactly hex #51e018, identical solid colour in every background pixel: no gradient, no vignette, no shadow, no floor plane, no panel, no second green shade.\n- EXACTLY 5 cells laid out as 1 ROW OF 5 (5-column by 1-row) — every cell holding exactly ONE subject at the same scale and position; a missing, empty or merged cell ruins the entire sheet.\n- Cells in reading order (left-right, then top-bottom):\n  cell 1 = FRAME 0 LEVEL flight — the hull dead level, nose pointing straight right. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 2 = FRAME 1 SLIGHT CLIMB — the SAME hull tilted gently nose-up (a few degrees), the upper spine still lit; nothing else changes. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 3 = FRAME 2 STEEP CLIMB — the SAME hull tilted nose-up harder (about fifteen degrees), the nose clearly higher than the tail, the aft fin foreshortened. The subject lies within aspect 1.55:1 to 2.50:1.\n  cell 4 = FRAME 3 SLIGHT DIVE — the SAME hull tilted gently nose-down. The subject lies within aspect 1.50:1 to 2.40:1.\n  cell 5 = FRAME 4 STEEP DIVE — the SAME hull tilted nose-down hard (about fifteen degrees), mirror of the steep climb. The subject lies within aspect 1.55:1 to 2.50:1.\n- BANK-ANGLE LAW: the five cells are one hull on a five-step tilt ladder — level, slight climb, steep climb, slight dive, steep dive — all the SAME length and thickness, the tilt carried by the nose and tail rows and by the folded wing rays only. Cells 1 and 2 are nearly identical; that is correct, do not invent new parts.\n- SAME SUBJECT LAW: every cell shows the SAME subject, the same size, the same materials and colours, at the same position in its cell — only the named attitude changes between cells.\n- The sheet canvas measures EXACTLY 1440×256 px. Produce EXACTLY 5 subject cells — no more, no fewer — and nothing else on the sheet.\n- Each subject sits well inside its cell with at least 12 px of unbroken flat #51e018 around it and clean flat gutters between cells: no subject may touch or cross a cell edge; keep every subject within the inner 75% of its cell.\n- CENTRING AND SIZE: every subject sits at the exact centre of its cell at the same scale and position as the other cell — only the named state changes.\n- NO guide lines, NO cell borders, NO divider lines, NO frames, NO text, NO labels, NO numbers anywhere on the sheet — the cell names above are ordering instructions and must NEVER be drawn.\n- Style: the finest retro pixel art for its native resolution — as much detail and inner structure as possible AT that low resolution, crisp hard-edged square pixels, chunky bold forms, a rich four-to-six step shading ramp lit from the top-left with careful inner detail and real material texture, clean saturated colours, a 1-px near-black outline on every silhouette edge, no anti-aliasing, no blur, no smooth gradients.\n\n- ATTEMPT-2 REFINEMENT (attempt 1 died gates: all five cells margin <12px — the wings crossed cell edges — and material-mean-diff 157/116 between cells — the five cells drifted into different drawings): paint the manta ONCE and REPEAT it — identical hull, identical colours, identical size, at the same position in all five cells, only the tilt changing; keep it compact and SMALL: about 150 px wide inside the 288×256 cell with at least 50 px of flat key left and right of the wing span and 70 px above and below; no part may touch or near a cell edge. Everything else in this ask is unchanged.\n\n- ATTEMPT-3 REFINEMENT (attempt 2 died gates: cell 1 right margin 6px — a wingtip too close to the cell edge — and cells 3/5 aspect 1.51/1.49 below the [1.55,2.50] window — the steep tilts came out too square): draw the whole manta a little SMALLER — max about 185 px wide — so no wingtip comes closer than 40 px to any cell edge; and on the STEEP CLIMB and STEEP DIVE frames tilt the hull HARDER, a clear ~20° nose-up / nose-down rake so the tilted hull reads visibly slanted with the nose well above the tail line (and well below it when diving). Level frame unchanged at ~1.7:1.\n\n- ATTEMPT-4 GEOMETRY (the cell is now 288×192 px): the manta spans about 190–225 px wide and 110–140 px tall (wings included) at the exact centre of its wide cell, at least 30 px of flat key to every edge. On the steep climb/dive cells rake the hull a clear 20° so the tilted silhouette stands ~130 px tall and reads ~1.6:1 or squarer.\n\n- ATTEMPT-5 GEOMETRY (the ATTEMPT-4 bullets are void: minimum canvas height is 256 px, so cells are 320×256): draw the manta at only about seventy percent of the cell width — roughly 215–230 px wide and 125–140 px tall (wings included), level frame about 1.7:1 — centred with at least 40 px of flat key left and right and 55 px above and below; keep the attempt-3 steep-rake law: climb/dive cells tilted a clear 20°.\n\n- ATTEMPT-6 GEOMETRY (ATTEMPT-4/5 bullets void: cells are back to 288×256; the attempt-5 hull again filled cell to cell edge): the manta is one small stamp centred in a wide green field — at most about 165–185 px wide, 100–115 px tall level (≈1.7:1), at least 50 px of flat key to left and right and 65 px above and below in every cell; the climb/dive cells rake a visible 20° so their bbox reads at least 1.55:1 wide.\n\n- ATTEMPT-7 EDGE LAW (attempt 6 died gates: margins of 4 / 1 px at the right edge of cells 1/4 and the same at left edges — the wings and tilted tips lean into the cell walls — plus f2/f4 AR 1.50/1.55 under the steep window and dup 3-4 92.9): draw the manta stamp SMALLER still — no more than 170 px wide level, and when raked the tilted hull stays at least 40 px from every cell edge (its bbox shrinks inward: width ≈160 px, height ≈105 px at steep rake) — and rake frames 3 and 5 noticeably more than 2 (deep nose-up/nose-down) while frames 4 and 5 use identical colours and detail so the pair reads as one hull mirrored.\n\n- ATTEMPT-8 FINAL GEOMETRY (cells are now 384×256 — your attempt-7 manta was the right drawing, the cell was too small; a filling manta is now ~320–350 px wide): keep the wings back from the gutters by at least 25 px on both sides of every cell; rake frames 3 and 5 a clear 20° so their bbox stays at least 1.5:1 wide (tilt shortens width — rake hard but keep the span wide); cells 1 and 2 and cells 4 and 5 are one identical hull re-tilted, same colours exactly.",
+  "negative": "photorealistic, 3d render, text, letters, labels, numbers, cell borders, guide lines, grid lines, watermark, signature, blurry, anti-aliasing, smooth gradient background, scenery, stars, cast shadow, drop shadow, multiple subjects per cell, empty cell, cropped subject, subject touching edge",
+  "model": "flux2",
+  "seed": 521313078,
+  "width": 1920,
+  "height": 256,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-27T03:27:01.726Z",
+  "seconds": 13.7,
+  "label": "s-manta",
+  "source": "v2-target",
+  "file": "art-prompts/v2/gen10/s-manta/gen.png",
+  "format": "png",
+  "requestedFormat": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negativeSent": null,
+  "mode": "generate",
+  "outputSize": "1920x256",
+  "meta": {
+    "job": "w15-GEN10",
+    "attempt": "8"
+  },
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "lane": "w15-GEN10-FIX",
+  "round": "ships-3",
+  "exit": "STOP@8",
+  "ownerAsk": "Quality-regen wave 3 per GEN10 brief, disk-derived: ships/manta (5 bank frames 24×15 v2 native; MANTA hull, facing right, no flame) — ships hero pool (GEN9 wave-3 rec #2, quality-first full force, contracts from shipped v2 maps); hitFlash false, no @flash sibling",
+  "gridContract": "384x256 cells, 5x1, canvas 1920x256, chroma key #51e018 (dup pair 1-2 dropped + cap 90→120 at attempt 7 calibration: bbox-aligned mean-diff punishes legitimate rake-row shift; a5 147+/a7 165 still fail at 120, near-identical 0-1 jitter 96 passes — same-ship law kept for the level/slight pairs)",
+  "keyContract": "flat #51e018 chroma key",
+  "targetSprite": "ships/manta (5 bank frames 24×15 v2 native; MANTA hull, facing right, no flame)",
+  "probe": {
+    "id": "s-manta",
+    "ok": false,
+    "fails": [
+      "cell 0 margin <12px (9/38/32/32)"
+    ],
+    "boxes": [
+      [
+        9,
+        38,
+        343,
+        186
+      ],
+      [
+        401,
+        38,
+        337,
+        187
+      ],
+      [
+        787,
+        38,
+        330,
+        187
+      ],
+      [
+        1168,
+        38,
+        338,
+        187
+      ],
+      [
+        1551,
+        38,
+        337,
+        187
+      ]
+    ],
+    "xors": [
+      31.4,
+      30.1,
+      28.2,
+      34.9
+    ],
+    "floor": 0.4
+  },
+  "attempts": [
+    {
+      "att": 1,
+      "seed": 521306078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (19/54/0/47)",
+        "cell 1 margin <12px (0/72/7/60)",
+        "cell 2 margin <12px (7/72/0/58)",
+        "cell 3 margin <12px (0/71/0/59)"
+      ]
+    },
+    {
+      "att": 2,
+      "seed": 521307078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (71/64/6/52)",
+        "cell 2 AR=1.51 outside [1.55,2.5] (f2)",
+        "cell 4 AR=1.49 outside [1.55,2.5] (f4)"
+      ]
+    },
+    {
+      "att": 3,
+      "seed": 521308078,
+      "ok": false,
+      "fails": [
+        "cell 0 AR=1.37 outside [1.4,2.3] (f0)",
+        "cell 0 margin <12px (72/59/0/39)",
+        "cell 1 margin <12px (0/59/7/39)",
+        "cell 2 AR=1.46 outside [1.55,2.5] (f2)"
+      ]
+    },
+    {
+      "att": 4,
+      "seed": 521309078,
+      "ok": false,
+      "fails": [
+        "dims 1440x256 != 1440x192"
+      ]
+    },
+    {
+      "att": 5,
+      "seed": 521310078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (44/59/0/45)",
+        "cell 1 margin <12px (0/59/0/42)",
+        "cell 2 margin <12px (0/54/10/31)",
+        "cell 4 margin <12px (2/51/38/31)"
+      ]
+    },
+    {
+      "att": 6,
+      "seed": 521311078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (48/60/4/46)",
+        "cell 2 AR=1.55 outside [1.55,2.5] (f2)",
+        "cell 3 margin <12px (1/56/0/47)",
+        "cell 4 AR=1.50 outside [1.55,2.5] (f4)"
+      ]
+    },
+    {
+      "att": 7,
+      "seed": 521312078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (49/46/0/42)",
+        "cell 1 margin <12px (0/46/4/42)",
+        "cell 2 margin <12px (24/46/0/42)",
+        "cell 3 margin <12px (0/46/0/42)"
+      ]
+    },
+    {
+      "att": 8,
+      "seed": 521313078,
+      "ok": false,
+      "fails": [
+        "cell 0 margin <12px (9/38/32/32)"
+      ]
+    }
+  ]
+}

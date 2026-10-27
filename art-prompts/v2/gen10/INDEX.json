@@ -1,0 +1,768 @@
+{
+  "generatedAt": "2026-10-27T03:33:40.345Z",
+  "lane": "w15-GEN10",
+  "salvage": "w15-GEN10-FIX — closeout re-derived from disk; all 9 final verdicts are this lane's fresh numeric re-probes (identical to the generation lane's stored probes; generation itself was honest).",
+  "governance": [
+    "Owner ruling 2026-10-23 (governance for this round, embedded per lane brief): FLUX.2-generated art is approved for the non-commercial ship; the BFL tier is cleared before any paid distribution.",
+    "Owner picker waiver 2026-10-26 (verbatim): \"ai generate those other things too\"",
+    "Owner quality-first directive 2026-10-26 (R6-D5, verbatim): \"graphics to look as good as they can at the resolution they're at ... if non pixelated means regenerating graphics then do it\"",
+    "Owner no-new-decision-rounds directive 2026-10-26 (verbatim): \"same model, updated prompts\"",
+    "Art-budget carve-out note (owner 2026-10-26): frame/pool floors raisable for RESTORED art with measured disclosure; every moved golden disclosed and justified; this store's frames replace upscaled v1 art 1:1 at the same served sizes."
+  ],
+  "rows": [
+    {
+      "id": "e-bubble-small",
+      "report": "w15-GEN10",
+      "target": "enemies/bubble-small (1f 8×8 v1 → 12×12 served; small bubble child of the splitter)",
+      "grid": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "e-bubble-small/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-bubble-small",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            81,
+            83,
+            95,
+            93
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521300000,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-lava",
+      "report": "w15-GEN10",
+      "target": "enemies/lava (2f 6×6 → 9×9 served; volcano lava stone, colour-only glow pulse)",
+      "grid": "256x256 cells, 2x1, canvas 512x256, chroma key #51e018",
+      "file": "e-lava/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-lava",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            76,
+            70,
+            123,
+            119
+          ],
+          [
+            313,
+            70,
+            126,
+            120
+          ]
+        ],
+        "xors": [
+          69.7
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521301013,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-rock",
+      "report": "w15-GEN10",
+      "target": "enemies/rock (1f 12×12 → 18×18 served; ceiling falling rock)",
+      "grid": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "e-rock/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-rock",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            73,
+            64,
+            108,
+            129
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521302026,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-rush-cube",
+      "report": "w15-GEN10",
+      "target": "enemies/rush-cube (1f 8×8 → 12×12 served; cube-rush crystal cube)",
+      "grid": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "e-rush-cube/gen.png",
+      "exit": "PROBE-OK@1",
+      "mode": "key",
+      "probe": {
+        "id": "e-rush-cube",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            78,
+            82,
+            98,
+            95
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521303039,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "e-tentacle",
+      "report": "w15-GEN10",
+      "target": "enemies/tentacle (1f 10×10 → 15×15 served; tentacle claw tip, arm is a link chain)",
+      "grid": "256x256 cell, 1x1, canvas 256x256, chroma key #51e018",
+      "file": "e-tentacle/gen.png",
+      "exit": "PROBE-OK@3",
+      "mode": "key",
+      "probe": {
+        "id": "e-tentacle",
+        "ok": true,
+        "fails": [],
+        "boxes": [
+          [
+            84,
+            68,
+            91,
+            122
+          ]
+        ],
+        "xors": [],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521304052,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.68 outside [0.7,1.3] (s)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521305052,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.67 outside [0.7,1.3] (s)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521306052,
+          "ok": true,
+          "fails": []
+        }
+      ]
+    },
+    {
+      "id": "s-kestrel",
+      "report": "w15-GEN10",
+      "target": "ships/kestrel (5 bank frames 24×14 v2 native, playerBankFrame order; KESTREL hull, facing right, no flame)",
+      "grid": "384x256 cells, 5x1, canvas 1920x256, chroma key #51e018 (dup pair 1-2 dropped + cap 90→120 at attempt 7 calibration: bbox-aligned mean-diff punishes legitimate rake-row shift; a5 147+/a7 165 still fail at 120, near-identical 0-1 jitter 96 passes — same-ship law kept for the level/slight pairs)",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "s-kestrel",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=3.23 outside [1.5,2.4] (f0)",
+          "cell 0 margin <12px (90/99/0/66)",
+          "cell 1 AR=4.02 outside [1.5,2.45] (f1)",
+          "cell 1 margin <12px (0/99/18/66)",
+          "cell 2 AR=3.15 outside [1.55,2.5] (f2)",
+          "cell 3 AR=3.96 outside [1.5,2.45] (f3)",
+          "cell 3 margin <12px (24/99/0/66)",
+          "cell 4 AR=3.12 outside [1.55,2.5] (f4)",
+          "cell 4 margin <12px (0/99/100/66)",
+          "gutter after col 3 ink 16.3%",
+          "dup 0-1 material-mean-diff 209.3 > 120"
+        ],
+        "boxes": [
+          [
+            90,
+            99,
+            294,
+            91
+          ],
+          [
+            384,
+            99,
+            366,
+            91
+          ],
+          [
+            819,
+            99,
+            287,
+            91
+          ],
+          [
+            1176,
+            99,
+            360,
+            91
+          ],
+          [
+            1536,
+            99,
+            284,
+            91
+          ]
+        ],
+        "xors": [
+          64.1,
+          68.2,
+          11.5,
+          17.6
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521305065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.66 outside [1.5,2.4] (f0)",
+            "cell 0 margin <12px (30/78/0/81)",
+            "cell 1 margin <12px (0/57/0/66)",
+            "cell 2 margin <12px (0/40/21/56)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521306065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=2.62 outside [1.5,2.4] (f0)",
+            "cell 0 margin <12px (26/85/0/71)",
+            "cell 1 AR=2.81 outside [1.5,2.45] (f1)",
+            "cell 1 margin <12px (0/83/7/73)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521307065,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (25/68/0/55)",
+            "cell 1 margin <12px (0/68/0/55)",
+            "cell 2 margin <12px (0/68/11/55)",
+            "cell 3 margin <12px (13/68/0/55)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521308065,
+          "ok": false,
+          "fails": [
+            "dims 1440x256 != 1440x192"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521309065,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (52/26/0/62)",
+            "cell 1 margin <12px (0/26/9/40)",
+            "cell 2 AR=1.49 outside [1.55,2.5] (f2)",
+            "cell 3 margin <12px (25/26/0/60)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521310065,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (39/82/0/66)",
+            "cell 1 AR=2.67 outside [1.5,2.45] (f1)",
+            "cell 1 margin <12px (0/82/0/66)",
+            "cell 2 AR=2.53 outside [1.55,2.5] (f2)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521311065,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (26/73/0/59)",
+            "cell 1 margin <12px (0/73/9/59)",
+            "cell 3 margin <12px (16/73/0/59)",
+            "cell 4 margin <12px (0/73/63/59)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521312065,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.23 outside [1.5,2.4] (f0)",
+            "cell 0 margin <12px (90/99/0/66)",
+            "cell 1 AR=4.02 outside [1.5,2.45] (f1)",
+            "cell 1 margin <12px (0/99/18/66)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-manta",
+      "report": "w15-GEN10",
+      "target": "ships/manta (5 bank frames 24×15 v2 native; MANTA hull, facing right, no flame)",
+      "grid": "384x256 cells, 5x1, canvas 1920x256, chroma key #51e018 (dup pair 1-2 dropped + cap 90→120 at attempt 7 calibration: bbox-aligned mean-diff punishes legitimate rake-row shift; a5 147+/a7 165 still fail at 120, near-identical 0-1 jitter 96 passes — same-ship law kept for the level/slight pairs)",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "s-manta",
+        "ok": false,
+        "fails": [
+          "cell 0 margin <12px (9/38/32/32)"
+        ],
+        "boxes": [
+          [
+            9,
+            38,
+            343,
+            186
+          ],
+          [
+            401,
+            38,
+            337,
+            187
+          ],
+          [
+            787,
+            38,
+            330,
+            187
+          ],
+          [
+            1168,
+            38,
+            338,
+            187
+          ],
+          [
+            1551,
+            38,
+            337,
+            187
+          ]
+        ],
+        "xors": [
+          31.4,
+          30.1,
+          28.2,
+          34.9
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521306078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (19/54/0/47)",
+            "cell 1 margin <12px (0/72/7/60)",
+            "cell 2 margin <12px (7/72/0/58)",
+            "cell 3 margin <12px (0/71/0/59)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521307078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (71/64/6/52)",
+            "cell 2 AR=1.51 outside [1.55,2.5] (f2)",
+            "cell 4 AR=1.49 outside [1.55,2.5] (f4)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521308078,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.37 outside [1.4,2.3] (f0)",
+            "cell 0 margin <12px (72/59/0/39)",
+            "cell 1 margin <12px (0/59/7/39)",
+            "cell 2 AR=1.46 outside [1.55,2.5] (f2)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521309078,
+          "ok": false,
+          "fails": [
+            "dims 1440x256 != 1440x192"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521310078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (44/59/0/45)",
+            "cell 1 margin <12px (0/59/0/42)",
+            "cell 2 margin <12px (0/54/10/31)",
+            "cell 4 margin <12px (2/51/38/31)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521311078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (48/60/4/46)",
+            "cell 2 AR=1.55 outside [1.55,2.5] (f2)",
+            "cell 3 margin <12px (1/56/0/47)",
+            "cell 4 AR=1.50 outside [1.55,2.5] (f4)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521312078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (49/46/0/42)",
+            "cell 1 margin <12px (0/46/4/42)",
+            "cell 2 margin <12px (24/46/0/42)",
+            "cell 3 margin <12px (0/46/0/42)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521313078,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (9/38/32/32)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-kestrel-thruster",
+      "report": "w15-GEN10",
+      "target": "ships/kestrel-thruster (4 flicker frames 9×5 v2 native, anchor right edge; KESTREL flame loop)",
+      "grid": "384x256 cells, 4x1, canvas 1536x256, chroma key #51e018 (cells widened on the aspect-fill hypothesis after a7 blob filled 204px height; dup dropped a5)",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "s-kestrel-thruster",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=3.84 outside [1.35,1.9] (f0)",
+          "cell 1 AR=3.14 outside [1.4,2.1] (f1)",
+          "cell 1 margin <12px (3/81/58/72)",
+          "cell 2 AR=3.01 outside [1.3,1.85] (f2)",
+          "cell 2 margin <12px (29/76/0/62)",
+          "cell 3 AR=1.18 outside [1.35,2.1] (f3)",
+          "cell 3 margin <12px (0/28/143/24)",
+          "gutter after col 2 ink 19.5%"
+        ],
+        "boxes": [
+          [
+            139,
+            108,
+            196,
+            51
+          ],
+          [
+            387,
+            81,
+            323,
+            103
+          ],
+          [
+            797,
+            76,
+            355,
+            118
+          ],
+          [
+            1152,
+            28,
+            241,
+            204
+          ]
+        ],
+        "xors": [
+          62.9,
+          48.5,
+          53.2
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521307091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.12 outside [1.2,2.1] (f0)",
+            "cell 2 AR=1.14 outside [1.2,2.1] (f2)",
+            "cell 3 AR=0.90 outside [1.2,2.1] (f3)",
+            "cell 3 margin <12px (8/10/43/17)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521308091,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (67/112/15/10)",
+            "cell 1 margin <12px (25/101/0/10)",
+            "cell 2 margin <12px (0/86/0/10)",
+            "cell 3 AR=1.15 outside [1.2,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521309091,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (43/112/29/10)",
+            "cell 1 margin <12px (31/105/6/10)",
+            "cell 2 AR=1.15 outside [1.2,2.1] (f2)",
+            "cell 2 margin <12px (39/87/34/10)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521310091,
+          "ok": false,
+          "fails": [
+            "dims 1024x256 != 1024x128"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521311091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=6.92 outside [1.2,2.1] (f0)",
+            "cell 0 margin <12px (43/115/0/101)",
+            "cell 1 AR=3.37 outside [1.2,2.1] (f1)",
+            "cell 1 margin <12px (0/87/0/74)"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521312091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.55 outside [1.2,2.1] (f0)",
+            "cell 0 margin <12px (50/99/0/99)",
+            "cell 1 AR=3.54 outside [1.2,2.1] (f1)",
+            "cell 1 margin <12px (0/96/15/92)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521313091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=1.06 outside [1.35,1.9] (f0)",
+            "cell 1 AR=1.37 outside [1.4,2.1] (f1)",
+            "cell 1 margin <12px (4/28/37/24)",
+            "cell 2 AR=1.10 outside [1.3,1.85] (f2)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521314091,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.84 outside [1.35,1.9] (f0)",
+            "cell 1 AR=3.14 outside [1.4,2.1] (f1)",
+            "cell 1 margin <12px (3/81/58/72)",
+            "cell 2 AR=3.01 outside [1.3,1.85] (f2)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-manta-thruster",
+      "report": "w15-GEN10",
+      "target": "ships/manta-thruster (4 flicker frames 9×5 v2 native, anchor right edge; MANTA green flame loop)",
+      "grid": "384x256 cells, 4x1, canvas 1536x256, chroma key #51e018 (cells widened on the aspect-fill hypothesis after a7 blob filled 204px height; dup dropped a5)",
+      "file": null,
+      "exit": "STOP@8",
+      "mode": "key",
+      "probe": {
+        "id": "s-manta-thruster",
+        "ok": false,
+        "fails": [
+          "cell 0 AR=3.72 outside [1.35,1.9] (f0)",
+          "cell 1 AR=3.84 outside [1.4,2.1] (f1)",
+          "cell 1 margin <12px (4/83/11/77)",
+          "cell 2 AR=1.88 outside [1.3,1.85] (f2)"
+        ],
+        "boxes": [
+          [
+            67,
+            99,
+            264,
+            71
+          ],
+          [
+            388,
+            83,
+            369,
+            96
+          ],
+          [
+            850,
+            63,
+            261,
+            139
+          ],
+          [
+            1164,
+            24,
+            296,
+            206
+          ]
+        ],
+        "xors": [
+          62,
+          47.5,
+          51.8
+        ],
+        "floor": 0.4
+      },
+      "attempts": [
+        {
+          "att": 1,
+          "seed": 521308104,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (49/115/0/0)",
+            "cell 1 margin <12px (0/111/47/18)",
+            "cell 2 margin <12px (14/79/0/0)",
+            "cell 3 AR=0.95 outside [1.2,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 2,
+          "seed": 521309104,
+          "ok": false,
+          "fails": [
+            "cell 1 AR=3.01 outside [1.2,2.1] (f1)",
+            "cell 1 margin <12px (2/113/19/65)",
+            "cell 2 AR=2.12 outside [1.2,2.1] (f2)",
+            "cell 3 AR=1.15 outside [1.2,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 3,
+          "seed": 521310104,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=0.89 outside [1.2,2.1] (f0)",
+            "cell 1 AR=1.07 outside [1.2,2.1] (f1)",
+            "cell 2 margin <12px (0/27/0/23)",
+            "cell 3 AR=1.17 outside [1.2,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 4,
+          "seed": 521311104,
+          "ok": false,
+          "fails": [
+            "dims 1024x256 != 1024x128"
+          ]
+        },
+        {
+          "att": 5,
+          "seed": 521312104,
+          "ok": false,
+          "fails": [
+            "cell 1 margin <12px (8/94/32/25)",
+            "cell 3 AR=0.87 outside [1.2,2.1] (f3)",
+            "dup 0-2 material-mean-diff 170.3 > 90",
+            "dup 1-3 material-mean-diff 192.7 > 90"
+          ]
+        },
+        {
+          "att": 6,
+          "seed": 521313104,
+          "ok": false,
+          "fails": [
+            "cell 0 margin <12px (26/124/0/21)",
+            "cell 1 margin <12px (0/111/21/21)",
+            "cell 2 margin <12px (1/71/0/21)",
+            "cell 3 AR=1.02 outside [1.2,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 7,
+          "seed": 521314104,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.25 outside [1.35,1.9] (f0)",
+            "cell 1 AR=3.17 outside [1.4,2.1] (f1)",
+            "cell 2 AR=2.61 outside [1.3,1.85] (f2)",
+            "cell 3 AR=1.16 outside [1.35,2.1] (f3)"
+          ]
+        },
+        {
+          "att": 8,
+          "seed": 521315104,
+          "ok": false,
+          "fails": [
+            "cell 0 AR=3.72 outside [1.35,1.9] (f0)",
+            "cell 1 AR=3.84 outside [1.4,2.1] (f1)",
+            "cell 1 margin <12px (4/83/11/77)",
+            "cell 2 AR=1.88 outside [1.3,1.85] (f2)"
+          ]
+        }
+      ]
+    }
+  ]
+}
