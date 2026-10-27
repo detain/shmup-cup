@@ -219,6 +219,16 @@ export {
   type ScreenEffects,
 } from './effects/index.js';
 export {
+  createVideoSurface,
+  type VideoBand,
+  type VideoBandAnchors,
+  type VideoElementLike,
+  type VideoFrameBitmapLike,
+  type VideoSourceLike,
+  type VideoSurface,
+  type VideoSurfaceOptions,
+} from './video/index.js';
+export {
   DEBUG_DEVICE_MAX,
   FRAME_GRAPH_LENGTH,
   OUTLINE_COLORS,

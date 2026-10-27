@@ -201,6 +201,7 @@ import {
   type BitmapFont,
 } from '../text/index.js';
 import { createDrawListView, type DrawListView } from '../ui/index.js';
+import { createVideoSurface, type VideoSurface, type VideoSurfaceOptions } from '../video/index.js';
 import { computeAspectViewport, type AspectViewport, type Viewport } from '../viewport/index.js';
 
 /** Module descriptor. */
@@ -386,6 +387,16 @@ export interface PixiRendererOptions {
    * @returns The mesh and its uniforms.
    */
   readonly createMode7Shader?: (width: number, height: number) => Mode7Shader;
+  /**
+   * The video cutscene surface (v2 R7-VID). Without it the renderer has no `<video>` element, no
+   * extra texture and no per-frame cost; with it, `renderer.video` exposes a surface the host
+   * director plays clips on — one container inside `layers.root` (world band under the HUD,
+   * screen band over the UI), pulled once per `render()` (never `requestVideoFrameCallback`,
+   * never the Pixi ticker). Tests and Node hosts pass fake `createVideoElement` /
+   * `createVideoSource` factories; browsers get the real ones. The frame size is the renderer's,
+   * not the host's.
+   */
+  readonly video?: Omit<VideoSurfaceOptions, 'root' | 'bands' | 'width' | 'height'>;
 }
 
 /** The Pixi-backed renderer. */
@@ -447,6 +458,12 @@ export interface PixiRenderer extends IRenderer {
   readonly crt: CrtPass;
   /** How the second pass draws the frame (plan M3-02d). */
   readonly screenPass: ScreenPassMode;
+  /**
+   * The video cutscene surface, or `null` when the renderer was created without
+   * {@link PixiRendererOptions.video} (v2 R7-VID). The host director plays clips on it; the pull
+   * runs inside `render()`, so nothing else may call {@link VideoSurface.tick}.
+   */
+  readonly video: VideoSurface | null;
   /**
    * Draws **one throwaway frame** into an off-screen target with every GL program the bound world
    * can use and every pooled sprite in it, then puts everything back (plan M3-02d, the render
@@ -834,6 +851,27 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
 
   const layers = createLayerStack({ renderGroups: options.renderGroups !== false });
   scene.addChild(layers.root);
+
+  // The video cutscene surface (v2 R7-VID): one container inside `layers.root` — the world band
+  // puts it over the world group and under the HUD/UI (gameplay windows), the screen band over
+  // the UI and under the debug layer (title/story windows, whose own full-frame backdrop would
+  // otherwise cover it). The 17 LayerId containers never move; the surface is not one of them.
+  // Without `options.video` (the common case) there is no element, no texture and no per-frame
+  // cost at all.
+  const video =
+    options.video === undefined
+      ? null
+      : createVideoSurface({
+          ...options.video,
+          root: layers.root,
+          bands: {
+            // Root children at creation: [world, HUD, UI, DEBUG] (WORLD_LAYER_COUNT = LayerId.Hud).
+            world: layers.root.children.indexOf(layers.layers[LayerId.Hud]),
+            screen: layers.root.children.indexOf(layers.layers[LayerId.Debug]),
+          },
+          width,
+          height,
+        });
 
   // Screen flash: last children of the world group (over every world layer, under the HUD) — an
   // ordinary overlay and an additive one (M2-08: the Mega Crash palette flash). Two sprites, so a
@@ -1247,6 +1285,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     crt,
     screenPass,
     mode7,
+    video,
     warmUp,
     uploadTextureSource,
     get showHitbox() {
@@ -1442,6 +1481,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       const dimAlpha = unit(screen.dim);
       dim.alpha = dimAlpha;
       dim.visible = dimAlpha > 0;
+      // The video pull (v2 R7-VID): one `texImage2D` of the element's current frame, only while a
+      // clip shows and only when its presentation time moved. A hidden surface returns at once.
+      if (video !== null) video.tick();
       if (hudView !== null) hudView.draw(frame.hud);
       if (uiView !== null) uiView.draw(frame.ui);
       drawCounter.calls = 0;
@@ -1465,6 +1507,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       mode7.destroy();
       hudView?.destroy();
       uiView?.destroy();
+      // The video surface owns a media element and a texture source of its own — released before
+      // the scene's children are destroyed (v2 R7-VID).
+      video?.destroy();
       crt.destroy();
       // The second pass's own container: the frame quad is the CRT pass's, the side panels are
       // this container's (`Container.destroy` ignores an already-destroyed child).
