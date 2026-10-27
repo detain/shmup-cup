@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentDb } from '../../src/data/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
+import { hashWorld } from '../../src/debug/index.js';
 import { Action, commitPlayerInput, type ActionMask } from '../../src/input/index.js';
 import { createHeadlessPlatform, type HeadlessPlatform } from '../../src/platform/index.js';
 import {
@@ -262,20 +263,50 @@ describe('title CONTINUE? and the checkpoint resume (R2 TL-2)', () => {
     press2(game, s1.platform, Action.Confirm); // the row
     expect(flow.stack.top?.id).toBe('game');
     const run = flow.run;
-    expect([run.checkpoint, run.zone, run.stage, run.practice]).toEqual([1, 0, 't-s', false]);
+    expect([run.zone, run.stage, run.practice]).toEqual([0, 't-s', false]);
     expect(run.campaign?.id).toBe('test');
+    // TL-4: the record carried a live tail — this resume is EXACT, not the checkpoint restart.
+    expect(run.checkpoint).toBe(-1); // the World is already at its live position
     const world = flow.world;
+    expect(world.tick).toBe(record.savedTick); // …tick for tick (the hashes locked it)
     expect(world.stage?.checkpoint).toBe(1);
-    // The game's own continue rule was spent (TL-2 semantics): one continue, lives from the config.
-    expect(world.continuesUsed).toBe(1);
-    expect(world.players[0].lives).toBe(world.config.startingLives);
+    // The exact rebuild spends NO continue: it is the killed game, not a restarted one.
+    expect(world.continuesUsed).toBe(0);
+    expect(hashWorld(world)).toBe(record.tail?.replay.finalHash);
     // The record is consumed by the resume itself — and the resumed run immediately writes its
-    // own fresh one at the World's birth (kill again right now, resume at this new edge).
+    // own fresh one at the adopted World's edge (kill again right now, resume at this tick).
     expect(flow.checkpointAvailable).toBe(true);
     const fresh = classifyCheckpointText(await readStorage(s1.platform), 'test').record;
     expect(fresh).not.toBeNull();
-    expect(fresh?.savedTick).toBeLessThanOrEqual(1); // this boot's tick count, not s1's 90
-    expect(fresh?.checkpointPassed).toBe(1); // the fresh World was born at checkpoint 1
+    expect(fresh?.savedTick).toBeCloseTo(record.savedTick, -2); // the rewind's tick, not s1's boot
+    expect(fresh?.checkpointPassed).toBe(1);
+  });
+
+  it('falls back to the checkpoint start when the tail no longer hashes (verified-or-checkpoint)', async () => {
+    const s1 = new Session();
+    s1.hold(0, 90); // past checkpoint 1
+    s1.platform.suspend(); // the TV kill
+    const record = await s1.record();
+    expect(record.tail).not.toBeNull();
+    // The quietest possible lie: one recorded hash, turned. The inputs still decode; the rebuild
+    // will not MATCH — and a resume that cannot verify must never show a wrong position.
+    const text = await s1.text();
+    const parsed = JSON.parse(text as string) as { tail: { replay: { finalHash: number } } };
+    parsed.tail.replay.finalHash = (parsed.tail.replay.finalHash ^ 1) >>> 0; // uint32-safe LSB flip
+    await s1.platform.storage.set(RUN_CHECKPOINT_STORAGE_KEY, JSON.stringify(parsed));
+    const { game, flow } = await resume(s1.platform);
+    expect(flow.checkpointAvailable).toBe(true); // the record itself is still valid: the row stays
+    press2(game, s1.platform, Action.Confirm); // PRESS OK → menu
+    expect(flow.title.menu.items.map((i) => i.label)[0]).toBe('CONTINUE?');
+    press2(game, s1.platform, Action.Confirm); // the row — the rewind fails, R1 takes over
+    expect(flow.stack.top?.id).toBe('game');
+    const run = flow.run;
+    expect([run.checkpoint, run.zone]).toEqual([1, 0]); // back at the last passed checkpoint
+    const world = flow.world;
+    expect(world.tick).toBeLessThan(60); // a fresh World flies in — never the fake 90
+    expect(world.stage?.checkpoint).toBe(1);
+    expect(world.continuesUsed).toBe(1); // …and this restart DID spend the continue rule
+    expect(world.players[0].lives).toBe(world.config.startingLives);
   });
 
   it('keeps every mode row working while the row is in (shifted focus dispatch)', async () => {

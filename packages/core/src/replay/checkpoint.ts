@@ -79,6 +79,17 @@ export const CHECKPOINT_FORMAT_VERSION = 1;
 export const CHECKPOINT_MAX_CHARS = 12_000;
 
 /**
+ * The most ticks an exact rewind (R2 — TL-4) may step to rebuild the killed World. From the TL-3
+ * Node proxy at **real** content density (`test/bench/rewind.perf.ts`, this machine: 52k-58k
+ * warm steps/s replaying the shipped goldens through the very loop the resume runs): at the
+ * bench's 4 s patience and the ÷12 M7-slowdown **estimate** (the measured M7 row is pending —
+ * owner) that is ≈ 17k-19k ticks, rounded down to a power of two. A tail longer than this is not
+ * rewound — the resume starts at the checkpoint instead (verified-or-checkpoint: the cap is a
+ * patience wall the owner can move, never a correctness one).
+ */
+export const MAX_REWIND_TICKS = 16_384;
+
+/**
  * The run-kind of a checkpoint: the `core/scenes` `RunMode` union, restated here because the
  * replay module does not import from scenes (the identical literal unions are assignable both
  * ways; the classifier of {@link classifyCheckpointText} is the parse boundary).

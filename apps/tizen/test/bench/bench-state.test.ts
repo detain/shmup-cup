@@ -166,7 +166,7 @@ describe('bench run state', () => {
     ]);
     state = recordRewind(state, fakeRewind({ stepsPerSecond: 999 }));
     expect([state.running, state.single, state.cursor]).toEqual([false, false, 175]);
-    expect(state.rewind.stepsPerSecond).toBe(999);
+    expect(state.rewind?.stepsPerSecond).toBe(999);
     expect(state.records).toHaveLength(173);
     expect(state.records[172].drawCalls).toBe(96);
     // The rewind is never POSTed: nothing new joins the acknowledged set, the decode stays acked.

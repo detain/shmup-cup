@@ -187,16 +187,65 @@ test.describe('TV resume: the kill cycle (R2 TL-2)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitTicks(page, 10);
     const resumed = await resumeState(page);
-    // R1 (TL-2): the World is a fresh birth at the last passed checkpoint (TL-4 tightens this to
-    // the exact tick when the tail rewinds clean).
-    expect(resumed.worldTick).toBeLessThan(60);
-    expect(resumed.continuesUsed).toBe(1); // the resume spent the game's own continue rule
+    // R2 (TL-4, the exact half): the tail replayed and verified, so the World continues at the
+    // tick it died at (plus the ticks this spec let it play after landing) — no continue spent.
+    expect(resumed.worldTick).toBeGreaterThanOrEqual(record.savedTick);
+    expect(resumed.worldTick).toBeLessThan(record.savedTick + 40);
+    expect(resumed.continuesUsed).toBe(0);
 
     // The record was consumed — and the live game immediately re-anchored a fresh one.
     const fresh = await checkpointText(page);
     expect(fresh, 'the resumed run keeps its own checkpoint').not.toBeNull();
     const freshRecord = JSON.parse(fresh ?? '{}') as { savedTick: number };
-    expect(freshRecord.savedTick).toBeLessThanOrEqual(20);
+    expect(freshRecord.savedTick).toBeGreaterThanOrEqual(record.savedTick);
+    expect(freshRecord.savedTick).toBeLessThan(record.savedTick + 80);
+  });
+
+  test('a tail that no longer hashes falls back to the checkpoint start — never a wrong tick', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto(TIZEN_INDEX);
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
+    await startGame(page);
+    await page.evaluate(() => {
+      (window as unknown as DebugWindow).__shmupDebug.flags.godMode = true;
+    });
+    await waitTicks(page, 320);
+    await goHidden(page);
+    await settle(page);
+    const text = await checkpointText(page);
+    expect(text).not.toBeNull();
+    const record = JSON.parse(text ?? '{}') as { savedTick: number; tail: unknown };
+    expect(record.tail).not.toBeNull();
+
+    // Corrupt the tail's sealed hash — the record stays valid (the row must appear), only the
+    // rebuild's verification can notice. One bit, uint32-safe.
+    await page.evaluate(
+      ([raw]) => {
+        const data = JSON.parse(raw as string) as {
+          tail: { replay: { finalHash: number } };
+        };
+        data.tail.replay.finalHash = (data.tail.replay.finalHash ^ 1) >>> 0;
+        window.localStorage.setItem('shmup-cup:run.checkpoint.v1', JSON.stringify(data));
+      },
+      [text],
+    );
+
+    await page.goto(TIZEN_INDEX);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
+    await waitTicks(page, 10);
+    expect((await resumeState(page)).available).toBe(true);
+    await tap(page, 'Enter');
+    await tap(page, 'Enter'); // CONTINUE? → verified-or-checkpoint: the check wins
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    await waitTicks(page, 10);
+    const landed = await resumeState(page);
+    // R1 (TL-2): the World is a fresh birth at the last passed checkpoint, continue rule spent —
+    // never the wrong (corrupted) position.
+    expect(landed.worldTick).toBeLessThan(60);
+    expect(landed.continuesUsed).toBe(1);
   });
 
   test('a record from another build shows no row and clears at load', async ({ page }) => {

@@ -403,16 +403,24 @@ import {
 } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
-import { buildCheckpointText, type RunCheckpointStore } from '../replay/checkpoint.js';
+import {
+  MAX_REWIND_TICKS,
+  buildCheckpointText,
+  type RunCheckpointStore,
+} from '../replay/checkpoint.js';
 import { createDemoPlayback, type DemoPlayback } from '../replay/demo.js';
 import { decodeReplay, type Replay } from '../replay/format.js';
 import {
   AssistFlag,
   REPLAY_SLOTS,
+  RUN_REPLAY_FORMAT_VERSION,
   RunAction,
   runAssisted,
+  runSegmentFromJson,
   type ReplayLibrary,
   type RunReplay,
+  type RunSegment,
+  type RunSegmentJson,
 } from '../replay/run.js';
 import {
   HI_SCORE_MODES,
@@ -503,7 +511,13 @@ import {
   stepWorld,
   type World,
 } from '../world/index.js';
-import { RunRecorder, RunReplayPlayback, readWorldStart, worldStartJson } from './replays.js';
+import {
+  RunRecorder,
+  RunReplayPlayback,
+  readWorldStart,
+  worldStartJson,
+  type ReadWorldStart,
+} from './replays.js';
 import {
   RunFlag,
   RunState,
@@ -1864,6 +1878,68 @@ function titleMenuLayout(labels: readonly string[]): MenuLayout {
 }
 
 /**
+ * Rewind the checkpoint tail (R2 — TL-4): rebuild the killed World by replaying its live segment
+ * from birth, exactly the way {@link RunReplayPlayback} plays a saved run — the same
+ * `createWorld` from the segment's recorded config, the same birth start, the same recorded input
+ * words, a `hashWorld` comparison every `REPLAY_HASH_INTERVAL` ticks and the sealed final hash.
+ * The rebuild either MATCHES the killed game tick for tick or it is thrown away: any desync, any
+ * unreadable recording, any tail past {@link MAX_REWIND_TICKS} returns `null` and the resume
+ * starts at the checkpoint instead — the invariant the owner asked for: *verified or checkpoint,
+ * never wrong*. Cold (a transition); the World it hands over sits at the killed tick with the
+ * ships already at their last live positions, so the continue rule is NOT spent on it.
+ *
+ * @param tail - The record's segment snapshot (`record.tail`).
+ * @param buildId - The record's build (informative; the hashes are the lock).
+ * @param assists - The record's assist flags (for the synthetic run wrapper).
+ * @param content - The host's content (the resumed one — a foreign content desyncs at tick 0).
+ * @param events - Where the rebuilt World pushes its presentation events (the flow's queue — the
+ *   stage theme and music cues ride it into the audio engine like any other World's).
+ * @returns The rebuilt World and its start state, or `null` when the rewind is not trusted.
+ */
+function rewindCheckpointWorld(
+  tail: RunSegmentJson,
+  buildId: string,
+  assists: number,
+  content: ContentDb,
+  events: EventQueue,
+): { world: World; start: ReadWorldStart } | null {
+  let segment: RunSegment;
+  try {
+    segment = runSegmentFromJson(tail);
+  } catch (_error) {
+    return null;
+  }
+  const ticks = segment.replay.ticks;
+  if (ticks < 0 || ticks > MAX_REWIND_TICKS) return null;
+  const replayRun: RunReplay = {
+    formatVersion: RUN_REPLAY_FORMAT_VERSION,
+    buildId,
+    mode: '1p',
+    label: '',
+    score: 0,
+    reached: '',
+    assists,
+    ticks,
+    segments: [segment],
+  };
+  const playback = new RunReplayPlayback(replayRun, content, events);
+  let steps = 0;
+  while (playback.running && steps <= MAX_REWIND_TICKS) {
+    playback.step();
+    steps++;
+  }
+  const world = playback.world;
+  if (!playback.report.ok || !playback.report.finished || world === null) return null;
+  let start: ReadWorldStart;
+  try {
+    start = readWorldStart(segment.start);
+  } catch (_error) {
+    return null;
+  }
+  return { world, start };
+}
+
+/**
  * The title's layout: the logo (or the game's name as text) above the frame's centre row, the
  * prompt below it, the session hi-score 20 px above the bottom edge, a secret code's message.
  */
@@ -3025,6 +3101,14 @@ export class GameScene extends SceneBase {
       flow.pendingWorld = null;
       flow.resumePending = false;
       flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+      // The rewind's own birth queued the stage theme BEFORE this fade (the queue is in order);
+      // queue it again after — what a continue does (`continueWorld`) — so the resumed stage
+      // plays its music under the card.
+      const stage = rebuilt.stage;
+      if (stage !== null) {
+        const theme = stage.stage.music.stageId;
+        if (theme >= 0) flow.music(theme, 0);
+      }
       this.useWorld(rebuilt);
       this.starts++;
       return;
@@ -11323,10 +11407,12 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       return true;
     },
     /**
-     * R2 (TL-2): the R1 checkpoint start — the record's map state is restored and its live World's
-     * players carried in, then the game's own continue rule resets them at the World's birth
-     * ({@link GameScene.enter} spends `resumePending`; `applyContinuePowerReset` is the rule).
-     * The tail (exact rewind, TL-4) is not read here: R1 is what TL-4 falls back *to*.
+     * R2 (TL-2, exact path TL-4): the record is tried EXACT first — the live segment rewound to
+     * the killed tick through {@link rewindCheckpointWorld} (verified-or-checkpoint) — and the
+     * R1 checkpoint start is what any failed rewind falls back to: the record's map state is
+     * restored, its live World's players carried in, and the game's own continue rule resets them
+     * at the World's birth ({@link GameScene.enter} spends `resumePending`;
+     * `applyContinuePowerReset` is the rule). Either way the record is consumed once.
      */
     beginResume(): boolean {
       const store = control.checkpointStore;
@@ -11356,6 +11442,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
         return false;
       }
       const saved = record.run;
+      // TL-4 first: the exact rebuild (skipped for a between-Worlds record — no live segment).
+      // The rewind pushes the rebuilt World's music cues onto the flow queue right away; the
+      // enter's fade-under of the title music follows them, so the stage theme plays.
+      const rebuilt =
+        record.tail === null || record.pendingStart
+          ? null
+          : rewindCheckpointWorld(record.tail, record.buildId, saved.assists, host.content, events);
       control.endRun(); // ends any previous recording — and clears the store; the record is ours
       control.runConfig = config;
       run.begin(host.content.campaign, saved.stage, saved.mode, saved.loop, saved.timeLimit);
@@ -11365,8 +11458,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       run.zone = saved.zone;
       run.depth = saved.depth;
       // The World restarts at the last passed checkpoint (`prepareRunWorld` reads `run.checkpoint`
-      // into `segmentStart`); a between-Worlds record starts its zone fresh.
-      run.checkpoint = record.pendingStart ? -1 : record.checkpointPassed;
+      // into `segmentStart`); a between-Worlds record starts its zone fresh; the exact rebuild is
+      // already at its live position — its birth segment (if any) rides `rebuilt.start`.
+      run.checkpoint = rebuilt === null && !record.pendingStart ? record.checkpointPassed : -1;
       run.flags = saved.flags;
       run.deaths = saved.deaths;
       run.continues = saved.continues;
@@ -11378,9 +11472,22 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       run.bonusLocked = saved.bonusLocked;
       run.inEscape = saved.inEscape;
       run.escapeStage = saved.escapeStage;
-      run.entry.copyFrom(carry);
-      run.pendingStart = true; // `GameScene.enter` builds the World from the entry carry
-      control.resumePending = true; // …and spends the game's own continue rule on it
+      if (rebuilt === null) {
+        run.entry.copyFrom(carry);
+        run.pendingStart = true; // `GameScene.enter` builds the World from the entry carry
+        control.resumePending = true; // …and spends the game's own continue rule on it
+      } else {
+        // The rewound World: the run adopts its birth start and carry as if this flow had built
+        // it (the next `beginSegment` records from them; RETRY restarts exactly this segment).
+        run.segmentStart.stageTerm = rebuilt.start.start.stageTerm;
+        run.segmentStart.returnX = rebuilt.start.start.returnX;
+        run.segmentStart.checkpoint = rebuilt.start.start.checkpoint;
+        run.segmentStart.locked = rebuilt.start.start.locked;
+        if (rebuilt.start.carry !== null) run.entry.copyFrom(rebuilt.start.carry);
+        run.continuesAtStart = rebuilt.start.carry !== null ? rebuilt.start.carry.continuesUsed : 0;
+        control.lastCarry = rebuilt.start.carry;
+        control.pendingWorld = rebuilt.world;
+      }
       control.recorder.beginRun();
       control.pendingCount = 0;
       control.prepareStage(run.stage);

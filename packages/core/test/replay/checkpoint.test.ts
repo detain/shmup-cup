@@ -160,7 +160,7 @@ describe('buildCheckpointText / classifyCheckpointText (R2 TL-1)', () => {
   });
 
   it('fails fast on a config that cannot resolve', () => {
-    expect(() => buildCheckpointText({ ...input(0), config: { seed: 'five' } as never })).toThrow();
+    expect(() => buildCheckpointText({ ...input(0), config: { seed: 'five' } })).toThrow();
   });
 
   it('classifies staleness like the replay kit: formats, build id, tail', () => {
