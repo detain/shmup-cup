@@ -5,7 +5,10 @@
  * same variant at 384×216 in the same session, with plan §13's outcome applied to 640×360 and the 960×540 note
  * — and two sessions of the same set into the WebGL 1-vs-2 verdict. Since plan R1-05 (B4) a run ends with the
  * decode scenario (`fixtures/bench-decode.jsonl` — its payload alone): its table and R3-04's zone-load estimate,
- * and an older session without it still reads the same.
+ * and an older session without it still reads the same. Since `898021ee` campaigns are partitioned by
+ * `env.buildId` first (the 2026-10-27 contamination law): the `output resolutions` fixtures pin both shapes —
+ * three outputs as three builds (per-build headings, no pooling, a cross-output refusal) and the same three
+ * outputs under one build (the pooled band and the cross-output table, exactly as they read before).
  */
 
 import { spawn } from 'node:child_process';
@@ -461,6 +464,11 @@ const SYNTHETIC_ROWS: SyntheticRow[] = [
 interface SyntheticOptions {
   /** `env.output` (a reduced-output build), or none for the full window. */
   output?: string;
+  /**
+   * `env.buildId` for every session written (default: the real bench's per-output identity,
+   * `<base>` for the window and `<base>@<output>` otherwise — apps/tizen/src/bench/output.ts).
+   */
+  build?: string;
   /** The window, `[innerWidth, innerHeight]` (default 1920×1080). */
   inner?: [number, number];
   /** The session's WebGL version. */
@@ -484,7 +492,7 @@ function syntheticSession(name: string, o: SyntheticOptions): string {
   const [w, h] = o.inner ?? [1920, 1080];
   const rows = SYNTHETIC_ROWS.filter((row) => !(o.skip?.(row) ?? false));
   const env: Record<string, unknown> = {
-    buildId: o.output === undefined ? 'abc1234' : `abc1234@${o.output}`,
+    buildId: o.build ?? (o.output === undefined ? 'abc1234' : `abc1234@${o.output}`),
     host: 'tizen',
     innerWidth: w,
     innerHeight: h,
@@ -533,6 +541,7 @@ function jitter(value: [number, number], run: number, points: number): [number, 
  * @param value - The row's figures.
  * @param skip - Skipped rows.
  * @param passes - How many of the four passes to write.
+ * @param build - The `env.buildId` every pass shares (omitted: the per-output ids).
  * @returns The paths.
  */
 function campaignOf(
@@ -541,6 +550,7 @@ function campaignOf(
   value: (row: SyntheticRow, run: number) => [number, number],
   skip?: (row: SyntheticRow) => boolean,
   passes = 4,
+  build?: string,
 ): string[] {
   return [1, 2, 1, 2].slice(0, passes).map((gl, i) =>
     syntheticSession(`${prefix}-${i}.jsonl`, {
@@ -548,6 +558,7 @@ function campaignOf(
       run: Math.floor(i / 2),
       ...(output === undefined ? {} : { output }),
       ...(skip === undefined ? {} : { skip }),
+      ...(build === undefined ? {} : { build }),
       value,
     }),
   );
@@ -581,6 +592,10 @@ function crossRow(report: string, size: string, variant: string): string[] {
 describe('output resolutions', () => {
   // 1920x1080 (the window): jitter 1.0 pt / +10 %. 1280x720: much better on busy, the same on worst; jitter 0.4 pt.
   // 960x540: one GL 1 session (no repeat), a hair better on busy, skips the native 1280x720n rows.
+  // `all` writes each output under its own build id — the identity the shipped bench composes
+  // (`<build>@<output>`, apps/tizen/src/bench/output.ts, the Oct-19 resolutions campaign), so under the
+  // 898021ee partition law its campaign splits into one build per output. `one` is the same matrix
+  // recorded under ONE build id — the case the analyzer still aggregates, pools and compares.
   const full = campaignOf('o1080', undefined, (row, run) => jitter(base1080(row), run, 1));
   const mid = campaignOf('o720', '1280x720', (row, run) => {
     const [t, s] = base1080(row);
@@ -597,6 +612,30 @@ describe('output resolutions', () => {
     1,
   );
   const all = [...full, ...mid, ...small];
+  const oneFull = campaignOf('u1080', undefined, (row, run) => jitter(base1080(row), run, 1), undefined, 4, 'abc1234');
+  const oneMid = campaignOf(
+    'u720',
+    '1280x720',
+    (row, run) => {
+      const [t, s] = base1080(row);
+      return row.variant === 'busy' ? jitter([t * 0.4, s * 0.5], run, 0.4) : jitter([t, s], run, 0.4);
+    },
+    undefined,
+    4,
+    'abc1234',
+  );
+  const oneSmall = campaignOf(
+    'u540',
+    '960x540',
+    (row) => {
+      const [t, s] = base1080(row);
+      return [row.variant === 'busy' ? t - 0.5 : t, s];
+    },
+    (row) => row.size === '1280x720n',
+    1,
+    'abc1234',
+  );
+  const one = [...oneFull, ...oneMid, ...oneSmall];
 
   it('takes the output from env.output, else from the window', () => {
     expect(sessionOutput({ output: '1280x720', innerWidth: 1920, innerHeight: 1080 })).toEqual({
@@ -638,9 +677,14 @@ describe('output resolutions', () => {
 
   it('prints a heading per output with its own sections, and a sessions table with the output', () => {
     const report = analyzeBenchSessions(all);
-    const heads = ['## Output 1920x1080 (window)', '## Output 1280x720 (backbuffer)', '## Output 960x540 (backbuffer)'].map((h) =>
-      report.indexOf('\n' + h + '\n'),
-    );
+    // The `all` campaign holds one build per output (the shipped bench's `<build>@<output>` identity),
+    // so the 898021ee partition law names the build in every heading. A single-build campaign keeps
+    // the unnamed headings — asserted on `one` in the cross-output tests below.
+    const heads = [
+      '## Output 1920x1080 (window) [build abc1234]',
+      '## Output 1280x720 (backbuffer) [build abc1234@1280x720]',
+      '## Output 960x540 (backbuffer) [build abc1234@960x540]',
+    ].map((h) => report.indexOf('\n' + h + '\n'));
     expect(heads.every((i) => i > 0)).toBe(true);
     expect([...heads].sort((a, b) => a - b)).toEqual(heads);
     expect(report).toMatch(/\| # +\| Session +\| Output +\| GL /);
@@ -662,8 +706,10 @@ describe('output resolutions', () => {
     expect(mid).not.toContain('falling back');
   });
 
-  it('falls back to the pooled band of all outputs when an output has no repeats, and says so', () => {
-    const campaign = loadCampaign(all);
+  it('falls back to the pooled band of the build’s outputs when one has no repeats, and says so', () => {
+    // The fallback survives the partition inside one build (898021ee): the `one` campaign records all
+    // three outputs under `abc1234`, so the 960x540 output borrows the band of its build's others.
+    const campaign = loadCampaign(one);
     const small540 = campaign.outputs[2];
     expect(small540.ownNoise).toBeNull();
     expect(small540.noise.pooled).toBe(true);
@@ -672,7 +718,7 @@ describe('output resolutions', () => {
     expect(small540.noise.twoTick.n).toBe(24);
     expect(small540.noise.twoTick.median).toBeCloseTo(0.7, 9);
     expect(small540.noise.twoTick.p90).toBeCloseTo(1, 9);
-    const report = analyzeBenchSessions(all);
+    const report = analyzeBenchSessions(one);
     const at = report.indexOf('\n## Output 960x540 (backbuffer)\n');
     const block = report.slice(at, report.indexOf('## Cross-output comparison'));
     expect(block).toContain('**No same-GL repeats at this output** (GL 1 × 1)');
@@ -680,13 +726,42 @@ describe('output resolutions', () => {
     expect(block).toContain('Pooled over the outputs. 24 scenario');
     // One run of one version: no verdict either way.
     expect(block).toContain('No comparison: the sessions hold WebGL 1 runs only.');
-    // No output with a repeat: no band, no fallback.
-    const lone = loadCampaign(campaignOf('lone', undefined, (row) => base1080(row), undefined, 2).concat(small));
+    // No output of the build with a repeat: no band, no fallback (nothing to pool).
+    const lone = loadCampaign(campaignOf('lone', undefined, (row) => base1080(row), undefined, 2, 'abc1234').concat(oneSmall));
     expect(lone.outputs.every((o: { noise: unknown }) => o.noise === null)).toBe(true);
   });
 
-  it('prints the cross-output table with the outputs side by side, a star where a reduced output beats 1080p', () => {
+  it('never pools the band or compares outputs across builds (the 2026-10-27 partition law)', () => {
+    // The `all` campaign is the Oct-19 shape: three outputs, three build ids. Nothing aggregates across them.
+    const campaign = loadCampaign(all);
+    expect(campaign.outputs.map((o: { output: { buildId: string } }) => o.output.buildId)).toEqual([
+      'abc1234',
+      'abc1234@1280x720',
+      'abc1234@960x540',
+    ]);
+    // The 960x540 build contributes a single output: its repeat-less band cannot borrow the other
+    // builds' outputs — no band at all, and the block says the plain no-noise-floor line.
+    expect(campaign.outputs[2].noise).toBeNull();
     const report = analyzeBenchSessions(all);
+    const at = report.indexOf('\n## Output 960x540 (backbuffer) [build abc1234@960x540]\n');
+    const block = report.slice(at, report.indexOf('## Cross-output comparison'));
+    expect(block).toContain('No noise floor: no WebGL version has 2 runs (GL 1 × 1)');
+    expect(block).not.toContain('pooled band');
+    expect(block).not.toContain('falling back');
+    // The cross-output section prints the refusal, not a table.
+    expect(report).toContain(
+      'No cross-output comparison: no build contributes two output resolutions to this campaign.',
+    );
+    expect(report).not.toContain('2t % 1920x1080');
+    // The same matrix under one build id still compares: its headings stay unnamed, as before.
+    const oneReport = analyzeBenchSessions(one);
+    expect(oneReport).not.toContain('[build');
+    expect(oneReport).toContain('2t % 1920x1080');
+  });
+
+  it('prints the cross-output table with the outputs side by side, a star where a reduced output beats 1080p', () => {
+    // The comparison is the one build's: `one` (the partition law above).
+    const report = analyzeBenchSessions(one);
     expect(report).toContain('Outputs, largest first: 1920x1080 (window) · 1280x720 (backbuffer) · 960x540 (backbuffer).');
     expect(report).toMatch(/\| Size +\| Variant +\| 2t % 1920x1080 +\| 2t % 1280x720 +\| 2t % 960x540 +\| p95 ms 1920x1080 /);
     // 640x360 busy (index 2): 1080 -> 12 / 10 (+1 pt, +10 % on the repeat: median over the four runs 12.5 / 10.5).
@@ -700,7 +775,7 @@ describe('output resolutions', () => {
   });
 
   it('says per variant where the reduced outputs beat the largest beyond the noise band', () => {
-    const report = analyzeBenchSessions(all);
+    const report = analyzeBenchSessions(one);
     expect(report).toContain('Where the reduced outputs beat 1920x1080 beyond the noise band, per load variant:');
     expect(report).toContain(
       '- **busy** — 1280x720 beats 1920x1080 on two-tick at 3/3 size(s) (most: 1280x720n -8.7 pts) and synced p95 at 3/3 size(s)' +
@@ -711,8 +786,8 @@ describe('output resolutions', () => {
   });
 
   it('adds the per-version tables with --full only', () => {
-    expect(analyzeBenchSessions(all)).not.toContain('### Cross-output — WebGL 1 runs only');
-    const full1 = analyzeBenchSessions(all, { full: true });
+    expect(analyzeBenchSessions(one)).not.toContain('### Cross-output — WebGL 1 runs only');
+    const full1 = analyzeBenchSessions(one, { full: true });
     expect(full1).toContain('### Cross-output — WebGL 1 runs only');
     expect(full1).toContain('### Cross-output — WebGL 2 runs only');
     // Per version the median is over that version's two runs: 640x360 busy at 1080 is (12 + 13) / 2.
