@@ -80,6 +80,39 @@ recorded here as shipped on `master`; what the hardware still owes is in
   store-listing key art now derive from the harvested paintings through the new `resample.mjs`
   kit, redrawn by `pnpm store:assets`.
 
+### Bench & measurements
+
+- **The owner's first final-art M7 run** (`3c24d608`, tables and README `898021ee`): the full
+  174-scenario matrix replayed on monitor 10.0.0.224 on 2026-10-27 — 176 payloads in ≈ 89 min, the
+  session files, the analyzer's old/new-partitioned tables and the run's README committed in
+  `tools/input-probe/results/2026-10-27-m7-bench/`. **640×360 sits inside the Oct-19 GL1 band**
+  (busy 12.3 %, filter 25.9, mode7 14.9, crt-light 11.7, crt-full 45.6, worst 63.5 — busy and
+  crt-full overshoot by +0.1 and +0.4 pt, the ordering and pressure points reproduce), and **§13's
+  verdict is unchanged: every 640×360 variant is a performance step** over the same run's
+  384×216 row (Δ +9.5 to +26.2 pts).
+- **The output-resolution knob is the lever** (`3c24d608`): at 640×360, dropping the panel output
+  takes busy −10.2 pts (720p) and −12.3 (540p), worst −52.5 and −63.1; at `1920x1080n` the rows
+  are saturated and no knob rescues them. The video-surface knob reads busy −4.7 / worst −4.5 at
+  640×360 — **one sample**, and the README holds its sign uncalled until a repeat run.
+- **Zone load is measured, not extrapolated** (`898021ee`): the stand-in pages through the `Image`
+  and upload path give **cold 654 ms / zone change 286 ms** on firmware — inside R3-04's 2 s
+  target — with a PNG-8 2048×1024 page at ≈ 76.3 ms per megapixel. These sit on a different basis
+  from the Oct-19 synthetic estimate (1492–1495 ms cold) and contradict nothing; the measured
+  basis is what the `createImageBitmap` adoption (`e519e80e`) is now judged against.
+- **The analyzer partitions by build** (`898021ee`): a resume trap proved the rule — one stray
+  later-build header re-attributed a whole cached GL2 session. A session's env is now its rows'
+  majority, campaign blocks group by (buildId, output), and a cross-build pool is a refusal, not a
+  mixed table; the committed tables are byte-identical reruns and the gate grew five cases
+  (`test/integration/tv-render-bench.test.ts`).
+- **The suite grew 174 → 190 rows** (`4b37d123`, plan v20x HARBENCH, wire `8ee8f91f`): twelve
+  960×540 knob rows promote that size to a first-class comparison — its busy row measured 640×360
+  busy's tier, so **960×540 is viable on an M7** — beside four big-frame video rows, four
+  measured **video-surface decode** rows (the cutscene path's first hardware numbers; webOS reads
+  them back as `video surface unavailable`), the rewind row POSTing its timing on the new versioned
+  `hb-` wire, and the bench host registering the five remote keys (Green / Yellow / Blue and
+  Play/Pause beside Red — the game-side colour keys `8cb4b0cf`). The full TV run is now ≈ 101
+  minutes at the measured pace.
+
 ### Notes
 
 - The dependency bump (`3d82e434`) and the HELP e2e port fix (`7ee20a07`) need no feature row;

@@ -49,8 +49,8 @@ See [what "placeholder" means here](#what-placeholder-means-here).
 The Samsung Smart Monitor M7 (Tizen 5.5) is what this game was written for, and the only hardware
 the project has ever touched — and even there, only the **input probe** (2026-09-15,
 [results](../dev/input-probe-results.md)) and the **TV render bench** (15 sessions on monitor
-10.0.0.224, 2026-10-19, read in §3) have run on it. **The game itself has never been installed
-on a monitor.**
+10.0.0.224, 2026-10-19, and the 2026-10-27 re-measure, read in §3) have run on it. **The game
+itself has never been installed on a monitor.**
 
 ### 1.1 Play it on the monitors (plan §8.4, §8.5)
 
@@ -233,6 +233,29 @@ archive in a browser before you publish it.
   [`build-test-deploy.md` § The TV render bench](../dev/build-test-deploy.md#the-tv-render-bench-r0-02);
   commit the sessions to `tools/input-probe/results/<date>-m7-bench/` and print them with
   `results/analyze-bench.mjs` (it estimates from the measured stand-in pages since R3-04.M4a).
+- **The 2026-10-27 M7 re-measure wants its repeat** (v2.1.0 hardware pass, plan R0-03). The run
+  happened — the 174-scenario matrix on monitor 10.0.0.224 with the final art, committed in
+  [`tools/input-probe/results/2026-10-27-m7-bench/`](../../tools/input-probe/results/2026-10-27-m7-bench/)
+  with its README and partitioned tables (`3c24d608`, `898021ee`): 640×360 inside the Oct-19 band,
+  §13's performance-step tier unchanged, zone load **measured** at 654 / 286 ms. But it is **one
+  window per scenario** — no noise floor — so every small verdict rode in single-sample: the
+  video-knob's sign (−4.7 / −4.5 pts at 640×360, the reading that adjudicates the default-ON
+  flip), the ±0.1 / ±0.4 pt band overshoots, the fit/stretch deltas. What to do: one repeat run of
+  the current **190-row** suite (`4b37d123`, ≈ 101 min at the measured ≈ 30.4 s-a-row pace) — two
+  windows of one build give those verdicts their floor, which the folder's aborted-launch pair
+  says is not kind (sync p95 median 16 %, two-tick 2.7 pts).
+- **The hardware bench's S2 / S3 / S4 page bodies** (plan v20x HARBENCH): the plumbing shipped in
+  v2.1.0 — the versioned `hb-` wire exported from `@shmup/shell` (`8ee8f91f`), the widget's
+  `harb.ts` sender, the `?gm=` game-mode A/B flag and the five-key remote registration
+  (`4b37d123`), and the rewind row already POSTs on it — but the boot + memory-soak, probe and
+  input **page bodies** were dropped at the finish line by the owner's ruling. The record union
+  carries their shapes (boot / memory / probe / input / watchdog) and waits for whoever times the
+  pages.
+- **The cullable-spike knob — dropped with reason** (v2.1.0 bench pass): a bench-only
+  `cullable = true` flip would set Pixi flags on the engine-owned `SpriteBatch` structures, and
+  the Culler's activation is unverifiable in this codebase without a real GPU draw-call reading —
+  the kill rule wants a lane watching `drawCalls` on firmware, not a desktop knob. The
+  zero-cullable greps stay untouched; the row returns only with a measured reason.
 - **The tracker-music CPU benchmark** (plan §8.9). The *size* half is already answered in code —
   libopenmpt's worklet is ≈ 518 KB gzip against a 512 KB bundle budget, so a tracker player can
   only ever be a separately loaded file. The *CPU* half needs the library and a monitor. Doing it
@@ -392,6 +415,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | An itch.io account (§8.9) | The web release only | [`web-release.md`](web-release.md) |
 | 240 fps latency video, two pads at once, the `rp-` render capture (§8.2, §8.4) | Nothing — but the release's boot ≤ 10 s and whole-process memory figures ride the capture (kit built, R6-02.P2) | [`debug-tools.md`](debug-tools.md#the-guided-capture-preferred) |
 | The v2 TV-bench run on the M7 — **run 2026-10-19 on monitor 10.0.0.224, budgets met, P4a–d not needed** (R6-02.P3); open: the second monitor, firmware context loss, W5-2 / W5-15 | Nothing — the measured zone-load verdict is in | [§3](#3-polish--blocks-nothing), [`build-test-deploy.md`](../dev/build-test-deploy.md#the-tv-render-bench-r0-02) |
+| The 2026-10-27 M7 re-measure — **run and committed** (`3c24d608`, `898021ee`); wants one repeat of the 190-row suite for the single-sample verdicts | Nothing — §13's tier is unchanged; the video-knob sign is the open call | [§3](#3-polish--blocks-nothing), [`results/2026-10-27-m7-bench/`](../../tools/input-probe/results/2026-10-27-m7-bench/) |
 | The tracker-music CPU benchmark (§8.9) | Nothing — the seam ships unused | [`audio.md`](../dev/audio.md) |
 | Real art — **the round CLOSED 2026-10-27 (142 records / 231 of 619 sprites ship AI-assisted art: the 79-name era of 2026-10-26 grew through REING-6 → REING-123 → PIXMAP-1 to 150 records and 239 served, and the closing day's two WEAPONLOOK retire rounds retired eight gen6 FLUX bolt overrides to hand-drawn pixel maps; FLUX on the non-commercial basis of 2026-10-23 — §8 decision 1, R6-D4 — with the BFL commercial licence to be in place before any paid distribution; picker waiver + art-budget carve-out both 2026-10-26)**: the interim pixel-map pool went 118 → … → **0**, the tileset class landed (four grids + the wide-canvas ridge), the two banked-impossible rows won back at zero GPU cost. What still stands not-generable is banked with its attempt counts in [`real-assets.md`](../dev/real-assets.md); music remains uncomposed. | Nothing — every batch landed on master | [`real-assets.md`](../dev/real-assets.md), [`art-provenance.md`](../dev/art-provenance.md) |
 | **Paid/commercial distribution of the game (monetization)** — art made with FLUX.2-dev / FLUX.1-dev requires a **BFL commercial licence ([bfl.ai/licensing](https://bfl.ai/licensing)) in place before any paid distribution ships** (the 2026-10-23 ruling stands on the non-commercial basis alone — art-provenance.md §8 decision 1); the same re-check covers SD3.5's USD 1 M and LTX-2.5's USD 10 M revenue ceilings | Nothing while the game stays free, open-source (MPL-2.0) distribution | [`art-provenance.md`](../dev/art-provenance.md) |

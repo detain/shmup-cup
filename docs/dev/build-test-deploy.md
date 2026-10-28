@@ -45,7 +45,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web`, `@shmup/tizen` and `@shmup/webos` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) with two projects: `chromium` runs every spec in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the two TV builds' `dist/index.html` via `file://` (`webos.spec.ts` is the only place the LG bundle is ever executed, M3-03) — and `firefox` runs only the cross-engine determinism spec (`determinism.spec.ts`, M2-18) in headless Firefox; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`); `--project=chromium` / `--project=firefox` runs one engine only. Needs both browsers once per machine: `pnpm exec playwright install --with-deps chromium firefox` (Chromium alone is enough for `--project=chromium`). See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
 | `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Since R5-P.P3, `node scripts/golden-update.mjs --only zone-b,zone-c` (through pnpm: `pnpm golden:update -- --only …`) re-records only the listed stages' goldens and demos — every other recording is still verified, and an unknown or empty id fails; this is what the zone LAND helper (`docs/v2-run/helpers/land-zone.sh`) runs, and `test/golden/golden-zone-<letter>.test.ts` holds each zone's outcome checks. Only for an **intended** simulation change, in the same commit, with the reason in the commit message. Since R2-01 it **refused to run** (exit 1) while a shipped tileset was not at `TILE_SIZE` — the content was v1's 8-px, and the goldens and demos were stale by design. R2-02's port (`8dbe858`) made that refusal dead, and R2-03's re-bless has since run: wave 6 re-recorded every golden and demo at 640×360 (`d4ba9e8`), and the R2-04 patch set re-blessed them (`a285e0e`) — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
-| `pnpm bench` | The benchmarks (`test/bench/*.perf.ts`, own Vitest config, `--expose-gc`, one file at a time): the stress benchmark — 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth — and since M2-18 the per-zone stress benches (`zones.perf.ts`: every campaign zone start → clear with the bot under the same load, median < 1.0 ms/tick, < 1 MB retained) and the 30-minute headless soak (`soak.perf.ts`: the scene flow through runs, endings, credits and the name entry, heap flat within 1 MB), and since M3-02c the **render** bench (`render.perf.ts` + `render-harness/`: worst-case frames — every measured frame carrying 512 of 512 enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles (asserted as a per-frame *floor*, not a last-frame reading), CRT off / light / full, a filtered layer, the Mode-7 floor, and the same load at ×2 the shipped frame (`2·FRAME_W` × `2·FRAME_H` since R1-02: 768×432 today, 1280×720 after R2-01) — through the real renderer in Playwright's Chromium; it prints render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta, and fails on the draw-call, p95 and heap budgets. It renders through **SwiftShader**, so its milliseconds are a regression gate, never a prediction of the TV — what transfers is the counted quantities and the comparisons between scenarios). Since R0-02 the render bench also builds the TV render bench widget and opens its 174-row matrix, the decode pages and the stand-in load headlessly, gating counts only, and every scenario renders to a **1280×720** display (a whole multiple of 640×360; it was 960×540) — [The TV render bench](#the-tv-render-bench-r0-02). Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench), [release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak) and [rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c) |
+| `pnpm bench` | The benchmarks (`test/bench/*.perf.ts`, own Vitest config, `--expose-gc`, one file at a time): the stress benchmark — 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth — and since M2-18 the per-zone stress benches (`zones.perf.ts`: every campaign zone start → clear with the bot under the same load, median < 1.0 ms/tick, < 1 MB retained) and the 30-minute headless soak (`soak.perf.ts`: the scene flow through runs, endings, credits and the name entry, heap flat within 1 MB), and since M3-02c the **render** bench (`render.perf.ts` + `render-harness/`: worst-case frames — every measured frame carrying 512 of 512 enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles (asserted as a per-frame *floor*, not a last-frame reading), CRT off / light / full, a filtered layer, the Mode-7 floor, and the same load at ×2 the shipped frame (`2·FRAME_W` × `2·FRAME_H` since R1-02: 768×432 today, 1280×720 after R2-01) — through the real renderer in Playwright's Chromium; it prints render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta, and fails on the draw-call, p95 and heap budgets. It renders through **SwiftShader**, so its milliseconds are a regression gate, never a prediction of the TV — what transfers is the counted quantities and the comparisons between scenarios). Since R0-02 the render bench also builds the TV render bench widget and opens its 190-row matrix, the decode pages and the stand-in load headlessly, gating counts only, and every scenario renders to a **1280×720** display (a whole multiple of 640×360; it was 960×540) — [The TV render bench](#the-tv-render-bench-r0-02). Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench), [release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak) and [rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c) |
 | `pnpm bench:tv` | R0-02: `turbo run build:bench` for `@shmup/tizen` and `@shmup/webos` — the **TV render bench** widgets into `apps/tizen/dist-bench/` and `apps/webos/dist-bench/`, each followed by its bundle check (`check-bundle.mjs dist-bench`). Set `VITE_REPORT_URL` to stream the results to the input probe's log server — [The TV render bench](#the-tv-render-bench-r0-02) |
 | `pnpm bench:tv:package` / `pnpm bench:tv:install` | R0-02: `pnpm --filter @shmup/tizen bench:package` / `bench:install` — `apps/tizen/scripts/tizen-bench.mjs` runs the Tizen CLI wrappers on `dist-bench/` under the bench's app id, so it installs next to the game. **Never run in CI or here** — the owner runs them from the Windows desktop (plan R0-03) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
@@ -314,11 +314,16 @@ A second widget built from `apps/tizen`, **next to** the game: it measures what 
 the M7 across a sweep of fifteen internal frames in two art-density modes (`scaled` — the same
 world at higher density, the ×s atlas modelled as the real page scaled and re-packed; `native` —
 more world at the original size) with a density-scaled synthetic scene (the real atlas upscaled
-×1 / ×1.5 / ×2.25, five parallax layers, ~35 % terrain, 64 enemies, 512 bullets, 512 point items,
-512 particles, the HUD bars), six variants per size, plus 24 knob rows (upscale modes,
-interpolation, output resolution, the cutscene video surface) — **174 scenarios, one per page load**
+at the eight densities ×1 … ×2.67, five parallax layers, ~35 % terrain, 64 enemies, 512 bullets,
+512 point items, 512 particles, the HUD bars), six variants per size, plus 40 knob rows
+(upscale modes,
+interpolation, output resolution, the cutscene video surface) — **190 scenarios, one per page load**
 ([plan_resolution.md](../../plan_resolution.md) R0-02, §13; the owner's R0-03 follow-up grew the
-matrix from R0-02's 18, which keep their ids). Then a run loads the page twice more. The
+matrix from R0-02's 18, which keep their ids — and the v2.1.0 passes append the same way, every id
+and index that ever shipped keeping its place: `61b4ed36` 172 → 174 with the two video-knob rows,
+`4b37d123` 174 → 190 with the twelve 960×540 rows that pair every knob with the promoted
+comparison size and the four big-frame `video` rows at `1280x720n` / `1920x1080n`). Then a run
+loads the page three more times. The
 **decode scenario** (R1-05 B4, decision W3-6; page model replaced by R3-04.M4a, decisions RR-8 /
 W5-17): the PNG pages `apps/tizen/scripts/bench-decode.mjs` generates at bench-build time into
 `dist-bench/assets/atlas/decode-<id>.png` — the stand-in zone A's own PNG-8 page or two, packed
@@ -328,9 +333,16 @@ two **are** the ×1.5 shipped pages, so decode rows from before and after the fl
 like; `bench-decode.mjs`'s docblock says so; the owner's R0-03 capture should name the side of the
 flip it ran on) — fetched by XHR, decoded by an `HTMLImageElement` and uploaded through the
 renderer's `uploadTextureSource`, eight times each with every stage timed (median / p95) and the
-textures released between repetitions; `createImageBitmap` decodes them too for comparison. The
-run's **last page load, `standin-zone`** (R3-04.M4a), draws one 640×360 frame from the stand-in
-pages it just decoded, through the real bindings, measured like a render scenario. Its results
+textures released between repetitions; `createImageBitmap` decodes them too for comparison, and since
+v2.1.0 (`4b37d123`) the same page also runs the four shipped cutscene clips through the TV's
+**video surface** (`measureVideoDecode` — fetch to `loadeddata`, one `createImageBitmap(video)`
+pull per load, the synced upload; `video-*` rows in the same record, every one noting
+`video surface unavailable` where no surface exists). The run's **`standin-zone` page** (R3-04.M4a)
+draws one 640×360 frame from the stand-in
+pages it just decoded, through the real bindings, measured like a render scenario, and the **last
+page load is `rewind`** (`5f211b13`, plan R2 TL-3 — the recorded-tail loop behind the resume's
+exact-tick rewind; since `4b37d123` its row also POSTs on the versioned `hb-` hardware-bench
+wire, the `rb-` protocol byte-frozen). Its results
 **never block** the plan. The bench folder shares the game's `DIST_BUDGET`:
 `turbo run build:bench --force` measured **3,943.0 KB** on Tizen and **3,940.0 KB** on webOS of
 the 16,384.0 KB at `7baeb4d`.
@@ -364,12 +376,13 @@ $env:TV_IP = "192.168.1.50"; pnpm bench:tv:install
 pnpm --filter @shmup/tizen bench:run
 ```
 
-4. On each monitor press **Enter** (the page says "174 scenarios + decode + stand-in" with its own
-   minute count — about 93 minutes: per scenario 10 s warm-up, 14 s free-running and 6 s with
+4. On each monitor press **Enter** (the page says "190 scenarios + decode + stand-in + rewind" with
+   its own minute count — about 101 minutes at the pace the 2026-10-27 run measured, ≈ 30.4 s a
+   row: per scenario 10 s warm-up, 14 s free-running and 6 s with
    `gl.finish()` after every render, the page reloading in between); then the decode page loads
-   (`R1-05 DECODE 175/176 GL1 <page> <rep>/8`) and, last, the stand-in frame draws (`R3-04
-   STAND-IN 176/176`). **Red** re-runs the current scenario (after a whole run: the stand-in load),
-   **Back** exits. Photograph the results table it draws at the end — and the **`DECODE (R1-05)`** table under
+   (`R1-05 DECODE 191/193 GL1 <page> <rep>/8`, the four video-surface rows riding along), the
+   stand-in frame draws (`R3-04 STAND-IN 192/193`), and the rewind loop closes the run. **Red**
+   re-runs the current scenario (on the results page: the last special load), **Back** exits. Photograph the results table it draws at the end — and the **`DECODE (R1-05)`** table under
    it (per page `FETCH50`, `DEC50` / `DEC95`, `UPL50` / `UPL95` with `gl.finish()`, `TOT50` / `TOT95`,
    `FIRST` — the coldest repetition —, `BMP50` / `BMPUP` for `createImageBitmap`; `NOTE` lines flag a
    failed stage). A page noted `decoded from the URL instead` means the TV refused `file://` XHR — the
@@ -389,6 +402,22 @@ pnpm --filter @shmup/tizen bench:run
    "all": decoded at boot, uploaded at the change). The `standin-zone` record is kept out of the
    campaign aggregation and printed on its own line. They go into `input-probe-results.md` §12
    (plan R0-03).
+
+A committed worked example of all this is
+[`tools/input-probe/results/2026-10-27-m7-bench/`](../../tools/input-probe/results/2026-10-27-m7-bench/)
+— the owner's first final-art run (176 payloads in ≈ 89 min, the read and the analysis commands in
+its README). Analyze one session file from `tools/input-probe/` with
+`node results/analyze-bench.mjs results/2026-10-27-m7-bench/rb-mvr96ztw-et2k.jsonl --full` (the
+two-file form, `<gl1>.jsonl <gl2>.jsonl`, still prints the WebGL comparison). Since `898021ee` the
+analyzer **partitions by build**: a session's env is the *majority* of its rows (`modalEnv`) — a
+TV relaunch can append one later-build header to an older run's file, and a naive last-row reading
+re-attributes the whole session to the wrong GPU; that resume trap is what shipped the fix.
+Campaign blocks group by **(buildId, output)**, so a 960×540-backbuffer session never pools with a
+1920×1080 one; noise pooling and the cross-output comparison run **within one build only** —
+across builds the analyzer refuses rather than prints a mixed table. The folder's
+`analysis-full.txt` / `analysis-old.txt` are byte-identical reruns of this analyzer, and
+`test/integration/tv-render-bench.test.ts` gates the mechanism (the fix grew it five cases;
+`a4c62bb1`'s §13 rows more).
 
 The results also stay in the widget's `localStorage` until the next run, so a crash loses nothing.
 `pnpm --filter @shmup/tizen dev:bench` serves the page in a desktop browser (`?scenario=<id>` runs
