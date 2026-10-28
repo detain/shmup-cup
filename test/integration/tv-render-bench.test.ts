@@ -25,7 +25,7 @@
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -70,7 +70,9 @@ import {
 import { createLogServer } from '../../tools/input-probe/server/log-server.mjs';
 import {
   analyzeBenchSession,
+  analyzeBenchSessions,
   decodeZoneEstimate,
+  modalEnv,
   readBenchSession,
 } from '../../tools/input-probe/results/analyze-bench.mjs';
 
@@ -657,5 +659,167 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     );
     expect(report).toContain('| 1 | 2.00 / 3.00 | 3.00 / 4.00 | 12 | 1 |');
     expect(report).toContain('174 of 174 scenario(s) measured');
+  });
+});
+
+describe('bench analyzer: session env by majority, campaigns partitioned by build (the 2026-10-27 law)', () => {
+  /** The 2026-10-27 shape: a session's payloads carry one env, plus a resumed app's stray header. */
+  type BenchEnv = RenderBenchEnv & { output?: string | null };
+
+  /** One log-server line: the stored payload object (`receivedAt` / `from` are the server's). */
+  function line(
+    session: string,
+    seq: number,
+    env: BenchEnv,
+    results: RenderBenchRecord[],
+    done = false,
+  ): string {
+    return JSON.stringify({
+      kind: RENDER_BENCH_KIND,
+      session,
+      seq,
+      sentAt: 1_793_140_000_000 + seq,
+      receivedAt: 1_793_140_000_001 + seq,
+      from: '10.0.0.1',
+      env,
+      results,
+      done,
+    });
+  }
+
+  /** The old 960x540-backbuffer GL 2 build (majority env of the replayed session). */
+  const envOld: BenchEnv = {
+    buildId: 'old-b@960x540',
+    host: 'tizen',
+    userAgent: 'UA',
+    innerWidth: 1920,
+    innerHeight: 1080,
+    devicePixelRatio: 1,
+    webGLVersion: 2,
+    scenarios: 8,
+    startedAt: 1_792_494_603_454,
+    output: '960x540',
+  };
+  /** The new full-window build (whose header a resumed run appends under the OLD session id). */
+  const envNew: BenchEnv = {
+    buildId: 'new-b',
+    host: 'tizen',
+    userAgent: 'UA',
+    innerWidth: 1920,
+    innerHeight: 1080,
+    devicePixelRatio: 1,
+    webGLVersion: 1,
+    scenarios: 174,
+    startedAt: 1_793_139_892_196,
+    output: null,
+  };
+
+  /** The busy rows of 384x216 and 640x360 — enough for §13 and for the output blocks' tables. */
+  function busyRows(webGLVersion: number): RenderBenchRecord[] {
+    const i384 = BENCH_SCENARIOS.findIndex((s) => s.id === '384x216-busy');
+    const i640 = BENCH_SCENARIOS.findIndex((s) => s.id === '640x360-busy');
+    return [record(i384, { webGLVersion }), record(i640, { webGLVersion })];
+  }
+
+  let dir = '';
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'shmup-bench-law-'));
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  /** Writes one session file and returns its path. */
+  function sessionFile(name: string, lines: string[]): string {
+    const file = join(dir, `${name}.jsonl`);
+    writeFileSync(file, lines.join('\n') + '\n');
+    return file;
+  }
+
+  it('reads a session env by majority over payloads, ties to the later (modalEnv)', () => {
+    expect(modalEnv([])).toEqual({});
+    // Payloads without a usable env fall into one empty bucket — a session of them reads `{}`.
+    expect(modalEnv([{}, {}, {}])).toEqual({});
+    const a = { buildId: 'a' };
+    const b = { buildId: 'b' };
+    expect(modalEnv([{ env: a }, { env: a }, { env: b }])).toEqual(a);
+    // A true tie goes to the later occurrence (a run that re-wrote its env really is the newer one).
+    expect(modalEnv([{ env: a }, { env: b }])).toEqual(b);
+  });
+
+  it('a resumed run stray header does not re-attribute the old session report', () => {
+    // Exactly the rb-mvgl07um-qm3i shape: N old payloads, then one new-build header under the same
+    // session id (the log server files by session id, so it landed in the old file).
+    const old = busyRows(2);
+    const file = sessionFile('rb-old', [
+      line('rb-old', 1, envOld, [old[0]]),
+      line('rb-old', 2, envOld, [old[1]]),
+      line('rb-old', 3, envNew, []),
+    ]);
+    const report = analyzeBenchSession(file);
+    expect(report).toContain('Build `old-b@960x540`');
+    expect(report).toContain('· output 960x540');
+    expect(report).toContain('2 of 8 scenario(s) measured');
+    expect(report).not.toContain('of 174');
+    expect(report).not.toContain('Build `new-b`');
+  });
+
+  it('a stray header does not re-attribute the campaign either (session table)', () => {
+    const old = busyRows(2);
+    const file = sessionFile('rb-table', [
+      line('rb-table', 1, envOld, [old[0]]),
+      line('rb-table', 2, envOld, [old[1]]),
+      line('rb-table', 3, envNew, []),
+    ]);
+    const table = analyzeBenchSessions([file]);
+    // The session table's row: its own build id and matrix count (not the stray header's new build).
+    expect(table).toMatch(/\| rb-table \|.*\b2\/8\b.*incomplete.*\| old-b@960x540 \|/);
+    expect(table).not.toMatch(/rb-table.*\| new-b \|/);
+    expect(table).toContain('## Output 960x540 (backbuffer)');
+    expect(table).not.toContain('[build'); // the lone build is not named in the heading (older campaigns read as before)
+    expect(table).not.toContain('## Output 1920x1080');
+  });
+
+  it('a folder campaign partitions by build: old replay and new run never share a table', () => {
+    const old = busyRows(2);
+    const oldFile = sessionFile('rb-oldmix', [
+      line('rb-oldmix', 1, envOld, [old[0]]),
+      line('rb-oldmix', 2, envOld, [old[1]]),
+      line('rb-oldmix', 3, envNew, []),
+    ]);
+    const newFile = sessionFile('rb-newmix', [
+      line('rb-newmix', 1, envNew, busyRows(1)),
+      line('rb-newmix', 2, envNew, [], true),
+    ]);
+    const report = analyzeBenchSessions([oldFile, newFile]);
+    // Every output block belongs to one build and says so.
+    const win = report.indexOf('## Output 1920x1080 (window) [build new-b]');
+    const back = report.indexOf('## Output 960x540 (backbuffer) [build old-b@960x540]');
+    expect(win).toBeGreaterThan(-1);
+    expect(back).toBeGreaterThan(win);
+    // The window block holds only the new session and never shows a GL 2 run (the old build's rows
+    // left its aggregates entirely — before the partition they sat inside it as `WebGL 2 — 1 run(s)`).
+    const windowBlock = report.slice(win, back);
+    expect(windowBlock).toContain('1 session(s) (rb-newmix); runs: GL 1 × 1');
+    expect(windowBlock).not.toContain('GL 2');
+    // No cross-build verdict, no cross-build comparison table (only the refusal).
+    expect(windowBlock).toContain('No comparison: the sessions hold WebGL 1 runs only');
+    expect(report).toContain(
+      'No cross-output comparison: no build contributes two output resolutions',
+    );
+    expect(report).not.toContain('it needs ≥ 2 runs of each WebGL version');
+  });
+
+  it('outputs of ONE build still compare (the cross-output table survives the partition)', () => {
+    const env720: BenchEnv = { ...envNew, output: '1280x720' };
+    const winFile = sessionFile('rb-b-win', [line('rb-b-win', 1, envNew, busyRows(1), true)]);
+    const bbFile = sessionFile('rb-b-bb', [line('rb-b-bb', 1, env720, busyRows(1), true)]);
+    const report = analyzeBenchSessions([winFile, bbFile]);
+    expect(report).toContain('## Output 1280x720 (backbuffer)');
+    expect(report).toContain('## Cross-output comparison');
+    expect(report).not.toContain('No cross-output comparison:');
+    expect(report).not.toContain('[build'); // single-build campaign: headings unnamed, exactly as before
+    expect(report).toContain('2t % 1920x1080');
+    expect(report).toContain('2t % 1280x720');
   });
 });

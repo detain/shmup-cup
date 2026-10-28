@@ -24,12 +24,19 @@
  *
  * **Output resolutions.** The same matrix is also recorded with the canvas backbuffer at 1280×720 and 960×540
  * (separate builds: `env.output` and a `buildId` ending in `@1280x720`); a session without `env.output` ran at
- * the full window (`innerWidth × innerHeight`, 1920×1080 on the TV). Sessions are grouped by (output, WebGL
- * version), largest output first: every section above is produced per output under an `## Output …` heading,
- * the noise band from that output's own same-version repeats (an output without any borrows the pooled band of
- * the others and says so). With ≥ 2 outputs a **cross-output comparison** puts each size × variant's two-tick
- * share and synced p95 side by side (`—` where a build skipped the row) and says where the reduced outputs beat
- * the largest beyond the noise band.
+ * the full window (`innerWidth × innerHeight`, 1920×1080 on the TV). Sessions are grouped by (build, output,
+ * WebGL version), largest output first: every section above is produced per build × output under an
+ * `## Output …` heading, the noise band from that output's own same-version repeats (an output without any
+ * borrows the pooled band of the other outputs **of its own build** and says so). With ≥ 2 outputs of one
+ * build a **cross-output comparison** puts each size × variant's two-tick share and synced p95 side by side
+ * (`—` where a build skipped the row) and says where the reduced outputs beat the largest beyond the noise band.
+ *
+ * **Builds are never mixed in one table** (the 2026-10-27 contamination law, `results/2026-10-27-m7-bench/`):
+ * a folder campaign may hold several `buildId`s — e.g. a legacy replay of an older bench whose session a newer
+ * app later resumed — but aggregation, noise pooling and cross-output comparison all stay inside one build.
+ * A session's `env` is read by **majority over its payloads** (see {@link modalEnv}), never from the last one:
+ * when the TV resumes a finished old run, the new app appends one header payload with its own `env` under the
+ * OLD session id, and the log server files payloads by session id.
  *
  * Why the figures are read relative: the M7's `requestAnimationFrame` already shows a p95 of ~30 ms with nothing
  * running at all (`input-probe-results.md` §8), so an absolute frame time says more about the panel than about
@@ -170,6 +177,35 @@ export function readBenchSession(file) {
     if (decode === null || (d.endedAt ?? 0) >= (decode.endedAt ?? 0)) decode = d;
   }
   return { payloads, records, standin, decode };
+}
+
+/**
+ * The `env` a session ran under: the modal one over its payloads, ties to the last occurrence.
+ *
+ * The bench writes `env` into every payload, so within one honest run they are all equal and the mode is that
+ * value. The mode matters when it is not: a new app that **resumes** a finished old run (the Oct-19 README's
+ * resume trap) appends its header payload with the new `env` under the OLD session id — the log server files by
+ * session id — and a one-payload straggler must not re-attribute a whole old-build session to the new build
+ * (`results/2026-10-27-m7-bench/`, the 2026-10-27 contamination law).
+ *
+ * @param {any[]} payloads - the session's payloads, arrival order.
+ * @returns {any} the most frequent `env` object (the last of the equally-frequent ones), or `{}` when no
+ *   payload carries one.
+ */
+export function modalEnv(payloads) {
+  const counts = new Map();
+  for (const p of payloads) {
+    const env = p !== null && typeof p === 'object' && p.env !== null && typeof p.env === 'object' ? p.env : null;
+    const key = env === null ? '' : JSON.stringify(env);
+    const hit = counts.get(key);
+    if (hit === undefined) counts.set(key, { env: env ?? {}, n: 1 });
+    else hit.n += 1;
+  }
+  let best = null;
+  for (const hit of counts.values()) {
+    if (best === null || hit.n >= best.n) best = hit;
+  }
+  return best === null ? {} : best.env;
 }
 
 /**
@@ -585,7 +621,7 @@ export function analyzeBenchSession(file, options = {}) {
   const { payloads, records, standin, decode } = readBenchSession(file);
   if (payloads.length === 0) return 'no payloads in ' + file;
   const last = payloads[payloads.length - 1];
-  const env = last.env ?? {};
+  const env = modalEnv(payloads);
   const scenarios = typeof env.scenarios === 'number' ? env.scenarios : '?';
   const glVersions = [...new Set(records.map((r) => r.webGLVersion))].sort();
   const out = [];
@@ -902,10 +938,11 @@ function outputCampaign(output, sessions) {
 }
 
 /**
- * Loads a campaign: its sessions (oldest first), grouped by output resolution ({@link sessionOutput}, largest
- * output first), and per output one run per session and WebGL version, the per-version aggregates, the display
- * order of the sizes and the noise floor. An output without same-version repeats borrows the pooled band of
- * the other outputs (`noise.pooled`).
+ * Loads a campaign: its sessions (oldest first), grouped by build and output resolution
+ * ({@link sessionOutput} under the {@link modalEnv}, largest output first; the 2026-10-27 contamination law:
+ * sessions of different `env.buildId`s are never aggregated into one block), and per group one run per session
+ * and WebGL version, the per-version aggregates, the display order of the sizes and the noise floor. An output
+ * without same-version repeats borrows the pooled band of its own build's other outputs (`noise.pooled`).
  *
  * @param {string[]} files - the session files.
  * @returns {any} the campaign: `{sessions, outputs, sizes}` plus — for callers that predate the outputs — the
@@ -917,12 +954,13 @@ export function loadCampaign(files) {
     .map((file, order) => {
       const { payloads, records, decode } = readBenchSession(file);
       const last = payloads[payloads.length - 1] ?? {};
-      const env = last.env ?? payloads[0]?.env ?? {};
+      const env = modalEnv(payloads);
       return {
         file,
         order,
         id: last.session ?? basename(file),
         env,
+        buildId: typeof env.buildId === 'string' ? env.buildId : '?',
         output: sessionOutput(env),
         from: last.from ?? null,
         payloads,
@@ -938,20 +976,28 @@ export function loadCampaign(files) {
     );
   const groups = new Map();
   for (const session of sessions) {
-    const g = groups.get(session.output.id);
-    if (g === undefined) groups.set(session.output.id, { output: { ...session.output }, sessions: [session] });
+    const key = `${session.buildId}|${session.output.id}`;
+    const g = groups.get(key);
+    if (g === undefined)
+      groups.set(key, { output: { ...session.output, buildId: session.buildId }, sessions: [session] });
     else {
       g.sessions.push(session);
       // A label says "(window)" only when no session of the output named it explicitly.
-      if (!session.output.window) g.output = { ...session.output };
+      if (!session.output.window) g.output = { ...session.output, buildId: session.buildId };
     }
   }
   const outputs = [...groups.values()]
     .sort((a, b) => b.output.area - a.output.area || (a.output.id < b.output.id ? -1 : 1))
     .map((g) => outputCampaign(g.output, g.sessions));
-  const own = outputs.filter((o) => o.ownNoise !== null).map((o) => o.ownNoise);
-  const pooled = outputs.length > 1 ? poolNoise(own) : null;
-  for (const o of outputs) if (o.noise === null && pooled !== null) o.noise = pooled;
+  // A multi-build campaign names the build in every output heading (a single-build one reads as before).
+  const builds = new Set(sessions.map((s) => s.buildId));
+  if (builds.size > 1) for (const o of outputs) o.output.label = `${o.output.label} [build ${o.output.buildId}]`;
+  for (const [, outs] of groupsByBuild(outputs)) {
+    if (outs.length < 2) continue; // noise is pooled within one build only
+    const own = outs.filter((o) => o.ownNoise !== null).map((o) => o.ownNoise);
+    const pooled = own.length > 0 ? poolNoise(own) : null;
+    for (const o of outs) if (o.noise === null && pooled !== null) o.noise = pooled;
+  }
   const first = outputs[0] ?? {
     output: null,
     gls: [],
@@ -1671,17 +1717,39 @@ function crossOutputVerdicts(outputs, sizes) {
 }
 
 /**
- * The cross-output comparison (only with ≥ 2 outputs): every size × variant at each output side by side, and a
- * line per variant on where the reduced outputs beat the largest beyond the noise band.
+ * The campaign's output campaigns grouped by the build they were recorded on, in first-seen order. The
+ * partition the 2026-10-27 contamination law asks for: aggregation pools noise inside a build and the
+ * cross-output comparison compares inside a build, never across builds.
  *
- * @param {any} campaign - {@link loadCampaign}.
- * @param {{full?: boolean}} [options] - `full`: also the table per WebGL version.
- * @returns {string[]} the lines.
+ * @param {any[]} outputs - the output campaigns (each `output.buildId` set by {@link loadCampaign}).
+ * @returns {Map<string, any[]>} the outputs of each build.
  */
-export function crossOutputSection(campaign, options = {}) {
-  const outputs = campaign.outputs;
+function groupsByBuild(outputs) {
+  const byBuild = new Map();
+  for (const o of outputs) {
+    const b = o.output.buildId ?? '?';
+    const list = byBuild.get(b);
+    if (list === undefined) byBuild.set(b, [o]);
+    else list.push(o);
+  }
+  return byBuild;
+}
+
+/**
+ * The cross-output comparison of ONE build (only with ≥ 2 outputs of it): every size × variant at each output
+ * side by side, and a line per variant on where the reduced outputs beat the largest beyond the noise band.
+ *
+ * @param {any[]} outputs - the build's output campaigns, largest first.
+ * @param {string | null} buildId - the build to name in the heading, or null to leave it unnamed (a
+ *   single-build campaign — the shape every older campaign has).
+ * @param {{full?: boolean}} [options] - `full`: also the table per WebGL version.
+ * @returns {string[]} the lines (empty without any row).
+ */
+function crossOutputBlock(outputs, buildId, options = {}) {
   const ref = outputs[0];
-  const out = ['## Cross-output comparison', ''];
+  const sizes = sizeOrder(outputs.flatMap((o) => o.sessions.flatMap((s) => s.records)));
+  const cells = outputs.map((o) => outputCells(o, null));
+  const out = [`## Cross-output comparison${buildId === null ? '' : ` — build ${buildId}`}`, ''];
   out.push(
     `Outputs, largest first: ${outputs.map((o) => o.output.label).join(' · ')}. Each cell is the **median over all runs of` +
       ' that output** (both WebGL versions pooled; `--full` adds a table per version) for a plain row — knob rows are' +
@@ -1690,7 +1758,7 @@ export function crossOutputSection(campaign, options = {}) {
       ' spreads: two-tick in points, synced p95 relative). The M7’s run-to-run noise is as large as many of these' +
       ' differences — a mark is a hint to look, not a verdict.',
   );
-  const tableOf = (gl) => crossOutputTable(outputs, gl, campaign.sizes);
+  const tableOf = (gl) => crossOutputTable(outputs, gl, sizes);
   const pooled = tableOf(null);
   out.push('');
   if (pooled.length === 0) {
@@ -1698,7 +1766,7 @@ export function crossOutputSection(campaign, options = {}) {
     return out;
   }
   out.push(...pooled);
-  const lines = crossOutputVerdicts(outputs, campaign.sizes);
+  const lines = crossOutputVerdicts(outputs, sizes);
   out.push('', `Where the reduced outputs beat ${ref.output.id} beyond the noise band, per load variant:`, '');
   out.push(...(lines.length > 0 ? lines : ['- none: no row has a reduced output and the largest in common.']));
   if (options.full === true) {
@@ -1707,6 +1775,36 @@ export function crossOutputSection(campaign, options = {}) {
       const t = tableOf(gl);
       if (t.length > 0) out.push('', `### Cross-output — WebGL ${gl} runs only`, '', ...t);
     }
+  }
+  return out;
+}
+
+/**
+ * The cross-output comparison (only with ≥ 2 outputs of one build): a block per such build. A campaign whose
+ * outputs all belong to different builds prints the refusal — builds are never compared in one table
+ * (the 2026-10-27 contamination law).
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {{full?: boolean}} [options] - `full`: also the table per WebGL version.
+ * @returns {string[]} the lines.
+ */
+export function crossOutputSection(campaign, options = {}) {
+  const byBuild = groupsByBuild(campaign.outputs);
+  const comparable = [...byBuild.values()].filter((outs) => outs.length > 1);
+  const out = [];
+  if (comparable.length === 0) {
+    out.push('## Cross-output comparison', '');
+    out.push(
+      'No cross-output comparison: no build contributes two output resolutions to this campaign. Sessions of' +
+        ' different builds are never compared in one table (the 2026-10-27 contamination law) — every build' +
+        ' keeps its own output block above.',
+    );
+    return out;
+  }
+  for (const [buildId, outs] of byBuild) {
+    if (outs.length <= 1) continue;
+    if (out.length > 0) out.push('');
+    out.push(...crossOutputBlock(outs, byBuild.size > 1 ? buildId : null, options));
   }
   return out;
 }
