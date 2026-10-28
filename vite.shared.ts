@@ -615,8 +615,10 @@ export function shmupVideos(
      *
      * @remarks
      * A machine without ffmpeg encodes nothing and the game ships without clips (the encode kit
-     * prints why and exits 0); CI's ubuntu runners carry ffmpeg, so there the clips are
-     * generated exactly like the atlas is.
+     * prints why and exits 0). CI runners carry no ffmpeg (v20x-D6 gate, run `40624036794`), so
+     * there a build is the degraded clip-less variant; hosts that have the binaries generate the
+     * clips exactly like the atlas is generated. Every concurrent spawn is serialized by the
+     * kits' cross-process lock (`scripts/v20x/encode-lock.mjs`, v20x-FIX-VIDEO).
      */
     buildStart() {
       if (process.env.SHMUP_NO_VIDEO === '1') return; // the baked kill switch: ship no clips

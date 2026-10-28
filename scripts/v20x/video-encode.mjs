@@ -22,6 +22,12 @@
  * runs as it does today). Run it where the binaries exist (this machine has them) before
  * `pnpm --filter @shmup/tizen build` to fill the bundle.
  *
+ * **One writer at a time.** The Vite plugins spawn this kit from every build, and `pnpm test`
+ * runs builds in parallel workers — so both modes take the cross-process lock of
+ * `encode-lock.mjs` over the output folder before touching it. `--check` therefore never probes
+ * a clip another run is still writing, and a full run that acquires the lock behind a finished
+ * one finds the ledger current and encodes nothing (deterministic outputs make the wait free).
+ *
  * Usage:
  *
  *   node scripts/v20x/video-encode.mjs             # encode every clip, write ledger + licences
@@ -45,6 +51,7 @@ import {
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FRAME_H, FRAME_W } from '../frame.mjs';
+import { withEncodeLock } from './encode-lock.mjs';
 
 /** Repository root (this file lives in `scripts/v20x/`). */
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -373,67 +380,83 @@ function parseOnly(argv) {
 }
 
 /**
- * The kit's entry point.
- * @returns {void}
+ * The ledger rows of the output folder by clip id (empty when it has no ledger yet).
+ *
+ * @returns {Map<string, Record<string, unknown>>} The rows, keyed by clip id.
  */
-function main() {
-  const argv = process.argv.slice(2).filter((a) => a !== '--');
-  const check = argv.includes('--check');
-  const rerun = argv.includes('--rerun');
-  const only = parseOnly(argv);
-  const clips = only === null ? [...CLIPS] : CLIPS.filter((c) => only.has(c.id));
+function readLedgerRows() {
+  const file = join(OUT_DIR, LEDGER_FILE);
+  if (!existsSync(file)) return new Map();
+  const ledger = /** @type {{ clips?: Array<Record<string, unknown>> }} */ (
+    JSON.parse(readFileSync(file, 'utf8'))
+  );
+  return new Map((ledger.clips ?? []).map((c) => [String(c.id), c]));
+}
 
-  if (process.env.SHMUP_NO_VIDEO === '1') {
-    console.log(
-      'SKIPPING the video encode: SHMUP_NO_VIDEO=1 (the baked kill switch).\n' +
-        'No clips were (re)encoded; a build from this tree ships no video at all.',
-    );
-    process.exitCode = 0;
-    return;
+/**
+ * Measures every selected clip against the codec contract and its ledger row — the `--check`
+ * pass, shared with the full run's "already current?" probe behind the lock.
+ *
+ * @param {(typeof CLIPS[number])[]} clips - The selected clips.
+ * @param {Map<string, Record<string, unknown>>} byId - The ledger rows by id.
+ * @returns {{ problems: string[], rows: Record<string, unknown>[] }} Every problem found
+ *   (empty = the selection is current) and the pinned row of every clip that passed.
+ */
+function inspectClips(clips, byId) {
+  const problems = [];
+  const rows = [];
+  for (const clip of clips) {
+    const source = join(WINNER_DIR, clip.winner, 'winner.mp4');
+    if (!existsSync(source)) {
+      problems.push(`${clip.id}: missing source ${source}`);
+      continue;
+    }
+    const out = join(OUT_DIR, `${clip.id}.mp4`);
+    if (!existsSync(out)) {
+      problems.push(`${clip.id}: ${out} is missing (run the encode first)`);
+      continue;
+    }
+    let measured;
+    try {
+      measured = verify(out, clip);
+    } catch (error) {
+      problems.push(`${clip.id}: ${/** @type {Error} */ (error).message}`);
+      continue;
+    }
+    const pinned = byId.get(clip.id);
+    if (pinned === undefined) {
+      problems.push(`${clip.id}: the ledger has no row for it`);
+      continue;
+    }
+    if (pinned.sha256 !== measured.sha256) {
+      problems.push(
+        `${clip.id}: bytes moved (ledger ${String(pinned.sha256)}, file ${measured.sha256}) ` +
+          '— re-run the encode and update the shell manifest',
+      );
+      continue;
+    }
+    rows.push(pinned);
   }
+  return { problems, rows };
+}
 
-  if (!hasBinary('ffmpeg') || !hasBinary('ffprobe')) {
-    console.log(
-      'SKIPPING the video encode: ffmpeg and/or ffprobe are not on PATH.\n' +
-        'No clips were (re)encoded; assets/generated/video/ keeps whatever is already there.\n' +
-        'A build without clips ships no video and the game plays every scene without a sting\n' +
-        '(the graceful-degradation path of lane v20x-VID). Install ffmpeg and re-run\n' +
-        '  node scripts/v20x/video-encode.mjs\nto fill the cutscene folder.',
-    );
-    process.exitCode = 0;
-    return;
-  }
-
-  mkdirSync(OUT_DIR, { recursive: true });
-  const existing = existsSync(join(OUT_DIR, LEDGER_FILE))
-    ? /** @type {{ clips?: Array<Record<string, unknown>> }} */ (
-        JSON.parse(readFileSync(join(OUT_DIR, LEDGER_FILE), 'utf8'))
-      )
-    : { clips: [] };
-  /** @type {Map<string, Record<string, unknown>>} */
-  const byId = new Map((existing.clips ?? []).map((c) => [String(c.id), c]));
-
+/**
+ * Encodes every selected clip, then rewrites the ledger and the licence notice.
+ *
+ * @param {(typeof CLIPS[number])[]} clips - The selected clips.
+ * @param {boolean} rerun - Re-encode each clip a second time and prove the bytes are identical.
+ * @param {Map<string, Record<string, unknown>>} byId - The existing ledger rows to merge over.
+ * @returns {void}
+ * @throws When a source is missing, its fps is not what the kit expects, or an output fails
+ *   the codec contract or the rerun proof.
+ */
+function encodeClips(clips, rerun, byId) {
   const ledgerClips = [];
-  const licenseLines = [];
   for (const clip of clips) {
     const source = join(WINNER_DIR, clip.winner, 'winner.mp4');
     const sidecar = join(WINNER_DIR, clip.winner, 'winner.json');
     if (!existsSync(source)) throw new Error(`${clip.id}: missing source ${source}`);
     const out = join(OUT_DIR, `${clip.id}.mp4`);
-    if (check) {
-      if (!existsSync(out)) throw new Error(`${clip.id}: ${out} is missing (run the encode first)`);
-      const measured = verify(out, clip);
-      const pinned = byId.get(clip.id);
-      if (pinned === undefined) throw new Error(`${clip.id}: the ledger has no row for it`);
-      if (pinned.sha256 !== measured.sha256) {
-        throw new Error(
-          `${clip.id}: bytes moved (ledger ${String(pinned.sha256)}, file ${measured.sha256}) ` +
-            '— re-run the encode and update the shell manifest',
-        );
-      }
-      ledgerClips.push(pinned);
-      continue;
-    }
     const measuredFps = sourceFps(source);
     if (measuredFps !== clip.fps) {
       throw new Error(
@@ -462,21 +485,10 @@ function main() {
       loop: clip.loop === true,
       ...measured,
     });
-    licenseLines.push(
-      licenseLine(clip, JSON.parse(readFileSync(sidecar, 'utf8')), `${clip.id}.mp4`),
-    );
     console.log(
       `${clip.id}.mp4 ${measured.bytes} B (${(measured.bytes / 1024).toFixed(1)} KB), ` +
         `${measured.frames} frames ${(measured.durationMs / 1000).toFixed(2)} s @ ${clip.fps} fps`,
     );
-  }
-
-  if (check) {
-    console.log(
-      `video encode kit: ${ledgerClips.length} clip(s) match the ledger ` +
-        `(High ≤ 4.2, ${CODEC.width}×${CODEC.height} yuv420p, silent, faststart).`,
-    );
-    return;
   }
 
   // Full rewrite keeps the ledger complete even for --only runs: merge over the existing rows.
@@ -525,6 +537,65 @@ function main() {
       } },`,
     );
   }
+}
+
+/**
+ * The kit's entry point: early-exit the no-write paths, then encode or verify the output
+ * folder under its cross-process lock (one writer per tree, `encode-lock.mjs`).
+ *
+ * @returns {void}
+ */
+function main() {
+  const argv = process.argv.slice(2).filter((a) => a !== '--');
+  const check = argv.includes('--check');
+  const rerun = argv.includes('--rerun');
+  const only = parseOnly(argv);
+  const clips = only === null ? [...CLIPS] : CLIPS.filter((c) => only.has(c.id));
+
+  if (process.env.SHMUP_NO_VIDEO === '1') {
+    console.log(
+      'SKIPPING the video encode: SHMUP_NO_VIDEO=1 (the baked kill switch).\n' +
+        'No clips were (re)encoded; a build from this tree ships no video at all.',
+    );
+    process.exitCode = 0;
+    return;
+  }
+
+  if (!hasBinary('ffmpeg') || !hasBinary('ffprobe')) {
+    console.log(
+      'SKIPPING the video encode: ffmpeg and/or ffprobe are not on PATH.\n' +
+        'No clips were (re)encoded; assets/generated/video/ keeps whatever is already there.\n' +
+        'A build without clips ships no video and the game plays every scene without a sting\n' +
+        '(the graceful-degradation path of lane v20x-VID). Install ffmpeg and re-run\n' +
+        '  node scripts/v20x/video-encode.mjs\nto fill the cutscene folder.',
+    );
+    process.exitCode = 0;
+    return;
+  }
+
+  withEncodeLock(OUT_DIR, () => {
+    mkdirSync(OUT_DIR, { recursive: true });
+    const byId = readLedgerRows();
+    if (check) {
+      const { problems, rows } = inspectClips(clips, byId);
+      if (problems.length > 0) throw new Error(problems.join('\n'));
+      console.log(
+        `video encode kit: ${rows.length} clip(s) match the ledger ` +
+          `(High ≤ 4.2, ${CODEC.width}×${CODEC.height} yuv420p, silent, faststart).`,
+      );
+      return;
+    }
+    // The deterministic outputs make waiting free: whoever acquires the lock behind a finished
+    // encode finds the set current and does nothing (the F-A cold-tree builds' second side).
+    if (!rerun && inspectClips(clips, byId).problems.length === 0) {
+      console.log(
+        'video encode kit: every selected clip already matches the ledger on disk — ' +
+          'nothing to encode.',
+      );
+      return;
+    }
+    encodeClips(clips, rerun, byId);
+  });
 }
 
 main();

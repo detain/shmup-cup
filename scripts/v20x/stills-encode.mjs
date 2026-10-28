@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { decodePng, encodePng } from '../assets/png.mjs';
 import { fitContain, medianCutPalette, quantize } from '../assets/resample.mjs';
 import { FRAME_H, FRAME_W } from '../frame.mjs';
+import { withEncodeLock } from './encode-lock.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -235,12 +236,20 @@ function check(only) {
   console.log(`stills ledger verified: ${selected(only).length} files`);
 }
 
-/** Entry point. */
+/**
+ * Entry point: verify or render the folder under its cross-process lock — one writer per
+ * tree, the `encode-lock.mjs` rule of the video kit, so a parallel build's `--check` never
+ * reads a half-written still.
+ *
+ * @returns {void}
+ */
 function main() {
   const argv = process.argv.slice(2).filter((arg) => arg !== '--');
   const only = parseOnly(argv);
-  if (argv.includes('--check')) check(only);
-  else encode(only);
+  withEncodeLock(OUT_DIR, () => {
+    if (argv.includes('--check')) check(only);
+    else encode(only);
+  });
 }
 
 main();

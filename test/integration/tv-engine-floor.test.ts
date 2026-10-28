@@ -142,11 +142,17 @@ const PAGE_REFERENCES = [/<script\b[^>]*\bsrc=["'](\.{1,2}\/[^"']+)["']/g] as co
  *
  * @param entries - Repo-relative entry files (a Vite config, a bundle check).
  * @returns Repo-relative paths, sorted; a folder (a Vite root, a content directory) ends in `/`.
- * @throws Error when a reference resolves to nothing or leaves the repo.
+ * @throws Error when a reference resolves to nothing outside the generated trees, or leaves
+ * the repo.
  *
  * @remarks
  * A `.js` specifier that does not exist resolves to its `.ts` source (NodeNext imports), and a
- * folder with an `index.html` (a Vite root) is followed into that page.
+ * folder with an `index.html` (a Vite root) is followed into that page. A path under
+ * `assets/generated/` that does not (yet) exist is build output — the pipeline and the encode
+ * kits create those trees from committed sources during a build, and a clean checkout (CI has
+ * no ffmpeg) has none of them before the first producer runs. The walk records such a folder and
+ * stops instead of throwing: the cache-key assertion that uses this list still demands the build
+ * hash it, which is the point of the reference naming it at all (v20x-FIX-VIDEO).
  */
 function reachedFiles(entries: readonly string[]): string[] {
   const seen = new Set<string>();
@@ -164,7 +170,13 @@ function reachedFiles(entries: readonly string[]): string[] {
         if (!existsSync(join(repo, target)) && target.endsWith('.js')) {
           target = `${target.slice(0, -3)}.ts`;
         }
-        if (!existsSync(join(repo, target))) throw new Error(`${file}: ${match[1]} not found`);
+        if (!existsSync(join(repo, target))) {
+          if (target.startsWith('assets/generated/')) {
+            seen.add(`${target.replace(/\/$/, '')}/`);
+            continue;
+          }
+          throw new Error(`${file}: ${match[1]} not found`);
+        }
         if (statSync(join(repo, target)).isDirectory()) {
           const folder = `${target.replace(/\/$/, '')}/`;
           seen.add(folder);
@@ -363,6 +375,12 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
         `apps/${app}/vite.bench.config.ts`,
         `apps/${app}/scripts/check-bundle.mjs`,
       ]);
+      // The generated trees the bench build emits from are named even when this checkout has
+      // not produced them (v20x-FIX-VIDEO) — so the filter below genuinely demands their
+      // cache-key coverage on every machine, cold or warm, with ffmpeg or without it.
+      expect(reached, app).toEqual(
+        expect.arrayContaining(['assets/generated/video/', 'assets/generated/stills/']),
+      );
       expect(
         reached.filter((path) => !inCacheKey(turbo, task, `apps/${app}`, path)),
         `files the ${app} bench build reads but turbo does not hash`,
