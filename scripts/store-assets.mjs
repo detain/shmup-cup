@@ -206,7 +206,7 @@ export const KEY_ART = Object.freeze([
  */
 export const STORE_TEXTS = Object.freeze({
   name: 'Shmup Cup',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'Games / Action',
   shortDescription: 'A remote-friendly horizontal shoot-them-up across a nine-zone map.',
   description:

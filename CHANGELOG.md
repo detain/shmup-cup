@@ -6,7 +6,7 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 [`shmup_progress.md`](docs/old/shmup_progress.md); v2 follows
 [`plan_resolution.md`](plan_resolution.md), whose §17 tracks its progress.
 
-## [2.1.0] — 2026-10-27
+## [2.1.0] — 2026-10-28
 
 **Shmup Cup 2.1.0** — the v2.0.x era on top of the remaster: the TV boot and playability pass
 (plan v20x P0), the TV resume (the checkpoint store, the title's CONTINUE? row and the exact-tick
