@@ -40,7 +40,10 @@ work too, and every device drives both the game and the menus.
 > returns to the title). Left alone on `PRESS OK` for 12 seconds the title plays the **attract
 > loop** (a zone demo, the high-score tables, the story) — **any** button returns to the title. A
 > cutscene clip (the title's sting, a zone's WARNING band, a story vista, an ending beat) can lie
-> over the picture, and **any pressed button skips it at once**; the clips ship switched **off by default**. The title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
+> over the picture, and **any pressed button skips it at once**; the clips ship switched **on by
+> default**, and **OPTIONS → DISPLAY → VIDEO** switches them off (the game remembers; it applies at
+> the next start). The title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE,
+> CHECKPOINT and LOADOUT, OK on
 > START) and **SOUND TEST** box (◀ ▶ choose a tune or a sound, OK plays it) close with Back
 > ([preview-build.md](preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes and opens five pages:
@@ -50,8 +53,9 @@ work too, and every device drives both the game and the menus.
 > and an **INPUT TEST** ([below](#the-controls-page-autofire-socd-and-the-hiccup-protection)), and pad
 > **RUMBLE** —, **DISPLAY** — the enemy bullets' colours (standard or one of three colour-blind sets),
 > how the picture fills the screen, the screen shake, gentler flashes, a hitbox marker on your ship,
-> the boss HP bar and the language the menus speak —, **GAME** — the difficulty, lives, what losing
-> a ship costs, Auto Power-Up, the capsule magnet and **ONE BUTTON** play
+> the boss HP bar, the cutscene clips and the language the menus speak —, **GAME** — the
+> difficulty, lives, what losing a ship costs, Auto Power-Up, the capsule magnet and **ONE BUTTON**
+> play
 > ([One-button play](#one-button-play)) —, **GRAPHICS** — the canvas **OUTPUT** and **RENDERER** boot
 > knobs (each takes effect after a restart) and the **CRT** and **ASPECT** rows — and **EXTRAS** — the
 > 16-bit slowdown, graze points, the death bomb and the black-hole bomb ([below](#the-black-hole-bomb-and-the-death-bomb))

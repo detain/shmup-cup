@@ -90,11 +90,13 @@ Everything else on this page can wait behind this one. Set up per
   (P0-3 `628a1afa` — it cannot be provoked on the TV, so the reading is the **absence** of hangs),
   the TV resume (the checkpoint store and the title's CONTINUE? row; the `?scenario=rewind` bench
   row replaces the engine's **÷12 estimate** with a measured M7 figure — TL-4's verdict is
-  ≈2–3 s for a full rewind at 5–10 k steps/s), the cutscene video (its two bench knob rows
-  adjudicate the default flip — `VIDEO_DEFAULT_ON` is false pending the owner ruling of
-  2026-10-27), and the ending stills (five paintings, default on). Plus the owner's UX call on the
-  colour-key bindings P0-2 registered (`8cb4b0cf`): the shortlist is red→Special, green→Speed,
-  yellow→palette cycle, blue→CRT toggle.
+  ≈2–3 s for a full rewind at 5–10 k steps/s), the cutscene video (the flip has **landed** — the
+  video knob rows of the owner's 190-row M7 session settled it and the ruling of 2026-10-28 made
+  `VIDEO_DEFAULT_ON` true; the DISPLAY page's VIDEO row is the player's switch and bundle rule 11
+  refuses a build that lost the era's media (15 clips, 5 stills) — and the install still owes the
+  clips' live look on the monitors), and the ending stills (five paintings, default on). Plus the
+  owner's UX call on the colour-key bindings P0-2 registered (`8cb4b0cf`): the shortlist is
+  red→Special, green→Speed, yellow→palette cycle, blue→CRT toggle.
 
 Results go into the checklists themselves and anything surprising into
 [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md).

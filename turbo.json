@@ -40,7 +40,8 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/assets/generated/video/**",
         "$TURBO_ROOT$/assets/generated/stills/**",
-        "$TURBO_ROOT$/scripts/v20x/**"
+        "$TURBO_ROOT$/scripts/v20x/**",
+        "$TURBO_ROOT$/scripts/game-code-hash.mjs"
       ],
       "outputs": ["dist-bench/**"]
     },
@@ -52,6 +53,7 @@
         "$TURBO_ROOT$/assets/generated/video/**",
         "$TURBO_ROOT$/assets/generated/stills/**",
         "$TURBO_ROOT$/scripts/v20x/**",
+        "$TURBO_ROOT$/scripts/game-code-hash.mjs",
         "$TURBO_ROOT$/apps/tizen/bench/**",
         "$TURBO_ROOT$/apps/tizen/src/**",
         "$TURBO_ROOT$/apps/tizen/scripts/**",
