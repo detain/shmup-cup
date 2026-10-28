@@ -589,6 +589,41 @@ describe('bench skip ledger (TV mode)', () => {
     expect(page.ledger()).toBe(serializeLedger(CODE, []));
   });
 
+  it('the number keys 1 and 2 stand in for Red and Green on a remote without colour buttons', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    // `1` is Red wherever Red works: the results page re-runs the last scenario — the rewind
+    // page on both arms — and leaves the ledger alone.
+    page.press(49);
+    expect(page.state()).toMatchObject({
+      running: true,
+      single: true,
+      cursor: REWIND_SCENARIO_INDEX,
+    });
+    expect(page.reload).toHaveBeenCalledTimes(1);
+    expect(page.ledger()).toBe(serializeLedger(CODE, first174()));
+    // `2` is Green: the full suite over the offer, ledger cleared to refill — one press more,
+    // the handler still on the results page (the fake reload does not reload).
+    page.press(50);
+    expect(page.state()).toMatchObject({ running: true, cursor: 0, skippedAtStart: 0 });
+    expect(page.reload).toHaveBeenCalledTimes(2);
+    expect(page.ledger()).toBe(serializeLedger(CODE, []));
+  });
+
+  it('a mid-scenario 2 starts nothing — the full-suite alias lives only on the results page', () => {
+    const running = serializeRunState(createRunState('rb-x', 1, 1, TV_BENCH_TIMING));
+    const page = fakePage('', running);
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    page.press(50);
+    expect(page.reload).not.toHaveBeenCalled();
+    expect(page.state()).toMatchObject({ session: 'rb-x', running: true, cursor: 0 });
+  });
+
   it('a foreign game code never offers, and Enter takes the full run over it', async () => {
     const page = fakePage('', completeRun(), ASSETS, {
       gameCodeHash: CODE,

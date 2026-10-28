@@ -261,11 +261,16 @@ describe('bench query string', () => {
 });
 
 describe('bench remote and host', () => {
-  it('maps Enter, every host’s Back, the Red key and the arrows that page the results', () => {
+  it('maps Enter, every host’s Back, Red and Green with their number aliases and the paging arrows', () => {
     expect(benchKeyOf(13)).toBe('enter');
     for (const code of [10009, 461, 27, 8]) expect(benchKeyOf(code)).toBe('back');
     expect(benchKeyOf(403)).toBe('red');
     expect(benchKeyOf(82)).toBe('red');
+    expect(benchKeyOf(49)).toBe('red');
+    expect(benchKeyOf(404)).toBe('full');
+    expect(benchKeyOf(70)).toBe('full');
+    expect(benchKeyOf(50)).toBe('full');
+    expect(benchKeyOf(51)).toBeNull();
     expect(benchKeyOf(37)).toBe('prev');
     expect(benchKeyOf(38)).toBe('prev');
     expect(benchKeyOf(39)).toBe('next');
@@ -293,6 +298,8 @@ describe('bench remote and host', () => {
       'ColorF2Yellow',
       'ColorF3Blue',
       'MediaPlayPause',
+      '1',
+      '2',
     ]);
     host.exit();
     expect(exit).toHaveBeenCalledTimes(1);

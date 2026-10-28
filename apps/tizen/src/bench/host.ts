@@ -4,10 +4,13 @@
  *
  * One bench bundle serves both TVs (the webOS stub builds the same entry) and a desktop browser,
  * so the keys of all three are accepted everywhere: **Enter** (13) starts, **Back** (Tizen 10009,
- * webOS 461, Escape, Backspace) exits, **Red** (403 on both TVs, or `R`) re-runs a scenario,
- * **Green** (404 on Tizen, or `F`) runs the full suite over a same-game-code skip offer (plan v20x
- * BENCSKIP), **Left / Right** (and Up / Down — 37–40, no registration needed) page the results. On
- * Tizen the Red key must be registered (`tv.inputdevice`); the bench registers the colour keys.
+ * webOS 461, Escape, Backspace) exits, **Red** (403 on both TVs, `R`, or the number key `1`)
+ * re-runs a scenario, **Green** (404 on Tizen, `F`, or the number key `2`) runs the full suite
+ * over a same-game-code skip offer (plan v20x BENCSKIP; on a remote without colour buttons `2`
+ * is the landing), **Left / Right** (and Up / Down — 37–40, no registration needed) page the
+ * results. On Tizen the Red key must be registered (`tv.inputdevice`) — as must the number keys
+ * (only arrows, OK and Back arrive otherwise, input-probe §5), and they arrive as their keyboard
+ * codes 49 / 50 on every host; the bench registers the colour and the two number keys.
  *
  * @module
  */
@@ -22,14 +25,15 @@ export const BENCH_KEY_CODES: Readonly<Record<BenchKey, readonly number[]>> = Ob
   enter: Object.freeze([13]),
   /** Tizen Back, webOS Back, Escape, Backspace. */
   back: Object.freeze([10009, 461, 27, 8]),
-  /** The red colour key (Tizen `ColorF0Red`, webOS), or `R` on a keyboard. */
-  red: Object.freeze([403, 82]),
+  /** The red colour key (Tizen `ColorF0Red`, webOS), `R` on a keyboard, or the number key `1`. */
+  red: Object.freeze([403, 82, 49]),
   /**
-   * The green colour key (Tizen `ColorF1Green` — registered, it arrives), or `F` on a keyboard:
-   * the full suite where the ledger would otherwise offer the new rows only (plan v20x BENCSKIP;
-   * the amendment's "Start" has no code on either TV's registered set — Green/F is the landing).
+   * The green colour key (Tizen `ColorF1Green` — registered, it arrives), `F` on a keyboard, or
+   * the number key `2`: the full suite where the ledger would otherwise offer the new rows only
+   * (plan v20x BENCSKIP; the amendment's "Start" has no code on either TV's registered set —
+   * Green/F/`2` is the landing, honoured only on the results page, exactly as Green was).
    */
-  full: Object.freeze([404, 70]),
+  full: Object.freeze([404, 70, 50]),
   /** Left or Up: the previous results page. */
   prev: Object.freeze([37, 38]),
   /** Right or Down: the next results page. */
@@ -73,8 +77,12 @@ interface WebosLike {
 
 /**
  * The remote keys every bench page registers: the Red re-run key, the other three colour keys and
- * MediaPlayPause — the S3 input page (`./inputpage.ts`) watches their delivery (the P0-2 colour-key
- * question), and registration is what makes them arrive at the app at all.
+ * MediaPlayPause — registration is what makes them arrive at the app at all (input-probe §5:
+ * only arrows, OK and Back come unregistered) — plus the number keys `1` and `2`, the aliases of
+ * Red and Green for a remote without colour buttons (named as in the game's own
+ * `DEBUG_REMOTE_KEYS`; `registerRemoteKeys` skips a name the device does not carry). Yellow and
+ * Blue stay registered as they were since the P0-2 colour-key delivery question — they carry no
+ * bench action; Red re-runs and Green takes the full-suite offer.
  */
 export const BENCH_REGISTERED_KEYS: readonly string[] = Object.freeze([
   'ColorF0Red',
@@ -82,6 +90,8 @@ export const BENCH_REGISTERED_KEYS: readonly string[] = Object.freeze([
   'ColorF2Yellow',
   'ColorF3Blue',
   'MediaPlayPause',
+  '1',
+  '2',
 ]);
 
 /**
