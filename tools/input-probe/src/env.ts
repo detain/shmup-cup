@@ -30,15 +30,23 @@ function safe<T>(errors: string[], label: string, fn: () => T, fallback: T): T {
 }
 
 /**
- * Creates a throw-away 1×1 canvas context to read WebGL limits and the (unmasked, when allowed) GPU strings,
- * then releases it via `WEBGL_lose_context` so the probe does not hold a GPU context.
+ * Creates a throw-away 1×1 canvas context to read WebGL limits, the (unmasked, when allowed) GPU strings
+ * and the supported-extension list, then releases it via `WEBGL_lose_context` so the probe does not hold
+ * a GPU context.
  *
  * @param kind - `'webgl'` (WebGL 1) or `'webgl2'`.
  * @param errors - error collector.
  * @returns the context facts (`supported: false` when no context could be created).
  */
 function probeWebGL(kind: 'webgl' | 'webgl2', errors: string[]): WebGLInfo {
-  const none: WebGLInfo = { supported: false, maxTextureSize: null, renderer: null, vendor: null, version: null };
+  const none: WebGLInfo = {
+    supported: false,
+    maxTextureSize: null,
+    renderer: null,
+    vendor: null,
+    version: null,
+    extensions: null,
+  };
   return safe(
     errors,
     kind,
@@ -55,6 +63,10 @@ function probeWebGL(kind: 'webgl' | 'webgl2', errors: string[]): WebGLInfo {
         renderer: String(gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER)),
         vendor: String(gl.getParameter(dbg ? dbg.UNMASKED_VENDOR_WEBGL : gl.VENDOR)),
         version: String(gl.getParameter(gl.VERSION)),
+        // Its own guard (tizen_optimize P1-8): the spec returns null on a lost context and any engine
+        // could deny the call — neither may cost the facts above or skip the context release below.
+        // The answers to the ETC/ASTC question live in this list.
+        extensions: safe(errors, kind + '.getSupportedExtensions', () => gl.getSupportedExtensions(), null),
       };
       const lose = gl.getExtension('WEBGL_lose_context');
       if (lose) lose.loseContext();

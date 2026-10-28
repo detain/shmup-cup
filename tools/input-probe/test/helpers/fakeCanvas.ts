@@ -39,6 +39,10 @@ export interface FakeWebGLInfo {
   vendor: string;
   version: string;
   debugInfo: boolean;
+  /** What `getSupportedExtensions()` returns — default `[]` (a healthy context); `null` simulates the spec's lost-context answer. */
+  extensions?: string[] | null;
+  /** When true, `getSupportedExtensions()` throws instead of answering (an engine that denies the query). */
+  extensionsThrows?: boolean;
 }
 
 /** A WebGL context stand-in answering the few queries `env.ts` makes. */
@@ -50,6 +54,10 @@ export function createFakeWebGL(info: FakeWebGLInfo): { gl: unknown; lost: () =>
     RENDERER: P.RENDERER,
     VENDOR: P.VENDOR,
     VERSION: P.VERSION,
+    getSupportedExtensions(): string[] | null {
+      if (info.extensionsThrows) throw new Error('getSupportedExtensions denied');
+      return info.extensions === undefined ? [] : info.extensions;
+    },
     getExtension(name: string): unknown {
       if (name === 'WEBGL_debug_renderer_info') return info.debugInfo ? { UNMASKED_RENDERER_WEBGL: P.UR, UNMASKED_VENDOR_WEBGL: P.UV } : null;
       if (name === 'WEBGL_lose_context') return { loseContext: () => void (lost = true) };

@@ -7,10 +7,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Arena, ARENA_HEIGHT, ARENA_WIDTH, LANE_HEIGHT } from '../src/arena';
 import { collectEnv } from '../src/env';
+import { envLines } from '../src/envInfo';
 import { FrameStats } from '../src/frameStats';
 import { describeError, exitApp, getSupportedKeys, hasTizen, registerAllKeys } from '../src/platform';
+import { ReportQueue } from '../src/report';
 import { createLanes } from '../src/ships';
 import { fitStage, ProbeUI, STAGE_HEIGHT, STAGE_WIDTH, type PanelId } from '../src/ui';
+import { validatePayload } from '../server/log-server.mjs';
 import { createFakeWebGL, createRecordingContext2D } from './helpers/fakeCanvas';
 
 afterEach(() => {
@@ -125,12 +128,23 @@ interface EnvStubOptions {
   webapis?: unknown;
   audio?: 'ok' | 'throws' | 'none';
   webgl?: 'ok' | 'throws' | 'none';
+  /** What the WebGL1 fake's `getSupportedExtensions()` does — `'throws'` denies the query, `null` answers like a lost context. */
+  webglExtensions?: string[] | null | 'throws';
   globalThisPolyfilled?: boolean;
 }
 
 function stubBrowser(o: EnvStubOptions = {}): { closed: () => boolean; glLost: () => boolean } {
   let closed = false;
-  const { gl, lost } = createFakeWebGL({ maxTextureSize: 8192, renderer: 'Mali-G52 MC2', vendor: 'ARM', version: 'WebGL 1.0', debugInfo: true });
+  const extOpt = o.webglExtensions;
+  const { gl, lost } = createFakeWebGL({
+    maxTextureSize: 8192,
+    renderer: 'Mali-G52 MC2',
+    vendor: 'ARM',
+    version: 'WebGL 1.0',
+    debugInfo: true,
+    extensions: extOpt === 'throws' || extOpt === undefined ? undefined : extOpt,
+    extensionsThrows: extOpt === 'throws',
+  });
   class FakeAudioContext {
     sampleRate = 48000;
     baseLatency = 0.012;
@@ -268,6 +282,63 @@ describe('collectEnv', () => {
     expect(e.tizenPlatformVersion).toBe('5.5');
     expect(e.firmware).toBeNull(); // '' → null
     expect(e.modelCode).toBeNull(); // method missing
+  });
+});
+
+// The tizen_optimize P1-8 slice: the env record carries the full `getSupportedExtensions()` list,
+// every failure mode is honest, and neither the new field nor its absence breaks the wire.
+describe('collectEnv WebGL extensions (tizen_optimize P1-8)', () => {
+  const EXTS = ['EXT_blend_minmax', 'WEBGL_compressed_texture_etc', 'WEBGL_debug_renderer_info', 'WEBGL_lose_context'];
+
+  it('records the full getSupportedExtensions() list; an unsupported context records null', () => {
+    const b = stubBrowser({ webglExtensions: EXTS });
+    const e = collectEnv();
+    expect(e.webgl1.extensions).toEqual(EXTS);
+    expect(e.webgl2).toMatchObject({ supported: false, extensions: null }); // no context — nothing captured
+    expect(e.errors).toEqual([]);
+    expect(b.glLost()).toBe(true);
+  });
+
+  it('the spec null (lost context) is recorded as null, facts intact, no error entry', () => {
+    stubBrowser({ webglExtensions: null });
+    const e = collectEnv();
+    expect(e.webgl1).toMatchObject({ supported: true, maxTextureSize: 8192, extensions: null });
+    expect(e.errors).toEqual([]);
+  });
+
+  it('a throwing getSupportedExtensions() is an error entry — not a lost probe, not a skipped release', () => {
+    const b = stubBrowser({ webglExtensions: 'throws' });
+    const e = collectEnv();
+    expect(e.webgl1).toMatchObject({ supported: true, maxTextureSize: 8192, renderer: 'Mali-G52 MC2', extensions: null });
+    expect(e.errors).toEqual(['webgl.getSupportedExtensions: getSupportedExtensions denied']);
+    expect(b.glLost()).toBe(true); // the guarded throw must not skip WEBGL_lose_context
+  });
+
+  it('the panel line shows the captured count and omits it when the list was never captured', () => {
+    stubBrowser({ webglExtensions: EXTS });
+    const line = envLines(collectEnv()).find((l) => l.startsWith('WebGL1:'));
+    expect(line).toBe('WebGL1: yes  MAX_TEXTURE_SIZE=8192  WebGL 1.0  ext=4');
+    const olderShape = { supported: true, maxTextureSize: 8192, renderer: 'x', vendor: 'y', version: 'WebGL 1.0' };
+    expect(envLines({ ...collectEnv(), webgl1: olderShape }).find((l) => l.startsWith('WebGL1:'))).toBe(
+      'WebGL1: yes  MAX_TEXTURE_SIZE=8192  WebGL 1.0',
+    );
+  });
+
+  it('payloads validate with the field, without it (old captures) and with null — the wire never breaks', () => {
+    const toWire = (env: unknown, session: string) => JSON.parse(JSON.stringify(new ReportQueue(session).build(env, {}, {}, 1)));
+    // (a) an old capture: a webgl1 exactly as the committed 2026-09-15 sessions hold it — no extensions key.
+    const oldShape = { supported: true, maxTextureSize: 8192, renderer: 'Mali-G51', vendor: 'ARM', version: 'WebGL 1.0' };
+    const oldPayload = toWire({ webgl1: oldShape, webgl2: oldShape }, 'ip-old');
+    expect(oldPayload.env.webgl1).not.toHaveProperty('extensions');
+    expect(validatePayload(oldPayload)).toBeNull();
+    // (b) a new capture: the list rides through serialization.
+    stubBrowser({ webglExtensions: EXTS });
+    const newPayload = toWire(collectEnv(), 'ip-new');
+    expect(newPayload.env.webgl1.extensions).toEqual(EXTS);
+    expect(validatePayload(newPayload)).toBeNull();
+    // (c) the honest null.
+    stubBrowser({ webglExtensions: null });
+    expect(validatePayload(toWire(collectEnv(), 'ip-null'))).toBeNull();
   });
 });
 

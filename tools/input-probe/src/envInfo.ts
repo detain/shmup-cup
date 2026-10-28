@@ -18,6 +18,16 @@ export interface WebGLInfo {
   vendor: string | null;
   /** `VERSION` string, e.g. `"WebGL 1.0 (OpenGL ES 2.0 Chromium)"`. */
   version: string | null;
+  /**
+   * The full `getSupportedExtensions()` string list, or null when the context is unsupported or the
+   * query failed (the spec returns null on a lost context; a throw is recorded in `errors` too).
+   *
+   * @remarks
+   * Additive and optional on purpose (tizen_optimize P1-8): captures made by older probe builds —
+   * every committed `ip-…` session included — simply carry no key, and the log server validates
+   * either shape. Readers must treat absence as *not captured*, never as *no extensions*.
+   */
+  extensions?: string[] | null;
 }
 
 /** Everything the probe learns about its runtime environment (spec question 7). */
@@ -134,11 +144,14 @@ function orDash(v: string | number | null): string {
  *
  * @param label - `"WebGL1"` or `"WebGL2"`.
  * @param g - the context facts.
- * @returns e.g. `WebGL1: yes  MAX_TEXTURE_SIZE=8192  WebGL 1.0 (…)` or `WebGL2: no`.
+ * @returns e.g. `WebGL1: yes  MAX_TEXTURE_SIZE=8192  WebGL 1.0 (…)  ext=27` or `WebGL2: no`;
+ *   the `ext=` count rides only when the extension list was captured (P1-8), so lines from
+ *   older-shape facts read exactly as before.
  */
 function glLine(label: string, g: WebGLInfo): string {
   if (!g.supported) return label + ': no';
-  return label + ': yes  MAX_TEXTURE_SIZE=' + orDash(g.maxTextureSize) + '  ' + orDash(g.version);
+  const ext = Array.isArray(g.extensions) ? '  ext=' + g.extensions.length : '';
+  return label + ': yes  MAX_TEXTURE_SIZE=' + orDash(g.maxTextureSize) + '  ' + orDash(g.version) + ext;
 }
 
 /**

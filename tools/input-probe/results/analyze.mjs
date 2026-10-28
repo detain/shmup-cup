@@ -67,6 +67,23 @@ out.push(
 const gl = (g) => (g?.supported ? `${g.version} · ${g.renderer} (${g.vendor}) · MAX_TEXTURE_SIZE ${g.maxTextureSize}` : 'no');
 out.push(`WebGL1: ${gl(env.webgl1)}`);
 out.push(`WebGL2: ${gl(env.webgl2)}`);
+// The `getSupportedExtensions()` list (tizen_optimize P1-8). The field is additive: a session captured by an
+// older probe build carries no key at all, and that prints as *not captured* — never as an empty extension set.
+const capturedExtensions = (g) => (g?.supported && Array.isArray(g.extensions) ? g.extensions : null);
+const capturedLists = [];
+for (const [label, g] of [['WebGL1', env.webgl1], ['WebGL2', env.webgl2]]) {
+  if (!g?.supported) continue;
+  const list = capturedExtensions(g);
+  if (list === null) out.push(`${label} extensions: not captured (probe build predates tizen_optimize P1-8)`);
+  else {
+    capturedLists.push(list);
+    out.push(`${label} extensions (${list.length}): ${[...list].sort().join(' ') || 'none'}`);
+  }
+}
+if (capturedLists.length > 0) {
+  const compressed = [...new Set([].concat(...capturedLists).filter((n) => /^WEBGL_compressed_texture_/i.test(n)))].sort();
+  out.push(`compressed-texture extensions: ${compressed.length > 0 ? compressed.join(' ') : 'none reported'}`);
+}
 out.push(
   `WASM ${env.webAssembly} · AudioWorklet ${env.audioWorklet} · OffscreenCanvas ${env.offscreenCanvas} · Gamepad API ${env.gamepadApi} · native globalThis ${env.nativeGlobalThis}`,
 );
