@@ -590,6 +590,7 @@ describe('core/save SaveStore (edge)', () => {
         aspect: 'normal',
         output: 'auto',
         renderer: 'auto',
+        video: true,
         language: 'en',
       },
     });
@@ -609,6 +610,7 @@ describe('core/save SaveStore (edge)', () => {
         aspect: 'normal',
         output: 'auto',
         renderer: 'auto',
+        video: true,
         language: 'en',
       },
     });

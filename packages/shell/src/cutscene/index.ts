@@ -157,18 +157,19 @@ const CLIP_WINDOW_TICKS = 300;
 export const VIDEO_SETTING_KEY = 'shmup.video';
 
 /**
- * The shipped default, decided by the TV render bench's video-decode rows (owner ruling
- * 2026-10-27 'Vs', lane v20x-VID, `v20x-VID-report.md`). Measured headless (SwiftShader) on
- * 2026-10-27: the `640x360-busy-video` row took **42.8 ms** render p95 and gave two ticks to
- * **100 %** of its frames against the plain row's 1.8 ms / 7 % — the YUV→RGB readback of the
- * per-frame `texImage2D` dominates a software pipeline. That is not the M7's number (its H.264
- * decode and video-texture path are hardware, unmeasured until the owner runs `pnpm bench:tv`),
- * but the standing law is that the pacing metric failing ships the feature **disabled**: a clip
- * must never cost the game its frame budget on a machine nobody measured. Players opt in (the
- * stored `'on'`, `?video=`, or the host), the TV flips once the M7 rows prove ≤ ~2 pts.
- * `SHMUP_NO_VIDEO=1`, the page global and `?novid=1` switch it off over any of those.
+ * The shipped default. It rode **off** while the TV render bench's video-decode rows were
+ * pending: measured headless (SwiftShader, 2026-10-27, owner ruling 'Vs', lane v20x-VID,
+ * `v20x-VID-report.md`) the `640x360-busy-video` row took **42.8 ms** render p95 and gave two
+ * ticks to **100 %** of its frames against the plain row's 1.8 ms / 7 % — the YUV→RGB readback
+ * of the per-frame `texImage2D` dominates a software pipeline, and the standing law was that an
+ * unmeasured pacing metric ships the feature disabled. The owner's M7 run settled it: a 190-row
+ * session on the hardware (analysis committed) shows the video path wins p95 at every size, and
+ * on **2026-10-28** the owner ruled all three enablements — default ON. The DISPLAY page's
+ * VIDEO row is the player's switch ({@link storeVideoSetting}); a stored 'off', the host
+ * option, `SHMUP_NO_VIDEO=1`, the page global and `?novid=1` still switch it off over the
+ * default, and `?video=<id>` forces one clip on for a run.
  */
-export const VIDEO_DEFAULT_ON = false;
+export const VIDEO_DEFAULT_ON = true;
 
 /** What {@link resolveVideoSetting} may consult (all optional so a bare fake window passes). */
 export interface VideoSettingHost {
@@ -220,8 +221,13 @@ export function videoProbeFromSearch(search: string): string | null {
 export interface VideoWindowLike {
   /** The page location (`search` only). */
   readonly location?: { readonly search?: string } | undefined;
-  /** The choice store (a denied access throws — caught, and counts as no stored choice). */
-  readonly localStorage?: { getItem(key: string): string | null } | undefined;
+  /** The choice store (a denied access throws — caught; reads null, and writes do nothing). */
+  readonly localStorage?:
+    | {
+        getItem(key: string): string | null;
+        setItem?(key: string, value: string): void;
+      }
+    | undefined;
   /** The page global `SHMUP_NO_VIDEO` (the harness / app kill switch). */
   readonly SHMUP_NO_VIDEO?: unknown;
 }
@@ -247,6 +253,23 @@ export function videoSettingFromWindow(win: VideoWindowLike, override?: boolean)
     search,
     storedSetting: stored,
   });
+}
+
+/**
+ * Writes the player's DISPLAY-page VIDEO choice into the store {@link videoSettingFromWindow}
+ * reads — the row's event handler (a cold path) calls this, and the next boot resolves it.
+ * A missing or denied store (private mode, a bare fake window) is tolerated exactly like the
+ * read's denial: the choice simply does not persist.
+ *
+ * @param win - The page window (or a fake shaped like {@link VideoWindowLike}).
+ * @param on - The choice: on (stored `'on'`) or off (stored `'off'`).
+ */
+export function storeVideoSetting(win: VideoWindowLike, on: boolean): void {
+  try {
+    win.localStorage?.setItem?.(VIDEO_SETTING_KEY, on ? 'on' : 'off');
+  } catch (_error) {
+    // A denied write is no write — the read already treats a denied store as no choice.
+  }
 }
 
 /** The flow state the director reads (the structural subset of core's `SceneFlow`). */

@@ -86,12 +86,12 @@ describe('core/save version 3 (R2-01)', () => {
   it('the fixture is a version-2 document in the layout v1.0.0 writes', () => {
     expect(V2_DOC.version).toBe(2);
     // The serialiser is v1.0.0's apart from `legacyScores` (absent here) and — since R6-04 — the
-    // display group's two boot knobs, which a version-2 document never carried: take them out of
-    // the new write and the fixture's own bytes stand.
-    const asV1Wrote = serializeSave({ ...sanitizeSave(V2_DOC), version: 2 }).replace(
-      '"output":"auto","renderer":"auto",',
-      '',
-    );
+    // display group's boot knobs (`output`, `renderer`, and since L-VIDIO1 `video`), which a
+    // version-2 document never carried: take them out of the new write and the fixture's own
+    // bytes stand.
+    const asV1Wrote = serializeSave({ ...sanitizeSave(V2_DOC), version: 2 })
+      .replace('"output":"auto","renderer":"auto",', '')
+      .replace('"video":true,', '');
     expect(asV1Wrote).toBe(JSON.stringify(V2_DOC));
     // It holds the three table kinds, an assisted row and unlocks.
     expect(Object.keys(V2_DOC.hiScores)).toEqual([
@@ -114,6 +114,7 @@ describe('core/save version 3 (R2-01)', () => {
         ...(V2_DOC.options['display'] as Record<string, unknown>),
         output: 'auto',
         renderer: 'auto',
+        video: true,
       },
     });
     expect(loaded.data.options.display).toMatchObject({

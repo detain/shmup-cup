@@ -360,6 +360,7 @@ describe('core/scenes options: saving', () => {
       aspect: 'normal',
       output: 'auto',
       renderer: 'auto',
+      video: true,
       language: 'en',
     });
     s.hold(0, 3);
@@ -553,6 +554,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
     ]);
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['STRETCH', 'OFF', 'REDUCED', 'ON']));
     s.press(Action.Down); // BOSS HP (M2-09), left OFF
+    s.press(Action.Down); // VIDEO (v20.x enablement), left ON
     s.press(Action.Down); // LANGUAGE (M3-03), left ENGLISH (R6-04: CRT / ASPECT live on GRAPHICS)
     s.press(Action.Down);
     expect(o.menu.focus).toBe(DisplayItem.Back);
@@ -568,6 +570,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       aspect: 'normal',
       output: 'auto',
       renderer: 'auto',
+      video: true,
       language: 'en',
     });
     await settle();

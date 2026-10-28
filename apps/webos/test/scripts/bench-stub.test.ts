@@ -11,7 +11,14 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { POLYFILL_BANNER, TV_BENCH_MARKER } from '../../../tizen/scripts/check-bundle.mjs';
+import {
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
+  POLYFILL_BANNER,
+  STILLS_LEDGER_FILE,
+  TV_BENCH_MARKER,
+  VIDEO_LEDGER_FILE,
+} from '../../../tizen/scripts/check-bundle.mjs';
 import {
   BENCH_APPINFO_ID,
   BENCH_APPINFO_TITLE,
@@ -109,6 +116,15 @@ describe('webos bench stub (R0-02)', () => {
       fonts: {},
     };
     put('assets/atlas/main.json', JSON.stringify(manifest));
+    // The game id makes rule 11 apply (v20x-VIDIO1) — the game build carries its era media.
+    const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+    for (const file of clips) put(`assets/video/${file}`, 'x');
+    put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+    put('assets/video/LICENSES-videos.md', '# videos');
+    const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+    for (const file of stills) put(`assets/stills/${file}`, 'x');
+    put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+    put('assets/stills/LICENSES-stills.md', '# stills');
     expect(checkWebosBundle(dir).problems).toEqual([]);
     put('app.js', benchApp);
     expect(checkWebosBundle(dir).problems).toEqual([

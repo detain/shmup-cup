@@ -110,11 +110,12 @@ Five pages of settings, all saved, all reachable with the remote: volumes; **CON
 always / toggle / hold, fire rate, SOCD, remote debounce, **rebinding for keys and pads with
 conflict detection**, a live input test and pad rumble; **DISPLAY** — four bullet palettes, **three
 of them colour-blind sets** with shape-coded centres, scale mode, screen shake off, **reduced
-flashing**, a visible hitbox, the boss HP bar and the text language; **GAME** — difficulty, lives,
-death penalty, Auto Power-Up, pickup magnet, a **one-button preset** that turns the whole game into
-"hold nothing, press nothing", and the assists; **GRAPHICS** — the canvas output and the renderer
-boot knobs, the CRT and scanline filters, and the ultra-wide and classic 4:3 windows with lit side
-panels; and **EXTRAS** — the 16-bit slowdown, graze points, the death bomb and the black-hole bomb.
+flashing**, a visible hitbox, the boss HP bar, cutscene video and the text language; **GAME** —
+difficulty, lives, death penalty, Auto Power-Up, pickup magnet, a **one-button preset** that turns
+the whole game into "hold nothing, press nothing", and the assists; **GRAPHICS** — the canvas
+output and the renderer boot knobs, the CRT and scanline filters, and the ultra-wide and classic
+4:3 windows with lit side panels; and **EXTRAS** — the 16-bit slowdown, graze points, the death
+bomb and the black-hole bomb.
 
 The game speaks **English, Español and ニホンゴ** — the Japanese in katakana, the way the arcade
 machines wrote it. (The Spanish and Japanese texts are placeholders that no native speaker has read

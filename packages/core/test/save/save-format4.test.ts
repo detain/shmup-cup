@@ -106,7 +106,8 @@ describe('core/save — format 4 (R6-04)', () => {
       stats: { gamesStarted: 0, gameOvers: 0, stagesCleared: 0 },
     });
     expect(text).toContain('"crtFilter":"off","aspect":"normal","output":"auto","renderer":"auto"');
-    expect(text).toContain('"renderer":"auto","language":"en"');
+    // L-VIDIO1: the video boot knob rides between `renderer` and `language` (default ON).
+    expect(text).toContain('"renderer":"auto","video":true,"language":"en"');
   });
 
   it('the new fields round-trip through storage', () => {

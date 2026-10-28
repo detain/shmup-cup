@@ -20,6 +20,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
+  STILLS_LEDGER_FILE,
+  VIDEO_LEDGER_FILE,
   checkTizenBundle,
   pngSize,
 } from '../../scripts/check-bundle.mjs';
@@ -80,6 +84,22 @@ function syncManifest(): void {
 }
 
 /**
+ * Writes the complete rule 11 set (v20x-VIDIO1) into the fixture — the era media ships with the
+ * game, so every budget boundary below is measured with it present (the exact `distBytes` rows
+ * need the set; the over-budget row tolerates its problems next to the budget's).
+ */
+function putEraMedia(): void {
+  const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+  for (const file of clips) put(`assets/video/${file}`, 'x');
+  put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+  put('assets/video/LICENSES-videos.md', '# videos');
+  const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+  for (const file of stills) put(`assets/stills/${file}`, 'x');
+  put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+  put('assets/stills/LICENSES-stills.md', '# stills');
+}
+
+/**
  * Bytes the fixture folder takes now.
  *
  * @returns The total of every file's size.
@@ -96,6 +116,7 @@ beforeEach(() => {
   put('icon.png', 'png');
   put('assets/atlas/main.png', png(256, 256));
   syncManifest();
+  putEraMedia();
 });
 
 afterEach(() => {

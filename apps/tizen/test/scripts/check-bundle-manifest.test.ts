@@ -15,7 +15,11 @@ import {
   ATLAS_MANIFEST_FILE,
   ATLAS_MANIFEST_VERSIONS,
   MAX_INLINED_FRAME_NAMES,
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
+  STILLS_LEDGER_FILE,
   TV_BENCH_MARKER,
+  VIDEO_LEDGER_FILE,
   checkAtlasManifest,
   checkTizenBundle,
 } from '../../scripts/check-bundle.mjs';
@@ -64,6 +68,21 @@ function put(name: string, contents: string | Uint8Array): void {
 const FRAMES = Array.from({ length: 24 }, (_, i) => `enemies/drone#${i}`);
 
 /**
+ * Writes the complete era media set (rule 11, v20x-VIDIO1) — without it every game fixture would
+ * carry the two ledger-missing problems on top of the ones rule 10 tests.
+ */
+function putEraMedia(): void {
+  const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+  for (const file of clips) put(`assets/video/${file}`, 'x');
+  put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+  put('assets/video/LICENSES-videos.md', '# videos');
+  const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+  for (const file of stills) put(`assets/stills/${file}`, 'x');
+  put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+  put('assets/stills/LICENSES-stills.md', '# stills');
+}
+
+/**
  * A manifest document.
  *
  * @param pages - Its pages.
@@ -104,6 +123,7 @@ beforeEach(() => {
       { file: 'main-1.png', w: 512, h: 256, group: 'zone-a' },
     ]),
   );
+  putEraMedia();
 });
 
 afterEach(() => {

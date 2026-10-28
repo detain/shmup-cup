@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -16,11 +16,14 @@ import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
   MAX_INLINED_FRAME_NAMES,
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
+  STILLS_LEDGER_FILE,
   TV_BENCH_MARKER,
+  VIDEO_LEDGER_FILE,
 } from '../../../tizen/scripts/check-bundle.mjs';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../scripts/check-bundle.mjs';
 import { BENCH_APPINFO_ID, benchAppInfo, validateAppInfo } from '../../scripts/appinfo.mjs';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /** The committed manifest, reused as the fixture's. */
@@ -84,6 +87,35 @@ function goodBundle(): void {
   put('largeIcon.png', PNG);
   put('assets/atlas/main.png', PNG);
   put('assets/atlas/main.json', manifestJson());
+  // Rule 11 (v20x-VIDIO1, shared with Tizen): the era's media ships with the game.
+  const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+  for (const file of clips) put(`assets/video/${file}`, 'x');
+  put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+  put('assets/video/LICENSES-videos.md', '# videos');
+  const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+  for (const file of stills) put(`assets/stills/${file}`, 'x');
+  put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+  put('assets/stills/LICENSES-stills.md', '# stills');
+}
+
+/**
+ * The rule 11 media paths of {@link goodBundle}, dist-relative (for the exact file lists).
+ *
+ * @returns The paths.
+ */
+function eraMediaFiles(): string[] {
+  const clips: string[] = [];
+  for (let i = 0; i < MEDIA_VIDEO_CLIP_COUNT; i++) clips.push(`assets/video/clip-${i}.mp4`);
+  const stills: string[] = [];
+  for (let i = 0; i < MEDIA_STILL_COUNT; i++) stills.push(`assets/stills/still-${i}.png`);
+  return [
+    'assets/stills/LICENSES-stills.md',
+    ...stills,
+    STILLS_LEDGER_FILE,
+    'assets/video/LICENSES-videos.md',
+    ...clips,
+    VIDEO_LEDGER_FILE,
+  ];
 }
 
 beforeEach(() => {
@@ -100,7 +132,12 @@ describe('webos check-bundle (M3-03)', () => {
     const result = checkWebosBundle(dir);
     expect(result.problems).toEqual([]);
     expect(result.files).toEqual(
-      [...WEBOS_APP_FILES, 'assets/atlas/main.json', 'assets/atlas/main.png'].sort(),
+      [
+        ...WEBOS_APP_FILES,
+        'assets/atlas/main.json',
+        'assets/atlas/main.png',
+        ...eraMediaFiles(),
+      ].sort(),
     );
     expect(result.gzipBytes).toBeGreaterThan(0);
   });
@@ -185,6 +222,24 @@ describe('webos check-bundle (M3-03)', () => {
     put('appinfo.json', benchAppInfo(APPINFO));
     put('app.js', `${BANNER_PAIR}var m = '${TV_BENCH_MARKER}';\n`);
     expect(BENCH_APPINFO_ID).not.toBe((JSON.parse(APPINFO) as { id: string }).id);
+    expect(checkWebosBundle(dir).problems).toEqual([]);
+  });
+
+  it('rule 11 (v20x-VIDIO1): needs the era media, shared with the Tizen check', () => {
+    goodBundle();
+    rmSync(join(dir, 'assets', 'video'), { recursive: true, force: true });
+    const { problems } = checkWebosBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/^assets\/video\/video-ledger\.json is missing/);
+    expect(problems[0]).toContain('ffmpeg');
+  });
+
+  it('rule 11 (v20x-VIDIO1): exempts the render bench', () => {
+    goodBundle();
+    put('appinfo.json', benchAppInfo(APPINFO));
+    put('app.js', `${BANNER_PAIR}var m = '${TV_BENCH_MARKER}';\n`);
+    rmSync(join(dir, 'assets', 'video'), { recursive: true, force: true });
+    rmSync(join(dir, 'assets', 'stills'), { recursive: true, force: true });
     expect(checkWebosBundle(dir).problems).toEqual([]);
   });
 });

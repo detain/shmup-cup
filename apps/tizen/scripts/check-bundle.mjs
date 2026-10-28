@@ -29,6 +29,16 @@
  *     {@link MAX_INLINED_FRAME_NAMES} of its frames — the inlined manifest named every one
  *     (~1,400), so more means the manifest was inlined by accident ({@link checkAtlasManifest};
  *     the bench widget, which inlines its own density atlases, is exempt).
+ * 11. The era's media ships with the game (the v20x-VIDIO1 enablement): `dist/assets/video/`
+ *     carries `video-ledger.json` listing {@link MEDIA_VIDEO_CLIP_COUNT} clips with every named
+ *     clip present, plus `LICENSES-videos.md`, and `dist/assets/stills/` the same shape with
+ *     {@link MEDIA_STILL_COUNT} stills and `LICENSES-stills.md`. Presence counts only, never
+ *     per-file digests (the H.264 encoder is not byte-deterministic across builds). Before this
+ *     rule a build box without ffmpeg produced a silently video-less dist (the encode kit
+ *     loud-skips with exit 0 and `assets/generated/` is git-ignored — that was the hole). The
+ *     bench widget is exempt (rule 9's family); `SHMUP_NO_VIDEO=1` / `SHMUP_NO_STILLS=1` skip
+ *     their half — the baked-off shape the Vite plugins ship under the same envs
+ *     ({@link checkEraMedia}).
  *
  * Exits non-zero with a readable report on failure. Checks `apps/tizen/dist` by default, or the
  * folder given as the first argument (`node scripts/check-bundle.mjs dist-bench` — `build:bench`).
@@ -39,7 +49,9 @@
  * {@link MATCH_ALL_BANNER},
  * {@link APP_JS_GZIP_BUDGET}, {@link ATLAS_PAGE_MAX_SIZE}, {@link DIST_BUDGET}, {@link pngSize},
  * {@link TV_BENCH_MARKER}, {@link applicationIdOf}, {@link checkAtlasManifest},
- * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES}.
+ * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES},
+ * {@link checkEraMedia}, {@link VIDEO_LEDGER_FILE}, {@link STILLS_LEDGER_FILE},
+ * {@link MEDIA_VIDEO_CLIP_COUNT}, {@link MEDIA_STILL_COUNT}, {@link bakedOffNote}.
  *
  * @module
  */
@@ -303,6 +315,148 @@ export function checkAtlasManifest(distDir, files, code) {
 }
 
 /**
+ * Rule 11 (the v20x-VIDIO1 enablement): where the clips' ledger ships, relative to `dist/`.
+ * The encode kit writes it (`scripts/assets/video-encode.mjs`) and the plugin emits it beside
+ * the clips (`vite.shared.ts` `shmupVideos`).
+ */
+export const VIDEO_LEDGER_FILE = 'assets/video/video-ledger.json';
+
+/** Rule 11: where the stills' ledger ships, relative to `dist/`. */
+export const STILLS_LEDGER_FILE = 'assets/stills/stills-ledger.json';
+
+/**
+ * Rule 11: the clips the era ships — pinned to the shell's `VIDEO_CLIPS` census by
+ * `apps/tizen/test/scripts/check-bundle.test.ts` (the count lives here so the check reads like
+ * the rule, and the test fails loud when the manifest grows without the rule).
+ */
+export const MEDIA_VIDEO_CLIP_COUNT = 15;
+
+/** Rule 11: the ending stills the era ships (pinned to `STILL_SURFACES` the same way). */
+export const MEDIA_STILL_COUNT = 5;
+
+/**
+ * One half of rule 11: the folder's ledger parses, names `expectedCount` files, every named
+ * file ships next to it, and the folder carries its AI-content disclosure.
+ *
+ * @param {string} distDir - The build output folder.
+ * @param {readonly string[]} files - Its files, relative and `/`-separated.
+ * @param {string} ledgerFile - The ledger's dist-relative path.
+ * @param {string} folder - The media folder, relative to `dist/` (no trailing slash).
+ * @param {string} listKey - The ledger's array key (`clips` / `stills`).
+ * @param {number} expectedCount - How many media files the era ships.
+ * @param {string} licencesFile - The disclosure file's name inside the folder.
+ * @param {string} why - What must ship, for the problem text.
+ * @returns {string[]} The problems (empty when the set is in order).
+ */
+function checkMediaSet(
+  distDir,
+  files,
+  ledgerFile,
+  folder,
+  listKey,
+  expectedCount,
+  licencesFile,
+  why,
+) {
+  if (!files.includes(ledgerFile)) {
+    return [`${ledgerFile} is missing — ${why}`];
+  }
+  /** @type {unknown} */
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(join(distDir, ledgerFile), 'utf8'));
+  } catch (error) {
+    return [`${ledgerFile} is not valid JSON: ${/** @type {Error} */ (error).message}`];
+  }
+  const record =
+    ledger !== null && typeof ledger === 'object'
+      ? /** @type {Record<string, unknown>} */ (ledger)
+      : {};
+  const rows = Array.isArray(record[listKey]) ? record[listKey] : null;
+  if (rows === null) {
+    return [`${ledgerFile} carries no \`${listKey}\` array — ${why}`];
+  }
+  /** @type {string[]} */
+  const problems = [];
+  if (rows.length !== expectedCount) {
+    problems.push(
+      `${ledgerFile} lists ${rows.length} ${listKey}; the era ships ${expectedCount} — ${why}`,
+    );
+  }
+  rows.forEach((/** @type {unknown} */ entry, /** @type {number} */ index) => {
+    const row =
+      entry !== null && typeof entry === 'object' ? /** @type {{ file?: unknown }} */ (entry) : {};
+    if (typeof row.file !== 'string') {
+      problems.push(`${ledgerFile} ${listKey} ${index} has no file name`);
+      return;
+    }
+    const path = `${folder}/${row.file}`;
+    if (!files.includes(path)) {
+      problems.push(`${path} is listed in ${ledgerFile} but missing — ${why}`);
+    }
+  });
+  if (!files.includes(`${folder}/${licencesFile}`)) {
+    problems.push(`${folder}/${licencesFile} is missing (the AI-content disclosure)`);
+  }
+  return problems;
+}
+
+/**
+ * Rule 11 (the v20x-VIDIO1 enablement): the era's media ships with the game — the 15 cutscene
+ * clips under `assets/video/` and the 5 ending stills under `assets/stills/`, each half by its
+ * kit ledger (row count + every named file present + the licences file).
+ *
+ * @remarks
+ * Presence-COUNT only, never per-file digests: the encode kit's H.264 output is not
+ * byte-deterministic across ffmpeg builds (the ledger's `sha256` rows belong to the machine
+ * that encoded them). The hole this closes: `scripts/assets/video-encode.mjs` loud-skips with
+ * exit 0 on a box without ffmpeg and `assets/generated/` is git-ignored, so a video-less `dist/`
+ * used to pass every earlier rule silently. `env.SHMUP_NO_VIDEO` / `env.SHMUP_NO_STILLS` = '1'
+ * skip their half — the intentional baked-off build the Vite plugins ship under the same envs
+ * (`vite.shared.ts`), disclosed on the OK line by {@link checkTizenBundle}'s entry point.
+ *
+ * @param {string} distDir - The build output folder.
+ * @param {readonly string[]} files - Its files, relative and `/`-separated.
+ * @param {Record<string, string | undefined>} [env] - The environment to read the opt-outs from
+ *   (default `process.env`).
+ * @returns {string[]} The problems (empty when both halves ship or are baked off).
+ */
+export function checkEraMedia(distDir, files, env = process.env) {
+  /** @type {string[]} */
+  const problems = [];
+  if (env.SHMUP_NO_VIDEO !== '1') {
+    problems.push(
+      ...checkMediaSet(
+        distDir,
+        files,
+        VIDEO_LEDGER_FILE,
+        'assets/video',
+        'clips',
+        MEDIA_VIDEO_CLIP_COUNT,
+        'LICENSES-videos.md',
+        `the era ships ${MEDIA_VIDEO_CLIP_COUNT} cutscene clips — a build box without ffmpeg ` +
+          'made a video-less bundle (rule 11; a bake needs SHMUP_NO_VIDEO=1)',
+      ),
+    );
+  }
+  if (env.SHMUP_NO_STILLS !== '1') {
+    problems.push(
+      ...checkMediaSet(
+        distDir,
+        files,
+        STILLS_LEDGER_FILE,
+        'assets/stills',
+        'stills',
+        MEDIA_STILL_COUNT,
+        'LICENSES-stills.md',
+        `the era ships ${MEDIA_STILL_COUNT} ending stills (rule 11; a bake needs SHMUP_NO_STILLS=1)`,
+      ),
+    );
+  }
+  return problems;
+}
+
+/**
  * Formats a byte count for reports.
  *
  * @param {number} bytes - Size in bytes.
@@ -470,6 +624,9 @@ export function checkTizenBundle(distDir) {
   // bench inlines its own density atlases).
   if (!bench) problems.push(...checkAtlasManifest(distDir, files, code));
 
+  // 11. The era's media ships with the game (the v20x-VIDIO1 enablement — the bench is exempt).
+  if (!bench) problems.push(...checkEraMedia(distDir, files));
+
   return { problems, files, code, gzipBytes, distBytes };
 }
 
@@ -488,8 +645,23 @@ function main() {
   console.log(
     `Tizen bundle OK: app.js ${kb(code.length)} (${kb(gzipBytes)} gzip of ${kb(APP_JS_GZIP_BUDGET)}), ` +
       `classic script, ES2018, ${files.length} files in ${relative(APP_DIR, target) || '.'}/ ` +
-      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
+      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})` +
+      bakedOffNote(),
   );
+}
+
+/**
+ * The rule 11 disclosure for a baked-off build: names the media halves the env opted out of, so
+ * an OK line never hides a deliberately video-less bundle (`vite.shared.ts`'s kill-switch envs).
+ *
+ * @returns {string} A suffix for the OK line ('' when nothing is baked off).
+ */
+export function bakedOffNote() {
+  /** @type {string[]} */
+  const off = [];
+  if (process.env.SHMUP_NO_VIDEO === '1') off.push('video');
+  if (process.env.SHMUP_NO_STILLS === '1') off.push('stills');
+  return off.length === 0 ? '' : ` [${off.join(' + ')} baked off by env — rule 11]`;
 }
 
 /**

@@ -20,11 +20,17 @@ import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
   MATCH_ALL_BANNER,
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
   POLYFILL_BANNER,
+  STILLS_LEDGER_FILE,
+  VIDEO_LEDGER_FILE,
   WIDGET_FILES,
+  checkEraMedia,
   checkTizenBundle,
   pngSize,
 } from '../../scripts/check-bundle.mjs';
+import { STILL_SURFACES, VIDEO_CLIPS } from '@shmup/shell';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
 const matchAllPolyfill = readFileSync(
@@ -85,6 +91,40 @@ function syncManifest(): void {
   put('assets/atlas/main.json', JSON.stringify(manifest));
 }
 
+/**
+ * Rule 11 (v20x-VIDIO1): the media files a complete era build carries under `assets/video/` and
+ * `assets/stills/`. The ids are synthetic — the rule compares ledger row COUNTS and file
+ * presence, never names or digests (the encoder is not byte-deterministic across ffmpeg builds).
+ *
+ * @returns The dist-relative paths.
+ */
+function eraMediaFiles(): string[] {
+  const clips: string[] = [];
+  for (let i = 0; i < MEDIA_VIDEO_CLIP_COUNT; i++) clips.push(`assets/video/clip-${i}.mp4`);
+  const stills: string[] = [];
+  for (let i = 0; i < MEDIA_STILL_COUNT; i++) stills.push(`assets/stills/still-${i}.png`);
+  return [
+    'assets/stills/LICENSES-stills.md',
+    ...stills,
+    STILLS_LEDGER_FILE,
+    'assets/video/LICENSES-videos.md',
+    ...clips,
+    VIDEO_LEDGER_FILE,
+  ];
+}
+
+/** Writes the complete rule 11 set (ledgers, licences, every media file) into the fixture. */
+function putEraMedia(): void {
+  const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+  for (const file of clips) put(`assets/video/${file}`, 'x');
+  put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+  put('assets/video/LICENSES-videos.md', '# videos');
+  const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+  for (const file of stills) put(`assets/stills/${file}`, 'x');
+  put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+  put('assets/stills/LICENSES-stills.md', '# stills');
+}
+
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'shmup-check-bundle-'));
   put('index.html', GOOD_HTML);
@@ -93,6 +133,7 @@ beforeEach(() => {
   put('icon.png', 'png');
   put('assets/atlas/main.png', PAGE);
   syncManifest();
+  putEraMedia();
 });
 
 afterEach(() => {
@@ -104,14 +145,17 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     put('app.js', `${GOOD_APP}\n(function () { var o = { ...{ a: 1 } }; void o; })();\n`);
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
-    expect(result.files.sort()).toEqual([
-      'app.js',
-      'assets/atlas/main.json',
-      'assets/atlas/main.png',
-      'config.xml',
-      'icon.png',
-      'index.html',
-    ]);
+    expect(result.files.sort()).toEqual(
+      [
+        'app.js',
+        'assets/atlas/main.json',
+        'assets/atlas/main.png',
+        'config.xml',
+        'icon.png',
+        'index.html',
+        ...eraMediaFiles(),
+      ].sort(),
+    );
     expect(result.code.startsWith(POLYFILL_BANNER)).toBe(true);
   });
 
@@ -120,15 +164,18 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     syncManifest();
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
-    expect(result.files.sort()).toEqual([
-      'app.js',
-      'assets/atlas/main-1.png',
-      'assets/atlas/main.json',
-      'assets/atlas/main.png',
-      'config.xml',
-      'icon.png',
-      'index.html',
-    ]);
+    expect(result.files.sort()).toEqual(
+      [
+        'app.js',
+        'assets/atlas/main-1.png',
+        'assets/atlas/main.json',
+        'assets/atlas/main.png',
+        'config.xml',
+        'icon.png',
+        'index.html',
+        ...eraMediaFiles(),
+      ].sort(),
+    );
   });
 
   it('rejects stray files outside dist/assets/ (they would end up in the .wgt)', () => {
@@ -332,5 +379,68 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(checkTizenBundle(missing).problems).toEqual([
       `${missing} does not exist — run vite build first`,
     ]);
+  });
+});
+
+describe('tizen/scripts/check-bundle rule 11 — the era media ships (v20x-VIDIO1)', () => {
+  it('pins the counted rows to the shell media manifests', () => {
+    expect(MEDIA_VIDEO_CLIP_COUNT).toBe(VIDEO_CLIPS.length);
+    expect(MEDIA_STILL_COUNT).toBe(STILL_SURFACES.length);
+  });
+
+  it('reports the video half missing loud — the ffmpeg hole (an emptied dist names the ledger)', () => {
+    rmSync(join(dir, 'assets', 'video'), { recursive: true, force: true });
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/^assets\/video\/video-ledger\.json is missing/);
+    expect(problems[0]).toContain('ffmpeg');
+  });
+
+  it('names a clip the ledger lists but the dist lost', () => {
+    unlinkSync(join(dir, 'assets', 'video', 'clip-7.mp4'));
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('assets/video/clip-7.mp4 is listed in');
+  });
+
+  it('rejects a ledger whose row count moved', () => {
+    const ledger = JSON.parse(readFileSync(join(dir, VIDEO_LEDGER_FILE), 'utf8')) as {
+      clips: unknown[];
+    };
+    ledger.clips.pop();
+    put(VIDEO_LEDGER_FILE, JSON.stringify(ledger));
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/lists 14 clips; the era ships 15/);
+  });
+
+  it('needs the AI-content disclosure beside the clips', () => {
+    unlinkSync(join(dir, 'assets', 'video', 'LICENSES-videos.md'));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'assets/video/LICENSES-videos.md is missing (the AI-content disclosure)',
+    ]);
+  });
+
+  it('reports the stills half missing', () => {
+    rmSync(join(dir, 'assets', 'stills'), { recursive: true, force: true });
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/^assets\/stills\/stills-ledger\.json is missing/);
+  });
+
+  it('names a still the ledger lists but the dist lost', () => {
+    unlinkSync(join(dir, 'assets', 'stills', 'still-2.png'));
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('assets/stills/still-2.png is listed in');
+  });
+
+  it('lets the baked-off build pass by env (the Vite plugins ship it under the same opt-outs)', () => {
+    rmSync(join(dir, 'assets', 'video'), { recursive: true, force: true });
+    rmSync(join(dir, 'assets', 'stills'), { recursive: true, force: true });
+    const { files } = checkTizenBundle(dir);
+    expect(checkEraMedia(dir, files, { SHMUP_NO_VIDEO: '1', SHMUP_NO_STILLS: '1' })).toEqual([]);
+    expect(checkEraMedia(dir, files, { SHMUP_NO_VIDEO: '1' })).toHaveLength(1);
+    expect(checkEraMedia(dir, files, { SHMUP_NO_STILLS: '1' })).toHaveLength(1);
   });
 });

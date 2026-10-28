@@ -7,7 +7,15 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TV_BENCH_MARKER, applicationIdOf, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import {
+  MEDIA_STILL_COUNT,
+  MEDIA_VIDEO_CLIP_COUNT,
+  STILLS_LEDGER_FILE,
+  TV_BENCH_MARKER,
+  VIDEO_LEDGER_FILE,
+  applicationIdOf,
+  checkTizenBundle,
+} from '../../scripts/check-bundle.mjs';
 import { BENCH_APP_ID, benchConfigXml } from '../../scripts/config-xml.mjs';
 
 // The banner pair real bundles start with (rule 4, w14) — a fixture needs both.
@@ -46,11 +54,27 @@ function page(): Uint8Array {
   return bytes;
 }
 
+/**
+ * Writes the complete era media set (rule 11, v20x-VIDIO1) — the game-widget fixtures would
+ * otherwise carry the two ledger-missing problems next to rule 9's.
+ */
+function putEraMedia(): void {
+  const clips = Array.from({ length: MEDIA_VIDEO_CLIP_COUNT }, (_, i) => `clip-${i}.mp4`);
+  for (const file of clips) put(`assets/video/${file}`, 'x');
+  put(VIDEO_LEDGER_FILE, JSON.stringify({ clips: clips.map((file) => ({ file })) }));
+  put('assets/video/LICENSES-videos.md', '# videos');
+  const stills = Array.from({ length: MEDIA_STILL_COUNT }, (_, i) => `still-${i}.png`);
+  for (const file of stills) put(`assets/stills/${file}`, 'x');
+  put(STILLS_LEDGER_FILE, JSON.stringify({ stills: stills.map((file) => ({ file })) }));
+  put('assets/stills/LICENSES-stills.md', '# stills');
+}
+
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'shmup-check-bench-'));
   put('index.html', HTML);
   put('icon.png', 'png');
   put('assets/atlas/bench-x1-0.png', page());
+  putEraMedia();
 });
 
 afterEach(() => {

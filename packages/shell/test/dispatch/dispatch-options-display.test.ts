@@ -155,6 +155,7 @@ describe('shell/dispatch display option events (M2-08)', () => {
       aspect: 'wide',
       output: 'auto',
       renderer: 'auto',
+      video: true,
       language: 'en',
     });
     expect(calls).toEqual([

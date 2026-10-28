@@ -298,6 +298,8 @@ describe('core/events — cue registries', () => {
       // R6-04.
       Output: 14,
       Renderer: 15,
+      // L-VIDIO1 (v20.x video enablement).
+      Video: 16,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

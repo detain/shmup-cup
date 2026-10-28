@@ -47,6 +47,7 @@ describe('core/config user options', () => {
         aspect: 'normal',
         output: 'auto',
         renderer: 'auto',
+        video: true,
         language: 'en',
       },
       // M3-01: the assists and feel; M3-02: the mechanic extras.
@@ -87,6 +88,7 @@ describe('core/config user options', () => {
       aspect: 'normal',
       output: 'auto',
       renderer: 'auto',
+      video: true,
       language: 'en',
     });
   });
@@ -114,6 +116,7 @@ describe('core/config user options', () => {
       aspect: 'normal',
       output: 'auto',
       renderer: 'auto',
+      video: true,
       language: 'en',
     });
     // Anything but a boolean takes the default.
@@ -174,6 +177,7 @@ describe('core/config user options', () => {
         aspect: 'normal',
         output: 'auto',
         renderer: 'auto',
+        video: true,
         language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,

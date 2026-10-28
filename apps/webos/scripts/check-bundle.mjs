@@ -22,6 +22,10 @@
  * 10. The atlas manifest ships as `dist/assets/atlas/main.json`, matches its pages and is not
  *     inlined into `app.js` (plan R1-05) — the Tizen check's `checkAtlasManifest`, imported like
  *     the budgets; the bench is exempt.
+ * 11. The era's media ships with the game (the v20x-VIDIO1 enablement): the 15 cutscene clips
+ *     under `assets/video/` and the 5 ending stills under `assets/stills/`, each half by its kit
+ *     ledger — the Tizen check's `checkEraMedia` (presence counts, never digests; `SHMUP_NO_VIDEO`
+ *     / `SHMUP_NO_STILLS` skip their half); the bench is exempt.
  *
  * Exits non-zero with a readable report on failure. Checks `apps/webos/dist` by default, or the
  * folder given as the first argument (`build:bench` checks `dist-bench`). The checks are also
@@ -43,7 +47,9 @@ import {
   MATCH_ALL_BANNER,
   POLYFILL_BANNER,
   TV_BENCH_MARKER,
+  bakedOffNote,
   checkAtlasManifest,
+  checkEraMedia,
   pngSize,
 } from '../../tizen/scripts/check-bundle.mjs';
 import { BENCH_APPINFO_ID, validateAppInfo } from './appinfo.mjs';
@@ -226,6 +232,9 @@ export function checkWebosBundle(distDir) {
   // 10. the atlas manifest ships next to the pages, not inlined into app.js (not the bench).
   if (id !== BENCH_APPINFO_ID) problems.push(...checkAtlasManifest(distDir, files, code));
 
+  // 11. the era's media ships with the game (the v20x-VIDIO1 enablement — not the bench).
+  if (id !== BENCH_APPINFO_ID) problems.push(...checkEraMedia(distDir, files));
+
   return { problems, files, code, gzipBytes, distBytes };
 }
 
@@ -244,7 +253,8 @@ function main() {
   console.log(
     `webOS bundle OK: app.js ${kb(code.length)} (${kb(gzipBytes)} gzip of ${kb(APP_JS_GZIP_BUDGET)}), ` +
       `classic script, ES2018, ${files.length} files in ${basename(target)}/ ` +
-      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
+      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})` +
+      bakedOffNote(),
   );
 }
 

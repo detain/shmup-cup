@@ -238,6 +238,13 @@ export const UserOptionKind = {
    * choice is read when the next renderer is created).
    */
   Renderer: 15,
+  /**
+   * VIDEO (the v20.x video enablement, L-VIDIO1): `param` = 1 (cutscene video on) or 0 (off) —
+   * the DISPLAY page's boot knob. The host writes the stored `'shmup.video'` choice at once (the
+   * row's live effect) and persists the option; the choice resolves at the next boot
+   * (`@shmup/shell` `cutscene` `resolveVideoSetting`).
+   */
+  Video: 16,
 } as const;
 
 /** A {@link UserOptionKind} code. */

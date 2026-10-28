@@ -757,6 +757,8 @@ export function serializeSave(data: SaveData): string {
         // R6-04: the GRAPHICS page's boot knobs (a save written before them gets `auto`).
         output: display.output,
         renderer: display.renderer,
+        // L-VIDIO1: the DISPLAY page's video boot knob (a save written before it gets default ON).
+        video: display.video,
         // M3-03: the UI language (a save written before it resolves to `en`).
         language: display.language,
       },

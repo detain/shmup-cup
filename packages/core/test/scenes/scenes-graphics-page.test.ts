@@ -200,6 +200,7 @@ describe('core/scenes — the GRAPHICS page (R6-04)', () => {
       aspect: 'wide',
       output: '1080',
       renderer: 'webgl1',
+      video: true,
       language: 'en',
     });
     await settle();

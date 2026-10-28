@@ -1594,7 +1594,8 @@ export type RendererChoice = (typeof RENDERER_CHOICES)[number];
 
 /**
  * Display options (presentation only). M2-02 brought the bullet palette, M2-08 the scale mode, the
- * screen-shake switch, reduced flashing and the hitbox marker, M2-09 the boss HP bar.
+ * screen-shake switch, reduced flashing and the hitbox marker, M2-09 the boss HP bar; the v20.x
+ * video enablement (L-VIDIO1, 2026-10-28) brings the cutscene-video switch.
  */
 export interface DisplayOptions {
   /** The enemy bullet colour set ({@link BULLET_PALETTES}; default `standard`). */
@@ -1634,6 +1635,14 @@ export interface DisplayOptions {
    * resolves it: an explicit row pins, `auto` takes WebGL 2 only above the Chromium 71 floor).
    */
   readonly renderer: RendererChoice;
+  /**
+   * Cutscene video playback on (default `true` — the owner's ruling of 2026-10-28 after the M7
+   * 190-row bench; `@shmup/shell` `cutscene` `VIDEO_DEFAULT_ON` is the same value). The DISPLAY
+   * page's VIDEO row; like {@link output} it is a boot knob — the host writes the stored
+   * `'shmup.video'` choice the next boot resolves (`resolveVideoSetting`, whose kill chain the
+   * row's OFF joins).
+   */
+  readonly video: boolean;
   /**
    * The UI language (M3-03): a `content/strings/<id>.strings.json` language id, default
    * {@link DEFAULT_LANGUAGE} (`en`). Presentation only — the simulation never reads it, so a
@@ -1747,6 +1756,7 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     aspect: 'normal',
     output: 'auto',
     renderer: 'auto',
+    video: true,
     language: DEFAULT_LANGUAGE,
   }),
   play: DEFAULT_PLAY_OPTIONS,
@@ -1847,7 +1857,8 @@ function volumeLevel(value: unknown, fallback: number): number {
  * `standard`; `display.scaleMode`: one of {@link SCALE_MODES}, else `integer` (M2-08);
  * `display.screenShake`, `reduceFlashing`, `showHitbox` and `bossHpBar` (M2-09): booleans, else
  * their defaults (M2-08 — a save written before them resolves without a migration; unknown display
- * fields are dropped).
+ * fields are dropped). `display.video` (the v20.x video enablement) rides the same rule: a boolean,
+ * else the default ON — no format bump.
  * Whether the profile id names an existing profile is the host's business (an unknown one is
  * skipped when applied).
  *
@@ -1921,6 +1932,7 @@ export function resolveUserOptions(value: unknown): UserOptions {
       aspect: oneOf(display.aspect, ASPECT_MODES) ?? dd.aspect,
       output: oneOf(display.output, OUTPUT_CAPS) ?? dd.output,
       renderer: oneOf(display.renderer, RENDERER_CHOICES) ?? dd.renderer,
+      video: typeof display.video === 'boolean' ? display.video : dd.video,
       language:
         typeof display.language === 'string' && LANGUAGE_ID_PATTERN.test(display.language)
           ? display.language

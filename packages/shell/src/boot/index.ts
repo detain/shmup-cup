@@ -251,6 +251,7 @@ import type { CaptureKind, InputProfile } from '@shmup/input-web';
 import { createShellControls, type ShellCaptureInput } from '../controls/index.js';
 import {
   createCutsceneDirector,
+  storeVideoSetting,
   videoProbeFromSearch,
   videoSettingFromWindow,
   type CutsceneDirector,
@@ -2097,6 +2098,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       profiles === null || profiles.customize === undefined
         ? null
         : () => profiles.customize?.(save.options.input),
+      // VIDEO (v20.x enablement): the restart knob whose stored choice the row writes live —
+      // the next boot's videoSettingFromWindow resolves it (`win` was read at boot already).
+      (on) => storeVideoSetting(win, on),
     );
     // v2 R7-VID: the cutscene director — presentation only. It watches the drained events and
     // the flow state, shows a clip inside a fixed window, skips on any pressed action and

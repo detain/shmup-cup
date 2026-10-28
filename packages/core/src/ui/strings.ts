@@ -127,6 +127,8 @@ const STATIC_UI_TEXT = {
   optFlashes: 'FLASHES',
   optHitbox: 'HITBOX',
   optBossHp: 'BOSS HP',
+  // The v20.x video enablement: the DISPLAY page's VIDEO boot-knob row.
+  optVideo: 'VIDEO',
   paletteStandard: 'STANDARD',
   paletteDeuteranopia: 'DEUTERANOPIA',
   paletteProtanopia: 'PROTANOPIA',

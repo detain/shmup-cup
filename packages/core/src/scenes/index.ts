@@ -1199,7 +1199,8 @@ export const OptionsItem = {
 } as const;
 
 /** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09; R6-04
- * moved the CRT and ASPECT rows to {@link GraphicsItem}).
+ * moved the CRT and ASPECT rows to {@link GraphicsItem}; the v20.x video enablement added
+ * the VIDEO boot knob).
  */
 export const DisplayItem = {
   /** BULLETS: the enemy bullet palette choice (M2-02). */
@@ -1214,10 +1215,12 @@ export const DisplayItem = {
   Hitbox: 4,
   /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
   BossHp: 5,
+  /** VIDEO: cutscene video off / on (the v20.x enablement — a boot knob, applies at restart). */
+  Video: 6,
   /** LANGUAGE: the UI language — `core/ui` `uiLanguageIds` (M3-03). */
-  Language: 6,
+  Language: 7,
   /** BACK: store and return to the Options screen. */
-  Back: 7,
+  Back: 8,
 } as const;
 
 /** The GRAPHICS page's items (R6-04 — {@link GraphicsScene}; the CRT / ASPECT rows of
@@ -3711,7 +3714,8 @@ const DISPLAY_HINT_DY = uiPx(12);
  * The Options screen's DISPLAY page (M2-16 — shmup_feat.md §21 "Display: scale mode, screen shake
  * on/off, flash reduction, show hitbox"; accessibility "colorblind bullet palettes"): BULLETS (the
  * enemy bullet colour set — M2-02), SCALE (integer / fit / stretch), SHAKE, FLASHES (normal /
- * reduced), HITBOX (M2-08), BOSS HP (M2-09), LANGUAGE (M3-03) and BACK — the CRT and ASPECT rows
+ * reduced), HITBOX (M2-08), BOSS HP (M2-09), VIDEO (the v20.x video enablement — a boot knob),
+ * LANGUAGE (M3-03) and BACK — the CRT and ASPECT rows
  * moved to {@link GraphicsScene} in v2's R6-04.
  *
  * @remarks
@@ -3720,7 +3724,10 @@ const DISPLAY_HINT_DY = uiPx(12);
  * (`BulletPalette` — the index in `BULLET_PALETTES` —, `ScaleMode` — in `SCALE_MODES` —,
  * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on —; the host applies them to
  * the renderer; the game's HUD follows the saved boss HP bar once the page closes). SHAKE, HITBOX
- * and BOSS HP are toggles (Left = OFF, Right = ON, OK flips). BACK or Back stores them in the save
+ * and BOSS HP are toggles (Left = OFF, Right = ON, OK flips). VIDEO is a **boot knob** like the
+ * GRAPHICS page's OUTPUT / RENDERER: its event lets the host store the choice (the stored
+ * `'shmup.video'` the next boot resolves, plus the save), and the hint row says so while it is
+ * focused. BACK or Back stores them in the save
  * — the GRAPHICS page's four fields carry over untouched —, writes it when it changed and returns
  * to the Options screen.
  */
@@ -3743,6 +3750,8 @@ export class DisplayScene extends SceneBase {
   readonly hitbox: Toggle = createToggle(false);
   /** BOSS HP: the boss HP bar on / off. */
   readonly bossHp: Toggle = createToggle(false);
+  /** VIDEO: cutscene video on / off — the v20.x enablement's boot knob (applies at restart). */
+  readonly video: Toggle = createToggle(true);
   /** LANGUAGE: the UI language, one of {@link FlowControl.languages} (M3-03). */
   readonly language: Choice;
   /** The menu ({@link DisplayItem} order). */
@@ -3768,6 +3777,7 @@ export class DisplayScene extends SceneBase {
       { label: t.optFlashes, choice: this.flashes },
       { label: t.optHitbox, toggle: this.hitbox },
       { label: t.optBossHp, toggle: this.bossHp },
+      { label: t.optVideo, toggle: this.video },
       { label: t.optLanguage, choice: this.language },
       t.back,
     ]);
@@ -3790,6 +3800,7 @@ export class DisplayScene extends SceneBase {
     this.flashes.index = display.reduceFlashing ? 1 : 0;
     this.hitbox.value = display.showHitbox;
     this.bossHp.value = display.bossHpBar;
+    this.video.value = display.video;
     const language = this.flow.languages.indexOf(display.language);
     this.language.index = language >= 0 ? language : 0;
     this.menu.focus = DisplayItem.Bullets;
@@ -3810,6 +3821,7 @@ export class DisplayScene extends SceneBase {
         reduceFlashing: this.flashes.index === 1,
         showHitbox: this.hitbox.value,
         bossHpBar: this.bossHp.value,
+        video: this.video.value,
         language: flow.languages[this.language.index] ?? DEFAULT_LANGUAGE,
       },
     });
@@ -3852,6 +3864,9 @@ export class DisplayScene extends SceneBase {
         case DisplayItem.BossHp:
           flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
           break;
+        case DisplayItem.Video:
+          flow.userOption(UserOptionKind.Video, this.video.value ? 1 : 0);
+          break;
         case DisplayItem.Language:
           flow.userOption(UserOptionKind.Language, this.language.index);
           break;
@@ -3874,7 +3889,10 @@ export class DisplayScene extends SceneBase {
     const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     list.setString(base, t.displayTitle);
-    list.setString(base + 1, t.languageHint);
+    list.setString(
+      base + 1,
+      this.menu.focus === DisplayItem.Video ? t.graphicsHint : t.languageHint,
+    );
     list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
     drawMenu(list, this.menu, base + 2, OPTIONS_MENU_LAYOUT, t);
     list.text(

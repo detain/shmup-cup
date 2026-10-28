@@ -59,6 +59,7 @@ describe('core/save version 2 (M2-16)', () => {
         aspect: 'normal',
         output: 'auto',
         renderer: 'auto',
+        video: true,
         language: 'en',
       },
       // M3-01: the assists and feel resolve to their defaults (no migration needed).

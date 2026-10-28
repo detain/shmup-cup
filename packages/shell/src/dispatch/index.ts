@@ -614,6 +614,9 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
  * `UserOptionKind.Output` and `UserOptionKind.Renderer` (R6-04) are ignored on purpose too: the
  * GRAPHICS page stores them in the save and marks them APPLIES AT RESTART — only the next boot
  * reads them (see {@link bootDisplayFromSaveText} in the `boot` module).
+ * `UserOptionKind.Video` (the v20.x enablement) is a restart knob as well — but it is forwarded
+ * to `onVideo`, because the stored `'shmup.video'` the next boot resolves is written live as
+ * the row flips (the boot wires this handler to the `cutscene` store writer).
  *
  * @param dispatcher - The shell's event dispatcher.
  * @param audio - The audio back-end.
@@ -628,6 +631,10 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
  * @param onInputSettings - Re-applies the save's input settings (M2-16 — `UserOptionKind`
  *   `InputSettings`: SOCD, the release debounce, the rebinding — already stored in the save), or
  *   `null` / omitted (those events are ignored).
+ * @param onVideo - Stores the DISPLAY page's VIDEO choice (the v20.x enablement —
+ *   `UserOptionKind.Video`, 1 = on): the boot passes the `cutscene` store writer, so the stored
+ *   `'shmup.video'` follows the row and the next boot resolves it. `null` / omitted: the events
+ *   are ignored (the save still carries the option — the row itself works in core).
  * @returns A function that unregisters the handler (idempotent).
  *
  * @example
@@ -648,6 +655,7 @@ export function connectOptionEvents(
   onBulletPalette: ((palette: BulletPalette) => void) | null = null,
   display: DisplayTarget | null = null,
   onInputSettings: (() => void) | null = null,
+  onVideo: ((on: boolean) => void) | null = null,
 ): () => void {
   return dispatcher.on(SimEventKind.UserOption, (event) => {
     const value = event.param;
@@ -702,6 +710,12 @@ export function connectOptionEvents(
         // R6-04: the two boot knobs. The page stores them in the save and the page's hint says
         // APPLIES AT RESTART — the next boot reads them (`bootDisplayFromSaveText`); nothing here
         // can re-create the renderer mid-session, so the events are deliberately ignored.
+        break;
+      case UserOptionKind.Video:
+        // The v20.x enablement: a restart knob too, but the host mirrors the row into the stored
+        // 'shmup.video' at once (onVideo = the cutscene store writer), so the next boot's
+        // resolveVideoSetting sees the player's choice even before the save is consulted.
+        if (onVideo !== null) onVideo(value !== 0);
         break;
       default:
         break;
