@@ -66,6 +66,22 @@ From 10.0.0.224 · host tizen · display 1920×1080 @1 · UA Mozilla/5.0 (SMART-
 
 960×540 (busy) is **tv-profile** where 640×360 is **performance-step**: clearly worse — note it; nothing changes.
 
+#### Plan §13 at 960×540 — GL 2, one run
+
+Δ 2-tick = each run’s 960×540 row against the same run’s 384×216 row (median, and the runs’ range).
+
+| Variant   | Runs | Δ 2-tick points | Synced p95 ms | Outcome              |
+|-----------|------|-----------------|---------------|----------------------|
+| busy      |    1 |            +0.9 |         11.40 | **tv-profile**       |
+| filter    |    1 |           +22.0 |         14.00 | **performance-step** |
+| mode7     |    1 |            +6.4 |         13.00 | **performance-step** |
+| crt-light |    1 |             0.0 |         15.10 | **performance-step** |
+| crt-full  |    1 |           +11.3 |         12.40 | **performance-step** |
+| worst     |    1 |           +38.8 |         17.00 | **performance-step** |
+
+- **tv-profile**: proceed; R3-06 and R5 adopt the TV profile from the start (parallax capped at 4 on Tizen, far backdrop at half resolution, CRT off by default on TV)
+- **performance-step**: proceed; open a performance step before R5, then re-measure
+
 #### Knobs — GL 2 (each against its plain row at the same size, paired per run)
 
 | Size    | Row           | 2t plain | 2t knob | Δ pts | p95 plain | p95 knob | p95 × | noise 2t | noise p95 |
@@ -287,6 +303,17 @@ Each row is read against the same variant at 384×216 in this session (a knob ro
 | worst | 2 | 2.1 | 15.30 | **performance-step** — proceed; open a performance step before R5, then re-measure |
 
 960×540 (busy) is **tv-profile** where 640×360 is **performance-step**: clearly worse — note it; nothing changes.
+
+## Plan §13 at 960×540
+
+| Variant | GL | Δ 2-tick points | Synced p95 ms | Outcome |
+|---|---|---|---|---|
+| busy | 2 | 0.9 | 11.40 | **tv-profile** — proceed; R3-06 and R5 adopt the TV profile from the start (parallax capped at 4 on Tizen, far backdrop at half resolution, CRT off by default on TV) |
+| filter | 2 | 22.0 | 14.00 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| mode7 | 2 | 6.4 | 13.00 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| crt-light | 2 | 0.0 | 15.10 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| crt-full | 2 | 11.3 | 12.40 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| worst | 2 | 38.8 | 17.00 | **performance-step** — proceed; open a performance step before R5, then re-measure |
 
 ## Decode and upload — file to GPU (plan R1-05 B4, for R3-04)
 

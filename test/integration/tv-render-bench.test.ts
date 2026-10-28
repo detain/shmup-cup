@@ -831,3 +831,179 @@ describe('bench analyzer: session env by majority, campaigns partitioned by buil
     expect(report).toContain('2t % 1280x720');
   });
 });
+
+describe('render bench analyzer: plan §13 prints its outcome rows at 960x540 as at 640x360 (the first-class frame)', () => {
+  /** A GL 1 full-window session: one payload per row, the run of these tests' sessions. */
+  const env: RenderBenchEnv = {
+    buildId: 's13-a',
+    host: 'tizen',
+    userAgent: 'UA',
+    innerWidth: 1920,
+    innerHeight: 1080,
+    devicePixelRatio: 1,
+    webGLVersion: 1,
+    scenarios: 18,
+    startedAt: 1_793_200_000_000,
+  };
+
+  const planned =
+    '**planned** — proceed as planned; record the headroom as the R3-04 / R6-02 budget';
+  const tvProfile =
+    '**tv-profile** — proceed; R3-06 and R5 adopt the TV profile from the start (parallax capped at 4 on ' +
+    'Tizen, far backdrop at half resolution, CRT off by default on TV)';
+
+  let dir = '';
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'shmup-bench-s13-'));
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  /** The six plain (non-knob) rows of one size id, in matrix order, as the bench records them. */
+  function plainRows(sizeId: string): RenderBenchRecord[] {
+    return BENCH_SCENARIOS.filter((s) => s.size.id === sizeId && s.knob === null).map((s) =>
+      record(s.index),
+    );
+  }
+
+  /** Writes a session file from whole records (one payload each) and returns its path. */
+  function writeSession(name: string, results: RenderBenchRecord[]): string {
+    const lines = results.map((r, i) =>
+      JSON.stringify({
+        kind: RENDER_BENCH_KIND,
+        session: name,
+        seq: i + 1,
+        sentAt: env.startedAt + i,
+        receivedAt: env.startedAt + i,
+        from: '10.0.0.1',
+        env,
+        results: [r],
+        done: i === results.length - 1,
+      }),
+    );
+    const file = join(dir, `${name}.jsonl`);
+    writeFileSync(file, lines.join('\n') + '\n');
+    return file;
+  }
+
+  /** A Markdown table row split into trimmed cells (padding, the session's raw pipes alike). */
+  function rowCells(line: string): string[] {
+    return line.replace(/^\|\s*|\s*\|$/g, '').split(/\s*\|\s*/);
+  }
+
+  /** The table below a report heading (the `… — GL 1, one run` suffixes included), as cells. */
+  function tableAfter(report: string, heading: string): string[][] {
+    const lines = report.split('\n');
+    const start = lines.indexOf(heading);
+    expect(start, heading).toBeGreaterThan(-1);
+    const rows: string[][] = [];
+    for (const line of lines.slice(start + 1)) {
+      if (!line.startsWith('|')) {
+        if (rows.length > 0) break;
+        continue;
+      }
+      rows.push(rowCells(line));
+    }
+    return rows;
+  }
+
+  /** One run of the three sizes' plain rows: 384×216 cost 1×, 640×360 1.5×, 960×540 2.25× (the fake's math). */
+  function bothFramesSession(name: string): string {
+    return writeSession(name, ['384x216', '640x360', '960x540'].flatMap(plainRows));
+  }
+
+  it('the session (--full) report prints both frames with one table shape; the note keeps its old place', () => {
+    const report = analyzeBenchSession(bothFramesSession('rb-s13-full'));
+    const head = ['Variant', 'GL', 'Δ 2-tick points', 'Synced p95 ms', 'Outcome'];
+    const v2 = tableAfter(report, '## Plan §13 at 640×360');
+    const hi = tableAfter(report, '## Plan §13 at 960×540');
+    expect(v2[0]).toEqual(head);
+    expect(hi[0]).toEqual(head);
+    // 640×360: +1.0 points over the 384×216 rows, synced p95 6.00 (7.20 with the filter pass) — planned.
+    expect(v2.slice(2)).toEqual([
+      ['busy', '1', '1.0', '6.00', planned],
+      ['filter', '1', '1.0', '7.20', planned],
+      ['mode7', '1', '1.0', '6.00', planned],
+      ['crt-light', '1', '1.0', '6.00', planned],
+      ['crt-full', '1', '1.0', '6.00', planned],
+      ['worst', '1', '1.0', '7.20', planned],
+    ]);
+    // 960×540 under the very same thresholds: +2.5 points, synced p95 9.00 / 10.80 → tv-profile.
+    expect(hi.slice(2)).toEqual([
+      ['busy', '1', '2.5', '9.00', tvProfile],
+      ['filter', '1', '2.5', '10.80', tvProfile],
+      ['mode7', '1', '2.5', '9.00', tvProfile],
+      ['crt-light', '1', '2.5', '9.00', tvProfile],
+      ['crt-full', '1', '2.5', '9.00', tvProfile],
+      ['worst', '1', '2.5', '10.80', tvProfile],
+    ]);
+    // The 960×540 busy note sits where it always sat — after the 640×360 rows — and the new table follows it,
+    // so a regenerated report differs from the old one by the added rows alone.
+    expect(report).toContain(
+      '960×540 (busy) is **tv-profile** where 640×360 is **planned**: clearly worse — note it; nothing changes.',
+    );
+    expect(report.indexOf('960×540 (busy) is')).toBeLessThan(
+      report.indexOf('## Plan §13 at 960×540'),
+    );
+  });
+
+  it('the campaign block prints its §13 table per frame, each frame with its own heading, note line and legend', () => {
+    const report = analyzeBenchSessions([bothFramesSession('rb-s13-camp')]);
+    expect(report).toContain('#### Plan §13 at 640×360 — GL 1, one run');
+    expect(report).toContain('#### Plan §13 at 960×540 — GL 1, one run');
+    expect(report).toContain(
+      'Δ 2-tick = each run’s 960×540 row against the same run’s 384×216 row (median, and the runs’ range).',
+    );
+    const v2 = tableAfter(report, '#### Plan §13 at 640×360 — GL 1, one run');
+    const hi = tableAfter(report, '#### Plan §13 at 960×540 — GL 1, one run');
+    expect(hi[0]).toEqual(v2[0]); // same columns: Variant, Runs, Δ, Synced p95 ms, Outcome
+    expect(hi.map((row) => row[0])).toEqual(v2.map((row) => row[0])); // same variants, same order
+    // One run: the Δ cell carries no range; with repeats the range rides beside the median (the 640 law).
+    expect(hi.slice(2)).toEqual([
+      ['busy', '1', '+2.5', '9.00', '**tv-profile**'],
+      ['filter', '1', '+2.5', '10.80', '**tv-profile**'],
+      ['mode7', '1', '+2.5', '9.00', '**tv-profile**'],
+      ['crt-light', '1', '+2.5', '9.00', '**tv-profile**'],
+      ['crt-full', '1', '+2.5', '9.00', '**tv-profile**'],
+      ['worst', '1', '+2.5', '10.80', '**tv-profile**'],
+    ]);
+    // Each frame's block holds its own legend: planned for 640×360, tv-profile for 960×540, never shared.
+    expect(report.split('\n').filter((l) => l.startsWith('- **planned**:'))).toHaveLength(1);
+    expect(report.split('\n').filter((l) => l.startsWith('- **tv-profile**:'))).toHaveLength(1);
+    expect(report.indexOf('- **planned**:')).toBeLessThan(
+      report.indexOf('#### Plan §13 at 960×540'),
+    );
+    expect(report.indexOf('- **tv-profile**:')).toBeGreaterThan(
+      report.indexOf('#### Plan §13 at 960×540'),
+    );
+    // The prose note still sits between the frames: after the 640 block, before the 960 table.
+    expect(report.indexOf('960×540 (busy) is')).toBeGreaterThan(
+      report.indexOf('#### Plan §13 at 640×360'),
+    );
+    expect(report.indexOf('960×540 (busy) is')).toBeLessThan(
+      report.indexOf('#### Plan §13 at 960×540'),
+    );
+  });
+
+  it('prints nothing at 960×540 without the frame’s plain rows (no frame, no block — knob rows never count)', () => {
+    const noFrame = writeSession('rb-s13-none', ['384x216', '640x360'].flatMap(plainRows));
+    expect(analyzeBenchSession(noFrame)).not.toContain('Plan §13 at 960×540');
+    const campaign = analyzeBenchSessions([noFrame]);
+    expect(campaign).toContain('#### Plan §13 at 640×360');
+    expect(campaign).not.toContain('Plan §13 at 960×540');
+    expect(campaign).not.toContain('960×540 (busy)');
+    // The widget's 960×540 knob rows are matrix rows too, yet the §13 table reads plain rows only.
+    const knobOnly = writeSession('rb-s13-knob', [
+      ...['384x216', '640x360'].flatMap(plainRows),
+      ...BENCH_SCENARIOS.filter((s) => s.size.id === '960x540' && s.knob !== null).map((s) =>
+        record(s.index),
+      ),
+    ]);
+    expect(
+      BENCH_SCENARIOS.filter((s) => s.size.id === '960x540' && s.knob !== null),
+    ).not.toHaveLength(0);
+    expect(analyzeBenchSession(knobOnly)).not.toContain('Plan §13 at 960×540');
+    expect(analyzeBenchSessions([knobOnly])).not.toContain('Plan §13 at 960×540');
+  });
+});

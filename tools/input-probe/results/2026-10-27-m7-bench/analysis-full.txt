@@ -89,6 +89,21 @@ From 10.0.0.224 · host tizen · display 1920×1080 @1 · UA Mozilla/5.0 (SMART-
 
 960×540 (busy) lands in the same §13 tier as 640×360 (**performance-step**): note "960×540 is viable on the M7" for after v2 (a desktop HD mode / v3). It changes nothing in this plan.
 
+#### Plan §13 at 960×540 — GL 1, one run
+
+Δ 2-tick = each run’s 960×540 row against the same run’s 384×216 row (median, and the runs’ range).
+
+| Variant   | Runs | Δ 2-tick points | Synced p95 ms | Outcome              |
+|-----------|------|-----------------|---------------|----------------------|
+| busy      |    1 |           +35.5 |         12.90 | **performance-step** |
+| filter    |    1 |           +54.7 |         15.70 | **performance-step** |
+| mode7     |    1 |           +38.8 |         12.50 | **performance-step** |
+| crt-light |    1 |           +39.1 |         15.20 | **performance-step** |
+| crt-full  |    1 |           +36.6 |         13.70 | **performance-step** |
+| worst     |    1 |           +60.9 |         15.70 | **performance-step** |
+
+- **performance-step**: proceed; open a performance step before R5, then re-measure
+
 #### Knobs — GL 1 (each against its plain row at the same size, paired per run)
 
 | Size       | Row           | 2t plain | 2t knob | Δ pts | p95 plain | p95 knob | p95 × | noise 2t | noise p95 |
@@ -465,6 +480,17 @@ Each row is read against the same variant at 384×216 in this session (a knob ro
 | worst | 1 | 26.2 | 13.60 | **performance-step** — proceed; open a performance step before R5, then re-measure |
 
 960×540 (busy) lands in the same §13 tier as 640×360 (**performance-step**): note "960×540 is viable on the M7" for after v2 (a desktop HD mode / v3). It changes nothing in this plan.
+
+## Plan §13 at 960×540
+
+| Variant | GL | Δ 2-tick points | Synced p95 ms | Outcome |
+|---|---|---|---|---|
+| busy | 1 | 35.5 | 12.90 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| filter | 1 | 54.7 | 15.70 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| mode7 | 1 | 38.8 | 12.50 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| crt-light | 1 | 39.1 | 15.20 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| crt-full | 1 | 36.6 | 13.70 | **performance-step** — proceed; open a performance step before R5, then re-measure |
+| worst | 1 | 60.9 | 15.70 | **performance-step** — proceed; open a performance step before R5, then re-measure |
 
 ## Stand-in draw (the run's last page load, plan R3-04.M4a) — 1 record(s)
 

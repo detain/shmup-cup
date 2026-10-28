@@ -20,7 +20,7 @@
  *    With fewer runs the script refuses.
  * 4. **Summary matrices** (rows = the 25 size ids, scaled then native, in matrix order; columns = the six
  *    variants): two-tick % and synced p95 ms per version, plus a **knob table** (a knob row against its own
- *    plain row at the same size, paired run by run) and plan §13's outcome at 640×360.
+ *    plain row at the same size, paired run by run) and plan §13's outcome at 640×360 and at 960×540.
  *
  * **Output resolutions.** The same matrix is also recorded with the canvas backbuffer at 1280×720 and 960×540
  * (separate builds: `env.output` and a `buildId` ending in `@1280x720`); a session without `env.output` ran at
@@ -40,8 +40,9 @@
  *
  * Why the figures are read relative: the M7's `requestAnimationFrame` already shows a p95 of ~30 ms with nothing
  * running at all (`input-probe-results.md` §8), so an absolute frame time says more about the panel than about
- * the frame. Plan §13 reads each 640×360 row against the same variant at 384×216 **of the same run** (the
- * median of those per-run differences), which also cancels a run's own drift (a slow first run after an install).
+ * the frame. Plan §13 reads each 640×360 and 960×540 row against the same variant at 384×216 **of the same
+ * run** (the median of those per-run differences), which also cancels a run's own drift (a slow first run after
+ * an install).
  *
  * Each JSONL line is one payload the bench POSTed: `{kind:'render-bench', session, seq, sentAt, env, results,
  * done}` plus the server's `receivedAt` / `from`. `results` holds that scenario's record — the shape is
@@ -393,6 +394,16 @@ export function section13Outcome(r, base) {
 }
 
 /**
+ * A bench size id as plan §13's headings and notes write the frame.
+ *
+ * @param {string} size - a size id (`640x360`).
+ * @returns {string} the frame text (`640×360`).
+ */
+function prettyFrame(size) {
+  return size.replace('x', '×');
+}
+
+/**
  * The size ids of some records in display order: the scaled ids first, then the native (`…n`) ones, each in
  * matrix order (the first record index a size has).
  *
@@ -610,6 +621,35 @@ export function decodeSection(decode) {
 }
 
 /**
+ * The `--full` plan §13 outcome table of one frame size: every plain row of the frame against this session's
+ * own 384×216 baseline (the campaign report prints the same outcome from the per-run medians — see
+ * {@link section13Block}).
+ *
+ * @param {string} size - the size id (`640x360`, `960x540`).
+ * @param {any[]} rows - the frame's plain rows, in matrix order.
+ * @param {any[]} records - every record of the session (for the baselines).
+ * @returns {string[]} the lines, starting with the blank that separates the section.
+ */
+function section13SessionBlock(size, rows, records) {
+  const out = [
+    '',
+    `## Plan §13 at ${prettyFrame(size)}`,
+    '',
+    '| Variant | GL | Δ 2-tick points | Synced p95 ms | Outcome |',
+    '|---|---|---|---|---|',
+  ];
+  for (const r of rows) {
+    const outcome = section13Outcome(r, baselineFor(r, records));
+    const points = relativeTo(r, baselineFor(r, records)).twoTickPoints;
+    out.push(
+      `| ${r.variant} | ${r.webGLVersion} | ${points === null ? '—' : num(points, 1)} |` +
+        ` ${Array.isArray(r.syncedMs) ? num(r.syncedMs[2]) : '—'} | **${outcome.tier}** — ${outcome.action} |`,
+    );
+  }
+  return out;
+}
+
+/**
  * The report of one session (the `--full` detail): a table per internal size, every row relative to the same
  * session's baseline, plan §13 on this run alone, and the decode section.
  *
@@ -657,19 +697,7 @@ export function analyzeBenchSession(file, options = {}) {
   }
   const v2 = records.filter((r) => r.size === V2_SIZE && parseRow(r.variant).knob === null);
   if (v2.length > 0) {
-    out.push('');
-    out.push('## Plan §13 at 640×360');
-    out.push('');
-    out.push('| Variant | GL | Δ 2-tick points | Synced p95 ms | Outcome |');
-    out.push('|---|---|---|---|---|');
-    for (const r of v2) {
-      const outcome = section13Outcome(r, baselineFor(r, records));
-      const points = relativeTo(r, baselineFor(r, records)).twoTickPoints;
-      out.push(
-        `| ${r.variant} | ${r.webGLVersion} | ${points === null ? '—' : num(points, 1)} |` +
-          ` ${Array.isArray(r.syncedMs) ? num(r.syncedMs[2]) : '—'} | **${outcome.tier}** — ${outcome.action} |`,
-      );
-    }
+    out.push(...section13SessionBlock(V2_SIZE, v2, records));
     const hiBit = records.filter((r) => r.size === HI_BIT_SIZE);
     if (hiBit.length > 0) {
       const busyV2 = v2.find((r) => r.variant === 'busy');
@@ -682,6 +710,8 @@ export function analyzeBenchSession(file, options = {}) {
       }
     }
   }
+  const hi = records.filter((r) => r.size === HI_BIT_SIZE && parseRow(r.variant).knob === null);
+  if (hi.length > 0) out.push(...section13SessionBlock(HI_BIT_SIZE, hi, records));
   if (standin.length > 0) {
     out.push('');
     out.push(`## Stand-in draw (the run's last page load, plan R3-04.M4a) — ${standin.length} record(s)`);
@@ -1167,12 +1197,13 @@ function scenarioCall(value, band, a, b) {
 }
 
 /**
- * Plan §13 at 640×360 for one version, on the medians of the per-run figures (each run's 640×360 row against
- * that run's 384×216 row), plus the 960×540 note.
+ * Plan §13's outcome tables for one version, on the medians of the per-run figures (each run's row at the frame
+ * against that run's 384×216 row): 640×360 first, then the 960×540 note between the frames, then 960×540 — a
+ * first-class decision frame read against the very same thresholds, not a prose note alone.
  *
  * @param {any} campaign - {@link loadCampaign}.
  * @param {number} gl - the WebGL version.
- * @returns {string[]} the lines (empty without 640×360 rows).
+ * @returns {string[]} the lines (empty without rows at either frame).
  */
 function section13Block(campaign, gl) {
   const runs = campaign.runsByGl.get(gl);
@@ -1189,35 +1220,42 @@ function section13Block(campaign, gl) {
     const synced = a.sync === null ? null : a.sync.median;
     return { a, d, points, synced, tier: section13Tier(points, synced) };
   };
-  const rows = [];
-  for (const variant of VARIANTS) {
-    const t = tierOf(V2_SIZE, variant);
-    if (t === null) continue;
-    rows.push([
-      variant,
-      String(t.a.runs),
-      t.d.points === null ? '—' : signed(t.points) + (t.d.points.n >= 2 ? ` (${signed(t.d.points.min)} … ${signed(t.d.points.max)})` : ''),
-      cell(t.a.sync, 2),
-      `**${t.tier}**`,
-    ]);
-  }
-  if (rows.length === 0) return [];
   const n = runs.length;
-  const out = [
-    `### Plan §13 at 640×360 — GL ${gl}, ${n === 1 ? 'one run' : `median of ${n} runs`}`,
-    '',
-    'Δ 2-tick = each run’s 640×360 row against the same run’s 384×216 row (median, and the runs’ range).',
-    '',
-    ...mdTable(['Variant', 'Runs', 'Δ 2-tick points', 'Synced p95 ms', 'Outcome'], rows, [0, 4]),
-    '',
-  ];
-  for (const tier of Object.keys(SECTION13_ACTIONS)) {
-    if (rows.some((r) => r[4] === `**${tier}**`)) out.push(`- **${tier}**: ${SECTION13_ACTIONS[tier]}`);
-  }
-  if (rows.some((r) => r[4] === '**unknown**')) out.push('- **unknown**: no 384x216 baseline in the same run — re-run it');
+  const out = [];
+  const frameBlock = (size) => {
+    const rows = [];
+    for (const variant of VARIANTS) {
+      const t = tierOf(size, variant);
+      if (t === null) continue;
+      rows.push([
+        variant,
+        String(t.a.runs),
+        t.d.points === null ? '—' : signed(t.points) + (t.d.points.n >= 2 ? ` (${signed(t.d.points.min)} … ${signed(t.d.points.max)})` : ''),
+        cell(t.a.sync, 2),
+        `**${t.tier}**`,
+      ]);
+    }
+    if (rows.length === 0) return;
+    if (out.length > 0) out.push('');
+    const frame = prettyFrame(size);
+    out.push(
+      `### Plan §13 at ${frame} — GL ${gl}, ${n === 1 ? 'one run' : `median of ${n} runs`}`,
+      '',
+      `Δ 2-tick = each run’s ${frame} row against the same run’s 384×216 row (median, and the runs’ range).`,
+      '',
+      ...mdTable(['Variant', 'Runs', 'Δ 2-tick points', 'Synced p95 ms', 'Outcome'], rows, [0, 4]),
+      '',
+    );
+    for (const tier of Object.keys(SECTION13_ACTIONS)) {
+      if (rows.some((r) => r[4] === `**${tier}**`)) out.push(`- **${tier}**: ${SECTION13_ACTIONS[tier]}`);
+    }
+    if (rows.some((r) => r[4] === '**unknown**')) out.push('- **unknown**: no 384x216 baseline in the same run — re-run it');
+  };
+  frameBlock(V2_SIZE);
   const busyV2 = tierOf(V2_SIZE, 'busy');
   const busyHi = tierOf(HI_BIT_SIZE, 'busy');
   if (busyV2 !== null && busyHi !== null) out.push('', hiBitNote(busyV2.tier, busyHi.tier));
+  frameBlock(HI_BIT_SIZE);
   return out;
 }
 
