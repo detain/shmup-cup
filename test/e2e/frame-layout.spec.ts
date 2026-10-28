@@ -65,6 +65,9 @@ const BUILDS = [
   { name: 'Tizen build via file://', url: TIZEN_INDEX },
 ] as const;
 
+/** The checkpoint store key (the shell prefix + core `RUN_CHECKPOINT_STORAGE_KEY`). */
+const CHECKPOINT_KEY = 'shmup-cup:run.checkpoint.v1';
+
 /** An RGB colour. */
 type Rgb = readonly [number, number, number];
 
@@ -667,7 +670,16 @@ test.describe('frame layout (web build): the screens', () => {
     await waitTicks(page, 10);
     const entry = await shoot(page, testInfo, 'name-entry');
     expectCentredX(wholePanel(entry, FOCUS_YELLOW)); // the name entry's panel has a yellow border
-    // A fresh title, then the Options screen through the title menu.
+    // A fresh title, then the Options screen through the title menu. The game flown above (for
+    // the name entry) leaves its birth record in the checkpoint store (R2 TL-1: `GameScene.enter`
+    // flushes at the World's birth; only a same-session return to the title clears it), and the
+    // reload would then offer the title's CONTINUE? row as the menu's first row, opening the
+    // focus there (R2 TL-2, `86b2a034`) — one row above this walk, landing it on PRACTICE (the
+    // v2.1.0-gate red F-E). This spec audits the Options page's frame layout, not the resume
+    // row, so the fresh title boots with the record gone; the init script clears it before the
+    // boot reads the store, whatever the leaving page's unload does with it. HELP (`beebff75`)
+    // joins below OPTIONS, so three downs from 1 PLAYER still reach it.
+    await page.addInitScript(`localStorage.removeItem('${CHECKPOINT_KEY}');`);
     await page.goto('./');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
     await waitTicks(page, 10);
