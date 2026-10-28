@@ -234,6 +234,8 @@ describe('bundle in a desktop browser (no Tizen)', () => {
     h.frames(20); // env is probed 250 ms after start
     expect(h.panel('env')).toContain('Chrome 139');
     expect(h.panel('headline')).toMatch(/^Chrome 139 · Tizen — · 1920×1080@1 · WebGL2 no · session ip-/);
+    // R-SVG-WO3A: the fake realm has no Image/Blob — the SVG matrix must degrade to `unavailable`, never throw.
+    expect(h.panel('svg')).toContain('matrix unavailable');
     expect(h.logs.some((l) => l.startsWith('[probe] ') && l.includes('environment collected (startup)'))).toBe(true);
   });
 

@@ -474,3 +474,53 @@ describe('envLines / envHeadline', () => {
     expect(envHeadline(e)).toContain('WebGL2 yes');
   });
 });
+
+describe('svg summary schema (WO-3A, additive)', () => {
+  const svgSummary = { status: 'done' as const, done: 19, total: 19, pass: 16, fail: 1, error: 0 };
+  const svgReport = {
+    status: 'done' as const,
+    elapsedMs: 52_000,
+    warmWindows: 3,
+    measureWindows: 12,
+    features: [{ id: 'blur-s2', kind: 'raster' as const, status: 'PASS' as const, bytes: 318, decodeMs: 2.1, drawMs: 1.1, totalMs: 3.2, windows: 12, inkedPx: 3163, detail: null }],
+  };
+
+  function baseInputs() {
+    const tr = new KeyTracker();
+    return {
+      env: null,
+      snapshot: snapshotFrom(tr, 0),
+      keyName,
+      seen: tr.seenKeys(),
+      registered: [],
+      supportedKeys: 0,
+      checklist: new Checklist().items(),
+      gamepads: [],
+    };
+  }
+
+  it('buildVerdicts omits the svg key when the matrix never ran (older shape stays byte-identical)', () => {
+    const snap = snapshotFrom(new KeyTracker(), 0);
+    const v = buildVerdicts(snap, keyName);
+    expect('svg' in v).toBe(false);
+  });
+
+  it('buildVerdicts carries the summary when the matrix ran', () => {
+    const snap = snapshotFrom(new KeyTracker(), 0);
+    snap.svg = svgSummary;
+    expect(buildVerdicts(snap, keyName).svg).toEqual(svgSummary);
+  });
+
+  it('stats gains svg only with an svgReport, and never otherwise', () => {
+    const without = buildReportParts(baseInputs()).stats as Record<string, unknown>;
+    expect('svg' in without).toBe(false);
+    const withSvg = buildReportParts({ ...baseInputs(), svgReport }).stats as Record<string, unknown>;
+    expect(withSvg['svg']).toEqual(svgReport);
+  });
+
+  it('a null svgReport (pending matrix) writes no key — undefined drops from JSON', () => {
+    const parts = buildReportParts({ ...baseInputs(), svgReport: null });
+    const wire = JSON.parse(JSON.stringify(parts)) as { stats: Record<string, unknown> };
+    expect('svg' in wire.stats).toBe(false);
+  });
+});

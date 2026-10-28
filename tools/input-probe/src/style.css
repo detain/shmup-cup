@@ -154,6 +154,15 @@ pre.verdicts {
   color: #b8c4ea;
 }
 
+/* The SVG capability matrix: 22 rows of 13 px; Environment (flex) yields the leftover height. */
+pre.svg {
+  flex: none;
+  height: 286px;
+  font-size: 12px;
+  line-height: 13px;
+  color: #9fe8c8;
+}
+
 #seen {
   max-height: 190px;
 }

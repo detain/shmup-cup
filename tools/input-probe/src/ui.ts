@@ -14,7 +14,7 @@ export const STAGE_WIDTH = 1920;
 export const STAGE_HEIGHT = 1080;
 
 /** Panel element ids in `index.html`. */
-export type PanelId = 'log' | 'env' | 'verdicts' | 'checklist' | 'seen' | 'keys' | 'pads' | 'headline' | 'report';
+export type PanelId = 'log' | 'env' | 'svg' | 'verdicts' | 'checklist' | 'seen' | 'keys' | 'pads' | 'headline' | 'report';
 
 /**
  * Computes the uniform scale and offsets that letterbox the stage into a window.
@@ -58,7 +58,7 @@ export class ProbeUI {
     const stage = doc.getElementById('stage');
     if (!stage) throw new Error('#stage missing');
     this.stage = stage;
-    const ids: PanelId[] = ['log', 'env', 'verdicts', 'checklist', 'seen', 'keys', 'pads', 'headline', 'report'];
+    const ids: PanelId[] = ['log', 'env', 'svg', 'verdicts', 'checklist', 'seen', 'keys', 'pads', 'headline', 'report'];
     for (const id of ids) {
       const el = doc.getElementById(id);
       if (!el) throw new Error('#' + id + ' missing');

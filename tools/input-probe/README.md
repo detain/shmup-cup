@@ -19,7 +19,7 @@ One 1920×1080 stage (scaled to the window), everything visible at once — no n
 | Area | Contents |
 |---|---|
 | Header | Title, key environment facts, session id, "Back ×3 quickly = exit", report status |
-| Left | **Event log** (last 28 events: `t(ms) DOWN/UP name(code) repeat=0/1 kind Δ`, plus info lines) and the **Environment** block (UA, Chromium/Tizen version, window size & DPR, WebGL1/2 + `MAX_TEXTURE_SIZE` + GPU, WASM, AudioWorklet, OffscreenCanvas, audio sample rate / base latency, model / firmware) |
+| Left | **Event log** (last 28 events: `t(ms) DOWN/UP name(code) repeat=0/1 kind Δ`, plus info lines), the **Environment** block (UA, Chromium/Tizen version, window size & DPR, WebGL1/2 + `MAX_TEXTURE_SIZE` + GPU, WASM, AudioWorklet, OffscreenCanvas, audio sample rate / base latency, model / firmware) and the **SVG capability** matrix (§B′ features — see below) |
 | Center | **Arena**: three ships driven by the same input — **A raw** (held between keydown/keyup), **B debounced** (held, or released < 50 ms ago), **C naive** (fixed step per keydown incl. repeats); 240-frame **movement timelines** (gaps = stutter); **frame-time graph** (16.7 / 33.3 ms guides, red ticks = hitches > 20 ms); **latency flash box** (white for 4 frames on every non-repeat keydown); the test protocol |
 | Right | **Verdicts & stats** (diagonals, OK-while-arrow-held, repeat style / delay / interval, bounces, max keys held, longest hold, dispatch delay, frame rate), **checklist** (auto-ticks), **seen keys**, **registered keys** (`getSupportedKeys()` + per-key `registerKey` result; everything except `Exit`), **gamepads** |
 
@@ -181,6 +181,35 @@ Every 3 s the probe POSTs `{session, seq, sentAt, env, verdicts, stats, newEvent
 `GET /` lists sessions. Allow Node through the Windows firewall on private networks when prompted. The header shows
 the report status (`#seq ok` / errors); events are buffered and re-sent if the server is unreachable.
 
+## SVG capability matrix (runs by itself at boot)
+
+~1.5 s after launch the probe walks the 19 SVG features of the v2 art plan's §B′ catalog — paths, linear and radial
+gradients, luminance masks, clip-paths, `<use>`/`<symbol>`, text glyphs and text-on-path, `feGaussianBlur` at σ = 2/4/8,
+`feDropShadow`, `feTurbulence` with 1 and 4 octaves, a `feTurbulence → feColorMatrix → feComposite` chain, an SMIL
+`<animate>`, a CSS `@keyframes` rule, `createImageBitmap(SVG)`, and an E3-style ~50 KB compound-path atlas chunk
+(128², deterministic art, one merged-run path per color — the representative whole-page load cost). Each feature is
+rasterized fresh from a `blob:` URL through `Image` → `decode()` → `drawImage` into a 2-D canvas and checked
+**numerically**: known pixel colors, inked-pixel and region counts, and for the E3 chunk a byte-exact compare against
+its own generated reference. Three warm-up windows are thrown away and twelve measured windows per feature give the
+median `decode` / `draw` milliseconds. No interaction is needed; **R** / Play-Pause does not restart it.
+
+| Status | Meaning |
+|---|---|
+| `PASS` / `FAIL` | the raster met (or not) the signature in ≥ 12/12 windows — a FAIL detail names the first bad pixel and the pass ratio |
+| `FROZEN` / `ANIMATES` | the two dynamic features redraw byte-identical after 500 ms (`FROZEN` = static-image mode, the expected desktop result) or not |
+| `REJECT` / `ACCEPT` | `createImageBitmap(SVG)` threw or returned a bitmap — either answer is a pinned fact, the detail carries the error text or the size |
+| `ERROR` / `TIMEOUT` | the SVG did not load/decode, or a phase hung 12 s (a filter the engine cannot run) |
+| `UNAVAILABLE` | this realm cannot raster SVG images at all (no `Image`/`Blob`); the matrix degrades silently, never throws |
+
+Every verdict streams to the event log, `verdicts.svg` (the summary) and `stats.svg` (the per-feature rows) in the
+session JSONL; `node results/analyze.mjs results/<run>/<file>.jsonl` prints the `## SVG capability` table with
+expected/surprise counts. Sessions from a probe build before the matrix print `not captured` there.
+
+Control-run reference on modern Chromium: 16 `PASS`, 2 `FROZEN`, `ACCEPT 256×256`, E3 chunk ≈ 50 KB — that is the
+expectation the M7 (Chromium 69 + software raster) is measured against. Code: `src/svgProbe.ts` (pure machine + the
+feature catalog + the E3 generator), `src/svgHost.ts` (the DOM adapter, null when the realm lacks `Image`/`Blob`),
+tests `test/svgProbe.test.ts` / `test/svgFeatures.test.ts` / `test/svgHost.test.ts`.
+
 ## On-device test protocol (also shown in the app)
 
 1. Tap each arrow, OK and Back once.
@@ -250,6 +279,10 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
   `format`, `exitGesture`, `report`, `summary`, `envInfo` (incl. Samsung's published Tizen 5.5/6.0 user agents).
 - **DOM/Tizen glue** with small fakes — `platform` (key registration without `Exit`, exit), `env`, `ui`, `arena`,
   `reporter` (XHR retry/in-flight rules).
+- **SVG matrix (WO-3A)** — `svgProbe` (the pure state machine on a scripted fake host: every status, the warm-window
+  rule, medians, the E3 strict compare, the unavailable realm), `svgFeatures` (catalog order/kinds, headline attributes,
+  E3 generator determinism and its pinned byte size), `svgHost` (null in a realm without `Image` — never a throw),
+  `analyzeSvg` (the `## SVG capability` table and the not-captured fallback of the analyzer CLI).
 - **Build output** — a real `vite build` into a temp dir: exactly the widget files, `index.html` loads `app.js` once
   as a classic deferred script, relative URLs only, `app.js` is a single IIFE that parses with acorn at
   `ecmaVersion: 2018`, no post-Chromium-69 APIs, `check:compat` passes.

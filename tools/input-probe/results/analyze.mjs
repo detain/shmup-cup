@@ -264,6 +264,32 @@ if (seconds > 10) {
 }
 out.push('');
 
+// ------------------------------------------------------------------ svg capability
+// Additive capture (R-SVG-WO3A): a session recorded by an older probe build simply carries
+// no stats.svg key — that prints as *not captured*, never as an empty matrix.
+const svg = last.stats && last.stats.svg;
+out.push('## SVG capability');
+if (!svg || typeof svg !== 'object' || !Array.isArray(svg.features)) {
+  out.push('  not captured (probe build predates the SVG matrix)');
+} else {
+  const rows = svg.features;
+  const n = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—');
+  const pass = rows.filter((r) => r.status === 'PASS' || r.status === 'FROZEN' || r.status === 'REJECT').length;
+  const fail = rows.filter((r) => r.status === 'FAIL' || r.status === 'ERROR' || r.status === 'TIMEOUT' || r.status === 'ANIMATES' || r.status === 'ACCEPT').length;
+  out.push(
+    `  matrix ${svg.status} · ${rows.length} features (${pass} expected, ${fail} surprise) · ${n(svg.elapsedMs / 1000, 1)} s · warm ${svg.warmWindows} · measure ${svg.measureWindows}`,
+  );
+  out.push(`  ${'feature'.padEnd(14)}${'status'.padEnd(12)}${'total'.padStart(8)}  ${'decode'.padStart(8)}  ${'draw'.padStart(8)}  ${'ink'.padStart(7)}  ${'bytes'.padStart(6)}`);
+  for (const r of rows) {
+    if (!r || typeof r !== 'object') continue;
+    out.push(
+      `  ${String(r.id).padEnd(14)}${String(r.status).padEnd(12)}${(n(r.totalMs, 1) + 'ms').padStart(8)}  ${(n(r.decodeMs, 1) + 'ms').padStart(8)}  ${(n(r.drawMs, 1) + 'ms').padStart(8)}  ${String(r.inkedPx ?? '—').padStart(7)}  ${String(r.bytes ?? '—').padStart(6)}`,
+    );
+    if (r.detail && r.status !== 'PASS' && r.status !== 'FROZEN') out.push(`  ${''.padEnd(26)}→ ${r.detail}`);
+  }
+}
+out.push('');
+
 // ------------------------------------------------------------------ timeline
 if (withTimeline) {
   out.push('## Timeline (handler clock; repeats folded)');

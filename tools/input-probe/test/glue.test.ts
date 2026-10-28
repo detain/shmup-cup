@@ -365,7 +365,7 @@ describe('fitStage', () => {
   });
 });
 
-const PANELS: PanelId[] = ['log', 'env', 'verdicts', 'checklist', 'seen', 'keys', 'pads', 'headline', 'report'];
+const PANELS: PanelId[] = ['log', 'env', 'svg', 'verdicts', 'checklist', 'seen', 'keys', 'pads', 'headline', 'report'];
 
 function fakeDoc(ids: string[]): { doc: Document; els: Map<string, { textContent: string; writes: number; style: Record<string, string> }> } {
   const els = new Map<string, { textContent: string; writes: number; style: Record<string, string> }>();

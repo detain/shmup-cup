@@ -33,6 +33,8 @@ import { describeError, exitApp, getSupportedKeys, hasTizen, registerAllKeys } f
 import { makeSessionId, REPORT_INTERVAL_MS, reportEndpoint, ReportQueue } from './report';
 import { Reporter } from './reporter';
 import { createLanes, stepLanes } from './ships';
+import { SvgMatrix } from './svgProbe';
+import { createSvgHost } from './svgHost';
 import {
   buildReportParts,
   buildVerdicts,
@@ -77,6 +79,9 @@ function start(): void {
   const session = makeSessionId(Date.now(), Math.random());
   const queue = new ReportQueue(session);
   const reporter = new Reporter(reportEndpoint(import.meta.env.VITE_REPORT_URL), queue);
+  // R-SVG-WO3A: the SVG feature matrix starts itself after a short delay; a realm without
+  // Image / Blob / URL ends as `unavailable` without touching anything.
+  const svg = new SvgMatrix(createSvgHost(), undefined, (line) => info(line));
 
   let env: EnvInfo | null = null;
   let supportedCount = 0;
@@ -250,7 +255,7 @@ function start(): void {
    * @returns a fresh snapshot (allocates; UI / report rate only).
    */
   function snapshot(now: number): ProbeSnapshot {
-    return { keys: tracker.getStats(now), frames: frames.summary(), dispatch: dispatch.summary() };
+    return { keys: tracker.getStats(now), frames: frames.summary(), dispatch: dispatch.summary(), svg: svg.summary() };
   }
   /**
    * Name lookup without learning (the DOM `event.key` is only available in the key handler).
@@ -296,6 +301,7 @@ function start(): void {
     ui.set('seen', seenKeyLines(tracker.seenKeys(), keyName).join('\n'));
     ui.set('keys', registerLines(supportedCount, registered, tizen).join('\n'));
     ui.set('pads', describePads(pads.states()).join('\n'));
+    ui.set('svg', svg.panelLines().join('\n'));
     if (env) {
       ui.set('env', envLines(env).join('\n'));
       ui.set('headline', envHeadline(env) + ' · session ' + session);
@@ -337,6 +343,7 @@ function start(): void {
           supportedKeys: supportedCount,
           checklist: checklist.items(),
           gamepads: padsForReport(pads.states()),
+          svgReport: svg.reportState(),
         }),
       now,
     );
@@ -363,6 +370,7 @@ function start(): void {
     lastFrame = now;
     frameNo++;
     tracker.tick(now);
+    svg.tick(now);
     if (pads.anySeen || frameNo % GAMEPAD_IDLE_POLL_FRAMES === 0) pollPads();
     stepLanes(lanes, tracker, now);
     frameState.flashFrames = flashFrames;

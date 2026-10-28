@@ -12,6 +12,7 @@ import type { FrameSummary, RunningSummary } from './frameStats';
 import { fmtHz, fmtMs, padRight, round1, truncate } from './format';
 import type { KeyStats, SeenKey } from './keyTracker';
 import { ARROW_CODES, KeyCode, type RegisterResult } from './keys';
+import type { SvgMatrixReport, SvgSummary } from './svgProbe';
 
 /** Everything measured, at one point in time. */
 export interface ProbeSnapshot {
@@ -21,6 +22,14 @@ export interface ProbeSnapshot {
   frames: FrameSummary;
   /** `performance.now() - event.timeStamp` statistics. */
   dispatch: RunningSummary;
+  /**
+   * SVG capability matrix verdicts (R-SVG-WO3A), or null while it cannot run.
+   *
+   * Additive and optional on purpose (same rule as `envInfo` `extensions`): captures made by older
+   * probe builds simply carry no key, and the log server validates either shape. Readers must treat
+   * absence as not-captured.
+   */
+  svg?: SvgSummary | null;
 }
 
 /**
@@ -78,6 +87,11 @@ export interface Verdicts {
   frameMaxMs: number | null;
   /** Frames above 20 ms since the last reset. */
   hitches: number;
+  /**
+   * SVG capability matrix (R-SVG-WO3A): compact counters, per-feature detail rides `stats.svg`.
+   * Additive and optional — a payload without the key is an older probe build, not a failed matrix.
+   */
+  svg?: SvgSummary;
 }
 
 /**
@@ -148,6 +162,7 @@ export function buildVerdicts(
     frameP95Ms: round1(s.frames.p95Ms),
     frameMaxMs: round1(s.frames.maxMs),
     hitches: s.frames.hitches,
+    ...(s.svg ? { svg: s.svg } : {}),
   };
 }
 
@@ -263,6 +278,8 @@ export interface ReportInputs {
   checklist: readonly ChecklistItem[];
   /** Gamepad summary (see `padsForReport` in `gamepad.ts`); passed through unchanged. */
   gamepads: unknown;
+  /** Full SVG matrix block for `stats.svg` (R-SVG-WO3A); `undefined` / null omits the key. */
+  svgReport?: SvgMatrixReport | null;
 }
 
 /**
@@ -289,6 +306,7 @@ export function buildReportParts(i: ReportInputs): { env: EnvInfo | null; verdic
       registered: i.registered,
       checklist: i.checklist.map((c) => ({ id: c.id, done: c.done })),
       gamepads: i.gamepads,
+      ...(i.svgReport ? { svg: i.svgReport } : {}),
     },
   };
 }
