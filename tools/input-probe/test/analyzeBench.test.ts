@@ -22,6 +22,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
   ZONE_LOAD_TARGET_MS,
   analyzeBenchSession,
+  benchPoolOf,
   analyzeBenchSessions,
   baselineFor,
   beatsReference,
@@ -473,6 +474,10 @@ interface SyntheticOptions {
   inner?: [number, number];
   /** The session's WebGL version. */
   gl: number;
+  /** `env.gameCodeHash` (plan v20x BENCSKIP): the pool key when present. */
+  gameCode?: string;
+  /** `env.svgEnc` (plan R-SVG WO-1): `'png'` / absent is the PNG arm, `'e3'` the SVG arm. */
+  svgEnc?: string;
   /** Position in the campaign: 0 for the first run of its output, 1 for the repeat, … */
   run: number;
   /** Rows the build skipped (no record). */
@@ -498,6 +503,8 @@ function syntheticSession(name: string, o: SyntheticOptions): string {
     innerHeight: h,
     devicePixelRatio: 1,
     webGLVersion: o.gl,
+    ...(o.gameCode === undefined ? {} : { gameCodeHash: o.gameCode }),
+    ...(o.svgEnc === undefined ? {} : { svgEnc: o.svgEnc }),
     scenarios: SYNTHETIC_ROWS.length,
     startedAt: 1760000000000 + o.run * 1000 + (o.output === undefined ? 0 : 500) + o.gl,
   };
@@ -836,5 +843,61 @@ describe('output resolutions', () => {
     expect(beatsReference({ twoTick: 10, sync: 10 }, { twoTick: 8.5, sync: 8.5 }, band, band)).toMatchObject({ twoTick: false, sync: false });
     expect(beatsReference({ twoTick: 10, sync: 10 }, { twoTick: 7.5, sync: 7.5 }, band, band)).toMatchObject({ twoTick: true, sync: true });
     expect(poolNoise([])).toBeNull();
+  });
+});
+
+describe('the pool key: game code and atlas encoding (plans v20x BENCSKIP + R-SVG WO-1)', () => {
+  it('names a PNG session exactly as it was named before the arm', () => {
+    // The 364+ committed rows' keys must not move: no field, `png`, `''` and `off` all read as the
+    // bare identity, with or without a game code.
+    expect(benchPoolOf({ buildId: 'abc1234' })).toBe('abc1234');
+    expect(benchPoolOf({ buildId: 'abc1234', svgEnc: 'png' })).toBe('abc1234');
+    expect(benchPoolOf({ buildId: 'abc1234', svgEnc: '' })).toBe('abc1234');
+    expect(benchPoolOf({ buildId: 'abc1234@960x540' })).toBe('abc1234@960x540');
+    expect(benchPoolOf({ buildId: 'abc1234', gameCodeHash: 'dead1' })).toBe('code:dead1');
+    expect(benchPoolOf({ buildId: 'abc1234', gameCodeHash: 'dead1', svgEnc: 'png' })).toBe('code:dead1');
+    expect(benchPoolOf({})).toBe('?');
+  });
+
+  it('suffixes an SVG session and never lets it share a pool with a PNG one', () => {
+    expect(benchPoolOf({ gameCodeHash: 'dead1', svgEnc: 'e3' })).toBe('code:dead1|svg=e3');
+    expect(benchPoolOf({ buildId: 'abc1234', svgEnc: 'e3' })).toBe('abc1234|svg=e3');
+    // A different encoding is a different pool, and so is a different game code.
+    expect(benchPoolOf({ gameCodeHash: 'dead1', svgEnc: 'e4' })).toBe('code:dead1|svg=e4');
+    expect(benchPoolOf({ gameCodeHash: 'dead2', svgEnc: 'e3' })).toBe('code:dead2|svg=e3');
+    // The suffix cannot collide with a real build id: one is a short sha with a dirty `+`, then
+    // `@<w>x<h>` for a build output (`8ba0e7c@960x540`), and it never holds a `|` — so a key with a
+    // `|` in it is always an arm key, and an arm's session is never read as a PNG session's.
+    expect(benchPoolOf({ buildId: '8ba0e7c@960x540' })).not.toContain('|');
+    expect(benchPoolOf({ buildId: '8ba0e7c@960x540', svgEnc: 'e3' })).toContain('|');
+  });
+
+  it('groups the arms apart in a campaign and stacks same-arm sessions together', () => {
+    const png = syntheticSession('pool-png.jsonl', { gl: 1, run: 0, gameCode: 'dead1', value: base1080 });
+    const other = syntheticSession('pool-png-2.jsonl', { gl: 2, run: 0, gameCode: 'dead1', value: base1080 });
+    const svg = syntheticSession('pool-svg.jsonl', {
+      gl: 1,
+      run: 0,
+      gameCode: 'dead1',
+      svgEnc: 'e3',
+      build: 'abc1234+svg-e3',
+      value: (row) => [base1080(row)[0] + 30, base1080(row)[1] * 3],
+    });
+    const mixed = loadCampaign([png, other, svg]);
+    // Two identities on one output: the PNG pool (two passes) and the SVG pool (its own session).
+    // The arms' rows never average together, and each group's session set says which is which.
+    expect(mixed.sessions).toHaveLength(3);
+    expect(mixed.outputs).toHaveLength(2);
+    const pools = mixed.outputs.map((o) => o.sessions.map((r) => r.id).sort().join('+')).sort();
+    expect(pools).toEqual(['pool-png+pool-png-2', 'pool-svg']);
+    const svgOnly = loadCampaign([svg]);
+    expect(svgOnly.outputs).toHaveLength(1);
+    expect(svgOnly.sessions).toHaveLength(1);
+    // The report names both builds apart (the shipped bench composes the arm's id with `+svg-e3`),
+    // and a PNG-only campaign keeps the headings it always had.
+    const report = analyzeBenchSessions([png, other, svg]);
+    expect(report).toContain('[build abc1234]');
+    expect(report).toContain('[build abc1234+svg-e3]');
+    expect(analyzeBenchSessions([png, other])).not.toContain('+svg-e3');
   });
 });

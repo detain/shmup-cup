@@ -15,11 +15,13 @@
  *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
  *     the shmupAssets() plugin, M1-03); anything else in dist/ would be packaged into the
  *     .wgt by accident.
- *  7. At least one atlas page (`dist/assets/atlas/*.png`) is present — the shell's boot
- *     loads the pages with `new Image()` and shows the boot error screen without them (M1-04).
+ *  7. At least one atlas page (`dist/assets/atlas/*.png`, or a `*.svg` page of the bench's SVG arm
+ *     — plan R-SVG WO-1) is present — the shell's boot loads the pages with `new Image()` and shows
+ *     the boot error screen without them (M1-04).
  *  8. Budgets (plan M1-19, shmup_feat.md §22 / §23): `app.js` ≤ {@link APP_JS_GZIP_BUDGET}
- *     gzipped, every atlas page a PNG of at most {@link ATLAS_PAGE_MAX_SIZE}² pixels, the whole
- *     `dist/` ≤ {@link DIST_BUDGET} bytes.
+ *     gzipped, every atlas page either a PNG of at most {@link ATLAS_PAGE_MAX_SIZE}² pixels or an
+ *     SVG of those dimensions within {@link SVG_PAGE_MAX_BYTES} raw, the whole `dist/` ≤
+ *     {@link DIST_BUDGET} bytes.
  *  9. The game and the TV render bench never mix (plan R0-02): a widget whose `config.xml` carries
  *     the bench's app id (`config-xml.mjs` `BENCH_APP_ID`) must be the bench — its `app.js` holds
  *     {@link TV_BENCH_MARKER} — and any other widget (the game) must not hold it.
@@ -39,6 +41,12 @@
  *     bench widget is exempt (rule 9's family); `SHMUP_NO_VIDEO=1` / `SHMUP_NO_STILLS=1` skip
  *     their half — the baked-off shape the Vite plugins ship under the same envs
  *     ({@link checkEraMedia}).
+ * 12. The atlas pages on disk are the pages `app.js` names, one encoding per build (plan R-SVG
+ *     WO-1, {@link checkBenchAtlasPages}): every `assets/atlas/*.svg` the bundle's inlined manifests
+ *     name is on disk, and every `.svg` on disk is named by the bundle. The SVG arm emits no PNG
+ *     density pages and the PNG arm no SVG ones, so a page of the other encoding is a page loaded
+ *     by nothing — and sized by the TV for nothing. The game widget ships no `.svg` page, so there
+ *     the rule reads as "no stray svg".
  *
  * Exits non-zero with a readable report on failure. Checks `apps/tizen/dist` by default, or the
  * folder given as the first argument (`node scripts/check-bundle.mjs dist-bench` — `build:bench`).
@@ -51,6 +59,7 @@
  * {@link TV_BENCH_MARKER}, {@link applicationIdOf}, {@link checkAtlasManifest},
  * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES},
  * {@link checkEraMedia}, {@link VIDEO_LEDGER_FILE}, {@link STILLS_LEDGER_FILE},
+ * {@link SVG_PAGE_MAX_BYTES}, {@link svgPageSize}, {@link checkBenchAtlasPages},
  * {@link MEDIA_VIDEO_CLIP_COUNT}, {@link MEDIA_STILL_COUNT}, {@link bakedOffNote}.
  *
  * @module
@@ -220,6 +229,65 @@ export function pngSize(bytes) {
   if (type !== 'IHDR') return null;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+/**
+ * The raw-byte budget of one SVG atlas page (the bench's SVG arm, plan R-SVG WO-1). The arm's
+ * largest density page today is ~0.8 MB of text; the budget leaves room for a page of the stand-in
+ * atlas's shape (7.9 MB of E3 for a 2048² page of 57 colours) without letting a runaway encoding
+ * blow the widget's install size. {@link DIST_BUDGET} still caps the whole bundle.
+ */
+export const SVG_PAGE_MAX_BYTES = 12 * 1024 * 1024;
+
+/**
+ * Reads an SVG's pixel size from its root element's `width` / `height` attributes — the two the
+ * emitter writes before `viewBox` (`scripts/bench-svg.mjs`), which are what make an SVG page a page
+ * of a known size to `new Image()`.
+ *
+ * @param {Uint8Array} bytes - The file.
+ * @returns {{ width: number, height: number } | null} The size, or `null` when the bytes do not
+ *   start with an `<svg` element carrying whole-number `width` and `height` attributes.
+ */
+export function svgPageSize(bytes) {
+  const head = new TextDecoder('utf-8').decode(bytes.subarray(0, 512));
+  if (!head.startsWith('<svg')) return null;
+  const tag = /^<svg[^>]*>/.exec(head);
+  if (tag === null) return null;
+  const width = /(?:^|\s)width="(\d+)"/.exec(tag[0]);
+  const height = /(?:^|\s)height="(\d+)"/.exec(tag[0]);
+  if (width === null || height === null) return null;
+  return { width: Number(width[1]), height: Number(height[1]) };
+}
+
+/**
+ * Rule 12 (plan R-SVG WO-1): the `.svg` pages on disk and the `.svg` pages the bundle names are the
+ * same set.
+ *
+ * @remarks
+ * The bench inlines its density manifests (decision D25), so the file names the widget fetches are
+ * string literals in `app.js`; the game's manifest is a fetched file instead (rule 10) and the game
+ * ships no SVG pages at all. Both directions are checked: a named page that is missing is a broken
+ * load, a present page that nothing names is a stale page of the other arm. The reader takes the
+ * names out of the minified bundle by a class of url-path characters only — a minifier may delimit
+ * the strings with backticks, and a negated class that forgot one would run a name across the
+ * literals next to it.
+ *
+ * @param {readonly string[]} files - The bundle's files, relative and `/`-separated.
+ * @param {string} code - The contents of `app.js` (`''` when missing).
+ * @returns {string[]} The problems (empty when the pages are in order).
+ */
+export function checkBenchAtlasPages(files, code) {
+  const onDisk = files.filter((file) => /^assets\/atlas\/[^/]+\.svg$/.test(file));
+  const named = new Set(code.match(/assets\/atlas\/[A-Za-z0-9._@-]+\.svg/g) ?? []);
+  /** @type {string[]} */
+  const problems = [];
+  for (const url of named) {
+    if (!files.includes(url)) problems.push(`app.js names ${url}, which the bundle does not hold`);
+  }
+  for (const file of onDisk) {
+    if (!named.has(file)) problems.push(`${file} is in the bundle but named by nothing (stale?)`);
+  }
+  return problems;
 }
 
 /**
@@ -593,8 +661,8 @@ export function checkTizenBundle(distDir) {
     problems.push(`unexpected files outside dist/assets/: ${stray.join(', ')}`);
   }
 
-  // 7. The atlas pages the shell loads at boot.
-  const pages = files.filter((file) => /^assets\/atlas\/[^/]+\.png$/.test(file));
+  // 7. The atlas pages the shell loads at boot (a `.svg` page is the bench's SVG arm, rule 12).
+  const pages = files.filter((file) => /^assets\/atlas\/[^/]+\.(png|svg)$/.test(file));
   if (pages.length === 0) {
     problems.push('no atlas page in dist/assets/atlas/ (the game cannot boot without it)');
   }
@@ -605,9 +673,16 @@ export function checkTizenBundle(distDir) {
     problems.push(`app.js is ${kb(gzipBytes)} gzipped, over the ${kb(APP_JS_GZIP_BUDGET)} budget`);
   }
   for (const page of pages) {
-    const size = pngSize(readFileSync(join(distDir, page)));
+    const pageBytes = readFileSync(join(distDir, page));
+    const isSvg = page.endsWith('.svg');
+    const size = isSvg ? svgPageSize(pageBytes) : pngSize(pageBytes);
     if (size === null) {
-      problems.push(`atlas page ${page} is not a PNG`);
+      problems.push(`atlas page ${page} is not a ${isSvg ? 'SVG' : 'PNG'}`);
+    } else if (isSvg && pageBytes.length > SVG_PAGE_MAX_BYTES) {
+      problems.push(
+        `atlas page ${page} is ${kb(pageBytes.length)} of SVG text, ` +
+          `over the ${kb(SVG_PAGE_MAX_BYTES)} budget for one page`,
+      );
     } else if (size.width > ATLAS_PAGE_MAX_SIZE || size.height > ATLAS_PAGE_MAX_SIZE) {
       problems.push(
         `atlas page ${page} is ${size.width}×${size.height}, over the ${ATLAS_PAGE_MAX_SIZE}² budget`,
@@ -626,6 +701,9 @@ export function checkTizenBundle(distDir) {
 
   // 11. The era's media ships with the game (the v20x-VIDIO1 enablement — the bench is exempt).
   if (!bench) problems.push(...checkEraMedia(distDir, files));
+
+  // 12. The SVG pages on disk are the SVG pages app.js names (plan R-SVG WO-1).
+  problems.push(...checkBenchAtlasPages(files, code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

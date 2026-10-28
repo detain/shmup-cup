@@ -10,6 +10,12 @@
  * looped clip and the decode scenario's measured clips in `assets/video/…` (v2 R7-VID + plan v20x
  * HARBENCH S8 — `shmupVideos({ only })` from `BENCH_VIDEO_CLIPS`, not the game's 15-clip set).
  *
+ * **The SVG arm (`VITE_BENCH_SVG=e3`, plan R-SVG WO-1):** the same contract with the density pages
+ * as E3 SVG text files (`assets/atlas/bench-x<s>-<i>.svg`, `scripts/bench-svg.mjs`) in place of the
+ * PNGs — separate fetched files, never inlined: `app.js` carries the manifests, and its gzip budget
+ * (512 KiB, ~487.5 KiB used) has no room for 4.5 MB of page text. The build id gains `+svg-e3` and
+ * the payload's `svgEnc` says which arm ran, so the analyzer keeps the two pools apart.
+ *
  * **The Tizen build contract, unchanged:** `chrome69` + `es2018` (so the emitted syntax is ES2018 —
  * inside webOS 5's Chromium 68 too), one IIFE with no code splitting and no module preload, the
  * hand-written ES5 polyfills (`globalThis`, `String.prototype.matchAll`) as the post-minify banner
@@ -29,6 +35,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { buildId, clientConditions, shmupBuildInfo, shmupVideos } from '../../vite.shared.js';
 import { gameCodeHash } from '../../scripts/game-code-hash.mjs';
 import { BENCH_VIDEO_CLIPS, shmupRenderBench } from './scripts/bench-atlas.mjs';
+import { parseBenchSvgEncoding } from './scripts/bench-svg.mjs';
 import { benchBuildId, parseBenchOutput } from './src/bench/output.js';
 import { benchConfigXml } from './scripts/config-xml.mjs';
 import { classicScriptTag } from './vite.config.js';
@@ -82,6 +89,12 @@ export function benchConfigXmlPlugin(): Plugin {
 /** `VITE_BENCH_OUTPUT`, parsed (`null`: the window's backbuffer); throws on a malformed value. */
 const benchOutput = parseBenchOutput(process.env.VITE_BENCH_OUTPUT ?? '');
 
+/**
+ * `VITE_BENCH_SVG`: the atlas-page encoding of this build (`'png'` by default, `'e3'` for the SVG
+ * arm — see `scripts/bench-svg.mjs`); a bad value fails the build like a bad `VITE_BENCH_OUTPUT`.
+ */
+const benchSvg = parseBenchSvgEncoding(process.env.VITE_BENCH_SVG ?? '');
+
 export default defineConfig({
   root: join(appDir, 'bench'),
   base: './',
@@ -92,7 +105,8 @@ export default defineConfig({
     __SHMUP_BENCH_CAMPAIGN__: JSON.stringify(process.env.VITE_BENCH_CAMPAIGN ?? ''),
     __SHMUP_BENCH_PAUSE_S__: JSON.stringify(process.env.VITE_BENCH_PAUSE_S ?? '30'),
     __SHMUP_BENCH_OUTPUT__: JSON.stringify(benchOutput === null ? '' : benchOutput.id),
-    __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput)),
+    __SHMUP_BENCH_SVG__: JSON.stringify(benchSvg),
+    __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput, benchSvg)),
     // Plan v20x BENCSKIP: the game-code identity the skip ledger and the payloads pool by —
     // stable across a bench-only rebuild, fresh whenever any drawn-pixel input moves.
     __SHMUP_GAME_CODE_HASH__: JSON.stringify(gameCodeHash(repoRoot)),
@@ -102,7 +116,7 @@ export default defineConfig({
     conditions: clientConditions,
   },
   plugins: [
-    shmupRenderBench(),
+    shmupRenderBench({ svgEnc: benchSvg }),
     shmupBuildInfo(),
     // The video knob's looped clip + the decode scenario's measured clips (v2 R7-VID, plan v20x
     // HARBENCH S8) — one list, derived from the same table the virtual module's `videos` emits from.

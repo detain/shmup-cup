@@ -12,10 +12,12 @@
  *     validates (`scripts/appinfo.mjs`).
  *  6. Every other file is a non-script asset under dist/assets/ — anything else would be packaged
  *     into the `.ipk` by accident.
- *  7. At least one atlas page (`dist/assets/atlas/*.png`) is present.
+ *  7. At least one atlas page (`dist/assets/atlas/*.png`, or a `*.svg` page of the bench's SVG
+ *     arm — plan R-SVG WO-1) is present.
  *  8. The same budgets as the Tizen widget, imported from its check so there is one source of
  *     truth: `app.js` ≤ `APP_JS_GZIP_BUDGET` gzipped, every atlas page at most
- *     `ATLAS_PAGE_MAX_SIZE`² pixels, the whole `dist/` ≤ `DIST_BUDGET`.
+ *     `ATLAS_PAGE_MAX_SIZE`² pixels (an SVG page within `SVG_PAGE_MAX_BYTES` raw), the whole
+ *     `dist/` ≤ `DIST_BUDGET`.
  *  9. The game and the TV render bench's stub never mix (plan R0-02): an `appinfo.json` with the
  *     bench's id (`appinfo.mjs` `BENCH_APPINFO_ID`) needs the bench's `app.js` (it holds the Tizen
  *     check's `TV_BENCH_MARKER`), and any other app must not hold it.
@@ -26,6 +28,9 @@
  *     under `assets/video/` and the 5 ending stills under `assets/stills/`, each half by its kit
  *     ledger — the Tizen check's `checkEraMedia` (presence counts, never digests; `SHMUP_NO_VIDEO`
  *     / `SHMUP_NO_STILLS` skip their half); the bench is exempt.
+ * 12. The `.svg` pages on disk are the `.svg` pages `app.js` names, one encoding per build (the
+ *     bench's SVG arm, plan R-SVG WO-1) — the Tizen check's `checkBenchAtlasPages`, imported like
+ *     the budgets; the game widget ships no SVG page, so there it reads as "no stray svg".
  *
  * Exits non-zero with a readable report on failure. Checks `apps/webos/dist` by default, or the
  * folder given as the first argument (`build:bench` checks `dist-bench`). The checks are also
@@ -46,11 +51,14 @@ import {
   DIST_BUDGET,
   MATCH_ALL_BANNER,
   POLYFILL_BANNER,
+  SVG_PAGE_MAX_BYTES,
   TV_BENCH_MARKER,
   bakedOffNote,
   checkAtlasManifest,
+  checkBenchAtlasPages,
   checkEraMedia,
   pngSize,
+  svgPageSize,
 } from '../../tizen/scripts/check-bundle.mjs';
 import { BENCH_APPINFO_ID, validateAppInfo } from './appinfo.mjs';
 
@@ -182,8 +190,8 @@ export function checkWebosBundle(distDir) {
     else if (file.endsWith('.js')) problems.push(`unexpected script in dist/assets/: ${file}`);
   }
 
-  // 7. at least one atlas page.
-  const pages = files.filter((file) => file.startsWith('assets/atlas/') && file.endsWith('.png'));
+  // 7. at least one atlas page (a `.svg` page is the bench's SVG arm, rule 12).
+  const pages = files.filter((file) => /^assets\/atlas\/[^/]+\.(png|svg)$/.test(file));
   if (pages.length === 0) problems.push('dist/assets/atlas/ holds no atlas page');
 
   // 8. budgets, shared with the Tizen widget.
@@ -192,9 +200,16 @@ export function checkWebosBundle(distDir) {
     problems.push(`app.js is ${kb(gzipBytes)} gzipped, over the ${kb(APP_JS_GZIP_BUDGET)} budget`);
   }
   for (const page of pages) {
-    const size = pngSize(readFileSync(join(distDir, page)));
+    const pageBytes = readFileSync(join(distDir, page));
+    const isSvg = page.endsWith('.svg');
+    const size = isSvg ? svgPageSize(pageBytes) : pngSize(pageBytes);
     if (size === null) {
-      problems.push(`atlas page ${page} is not a PNG`);
+      problems.push(`atlas page ${page} is not a ${isSvg ? 'SVG' : 'PNG'}`);
+    } else if (isSvg && pageBytes.length > SVG_PAGE_MAX_BYTES) {
+      problems.push(
+        `atlas page ${page} is ${kb(pageBytes.length)} of SVG text, ` +
+          `over the ${kb(SVG_PAGE_MAX_BYTES)} budget for one page`,
+      );
     } else if (size.width > ATLAS_PAGE_MAX_SIZE || size.height > ATLAS_PAGE_MAX_SIZE) {
       problems.push(
         `atlas page ${page} is ${size.width}×${size.height}, over the ${ATLAS_PAGE_MAX_SIZE}² budget`,
@@ -234,6 +249,9 @@ export function checkWebosBundle(distDir) {
 
   // 11. the era's media ships with the game (the v20x-VIDIO1 enablement — not the bench).
   if (id !== BENCH_APPINFO_ID) problems.push(...checkEraMedia(distDir, files));
+
+  // 12. the SVG pages on disk are the SVG pages app.js names (plan R-SVG WO-1).
+  problems.push(...checkBenchAtlasPages(files, code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

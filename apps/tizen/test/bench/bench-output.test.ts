@@ -240,4 +240,33 @@ describe('bench output: the bench configs’ defines', () => {
       await expect(definesOf(app)).rejects.toThrow(/VITE_BENCH_OUTPUT/);
     },
   );
+
+  it.each(['tizen', 'webos'] as const)(
+    '%s: defaults the SVG arm to png; when armed, the define flips and the build id gains its suffix',
+    async (app) => {
+      vi.stubEnv('SHMUP_BUILD_ID', 'abc1234+');
+      vi.stubEnv('VITE_BENCH_OUTPUT', undefined);
+      vi.stubEnv('VITE_BENCH_SVG', undefined);
+      const plain = await definesOf(app);
+      expect(plain.__SHMUP_BENCH_SVG__).toBe('"png"');
+      expect(plain.__SHMUP_BENCH_BUILD_ID__).toBe('"abc1234+"');
+
+      // The armed build: the encoding define flips and the identity carries the suffix (the
+      // analyzer pools the rows under `code:<hash>|svg=e3`, never with the PNG rows).
+      vi.stubEnv('VITE_BENCH_SVG', 'e3');
+      const armed = await definesOf(app);
+      expect(armed.__SHMUP_BENCH_SVG__).toBe('"e3"');
+      expect(armed.__SHMUP_BENCH_BUILD_ID__).toBe('"abc1234++svg-e3"');
+
+      // The full form with an output too: `+svg-e3` rides after `@<w>x<h>`.
+      vi.stubEnv('VITE_BENCH_OUTPUT', '1280x720');
+      expect((await definesOf(app)).__SHMUP_BENCH_BUILD_ID__).toBe('"abc1234+@1280x720+svg-e3"');
+
+      // The png word is the default spelled out — no suffix; an unknown value fails the build.
+      vi.stubEnv('VITE_BENCH_SVG', 'png');
+      expect((await definesOf(app)).__SHMUP_BENCH_BUILD_ID__).toBe('"abc1234+@1280x720"');
+      vi.stubEnv('VITE_BENCH_SVG', 'jpeg');
+      await expect(definesOf(app)).rejects.toThrow(/VITE_BENCH_SVG/);
+    },
+  );
 });

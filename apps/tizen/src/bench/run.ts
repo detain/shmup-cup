@@ -164,7 +164,12 @@ import {
   fillBenchParticles,
   pickBenchSprites,
 } from './scene.js';
-import { benchScenarioSetup, benchSkippedScenarios, type BenchOutput } from './output.js';
+import {
+  benchScenarioSetup,
+  benchSkippedScenarios,
+  type BenchOutput,
+  type BenchSvgEncoding,
+} from './output.js';
 import { BenchSampler } from './stats.js';
 import {
   BENCH_STATE_KEY,
@@ -259,6 +264,12 @@ export interface RenderBenchAppOptions {
    * bench never offers a skip and never writes a ledger — its pre-BENCSKIP behavior.
    */
   readonly gameCodeHash?: string;
+  /**
+   * The atlas-page encoding the bundle was built with (`VITE_BENCH_SVG` — `./output.ts`): `'png'`
+   * (absent, the default) ships the PNG density pages, `'e3'` the SVG ones. Rides every payload as
+   * `svgEnc`, which is what keeps the two arms' samples apart in the analyzer.
+   */
+  readonly svgEnc?: BenchSvgEncoding;
   /** The density atlases and particle presets (`virtual:shmup-render-bench`). */
   readonly assets: BenchAssets;
   /** The host (default {@link detectBenchHost}). */
@@ -278,11 +289,22 @@ export interface RenderBenchAppOptions {
 
 /**
  * The session-level facts of a TV run's payloads: the shell's {@link RenderBenchEnv} plus the
- * build output.
+ * build output and the atlas-page encoding.
  */
 export interface TvBenchEnv extends RenderBenchEnv {
   /** The build output resolution (`'1280x720'`), or `null` for the window's backbuffer. */
   output: string | null;
+  /**
+   * The atlas-page encoding of this build's density pages (`'png'` or `'e3'`, plan R-SVG WO-1).
+   *
+   * @remarks
+   * This field is here rather than on the shell's {@link RenderBenchEnv} on purpose: the shell's
+   * sources are inside `scripts/game-code-hash.mjs`'s hashed set, so editing them would move every
+   * build's game-code hash — and the bench arm is a bench-only change. The extra field rides the
+   * payload's JSON unchanged (the type is a structural superset); `env.svgEnc` is what the analyzer
+   * pools on, and a session without the field (any build before the arm) is the PNG arm.
+   */
+  svgEnc: BenchSvgEncoding;
 }
 
 /** The empty screen effects of every bench frame. */
@@ -1187,6 +1209,9 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     // the widget's offer does — `''` (a build without the define) keeps the old buildId pooling.
     gameCodeHash: gameCode,
     output: output === null ? null : output.id,
+    // Additive field (plan R-SVG WO-1): the analyzer pools the SVG arm's rows apart from the PNG
+    // bench's, so a density page's cost per encoding never mixes into one sample pool.
+    svgEnc: options.svgEnc ?? 'png',
     host: host.name,
     userAgent: (win as Partial<Window>).navigator?.userAgent ?? '',
     innerWidth: win.innerWidth,

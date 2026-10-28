@@ -3,9 +3,12 @@
  * orchestration against a scripted host (what is timed, what is released, how a failing stage is
  * noted), the browser host on a fake window (XHR, an image on a blob URL with `decode()`,
  * `createImageBitmap`, the stage timeout), and the small helpers. The WebGL half runs on the TV and
- * in `pnpm bench` (`?scenario=decode`).
+ * in `pnpm bench` (`?scenario=decode`). The SVG arm's rows (plan R-SVG WO-1) prove the encoding
+ * sniff, the skipped `createImageBitmap` stage, and the blob typed by the file.
  */
 import { describe, expect, it, vi } from 'vitest';
+import { SVG_DECODE_ENCODING, SVG_DECODE_MIME } from '../../src/bench/decode.js';
+import { SVG_MIME_TYPE } from '../../scripts/bench-svg.mjs';
 import {
   BENCH_RUN_LENGTH,
   BENCH_SCENARIOS,
@@ -88,6 +91,15 @@ function scriptedHost(
       clock += 10;
       if (options.failFetch === true && url.endsWith('b.png')) {
         return Promise.reject(new Error('status 404'));
+      }
+      if (url.endsWith('.svg')) {
+        // The SVG arm's page (plan R-SVG WO-1): E3 text of a big page, the sniff's `<svg` first.
+        const text =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" ' +
+          'viewBox="0 0 2048 1024" shape-rendering="crispEdges"><path fill="#102030" d="M0 0h1z"/></svg>';
+        const bytes = new ArrayBuffer(300_000);
+        new Uint8Array(bytes).set(new TextEncoder().encode(text));
+        return Promise.resolve(bytes);
       }
       const head = pngHead(url.endsWith('a.png') ? 6 : 3);
       const bytes = new ArrayBuffer(url.endsWith('a.png') ? 2_500_000 : 2_600);
@@ -316,6 +328,7 @@ function fakeWindow(
   const opened: string[] = [];
   const videos: FakeVideo[] = [];
   const timers = new Map<number, () => void>();
+  const blobTypes: string[] = [];
   let nextTimer = 0;
   /** An XHR answering with 30 bytes (status 0, as `file://` does). */
   class FakeXhr {
@@ -395,7 +408,12 @@ function fakeWindow(
     XMLHttpRequest: FakeXhr as unknown as DecodeWindow['XMLHttpRequest'],
     Image: FakeImage as unknown as DecodeWindow['Image'],
     Blob: class {
-      constructor(readonly parts: unknown[]) {}
+      constructor(
+        readonly parts: unknown[],
+        options?: { type?: string },
+      ) {
+        blobTypes.push(options?.type ?? '');
+      }
     } as unknown as typeof Blob,
     URL: {
       createObjectURL: () => {
@@ -429,7 +447,7 @@ function fakeWindow(
       ? {}
       : { Video: FakeVideo as unknown as DecodeWindow['Video'] }),
   };
-  return { win, created, revoked, closed, opened, videos, timers };
+  return { win, created, revoked, closed, opened, videos, timers, blobTypes };
 }
 
 /**
@@ -693,5 +711,72 @@ describe('the video rows (plan v20x HARBENCH S8)', () => {
   it('has no surface on a window without Video (the old fakes keep working)', () => {
     const host = hostOn(fakeWindow({ bitmap: true }).win);
     expect(host.openVideo).toBeNull();
+  });
+});
+
+describe('the SVG arm page: the encoding sniff and the createImageBitmap guard (plan R-SVG WO-1)', () => {
+  /** The stand-in zone A page of the SVG arm (the shape the emitter's largest page has). */
+  const SVG_PAGE: BenchDecodePage = {
+    id: 'standin-zone-a',
+    what: 'big',
+    width: 2048,
+    height: 1024,
+    url: 'assets/atlas/standin-zone-a.svg',
+  };
+
+  it('reads an SVG page as svg-e3 and never hands it to createImageBitmap', async () => {
+    const s = scriptedHost(); // the scripted host HAS decodeBitmap — the file, not the engine, skips
+    const record = await measureDecode(s.host, [SVG_PAGE], { ...FACTS, repetitions: 2 });
+    const row = record.pages[0];
+    expect(row.encoding).toBe(SVG_DECODE_ENCODING);
+    expect(row.error).toBeNull();
+    // The bitmap stage is the one the guard skips: no `bitmap` log line, null summaries.
+    expect(s.log.filter((l) => l.startsWith('bitmap '))).toEqual([]);
+    expect(row.bitmapMs).toBeNull();
+    expect(row.bitmapUploadMs).toBeNull();
+    // The other stages still measured (the row says what the TV took, not that it took nothing).
+    expect(record.imageBitmap).toBe(true);
+    expect(row.fetchMs).not.toBeNull();
+    expect(row.decodeMs).not.toBeNull();
+    expect(row.uploadMs).not.toBeNull();
+  });
+
+  it('measures a PNG page and an SVG page in one scenario without cross-contamination', async () => {
+    const s = scriptedHost();
+    const record = await measureDecode(s.host, [PAGES[1], SVG_PAGE], {
+      ...FACTS,
+      repetitions: 1,
+    });
+    // b.png is the PNG-8 page; its bitmap stage ran as always (colour type 3 at byte 25).
+    expect(record.pages[0].encoding).toBe('png8');
+    expect(record.pages[0].bitmapMs).not.toBeNull();
+    expect(s.log.some((l) => l.startsWith('bitmap 2600'))).toBe(true);
+    // The svg row: sniffed by content (the url ends .svg but the reader never looks at it).
+    expect(record.pages[1].encoding).toBe(SVG_DECODE_ENCODING);
+    expect(s.log.filter((l) => l.startsWith('bitmap 300000'))).toEqual([]);
+  });
+
+  it('types the blob by the file: SVG text as image/svg+xml, a PNG stays image/png', async () => {
+    const fake = fakeWindow({ decode: 'resolve' });
+    const host = hostOn(fake.win);
+    const text = new TextEncoder().encode(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="2"></svg>',
+    );
+    const svg = text.buffer.slice(text.byteOffset, text.byteOffset + text.byteLength);
+    await host.decodeImage(svg);
+    expect(fake.blobTypes).toEqual([SVG_DECODE_MIME]);
+    await host.decodeImage(new ArrayBuffer(8));
+    expect(fake.blobTypes).toEqual([SVG_DECODE_MIME, 'image/png']);
+    // The bitmap route types the same way (even though measureDecode never calls it for svg).
+    const fake2 = fakeWindow({ bitmap: true });
+    const decodeBitmap = hostOn(fake2.win).decodeBitmap;
+    expect(decodeBitmap).not.toBeNull();
+    await decodeBitmap!(svg);
+    expect(fake2.blobTypes).toEqual([SVG_DECODE_MIME]);
+  });
+
+  it('the runtime MIME constant equals the build side (one string, pinned across the trees)', () => {
+    expect(SVG_DECODE_MIME).toBe(SVG_MIME_TYPE);
+    expect(SVG_DECODE_ENCODING).toBe('svg-e3');
   });
 });

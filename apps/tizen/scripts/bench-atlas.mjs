@@ -64,6 +64,12 @@ import { MAX_PAGE_SIZE, packRects } from '../../../scripts/assets/packer.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { buildDecodeStandin } from './bench-decode.mjs';
+import {
+  BENCH_SVG_ENCODING,
+  SVG_MIME_TYPE,
+  buildBenchSvgPages,
+  parseBenchSvgEncoding,
+} from './bench-svg.mjs';
 import { FRAME_H, FRAME_W } from '../../../scripts/frame.mjs';
 
 /**
@@ -458,9 +464,16 @@ export function readFxFiles(dir = FX_DIR) {
  * are loaded with `new Image()` like the game's. Only the scenario's own density is loaded on a
  * page, so a scenario's texture bytes are its own.
  *
+ * @param {{ svgEnc?: string }} [options] - `svgEnc` flips the density pages to the **E3 SVG
+ *   encoding** (`'e3'`; `''`/`'off'`/`'png'` is the default PNG arm, any other value throws). The
+ *   arm renames every density page `bench-x<s>-<i>.svg` in the inlined manifests and emits the SVG
+ *   text in its place — the PNG density pages are then *not* in the bundle, and the `decode` and
+ *   `standin` pages stay PNG (they measure the PNG/OGG decoders, not an encoding of the atlas).
+ *   See `./bench-svg.mjs` for the emitter and its pixel-exactness proof.
  * @returns {import('vite').Plugin} The plugin.
  */
-export function shmupRenderBench() {
+export function shmupRenderBench(options = {}) {
+  const svgEnc = parseBenchSvgEncoding(options.svgEnc ?? '');
   /** @type {BenchAtlas[] | null} */
   let atlases = null;
   /** @type {{ pages: import('./bench-decode.mjs').DecodePage[], manifest: object } | null} */
@@ -481,7 +494,7 @@ export function shmupRenderBench() {
   };
 
   /**
-   * Builds the decode scenario's pages and the `standin-zone` load's manifest once per Vite run.
+   * The decode scenario's pages and the `standin-zone` load's manifest once per Vite run.
    *
    * @returns {{ pages: import('./bench-decode.mjs').DecodePage[], manifest: object }} The pages and
    *   the stand-in manifest.
@@ -489,6 +502,37 @@ export function shmupRenderBench() {
   const ensureDecode = () => {
     decodeBuild ??= buildDecodeStandin();
     return decodeBuild;
+  };
+
+  /** @type {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} */
+  let svgByName = null;
+
+  /**
+   * The E3 page of each density page's PNG bytes, keyed by the PNG file name (null in the PNG arm).
+   *
+   * @returns {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} The pages by PNG name.
+   */
+  const svgPages = () => {
+    if (svgEnc !== BENCH_SVG_ENCODING) return null;
+    if (svgByName === null) {
+      svgByName = new Map();
+      for (const page of buildBenchSvgPages(ensure())) svgByName.set(page.pngFile, page);
+    }
+    return svgByName;
+  };
+
+  /**
+   * The page the widget fetches and the bundle emits: the PNG page in the default arm, the E3 SVG
+   * text of the same pixels when armed (the bytes argument is then only read in the PNG arm).
+   *
+   * @param {string} pngFile - The page's PNG file name.
+   * @param {Buffer} pngBytes - The page's PNG bytes.
+   * @returns {{ file: string, source: Buffer, mime: string }} Name, bytes and content type.
+   */
+  const pageOf = (pngFile, pngBytes) => {
+    const svg = svgPages()?.get(pngFile);
+    if (svg === undefined) return { file: pngFile, source: pngBytes, mime: 'image/png' };
+    return { file: svg.file, source: svg.svg, mime: SVG_MIME_TYPE };
   };
 
   return {
@@ -501,10 +545,11 @@ export function shmupRenderBench() {
       if (command !== 'build') return;
       for (const atlas of built) {
         atlas.manifest.pages.forEach((page, index) => {
+          const out = pageOf(page.file, atlas.png[index]);
           this.emitFile({
             type: 'asset',
-            fileName: `${BENCH_ATLAS_DIR}/${page.file}`,
-            source: atlas.png[index],
+            fileName: `${BENCH_ATLAS_DIR}/${out.file}`,
+            source: out.source,
           });
         });
       }
@@ -526,10 +571,13 @@ export function shmupRenderBench() {
         }
         const file = url.slice(prefix.length);
         for (const atlas of ensure()) {
-          const index = atlas.manifest.pages.findIndex((page) => page.file === file);
-          if (index >= 0) {
-            response.setHeader('Content-Type', 'image/png');
-            response.end(atlas.png[index]);
+          const pages = atlas.manifest.pages.map((page, index) =>
+            pageOf(page.file, atlas.png[index]),
+          );
+          const served = pages.find((page) => page.file === file);
+          if (served !== undefined) {
+            response.setHeader('Content-Type', served.mime);
+            response.end(served.source);
             return;
           }
         }
@@ -547,12 +595,20 @@ export function shmupRenderBench() {
     },
     load(id) {
       if (id !== RESOLVED_BENCH_MODULE_ID) return null;
-      const list = ensure().map((atlas) => ({
-        density: atlas.density,
-        label: atlas.label,
-        manifest: atlas.manifest,
-        pageUrls: atlas.pageUrls,
-      }));
+      const list = ensure().map((atlas) => {
+        const files = atlas.manifest.pages.map(
+          (page, index) => pageOf(page.file, atlas.png[index]).file,
+        );
+        return {
+          density: atlas.density,
+          label: atlas.label,
+          manifest: {
+            ...atlas.manifest,
+            pages: atlas.manifest.pages.map((page, index) => ({ ...page, file: files[index] })),
+          },
+          pageUrls: files.map((file) => `${BENCH_ATLAS_DIR}/${file}`),
+        };
+      });
       const build = ensureDecode();
       const decode = build.pages.map((page) => ({
         id: page.id,

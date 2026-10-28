@@ -21,7 +21,10 @@
  *    eager upload, B3a): the CPU time of the call, and the time until `gl.finish()` returns;
  * 4. the alternative path, **`createImageBitmap`** (Chromium 50+; options from 52 — so inside the
  *    engine floor) on the same bytes, then its upload — measured where the engine has it, so R3-04
- *    can tell whether an image upload re-decodes and whether a bitmap loader would be faster.
+ *    can tell whether an image upload re-decodes and whether a bitmap loader would be faster. The
+ *    stage is **skipped for an SVG page** ({@link SVG_DECODE_ENCODING}, plan R-SVG WO-1): the spec
+ *    rejects a bitmap source that is an SVG image and Chromium honours that rejection on every
+ *    engine measured (Chromium 69 up to 156), so calling it would only record a `DOMException`.
  *
  * **Nothing is a cache hit:** each repetition decodes from a fresh blob URL (revoked after), wraps
  * the image in a new source and destroys it after the upload (Pixi deletes the GL texture), and
@@ -233,6 +236,44 @@ export function pngEncodingOf(bytes: Uint8Array): string {
 }
 
 /**
+ * The encoding tag of a page fetched as E3 SVG text (the SVG arm's atlas pages, plan R-SVG WO-1 —
+ * `apps/tizen/scripts/bench-svg.mjs`, whose `SVG_MIME_TYPE` this file's {@link SVG_DECODE_MIME}
+ * mirrors: the two are pinned to each other by `test/bench/decode.test.ts`).
+ */
+export const SVG_DECODE_ENCODING = 'svg-e3';
+
+/** The MIME type an SVG page is a blob of — the `image/png` blob's sibling. */
+export const SVG_DECODE_MIME = 'image/svg+xml';
+
+/**
+ * Whether fetched bytes are an SVG file (the arm's pages are emitted as `<svg …`, so the tag is at
+ * offset 0; the emitter writes nothing before it).
+ *
+ * @param bytes - The file (its first bytes are enough).
+ * @returns true for SVG text, false for a PNG (or anything else).
+ */
+export function isSvgBytes(bytes: Uint8Array): boolean {
+  return (
+    bytes.length >= 4 &&
+    bytes[0] === 0x3c &&
+    bytes[1] === 0x73 &&
+    bytes[2] === 0x76 &&
+    bytes[3] === 0x67
+  );
+}
+
+/**
+ * A fetched page's encoding: {@link SVG_DECODE_ENCODING} for an SVG file, else {@link pngEncodingOf}
+ * (the PNG IHDR read, unchanged for every page that was ever measured here).
+ *
+ * @param bytes - The file (its first 26 bytes are enough).
+ * @returns The encoding.
+ */
+export function pageEncodingOf(bytes: Uint8Array): string {
+  return isSvgBytes(bytes) ? SVG_DECODE_ENCODING : pngEncodingOf(bytes);
+}
+
+/**
  * `[min, p50, p95, max]` of a stage's repetitions (the bench's nearest-rank rule, 3 decimals).
  *
  * @param values - One figure per measured repetition.
@@ -332,7 +373,7 @@ export async function measureDecode(
         fetchMs = host.now() - t0;
         run.fetch.push(fetchMs);
         run.bytes = bytes.byteLength;
-        run.encoding = pngEncodingOf(new Uint8Array(bytes, 0, Math.min(26, bytes.byteLength)));
+        run.encoding = pageEncodingOf(new Uint8Array(bytes, 0, Math.min(26, bytes.byteLength)));
       } catch (error) {
         fail(run, 'fetch', error);
       }
@@ -372,8 +413,11 @@ export async function measureDecode(
           decoded.release();
         }
       }
-      // 4. The alternative: createImageBitmap, then its upload.
-      if (bytes !== null && host.decodeBitmap !== null) {
+      // 4. The alternative: createImageBitmap, then its upload. An SVG page is skipped: Chromium
+      // rejects a bitmap source whose image is an SVG (the spec's own rule, measured on 69 and 156),
+      // so the stage would report nothing but its own rejection. `bitmapMs` stays null, exactly as
+      // on an engine without the API, and the row's `encoding` says which file it measured.
+      if (bytes !== null && host.decodeBitmap !== null && run.encoding !== SVG_DECODE_ENCODING) {
         let bitmap: DecodedPage | null = null;
         try {
           const t5 = host.now();
@@ -739,12 +783,16 @@ export function createDecodeHost(options: DecodeHostOptions): DecodeHost {
       'decode',
     );
   /**
-   * PNG bytes as a blob.
+   * The file's bytes as a blob, typed by what they are: an SVG page (the arm's atlas page) would
+   * otherwise reach the image decoder as a PNG and never load.
    *
    * @param bytes - The file.
    * @returns The blob.
    */
-  const blobOf = (bytes: ArrayBuffer): Blob => new win.Blob([bytes], { type: 'image/png' });
+  const blobOf = (bytes: ArrayBuffer): Blob =>
+    new win.Blob([bytes], {
+      type: isSvgBytes(new Uint8Array(bytes, 0, 4)) ? SVG_DECODE_MIME : 'image/png',
+    });
   const createBitmap = win.createImageBitmap;
   const VideoCtor = win.Video;
   return {

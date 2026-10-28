@@ -4,14 +4,15 @@
  * widget's one classic `app.js`. The game's entry (`../main.ts`) never imports the bench, and only
  * this file reads the bench build's virtual module, so the rest of the module is testable in Node.
  * It also reads the bench build's campaign defines (`VITE_BENCH_CAMPAIGN`, `VITE_BENCH_PAUSE_S` —
- * `./campaign.ts`) and its output define (`VITE_BENCH_OUTPUT` — `./output.ts`, which also gives
- * the build id); without them the bench runs as it always did.
+ * `./campaign.ts`), its output define (`VITE_BENCH_OUTPUT` — `./output.ts`, which also gives
+ * the build id) and its atlas-encoding define (`VITE_BENCH_SVG` — the same file); without them the
+ * bench runs as it always did.
  *
  * @module
  */
 import bench from 'virtual:shmup-render-bench';
 import { parseCampaignConfig } from './campaign.js';
-import { parseBenchOutput } from './output.js';
+import { parseBenchOutput, parseBenchSvg } from './output.js';
 import { startRenderBench } from './run.js';
 
 startRenderBench({
@@ -27,4 +28,7 @@ startRenderBench({
   assets: bench,
   campaign: parseCampaignConfig(__SHMUP_BENCH_CAMPAIGN__, __SHMUP_BENCH_PAUSE_S__),
   output: parseBenchOutput(__SHMUP_BENCH_OUTPUT__),
+  // The atlas-page encoding the bundle was built with (`VITE_BENCH_SVG`): the payload says which
+  // arm ran, so the analyzer never pools an SVG session's rows with the PNG bench's (`./output.ts`).
+  svgEnc: parseBenchSvg(__SHMUP_BENCH_SVG__),
 });

@@ -20,8 +20,14 @@ declare const __SHMUP_BENCH_PAUSE_S__: string;
 declare const __SHMUP_BENCH_OUTPUT__: string;
 
 /**
+ * `VITE_BENCH_SVG` of the bench build, normalised by `./output.ts` `parseBenchSvg`: `'png'` (the
+ * default — the PNG atlas pages) or `'e3'` (the SVG arm, `scripts/bench-svg.mjs`).
+ */
+declare const __SHMUP_BENCH_SVG__: string;
+
+/**
  * The bench build's id (`./output.ts` `benchBuildId`): `__SHMUP_BUILD__`, plus `@<w>x<h>` when the
- * build has an output (`'9e60df2+@1280x720'`).
+ * build has an output (`'9e60df2+@1280x720'`), plus `+svg-e3` in the SVG arm.
  */
 declare const __SHMUP_BENCH_BUILD_ID__: string;
 

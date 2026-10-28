@@ -1009,8 +1009,13 @@ describe('render bench analyzer: plan §13 prints its outcome rows at 960x540 as
 });
 
 describe('bench analyzer: game-code pooling (plan v20x BENCSKIP): one code merges across builds, two codes never pool', () => {
-  /** The 2026-10-27 law's env type, with the BENCSKIP field it may now carry. */
-  type BenchEnv = RenderBenchEnv & { output?: string | null };
+  /**
+   * The 2026-10-27 law's env type, with the fields the payload may now carry: `gameCodeHash`
+   * (BENCSKIP) and `svgEnc` (R-SVG WO-1). Neither is on `RenderBenchEnv` — the shell type file is
+   * hashed by the game-code digest, so an additive bench-only field travels on the app's own env
+   * type (`TvBenchEnv` in `apps/tizen/src/bench/run.ts`) and the analyzer reads it from the JSON.
+   */
+  type BenchEnv = RenderBenchEnv & { output?: string | null; svgEnc?: string };
 
   /** The code a rebuilt-bench-over-same-game bundle carries. */
   const CODE = 'c0de000001';
@@ -1053,12 +1058,19 @@ describe('bench analyzer: game-code pooling (plan v20x BENCSKIP): one code merge
    * @param buildId - The bundle's build id.
    * @param startedAt - When the run started (orders the sessions).
    * @param gameCodeHash - The code field, absent for a legacy session.
+   * @param svgEnc - The atlas-page encoding, absent (or `png`) for every session until R-SVG.
    * @returns The env.
    */
-  function envWin(buildId: string, startedAt: number, gameCodeHash?: string): BenchEnv {
+  function envWin(
+    buildId: string,
+    startedAt: number,
+    gameCodeHash?: string,
+    svgEnc?: string,
+  ): BenchEnv {
     return {
       buildId,
       ...(gameCodeHash === undefined ? {} : { gameCodeHash }),
+      ...(svgEnc === undefined ? {} : { svgEnc }),
       host: 'tizen',
       userAgent: 'UA',
       innerWidth: 1920,
@@ -1193,5 +1205,60 @@ describe('bench analyzer: game-code pooling (plan v20x BENCSKIP): one code merge
     expect(analyzeBenchSessions([noField, empty])).toContain(
       '2 session(s) (rb-empty-f, rb-empty-e); runs: GL 1 × 2.',
     );
+  });
+
+  it('never pools an SVG-arm session with the PNG rows of the same code (plan R-SVG WO-1)', () => {
+    // The arm measures the same scenes from differently encoded pages, so its samples must never
+    // average with the PNG samples — while the PNG pool's keys stay exactly as every committed
+    // table wrote them (an absent `svgEnc` is the bare key, no suffix).
+    const png1 = sessionFile('rb-arm-p1', [
+      line('rb-arm-p1', 1, envWin('b-one', 1_793_299_000_000, CODE), busyRows(), true),
+    ]);
+    const png2 = sessionFile('rb-arm-p2', [
+      line('rb-arm-p2', 1, envWin('b-two', 1_793_300_100_000, CODE), row640(), true),
+    ]);
+    const arm = sessionFile('rb-arm-svg', [
+      line(
+        'rb-arm-svg',
+        1,
+        envWin('b-svg+svg-e3', 1_793_301_100_000, CODE, 'e3'),
+        busyRows(),
+        true,
+      ),
+    ]);
+    // The PNG pair still pools (the pre-arm law, byte-kept) …
+    expect(analyzeBenchSessions([png1, png2])).toContain('2 session(s) (rb-arm-p1, rb-arm-p2)');
+    // … and the armed session stands apart from them: three files, the 2-pool and a 1-pool.
+    const mixed = analyzeBenchSessions([png1, png2, arm]);
+    expect(mixed).toContain('2 session(s) (rb-arm-p1, rb-arm-p2)');
+    expect(mixed).toContain('1 session(s) (rb-arm-svg)');
+    // (the report's title counts all read files — the negative is on the block line.)
+    expect(mixed).not.toContain('3 session(s) (rb-arm-p1');
+    expect(mixed).toContain('[build b-svg+svg-e3]');
+    // `png` written explicitly is the PNG arm: it pools with the bare-key sessions.
+    const stated = sessionFile('rb-arm-png', [
+      line('rb-arm-png', 1, envWin('b-three', 1_793_302_100_000, CODE, 'png'), row640(), true),
+    ]);
+    expect(analyzeBenchSessions([png1, stated])).toContain('2 session(s) (rb-arm-p1, rb-arm-png)');
+  });
+
+  it('pools two SVG-arm sessions of one code into the suffixed pool', () => {
+    const a = sessionFile('rb-both-a', [
+      line('rb-both-a', 1, envWin('b-one+svg-e3', 1_793_299_000_000, CODE, 'e3'), busyRows(), true),
+    ]);
+    const b = sessionFile('rb-both-b', [
+      line('rb-both-b', 1, envWin('b-two+svg-e3', 1_793_300_100_000, CODE, 'e3'), row640(), true),
+    ]);
+    const report = analyzeBenchSessions([a, b]);
+    expect(report).toContain('2 session(s) (rb-both-a, rb-both-b); runs: GL 1 × 2.');
+    expect(report).toContain('[build b-one+svg-e3]');
+    // A legacy session (no code, no encoding) never joins the arm's build-id pool either: the
+    // suffixed key cannot collide with the plain build ids it would otherwise share a block with.
+    const leg = sessionFile('rb-both-l', [
+      line('rb-both-l', 1, envWin('b-one+svg-e3', 1_793_301_000_000), busyRows(), true),
+    ]);
+    const mixed = analyzeBenchSessions([a, leg]);
+    expect(mixed).toContain('1 session(s) (rb-both-a)');
+    expect(mixed).toContain('1 session(s) (rb-both-l)');
   });
 });

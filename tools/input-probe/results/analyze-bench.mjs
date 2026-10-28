@@ -214,6 +214,28 @@ export function modalEnv(payloads) {
 }
 
 /**
+ * The pool a session's rows go into: the identity the skip ledger and every budget read is taken
+ * over (plan v20x BENCSKIP, extended by plan R-SVG WO-1 for the atlas-page encoding).
+ *
+ * A session that carries `env.gameCodeHash` pools by it (`code:<hash>`); one that does not pools by
+ * `env.buildId`, exactly as every session recorded before the field does — so the committed analysis
+ * tables regenerate byte for byte on that rule. An **SVG-arm** session (`env.svgEnc` other than
+ * `'png'` or absent) gains a `|svg=<enc>` suffix, and a PNG session's key never carries it: the two
+ * arms draw the same scenes from differently encoded pages, so their samples must never average
+ * together, and an older table's keys stay untouched.
+ *
+ * @param {Record<string, unknown>} env - The session's modal env (`modalEnv` of its payloads).
+ * @returns {string} The pool key, part of the group key `${pool}|${output.id}`.
+ */
+export function benchPoolOf(env) {
+  const code = typeof env.gameCodeHash === 'string' && env.gameCodeHash !== '' ? env.gameCodeHash : null;
+  const enc =
+    typeof env.svgEnc === 'string' && env.svgEnc !== '' && env.svgEnc !== 'png' ? env.svgEnc : null;
+  const base = code === null ? (typeof env.buildId === 'string' ? env.buildId : '?') : `code:${code}`;
+  return enc === null ? base : `${base}|svg=${enc}`;
+}
+
+/**
  * Formats a number, or `—` when it is missing.
  *
  * @param {unknown} v - the value.
@@ -991,7 +1013,7 @@ export function loadCampaign(files) {
       const { payloads, records, decode } = readBenchSession(file);
       const last = payloads[payloads.length - 1] ?? {};
       const env = modalEnv(payloads);
-      const code = typeof env.gameCodeHash === 'string' && env.gameCodeHash !== '' ? env.gameCodeHash : null;
+      const pool = benchPoolOf(env);
       return {
         file,
         order,
@@ -1002,7 +1024,7 @@ export function loadCampaign(files) {
         // when it did not — every session recorded before the field exists groups exactly as it
         // always did (the committed analysis tables regenerate byte for byte on that rule). The
         // `code:` shape can never collide with a build id (`4b37d12`, `8ba0e7c@960x540`, …).
-        pool: code === null ? (typeof env.buildId === 'string' ? env.buildId : '?') : `code:${code}`,
+        pool,
         output: sessionOutput(env),
         from: last.from ?? null,
         payloads,

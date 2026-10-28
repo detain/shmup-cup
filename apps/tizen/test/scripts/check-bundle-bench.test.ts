@@ -1,7 +1,9 @@
 /**
- * Rule 9 of `scripts/check-bundle.mjs` (plan R0-02): the game and the TV render bench never mix —
- * a widget with the bench's app id must carry the bench's `app.js`, and the game's `app.js` must
- * not contain the bench. Small fixture folders, like `check-bundle.test.ts`.
+ * Rules 9 and 12 of `scripts/check-bundle.mjs`: the game and the TV render bench never mix — a
+ * widget with the bench's app id must carry the bench's `app.js`, and the game's `app.js` must not
+ * contain the bench (plan R0-02) — and the `.svg` pages on disk are exactly the `.svg` pages
+ * `app.js` names, one encoding per build (the bench's SVG arm, plan R-SVG WO-1). Small fixture
+ * folders, like `check-bundle.test.ts`.
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,6 +16,7 @@ import {
   TV_BENCH_MARKER,
   VIDEO_LEDGER_FILE,
   applicationIdOf,
+  checkBenchAtlasPages,
   checkTizenBundle,
 } from '../../scripts/check-bundle.mjs';
 import { BENCH_APP_ID, benchConfigXml } from '../../scripts/config-xml.mjs';
@@ -121,5 +124,82 @@ describe('tizen/scripts/check-bundle rule 9 (the game and the TV render bench ne
     ]);
     put('app.js', GAME_APP);
     expect(checkTizenBundle(dir).problems).toEqual([]);
+  });
+});
+
+describe('tizen/scripts/check-bundle rule 12 (the SVG pages on disk are the pages app.js names)', () => {
+  /**
+   * A page document in the arm's shape (the reader wants the root's `width` / `height`).
+   *
+   * @param width - Page width in pixels.
+   * @param height - Page height in pixels.
+   * @returns The document text.
+   */
+  function svgDoc(width = 512, height = 512): string {
+    return (
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
+      `viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges"></svg>`
+    );
+  }
+
+  /**
+   * A bench `app.js` naming these page urls (the virtual module holds them as string literals).
+   *
+   * @param urls - The page urls the bundle fetches.
+   * @returns The script text (the marker statement plus the names).
+   */
+  function benchAppNaming(urls: string[]): string {
+    const lits = urls.map((url) => `'${url}'`).join(', ');
+    return (
+      `${polyfill}\n(function () { document.body.setAttribute('${TV_BENCH_MARKER}', 'x'); ` +
+      `var pages = [${lits}]; void pages; })();\n`
+    );
+  }
+
+  it('unit: one encoding named and present passes; both mismatches return problems', () => {
+    // The PNG arm: pages, no svg named, no svg on disk.
+    expect(
+      checkBenchAtlasPages(['assets/atlas/bench-x1-0.png', 'assets/atlas/main.json'], 'bench-x1-0'),
+    ).toEqual([]);
+    // The SVG arm: the named page is on disk.
+    expect(
+      checkBenchAtlasPages(['assets/atlas/bench-x1-0.svg'], `'assets/atlas/bench-x1-0.svg'`),
+    ).toEqual([]);
+    // Named but not emitted: a load that would 404 on the TV.
+    expect(checkBenchAtlasPages([], `'assets/atlas/gone.svg'`)).toEqual([
+      'app.js names assets/atlas/gone.svg, which the bundle does not hold',
+    ]);
+    // Emitted but not named: the other arm's leftover page, sized for nothing.
+    expect(checkBenchAtlasPages(['assets/atlas/x.svg'], '')).toEqual([
+      'assets/atlas/x.svg is in the bundle but named by nothing (stale?)',
+    ]);
+    // The game widget holds neither: the rule reads as no stray svg.
+    expect(
+      checkBenchAtlasPages(['assets/atlas/main.png', 'assets/atlas/main.json'], 'game'),
+    ).toEqual([]);
+  });
+
+  it('accepts the bench whose density pages are SVG (the arm)', () => {
+    put('config.xml', benchConfigXml(GAME_XML));
+    put('assets/atlas/bench-x1-0.svg', svgDoc());
+    put('app.js', benchAppNaming(['assets/atlas/bench-x1-0.svg']));
+    expect(checkTizenBundle(dir).problems).toEqual([]);
+  });
+
+  it('rejects an SVG page left on disk by the PNG arm (the stale direction)', () => {
+    put('config.xml', benchConfigXml(GAME_XML));
+    put('assets/atlas/bench-x1-0.svg', svgDoc());
+    put('app.js', BENCH_APP);
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'assets/atlas/bench-x1-0.svg is in the bundle but named by nothing (stale?)',
+    ]);
+  });
+
+  it('rejects a bench app.js naming an SVG page the bundle does not hold (the broken-load direction)', () => {
+    put('config.xml', benchConfigXml(GAME_XML));
+    put('app.js', benchAppNaming(['assets/atlas/bench-x2.67-1.svg']));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'app.js names assets/atlas/bench-x2.67-1.svg, which the bundle does not hold',
+    ]);
   });
 });

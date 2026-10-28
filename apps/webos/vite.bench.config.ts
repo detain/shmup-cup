@@ -12,6 +12,10 @@
  * install next to the game. `scripts/check-bundle.mjs dist-bench` checks it like the game's
  * build, budgets included. `bench:package` / `bench:install` (`scripts/webos-bench.mjs`) drive the
  * existing `ares-*` wrappers — written, never run (no LG hardware).
+ *
+ * **The SVG arm (`VITE_BENCH_SVG=e3`, plan R-SVG WO-1)** flips the density pages to E3 SVG files in
+ * this widget exactly as it does in the Tizen one (`../tizen/vite.bench.config.ts`); Chromium 68
+ * rasterises an `<img>`-loaded SVG like 69 does, so the arm is comparable on both TVs.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -20,7 +24,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { buildId, clientConditions, shmupBuildInfo } from '../../vite.shared.js';
 import { gameCodeHash } from '../../scripts/game-code-hash.mjs';
 import { shmupRenderBench } from '../tizen/scripts/bench-atlas.mjs';
-import { benchBuildId, parseBenchOutput } from '../tizen/src/bench/output.js';
+import { benchBuildId, parseBenchOutput, parseBenchSvg } from '../tizen/src/bench/output.js';
 import { classicScriptTag } from '../tizen/vite.config.js';
 import { benchAppInfo } from './scripts/appinfo.mjs';
 
@@ -69,6 +73,12 @@ export function benchAppInfoPlugin(): Plugin {
 /** `VITE_BENCH_OUTPUT`, parsed (`null`: the window's backbuffer); throws on a malformed value. */
 const benchOutput = parseBenchOutput(process.env.VITE_BENCH_OUTPUT ?? '');
 
+/**
+ * `VITE_BENCH_SVG`: the atlas-page encoding of this build (`'png'` by default, `'e3'` for the SVG
+ * arm — `apps/tizen/scripts/bench-svg.mjs`); a bad value fails the build (`../tizen/vite.bench.config.ts`).
+ */
+const benchSvg = parseBenchSvg(process.env.VITE_BENCH_SVG ?? '');
+
 export default defineConfig({
   root: fileURLToPath(new URL('../tizen/bench', import.meta.url)),
   base: './',
@@ -79,7 +89,8 @@ export default defineConfig({
     __SHMUP_BENCH_CAMPAIGN__: JSON.stringify(process.env.VITE_BENCH_CAMPAIGN ?? ''),
     __SHMUP_BENCH_PAUSE_S__: JSON.stringify(process.env.VITE_BENCH_PAUSE_S ?? '30'),
     __SHMUP_BENCH_OUTPUT__: JSON.stringify(benchOutput === null ? '' : benchOutput.id),
-    __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput)),
+    __SHMUP_BENCH_SVG__: JSON.stringify(benchSvg),
+    __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput, benchSvg)),
     // Plan v20x BENCSKIP: the game-code identity the skip ledger and the payloads pool by —
     // stable across a bench-only rebuild, fresh whenever any drawn-pixel input moves.
     __SHMUP_GAME_CODE_HASH__: JSON.stringify(gameCodeHash(repoRoot)),
@@ -88,7 +99,12 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupRenderBench(), shmupBuildInfo(), classicScriptTag(), benchAppInfoPlugin()],
+  plugins: [
+    shmupRenderBench({ svgEnc: benchSvg }),
+    shmupBuildInfo(),
+    classicScriptTag(),
+    benchAppInfoPlugin(),
+  ],
   build: {
     outDir: join(appDir, 'dist-bench'),
     emptyOutDir: true,

@@ -243,6 +243,45 @@ analyzer's **"Decode and upload"** section, which ends with plan R3-04's zone-lo
 two zone pages, against its 2 s target). **Red** on the results page re-runs it alone;
 `?scenario=decode&reps=<n>` runs it in a browser.
 
+**The SVG arm (plan R-SVG WO-1 — `VITE_BENCH_SVG=e3`).** The bench has a second encoding of its
+atlas pages, chosen at build time by the environment variable `VITE_BENCH_SVG`. Unset (or `png`)
+is today's build itself — the density pages are PNGs and every committed analysis table regenerates
+byte for byte. `e3` arms it: an armed build emits each density page as **E3 SVG text**
+(`scripts/bench-svg.mjs`: one `<path fill="#rrggbb" fill-opacity="…">` per colour, one compound
+rect subpath per colour run, `shape-rendering="crispEdges"` — only the SVG 1.1 core the TV engines
+parse) in place of its PNG. The pages are still separate fetched files, now
+`dist-bench/assets/atlas/*.svg`, and they are **never inlined**: the bench's `app.js` already sits
+at 487.5 KiB of the 512 KiB gzip budget, and one page of the density atlas's shape is 0.8–7.9 MB of
+SVG text. The widget loads them through the same `texImage2D` route as the PNGs (`new Image()`; the
+decode scenario's blob is typed by sniffing the file's content, `src/bench/decode.ts`).
+`createImageBitmap` is never tried for an SVG page — Chromium rejects an SVG as a bitmap source,
+measured on 69 and on 156 alike — so the decode row of such a file says `encoding: svg-e3` and
+keeps its bitmap columns null, the honest shape of a known-rejected path.
+
+The identity separates the two arms so their samples never mix: an armed build id carries a
+`+svg-e3` suffix (`benchBuildId` in `src/bench/output.ts`), every payload carries its `svgEnc`, and
+`results/analyze-bench.mjs`'s `benchPoolOf` pools the arm's rows under `code:<hash>|svg=e3` while
+PNG rows keep the bare `code:<hash>` key of every committed table. The emitter lives under
+`apps/tizen/scripts/` — the bench's own unhashed tree — so the game-code digest of any arm is the
+digest of the game (verified by `test/scripts/game-code-hash.test.ts`'s path rules and the
+pixel-exactness gate in this app's `test/scripts/bench-svg.test.ts`, which re-derives every shipped
+SVG page against its baked PNG inside the repo).
+
+The prediction the arm ships to test is honest: **SVG is expected to lose here.** These pages are
+drawn once per scenario at fixed positions as pre-uploaded static textures; nothing renders
+vectorly during the frame, so the encoding can only change the file → GPU path — and the desktop
+figures are parse- and upload-bound: E3 loaded at 55.3 ms per page against the PNG's 12.6 ms and
+uploaded at 30.2 against 17.3. On the M7's slow single-core CPU the text parse is paid in full, so
+the decode rows should read several times the PNG's; measuring that on hardware is the arm's job
+(plan R-SVG WO-2 slices it). A red verdict is still information, and the rules stay real either
+way: the bundle check sizes an SVG page against a 12 MiB raw budget and a 2048² edge (rule 8) and
+demands the pages on disk are exactly the pages the bundle names, one encoding per build (rule 12).
+
+```powershell
+$env:VITE_BENCH_SVG = "e3"              # SVG arm; unset = the PNG arm (the default)
+pnpm bench:tv                           # same command, armed dist-bench/
+```
+
 ## config.xml
 
 `public/config.xml`: profile `tv-samsung`, privileges `tv.inputdevice` (extra remote keys),

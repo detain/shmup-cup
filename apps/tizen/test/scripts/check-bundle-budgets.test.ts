@@ -2,7 +2,8 @@
  * Boundaries of the plan M1-19 budgets in scripts/check-bundle.mjs: an atlas page of exactly
  * 2048 px per edge passes and one pixel more on either edge fails; a `dist/` of exactly the
  * budget passes and one byte more fails; only pages directly in `assets/atlas/` count; `pngSize`
- * reads a PNG through a view into a larger buffer and rejects truncated or signature-less bytes.
+ * reads a PNG through a view into a larger buffer and rejects truncated or signature-less bytes;
+ * the same edge rows exist for `svgPageSize` and the SVG page branch of rule 8 (plan R-SVG WO-1).
  */
 import {
   existsSync,
@@ -23,9 +24,11 @@ import {
   MEDIA_STILL_COUNT,
   MEDIA_VIDEO_CLIP_COUNT,
   STILLS_LEDGER_FILE,
+  SVG_PAGE_MAX_BYTES,
   VIDEO_LEDGER_FILE,
   checkTizenBundle,
   pngSize,
+  svgPageSize,
 } from '../../scripts/check-bundle.mjs';
 
 // The banner pair real bundles start with (rule 4, w14) — a fixture needs both.
@@ -185,5 +188,113 @@ describe('tizen/scripts/check-bundle pngSize — edge cases', () => {
     const broken = png(1, 1);
     broken[1] = 0x51;
     expect(pngSize(broken)).toBeNull();
+  });
+});
+
+describe('tizen/scripts/check-bundle svgPageSize — the SVG arm’s page reader (plan R-SVG WO-1)', () => {
+  /**
+   * Bytes of a document whose root element carries the given size (the emitter's attribute order).
+   *
+   * @param width - Root `width` in pixels.
+   * @param height - Root `height` in pixels.
+   * @param tail - Text after the opening tag (default: the closed document).
+   * @returns The UTF-8 bytes.
+   */
+  function svgBytes(width: number, height: number, tail = '</svg>'): Uint8Array {
+    return new TextEncoder().encode(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
+        `viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges">` +
+        tail,
+    );
+  }
+
+  it('reads the root width and height', () => {
+    expect(svgPageSize(svgBytes(640, 360))).toEqual({ width: 640, height: 360 });
+  });
+
+  it('refuses a document without the size attributes, an XML prolog, and a PNG', () => {
+    expect(svgPageSize(new TextEncoder().encode('<svg xmlns="x"></svg>'))).toBeNull();
+    // The emitter never writes a prolog: a page that starts with one is not the arm's document.
+    expect(
+      svgPageSize(new TextEncoder().encode('<?xml version="1.0"?><svg width="1" height="1">')),
+    ).toBeNull();
+    expect(svgPageSize(png(8, 8))).toBeNull();
+    expect(svgPageSize(new Uint8Array(0))).toBeNull();
+  });
+
+  it('opens the document tag before reading the attributes', () => {
+    // The size lives inside the FIRST tag: a second element may not lend it (the reader stops at
+    // the root's `>`), so a headerless root over a sized child reads as null.
+    expect(
+      svgPageSize(new TextEncoder().encode('<svg><rect width="9" height="9"/></svg>')),
+    ).toBeNull();
+  });
+});
+
+describe('tizen/scripts/check-bundle budgets — the SVG page branch of rule 8 (plan R-SVG WO-1)', () => {
+  /**
+   * A game `app.js` naming one page url as a string literal (rule 12 wants named pages on disk).
+   *
+   * @param file - The page path inside `assets/atlas/`.
+   * @returns The script text.
+   */
+  function appNaming(file: string): string {
+    return `${polyfill}\n(function () { 'use strict'; var page = '${file}'; void page; })();\n`;
+  }
+
+  /**
+   * The arm's page document at the given size.
+   *
+   * @param width - Page width in pixels.
+   * @param height - Page height in pixels.
+   * @param tail - Text after the opening tag (default: the closed document).
+   * @returns The document text.
+   */
+  function svgDoc(width: number, height: number, tail = '</svg>'): string {
+    return (
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
+      `viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges">` +
+      tail
+    );
+  }
+
+  it('accepts a named SVG page inside both budgets (the extra file the game never loads is rule 12-clean)', () => {
+    put('assets/atlas/arm.svg', svgDoc(1024, 1024));
+    put('app.js', appNaming('assets/atlas/arm.svg'));
+    // Rule 10 still sees only the PNG manifest pages, rule 12 sees the name match.
+    expect(checkTizenBundle(dir).problems).toEqual([]);
+  });
+
+  it('rejects an SVG page over the raw-byte budget, counted in KB', () => {
+    const target = SVG_PAGE_MAX_BYTES + 64 * 1024;
+    // head + `<!--…-->` (`<!--` is 4, `-->` is 3) + `</svg>` padded to exactly `target` bytes.
+    const head = svgDoc(1024, 1024, '');
+    const close = '</svg>';
+    const pad = target - head.length - close.length - 7;
+    const text = head + `<!--${'x'.repeat(pad)}-->` + close;
+    expect(new TextEncoder().encode(text).length).toBe(target);
+    put('assets/atlas/big.svg', text);
+    put('app.js', appNaming('assets/atlas/big.svg'));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'atlas page assets/atlas/big.svg is 12352.0 KB of SVG text, ' +
+        'over the 12288.0 KB budget for one page',
+    ]);
+  });
+
+  it('rejects an SVG page whose root edge passes the 2048 budget', () => {
+    put('assets/atlas/wide.svg', svgDoc(ATLAS_PAGE_MAX_SIZE + 1, 512));
+    put('app.js', appNaming('assets/atlas/wide.svg'));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      `atlas page assets/atlas/wide.svg is ${ATLAS_PAGE_MAX_SIZE + 1}×512, ` +
+        `over the ${ATLAS_PAGE_MAX_SIZE}² budget`,
+    ]);
+  });
+
+  it('rejects bytes named .svg that are not an SVG document', () => {
+    put('assets/atlas/bad.svg', 'not an svg');
+    put('app.js', appNaming('assets/atlas/bad.svg'));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'atlas page assets/atlas/bad.svg is not a SVG',
+    ]);
   });
 });
