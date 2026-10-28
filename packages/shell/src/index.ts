@@ -134,6 +134,24 @@ export {
   type VideoWindowLike,
 } from './cutscene/index.js';
 export {
+  STILL_DEFAULT_ON,
+  STILL_SURFACES,
+  STILLS_URL_DIR,
+  createStillsDirector,
+  resolveStillsSetting,
+  stillProbeFromSearch,
+  stillForEnding,
+  stillsSettingFromWindow,
+  type StillsDirector,
+  type StillsDirectorOptions,
+  type StillsFlow,
+  type StillsImageLike,
+  type StillsSettingHost,
+  type StillsSurface,
+  type StillsSurfaceLike,
+  type StillsWindowLike,
+} from './stills/index.js';
+export {
   BOOT_SCREEN_COLORS,
   createBootOverlay,
   drawErrorScreen,

@@ -62,7 +62,16 @@
  * {@link MAX_QUEUED_SAMPLES}); the TV render bench's wire format (plan R0-02 — see below:
  * {@link RENDER_BENCH_KIND}, {@link RenderBenchEnv}, {@link RenderBenchRecord},
  * {@link RenderBenchPayload}, {@link DecodeBenchRecord}, {@link DecodeBenchPage},
- * {@link makeRenderBenchSessionId}, {@link buildRenderBenchPayload}, {@link sendRenderBench}).
+ * {@link makeRenderBenchSessionId}, {@link buildRenderBenchPayload}, {@link sendRenderBench});
+ * the M7 hardware bench's wire format (plan v20x HARBENCH — see below: {@link HARBENCH_KIND},
+ * {@link HARBENCH_FORMAT_VERSION}, {@link HARBENCH_RECORD_KINDS}, {@link MAX_HARBENCH_RECORDS},
+ * {@link HarbenchEnv}, {@link HarbenchRecord}, {@link HarbenchRecordId},
+ * {@link HarbenchRenderRecord}, {@link HarbenchDecodeRecord}, {@link HarbenchRewindRecord},
+ * {@link HarbenchBootRecord}, {@link HarbenchBootPage}, {@link HarbenchMemoryRecord},
+ * {@link HarbenchProbeRecord}, {@link HarbenchInputRecord}, {@link HarbenchInputKeyRow},
+ * {@link HarbenchWatchdogRecord}, {@link HarbenchPayload}, {@link HarbenchIssue},
+ * {@link makeHarbenchSessionId}, {@link buildHarbenchPayload}, {@link harbenchPayloadIssues},
+ * {@link isHarbenchPayload}, {@link sendHarbench}).
  *
  * **The TV render bench (plan R0-02).** The bench widget (`apps/tizen/src/bench`, its own app id)
  * measures a density-scaled synthetic scene at 384×216, 640×360 and 960×540, one scenario per page
@@ -73,6 +82,22 @@
  * `tools/input-probe/results/analyze-bench.mjs` turns the session into the relative tables of
  * `docs/dev/input-probe-results.md` §12. The bench is a separate bundle, so none of this reaches the
  * game's `app.js` either.
+ *
+ * **The M7 hardware bench (plan v20x HARBENCH).** The unified hardware program (sessions S1–S6 of
+ * the HARBENCH scout: matrix refresh, boot + memory soak, input + game-mode A/B, extension probe,
+ * guided capture, context-loss watchdog) rides a **new** payload kind — `harbench`
+ * ({@link HarbenchPayload}, sessions {@link makeHarbenchSessionId hb-…}) — because its records go
+ * beyond the frozen `render-bench` wire: a versioned header ({@link HARBENCH_FORMAT_VERSION} from
+ * day one), an explicit knob per render row (the knob set incl. `video`), and the discriminated
+ * record union ({@link HarbenchRecord}) that adds the rewind timing row — the number behind
+ * `M7_SLOWDOWN_ESTIMATE`, today readable only by photographing the TV's results page because the
+ * widget never POSTs it — plus boot, memory (with the supervisor's optional sdb-RSS pairing), probe,
+ * input and watchdog rows. {@link harbenchPayloadIssues} is the zero-trust parse of that wire for
+ * anybody who must check a record they did not build (the log server lane ports it; the analyzer
+ * and the results page read untrusted JSONL). The `render-bench` and `render-profile` kinds stay
+ * byte-for-byte frozen: this section only **adds**, so the not-yet-updated log server still accepts
+ * and verbatim-writes every old payload — and, being kind-agnostic at its gate, tolerates these
+ * until its own lane learns the `harbench` formatter.
  *
  * @module
  */
@@ -1795,7 +1820,9 @@ export function buildRenderBenchPayload(
  * {@link RENDER_REQUEST_TIMEOUT_MS} timeout and `Content-Type: text/plain` (a CORS "simple
  * request", no preflight). The bench waits for `onDone` before it reloads the page for the next
  * scenario, so a slow or dead server costs at most the timeout. Never throws: a request that cannot
- * be built, opened or sent reports through `onDone` at once and returns `false`.
+ * be built, opened or sent reports through `onDone` at once and returns `false`. The payload is
+ * typed as either bench kind — {@link sendHarbench} rides this same transport, and the wire bytes
+ * are whatever `JSON.stringify` makes of what the caller hands it.
  *
  * @param endpoint - POST URL ({@link renderReportEndpoint}), or `null` when no log server is
  *   configured — nothing is sent and `onDone(false, 'off')` runs at once.
@@ -1812,7 +1839,7 @@ export function buildRenderBenchPayload(
  */
 export function sendRenderBench(
   endpoint: string | null,
-  payload: RenderBenchPayload,
+  payload: RenderBenchPayload | HarbenchPayload,
   createRequest: () => XMLHttpRequest,
   onDone: (ok: boolean, error: string | null) => void,
 ): boolean {
@@ -1867,4 +1894,1382 @@ export function sendRenderBench(
     return false;
   }
   return true;
+}
+
+// ------------------------------------------------------------- the M7 hardware bench (v20x HARBENCH)
+
+/**
+ * The `kind` field of an M7 hardware-bench payload (plan v20x HARBENCH) — the `harbench` wire the
+ * S1–S6 sessions ride, kept apart from the frozen `render-profile` and `render-bench` kinds so old
+ * payloads and the log server's old formatters never move.
+ */
+export const HARBENCH_KIND = 'harbench';
+
+/**
+ * The wire version of a {@link HarbenchPayload}, declared ON the payload so a reader learns from the
+ * row itself which schema it was recorded under. Version 1 is defined once and never edited —
+ * breaking the record union apart is the only reason to bump it, exactly like the game's replay and
+ * save formats.
+ */
+export const HARBENCH_FORMAT_VERSION = 1;
+
+/** Every {@link HarbenchRecord} discriminator version 1 accepts. */
+export const HARBENCH_RECORD_KINDS: readonly string[] = Object.freeze([
+  'render',
+  'decode',
+  'rewind',
+  'boot',
+  'memory',
+  'probe',
+  'input',
+  'watchdog',
+]);
+
+/** One of the {@link HARBENCH_RECORD_KINDS} (the literal union behind the wire discriminator). */
+export type HarbenchRecordId =
+  'render' | 'decode' | 'rewind' | 'boot' | 'memory' | 'probe' | 'input' | 'watchdog';
+
+/** Most records one {@link HarbenchPayload} may carry (the cap {@link harbenchPayloadIssues} keeps). */
+export const MAX_HARBENCH_RECORDS = 128;
+
+/**
+ * Session-level facts of one hardware-bench run: every {@link RenderBenchEnv} field (so the S1
+ * matrix refresh keeps the identity the `rb-` sessions already carry — buildId, host, the window,
+ * the GL version asked for, the run's shape and start), plus the two the program adds.
+ */
+export interface HarbenchEnv extends RenderBenchEnv {
+  /**
+   * The program session this run belongs to — an open id the analyzer groups rows by (`S1` matrix
+   * refresh, `S2` boot and memory, `S3` input, `S4` probe, `S6` watchdog; `S5`'s guided capture
+   * stays on the `render-profile` wire and is paired in the results folder).
+   */
+  phase: string;
+  /**
+   * The input-latency A/B flag: whether the installed app's `config.xml` carried
+   * `<tizen:property name="use.game.mode" …>` (tizen_optimize §8.5). One build ships with it and
+   * one without; the A/B pairs rows on this value — it is a fact of the INSTALL, so it rides the
+   * env of every payload, not the input rows alone.
+   */
+  gameMode: boolean;
+}
+
+/**
+ * One refreshed matrix row (session S1) on the harbench wire — every {@link RenderBenchRecord} stat
+ * exactly as the frozen `rb-` kind carries it ("per-row verdicts/stats as today"), plus the two
+ * things that shape could not say without a new kind: the knob as a field of its own (a knob row
+ * hides it in the `<variant>-<knob>` string today) and an explicit video-surface flag.
+ */
+export interface HarbenchRenderRecord extends RenderBenchRecord {
+  /** The discriminator — always `'render'`. */
+  readonly record: 'render';
+  /**
+   * The knob id the row varies — `fit`, `stretch`, `interp`, `out720`, `out540` or `video` (the
+   * {@link HARBENCH_RECORD_KINDS | matrix's} knob set incl. the v2 R7-VID surface), or `''` when the
+   * row is a plain matrix row.
+   */
+  knob: string;
+  /** Whether the cutscene video surface — the per-frame `createImageBitmap(video)` pull — was on. */
+  video: boolean;
+}
+
+/**
+ * The decode scenario on the harbench wire — the frozen {@link DecodeBenchRecord} verbatim (its
+ * per-page rows already carry the sizes: `width`, `height`, the file's `bytes`, the uploaded
+ * `textureBytes`), told apart only by its discriminator.
+ */
+export interface HarbenchDecodeRecord extends DecodeBenchRecord {
+  /** The discriminator — always `'decode'`. */
+  readonly record: 'decode';
+}
+
+/**
+ * The rewind timing row — the number the bench's `M7_SLOWDOWN_ESTIMATE = 12` placeholder stands in
+ * for, measured on the set. Plan R2's TL-3 scenario already computes it, but the widget keeps it in
+ * its own localStorage state and never POSTs it, because "the server's schema does not move" — so
+ * today it is readable only by photographing the TV's results page. The versioned `hb-` kind IS the
+ * schema moving: this row makes the richer record legal on the wire before the widget lane emits it.
+ */
+export interface HarbenchRewindRecord {
+  /** The discriminator — always `'rewind'`. */
+  readonly record: 'rewind';
+  /** The scenario id, always `'rewind'` as well (table parity with the render and decode rows). */
+  scenario: string;
+  /** Position of the scenario in the run's load order (after the stand-in load). */
+  index: number;
+  /** Wall-clock start of the measured loop, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock end of the scenario, ms since the epoch. */
+  endedAt: number;
+  /** Ticks the steady-state loop stepped (a few seconds of scroll at 60 Hz). */
+  ticks: number;
+  /** Warm sim steps per second — the rate a resume rewinds at (the row's headline number). */
+  stepsPerSecond: number;
+  /** Milliseconds to build the World (content resolved, pools sized) — every resume's fixed cost. */
+  worldBuildMs: number;
+  /** Milliseconds of one `hashWorld` (the resume's every-`REPLAY_HASH_INTERVAL` verify). */
+  hashMs: number;
+  /** How many hash checks the loop ran. */
+  hashChecks: number;
+  /**
+   * Ticks of tail the resume may rewind at {@link HarbenchRewindRecord.stepsPerSecond} within the
+   * patience budget — read ONLY together with {@link HarbenchRewindRecord.capTicksEstimated}.
+   */
+  capTicks: number;
+  /**
+   * The ESTIMATE flag: `true` while `capTicks` was divided out of the M7 slowdown ESTIMATE (the
+   * placeholder), `false` once a measured divisor produced it. A patch-ready row with `true` is a
+   * lead, never a committed number.
+   */
+  capTicksEstimated: boolean;
+  /** The stage the scenario rewinds (the bench's own open-water stage). */
+  stage: string;
+  /** Why the scenario could not finish, or `null`. */
+  error: string | null;
+}
+
+/**
+ * One atlas page the boot scenario timed, file to GPU through the SHIPPED loader branch — the
+ * per-page detail behind the zone-load CONFIRMS verdict (the −47…−56 % bitmap-vs-image claim,
+ * re-measured on the final-art pages).
+ */
+export interface HarbenchBootPage {
+  /** Page id (`common`, `zone-<letter>`, …). */
+  id: string;
+  /** Page width, px. */
+  width: number;
+  /** Page height, px. */
+  height: number;
+  /** The fetched PNG file's bytes. */
+  bytes: number;
+  /** The XHR fetch of the page file, `[min, p50, p95, max]` ms over the reps, or `null`. */
+  fetchMs: number[] | null;
+  /** `createImageBitmap(blob)` of the fetched bytes, or `null` when the engine lacks it. */
+  bitmapMs: number[] | null;
+  /** The `HTMLImageElement` path's decode (the shipped bitmap branch skips it), or `null`. */
+  decodeMs: number[] | null;
+  /** The renderer upload (`texImage2D`), or `null`. */
+  uploadMs: number[] | null;
+  /** The upload followed by `gl.finish()` — GPU done too, or `null`. */
+  syncedMs: number[] | null;
+  /** Fetch to synced upload of each repetition: file to GPU, or `null`. */
+  totalMs: number[] | null;
+  /** Whether this page's run went through `createImageBitmap` (the shipped branch really taken). */
+  viaBitmap: boolean;
+  /** Why the page could not be measured, or `null`. */
+  error: string | null;
+}
+
+/**
+ * The boot row (program session S2): what a cold start costs on the set — the manifest's `file://`
+ * XHR (the W3-7 firmware question, answered by the bench's own fetch), the atlas pages through the
+ * shipped bitmap loader, and the time to a first drawn frame (the boot ≤ 10 s budget, never yet
+ * measured on hardware).
+ */
+export interface HarbenchBootRecord {
+  /** The discriminator — always `'boot'`. */
+  readonly record: 'boot';
+  /** The scenario id, `'boot'`. */
+  scenario: string;
+  /** Position in the run's load order. */
+  index: number;
+  /** Wall-clock start of the scenario, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock end of the scenario, ms since the epoch. */
+  endedAt: number;
+  /** The `main.json` fetch over its repetitions, `[min, p50, p95, max]` ms. */
+  manifestMs: number[];
+  /** The manifest's bytes. */
+  atlasBytes: number;
+  /** Whether the engine has `createImageBitmap` at all. */
+  imageBitmap: boolean;
+  /** Whether the shipped loader really took the bitmap branch this run (the loader's own flag). */
+  bitmapBranch: boolean;
+  /** The pages, in fetch order. */
+  pages: HarbenchBootPage[];
+  /** Boot to first drawn frame as the page timed it, ms. */
+  bootMs: number;
+  /** Why the scenario could not finish, or `null`. */
+  error: string | null;
+}
+
+/**
+ * The memory row (program session S2, the soak page): the JS-heap series the page can see, the
+ * atlas-page ledger the residency cycles drive, and — when the supervisor paired one — the
+ * process-wide RSS no page can read. This is §8.4's first owed measurement: the counted estimator
+ * sits 3.4× inside the 120 MB dev cap while the Chromium process total (surfaces, compositor
+ * planes) has never been read at all.
+ */
+export interface HarbenchMemoryRecord {
+  /** The discriminator — always `'memory'`. */
+  readonly record: 'memory';
+  /** The scenario id, `'soak'`. */
+  scenario: string;
+  /** Position in the run's load order. */
+  index: number;
+  /** Wall-clock start of the soak, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock end of the soak, ms since the epoch. */
+  endedAt: number;
+  /** Seconds of soak measured. */
+  seconds: number;
+  /** Residency load/unload cycles completed. */
+  cycles: number;
+  /** Whether `performance.memory` reported at all. */
+  heapMeasured: boolean;
+  /** Used JS heap at the first sample, at the peak, and at the last sample, bytes. */
+  heapStartBytes: number;
+  /** Peak used heap of the soak, bytes. */
+  heapPeakBytes: number;
+  /** Used JS heap at the last sample, bytes. */
+  heapEndBytes: number;
+  /** `heapEndBytes − heapStartBytes` — negative is fine: the drift over the soak is the point. */
+  heapDeltaBytes: number;
+  /** The used-heap bytes of every sample, in order (the leak-guard series the analyzer trends). */
+  heapSamples: number[];
+  /** Fewest / most atlas pages resident in any cycle (the page-count ledger of the soak). */
+  pageLedgerMin: number;
+  /** Most atlas pages resident in any cycle. */
+  pageLedgerMax: number;
+  /**
+   * The optional sdb-RSS field: process-wide resident bytes the SUPERVISOR read over `sdb shell`
+   * and paired to this send — never produced by the page, which cannot see it. The validator checks
+   * only that it is a plausible non-negative count; pairing it to a supervisor sample is provenance
+   * for the session-meta record, and a row carrying it without a pairing is a data bug, not a shape
+   * one. The 120 MB dev-install cap is judged on THIS number.
+   */
+  rssBytes?: number;
+  /** Why the soak could not finish, or `null`. */
+  error: string | null;
+}
+
+/**
+ * The extension-probe row (program session S4): the free addition §8.4 promised —
+ * `getSupportedExtensions()` on both GL contexts (1×1, released like the probe's env report) and the
+ * named verdicts the texture-format questions wait on. With this row on the wire the KTX2 / ETC /
+ * ASTC question closes "with data instead of plausibility" (tizen_optimize §7.6).
+ */
+export interface HarbenchProbeRecord {
+  /** The discriminator — always `'probe'`. */
+  readonly record: 'probe';
+  /** The scenario id, `'probe'`. */
+  scenario: string;
+  /** Position in the run's load order (the first payload of the S2 build's session). */
+  index: number;
+  /** Wall-clock start of the probe, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock end of the probe, ms since the epoch. */
+  endedAt: number;
+  /** `getSupportedExtensions()` on the `webgl` context (the Mali answer incl. index-uint). */
+  webglExtensions: string[];
+  /** …on a `webgl2` context, or `null` when one could not be created (on the TVs: it cannot). */
+  webgl2Extensions: string[] | null;
+  /** `navigator.deviceMemory` (GiB), or `null` when the engine does not report it. */
+  deviceMemory: number | null;
+  /** `navigator.hardwareConcurrency`, or `null`. */
+  hardwareConcurrency: number | null;
+  /** Whether `OffscreenCanvas` exists (the worker-decode P3 row records presence only). */
+  offscreenCanvas: boolean;
+  /** Whether `matchMedia('(prefers-reduced-motion)')` resolves (the §8.5 negative check). */
+  reduceMotionResolves: boolean;
+  /**
+   * The ETC smoke upload (`compressedTexImage2D` of one tiny block-packed texture), `[min, p50,
+   * p95, max]` ms — or `null` when the extension list showed no ETC and the question is moot.
+   */
+  smokeUploadMs: number[] | null;
+  /** Why the probe could not run, or `null`. */
+  error: string | null;
+}
+
+/** One key the input page watched: whether it arrives at all, its measured repeat, its tick lag. */
+export interface HarbenchInputKeyRow {
+  /** The key the page labels it by (its registered name — `ColorF0Red`, `MediaPlayPause`, …). */
+  id: string;
+  /** The delivered `keyCode` (0 when the key never arrived), the P0-2 delivery answer per key. */
+  keyCode: number;
+  /** Whether the key was delivered at all while watched. */
+  delivered: boolean;
+  /** Presses observed for it during the watch. */
+  presses: number;
+  /** Measured auto-repeat Hz of a held press, or `null` when it was not held or did not repeat. */
+  repeatsPerSecond: number | null;
+  /**
+   * Key-down to tick-applied lag `[min, p50, p95, max]` ms counted in game ticks (the event-clock
+   * law: Tizen `timeStamp` is whole seconds), or `null` when nothing was applied. This re-measures
+   * the §findings figures (9.3 Hz, 356 ms) — those are the 2026-09-15 v1-era probe.
+   */
+  appliedMs: number[] | null;
+}
+
+/**
+ * The input row (program session S3): registered-key delivery (the ColorF0–F3 question P0-2 left
+ * unverified on a real remote) and the press-to-tick lag on the CURRENT firmware. Which A/B leg a
+ * row belongs to is NOT in here: `use.game.mode` is a fact of the install, and it rides every
+ * payload's env ({@link HarbenchEnv.gameMode}) so all row classes pair, not just input.
+ */
+export interface HarbenchInputRecord {
+  /** The discriminator — always `'input'`. */
+  readonly record: 'input';
+  /** The scenario id, `'input'`. */
+  scenario: string;
+  /** Position in the run's load order. */
+  index: number;
+  /** Wall-clock start of the watch, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock end of the watch, ms since the epoch. */
+  endedAt: number;
+  /** Whether a gamepad was present at the watch (outstanding-work §3's two-pads row, presence). */
+  gamepadPresent: boolean;
+  /** The keys, in the press-list order the page asked the owner for. */
+  keys: HarbenchInputKeyRow[];
+  /** Why the watch could not run, or `null`. */
+  error: string | null;
+}
+
+/**
+ * The watchdog row (program session S6): what the P0-3 context-loss guard really does on firmware —
+ * driven remotely with `WEBGL_lose_context.loseContext()` and NO restore (R3-04.M3d), where today
+ * it is proven only synthetically. Frames-since-loss and the screen-swap latency become a recorded
+ * row instead of an observed event.
+ */
+export interface HarbenchWatchdogRecord {
+  /** The discriminator — always `'watchdog'`. */
+  readonly record: 'watchdog';
+  /** The scenario id, `'watchdog'`. */
+  scenario: string;
+  /** Position in the run's load order. */
+  index: number;
+  /** Wall-clock time of the injected loss, ms since the epoch. */
+  startedAt: number;
+  /** Wall-clock time the outcome was read, ms since the epoch. */
+  endedAt: number;
+  /** Dead frames counted when the error screen swapped in (the ~60-frame budget's real burn). */
+  framesAfterLoss: number;
+  /** Loss to error-screen latency, ms. */
+  screenSwapMs: number;
+  /** Whether a `webglcontextrestored` ever arrived (the watchdog must NOT fire when one does). */
+  contextRestored: boolean;
+  /** Why the row could not be observed, or `null`. */
+  error: string | null;
+}
+
+/**
+ * One measured row of a hardware-bench session, discriminated by its `record`: the render matrix
+ * (`render`, S1), the decode rows (`decode`, S1), the rewind timing (`rewind` — the number behind
+ * `M7_SLOWDOWN_ESTIMATE`, S1 once the widget lane POSTs it), boot timing (`boot`, S2), the memory
+ * soak (`memory`, S2), the extension probe (`probe`, S4), input latency (`input`, S3) and the
+ * context-loss watchdog (`watchdog`, S6).
+ */
+export type HarbenchRecord =
+  | HarbenchRenderRecord
+  | HarbenchDecodeRecord
+  | HarbenchRewindRecord
+  | HarbenchBootRecord
+  | HarbenchMemoryRecord
+  | HarbenchProbeRecord
+  | HarbenchInputRecord
+  | HarbenchWatchdogRecord;
+
+/**
+ * Payload a hardware-bench run POSTs to the log server as `text/plain` JSON — the header fields are
+ * the `render-bench` payload's (session, seq, sentAt, env, done) under the {@link HARBENCH_KIND}
+ * the old server's kind-agnostic gate tolerates verbatim, plus the wire version declared ON the
+ * payload, and the rows as `records` (NOT `results`): the old per-kind formatters never inspect it,
+ * so a new-kind payload can never be half-read as an old one.
+ */
+export interface HarbenchPayload {
+  /** Always {@link HARBENCH_KIND}. */
+  kind: string;
+  /** Always {@link HARBENCH_FORMAT_VERSION} on a payload this build sends. */
+  formatVersion: number;
+  /** Session id ({@link makeHarbenchSessionId}), one per program session. */
+  session: string;
+  /** Monotonic sequence number per session, starting at 1. */
+  seq: number;
+  /** Wall-clock send time (ms since epoch). */
+  sentAt: number;
+  /** Session-level facts. */
+  env: HarbenchEnv;
+  /** The rows this payload carries (typically one; a flush carries the unacknowledged rest). */
+  records: HarbenchRecord[];
+  /** Whether the session's planned loads are complete. */
+  done: boolean;
+}
+
+/**
+ * Creates a hardware-bench session id — the `hb-` prefix keeps a program session's JSONL apart from
+ * the probe's `ip-…`, the render profile's `rp-…` and the render bench's `rb-…` in the same log
+ * directory (scout Part E: the namespace is free in the tree; it is claimed here).
+ *
+ * @param nowMs - Wall-clock time (`Date.now()`).
+ * @param random - A number in [0, 1) (`Math.random()`).
+ * @returns The session id.
+ *
+ * @example
+ * ```ts
+ * makeHarbenchSessionId(1_700_000_000_000, 0.5); // → 'hb-…-i000'
+ * ```
+ */
+export function makeHarbenchSessionId(nowMs: number, random: number): string {
+  return 'hb-' + makeRenderSessionId(nowMs, random).slice(3);
+}
+
+/**
+ * Builds one hardware-bench payload. The `kind` and `formatVersion` are the module's constants, not
+ * parameters — a payload cannot be built against a version this file does not define.
+ *
+ * @param session - Session id ({@link makeHarbenchSessionId}).
+ * @param seq - Sequence number (1-based).
+ * @param sentAt - Wall-clock send time.
+ * @param env - Session-level facts.
+ * @param records - The rows to carry.
+ * @param done - Whether the session is complete.
+ * @returns The payload ({@link HARBENCH_KIND} at {@link HARBENCH_FORMAT_VERSION}).
+ */
+export function buildHarbenchPayload(
+  session: string,
+  seq: number,
+  sentAt: number,
+  env: HarbenchEnv,
+  records: HarbenchRecord[],
+  done: boolean,
+): HarbenchPayload {
+  return {
+    kind: HARBENCH_KIND,
+    formatVersion: HARBENCH_FORMAT_VERSION,
+    session,
+    seq,
+    sentAt,
+    env,
+    records,
+    done,
+  };
+}
+
+/**
+ * POSTs a hardware-bench payload to the log server and reports the outcome exactly once.
+ *
+ * @remarks
+ * {@link sendRenderBench} IS the transport — the same `XMLHttpRequest`, the same
+ * {@link RENDER_REQUEST_TIMEOUT_MS} timeout, `Content-Type: text/plain` (a CORS "simple request").
+ * A program session posts per row and a final flush carries what the server never acknowledged; the
+ * widget waits for `onDone` before its next page load, so a slow or dead server costs at most the
+ * timeout. Never throws.
+ *
+ * @param endpoint - POST URL ({@link renderReportEndpoint}), or `null` when no log server is
+ *   configured — nothing is sent and `onDone(false, 'off')` runs at once.
+ * @param payload - The payload.
+ * @param createRequest - Makes the request object (injected so tests need no DOM).
+ * @param onDone - Called exactly once: `ok` for a 2xx answer, else `false` and the reason.
+ * @returns Whether a request went out.
+ *
+ * @example
+ * ```ts
+ * sendHarbench(renderReportEndpoint(__SHMUP_REPORT_URL__), payload, () => new XMLHttpRequest(),
+ *   (ok) => { if (ok) markSent(); location.reload(); });
+ * ```
+ */
+export function sendHarbench(
+  endpoint: string | null,
+  payload: HarbenchPayload,
+  createRequest: () => XMLHttpRequest,
+  onDone: (ok: boolean, error: string | null) => void,
+): boolean {
+  return sendRenderBench(endpoint, payload, createRequest, onDone);
+}
+
+/** One shape problem {@link harbenchPayloadIssues} found, and where it sits. */
+export interface HarbenchIssue {
+  /** Dotted path to the offending field (`records[3].stepsPerSecond`), `''` for the payload. */
+  path: string;
+  /** What the wire requires there. */
+  message: string;
+}
+
+/** `Record<string, unknown>` view of a JSON object read off the wire. */
+type WireObject = Record<string, unknown>;
+
+/**
+ * Whether the bag itself carries the key — a prototype-injected one does not count (the payload
+ * arrives from `JSON.parse`, where only own keys exist, and an in-process caller must not cheat).
+ *
+ * @param o - The field bag.
+ * @param key - The field name.
+ * @returns Whether it is an own property.
+ */
+function hasOwnProp(o: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(o, key);
+}
+
+/** The largest magnitude a wire number may carry — timestamps and byte counts fit; garbage does not. */
+const WIRE_MAX = 1e15;
+
+/** Cap for an id-ish string (scenario, size, variant, knob, stage, key id, build id, extension). */
+const ID_MAX = 128;
+
+/** Cap for a free-text string (user agent, note, error). */
+const TEXT_MAX = 512;
+
+/** Length of a `[min, p50, p95, max]` series — every ms tuple on this wire. */
+const SERIES_TUPLE = 4;
+
+/** Shape of an `hb-` session id: the prefix plus the log server's own character set, capped at its 64-char file-name rule. */
+const HARBENCH_SESSION_PATTERN = /^hb-[A-Za-z0-9._-]{1,61}$/;
+
+/**
+ * A JSON object usable as a field bag, or `null` for anything else (arrays included — a payload is
+ * an object by schema, and a row's array fields are checked as lists, never as bags).
+ *
+ * @param value - The candidate.
+ * @returns The bag, or `null`.
+ */
+function wireObject(value: unknown): WireObject | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  return value as WireObject;
+}
+
+/**
+ * Whether a value is a wire number — JSON carries no NaN or ±Infinity, and a producer that
+ * stringified one had already lost the row; the refusal belongs at this boundary, not downstream.
+ *
+ * @param value - The candidate.
+ * @returns Whether it is a finite number.
+ */
+function wireNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+/**
+ * The path of a child field: `base.key`, or whichever side is empty.
+ *
+ * @param base - The parent path.
+ * @param key - The child name (empty for the parent itself, e.g. an array element).
+ * @returns The joined path.
+ */
+function joinPath(base: string, key: string): string {
+  if (base === '') return key;
+  if (key === '') return base;
+  return base + '.' + key;
+}
+
+/**
+ * Records one issue at `joinPath(base, key)`.
+ *
+ * @param issues - The sink.
+ * @param base - The parent path.
+ * @param key - The child name.
+ * @param message - What the wire requires there.
+ */
+function addIssue(issues: HarbenchIssue[], base: string, key: string, message: string): void {
+  issues.push({ path: joinPath(base, key), message });
+}
+
+/**
+ * Requires an own, non-empty string field of at most `maxLen` characters.
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxLen - The length cap.
+ */
+function checkString(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxLen: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (typeof v !== 'string' || v.length === 0) {
+    addIssue(issues, base, key, 'must be a non-empty string');
+    return;
+  }
+  if (v.length > maxLen) {
+    addIssue(issues, base, key, 'must be at most ' + maxLen + ' characters');
+  }
+}
+
+/**
+ * Requires an own string-or-`null` field (a note or error slot: `null` means checked and none).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxLen - The string length cap.
+ */
+function checkStringOrNull(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxLen: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (v === null) return;
+  if (typeof v !== 'string' || v.length === 0) {
+    addIssue(issues, base, key, 'must be a non-empty string or null');
+    return;
+  }
+  if (v.length > maxLen) {
+    addIssue(issues, base, key, 'must be at most ' + maxLen + ' characters');
+  }
+}
+
+/**
+ * Requires an own boolean field.
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkBool(o: WireObject, key: string, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  if (typeof o[key] !== 'boolean') addIssue(issues, base, key, 'must be a boolean');
+}
+
+/**
+ * Requires an own signed finite field (|v| ≤ {@link WIRE_MAX}).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkNumber(o: WireObject, key: string, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!wireNumber(v) || v < -WIRE_MAX || v > WIRE_MAX) {
+    addIssue(issues, base, key, 'must be a finite number');
+  }
+}
+
+/**
+ * Requires an own non-negative finite field.
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkNonNeg(o: WireObject, key: string, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!wireNumber(v) || v < 0 || v > WIRE_MAX) {
+    addIssue(issues, base, key, 'must be a non-negative finite number');
+  }
+}
+
+/**
+ * Requires an own integral field within [min, max].
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param min - The least legal value.
+ * @param max - The greatest legal value.
+ */
+function checkInt(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  min: number,
+  max: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!wireNumber(v) || !Number.isInteger(v) || v < min || v > max) {
+    addIssue(issues, base, key, 'must be a whole number');
+  }
+}
+
+/**
+ * Requires an own number-or-`null` field (a probe of something the engine may not report).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkNumberOrNull(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (v === null) return;
+  if (!wireNumber(v) || v < 0 || v > WIRE_MAX) {
+    addIssue(issues, base, key, 'must be a non-negative finite number or null');
+  }
+}
+
+/**
+ * Requires an own integral-or-`null` field.
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkIntOrNull(o: WireObject, key: string, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (v === null) return;
+  if (!wireNumber(v) || !Number.isInteger(v) || v < 0 || v > WIRE_MAX) {
+    addIssue(issues, base, key, 'must be a whole number or null');
+  }
+}
+
+/**
+ * Allows an OMITTED non-negative field (`rssBytes` and friends: absent on every row the page could
+ * not pair, present and checked when the supervisor wrote one).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkOptionalNonNeg(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+): void {
+  if (!hasOwnProp(o, key)) return;
+  const v = o[key];
+  if (v === undefined) return;
+  if (!wireNumber(v) || v < 0 || v > WIRE_MAX) {
+    addIssue(issues, base, key, 'must be a non-negative finite number when present');
+  }
+}
+
+/**
+ * Requires an own ratio field in [0, 1].
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ */
+function checkRatio(o: WireObject, key: string, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!wireNumber(v) || v < 0 || v > 1) {
+    addIssue(issues, base, key, 'must be a fraction from 0 to 1');
+  }
+}
+
+/**
+ * Checks a series value (an array of exactly `length` non-negative finite numbers) at `elemBase`.
+ *
+ * @param v - The value under test.
+ * @param elemBase - The path of the array itself.
+ * @param issues - The sink.
+ * @param length - The exact element count the field declares.
+ */
+function checkSeriesValues(
+  v: unknown,
+  elemBase: string,
+  issues: HarbenchIssue[],
+  length: number,
+): void {
+  if (!Array.isArray(v)) {
+    addIssue(issues, elemBase, '', 'must be a number array');
+    return;
+  }
+  if (v.length !== length) {
+    addIssue(issues, elemBase, '', 'must hold exactly ' + length + ' numbers');
+    return;
+  }
+  for (let i = 0; i < v.length; i++) {
+    const x: unknown = v[i];
+    if (!wireNumber(x) || x < 0 || x > WIRE_MAX) {
+      addIssue(issues, elemBase + '[' + i + ']', '', 'must be a non-negative finite number');
+    }
+  }
+}
+
+/**
+ * Requires an own series field ([min, p50, p95, max] or one of the declared count tuples).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param length - The exact element count.
+ */
+function checkSeries(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  length: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  checkSeriesValues(o[key], joinPath(base, key), issues, length);
+}
+
+/**
+ * Requires an own series-or-`null` field (`null` means the stage never ran — an absent engine
+ * feature or a failed measurement, with the reason in the row's `error`).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param length - The exact element count when not `null`.
+ */
+function checkSeriesOrNull(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  length: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (v === null) return;
+  checkSeriesValues(v, joinPath(base, key), issues, length);
+}
+
+/**
+ * Requires an own array of non-negative finite numbers up to `maxItems` (the soak's heap series).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxItems - The length cap.
+ */
+function checkNumberList(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxItems: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!Array.isArray(v)) {
+    addIssue(issues, base, key, 'must be a number array');
+    return;
+  }
+  if (v.length > maxItems) {
+    addIssue(issues, base, key, 'carries more than ' + maxItems + ' values');
+    return;
+  }
+  for (let i = 0; i < v.length; i++) {
+    const x: unknown = v[i];
+    if (!wireNumber(x) || x < 0 || x > WIRE_MAX) {
+      addIssue(
+        issues,
+        joinPath(base, key) + '[' + i + ']',
+        '',
+        'must be a non-negative finite number',
+      );
+    }
+  }
+}
+
+/**
+ * Requires an own array of strings up to `maxItems`, each 1 to `maxLen` characters (a GL extension
+ * list).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxItems - The length cap.
+ * @param maxLen - The per-entry cap.
+ */
+function checkStringList(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxItems: number,
+  maxLen: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!Array.isArray(v)) {
+    addIssue(issues, base, key, 'must be a string array');
+    return;
+  }
+  if (v.length > maxItems) {
+    addIssue(issues, base, key, 'carries more than ' + maxItems + ' entries');
+    return;
+  }
+  for (let i = 0; i < v.length; i++) {
+    const s: unknown = v[i];
+    if (typeof s !== 'string' || s.length === 0 || s.length > maxLen) {
+      addIssue(issues, joinPath(base, key) + '[' + i + ']', '', 'must be a non-empty short string');
+    }
+  }
+}
+
+/**
+ * Requires an own string-list-or-`null` field (the WebGL2 extension list, `null` for a context the
+ * engine could not create).
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxItems - The length cap.
+ * @param maxLen - The per-entry cap.
+ */
+function checkStringListOrNull(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxItems: number,
+  maxLen: number,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  if (o[key] === null) return;
+  checkStringList(o, key, base, issues, maxItems, maxLen);
+}
+
+/**
+ * Requires an own array of row objects up to `maxItems`, each validated by `checkRow`.
+ *
+ * @param o - The bag.
+ * @param key - The field.
+ * @param base - The parent path.
+ * @param issues - The sink.
+ * @param maxItems - The length cap (a payload is small; a runaway list is a bug, not a dataset).
+ * @param checkRow - The per-row shape check.
+ */
+function checkRows(
+  o: WireObject,
+  key: string,
+  base: string,
+  issues: HarbenchIssue[],
+  maxItems: number,
+  checkRow: (row: unknown, rowBase: string, sink: HarbenchIssue[]) => void,
+): void {
+  if (!hasOwnProp(o, key)) {
+    addIssue(issues, base, key, 'missing');
+    return;
+  }
+  const v = o[key];
+  if (!Array.isArray(v)) {
+    addIssue(issues, base, key, 'must be an array');
+    return;
+  }
+  if (v.length > maxItems) {
+    addIssue(issues, base, key, 'carries more than ' + maxItems + ' rows');
+    return;
+  }
+  const listPath = joinPath(base, key);
+  for (let i = 0; i < v.length; i++) {
+    checkRow(v[i], listPath + '[' + i + ']', issues);
+  }
+}
+
+/** The five live pool counts a render row carried (the floor over its measured frames). */
+function checkLoad(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(o, 'load')) {
+    addIssue(issues, base, 'load', 'missing');
+    return;
+  }
+  const load = wireObject(o.load);
+  if (load === null) {
+    addIssue(issues, base, 'load', 'must be an object');
+    return;
+  }
+  const lb = joinPath(base, 'load');
+  checkInt(load, 'bullets', lb, issues, 0, WIRE_MAX);
+  checkInt(load, 'points', lb, issues, 0, WIRE_MAX);
+  checkInt(load, 'enemies', lb, issues, 0, WIRE_MAX);
+  checkInt(load, 'particles', lb, issues, 0, WIRE_MAX);
+  checkInt(load, 'tiles', lb, issues, 0, WIRE_MAX);
+}
+
+/** The inherited `render-bench` stat fields — the frozen shape's per-row verdicts/stats as today. */
+function checkRenderStats(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkString(o, 'size', base, issues, ID_MAX);
+  checkNonNeg(o, 'width', base, issues);
+  checkNonNeg(o, 'height', base, issues);
+  checkNonNeg(o, 'density', base, issues);
+  checkString(o, 'variant', base, issues, ID_MAX);
+  checkString(o, 'crt', base, issues, ID_MAX);
+  checkBool(o, 'filter', base, issues);
+  checkBool(o, 'mode7', base, issues);
+  checkInt(o, 'webGLVersion', base, issues, 0, 16);
+  checkNonNeg(o, 'displayWidth', base, issues);
+  checkNonNeg(o, 'displayHeight', base, issues);
+  checkNonNeg(o, 'scale', base, issues);
+  checkSeries(o, 'phaseMs', base, issues, 3);
+  checkInt(o, 'frames', base, issues, 0, WIRE_MAX);
+  checkInt(o, 'syncedFrames', base, issues, 0, WIRE_MAX);
+  checkSeries(o, 'renderMs', base, issues, SERIES_TUPLE);
+  checkSeries(o, 'syncedMs', base, issues, SERIES_TUPLE);
+  checkSeries(o, 'frameMs', base, issues, SERIES_TUPLE);
+  checkSeries(o, 'raf', base, issues, RAF_BUCKETS);
+  checkSeries(o, 'tickFrames', base, issues, SERIES_TUPLE);
+  checkRatio(o, 'twoTickShare', base, issues);
+  checkInt(o, 'drawCalls', base, issues, 0, WIRE_MAX);
+  checkInt(o, 'rebuilds', base, issues, -1, WIRE_MAX);
+  checkNonNeg(o, 'renderTargetBytes', base, issues);
+  checkNonNeg(o, 'frameTargetBytes', base, issues);
+  checkNonNeg(o, 'textureBytes', base, issues);
+  checkInt(o, 'atlasPages', base, issues, 0, WIRE_MAX);
+  checkBool(o, 'heapMeasured', base, issues);
+  checkNonNeg(o, 'heapStartBytes', base, issues);
+  checkNonNeg(o, 'heapEndBytes', base, issues);
+  checkNumber(o, 'heapDeltaBytes', base, issues);
+  checkLoad(o, base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+}
+
+/** A render row: the frozen stats, plus the knob as a field and the video-surface flag. */
+function checkRenderRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkRenderStats(o, base, issues);
+  checkString(o, 'knob', base, issues, ID_MAX);
+  checkBool(o, 'video', base, issues);
+}
+
+/** One measured atlas page of the decode scenario (the file-to-GPU stages are the record's own). */
+function checkDecodePage(row: unknown, base: string, issues: HarbenchIssue[]): void {
+  const page = wireObject(row);
+  if (page === null) {
+    addIssue(issues, base, '', 'must be an object');
+    return;
+  }
+  checkString(page, 'id', base, issues, ID_MAX);
+  checkString(page, 'what', base, issues, TEXT_MAX);
+  checkNonNeg(page, 'width', base, issues);
+  checkNonNeg(page, 'height', base, issues);
+  checkString(page, 'encoding', base, issues, ID_MAX);
+  checkNonNeg(page, 'bytes', base, issues);
+  checkNonNeg(page, 'textureBytes', base, issues);
+  checkInt(page, 'repetitions', base, issues, 0, WIRE_MAX);
+  checkSeriesOrNull(page, 'fetchMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'decodeMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'uploadMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'uploadSyncedMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'totalMs', base, issues, SERIES_TUPLE);
+  checkNonNeg(page, 'firstTotalMs', base, issues);
+  checkSeriesOrNull(page, 'bitmapMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'bitmapUploadMs', base, issues, SERIES_TUPLE);
+  checkStringOrNull(page, 'error', base, issues, TEXT_MAX);
+}
+
+/** A decode row: the frozen record verbatim, pages and their sizes included. */
+function checkDecodeRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkInt(o, 'webGLVersion', base, issues, 0, 16);
+  checkInt(o, 'repetitions', base, issues, 0, WIRE_MAX);
+  checkBool(o, 'imageDecode', base, issues);
+  checkBool(o, 'imageBitmap', base, issues);
+  checkRows(o, 'pages', base, issues, 16, checkDecodePage);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+  checkNonNeg(o, 'endedAt', base, issues);
+}
+
+/** A rewind row: the timing record — steps per second, ticks, and the cap with its estimate flag. */
+function checkRewindRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkInt(o, 'ticks', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'stepsPerSecond', base, issues);
+  checkNonNeg(o, 'worldBuildMs', base, issues);
+  checkNonNeg(o, 'hashMs', base, issues);
+  checkInt(o, 'hashChecks', base, issues, 0, WIRE_MAX);
+  checkInt(o, 'capTicks', base, issues, 0, WIRE_MAX);
+  checkBool(o, 'capTicksEstimated', base, issues);
+  checkString(o, 'stage', base, issues, ID_MAX);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** One boot-scenario atlas page (file to GPU through the shipped loader branch). */
+function checkBootPage(row: unknown, base: string, issues: HarbenchIssue[]): void {
+  const page = wireObject(row);
+  if (page === null) {
+    addIssue(issues, base, '', 'must be an object');
+    return;
+  }
+  checkString(page, 'id', base, issues, ID_MAX);
+  checkNonNeg(page, 'width', base, issues);
+  checkNonNeg(page, 'height', base, issues);
+  checkNonNeg(page, 'bytes', base, issues);
+  checkSeriesOrNull(page, 'fetchMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'bitmapMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'decodeMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'uploadMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'syncedMs', base, issues, SERIES_TUPLE);
+  checkSeriesOrNull(page, 'totalMs', base, issues, SERIES_TUPLE);
+  checkBool(page, 'viaBitmap', base, issues);
+  checkStringOrNull(page, 'error', base, issues, TEXT_MAX);
+}
+
+/** A boot row: manifest XHR, the shipped bitmap branch's flags, the page rows, time to a frame. */
+function checkBootRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkSeries(o, 'manifestMs', base, issues, SERIES_TUPLE);
+  checkInt(o, 'atlasBytes', base, issues, 0, WIRE_MAX);
+  checkBool(o, 'imageBitmap', base, issues);
+  checkBool(o, 'bitmapBranch', base, issues);
+  checkRows(o, 'pages', base, issues, 32, checkBootPage);
+  checkNonNeg(o, 'bootMs', base, issues);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** A memory row: the soak's heap series and page ledger, and the supervisor-paired RSS when any. */
+function checkMemoryRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkNonNeg(o, 'seconds', base, issues);
+  checkInt(o, 'cycles', base, issues, 0, WIRE_MAX);
+  checkBool(o, 'heapMeasured', base, issues);
+  checkNonNeg(o, 'heapStartBytes', base, issues);
+  checkNonNeg(o, 'heapPeakBytes', base, issues);
+  checkNonNeg(o, 'heapEndBytes', base, issues);
+  checkNumber(o, 'heapDeltaBytes', base, issues);
+  checkNumberList(o, 'heapSamples', base, issues, 65536);
+  checkInt(o, 'pageLedgerMin', base, issues, 0, WIRE_MAX);
+  checkInt(o, 'pageLedgerMax', base, issues, 0, WIRE_MAX);
+  checkOptionalNonNeg(o, 'rssBytes', base, issues);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** A probe row: both extension lists (GL2's may be null), the presence flags, the ETC smoke. */
+function checkProbeRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkStringList(o, 'webglExtensions', base, issues, 512, ID_MAX);
+  checkStringListOrNull(o, 'webgl2Extensions', base, issues, 512, ID_MAX);
+  checkNumberOrNull(o, 'deviceMemory', base, issues);
+  checkIntOrNull(o, 'hardwareConcurrency', base, issues);
+  checkBool(o, 'offscreenCanvas', base, issues);
+  checkBool(o, 'reduceMotionResolves', base, issues);
+  checkSeriesOrNull(o, 'smokeUploadMs', base, issues, SERIES_TUPLE);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** One watched key of an input row. */
+function checkKeyRow(row: unknown, base: string, issues: HarbenchIssue[]): void {
+  const key = wireObject(row);
+  if (key === null) {
+    addIssue(issues, base, '', 'must be an object');
+    return;
+  }
+  checkString(key, 'id', base, issues, ID_MAX);
+  checkInt(key, 'keyCode', base, issues, 0, 65535);
+  checkBool(key, 'delivered', base, issues);
+  checkInt(key, 'presses', base, issues, 0, WIRE_MAX);
+  checkNumberOrNull(key, 'repeatsPerSecond', base, issues);
+  checkSeriesOrNull(key, 'appliedMs', base, issues, SERIES_TUPLE);
+}
+
+/** An input row: gamepad presence and the per-key delivery / repeat / tick-lag rows. */
+function checkInputRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkBool(o, 'gamepadPresent', base, issues);
+  checkRows(o, 'keys', base, issues, 64, checkKeyRow);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** A watchdog row: the dead-frame burn, the screen-swap latency, the restore answer. */
+function checkWatchdogRecord(o: WireObject, base: string, issues: HarbenchIssue[]): void {
+  checkString(o, 'scenario', base, issues, ID_MAX);
+  checkInt(o, 'index', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'startedAt', base, issues);
+  checkNonNeg(o, 'endedAt', base, issues);
+  checkInt(o, 'framesAfterLoss', base, issues, 0, WIRE_MAX);
+  checkNonNeg(o, 'screenSwapMs', base, issues);
+  checkBool(o, 'contextRestored', base, issues);
+  checkStringOrNull(o, 'error', base, issues, TEXT_MAX);
+}
+
+/** The session-level facts every payload of a run repeats (env identity, the A/B and phase tags). */
+function checkEnv(p: WireObject, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(p, 'env')) {
+    addIssue(issues, '', 'env', 'missing');
+    return;
+  }
+  const env = wireObject(p.env);
+  if (env === null) {
+    addIssue(issues, '', 'env', 'must be an object');
+    return;
+  }
+  const base = 'env';
+  checkString(env, 'buildId', base, issues, ID_MAX);
+  checkString(env, 'host', base, issues, 32);
+  checkString(env, 'userAgent', base, issues, TEXT_MAX);
+  checkNonNeg(env, 'innerWidth', base, issues);
+  checkNonNeg(env, 'innerHeight', base, issues);
+  checkNonNeg(env, 'devicePixelRatio', base, issues);
+  checkNonNeg(env, 'webGLVersion', base, issues);
+  checkInt(env, 'scenarios', base, issues, 0, WIRE_MAX);
+  checkNonNeg(env, 'startedAt', base, issues);
+  checkString(env, 'phase', base, issues, ID_MAX);
+  checkBool(env, 'gameMode', base, issues);
+}
+
+/** The record array: shape, size, discriminator, then the per-kind checker. */
+function checkRecords(p: WireObject, issues: HarbenchIssue[]): void {
+  if (!hasOwnProp(p, 'records')) {
+    addIssue(issues, '', 'records', 'missing');
+    return;
+  }
+  const list = p.records;
+  if (!Array.isArray(list)) {
+    addIssue(issues, '', 'records', 'must be an array');
+    return;
+  }
+  if (list.length > MAX_HARBENCH_RECORDS) {
+    addIssue(issues, '', 'records', 'carries more than ' + MAX_HARBENCH_RECORDS + ' rows');
+    return;
+  }
+  for (let i = 0; i < list.length; i++) {
+    const base = 'records[' + i + ']';
+    const row = wireObject(list[i]);
+    if (row === null) {
+      addIssue(issues, base, '', 'must be an object');
+      continue;
+    }
+    if (!hasOwnProp(row, 'record')) {
+      addIssue(issues, base, 'record', 'missing discriminator');
+      continue;
+    }
+    const id = row.record;
+    if (typeof id !== 'string' || HARBENCH_RECORD_KINDS.indexOf(id) < 0) {
+      addIssue(issues, base, 'record', 'unknown record kind at format version 1');
+      continue;
+    }
+    if (id === 'render') checkRenderRecord(row, base, issues);
+    else if (id === 'decode') checkDecodeRecord(row, base, issues);
+    else if (id === 'rewind') checkRewindRecord(row, base, issues);
+    else if (id === 'boot') checkBootRecord(row, base, issues);
+    else if (id === 'memory') checkMemoryRecord(row, base, issues);
+    else if (id === 'probe') checkProbeRecord(row, base, issues);
+    else if (id === 'input') checkInputRecord(row, base, issues);
+    else checkWatchdogRecord(row, base, issues);
+  }
+}
+
+/**
+ * The zero-trust parse of the harbench wire: takes anything — the value a `JSON.parse` of a request
+ * body or one stored session line yields — and reports EVERY shape problem against
+ * {@link HARBENCH_FORMAT_VERSION}, deciding nothing for a broken row and trusting nothing the page
+ * claimed. The log server lane ports this function (the tree's zero-dependency rule keeps the wire
+ * types on this side of the boundary); the results page and the analyzer read the same untrusted
+ * JSON and may lean on it exactly as far. Fields the version 1 schema does not name PASS — additive
+ * compatibility the other way, so a reader written against an older union never wedges on a newer
+ * row it does not dispatch. Numbers must be finite (JSON has no NaN or ±Infinity and a producer
+ * that stringified one had already lost the row), strings non-empty and bounded, booleans strict,
+ * and only OWN properties count (a prototype-injected "valid" payload is not a valid payload).
+ *
+ * @param value - The parsed candidate.
+ * @returns One {@link HarbenchIssue} per broken field, empty when the payload is exactly a
+ *   {@link HARBENCH_FORMAT_VERSION | version-1} {@link HarbenchPayload}.
+ *
+ * @example
+ * ```ts
+ * // log server, once its lane learns the kind:
+ * harbenchPayloadIssues(JSON.parse(body)).forEach((i) => log(i.path + ': ' + i.message));
+ * ```
+ */
+export function harbenchPayloadIssues(value: unknown): HarbenchIssue[] {
+  const issues: HarbenchIssue[] = [];
+  const p = wireObject(value);
+  if (p === null) {
+    issues.push({ path: '', message: 'payload must be a JSON object' });
+    return issues;
+  }
+  if (!hasOwnProp(p, 'kind')) addIssue(issues, '', 'kind', 'missing');
+  else if (p.kind !== HARBENCH_KIND) addIssue(issues, '', 'kind', 'must be ' + HARBENCH_KIND);
+  if (!hasOwnProp(p, 'formatVersion')) addIssue(issues, '', 'formatVersion', 'missing');
+  else if (p.formatVersion !== HARBENCH_FORMAT_VERSION) {
+    addIssue(issues, '', 'formatVersion', 'unsupported wire version');
+  }
+  const session = p.session;
+  if (typeof session !== 'string' || !HARBENCH_SESSION_PATTERN.test(session)) {
+    addIssue(issues, '', 'session', 'must be an hb- id: hb- then 1 to 61 of A-Z a-z 0-9 . _ -');
+  }
+  checkInt(p, 'seq', '', issues, 1, WIRE_MAX);
+  checkNonNeg(p, 'sentAt', '', issues);
+  checkEnv(p, issues);
+  checkRecords(p, issues);
+  checkBool(p, 'done', '', issues);
+  return issues;
+}
+
+/**
+ * Whether a parsed value is exactly a version-1 harbench payload — the typed gate for readers of
+ * untrusted JSON (the results page's stored rows, a replayed session log).
+ *
+ * @param value - The candidate.
+ * @returns `true` when {@link harbenchPayloadIssues} would report no issues.
+ */
+export function isHarbenchPayload(value: unknown): value is HarbenchPayload {
+  return harbenchPayloadIssues(value).length === 0;
 }

@@ -294,11 +294,12 @@ function imageSize(image: AtlasPageImage): [number, number] {
  * alive until `close()` — the GC runs it late, and late bytes are exactly the VRAM the residency
  * frees when it detaches a page inside the atlas share. An `HTMLImageElement` or canvas has
  * nothing to close. Cold path (page attach/detach only); called by {@link applyPage} on the
- * release and the replace arm — never for an image still in use.
+ * release and the replace arm — never for an image still in use — and by the image surface
+ * (`stills/index.ts`), which holds the same law for a single non-atlas bitmap (plan v20x A4).
  *
  * @param image - The image the atlas just let go of, when one was attached.
  */
-function closePageImage(image: AtlasPageImage | null | undefined): void {
+export function closePageImage(image: AtlasPageImage | null | undefined): void {
   const bitmap = image as ImageBitmap | null | undefined;
   if (bitmap === null || bitmap === undefined || typeof bitmap.close !== 'function') return;
   bitmap.close();

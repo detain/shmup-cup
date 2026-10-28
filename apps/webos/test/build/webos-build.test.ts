@@ -19,7 +19,7 @@ import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MATCH_ALL_BANNER, POLYFILL_BANNER } from '../../../tizen/scripts/check-bundle.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
-import { videoShippedFiles } from '../../../../vite.shared.js';
+import { stillsShippedFiles, videoShippedFiles } from '../../../../vite.shared.js';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../scripts/check-bundle.mjs';
 import { validateAppInfo } from '../../scripts/appinfo.mjs';
 
@@ -71,6 +71,9 @@ describe('webos build output (vite build → dist/) — M3-03', () => {
         // The same MP4 set the Tizen widget ships (webOS reads the Tizen budgets and the
         // `shmupVideos()` plugin's outputs; no webm anywhere — v2 R7-VID).
         ...videoShippedFiles(),
+        // What the `shmupStills()` plugin ships — the stills kit's outputs on disk, none
+        // before it ran (the still-less build variant, plan v20x A4).
+        ...stillsShippedFiles(),
       ].sort(),
     );
     const shipped = JSON.parse(

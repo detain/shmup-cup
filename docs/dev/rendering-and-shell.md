@@ -532,6 +532,69 @@ The whole story is on [presentation-polish.md](presentation-polish.md); in brief
   when it kept its sprite id and moved ≤ 24 px). The shell turns it on only while its refresh
   probe reads more than 70 Hz.
 
+## Cutscene video and image stills (v2.0.x)
+
+The era grew two media passes over the drawn frame, and both ride one pattern: a full-frame
+quad in the layer stack's `world` or `screen` band, fed through the **`image` upload path** the
+atlas pages use — never Pixi's own video plumbing.
+
+**The video surface** (`video` module, `ee930b0a`): `createVideoSurface({ root, bands, … })`
+owns one `<video>` element (the factory is injectable) and pulls its **moved** frames with an
+option-less `createImageBitmap`, uploading each into the quad's texture and `close()`ing the
+previous bitmap on the swap — the same release law as the atlas pages, because a detached
+bitmap holds GPU memory until closed. Pixi's `VideoSource` was measured out on the target's
+ANGLE driver, and `requestVideoFrameCallback` (Chromium 80) is above both TVs' engine floor,
+so the element's own frame events poll the moved frames instead. `play(url, loop)` is cold;
+`setBand` moves the quad only at a clip's start; a media failure marks the surface unusable
+and every later call is inert. The two bands: `world` draws over the playfield under the HUD
+and UI (every gameplay window), `screen` over the UI under the debug layer — the title's
+opaque full-frame backdrop would cover a `world` band, so the title sting picks `screen`.
+
+**The image stills surface** (`stills` module, `13ef0f90`): `createImageSurface({ root, bands,
+width?, height? })` shows one already-decoded image — an `AtlasPageImage` from the shell's
+page factory, **ownership transferring on `show`**. The first show builds a `TextureSource`
+labelled `stills` on the `image` upload method; a same-size swap closes the previous bitmap
+only *after* the new texture attaches; `hide` is `Texture.EMPTY` + source destroyed + bitmap
+closed — zero bytes held while nothing shows. The renderer creates the stills surface BEFORE
+the video surface when both are asked for, so a clip draws over a still.
+
+**The directors** (`@shmup/shell`, `cutscene` `06a28d85` / `stills` `8575d9ff`) keep the same
+law: **the sim never waits on media**. Trigger windows only cut a clip short, any pressed
+action skips it at once, and a still that fails to load is invisible — the ending plays
+without its painting. The cutscene maps the flow's state and the event stream onto the fifteen
+shipped clips (`3d4f284a` deterministic encode kit, `2105e7fd` shipped under `assets/video/` —
+6,803,092 B ≈ 6.49 MiB of LTX-2.5 winners, `LICENSES-videos.md` carrying the machine-generated
+disclaimer): title sting, attract ambient (the only looping clip), the story vista, the zone
+WARNING stings (`warn-zone-a`…`warn-zone-i` — no F, and no captain stings; absent ids degrade
+silently), the ark's sailing on `BossEscaped`, the escape collapse, the hull explosions on
+`BossDefeated`, the dawn flight after the ending. Video ships **default OFF** —
+`VIDEO_DEFAULT_ON = false`, the owner's ruling of 2026-10-27 pending the M7 bench rows; the
+kill precedence is the host option, then the baked `NO_VIDEO` define, then `?novid=1` and the
+stored `shmup.video` choice, then the default, with `?video=<id>` forcing one clip on for a
+run. The stored choice rides the shell; core stayed 0-diff. Stills resolve the same shape
+without the stored tier — host, baked `SHMUP_NO_STILLS` (`b4d11288`), `?nostills=1`, a probe
+forcing on, else default ON; a still is not a player setting.
+
+**The still set** is five campaign-ending paintings keyed by ending id (`STILL_SURFACES`):
+`citadel` → `ending-citadel-falls`, `citadel-flawless` → `ending-citadel-falls-silent`,
+`throne` → `ending-throne-is-broken`, `throne-flawless` → `ending-deep-is-still`,
+`throne-escape` → `ending-flagship-slips-away` — moment winners contain-fitted on the
+`0x05070f` letterbox pad and median-cut to PNG-8 at 640×360 by `scripts/v20x/stills-encode.mjs`
+(ledger + byte `--check`; the kit in [asset-pipeline.md](asset-pipeline.md)). 277,485 B of
+PNGs ≈ 292 KB of dist payload; a resident still costs 640×360×4 for the texture AND the same
+for the bitmap — 1,843,200 B (1.76 MiB), one atlas page's rate, charged as
+`MemoryEstimate.stills` (exempt from `keepPageImages`, both copies living and dying with the
+show / hide), and 0 hidden. The story pages are capability-ready with no approved painting —
+the honest partial; the title backdrop was rejected because its opaque UI sprite covers the
+band. For the bundle the clip set raised the TV dist budget 16 → 24 MiB (`9dfb9ef5`; measured
+9,421,536 B — 15,744,288 B of headroom).
+
+Both directors mark the game canvas — `data-shmup-video` and `data-shmup-still` carry the id
+showing now or `none`, written only on a change (`VIDEO_ATTRIBUTE` / `STILL_ATTRIBUTE`): the
+numeric probes of `a060f7b4` and the stills pixel spec `8ca1691d` read the state there, and
+the specs' sampler derives its scale from the captured image width — a mis-modelled sampler
+was fixed spec-side, not in the surface.
+
 ## The browser shell (`@shmup/shell`)
 
 `bootShell(options)` is the one boot path of `apps/web`, `apps/tizen` and `apps/webos` (D34). The
@@ -575,6 +638,7 @@ const shell = await bootShell({
 | 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08; M3-02b: the probe also drives `game.setVsyncLock` while `framePacing` is `'auto'` and it reads `VSYNC_LOCK_MIN_HZ … VSYNC_LOCK_MAX_HZ`); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers; M2-16: `InputSettings` → the app's `customize(save.options.input)`) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()` + `refresh.reset()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups) **and, since M3-02b, a platform suspend**: the apps' lifecycles treat `blur` / `focus` like hidden / visible (the M7's Home bar is only an overlay — it fires no `visibilitychange`), de-duplicated so a `blur` + `hidden` pair suspends once and the resume waits for both; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 6a | The atlas residency — `createAtlasResidency` under `'eager'`, `createLazyAtlasResidency` under the `'lazy'` default (R3-04) — prepares the boot stage (the scene flow's and free flight's `game.world` stage; showcase, calibration and the fx gallery keep every page) so its pages are uploaded **behind the loading screen, before the warm-up frame**, each upload timed; a lazy boot **awaits** that prepare, so the first displayed frame draws the boot stage (decision W5-16). The canvas gets `data-shmup-atlas-pages`, `data-shmup-atlas-load-ms` (`atlasTiming.totalMs`) and `data-shmup-atlas-page-ms` | — |
+| 6b | v2.0.x: the scene flow also starts the cutscene and stills directors (`ShellOptions.video` / `.stills` resolving the kill precedence; the section above). The canvas mirrors them with `data-shmup-video` / `data-shmup-still` — the id showing or `none`, written only on a change | — |
 | 7a | `renderer.warmUp()` (M3-02d) — one throwaway frame into an off-screen target with every GL program and every pooled sprite in it, so nothing links or grows a batch buffer once the game is running; never presented | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later; since M2-17 with the save store for `__shmupDebug.save`) | — |
 
@@ -619,6 +683,13 @@ image (policy "all") and only moving GPU copies. Both modes share the page bookk
   image standing in, a failed upload leaves Pixi's own lazy re-creation to heal the next drawn
   frame. The listener is added after the renderer's, so Pixi has cleared its texture bookkeeping
   first. `test/e2e/atlas-context-loss.spec.ts` drives it through `WEBGL_lose_context`.
+  The loss can also be **terminal**, and since v2.0.x P0-3 (`628a1afa`) it fails loud instead
+  of hanging: the frame-loop watchdog counts 60 rendered frames on a still-lost context
+  (counted even while paused — a game frozen on a dead canvas must still answer), asks
+  `isContextLost` once, and stops the loop, suspends the audio and swaps the boot error screen
+  to `GPU CONTEXT LOST` with `PRESS BACK TO EXIT` / `RELOAD THE PAGE TO START AGAIN`; Back
+  (10009 / 461 / Esc / Backspace) exits the app. A healthy canvas costs one boolean branch a
+  frame.
 - **Self-healing unload:** a prepare unloads every page the stage does not need **whether or not it
   believes it resident** — the preview draws `terrain-a` from zone A's page behind its back, and
   Pixi uploads it on that first draw; the game start's prepare frees it again. Unloading a page
@@ -1138,7 +1209,11 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   could carry), 384×216's two modes collapsed into one row, six variants per size (busy, a
   filtered layer, Mode-7, CRT light, CRT full, all at once — 25 sizes × 6 = 150 rows), and 22
   **knob** rows on top (the `fit` / `stretch` upscale modes, render interpolation, an output
-  resolution below the display's, each at a few representative sizes). The ids R0-02 and R0-03
+  resolution below the display's, each at a few representative sizes) — the v2.0.x **video
+  knob** (`61b4ed36`) added a 23rd and 24th (`busy-video` and `worst-video`: the video
+  surface's quad over the base scene — the headless SwiftShader rows read p95 2.10 ms (+0.2)
+  and 2.70 ms (+0.6) with +1 draw call exactly, heap +33–88 KB), so the matrix is **174
+  scenarios, one per page load** now and a full session **177 page loads**. The ids R0-02 and R0-03
   recorded — `384x216`, `640x360`, `960x540` — are byte-identical through the growth, so the
   sessions under `tools/input-probe/results/` stay comparable row for row. The atlas is upscaled
   ×`s` at build time (`scripts/bench-atlas.mjs`; `ceil(s² / 4)` pages of 2048² by the plan's area
@@ -1161,8 +1236,9 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   30 ms with nothing running, so absolute times mislead), applies §13's verdict rules and compares a
   WebGL 1 with a WebGL 2 session.
 - **The decode scenario** (R1-05 B4, decision W3-6 — `apps/tizen/src/bench/decode.ts`): after the
-  matrix a run loads the page a **173rd time** (`DECODE_SCENARIO_INDEX` 172, `BENCH_RUN_LENGTH`
-  174; `BENCH_SCENARIOS` stays the 172-row matrix and the labels read `n/174`) to measure what an
+  matrix a run loads the page a **175th time** (`DECODE_SCENARIO_INDEX` 174,
+  `BENCH_RUN_LENGTH` 177; `BENCH_SCENARIOS` is the 174-row matrix and the labels read `n/177`)
+  to measure what an
   atlas page costs from file to GPU, on the game's own paths. The pages changed with R3-04.M4a
   (decisions RR-8 / W5-17): the bench build no longer ships a synthetic 2048² pair — it ships
   **the stand-in zone A's own PNG-8 pages** (`standin-zone-a`, plus `standin-zone-a-2` when the
@@ -1203,13 +1279,15 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   the **measured pages** — `common` plus the stand-in zone's own pages, each at its own median,
   no ×2 — and only the older sessions fall back to the synthetic basis (`common` + two 2048²
   pages against 2 s, conservative, since `common` stays resident across a zone change).
-- **The stand-in load** (R3-04.M4a — `STANDIN_SCENARIO_ID` `standin-zone`, the run's **last** page
-  load at index 173): after the decode scenario the widget draws one 640×360 frame of the stand-in
+- **The stand-in load** (R3-04.M4a — `STANDIN_SCENARIO_ID` `standin-zone`, the run's
+  **penultimate** page load at index 175 since v2.0.x `5f211b13` added the **rewind scenario**
+  after it, the 177th load `?scenario=rewind` measuring the TV-resume's steps/s on the widget's
+  own engine-floor label): after the decode scenario the widget draws one 640×360 frame of the stand-in
   zone through the real bindings, from exactly those decoded pages. The headless twin
   `?scenario=standin-zone` gates the same frame (R3-04.M4b: `standinBenchViolations` — counts and
   the ordinary budgets, never milliseconds raised), so the on-screen table and the gate agree. The
   analyzer prints the row on its own line, excluded from the campaign aggregation. Red after a
-  whole run re-runs this last load (the cursor lands on 173), so a red there is the stand-in
+  whole run re-runs this load (the cursor lands on 175), so a red there is the stand-in
   load, not the matrix.
 - **Headless:** `pnpm bench` builds the widget exactly as `bench:tv` does and opens each scenario
   with `?scenario=<id>` on the 1280×720 display, gating **counts only** — `tvBenchViolations` in

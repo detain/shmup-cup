@@ -245,6 +245,7 @@ stays black.
 | **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
 | **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
 | **PRESS OK** | Under the logo | Blinks on and off about once a second |
+| **CONTINUE?** | The first menu row — only after a lost run | Appears only while a saved in-flight run waits (the TV closed the app mid-game): the game's own continue rule carries it on — lives and power reset — and the row is gone once used or discarded |
 | **HI** and a number | Bottom | The best one-player score kept on this device for the difficulty and the kind of ship you chose last (NORMAL and the KESTREL at first) — from earlier launches too (0 on a fresh install) |
 
 The title music (SHMUP CUP) plays — in a browser from your first key press or click. Left alone on
@@ -2196,6 +2197,9 @@ with its bonuses) is followed by the **ending** — no map. The music changes to
      dark shape **sinking** into the deep — or, if it escaped, **sailing off** to the right — while
      your ship rises towards the light and then flies away;
    - if **no ship was lost in the whole run**, a pale-gold **dawn sun** rises over the scene.
+   - since v2.1.0 a **full-frame painting** of the moment can lie over the scene — one per ending,
+     five in all, picked by the outcome (a quiet variant when no ship was lost, the sailing one
+     when the ARK escaped); on by default, and a painting that cannot load simply never appears.
 2. **The epilogue** — five or six lines of story — appears below the scene, one line every second
    and a half. **OK** (after the first second) shows all the lines at once; **OK** again, or waiting
    four seconds after the last line, goes on.

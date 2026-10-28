@@ -224,6 +224,7 @@ import {
 import {
   EMPTY_FX_CONTENT,
   FX_CONTENT_KIND,
+  closePageImage,
   createAtlas,
   createPixiRenderer,
   loadFxContent,
@@ -254,6 +255,13 @@ import {
   videoSettingFromWindow,
   type CutsceneDirector,
 } from '../cutscene/index.js';
+import {
+  createStillsDirector,
+  stillProbeFromSearch,
+  stillsSettingFromWindow,
+  type StillsDirector,
+  type StillsImageLike,
+} from '../stills/index.js';
 import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import {
@@ -301,6 +309,11 @@ import {
  * the `typeof` guard at the renderer also compiles in Node, where the global simply is absent.
  */
 declare const __SHMUP_NO_VIDEO__: boolean;
+/**
+ * The `SHMUP_NO_STILLS=1` baked kill switch (plan v20x A4): defined by `shmupBuildInfo()` in
+ * every app bundle. Declared locally for the same reason as {@link __SHMUP_NO_VIDEO__}.
+ */
+declare const __SHMUP_NO_STILLS__: boolean;
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -334,6 +347,13 @@ export const SCENE_ATTRIBUTE = 'data-shmup-scene';
  * Written only when the clip changes — a cold path. For the browser spec's state probe.
  */
 export const VIDEO_ATTRIBUTE = 'data-shmup-video';
+
+/**
+ * Attribute on the game canvas naming the still the image-surface director shows right now
+ * (plan v20x A4 — the `stills` module's `onStillChange` mirror), or `'none'` when nothing shows.
+ * Written only when the still changes — a cold path. For the browser spec's state probe.
+ */
+export const STILL_ATTRIBUTE = 'data-shmup-still';
 
 /**
  * Attribute on the game canvas holding the launch-to-ready time in whole milliseconds
@@ -873,6 +893,13 @@ export interface ShellOptions {
    */
   readonly video?: boolean;
   /**
+   * Plan v20x A4: explicit decision for the large-format stills feature — wins over every
+   * other switch. Unset: `SHMUP_NO_STILLS`, the `?nostills=1` / `?still=<id>` search and the
+   * shipped default (ON) resolve it (see `stills` `resolveStillsSetting`). Off costs nothing:
+   * no surface, no texture, no watch.
+   */
+  readonly stills?: boolean;
+  /**
    * When to unlock audio: `'gesture'` (default — first key or pointer press, the browser
    * autoplay policy) or `'immediate'` (TV: no gesture needed).
    */
@@ -998,6 +1025,12 @@ export interface Shell {
    * `clip` reports what shows; `playClip` forces one (the debug probe).
    */
   readonly cutscene: CutsceneDirector | null;
+  /**
+   * Plan v20x A4: the stills director when the scene flow runs, else `null` (dev scenes).
+   * `showing` reports whether a painting is resident; the canvas `data-shmup-still` attribute
+   * is its browser-spec mirror.
+   */
+  readonly stills: StillsDirector | null;
   /** The particle presets and triggers of `content/fx/` handed to the renderer. */
   readonly fx: FxContent;
   /**
@@ -1567,6 +1600,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const videoSearch = win.location?.search ?? '';
   const videoOn = videoSettingFromWindow(win, videoBakedOff ? false : options.video);
   const videoProbe = videoProbeFromSearch(videoSearch);
+  // Plan v20x A4: the stills switch resolves the same way (baked define, page global,
+  // ?nostills / forced ?still probe) — but ships ON: a static image decoded once at a scene
+  // edge carries none of the media pacing the video default-off was measured into (R7-VID).
+  const stillsBakedOff = typeof __SHMUP_NO_STILLS__ === 'boolean' && __SHMUP_NO_STILLS__;
+  const stillsOn = stillsSettingFromWindow(win, stillsBakedOff ? false : options.stills);
+  const stillsProbe = stillProbeFromSearch(videoSearch);
   try {
     renderer = await createPixiRenderer({
       canvas,
@@ -1585,6 +1624,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       countDrawCalls: options.debugTools !== undefined && options.debugTools !== null,
       countStructureRebuilds: options.debugTools !== undefined && options.debugTools !== null,
       ...(videoOn ? { video: {} } : {}),
+      ...(stillsOn ? { stills: {} } : {}),
     });
   } catch (error) {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);
@@ -2015,6 +2055,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const events = createEventDispatcher();
   /** The cutscene director of the scene-flow boot, `null` for the dev scenes (v2 R7-VID). */
   let cutscene: CutsceneDirector | null = null;
+  /** The stills director of the scene-flow boot, `null` for the dev scenes (plan v20x A4). */
+  let stills: StillsDirector | null = null;
   // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
   // audio engine (M1-15) — in the scene flow and free flight: the other scenes do not show the
   // World.
@@ -2076,6 +2118,24 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         },
       });
       cutscene.connect(events);
+      // Plan v20x A4: the stills director — presentation only (the cutscene's law): it watches
+      // the ending the run selected and shows its approved painting behind the scene art, the
+      // load riding the shipped page-image factory. The sim never sees it; a failure or a miss
+      // leaves the procedural scene exactly as it drew.
+      stills = createStillsDirector({
+        flow: scenes,
+        enabled: stillsOn,
+        surface: readyRenderer.stills,
+        loadImage: (url) => createImage(url).then((loaded) => loaded.image),
+        // The director is Pixi-free; the boot hands it the atlas's guarded bitmap close.
+        closeImage: (image: StillsImageLike): void => {
+          closePageImage(image as AtlasPageImage);
+        },
+        probeStill: stillsProbe,
+        onStillChange: (still) => {
+          markCanvas(canvas, STILL_ATTRIBUTE, still ?? 'none');
+        },
+      });
     }
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);
@@ -2246,6 +2306,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       worldShown = frame.world !== null;
       // v2 R7-VID: clip windows and the skip, on presentation time, after the events drained.
       if (cutscene !== null) cutscene.update(frame.tick);
+      // Plan v20x A4: the stills watch — a string compare on the common path (module docblock).
+      if (stills !== null) stills.update();
     } else {
       shown = sceneView !== null ? sceneView.update(frame) : calibration.update(frame);
       worldShown = flight !== null;
@@ -2294,6 +2356,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     showcase,
     fxGallery,
     cutscene,
+    stills,
     fx,
     audioEngine: engine,
     loadedSave,
@@ -2320,6 +2383,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       }
       input.destroy();
       cutscene?.destroy();
+      stills?.destroy();
       readyRenderer.destroy();
       readyAtlas.destroy();
       engine.destroy();

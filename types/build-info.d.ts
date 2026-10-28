@@ -31,6 +31,11 @@ declare const __SHMUP_REPORT_URL__: string;
  * reads it through its own guarded `declare` (unit tests never define it).
  */
 declare const __SHMUP_NO_VIDEO__: boolean;
+/**
+ * Plan v20x A4: the stills kill switch (`SHMUP_NO_STILLS=1` build) — `true` means the bundle
+ * carries no image-surface stills. Same define mechanism as {@link __SHMUP_NO_VIDEO__}.
+ */
+declare const __SHMUP_NO_STILLS__: boolean;
 
 /**
  * The live-reload WebSocket URL of a `tizen:watch` dev build (`ws://<desktop>:<port>`, M2-17 —

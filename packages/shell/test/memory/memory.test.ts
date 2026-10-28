@@ -123,6 +123,35 @@ describe('shell/memory', () => {
     expect(pageBytes({ w: 2048, h: 2048 })).toBe(16 * MIB);
   });
 
+  it('sizes a resident still at the attached-page rate, and nothing when hidden (plan v20x A4)', () => {
+    const base = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0 });
+    const shown = estimateMemory({
+      atlasPages: [],
+      stillsPages: [{ w: 640, h: 360 }],
+      sfxBytes: 0,
+      musicBytes: 0,
+    });
+    const bytes = 640 * 360 * 4;
+    expect(shown.textures - base.textures).toBe(bytes); // the GPU copy
+    expect(shown.images - base.images).toBe(bytes); // the decoded image held for re-upload
+    expect(shown.stills).toBe(bytes * 2);
+    // The empty list and no list are the hidden surface: zero charged (the VRAM law of the
+    // stills module — hide() closes the bitmap and destroys the texture).
+    expect(
+      estimateMemory({ atlasPages: [], stillsPages: [], sfxBytes: 0, musicBytes: 0 }).stills,
+    ).toBe(0);
+    // The lazy-eager policy flag models the atlas only: a shown still holds its image always.
+    expect(
+      estimateMemory({
+        atlasPages: [],
+        stillsPages: [{ w: 640, h: 360 }],
+        keepPageImages: false,
+        sfxBytes: 0,
+        musicBytes: 0,
+      }).stills,
+    ).toBe(bytes * 2);
+  });
+
   it('counts the render targets as Pixi really pools them, CRT on and off (M3-02d, review F3)', () => {
     // Hand-computed, in bytes, for the 384×216 frame:
     //   frame target   384 × 216 × 4                       =        331 776  (created directly)

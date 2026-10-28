@@ -667,6 +667,151 @@ export function shmupVideos(
   };
 }
 
+// ----------------------------------------------------------------------------- image stills
+
+/**
+ * Where the kit's rendered stills live before the build ships them
+ * (`assets/generated/stills/` — `scripts/v20x/stills-encode.mjs`'s output, git-ignored like the
+ * atlas and the clips). Plan v20x A4: the large-format image surfaces of the ending screens.
+ */
+export const STILLS_SOURCE_DIR = fileURLToPath(
+  new URL('./assets/generated/stills', import.meta.url),
+);
+
+/** The encode kit (`scripts/v20x/stills-encode.mjs`): deterministic resampling of the art-prompts
+ * moment winners into the shipped PNG-8 stills (pure Node — no ffmpeg, no GPU). */
+const STILLS_KIT = fileURLToPath(new URL('./scripts/v20x/stills-encode.mjs', import.meta.url));
+
+/**
+ * Where the built app serves the stills (`dist/assets/stills/`); the shell's `stills`
+ * `STILLS_URL_DIR` is the same string — pinned by `test/integration/stills-plugin.test.ts`.
+ */
+export const STILLS_URL_DIR = 'assets/stills';
+
+/** A shippable still file: a PNG, its provenance sidecar, the ledger or the licences. */
+export const STILLS_FILE_PATTERN =
+  /^([a-z0-9-]+\.png|[a-z0-9-]+\.art\.json|stills-ledger\.json|LICENSES-stills\.md)$/;
+
+/**
+ * The still files a default-directory build emits into `dist/${STILLS_URL_DIR}/` — empty when
+ * the kit's directory does not exist yet. The build-output tests (`tizen-build`, `webos-build`)
+ * derive their exact file lists from this, the video precedent's rule (plan v20x A4).
+ *
+ * @param only - When set, ship only these names.
+ * @returns The dist-relative paths, sorted.
+ */
+export function stillsShippedFiles(only: readonly string[] | null = null): string[] {
+  if (!existsSync(STILLS_SOURCE_DIR)) return [];
+  return readdirSync(STILLS_SOURCE_DIR)
+    .filter((name) => STILLS_FILE_PATTERN.test(name) && (only === null || only.includes(name)))
+    .map((name) => `${STILLS_URL_DIR}/${name}`)
+    .sort();
+}
+
+/**
+ * Vite plugin serving and shipping the large-format stills (plan v20x A4, the `shmupVideos`
+ * sibling).
+ *
+ * - **`buildStart` (both commands):** runs the encode kit's `--check`; when it fails, runs the
+ *   full kit (pure Node, always available — a drift re-renders, never ships silently).
+ * - **Build:** emits every kit output into `assets/stills/` under fixed names (the shell's
+ *   manifest refers to files by name, like the clips and the atlas pages).
+ * - **Dev server:** serves `<base>assets/stills/<file>` from the kit's directory with no caching.
+ * - `SHMUP_NO_STILLS=1` bakes the kill switch and ships no files (the video rule).
+ *
+ * @param options - The plugin options.
+ * @param options.sourceDir - The stills' directory (default the kit's output,
+ *   `assets/generated/stills`).
+ * @param options.only - When set, ship only these files.
+ * @returns The plugin.
+ */
+export function shmupStills(
+  options: { sourceDir?: string; only?: readonly string[] } = {},
+): Plugin {
+  const sourceDir = options.sourceDir ?? STILLS_SOURCE_DIR;
+  const only = options.only ?? null;
+  // A custom directory is the test's fixture — the kit only ever feeds the real one.
+  const runsKit = options.sourceDir === undefined;
+  let command: 'build' | 'serve' = 'build';
+
+  /** Re-renders the stills when the shipped files do not match the ledger. */
+  const ensure = (): void => {
+    if (!runsKit) return;
+    const check = spawnSync(process.execPath, [STILLS_KIT, '--check'], { stdio: 'ignore' });
+    if (check.status === 0) return;
+    spawnSync(process.execPath, [STILLS_KIT], { stdio: 'inherit' });
+  };
+
+  /** The shippable files now in the directory (empty when the kit has not run). */
+  const stillFiles = (): string[] => {
+    if (!existsSync(sourceDir)) return [];
+    return readdirSync(sourceDir).filter(
+      (name) => STILLS_FILE_PATTERN.test(name) && (only === null || only.includes(name)),
+    );
+  };
+
+  return {
+    name: 'shmup:stills',
+    /**
+     * Remembers whether this is a build or the dev server.
+     *
+     * @param config - The resolved Vite config.
+     */
+    configResolved(config) {
+      command = config.command;
+    },
+    /**
+     * Renders what is missing and, in builds, emits the stills into `assets/stills/`.
+     */
+    buildStart() {
+      if (process.env.SHMUP_NO_STILLS === '1') return; // the baked kill switch: ship no stills
+      ensure();
+      if (command !== 'build') return;
+      for (const name of stillFiles()) {
+        this.emitFile({
+          type: 'asset',
+          fileName: `${STILLS_URL_DIR}/${name}`,
+          source: readFileSync(join(sourceDir, name)),
+        });
+      }
+    },
+    /**
+     * Dev server only: serves `<base>assets/stills/<file>` from the kit's directory, no cache.
+     *
+     * @param server - The Vite dev server.
+     */
+    configureServer(server) {
+      const prefix = `${server.config.base}${STILLS_URL_DIR}/`;
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? '').split('?')[0] ?? '';
+        if (!url.startsWith(prefix)) {
+          next();
+          return;
+        }
+        let file: string;
+        try {
+          file = decodeURIComponent(url.slice(prefix.length));
+        } catch {
+          next();
+          return;
+        }
+        const path = join(sourceDir, file);
+        if (
+          !STILLS_FILE_PATTERN.test(file) ||
+          (only !== null && !only.includes(file)) ||
+          !existsSync(path)
+        ) {
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', file.endsWith('.png') ? 'image/png' : 'application/json');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.end(readFileSync(path));
+      });
+    },
+  };
+}
+
 // ------------------------------------------------------------------------------ build info
 
 /**
@@ -764,6 +909,9 @@ export function shmupBuildInfo(): Plugin {
           __SHMUP_REPORT_URL__: JSON.stringify(reportUrl),
           // v2 R7-VID: `SHMUP_NO_VIDEO=1` bakes the kill switch in (no surface, no clips).
           __SHMUP_NO_VIDEO__: JSON.stringify(process.env.SHMUP_NO_VIDEO === '1'),
+          // Plan v20x A4: `SHMUP_NO_STILLS=1` bakes the stills kill switch in (no surface, no
+          // files — the video rule, the shipped default being ON instead of OFF).
+          __SHMUP_NO_STILLS__: JSON.stringify(process.env.SHMUP_NO_STILLS === '1'),
         },
       };
     },

@@ -575,9 +575,10 @@ file quoted on the headless side:
   `MIN_LIVE_LOAD` 400, all byte-untouched by the step — plus a new `zoneSweepViolations` state
   gate: the camera must have flown (`cameraX > 0`) and the status must still be `playing` — a
   `stageClear`, `gameOver` or `bossWarning` names the zone and fails the sweep, because the arms
-  measure a zone's opening section. The TV widget's matrix is unchanged at 172 scenarios + decode
-  + stand-in = **174 page loads**; its 174th is now the only place the stand-in page load still
-  runs, and it stays the owner's R0-03 carrier.
+  measure a zone's opening section. The TV widget's matrix then stood at 172 scenarios + decode
+  + stand-in = **174 page loads**, the 174th the only place the stand-in page load ran. The v2.0.x
+  `61b4ed36` video knob grew the matrix to **174 rows** and `5f211b13`'s rewind scenario the session
+  to **177 page loads**; the stand-in load still runs there, and it stays the owner's R0-03 carrier.
 - **R6-02.P1** then re-measured everything headless on the final content (all nine zone remasters
   in), serialized under the e2e lock at that tip. Every gate **passed; no budget was raised and no
   gate file moved.** The tables below are its report's, verbatim.
@@ -640,7 +641,7 @@ The review lane re-ran the same bench at the same tip and the deterministic fiel
 KB, floors, camera, status) matched field for field; the ±0.1–0.3 ms differences are SwiftShader
 load noise.
 
-**TV bench headless** (suite 2 — 172 scenario tests + decode + report, counts only, every
+**TV bench headless** (suite 2 — 174 scenario tests + decode + stand-in + rewind + report, counts only, every
 millisecond *not the M7*): the worst arms are the 1080p `worst` scenes — `1920x1080n-worst`
 15 calls / p95 11.50 ms / 16 384 KB pooled, and the `-out720` / `-interp` twins at 15 calls /
 11.00 / 10.60 ms. The 1080p filter arms pool up to 16 384 KB of render targets — the biggest RT

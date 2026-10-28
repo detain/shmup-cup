@@ -202,6 +202,11 @@ import {
 } from '../text/index.js';
 import { createDrawListView, type DrawListView } from '../ui/index.js';
 import { createVideoSurface, type VideoSurface, type VideoSurfaceOptions } from '../video/index.js';
+import {
+  createImageSurface,
+  type ImageSurface,
+  type ImageSurfaceOptions,
+} from '../stills/index.js';
 import { computeAspectViewport, type AspectViewport, type Viewport } from '../viewport/index.js';
 
 /** Module descriptor. */
@@ -397,6 +402,15 @@ export interface PixiRendererOptions {
    * not the host's.
    */
   readonly video?: Omit<VideoSurfaceOptions, 'root' | 'bands' | 'width' | 'height'>;
+  /**
+   * The image-still surface (plan v20x A4). Without it the renderer owns no extra texture; with
+   * it, `renderer.stills` exposes a surface the host director shows decoded non-atlas bitmaps
+   * on — one container inside `layers.root` (the video's two bands, created **before** the video
+   * surface so a clip in the same band draws over the still). Cold path only: `render()` never
+   * touches it, and a hidden surface holds zero bytes ({@link ImageSurface.hide}). The frame
+   * size is the renderer's, not the host's.
+   */
+  readonly stills?: Omit<ImageSurfaceOptions, 'root' | 'bands' | 'width' | 'height'>;
 }
 
 /** The Pixi-backed renderer. */
@@ -464,6 +478,12 @@ export interface PixiRenderer extends IRenderer {
    * runs inside `render()`, so nothing else may call {@link VideoSurface.tick}.
    */
   readonly video: VideoSurface | null;
+  /**
+   * The image-still surface, or `null` when the renderer was created without
+   * {@link PixiRendererOptions.stills} (plan v20x A4). The host's stills director shows decoded
+   * stills on it; the surface is cold-path only, so nothing else may need to drive it per frame.
+   */
+  readonly stills: ImageSurface | null;
   /**
    * Draws **one throwaway frame** into an off-screen target with every GL program the bound world
    * can use and every pooled sprite in it, then puts everything back (plan M3-02d, the render
@@ -851,6 +871,25 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
 
   const layers = createLayerStack({ renderGroups: options.renderGroups !== false });
   scene.addChild(layers.root);
+
+  // The image-still surface (plan v20x A4): one container inside `layers.root`, built BEFORE the
+  // video surface so both bands keep their order — a clip in the same band draws over the still
+  // (the endings show the dawn-flight clip above their backdrop). Same band anchors as the video
+  // (recomputed from the live children below), and like the video it is not a LayerId; without
+  // `options.stills` there is no element, no texture and no per-frame cost at all.
+  const stills =
+    options.stills === undefined
+      ? null
+      : createImageSurface({
+          ...options.stills,
+          root: layers.root,
+          bands: {
+            world: layers.root.children.indexOf(layers.layers[LayerId.Hud]),
+            screen: layers.root.children.indexOf(layers.layers[LayerId.Debug]),
+          },
+          width,
+          height,
+        });
 
   // The video cutscene surface (v2 R7-VID): one container inside `layers.root` — the world band
   // puts it over the world group and under the HUD/UI (gameplay windows), the screen band over
@@ -1286,6 +1325,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     screenPass,
     mode7,
     video,
+    stills,
     warmUp,
     uploadTextureSource,
     get showHitbox() {
@@ -1509,6 +1549,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       uiView?.destroy();
       // The video surface owns a media element and a texture source of its own — released before
       // the scene's children are destroyed (v2 R7-VID).
+      stills?.destroy();
       video?.destroy();
       crt.destroy();
       // The second pass's own container: the frame quad is the CRT pass's, the side panels are

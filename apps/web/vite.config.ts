@@ -16,11 +16,12 @@ import {
   shmupBuildInfo,
   shmupContent,
   shmupVideos,
+  shmupStills,
 } from '../../vite.shared.js';
 
 export default defineConfig({
   base: './',
-  plugins: [shmupContent(), shmupAssets(), shmupVideos(), shmupBuildInfo()],
+  plugins: [shmupContent(), shmupAssets(), shmupVideos(), shmupStills(), shmupBuildInfo()],
   resolve: {
     conditions: clientConditions,
   },
