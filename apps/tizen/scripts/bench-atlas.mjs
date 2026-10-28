@@ -64,6 +64,7 @@ import { MAX_PAGE_SIZE, packRects } from '../../../scripts/assets/packer.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { buildDecodeStandin } from './bench-decode.mjs';
+import { FRAME_H, FRAME_W } from '../../../scripts/frame.mjs';
 
 /**
  * The density factors the bench's frame sizes use, ascending: 1 (the 384×216 baseline and every
@@ -83,6 +84,25 @@ const RESOLVED_BENCH_MODULE_ID = '\0' + BENCH_MODULE_ID;
 
 /** Where the bench's atlas pages are emitted (the Tizen bundle check looks for pages there). */
 export const BENCH_ATLAS_DIR = 'assets/atlas';
+
+/**
+ * Where the built bench serves the clips (the shell's `VIDEO_URL_DIR`, mirrored for a Node
+ * script).
+ */
+export const BENCH_VIDEO_DIR = 'assets/video';
+
+/**
+ * The clips the bench build ships for the decode scenario's video rows (plan v20x HARBENCH S8):
+ * each `id` is the encode kit's file name (`assets/video/<id>.mp4`), every clip encoded at the
+ * codec frame ({@link FRAME_W}×{@link FRAME_H}). `vite.bench.config.ts` extends its `shmupVideos`
+ * only-list from this table, so the virtual module and the shipped files cannot drift apart.
+ */
+export const BENCH_VIDEO_CLIPS = Object.freeze([
+  Object.freeze({ id: 'attract-ambient', what: 'Attract loop ambient clip' }),
+  Object.freeze({ id: 'warn-zone-a', what: 'Zone A warning clip' }),
+  Object.freeze({ id: 'title-sting', what: 'Title sting clip' }),
+  Object.freeze({ id: 'ark-sailing', what: 'Zone I ark sailing clip' }),
+]);
 
 /** Edge-extrusion border around each frame (the pipeline's `ATLAS_EXTRUDE`). */
 const EXTRUDE = 1;
@@ -427,8 +447,11 @@ export function readFxFiles(dir = FX_DIR) {
  * `buildDecodeStandin`, plan R1-05 B4 — page model per plan R3-04.M4a), serves them from memory on
  * the dev server, and provides {@link BENCH_MODULE_ID}: `export const atlases = [{ density, label,
  * manifest, pageUrls }, …]; export const fx = [{ path, data }, …]; export const decode = [{ id,
- * what, width, height, url }, …]; export const standin = { manifest, pageUrls };` — `standin` is
- * the manifest of the run's last page load, the `standin-zone` one.
+ * what, width, height, url }, …]; export const standin = { manifest, pageUrls }; export const
+ * videos = [{ id, what, width, height, url }, …];` — `standin` is
+ * the manifest of the run's last page load, the `standin-zone` one; the `videos` entries name the
+ * clips {@link BENCH_VIDEO_CLIPS} ships through the `shmupVideos` plugin (plan v20x HARBENCH S8),
+ * whose URLs the decode scenario measures on the video surface.
  *
  * @remarks
  * The manifests are inlined (decision D25 — a widget runs from `file://`, no `fetch()`); the pages
@@ -542,12 +565,20 @@ export function shmupRenderBench() {
         manifest: build.manifest,
         pageUrls: build.manifest.pages.map((page) => `${BENCH_ATLAS_DIR}/${page.file}`),
       };
+      const videos = BENCH_VIDEO_CLIPS.map((clip) => ({
+        id: clip.id,
+        what: clip.what,
+        width: FRAME_W,
+        height: FRAME_H,
+        url: `${BENCH_VIDEO_DIR}/${clip.id}.mp4`,
+      }));
       return (
         `export const atlases = ${JSON.stringify(list)};\n` +
         `export const fx = ${JSON.stringify(readFxFiles())};\n` +
         `export const decode = ${JSON.stringify(decode)};\n` +
         `export const standin = ${JSON.stringify(standin)};\n` +
-        'export default { atlases, fx, decode, standin };\n'
+        `export const videos = ${JSON.stringify(videos)};\n` +
+        'export default { atlases, fx, decode, standin, videos };\n'
       );
     },
   };

@@ -83,6 +83,7 @@ import {
   renderReportEndpoint,
   sendRenderBench,
   type DecodeBenchRecord,
+  type HarbenchRewindRecord,
   type RenderBenchEnv,
   type RenderBenchRecord,
 } from '@shmup/shell';
@@ -98,7 +99,9 @@ import {
   decodeRepetitionsFromSearch,
   failedDecodeRecord,
   measureDecode,
+  measureVideoDecode,
   type BenchDecodePage,
+  type BenchVideoSpec,
   type DecodeMeasureOptions,
   type DecodeWindow,
 } from './decode.js';
@@ -125,6 +128,7 @@ import {
   type BenchCampaignState,
 } from './campaign.js';
 import { benchKeyOf, detectBenchHost, type BenchHost } from './host.js';
+import { gameModeFromSearch, sendHarbRecord } from './harb.js';
 import {
   BENCH_SCENARIOS,
   BENCH_V2_SIZE,
@@ -322,6 +326,8 @@ export interface BenchAssets {
   readonly fx: readonly { readonly path: string; readonly data: unknown }[];
   /** The decode scenario's pages (plan R1-05 B4); absent from older builds and test fakes. */
   readonly decode?: readonly BenchDecodePage[];
+  /** The decode scenario's video clips (plan v20x HARBENCH S8); absent from older builds/fakes. */
+  readonly videos?: readonly BenchVideoSpec[];
   /** The stand-in load's atlas (plan R3-04.M4a); absent from older builds and test fakes. */
   readonly standin?: BenchStandinData | null;
 }
@@ -810,6 +816,17 @@ function measureDecodeScenario(
       ...facts,
       webGLVersion: renderer.webGLVersion,
     });
+    // The video rows (plan v20x HARBENCH S8): the R7-VID surface path over the build's shipped
+    // clips, appended after the image pages — a build without `assets.videos` (older bench builds,
+    // every test fake) measures none and the record keeps its exact previous shape.
+    const videoSpecs = assets.videos ?? [];
+    if (videoSpecs.length > 0) {
+      const rows = await measureVideoDecode(host, videoSpecs, {
+        ...facts,
+        webGLVersion: renderer.webGLVersion,
+      });
+      for (let i = 0; i < rows.length; i++) record.pages.push(rows[i]);
+    }
     show('done');
     return record;
   })().catch((error: unknown) => failedDecodeRecord(String(error), facts));
@@ -1274,9 +1291,10 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     return;
   }
   if (mode === 'scenario' && state !== null && state.cursor === REWIND_SCENARIO_INDEX) {
-    // The run's fourth special page (R2 TL-3): the rewind loop, stored for the results table and
-    // never POSTed (the payload protocol is the render records and the decode record — rule: the
-    // server's schema does not move for a scenario that is a bench-build-local number).
+    // The run's fourth special page (R2 TL-3): the rewind loop, stored for the results table. The
+    // `rb-` payload protocol does not carry it (the server's schema does not move) — the `hb-`
+    // wire DOES (plan v20x HARBENCH): the row rides a best-effort single-record send, with
+    // capTicksEstimated = true while capTicks is divided out of the M7 slowdown ESTIMATE.
     mark(win, 'scenario');
     const record = measureRewindScenario(
       options.buildId,
@@ -1286,7 +1304,33 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     );
     const next = recordRewind(state, record);
     save(next);
-    post([], next.cursor >= BENCH_RUN_LENGTH, reload);
+    const row: HarbenchRewindRecord = {
+      record: 'rewind',
+      scenario: record.scenario,
+      index: record.index,
+      startedAt: record.startedAt,
+      endedAt: record.endedAt,
+      ticks: record.ticks,
+      stepsPerSecond: record.stepsPerSecond,
+      worldBuildMs: record.worldBuildMs,
+      hashMs: record.hashMs,
+      hashChecks: record.hashChecks,
+      capTicks: record.estCapTicks,
+      capTicksEstimated: true,
+      stage: record.stage,
+      error: record.error,
+    };
+    sendHarbRecord(
+      {
+        win,
+        endpoint,
+        envBase: envOf(next),
+        phase: 'S1',
+        gameMode: gameModeFromSearch(search),
+      },
+      row,
+      () => post([], next.cursor >= BENCH_RUN_LENGTH, reload),
+    );
     return;
   }
   if (mode === 'scenario' && state !== null) {

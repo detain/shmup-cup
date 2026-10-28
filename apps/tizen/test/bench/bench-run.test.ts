@@ -143,7 +143,7 @@ const settle = async (): Promise<void> => {
 };
 
 /**
- * A run whose 174 render scenarios are measured: the decode scenario is next.
+ * A run whose 190 render scenarios are measured: the decode scenario is next.
  *
  * @returns Its stored text.
  */
@@ -225,7 +225,7 @@ describe('bench page (TV mode)', () => {
     done.press(403);
     // The last page load of a whole run is the rewind page (plan R2 TL-3, after the stand-in of
     // plan R3-04.M4a).
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 176 });
+    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 192 });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -274,8 +274,8 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: true, cursor: 175, lastError: null });
-    expect(state?.records).toHaveLength(174);
+    expect(state).toMatchObject({ running: true, cursor: 191, lastError: null });
+    expect(state?.records).toHaveLength(190);
     expect(state?.decode?.error).toBe('this bench build has no decode pages');
     expect(state?.decode?.pages).toEqual([]);
     expect(page.reload).toHaveBeenCalledTimes(1);
@@ -287,9 +287,9 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: false, cursor: 175 });
+    expect(state).toMatchObject({ running: false, cursor: 191 });
     expect(state?.lastError).toContain('this bench build has no stand-in pages');
-    expect(state?.records).toHaveLength(174);
+    expect(state?.records).toHaveLength(190);
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -298,7 +298,7 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     page.start();
     await settle();
     const state = page.state();
-    expect(state?.cursor).toBe(175);
+    expect(state?.cursor).toBe(191);
     expect(state?.decode?.error).toContain('atlas page missing.png failed to load');
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
@@ -415,9 +415,9 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(payload.env.scenarios).toBe(BENCH_SCENARIOS.length);
     const text = page.appended[0].textContent;
     expect(text).toContain('output 1280x720');
-    expect(text).toContain('22 scenario(s) skipped: frame larger than the output');
+    expect(text).toContain('24 scenario(s) skipped: frame larger than the output');
     expect(text).toContain('SKIPPED 1024x768n 1280x960n 1920x1080n 1920x1080n-interp');
-    expect(text).toContain('ENTER run: 152 scenarios + decode + stand-in + rewind');
+    expect(text).toContain('ENTER run: 166 scenarios + decode + stand-in + rewind');
   });
 
   it('reports a null output without one', async () => {
@@ -432,7 +432,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(payload.env.output).toBeNull();
     expect(page.appended[0].textContent).not.toContain('OUTPUT');
     expect(page.appended[0].textContent).toContain(
-      'ENTER run: 174 scenarios + decode + stand-in + rewind',
+      'ENTER run: 190 scenarios + decode + stand-in + rewind',
     );
   });
 

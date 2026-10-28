@@ -54,16 +54,18 @@ function setupOf(id: string, out: BenchOutput | null) {
   return benchScenarioSetup(scenario, out);
 }
 
-/** The rows a 1280×720 build skips (22 — 152 of the 174 run). */
+/** The rows a 1280×720 build skips (24 — 166 of the 190 run). */
 const SKIPPED_720 = [
   ...plainRows(['1024x768n', '1280x960n', '1920x1080n']),
   '1920x1080n-busy-interp',
   '1920x1080n-worst-interp',
   '1920x1080n-busy-out720',
   '1920x1080n-worst-out720',
+  '1920x1080n-busy-video',
+  '1920x1080n-worst-video',
 ];
 
-/** The rows a 960×540 build skips (82 — 92 of the 174 run). */
+/** The rows a 960×540 build skips (86 — 104 of the 190 run). */
 const SKIPPED_540 = [
   ...plainRows([
     '1024x576',
@@ -89,6 +91,10 @@ const SKIPPED_540 = [
   '1920x1080n-worst-interp',
   '1920x1080n-busy-out720',
   '1920x1080n-worst-out720',
+  '1280x720n-busy-video',
+  '1280x720n-worst-video',
+  '1920x1080n-busy-video',
+  '1920x1080n-worst-video',
 ];
 
 describe('bench output: VITE_BENCH_OUTPUT', () => {
@@ -135,11 +141,11 @@ describe('bench output: each scenario’s setup', () => {
       });
     }
     expect(benchSkippedScenarios(null)).toEqual([]);
-    // The matrix itself does not depend on the output: 174 rows + decode + stand-in + rewind,
+    // The matrix itself does not depend on the output: 190 rows + decode + stand-in + rewind,
     // indexes unchanged (the three extra page loads of plan R1-05 B4, R3-04.M4a and R2 TL-3 ride
     // after the matrix).
-    expect(BENCH_SCENARIOS).toHaveLength(174);
-    expect(BENCH_RUN_LENGTH).toBe(177);
+    expect(BENCH_SCENARIOS).toHaveLength(190);
+    expect(BENCH_RUN_LENGTH).toBe(193);
     expect(setupOf('640x360-busy', null).scaleMode).toBe(BENCH_DEFAULT_SCALE_MODE);
   });
 
@@ -182,16 +188,16 @@ describe('bench output: each scenario’s setup', () => {
     );
   });
 
-  it('skips exactly these rows at 1280x720 (152 of 174 run)', () => {
+  it('skips exactly these rows at 1280x720 (166 of 190 run)', () => {
     const skipped = benchSkippedScenarios(output('1280x720')).map((s) => s.id);
     expect(skipped).toEqual(SKIPPED_720);
-    expect(BENCH_SCENARIOS.length - skipped.length).toBe(152);
+    expect(BENCH_SCENARIOS.length - skipped.length).toBe(166);
   });
 
-  it('skips exactly these rows at 960x540 (92 of 174 run)', () => {
+  it('skips exactly these rows at 960x540 (104 of 190 run)', () => {
     const skipped = benchSkippedScenarios(output('960x540')).map((s) => s.id);
     expect(skipped).toEqual(SKIPPED_540);
-    expect(BENCH_SCENARIOS.length - skipped.length).toBe(92);
+    expect(BENCH_SCENARIOS.length - skipped.length).toBe(104);
   });
 });
 

@@ -5,7 +5,8 @@
  * — one classic ES2018 IIFE behind the `globalThis` banner, the bench's own `config.xml`, the
  * eight density atlases (one page each up to ×2, two from ×2.25), the decode scenario's pages
  * (plan R1-05 B4, plan R3-04.M4a: the interim stand-in zone A's own packed PNG-8 page(s) and the
- * shipped `common` and zone A pages) and nothing of the game's.
+ * shipped `common` and zone A pages), the decode scenario's shipped video clips (plan v20x
+ * HARBENCH S8) and nothing of the game's.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -95,9 +96,15 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
       'assets/atlas/decode-common.png',
       'assets/atlas/decode-standin-zone-a.png',
       'assets/atlas/decode-zone-a.png',
-      // The video knob's one looped clip (v2 R7-VID) — the bench config ships `only` it; empty
-      // on a host without ffmpeg, exactly as the plugin emits.
-      ...videoShippedFiles(['attract-ambient.mp4']),
+      // The video knob's looped clip and the decode scenario's measured clips (v2 R7-VID, plan
+      // v20x HARBENCH S8) — the bench config ships `only` these; empty on a host without ffmpeg,
+      // exactly as the plugin emits.
+      ...videoShippedFiles([
+        'attract-ambient.mp4',
+        'warn-zone-a.mp4',
+        'title-sting.mp4',
+        'ark-sailing.mp4',
+      ]),
       'config.xml',
       'icon.png',
       'index.html',

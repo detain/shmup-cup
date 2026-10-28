@@ -22,9 +22,12 @@ import {
   decodeRepetitionsFromSearch,
   failedDecodeRecord,
   measureDecode,
+  measureVideoDecode,
   pngEncodingOf,
   summarizeRuns,
+  VIDEO_DECODE_ENCODING,
   type BenchDecodePage,
+  type BenchVideoSpec,
   type DecodeHost,
   type DecodeMeasureOptions,
   type DecodeTexture,
@@ -144,11 +147,11 @@ function scriptedHost(
 }
 
 describe('decode scenario: its place in the run', () => {
-  it('follows the 174-scenario matrix, then the stand-in load and the rewind page (R3-04.M4a, R2 TL-3)', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(174);
+  it('follows the 190-scenario matrix, then the stand-in load and the rewind page (R3-04.M4a, R2 TL-3)', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(190);
     expect(DECODE_SCENARIO_ID).toBe('decode');
-    expect(DECODE_SCENARIO_INDEX).toBe(174);
-    expect(BENCH_RUN_LENGTH).toBe(177);
+    expect(DECODE_SCENARIO_INDEX).toBe(190);
+    expect(BENCH_RUN_LENGTH).toBe(193);
     expect(BENCH_SCENARIOS.some((s) => s.id === DECODE_SCENARIO_ID)).toBe(false);
     expect(STANDIN_SCENARIO_ID).toBe('standin-zone');
     expect(STANDIN_SCENARIO_INDEX).toBe(DECODE_SCENARIO_INDEX + 1);
@@ -190,7 +193,7 @@ describe('decode scenario: measureDecode', () => {
     const record = await measureDecode(script.host, PAGES, FACTS);
     expect(record).toMatchObject({
       scenario: 'decode',
-      index: 174,
+      index: 190,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,
@@ -286,7 +289,7 @@ describe('decode scenario: measureDecode', () => {
   it('records a scenario that could not run at all', () => {
     expect(failedDecodeRecord('Error: no WebGL', FACTS)).toEqual({
       scenario: 'decode',
-      index: 174,
+      index: 190,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,
@@ -300,12 +303,18 @@ describe('decode scenario: measureDecode', () => {
 
 /** A fake browser window for {@link createDecodeHost}. */
 function fakeWindow(
-  options: { bitmap?: boolean; decode?: 'resolve' | 'reject' | 'none'; imageError?: boolean } = {},
+  options: {
+    bitmap?: boolean;
+    decode?: 'resolve' | 'reject' | 'none';
+    imageError?: boolean;
+    video?: 'ok' | 'error';
+  } = {},
 ) {
   const created: string[] = [];
   const revoked: string[] = [];
   const closed: number[] = [];
   const opened: string[] = [];
+  const videos: FakeVideo[] = [];
   const timers = new Map<number, () => void>();
   let nextTimer = 0;
   /** An XHR answering with 30 bytes (status 0, as `file://` does). */
@@ -346,6 +355,42 @@ function fakeWindow(
       });
     }
   }
+  /**
+   * A video surface: `src` fires `loadeddata` (or `error`) asynchronously; `removeAttribute` and
+   * `load` stand in for the release, counted on the instance.
+   */
+  class FakeVideo {
+    muted = false;
+    preload = '';
+    src = '';
+    onloadeddata: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    readonly removed: string[] = [];
+    loaded = 0;
+    play(): Promise<void> {
+      return Promise.resolve();
+    }
+    removeAttribute(name: string): void {
+      this.removed.push(name);
+    }
+    load(): void {
+      this.loaded++;
+    }
+    constructor() {
+      videos.push(this);
+      let src = '';
+      Object.defineProperty(this, 'src', {
+        get: () => src,
+        set: (value: string) => {
+          src = value;
+          void Promise.resolve().then(() => {
+            if (options.video === 'error') this.onerror?.();
+            else this.onloadeddata?.();
+          });
+        },
+      });
+    }
+  }
   const win: DecodeWindow = {
     XMLHttpRequest: FakeXhr as unknown as DecodeWindow['XMLHttpRequest'],
     Image: FakeImage as unknown as DecodeWindow['Image'],
@@ -372,7 +417,7 @@ function fakeWindow(
     },
     ...(options.bitmap === true
       ? {
-          createImageBitmap: (_blob: Blob) =>
+          createImageBitmap: (_source: Blob | HTMLVideoElement) =>
             Promise.resolve({
               width: 4,
               height: 4,
@@ -380,8 +425,11 @@ function fakeWindow(
             } as unknown as ImageBitmap),
         }
       : {}),
+    ...(options.video === undefined
+      ? {}
+      : { Video: FakeVideo as unknown as DecodeWindow['Video'] }),
   };
-  return { win, created, revoked, closed, opened, timers };
+  return { win, created, revoked, closed, opened, videos, timers };
 }
 
 /**
@@ -489,5 +537,161 @@ describe('decode scenario: the browser host', () => {
     host.finish();
     expect(upload).toHaveBeenCalledTimes(1);
     expect(finish).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the video rows (plan v20x HARBENCH S8)', () => {
+  /** One clip, in the shape the virtual module ships. */
+  const CLIPS: BenchVideoSpec[] = [
+    {
+      id: 'attract',
+      what: 'Attract clip',
+      width: 640,
+      height: 360,
+      url: 'assets/video/attract.mp4',
+    },
+  ];
+
+  /** Facts for the video scenario — two repetitions cache-bust the URLs. */
+  const VIDEO_FACTS: DecodeMeasureOptions = {
+    repetitions: 2,
+    webGLVersion: 1,
+    imageDecode: true,
+    wallClock: () => 1_760_000_000_000,
+  };
+
+  /**
+   * A scripted surface host: the clock advances fetch 3 ms, surface load 40 ms, the pull 10 ms,
+   * upload 5 ms CPU + 20 ms per `finish()`.
+   *
+   * @param fail - `'open'` omits the surface entirely, `'pull'` omits the bitmap pull.
+   * @returns The host, the closed bitmaps, the released surfaces and the opened URLs.
+   */
+  function videoHost(fail: 'open' | 'pull' | 'none' = 'none') {
+    let clock = 0;
+    const closed: number[] = [];
+    const released: number[] = [];
+    const urls: string[] = [];
+    const host: DecodeHost = {
+      now: () => clock,
+      fetch: () => {
+        clock += 3;
+        return Promise.resolve(new ArrayBuffer(99));
+      },
+      decodeImage: () => Promise.resolve({ image: null, release: () => {} }),
+      decodeUrl: () => Promise.resolve({ image: null, release: () => {} }),
+      decodeBitmap: null,
+      createSource: () => ({ destroy: () => {} }),
+      upload: () => {
+        clock += 5;
+      },
+      finish: () => {
+        clock += 20;
+      },
+      ...(fail === 'open'
+        ? {}
+        : {
+            openVideo: (url: string, repetition: number) => {
+              urls.push(`${url}@${repetition}`);
+              clock += 40;
+              return Promise.resolve({
+                image: { repetition },
+                release: () => {
+                  released.push(repetition);
+                },
+              });
+            },
+          }),
+      ...(fail === 'pull'
+        ? {}
+        : {
+            pullBitmap: (image: unknown) => {
+              clock += 10;
+              return Promise.resolve({
+                close: () => closed.push((image as { repetition: number }).repetition),
+              } as unknown as ImageBitmap);
+            },
+          }),
+    };
+    return { host, closed, released, urls };
+  }
+
+  it('folds load, pull and synced upload onto one row per clip', async () => {
+    const { host, closed, released, urls } = videoHost();
+    const rows = await measureVideoDecode(host, CLIPS, VIDEO_FACTS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({
+      id: 'video-attract',
+      what: 'Attract clip',
+      width: 640,
+      height: 360,
+      encoding: VIDEO_DECODE_ENCODING,
+      bytes: 99,
+      textureBytes: 640 * 360 * 4,
+      repetitions: 2,
+      fetchMs: [40, 40, 40, 40],
+      decodeMs: null,
+      uploadMs: null,
+      uploadSyncedMs: null,
+      totalMs: [75, 75, 75, 75],
+      firstTotalMs: 75,
+      bitmapMs: [10, 10, 10, 10],
+      bitmapUploadMs: [25, 25, 25, 25],
+      error: null,
+    });
+    // The bytes are fetched once (rep 0 only); the surfaces cache-bust like the image pages.
+    expect(urls).toEqual(['assets/video/attract.mp4@0', 'assets/video/attract.mp4@1']);
+    expect(closed).toEqual([0, 1]);
+    expect(released).toEqual([0, 1]);
+  });
+
+  it('notes the missing surface on every clip, without touching the host', async () => {
+    for (const fail of ['open', 'pull'] as const) {
+      const { host, urls } = videoHost(fail);
+      const rows = await measureVideoDecode(host, CLIPS, VIDEO_FACTS);
+      expect(rows[0].error, fail).toBe('video surface unavailable');
+      expect(rows[0].repetitions, fail).toBe(0);
+      expect(rows[0].bytes, fail).toBe(0);
+      expect(rows[0].fetchMs, fail).toBeNull();
+      expect(rows[0].firstTotalMs, fail).toBe(0);
+      expect(urls, fail).toEqual([]);
+    }
+  });
+
+  it('opens the fake surface through the real host, and releases it', async () => {
+    const fake = fakeWindow({ bitmap: true, video: 'ok' });
+    const host = hostOn(fake.win);
+    expect(host.openVideo).not.toBeNull();
+    const rows = await measureVideoDecode(host, CLIPS, {
+      ...VIDEO_FACTS,
+      repetitions: 1,
+    });
+    expect(rows[0].id).toBe('video-attract');
+    expect(rows[0].encoding).toBe(VIDEO_DECODE_ENCODING);
+    expect(rows[0].error).toBeNull();
+    expect(rows[0].repetitions).toBe(1);
+    expect(rows[0].bytes).toBe(32); // the fake XHR's answer
+    expect(fake.videos).toHaveLength(1);
+    expect(fake.videos[0].muted).toBe(true);
+    expect(fake.videos[0].removed).toEqual(['src']);
+    expect(fake.videos[0].loaded).toBe(1);
+    expect(fake.closed).toHaveLength(1); // the pulled bitmap was closed
+  });
+
+  it('notes the clip whose surface errors, with the bytes it did fetch', async () => {
+    const fake = fakeWindow({ bitmap: true, video: 'error' });
+    const rows = await measureVideoDecode(hostOn(fake.win), CLIPS, {
+      ...VIDEO_FACTS,
+      repetitions: 1,
+    });
+    expect(rows[0].error).toContain('video: the clip did not load');
+    expect(rows[0].repetitions).toBe(0);
+    expect(rows[0].bytes).toBe(32);
+    expect(fake.videos[0].removed).toEqual(['src']); // released even on failure
+  });
+
+  it('has no surface on a window without Video (the old fakes keep working)', () => {
+    const host = hostOn(fakeWindow({ bitmap: true }).win);
+    expect(host.openVideo).toBeNull();
   });
 });

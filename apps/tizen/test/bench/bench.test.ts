@@ -111,8 +111,8 @@ describe('bench matrix (plan R0-02, §13)', () => {
     ]);
   });
 
-  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 24 knob rows', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(174);
+  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 40 knob rows', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(190);
     expect(BENCH_SCENARIOS.slice(0, 6).every((s) => s.size.id === '384x216')).toBe(true);
     BENCH_SCENARIOS.forEach((scenario, index) => {
       expect(scenario.index).toBe(index);
@@ -127,7 +127,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
         expect([scenario.outputWidth, scenario.outputHeight]).toEqual([0, 0]);
       }
     });
-    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(174);
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(190);
     expect(Object.isFrozen(BENCH_SCENARIOS)).toBe(true);
     // R0-02's and R0-03's 18 ids are still there, byte for byte.
     for (const size of ['384x216', '640x360', '960x540']) {
@@ -145,9 +145,18 @@ describe('bench matrix (plan R0-02, §13)', () => {
       ['out720', 4],
       ['out540', 2],
       ['video', 2],
+      // The 960×540 first-class set and the big-frame video pairs (owner 2026-10-27) — appended,
+      // so every row above keeps its id and its index.
+      ['fit', 2],
+      ['stretch', 2],
+      ['interp', 2],
+      ['out720', 2],
+      ['out540', 2],
+      ['video', 2],
+      ['video', 4],
     ]);
     const knobRows = BENCH_SCENARIOS.filter((s) => s.knob !== null);
-    expect(knobRows).toHaveLength(24);
+    expect(knobRows).toHaveLength(40);
     expect(knobRows[0].id).toBe('800x600-busy-fit');
     expect(findBenchScenario('640x360-busy-stretch')).toMatchObject({
       row: 'busy-stretch',
@@ -170,7 +179,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     expect(findBenchScenario('640x360-nope')).toBeNull();
   });
 
-  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 87 minutes', () => {
+  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 95 minutes', () => {
     expect(TV_BENCH_TIMING).toEqual({
       warmupMs: 10_000,
       measureMs: 14_000,
@@ -179,7 +188,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     });
     const perScenario =
       TV_BENCH_TIMING.warmupMs + TV_BENCH_TIMING.measureMs + TV_BENCH_TIMING.syncMs;
-    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(87);
+    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(95);
     expect(HEADLESS_BENCH_TIMING.measureMs).toBeGreaterThan(0);
   });
 });
@@ -241,7 +250,7 @@ describe('bench remote and host', () => {
     expect(BENCH_KEY_CODES.back).toContain(10009);
   });
 
-  it('registers the Red key on Tizen and exits through the application', () => {
+  it('registers the bench remote keys on Tizen and exits through the application', () => {
     const exit = vi.fn();
     const registered: string[] = [];
     const win = {
@@ -254,7 +263,13 @@ describe('bench remote and host', () => {
     } as unknown as Window;
     const host = detectBenchHost(win);
     expect(host.name).toBe('tizen');
-    expect(registered).toEqual(['ColorF0Red']);
+    expect(registered).toEqual([
+      'ColorF0Red',
+      'ColorF1Green',
+      'ColorF2Yellow',
+      'ColorF3Blue',
+      'MediaPlayPause',
+    ]);
     host.exit();
     expect(exit).toHaveBeenCalledTimes(1);
   });

@@ -302,6 +302,13 @@ describe('bench-atlas plugin and particle presets', () => {
     expect(source).toContain('"url":"assets/atlas/decode-zone-a.png"');
     expect(source).toContain('export const standin = {"manifest":{"formatVersion":2,');
     expect(source).toContain('"pageUrls":["assets/atlas/decode-standin-zone-a.png"]');
-    expect(source).toContain('export default { atlases, fx, decode, standin };');
+    // The decode scenario's video clips (plan v20x HARBENCH S8): the four shipped names, the codec
+    // frame, URLs under the video dir the `shmupVideos` plugin emits into.
+    expect(source).toContain(
+      '{"id":"attract-ambient","what":"Attract loop ambient clip","width":640,"height":360,' +
+        '"url":"assets/video/attract-ambient.mp4"}',
+    );
+    expect(source).toContain('{"id":"ark-sailing"');
+    expect(source).toContain('export default { atlases, fx, decode, standin, videos };');
   }, 60_000);
 });

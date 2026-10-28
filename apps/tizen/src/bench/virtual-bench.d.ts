@@ -84,12 +84,31 @@ declare module 'virtual:shmup-render-bench' {
   export const decode: readonly BenchDecodePageModule[];
   /** The `standin-zone` load's atlas. */
   export const standin: BenchStandinModule;
-  /** All four. */
+  /**
+   * One clip of the decode scenario's video rows (plan v20x HARBENCH S8): shipped by the
+   * `shmupVideos` plugin from the same table, measured on the R7-VID surface path.
+   */
+  export interface BenchVideoPageModule {
+    /** Clip id (the file's name without the extension). */
+    readonly id: string;
+    /** What it stands for. */
+    readonly what: string;
+    /** Pixels (the encoder's frame). */
+    readonly width: number;
+    /** Pixels. */
+    readonly height: number;
+    /** URL relative to the page (`assets/video/attract-ambient.mp4`). */
+    readonly url: string;
+  }
+  /** The decode scenario's video clips, in the order it measures them. */
+  export const videos: readonly BenchVideoPageModule[];
+  /** All five. */
   const bench: {
     readonly atlases: readonly BenchAtlasModule[];
     readonly fx: readonly BenchFxFile[];
     readonly decode: readonly BenchDecodePageModule[];
     readonly standin: BenchStandinModule;
+    readonly videos: readonly BenchVideoPageModule[];
   };
   export default bench;
 }

@@ -325,6 +325,90 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputHeight: 0,
     video: true,
   }),
+  // — The 960×540 first-class comparison (owner 2026-10-27): every knob must pair at 960×540
+  // against the plain row the same way the 640×360 rows do. These entries are APPENDED at the
+  // tail of the knob list — the existing 174 scenario ids AND indices never move; the new rows
+  // take indices 174 … 189 and the specials shift by their count alone.
+  Object.freeze<BenchKnob>({
+    id: 'fit',
+    what: "upscale mode 'fit' at 960×540 (first-class knob comparison, owner 2026-10-27)",
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: 'fit',
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'stretch',
+    what: "upscale mode 'stretch' at 960×540 (first-class knob comparison, owner 2026-10-27)",
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: 'stretch',
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'interp',
+    what: 'render interpolation at 960×540 (first-class knob comparison, owner 2026-10-27)',
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: true,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'out720',
+    what: 'canvas backbuffer 1280x720 on the 960×540 frame (output above the frame, paired)',
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 1280,
+    outputHeight: 720,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'out540',
+    what: 'canvas backbuffer 960x540 on the 960×540 frame (output equal to the frame, paired)',
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 960,
+    outputHeight: 540,
+    video: false,
+  }),
+  Object.freeze<BenchKnob>({
+    id: 'video',
+    what: 'cutscene video surface at 960×540 (the busy/worst video pair the owner data lacks)',
+    sizes: Object.freeze(['960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: true,
+  }),
+  // The video surface at the big native frames — the endgame worst case one and two steps above
+  // 960×540 (the M7 fix held at 640×360; the panel-side cost of the per-frame pull never measured
+  // past that).
+  Object.freeze<BenchKnob>({
+    id: 'video',
+    what: 'cutscene video surface at the native big frames (R7-VID worst case)',
+    sizes: Object.freeze(['1280x720n', '1920x1080n']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: true,
+  }),
 ]);
 
 /** One scenario: a size, a variant and — on a knob row — the knob it varies. */
@@ -408,7 +492,7 @@ function buildScenarios(): BenchScenario[] {
 /**
  * Every scenario: the plain matrix first — sizes outer, variants inner, so a session measures its
  * 384×216 baseline before anything else and a run cut short still holds whole resolutions — then
- * the knob rows (150 + 24 = 174).
+ * the knob rows (150 + 40 = 190).
  */
 export const BENCH_SCENARIOS: readonly BenchScenario[] = Object.freeze(buildScenarios());
 

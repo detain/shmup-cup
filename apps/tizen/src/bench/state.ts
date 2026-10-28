@@ -8,7 +8,8 @@
  * later run overwrites them, so a crash or a power cut loses nothing. Everything here is a pure
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
- * A run is the render scenarios of the matrix (174 since the resolution sweep and the video knob), then the `decode` scenario (plan R1-05 B4 —
+ * A run is the render scenarios of the matrix (190 since the resolution sweep, the video knob and
+ * the 960×540 first-class set), then the `decode` scenario (plan R1-05 B4 —
  * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`) and the
  * `rewind` scenario (plan R2 TL-3 — `./rewind.ts`): the cursor runs to {@link BENCH_RUN_LENGTH},
  * the render records (the stand-in load's among them) go to `records`, the decode record to

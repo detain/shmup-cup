@@ -167,6 +167,24 @@ export interface DecodeHost {
    * @param text - What is being measured.
    */
   progress?(text: string): void;
+  /**
+   * Opens one video clip on the R7-VID surface path (a `video` element whose load starts and which
+   * settles at `loadeddata`), for {@link measureVideoDecode}. Absent on hosts that do not carry the
+   * surface (older builds, test fakes).
+   *
+   * @param url - Relative URL of the clip.
+   * @param repetition - The repetition (keeps the URLs of repetitions apart, past the media cache).
+   * @returns The loaded surface (released by the scenario).
+   */
+  readonly openVideo?: ((url: string, repetition: number) => Promise<DecodedPage>) | null;
+  /**
+   * Pulls the current frame of a loaded surface with `createImageBitmap` — the per-frame pull the
+   * cutscene scene pays on a rendered frame. Absent where the engine cannot pull.
+   *
+   * @param image - The surface element.
+   * @returns The bitmap (closed by the scenario).
+   */
+  readonly pullBitmap?: ((image: unknown) => Promise<ImageBitmap>) | null;
 }
 
 /** The scenario's settings and the engine facts its record carries. */
@@ -435,6 +453,186 @@ export function failedDecodeRecord(
   };
 }
 
+/**
+ * One clip of the decode scenario's video rows (plan v20x HARBENCH S8): a shipped MP4 measured
+ * through the R7-VID cutscene surface path — the file-to-GPU story behind the render matrix's
+ * `video` knob, which only ever sees the per-frame pull inside a warm frame.
+ */
+export interface BenchVideoSpec {
+  /** Clip id (the file's name without the extension). */
+  readonly id: string;
+  /** What the clip is. */
+  readonly what: string;
+  /** Width in pixels (the encoder's frame). */
+  readonly width: number;
+  /** Height in pixels. */
+  readonly height: number;
+  /** Relative URL of the MP4. */
+  readonly url: string;
+}
+
+/** The encoding tag the video rows carry (the H.264 baseline the video-encode lane ships). */
+export const VIDEO_DECODE_ENCODING = 'avc1';
+
+/**
+ * The video rows' honest mapping onto the frozen {@link DecodeBenchPage} columns (the `rb-` schema
+ * does not move): `fetchMs` is the surface's own load (`src` → `loadeddata`), `bitmapMs` the
+ * per-frame `createImageBitmap(video)` pull, `bitmapUploadMs` that bitmap uploaded and
+ * `gl.finish()`ed, `totalMs` the sum of the three per repetition. The image-path columns
+ * (`decodeMs`, `uploadMs`, `uploadSyncedMs`) are `null`; `encoding` reads {@link
+ * VIDEO_DECODE_ENCODING}. The analyzer lane pairs video rows on that tag.
+ */
+interface VideoRuns {
+  /** The clip. */
+  readonly spec: BenchVideoSpec;
+  /** The file's bytes (one XHR of the first repetition; the surface fetches its own copy). */
+  bytes: number;
+  /** `src` to `loadeddata` ms. */
+  readonly load: number[];
+  /** `createImageBitmap(video)` ms. */
+  readonly pull: number[];
+  /** Pulled-bitmap upload + `gl.finish()` ms. */
+  readonly upload: number[];
+  /** Load + pull + synced upload ms. */
+  readonly total: number[];
+  /** Distinct stage failures. */
+  readonly errors: string[];
+}
+
+/**
+ * The row one clip's figures fold into (see {@link VideoRuns} for the column story).
+ *
+ * @param run - The clip's figures.
+ * @param base - A scenario-level error to note, or `null`.
+ * @returns The row.
+ */
+function videoRow(run: VideoRuns, base: string | null): DecodeBenchPage {
+  const errors = base === null ? run.errors.slice() : [base, ...run.errors];
+  return {
+    id: `video-${run.spec.id}`,
+    what: run.spec.what,
+    width: run.spec.width,
+    height: run.spec.height,
+    encoding: VIDEO_DECODE_ENCODING,
+    bytes: run.bytes,
+    textureBytes: run.spec.width * run.spec.height * 4,
+    repetitions: run.load.length,
+    fetchMs: summarizeRuns(run.load),
+    decodeMs: null,
+    uploadMs: null,
+    uploadSyncedMs: null,
+    totalMs: summarizeRuns(run.total),
+    firstTotalMs: run.total.length > 0 ? roundTo(run.total[0], 3) : 0,
+    bitmapMs: summarizeRuns(run.pull),
+    bitmapUploadMs: summarizeRuns(run.upload),
+    error: errors.length === 0 ? null : errors.join('; '),
+  };
+}
+
+/**
+ * Measures the clips through the video surface (see {@link VideoRuns}): repetitions outer, clips
+ * inner, the surface opened fresh every repetition (`?rep=` past the media cache, like the image
+ * pages' URL trick), and every bitmap and surface released before the next repetition. A stage
+ * that fails is noted in the clip's row and the repetition moves on; it never rejects. Cold path.
+ *
+ * @param host - The browser (or a fake) — without {@link DecodeHost.openVideo} or
+ * {@link DecodeHost.pullBitmap} every row comes back noting the missing surface.
+ * @param specs - The clips, in the order to measure.
+ * @param options - Repetitions and the engine facts (the video facts ride the rows, not a record).
+ * @returns The rows, appended after the image pages' by the caller.
+ *
+ * @example
+ * ```ts
+ * const rows = await measureVideoDecode(host, assets.videos, facts);
+ * rows[0].bitmapMs; // → [min, p50, p95, max] of the per-frame pull
+ * ```
+ */
+export async function measureVideoDecode(
+  host: DecodeHost,
+  specs: readonly BenchVideoSpec[],
+  options: DecodeMeasureOptions,
+): Promise<DecodeBenchPage[]> {
+  const runs: VideoRuns[] = specs.map((spec) => ({
+    spec,
+    bytes: 0,
+    load: [],
+    pull: [],
+    upload: [],
+    total: [],
+    errors: [],
+  }));
+  /**
+   * Notes a stage's failure once per clip and message.
+   *
+   * @param run - The clip's figures.
+   * @param stage - The stage.
+   * @param error - What went wrong.
+   */
+  const fail = (run: VideoRuns, stage: string, error: unknown): void => {
+    const message = `${stage}: ${error instanceof Error ? error.message : String(error)}`;
+    if (run.errors.indexOf(message) < 0) run.errors.push(message);
+  };
+  const open = host.openVideo === undefined ? null : host.openVideo;
+  const pullOf = host.pullBitmap === undefined ? null : host.pullBitmap;
+  if (open === null || pullOf === null || specs.length === 0) {
+    return runs.map((run) => videoRow(run, 'video surface unavailable'));
+  }
+  for (let rep = 0; rep < options.repetitions; rep++) {
+    for (const run of runs) {
+      host.progress?.(`video ${run.spec.id} ${rep + 1}/${options.repetitions}`);
+      // 1. The bytes of the file (once — the surface fetches its own copy).
+      if (rep === 0) {
+        try {
+          run.bytes = (await host.fetch(run.spec.url)).byteLength;
+        } catch (error) {
+          fail(run, 'bytes', error);
+        }
+      }
+      // 2. Open the surface: `src` to `loadeddata`.
+      let surface: DecodedPage | null = null;
+      let loadMs = 0;
+      const t0 = host.now();
+      try {
+        surface = await open(run.spec.url, rep);
+        loadMs = host.now() - t0;
+        run.load.push(loadMs);
+      } catch (error) {
+        fail(run, 'video', error);
+      }
+      if (surface === null) continue;
+      try {
+        // 3. Pull a frame, upload it, wait for the GPU.
+        let bitmap: ImageBitmap | null = null;
+        try {
+          const t1 = host.now();
+          bitmap = await pullOf(surface.image);
+          const pullMs = host.now() - t1;
+          const source = host.createSource(bitmap, run.spec);
+          try {
+            host.finish();
+            const t2 = host.now();
+            host.upload(source);
+            host.finish();
+            const uplMs = host.now() - t2;
+            run.pull.push(pullMs);
+            run.upload.push(uplMs);
+            run.total.push(loadMs + pullMs + uplMs);
+          } finally {
+            source.destroy();
+          }
+        } catch (error) {
+          fail(run, 'bitmap', error);
+        } finally {
+          if (bitmap !== null) bitmap.close();
+        }
+      } finally {
+        surface.release();
+      }
+    }
+  }
+  return runs.map((run) => videoRow(run, null));
+}
+
 /** The window's parts {@link createDecodeHost} uses (a fake in the tests). */
 export interface DecodeWindow {
   /** `XMLHttpRequest`. */
@@ -446,7 +644,9 @@ export interface DecodeWindow {
   /** `URL` (`createObjectURL` / `revokeObjectURL`). */
   readonly URL: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
   /** `createImageBitmap`, absent on old engines. */
-  readonly createImageBitmap?: (blob: Blob) => Promise<ImageBitmap>;
+  readonly createImageBitmap?: (source: Blob | HTMLVideoElement) => Promise<ImageBitmap>;
+  /** `Video` (the HTML video element constructor), absent on hosts without the surface. */
+  readonly Video?: new () => HTMLVideoElement;
   /** `performance.now()`. */
   readonly performance: { now(): number };
   /** `setTimeout`. */
@@ -546,6 +746,7 @@ export function createDecodeHost(options: DecodeHostOptions): DecodeHost {
    */
   const blobOf = (bytes: ArrayBuffer): Blob => new win.Blob([bytes], { type: 'image/png' });
   const createBitmap = win.createImageBitmap;
+  const VideoCtor = win.Video;
   return {
     now: () => win.performance.now(),
     fetch: (url) =>
@@ -573,6 +774,45 @@ export function createDecodeHost(options: DecodeHostOptions): DecodeHost {
               })),
               'createImageBitmap',
             )
+        : null,
+    openVideo:
+      VideoCtor === undefined || createBitmap === undefined
+        ? null
+        : (url, repetition) =>
+            timed(
+              new Promise<DecodedPage>((resolve, reject) => {
+                const video = new VideoCtor();
+                video.muted = true;
+                video.preload = 'auto';
+                const release = (): void => {
+                  video.removeAttribute('src');
+                  try {
+                    video.load();
+                  } catch (_error) {
+                    /* an empty-src load may throw on some engines — the surface is gone either way */
+                  }
+                };
+                video.onloadeddata = (): void => {
+                  video.onloadeddata = null;
+                  video.onerror = null;
+                  resolve({ image: video, release });
+                };
+                video.onerror = (): void => {
+                  video.onloadeddata = null;
+                  video.onerror = null;
+                  release();
+                  reject(new Error('the clip did not load'));
+                };
+                video.src = repetition === 0 ? url : `${url}?rep=${repetition}`;
+                const playing = typeof video.play === 'function' ? video.play() : null;
+                if (playing !== null) playing.catch(() => {});
+              }),
+              'video',
+            ),
+    pullBitmap:
+      typeof createBitmap === 'function'
+        ? (image) =>
+            timed(Promise.resolve(createBitmap.call(win, image as HTMLVideoElement)), 'video pull')
         : null,
     createSource: options.createSource,
     upload: options.upload,

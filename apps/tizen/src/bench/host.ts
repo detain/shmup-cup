@@ -64,7 +64,20 @@ interface WebosLike {
 }
 
 /**
- * Detects the host, registers the Red key on Tizen and returns how to exit.
+ * The remote keys every bench page registers: the Red re-run key, the other three colour keys and
+ * MediaPlayPause — the S3 input page (`./inputpage.ts`) watches their delivery (the P0-2 colour-key
+ * question), and registration is what makes them arrive at the app at all.
+ */
+export const BENCH_REGISTERED_KEYS: readonly string[] = Object.freeze([
+  'ColorF0Red',
+  'ColorF1Green',
+  'ColorF2Yellow',
+  'ColorF3Blue',
+  'MediaPlayPause',
+]);
+
+/**
+ * Detects the host, registers the bench's remote keys on Tizen and returns how to exit.
  *
  * @param win - The window.
  * @returns The host.
@@ -72,7 +85,7 @@ interface WebosLike {
 export function detectBenchHost(win: Window): BenchHost {
   const tizen = getTizenApi(win);
   if (tizen !== null) {
-    registerRemoteKeys(tizen, ['ColorF0Red']);
+    registerRemoteKeys(tizen, BENCH_REGISTERED_KEYS);
     return {
       name: 'tizen',
       exit(): void {
