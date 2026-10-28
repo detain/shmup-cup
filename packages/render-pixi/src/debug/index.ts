@@ -26,8 +26,8 @@
  * colours ({@link DebugPanelLists}) — and a quad keeps its tint for good: the overlay allocates
  * nothing per frame.
  *
- * **Coordinates.** Screen pixels of the 384×216 frame. World boxes are drawn at
- * `world − camera + (0, PLAYFIELD_Y)` (the playfield starts under the 8-px HUD bar) and skipped
+ * **Coordinates.** Screen pixels of the 640×360 frame. World boxes are drawn at
+ * `world − camera + (0, PLAYFIELD_Y)` (the playfield starts under the 12-px HUD bar) and skipped
  * when they lie outside the playfield; a circle is drawn as its bounding square. The panel sits at
  * the playfield's top-left corner on a translucent backdrop.
  *

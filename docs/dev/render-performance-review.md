@@ -306,13 +306,13 @@ Given that this report's largest findings are all in the Pixi half of the frame,
 
 ### F11 — Smaller notes, each Confirmed
 
-- **`hello: false`, `powerPreference: 'high-performance'`** are set (`renderer/index.ts:620-622`). `powerPreference` is a no‑op on a single‑GPU TV SoC; harmless.
+- **`hello: false`, `powerPreference: 'high-performance'`** are set (`renderer/index.ts:823-825`). `powerPreference` is a no‑op on a single‑GPU TV SoC; harmless.
 - **`stencil: true`** is hard‑coded by Pixi for every context (`GlContextSystem.mjs:72`) — an unavoidable depth/stencil attachment at 1920×1080. Already covered by the estimator's `CANVAS_BUFFERS = 3`.
 - **`useBackBuffer` defaults to `false`** (`GlBackBufferSystem.mjs:135-138`), so we are not paying for the extra big‑triangle present pass. Good — and a reason *not* to enable `antialias`, which would drag the back buffer in.
-- **Pixi's `GCSystem` is active** (`GCSystem.mjs:294-301`: `gcActive: true`, 60 s idle, 30 s sweep) but only manages GL textures/buffers/geometries and `Graphics`/`Text`/`TilingSprite`/`ParticleContainer` renderables — **plain `Sprite` is not GC‑managed** (`"renderable"` hashes are registered only by those pipes). So our 6 400 pooled sprites are safe. The atlas page is drawn every frame and never idles out. **No action.** (If F1(b) introduces `ParticleContainer`, it *does* become GC‑managed — worth `autoGarbageCollect = false` on it.)
-- **Assigning `filters`** allocates two objects (`value.slice(0)` + `Object.freeze`, `effectsMixin.mjs:60-73`). The code already confines this to range edges and documents why (`layer-effects.ts:17-19`, `crt.ts:15-17`, `mode7.ts:16-18`). Correct.
-- **`resetPass`** (`renderer/index.ts:551-563`) is a genuinely good piece of work — it keeps Pixi's mutation of the options object from leaking across frames without allocating. Worth keeping in the conventions doc as an example.
-- **Audio does not threaten frame pacing.** The engine renders/decodes only in `loadSfx` / `prepareMusic`, never mid‑stage (`packages/audio-web/src/engine/index.ts:7-12`), and music decodes through an `OfflineAudioContext(2, 1, 32000)` (`loader/index.ts:868-876`). The probe's 44.1 kHz / 50 ms `baseLatency` is a latency concern, not a frame‑time one.
+- **Pixi's `GCSystem` is active** (`GCSystem.mjs:312-319`: `gcActive: true`, 60 s idle, 30 s sweep) but only manages GL textures/buffers/geometries and `Graphics`/`Text`/`TilingSprite`/`ParticleContainer` renderables — **plain `Sprite` is not GC‑managed** (`"renderable"` hashes are registered only by those pipes). So our 6 400 pooled sprites are safe. The atlas page is drawn every frame and never idles out. **No action.** (If F1(b) introduces `ParticleContainer`, it *does* become GC‑managed — worth `autoGarbageCollect = false` on it.)
+- **Assigning `filters`** allocates two objects (`value.slice(0)` + `Object.freeze`, `effectsMixin.mjs:60-73`). The code already confines this to range edges and documents why (`layer-effects.ts:14-16`, `crt.ts:26-28`, `mode7.ts:21-23`). Correct.
+- **`resetPass`** (`renderer/index.ts:711-721`) is a genuinely good piece of work — it keeps Pixi's mutation of the options object from leaking across frames without allocating. Worth keeping in the conventions doc as an example.
+- **Audio does not threaten frame pacing.** The engine renders/decodes only in `loadSfx` / `prepareMusic`, never mid‑stage (`packages/audio-web/src/engine/index.ts:7-12`), and music decodes through an `OfflineAudioContext(2, 1, 32000)` (`loader/index.ts:946-956`). The probe's 44.1 kHz / 50 ms `baseLatency` is a latency concern, not a frame‑time one.
 
 ---
 

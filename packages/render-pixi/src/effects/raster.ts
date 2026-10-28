@@ -3,10 +3,10 @@
  * "Raster/HDMA-style effects: per-scanline offset table (1×H data texture)"): pure builders — no
  * Pixi — so they are unit-tested in Node and cost no allocation per frame.
  *
- * A {@link RasterTable} holds one horizontal offset and one wrap period per frame row (216 rows).
+ * A {@link RasterTable} holds one horizontal offset and one wrap period per frame row (360 rows).
  * Each frame the layer effects clear the table, add every active stage raster effect of the layer
  * ({@link addRasterEffect}: wavy water, heat haze, line-band parallax floor) and encode it into the
- * RGBA8 bytes of the 1 × 216 texture the layer shader samples ({@link encodeRasterTable}).
+ * RGBA8 bytes of the 1 × 360 texture the layer shader samples ({@link encodeRasterTable}).
  *
  * The sines come from the core's committed tables (`sinB`, 1024 binary units per turn), so the
  * same tick and camera always give the same table on every engine — screenshots stay comparable.

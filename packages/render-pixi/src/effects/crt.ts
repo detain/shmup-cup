@@ -258,7 +258,7 @@ export interface CrtBlitHandle {
  *
  * @example
  * ```ts
- * const blit = createCrtBlit(frameTexture, 384, 216);
+ * const blit = createCrtBlit(frameTexture, 640, 360);
  * screen.addChild(blit.mesh);
  * blit.mesh.position.set(viewport.x, viewport.y);
  * blit.mesh.scale.set(viewport.scaleX, viewport.scaleY);
@@ -406,8 +406,8 @@ export interface CrtPass {
  *
  * @example
  * ```ts
- * const crt = createCrtPass({ screen, frame: frameTexture, width: 384, height: 216 });
- * crt.setViewport(5, 0, 0, 1920, 1080, 5, 5, 1080);
+ * const crt = createCrtPass({ screen, frame: frameTexture, width: 640, height: 360 });
+ * crt.setViewport(3, 0, 0, 1920, 1080, 3, 3, 1080);
  * crt.setSetting('full');
  * ```
  */

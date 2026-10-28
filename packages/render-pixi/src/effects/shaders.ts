@@ -69,7 +69,7 @@ export const LAYER_EFFECT_MAX_COLORS = 8;
 
 /**
  * Vertex shader of the layer effect: Pixi's default filter vertex (the quad over the filter area),
- * plus `vScreen` — the fragment's pixel position in the render target (the 384×216 frame), whose
+ * plus `vScreen` — the fragment's pixel position in the render target (the 640×360 frame), whose
  * `y` picks the offset table row.
  */
 export const LAYER_EFFECT_VERTEX = `attribute vec2 aPosition;
@@ -230,7 +230,7 @@ void main(void)
 /**
  * Vertex shader of the **Mode-7 floor** (plan M3-02, shmup_feat.md §18 "[P2] Mode 7-style effects:
  * scaling/rotation, pseudo-3D floor (per-row affine matrix in shader)"): Pixi's default filter
- * quad plus `vScreen`, the fragment's pixel position in the 384×216 frame — the row is what the
+ * quad plus `vScreen`, the fragment's pixel position in the 640×360 frame — the row is what the
  * per-row affine transform is built from.
  */
 export const MODE7_VERTEX = LAYER_EFFECT_VERTEX;

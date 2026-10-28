@@ -16,8 +16,8 @@
  * It also draws the two stage views of the render contract (plan M1-07):
  *
  * - {@link createTerrainBinding} — the stage's `TerrainView` as a **preallocated tile-sprite
- *   grid** one tile wider and taller than the playfield (49 × 26 for 8-px tiles). The grid is a
- *   ring: slot column `s` shows the map column `≡ s (mod 49)` inside the view, so when the
+ *   grid** one tile wider and taller than the playfield (55 × 29 for 12-px tiles). The grid is a
+ *   ring: slot column `s` shows the map column `≡ s (mod 55)` inside the view, so when the
  *   camera crosses a tile column only the one column that scrolled in is re-textured (rows
  *   likewise for vertical pans); every frame the whole grid moves with one container offset.
  *   Since M2-07 the view's `changes` log (destructible tiles breaking, growing back, cube-rush

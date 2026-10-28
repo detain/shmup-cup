@@ -1,9 +1,9 @@
 /**
  * # test-pattern — placeholder pixel-art calibration scene
  *
- * **Responsibility.** What the renderer shows until real scenes exist: a 384×216
+ * **Responsibility.** What the renderer shows until real scenes exist: a 640×360
  * calibration pattern that makes scaling problems obvious on a TV —
- * a 1-px checker border (edge pixels must stay crisp at ×3/×5), a faint 16-px grid,
+ * a 1-px checker border (edge pixels must stay crisp at ×2/×3), a faint 16-px grid,
  * centre cross-hair, colour bars, an original placeholder ship drawn from a pixel
  * map, and a tick-driven marker that sweeps one pixel per simulation tick (proves
  * the fixed-step loop runs at 60 ticks/s and shows any judder).
@@ -118,11 +118,11 @@ export interface TestPattern {
  * @remarks
  * Everything static is drawn once into one `Graphics`; only the marker moves. The
  * marker advances one pixel per tick and wraps every `width - 16` ticks, so at 60
- * ticks/s on a ×5 display it should glide smoothly — any stutter means dropped or
+ * ticks/s on a ×3 display it should glide smoothly — any stutter means dropped or
  * doubled ticks.
  *
- * @param width - Internal frame width (384).
- * @param height - Internal frame height (216).
+ * @param width - Internal frame width (640).
+ * @param height - Internal frame height (360).
  * @returns The pattern.
  */
 export function createTestPattern(width: number, height: number): TestPattern {

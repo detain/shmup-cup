@@ -21,9 +21,9 @@
  *   where points were scored and vanish after {@link SCORE_POPUP_TICKS} (40) ticks, blinking at
  *   the end; the oldest is replaced when all are in use. Drawn into one small quad pool per slot
  *   on the `FX` layer (below the enemy bullets), camera-converted like the particles.
- * - **Raster effects (M2-08, `./raster.ts`)** — a per-scanline offset table (216 rows:
+ * - **Raster effects (M2-08, `./raster.ts`)** — a per-scanline offset table (360 rows:
  *   {@link createRasterTable}, {@link addRasterEffect} — wavy water, heat haze, line-band parallax
- *   floors — and {@link encodeRasterTable} into the RGBA8 texels of a 1 × 216 texture), driven by
+ *   floors — and {@link encodeRasterTable} into the RGBA8 texels of a 1 × 360 texture), driven by
  *   the stage's `raster` data (core `RasterEffectView`s).
  * - **Layer effects (M2-08, `./layer-effects.ts`)** — {@link createLayerEffects}: per world layer
  *   one GLSL ES 1.0 Pixi filter ({@link createLayerEffectFilter}; sources

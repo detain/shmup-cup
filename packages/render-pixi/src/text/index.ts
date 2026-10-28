@@ -2,7 +2,7 @@
  * # text — bitmap-font text rendering
  *
  * **Responsibility.** Text in the pixel font the asset pipeline packs into the atlas
- * (`fonts.pixel`: 6×8 cells, ASCII 32–126 plus `← ↑ → ↓ ● ✕ ★`): glyph lookup by code point,
+ * (`fonts.pixel`: 9×12 cells, ASCII 32–126 plus `← ↑ → ↓ ● ✕ ★`): glyph lookup by code point,
  * metrics for layout code (implements the core's `TextMetrics`), and layout that emits one
  * atlas quad per visible glyph into a {@link GlyphSink} — normally the renderer's ordered quad
  * pool of {@link DEFAULT_GLYPH_CAPACITY} glyph sprites. Layout never allocates: text is read with
@@ -209,7 +209,7 @@ export function createBitmapFont(atlas: Atlas, name: string = DEFAULT_FONT): Bit
  * @example
  * ```ts
  * const metrics = createTextMetrics([createBitmapFont(atlas)]);
- * const x = (384 - metrics.measure('GAME OVER', 'pixel')) / 2;
+ * const x = (640 - metrics.measure('GAME OVER', 'pixel')) / 2;
  * ```
  */
 export function createTextMetrics(fonts: readonly BitmapFont[]): TextMetrics {
@@ -276,7 +276,7 @@ function alignLeft(x: number, width: number, align: number): number {
  *
  * @example
  * ```ts
- * drawText(pool, font, 'SHMUP CUP', 192, 40, 0xf8d030, TextAlign.Center);
+ * drawText(pool, font, 'SHMUP CUP', 320, 40, 0xf8d030, TextAlign.Center);
  * ```
  */
 export function drawText(

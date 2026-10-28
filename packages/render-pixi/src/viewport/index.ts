@@ -1,7 +1,7 @@
 /**
  * # viewport — scale modes and letterboxing math
  *
- * **Responsibility.** Computes where the low-resolution frame (384×216) goes on the
+ * **Responsibility.** Computes where the low-resolution frame (640×360) goes on the
  * physical canvas for each **scale mode** (core `config` `SCALE_MODES`, plan M2-08):
  *
  * - `integer` (the default) — the largest *integer* scale that fits, centred, with a letterbox;
@@ -13,14 +13,16 @@
  *
  * Pure functions — no Pixi, no DOM — so they are unit-tested in Node.
  *
- * Examples (integer): 1920×1080 → ×5 exactly (Tizen UHD web apps); 1280×720 → ×3 = 1152×648
- * with a 64/36 px border (Tizen FHD); 3840×2160 → ×10. The same 1280×720 display in `fit` gives
- * ×3.33 = 1280×720, no border.
+ * Examples (integer): 1920×1080 → ×3 exactly (the Tizen web-app display cap); 1280×720 → ×2
+ * exactly; 3840×2160 → ×6 on a desktop 4K (a TV web app never renders one). The frame divides
+ * every standard 16:9 display whole, so a letterbox only shows elsewhere: a 1680×1050 desktop
+ * gives ×2 = 1280×720 with a 200/165 px border; the same display in `fit` gives ×2.625 =
+ * 1680×945 with a 52 px one.
  *
  * **Implements.** shmup_feat.md §3 (integer upscale, nearest-neighbour, letterbox; the scale
  * modes integer / fit / stretch; the classic 4:3 mode with pillarbox side art — M3-02),
  * shmup_feat.md §18 (the ultra-wide desktop mode — M3-02), shmup_feat.md §21 (the display
- * option), shmup_tech.md §2.2 (1080p/720p web resolutions → 384×216 ×5 / ×3).
+ * option), shmup_tech.md §2.2 (1080p/720p web resolutions → 640×360 ×3 / ×2).
  *
  * Since M3-02 the **aspect modes** of `core/config` `ASPECT_MODES` sit on top
  * ({@link computeAspectViewport}): `normal` (the whole display), `wide` (a 21:9 window for
@@ -76,16 +78,16 @@ export interface Viewport {
  *
  * @param displayWidth - Available width in pixels.
  * @param displayHeight - Available height in pixels.
- * @param baseWidth - Internal frame width (e.g. 384).
- * @param baseHeight - Internal frame height (e.g. 216).
+ * @param baseWidth - Internal frame width (e.g. 640).
+ * @param baseHeight - Internal frame height (e.g. 360).
  * @returns The integer viewport.
  *
  * @example
  * ```ts
- * computeIntegerViewport(1920, 1080, 384, 216);
- * // → { mode: 'integer', scale: 5, scaleX: 5, scaleY: 5, x: 0, y: 0, width: 1920, height: 1080 }
- * computeIntegerViewport(1280, 720, 384, 216);
- * // → { …, scale: 3, x: 64, y: 36, width: 1152, height: 648 }
+ * computeIntegerViewport(1920, 1080, 640, 360);
+ * // → { mode: 'integer', scale: 3, scaleX: 3, scaleY: 3, x: 0, y: 0, width: 1920, height: 1080 }
+ * computeIntegerViewport(1680, 1050, 640, 360);
+ * // → { …, scale: 2, x: 200, y: 165, width: 1280, height: 720 }
  * ```
  */
 export function computeIntegerViewport(
@@ -128,8 +130,8 @@ export function computeIntegerViewport(
  *
  * @example
  * ```ts
- * computeViewport('fit', 1280, 720, 384, 216);     // → scale 3.33…, 1280×720 at (0, 0)
- * computeViewport('stretch', 1000, 1000, 384, 216); // → scaleX 2.60…, scaleY 4.62…
+ * computeViewport('fit', 1680, 1050, 640, 360);      // → scale 2.625, 1680×945 at (0, 52)
+ * computeViewport('stretch', 1000, 1000, 640, 360);  // → scaleX 1.56…, scaleY 2.78…
  * ```
  */
 export function computeViewport(
@@ -222,8 +224,8 @@ export interface AspectViewport {
  *
  * @example
  * ```ts
- * computeAspectViewport(2, 'integer', 1920, 1080, 384, 216).panelLeft; // → 240 (4:3 on 16:9)
- * computeAspectViewport(0, 'integer', 1920, 1080, 384, 216).panelLeft; // → 0
+ * computeAspectViewport(2, 'integer', 1920, 1080, 640, 360).panelLeft; // → 240 (4:3 on 16:9)
+ * computeAspectViewport(0, 'integer', 1920, 1080, 640, 360).panelLeft; // → 0
  * ```
  */
 export function computeAspectViewport(

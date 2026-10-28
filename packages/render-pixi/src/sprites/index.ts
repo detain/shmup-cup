@@ -507,8 +507,8 @@ export interface QuadPool {
  * ```ts
  * const pool = createQuadPool({ atlas, capacity: 1024 });
  * pool.begin();
- * pool.rect(0, 0, 384, 8, 0x10173a, 255);
- * pool.frame(atlas.frameId('hud/life#0'), 4, 212, 0, 0xffffff, 255);
+ * pool.rect(0, 0, 640, 12, 0x10173a, 255);
+ * pool.frame(atlas.frameId('hud/life#0'), 4, 352, 0, 0xffffff, 255);
  * pool.end();
  * ```
  */

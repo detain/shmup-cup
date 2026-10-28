@@ -5,7 +5,7 @@
  * for the older sets the project also targets; the M7 probe of 2026-09-15 found WebGL **1 and 2**
  * both available on Tizen 5.5 / Chromium 69 with `MAX_TEXTURE_SIZE` 8192, so 2 is *possible*, not
  * *better* — see `docs/dev/input-probe-results.md` §9 and the review's F8. Dev builds can A/B it
- * with `?gl=2`), a 384×216 render texture with nearest-neighbour
+ * with `?gl=2`), a 640×360 render texture with nearest-neighbour
  * sampling, and the two-pass frame: (1) draw the low-res scene into the render texture,
  * (2) draw that texture once, integer-scaled and letterboxed, to the canvas. Pixi is
  * used as a *renderer only*: no `Application`, no Pixi ticker — the host's fixed-step
@@ -95,7 +95,7 @@
  * pass 2's blit since M3-02d) and the **aspect modes** (`viewport`
  * {@link computeAspectViewport}: the frame is placed in the largest ultra-wide or 4:3 window that
  * fits and the leftover width becomes two dimmed side panels at {@link PANEL_ALPHA} — a window on
- * the display, never a crop, and the internal 384×216 playfield is unchanged).
+ * the display, never a crop, and the internal 640×360 playfield is unchanged).
  *
  * **The render review's fixes (M3-02e).** The scene structure above is **F1**, counted from 659
  * of every 660 frames rebuilding the whole scene to 0 (`pnpm bench`, which builds both scenes in
@@ -548,7 +548,7 @@ export interface PixiRenderer extends IRenderer {
   readonly layerEffects: LayerEffects;
   /** Hitbox markers of the bound world (`null` without a hitbox view or atlas — plan M2-08). */
   readonly hitboxes: HitboxBinding | null;
-  /** Low-res scene root (384×216 coordinates). */
+  /** Low-res scene root (640×360 coordinates). */
   readonly scene: Container;
   /** The layer containers (one per core `LayerId`). */
   readonly layers: LayerStack;
@@ -757,7 +757,7 @@ const countGroupRebuilds = (group: SceneRenderGroup): number => {
  *   `roundPixels`, so one canvas pixel is one CSS pixel and nothing is filtered.
  * - `preferWebGLVersion` defaults to 1; if WebGL1 is unavailable Pixi tries WebGL2.
  *   Read {@link PixiRenderer.webGLVersion} to see what was obtained.
- * - `render()` makes two passes: scene → 384×216 render texture, then the texture as
+ * - `render()` makes two passes: scene → 640×360 render texture, then the texture as
  *   one integer-scaled sprite → canvas. `resize()` floors its arguments and never goes
  *   below 1×1.
  * - The HUD and UI layers each get a quad pool of `glyphCapacity` sprites; world batches get
