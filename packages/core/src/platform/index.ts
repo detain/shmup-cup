@@ -97,7 +97,15 @@ export interface PlatformLifecycle {
   onResume(callback: () => void): void;
 }
 
-/** Display facts (CSS pixels), used to pick the integer scale factor. */
+/**
+ * Display facts (CSS pixels), used to pick the integer scale factor.
+ *
+ * @remarks
+ * Viewport metrics on demand — never in a per-frame path (the law of tizen_optimize.md §8.5,
+ * plan v20x P1-7). The live hosts answer these getters from the window itself, so a frame
+ * loop that polled them would re-read the display every frame; instead the boot sizes the
+ * canvas once and re-sizes it on the `resize` listener, which never fires during TV play.
+ */
 export interface PlatformDisplay {
   /** Width of the available viewport in CSS pixels (1920 on a Tizen 1080p web app). */
   readonly cssWidth: number;
