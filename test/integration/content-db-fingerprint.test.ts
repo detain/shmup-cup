@@ -265,7 +265,7 @@ const PINNED: Record<string, Record<string, string>> = {
     'core.campaign': '7cd2f8d441221169',
     'core.demos': '49b5f982cf03244e',
     'core.demoIndex': 'b37bbd0e0ad0fca7',
-    'core.uiStrings': '0f64dbf3b3ed2796',
+    'core.uiStrings': 'dfeee25f549c385e',
     'core.spriteKeys': '964972bcb3e36bd4',
     'core.enemyKeys': '21e5f8a8f7608053',
     'core.pathKeys': 'e0aefdd1d5516ff6',

@@ -60,9 +60,11 @@ recorded here as shipped on `master`; what the hardware still owes is in
 - **One video surface, one director, the sim never waits** (`ee930b0a`, `06a28d85`): a clip
   draws as a bitmap-pulled quad in the world or screen band (Pixi's `VideoSource` was measured
   out on ANGLE); trigger windows only cut clips short and any pressed action skips at once. The
-  feature ships **default OFF** (`VIDEO_DEFAULT_ON = false`) until the owner's M7 bench rows
-  adjudicate the flip; the kill chain is host option → `SHMUP_NO_VIDEO` → `?novid=1` → stored
-  choice, with `?video=<id>` forcing one clip on for the run.
+  feature ships **default ON** (`VIDEO_DEFAULT_ON = true`, owner ruling 2026-10-28 on the M7
+  bench's 190-row adjudication — the video path won p95 at every size; the earlier default-off
+  law held until those rows landed); the DISPLAY page gained a VIDEO row that writes the stored
+  choice (applies at restart), and the kill chain is host option → `SHMUP_NO_VIDEO` →
+  `?novid=1` → stored choice, with `?video=<id>` forcing one clip on for the run.
 - **The five campaign endings show full-frame stills** (`13ef0f90`, `b4d11288`, `8575d9ff`):
   PNG-8 640×360 paintings (277 KB shipped) behind the ending scene's text, default ON, a failed
   load invisible, one still costing one atlas page's VRAM while shown and zero hidden. The
