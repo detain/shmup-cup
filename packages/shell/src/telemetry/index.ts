@@ -1946,9 +1946,9 @@ export interface HarbenchEnv extends RenderBenchEnv {
   phase: string;
   /**
    * The input-latency A/B flag: whether the installed app's `config.xml` carried
-   * `<tizen:property name="use.game.mode" …>` (tizen_optimize §8.5). One build ships with it and
-   * one without; the A/B pairs rows on this value — it is a fact of the INSTALL, so it rides the
-   * env of every payload, not the input rows alone.
+   * `<tizen:property name="use.game.mode" …>` (docs/old/shmup_plan.md §8.5). One build ships
+   * with it and one without; the A/B pairs rows on this value — it is a fact of the INSTALL, so
+   * it rides the env of every payload, not the input rows alone.
    */
   gameMode: boolean;
 }

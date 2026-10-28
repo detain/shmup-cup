@@ -55,7 +55,7 @@ export const TIZEN_BACK_KEY_CODE = 10009;
 /**
  * Remote keys registered at startup when no input profile provides a `register` list (names
  * from `tvinputdevice.getSupportedKeys()`). Aligned with the shipped `tizen-remote-safe`
- * profile's list (P0-2, tizen_optimize.md §9.2 — the colors are registered so REBIND can
+ * profile's list (P0-2, tizen_optimize.md §8.2 — the colors are registered so REBIND can
  * capture them; they carry no default binding). Deliberately excludes `Exit` and the volume
  * keys (system keys).
  */

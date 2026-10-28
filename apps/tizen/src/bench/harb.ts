@@ -23,9 +23,10 @@ import {
 import { searchParam } from './matrix.js';
 
 /**
- * The `use.game.mode` A/B flag (tizen_optimize §8.5): `?gm=0` marks an install whose `config.xml`
- * did NOT carry the game-mode property, anything else (default) marks one that did. It is a fact
- * of the INSTALL, so it rides the env of every `hb-` payload, not only the input rows.
+ * The `use.game.mode` A/B flag (the plan §8.5 A/B — `docs/old/shmup_plan.md`): `?gm=0` marks an
+ * install whose `config.xml` did NOT carry the game-mode property, anything else (default) marks
+ * one that did. It is a fact of the INSTALL, so it rides the env of every `hb-` payload, not only
+ * the input rows.
  *
  * @param search - `location.search`.
  * @returns Whether the install runs in game mode.

@@ -811,7 +811,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const drawCounter: DrawCallCounter = { calls: 0, last: -1 };
   await renderer.init({
     canvas: options.canvas,
-    // P0-4 (tizen_optimize.md §9.4): the floor `resize()` applies at its own entry — a 0 (or
+    // P0-4 (tizen_optimize.md §9 P0-4): the floor `resize()` applies at its own entry — a 0 (or
     // absent) display read at boot must not open a 0×0 drawing buffer; identical for nonzero.
     width: Math.max(1, Math.floor(options.displayWidth ?? 0)),
     height: Math.max(1, Math.floor(options.displayHeight ?? 0)),
@@ -823,7 +823,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     powerPreference: 'high-performance',
     background: PALETTE.letterbox,
     hello: false,
-    // P0-5 (tizen_optimize.md §9.5): nothing in the scene graph is interactive and the audio
+    // P0-5 (tizen_optimize.md §9 P0-5): nothing in the scene graph is interactive and the audio
     // unlock is the shell's own window listener, so Pixi's EventSystem stays fully off — no
     // document-level pointer listeners, no `touch-action` write, no EventsTicker, no layout
     // read per pointermove (its only cost lands on the web and Electron hosts).
