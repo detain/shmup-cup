@@ -118,7 +118,7 @@ Actions: `Up`, `Down`, `Left`, `Right`, `Shot`, `Sub`, `PowerUp`, `Special`, `Sp
 - The colour keys register as `ColorF0Red` (403), `ColorF1Green` (404), `ColorF2Yellow` (405),
   `ColorF3Blue` (406) — the web names; the `XF86*` spellings are ElmSharp/Ecore names and
   `registerKey` refuses them (`InvalidValuesError`). They are registered with no default binding
-  (tizen_optimize.md §9.2 — the action choice is an owner UX call), which already makes them
+  (tizen_optimize.md §8.2 — the action choice is an owner UX call), which already makes them
   capturable in REBIND, in parity with the webOS magic remote, where `webos-remote-safe` binds
   403 → `Special` and 404 → `Speed`.
 - `hosts` (M3-03) names the `Platform.id`s whose Options screen may offer the profile; an empty
