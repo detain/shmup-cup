@@ -377,8 +377,9 @@ pnpm --filter @shmup/tizen bench:run
 ```
 
 4. On each monitor press **Enter** (the page says "190 scenarios + decode + stand-in + rewind" with
-   its own minute count — about 101 minutes at the pace the 2026-10-27 run measured, ≈ 30.4 s a
-   row: per scenario 10 s warm-up, 14 s free-running and 6 s with
+   its own minute count — ≈ 101 minutes at the page's own 32 s-a-row estimate, ≈ 96–98 minutes at
+   the pace the 2026-10-27 run measured (≈ 30.4 s a row): per scenario 10 s warm-up, 14 s
+   free-running and 6 s with
    `gl.finish()` after every render, the page reloading in between); then the decode page loads
    (`R1-05 DECODE 191/193 GL1 <page> <rep>/8`, the four video-surface rows riding along), the
    stand-in frame draws (`R3-04 STAND-IN 192/193`), and the rewind loop closes the run. **Red**

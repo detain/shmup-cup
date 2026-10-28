@@ -40,7 +40,7 @@ work too, and every device drives both the game and the menus.
 > returns to the title). Left alone on `PRESS OK` for 12 seconds the title plays the **attract
 > loop** (a zone demo, the high-score tables, the story) — **any** button returns to the title. A
 > cutscene clip (the title's sting, a zone's WARNING band, a story vista, an ending beat) can lie
-> over the picture, and **any pressed button skips it at once**; the clips ship switched **off** > default. The title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
+> over the picture, and **any pressed button skips it at once**; the clips ship switched **off by default**. The title menu's **PRACTICE** box (▲ ▼ move, ◀ ▶ or OK change ZONE, CHECKPOINT and LOADOUT, OK on
 > START) and **SOUND TEST** box (◀ ▶ choose a tune or a sound, OK plays it) close with Back
 > ([preview-build.md](preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes and opens five pages:

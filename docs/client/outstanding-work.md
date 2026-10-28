@@ -241,7 +241,8 @@ archive in a browser before you publish it.
   window per scenario** — no noise floor — so every small verdict rode in single-sample: the
   video-knob's sign (−4.7 / −4.5 pts at 640×360, the reading that adjudicates the default-ON
   flip), the ±0.1 / ±0.4 pt band overshoots, the fit/stretch deltas. What to do: one repeat run of
-  the current **190-row** suite (`4b37d123`, ≈ 101 min at the measured ≈ 30.4 s-a-row pace) — two
+  the current **190-row** suite (`4b37d123`, ≈ 101 min at the page's own 32 s-a-row estimate,
+  ≈ 96–98 min at the measured ≈ 30.4 s-a-row pace) — two
   windows of one build give those verdicts their floor, which the folder's aborted-launch pair
   says is not kind (sync p95 median 16 %, two-tick 2.7 pts).
 - **The hardware bench's S2 / S3 / S4 page bodies** (plan v20x HARBENCH): the plumbing shipped in

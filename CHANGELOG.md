@@ -111,7 +111,8 @@ recorded here as shipped on `master`; what the hardware still owes is in
   them back as `video surface unavailable`), the rewind row POSTing its timing on the new versioned
   `hb-` wire, and the bench host registering the five remote keys (Green / Yellow / Blue and
   Play/Pause beside Red — the game-side colour keys `8cb4b0cf`). The full TV run is now ≈ 101
-  minutes at the measured pace.
+  minutes at the page's own 32 s-a-row estimate, ≈ 96–98 minutes at the measured
+  ≈ 30.4 s-a-row pace.
 
 ### Notes
 

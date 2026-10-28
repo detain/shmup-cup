@@ -641,7 +641,7 @@ The review lane re-ran the same bench at the same tip and the deterministic fiel
 KB, floors, camera, status) matched field for field; the ±0.1–0.3 ms differences are SwiftShader
 load noise.
 
-**TV bench headless** (suite 2 — 174 scenario tests + decode + stand-in + rewind + report, counts only, every
+**TV bench headless** (suite 2 — 190 scenario tests + decode + stand-in + rewind + report, counts only, every
 millisecond *not the M7*): the worst arms are the 1080p `worst` scenes — `1920x1080n-worst`
 15 calls / p95 11.50 ms / 16 384 KB pooled, and the `-out720` / `-interp` twins at 15 calls /
 11.00 / 10.60 ms. The 1080p filter arms pool up to 16 384 KB of render targets — the biggest RT

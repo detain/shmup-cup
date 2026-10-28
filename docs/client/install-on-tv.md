@@ -303,8 +303,10 @@ pnpm --filter @shmup/tizen bench:run
 
 ### Step 5 — run the bench on each M7, TWICE per monitor (WebGL 1 then WebGL 2)
 
-1. Press **Enter** on the bench page ("174 scenarios + decode + stand-in + rewind" — the v2.0.x
-   matrix grew from the 172 rows the first sessions ran; a little over ~90 min; per scenario
+1. Press **Enter** on the bench page ("190 scenarios + decode + stand-in + rewind, ~101 min" —
+   the matrix grew from the 172 rows the first sessions ran, to 174 in v2.0.x with the video
+   knob, to 190 with the v2.1.0 rows `4b37d123`; ~101 min is the page's own 32 s-a-row estimate,
+   ≈ 96–98 min at the pace the 2026-10-27 run measured (≈ 30.4 s a row); per scenario
    10 s warm-up, 14 s free-running, 6 s with `gl.finish()`, page reloads between). **Red** re-runs
    the current scenario; **Back** exits. The run ends with the decode page loads, the stand-in
    frame and the rewind measurement.

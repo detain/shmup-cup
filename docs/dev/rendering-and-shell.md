@@ -1212,11 +1212,14 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   resolution below the display's, each at a few representative sizes) — the v2.0.x **video
   knob** (`61b4ed36`) added a 23rd and 24th (`busy-video` and `worst-video`: the video
   surface's quad over the base scene — the headless SwiftShader rows read p95 2.10 ms (+0.2)
-  and 2.70 ms (+0.6) with +1 draw call exactly, heap +33–88 KB), so the matrix is **174
-  scenarios, one per page load** now and a full session **177 page loads**. The ids R0-02 and R0-03
+  and 2.70 ms (+0.6) with +1 draw call exactly, heap +33–88 KB) — **174 rows** through v2.0.x —
+  and `4b37d123` appended the twelve 960×540 knob rows and the four big-frame video rows at the
+  tail (40 knobs in all; ids and indices 0 … 173 never move), so the matrix is **190
+  scenarios, one per page load** now and a full session **193 page loads**. The ids R0-02 and R0-03
   recorded — `384x216`, `640x360`, `960x540` — are byte-identical through the growth, so the
   sessions under `tools/input-probe/results/` stay comparable row for row. The atlas is upscaled
-  ×`s` at build time (`scripts/bench-atlas.mjs`; `ceil(s² / 4)` pages of 2048² by the plan's area
+  ×`s` at build time (`apps/tizen/scripts/bench-atlas.mjs`; `ceil(s² / 4)` pages of
+  2048² by the plan's area
   model — 1 / 1 / 2 at R0-02's three sizes — since R1-05 from the **ungrouped** source atlas, and
   since R2-01 W4-6 at `artScale: 1` (`buildAtlas({ ungrouped: true, artScale: 1 })`) so the bench
   draws v1-scale art for good — the old one-page layout byte for byte, so R0-02's figures stay
@@ -1236,13 +1239,14 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   30 ms with nothing running, so absolute times mislead), applies §13's verdict rules and compares a
   WebGL 1 with a WebGL 2 session.
 - **The decode scenario** (R1-05 B4, decision W3-6 — `apps/tizen/src/bench/decode.ts`): after the
-  matrix a run loads the page a **175th time** (`DECODE_SCENARIO_INDEX` 174,
-  `BENCH_RUN_LENGTH` 177; `BENCH_SCENARIOS` is the 174-row matrix and the labels read `n/177`)
+  matrix a run loads the page a **191st time** (`DECODE_SCENARIO_INDEX` 190,
+  `BENCH_RUN_LENGTH` 193; `BENCH_SCENARIOS` is the 190-row matrix and the labels read `n/193`)
   to measure what an
   atlas page costs from file to GPU, on the game's own paths. The pages changed with R3-04.M4a
   (decisions RR-8 / W5-17): the bench build no longer ships a synthetic 2048² pair — it ships
   **the stand-in zone A's own PNG-8 pages** (`standin-zone-a`, plus `standin-zone-a-2` when the
-  group needs two; `scripts/bench-decode.mjs` packs them through the real pipeline into the RR-7
+  group needs two; `apps/tizen/scripts/bench-decode.mjs` packs them through the real
+  pipeline into the RR-7
   byte band, 0.3–0.6 MB per 2048×1024 — the band v2 zone pages will ship in) **and the shipped
   `common` and zone A pages** for reference (`DECODE_PAGE_IDS`; into `dist-bench/assets/atlas/
   decode-<id>.png`, so the bundle check's page rules cover them). The shipped two are the
@@ -1280,14 +1284,14 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   no ×2 — and only the older sessions fall back to the synthetic basis (`common` + two 2048²
   pages against 2 s, conservative, since `common` stays resident across a zone change).
 - **The stand-in load** (R3-04.M4a — `STANDIN_SCENARIO_ID` `standin-zone`, the run's
-  **penultimate** page load at index 175 since v2.0.x `5f211b13` added the **rewind scenario**
-  after it, the 177th load `?scenario=rewind` measuring the TV-resume's steps/s on the widget's
+  **penultimate** page load at index 191 since v2.0.x `5f211b13` added the **rewind scenario**
+  after it, the 193rd load `?scenario=rewind` measuring the TV-resume's steps/s on the widget's
   own engine-floor label): after the decode scenario the widget draws one 640×360 frame of the stand-in
   zone through the real bindings, from exactly those decoded pages. The headless twin
   `?scenario=standin-zone` gates the same frame (R3-04.M4b: `standinBenchViolations` — counts and
   the ordinary budgets, never milliseconds raised), so the on-screen table and the gate agree. The
   analyzer prints the row on its own line, excluded from the campaign aggregation. Red after a
-  whole run re-runs this load (the cursor lands on 175), so a red there is the stand-in
+  whole run re-runs this load (the cursor lands on 191), so a red there is the stand-in
   load, not the matrix.
 - **Headless:** `pnpm bench` builds the widget exactly as `bench:tv` does and opens each scenario
   with `?scenario=<id>` on the 1280×720 display, gating **counts only** — `tvBenchViolations` in
