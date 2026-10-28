@@ -48,7 +48,11 @@
  * its shape: the pages fetched, decoded and uploaded, with their sizes, encodings and bytes — since
  * plan R3-04.M4a that is the stand-in zone A page first, then the shipped `common` and `zone-a`
  * pages, every shape read off `buildDecodePages()` rather than pinned — and plan R3-04's zone-load
- * figure rides on those page timings (decision W5-19). Plan **R5-10.T7** retired the headless twin
+ * figure rides on those page timings (decision W5-19). Plan **v20x HARBENCH S8** appended one
+ * `video-<clip>` surface row per shipped clip after the image pages, so the id list is now pinned
+ * (`DECODE_PAGE_IDS_PIN`, restated 2026-10-27 for F-D of the v20x-D6 gate report) while the image
+ * shapes still read off the build and the video rows are checked against `BENCH_VIDEO_CLIPS` and
+ * the encoded mp4 bytes. Plan **R5-10.T7** retired the headless twin
  * of the TV bench's **stand-in load** (`?scenario=standin-zone`, R3-04.M4b): with the nine
  * remastered zones shipped, the run no longer gates a stand-in frame — the real zones are flown by
  * the first suite's sweep above. The widget keeps the page load itself for the owner's on-TV
@@ -73,13 +77,14 @@ import {
   BENCH_SCENARIOS,
   BENCH_SIZES,
 } from '../../apps/tizen/src/bench/matrix.js';
-import { DECODE_SCENARIO_ID } from '../../apps/tizen/src/bench/decode.js';
+import { DECODE_SCENARIO_ID, VIDEO_DECODE_ENCODING } from '../../apps/tizen/src/bench/decode.js';
 import {
   DECODE_PAGE_IDS,
   buildDecodePages,
   decodePageFile,
   pngColorType,
 } from '../../apps/tizen/scripts/bench-decode.mjs';
+import { BENCH_VIDEO_CLIPS, BENCH_VIDEO_DIR } from '../../apps/tizen/scripts/bench-atlas.mjs';
 import type {
   DecodeBenchRecord,
   RenderBenchRecord,
@@ -601,6 +606,34 @@ const TV_BENCH_OUT_DIR = fileURLToPath(
 );
 
 /**
+ * The row ids the decode scenario's video rows ship (plan v20x HARBENCH S8), in measured order:
+ * one `video-${id}` per entry of `BENCH_VIDEO_CLIPS`, the id rule being the widget's `videoRow`
+ * (`apps/tizen/src/bench/decode.ts`).
+ */
+const DECODE_VIDEO_ROW_IDS = Object.freeze([
+  'video-attract-ambient',
+  'video-warn-zone-a',
+  'video-title-sting',
+  'video-ark-sailing',
+]);
+
+/**
+ * The decode scenario's full page-id pin: the atlas pages ({@link DECODE_PAGE_IDS}) first, then
+ * the {@link DECODE_VIDEO_ROW_IDS} — the order the widget's decode scenario appends them in
+ * (`apps/tizen/src/bench/run.ts`).
+ *
+ * Restated 2026-10-27 (lane v20x-FIX-PIN; gate finding F-D of `v20x-D6GATE-report.md`): HARBENCH
+ * S8 commit `4b37d123` gave the scenario the surface rows and this bench-project pin stayed at
+ * the old three — the widget lane's gates ran the tizen bench suites, which pin `DECODE_PAGE_IDS`
+ * itself (they still pass: it stayed three), never this use. Derived programmatically once from
+ * `DECODE_PAGE_IDS` + `BENCH_VIDEO_CLIPS` through the `video-` id rule, never hand-written. A
+ * future delta that moves anything beyond an intended clip-row addition means an unexpected page
+ * shifted — investigate first; the atlas head follows the module constant, only the video tail
+ * re-pins here.
+ */
+const DECODE_PAGE_IDS_PIN = Object.freeze([...DECODE_PAGE_IDS, ...DECODE_VIDEO_ROW_IDS]);
+
+/**
  * Atlas pages each density of the TV bench must have: the modelled ×s atlas is the 1024² source
  * page scaled ×s and re-packed into pages of at most 2048² (`apps/tizen/scripts/bench-atlas.mjs`
  * `benchPageCount`, `ceil(s² / 4)`) — one page up to ×2 (×1.5 is one 2048×1024 page, ×2 one 2048²),
@@ -730,9 +763,13 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
     const outcome = await runTvScenario(tvUrl, DECODE_SCENARIO_ID, '&reps=2');
     expect(outcome.error).toBeNull();
     const decode = outcome.decode as DecodeBenchRecord;
-    expect(decode.pages.map((page) => page.id)).toEqual(DECODE_PAGE_IDS);
+    expect(decode.pages.map((page) => page.id)).toEqual(DECODE_PAGE_IDS_PIN);
     expect(decode.repetitions).toBe(2);
-    for (const page of decode.pages) {
+    // The video rows (plan v20x HARBENCH S8) ride the same `pages` array after the image pages;
+    // the `avc1` encoding tag is the widget's own marker (decode.ts `videoRow`).
+    const imagePages = decode.pages.filter((page) => page.encoding !== VIDEO_DECODE_ENCODING);
+    const videoPages = decode.pages.filter((page) => page.encoding === VIDEO_DECODE_ENCODING);
+    for (const page of imagePages) {
       const bytes = statSync(join(TV_BENCH_OUT_DIR, 'assets/atlas', decodePageFile(page.id))).size;
       console.info(
         `[bench] tv decode ${page.id} ${page.width}x${page.height} ${page.encoding} ` +
@@ -749,14 +786,52 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       // Chromium has createImageBitmap, so the alternative path is measured too.
       expect(page.bitmapMs).not.toBeNull();
     }
-    // The pages and their shapes come from the same deterministic build the bench plugin baked —
-    // since R3-04.M4a the stand-in zone's own page first, then `common` and `zone-a` (no more
-    // synthetic 2048² pages, and the shipped pages are PNG-8 since R1-05).
+    // The video rows: the R7-VID surface path over the build's shipped clips (plan v20x HARBENCH
+    // S8). What the bench host truly returns is what is pinned here (lane v20x-FIX-PIN, measured
+    // 2026-10-27): the widget's surface detection reads `win.Video`
+    // (`apps/tizen/src/bench/decode.ts` `createDecodeHost`) and Chromium never exposes `Video`
+    // as a window constructor, so every clip row folds to the `videoRow` missing-surface shape —
+    // the spec columns filled, the measured columns zeroed/null, the error 'video surface
+    // unavailable'. The mp4 clips are still encoded into the build (ffmpeg) and sit in the served
+    // dir — the rows just never fetch them. If a later lane fixes that detection, restate these
+    // rows to the measured shape with the why and when, as always. The CI ffmpeg gap is gate
+    // finding F-F's, not this pin's.
+    expect(videoPages).toHaveLength(BENCH_VIDEO_CLIPS.length);
+    for (let i = 0; i < BENCH_VIDEO_CLIPS.length; i++) {
+      const clip = BENCH_VIDEO_CLIPS[i];
+      const page = videoPages[i];
+      const shippedBytes = statSync(join(TV_BENCH_OUT_DIR, BENCH_VIDEO_DIR, `${clip.id}.mp4`)).size;
+      expect(shippedBytes, clip.id).toBeGreaterThan(0);
+      expect(page.id, `row ${i}`).toBe(`video-${clip.id}`);
+      expect(page.what).toBe(clip.what);
+      expect(page.encoding).toBe(VIDEO_DECODE_ENCODING);
+      // The virtual module stamps every clip row with the frame the encoder cuts at
+      // (`apps/tizen/scripts/bench-atlas.mjs` `load()`), and the texture is that frame RGBA.
+      expect([page.width, page.height]).toEqual([FRAME_W, FRAME_H]);
+      expect(page.textureBytes).toBe(FRAME_W * FRAME_H * 4);
+      // The missing-surface fold (`videoRow` over empty `VideoRuns`): nothing fetched, pulled or
+      // uploaded — and `decodeMs`/`uploadMs`/`uploadSyncedMs` are null on every video row.
+      expect(page.error, page.id).toBe('video surface unavailable');
+      expect(page.bytes).toBe(0);
+      expect(page.repetitions).toBe(0);
+      expect(page.fetchMs).toBeNull();
+      expect(page.bitmapMs).toBeNull();
+      expect(page.bitmapUploadMs).toBeNull();
+      expect(page.totalMs).toBeNull();
+      expect(page.firstTotalMs).toBe(0);
+      expect(page.decodeMs).toBeNull();
+      expect(page.uploadMs).toBeNull();
+      expect(page.uploadSyncedMs).toBeNull();
+    }
+    // The image pages and their shapes come from the same deterministic build the bench plugin
+    // baked — since R3-04.M4a the stand-in zone's own page first, then `common` and `zone-a`
+    // (no more synthetic 2048² pages, and the shipped pages are PNG-8 since R1-05). The video
+    // rows are not in that build (they are the clips, checked row by row above).
     const built = buildDecodePages();
-    expect(decode.pages.map((page) => [page.id, page.width, page.height])).toEqual(
+    expect(imagePages.map((page) => [page.id, page.width, page.height])).toEqual(
       built.map((page) => [page.id, page.width, page.height]),
     );
-    expect(decode.pages.map((page) => page.encoding)).toEqual(
+    expect(imagePages.map((page) => page.encoding)).toEqual(
       built.map((page) => (pngColorType(page.png) === 3 ? 'png8' : 'rgba')),
     );
     expect(decode.imageBitmap).toBe(true);
