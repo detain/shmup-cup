@@ -65,22 +65,32 @@ export interface BenchRunState {
   readonly sent: readonly number[];
   /** The last error that stopped the run, or `null`. */
   readonly lastError: string | null;
+  /**
+   * Rows the run skipped at its start from the same-game-code ledger (`./ledger.ts`) — 0 for a
+   * full run; shown in the scenario labels and the RUN line as `(skipped N same game)`.
+   */
+  readonly skippedAtStart: number;
 }
 
 /**
- * A fresh run, positioned on the first scenario.
+ * A fresh run, positioned on the first scenario — or, with the plan of a same-code skip
+ * (`./ledger.ts` {@link skipPlan}), on its first pending row with that many counted skipped.
  *
  * @param session - Session id.
  * @param startedAt - Wall-clock start.
  * @param webGLVersion - WebGL version to ask for.
  * @param timing - Phase timing.
- * @returns The state (`running`, cursor 0, no records).
+ * @param cursor - Index to start at (default 0, the first scenario).
+ * @param skippedAtStart - Rows the ledger let the run skip (default 0 — a full run).
+ * @returns The state (`running`, no records).
  */
 export function createRunState(
   session: string,
   startedAt: number,
   webGLVersion: number,
   timing: BenchTiming,
+  cursor: number = 0,
+  skippedAtStart: number = 0,
 ): BenchRunState {
   return {
     version: BENCH_STATE_VERSION,
@@ -88,7 +98,7 @@ export function createRunState(
     startedAt,
     running: true,
     single: false,
-    cursor: 0,
+    cursor,
     seq: 0,
     webGLVersion,
     timing,
@@ -97,6 +107,7 @@ export function createRunState(
     rewind: null,
     sent: [],
     lastError: null,
+    skippedAtStart,
   };
 }
 
@@ -285,6 +296,9 @@ export function parseRunState(text: string | null): BenchRunState | null {
     rewind: isRewindRecord(o.rewind) ? o.rewind : null,
     sent: (o.sent as unknown[]).filter(isNumber),
     lastError: typeof o.lastError === 'string' ? o.lastError : null,
+    // Additive field (plan v20x BENCSKIP): a state stored before it reads as a full run.
+    skippedAtStart:
+      isNumber(o.skippedAtStart) && o.skippedAtStart > 0 ? Math.floor(o.skippedAtStart) : 0,
   };
 }
 

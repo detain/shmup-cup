@@ -21,6 +21,9 @@ startRenderBench({
   // `__SHMUP_BUILD__`, plus `@<w>x<h>` in a build with an output — composed by the bench config so
   // it is a literal in app.js, where `scripts/bench-campaign.mjs` reads it (`./output.ts`).
   buildId: __SHMUP_BENCH_BUILD_ID__,
+  // The game-code hash baked in by the bench configs (plan v20x BENCSKIP): the skip ledger's
+  // and the payloads' pooling identity — every change that could move a drawn pixel alters it.
+  gameCodeHash: __SHMUP_GAME_CODE_HASH__,
   assets: bench,
   campaign: parseCampaignConfig(__SHMUP_BENCH_CAMPAIGN__, __SHMUP_BENCH_PAUSE_S__),
   output: parseBenchOutput(__SHMUP_BENCH_OUTPUT__),

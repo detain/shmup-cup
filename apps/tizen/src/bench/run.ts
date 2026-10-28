@@ -141,6 +141,14 @@ import {
   type BenchTiming,
 } from './matrix.js';
 import {
+  BENCH_LEDGER_KEY,
+  benchSkipNote,
+  ledgerWith,
+  parseLedger,
+  serializeLedger,
+  skipPlan,
+} from './ledger.js';
+import {
   NOTE_COLOR,
   benchPageLines,
   benchResultPages,
@@ -244,6 +252,13 @@ export interface RenderBenchAppOptions {
   readonly reportUrl: string;
   /** The bundle's build id (`__SHMUP_BUILD__`). */
   readonly buildId: string;
+  /**
+   * The game-code hash the bundle was built with (`__SHMUP_GAME_CODE_HASH__`, plan v20x
+   * BENCSKIP — `scripts/game-code-hash.mjs`): the identity the skip ledger and the payloads'
+   * pooling key on. Absent / `''` (a harness that passed none, a build without the define): the
+   * bench never offers a skip and never writes a ledger — its pre-BENCSKIP behavior.
+   */
+  readonly gameCodeHash?: string;
   /** The density atlases and particle presets (`virtual:shmup-render-bench`). */
   readonly assets: BenchAssets;
   /** The host (default {@link detectBenchHost}). */
@@ -1097,6 +1112,15 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
   if (state !== null && state !== stored) write(storage, BENCH_STATE_KEY, serializeRunState(state));
   const mode: 'scenario' | 'results' = state !== null && state.running ? 'scenario' : 'results';
 
+  // The same-game-code skip ledger (plan v20x BENCSKIP): the rows this game's code already has
+  // timings for. It never blocks anything — an unknown code, a foreign ledger or an empty one
+  // all read as "run the whole suite", the behavior of every bench built before this one.
+  const gameCode = options.gameCodeHash ?? '';
+  let ledgerDone = parseLedger(read(storage, BENCH_LEDGER_KEY), gameCode);
+  /** Whether the render scenario at an index is skipped by this build's output (`./output.ts`). */
+  const plannedSkip = (index: number): boolean =>
+    benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null;
+
   /**
    * Stores the state.
    *
@@ -1134,6 +1158,23 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       // As for the run state: the campaign goes on in this page.
     }
   };
+  /** Stores the ledger (a storage that refuses it just loses the offer — the run goes on). */
+  const saveLedger = (): void => {
+    if (gameCode === '') return;
+    write(storage, BENCH_LEDGER_KEY, serializeLedger(gameCode, ledgerDone));
+  };
+  /**
+   * Notes one measured row in the ledger. Every save path of a successful measurement calls it —
+   * a render scenario, the stand-in load, the decode and the rewind page (a page whose record
+   * carries an error is not marked, so a skip run visits it again) — and a **Red** re-run of a
+   * row re-marks the idempotent set.
+   *
+   * @param index - The measured row's scenario index.
+   */
+  const markLedger = (index: number): void => {
+    ledgerDone = ledgerWith(ledgerDone, index);
+    saveLedger();
+  };
   /**
    * The session-level facts of a payload.
    *
@@ -1142,6 +1183,9 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
    */
   const envOf = (run: BenchRunState): TvBenchEnv => ({
     buildId: options.buildId,
+    // Additive field (plan v20x BENCSKIP): the analyzer pools by it when non-empty, exactly as
+    // the widget's offer does — `''` (a build without the define) keeps the old buildId pooling.
+    gameCodeHash: gameCode,
     output: output === null ? null : output.id,
     host: host.name,
     userAgent: (win as Partial<Window>).navigator?.userAgent ?? '',
@@ -1226,6 +1270,13 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       return;
     }
     if (mode === 'results') {
+      // The ledger's offer (plan v20x BENCSKIP): **Enter** runs the rows this game code has left,
+      // **Green** runs the full suite as a fresh noise-floor sample and takes the ledger back to
+      // zero. Without an offer — no ledger, foreign game code, or nothing pending — every key
+      // starts the full run exactly as before, and the ledger is cleared for it to refill.
+      const plan = skipPlan(ledgerDone, plannedSkip);
+      const skipStart =
+        key === 'enter' && gameCode !== '' && plan.skipped > 0 && plan.remaining > 0;
       const now = Date.now();
       save(
         createRunState(
@@ -1233,8 +1284,14 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
           now,
           benchWebGLVersion(search, storage),
           timingFromSearch(search, TV_BENCH_TIMING),
+          skipStart ? plan.firstPending : 0,
+          skipStart ? plan.skipped : 0,
         ),
       );
+      if (!skipStart) {
+        ledgerDone = [];
+        saveLedger();
+      }
       reload();
     }
   });
@@ -1257,12 +1314,15 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     void measureDecodeScenario(
       options,
       run.webGLVersion === 2 ? 2 : 1,
-      `R1-05 DECODE ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}`,
+      `R1-05 DECODE ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}${benchSkipNote(
+        run.skippedAtStart,
+      )}`,
       decodeRepetitionsFromSearch(search, TV_DECODE_REPETITIONS),
     ).then((record) => {
       if (state === null) return;
       const next = recordDecode(state, record);
       save(next);
+      if (record.error === null) markLedger(DECODE_SCENARIO_INDEX);
       post([], next.cursor >= BENCH_RUN_LENGTH, reload, record);
     });
     return;
@@ -1275,12 +1335,15 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     measureStandinScenario(
       options,
       run.webGLVersion === 2 ? 2 : 1,
-      `R3-04 STAND-IN ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}`,
+      `R3-04 STAND-IN ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}${benchSkipNote(
+        run.skippedAtStart,
+      )}`,
     ).then(
       (record) => {
         if (state === null) return;
         const next = recordResult(state, record);
         save(next);
+        markLedger(record.index);
         post([record], next.cursor >= BENCH_RUN_LENGTH, reload);
       },
       (error: unknown) => {
@@ -1304,6 +1367,7 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     );
     const next = recordRewind(state, record);
     save(next);
+    if (record.error === null) markLedger(REWIND_SCENARIO_INDEX);
     const row: HarbenchRewindRecord = {
       record: 'rewind',
       scenario: record.scenario,
@@ -1338,12 +1402,14 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     const scenario = BENCH_SCENARIOS[run.cursor];
     mark(win, 'scenario');
     const label =
-      `R0-02 ${run.cursor + 1}/${BENCH_SCENARIOS.length} ${scenario.id} ` + `GL${run.webGLVersion}`;
+      `R0-02 ${run.cursor + 1}/${BENCH_SCENARIOS.length} ${scenario.id} ` +
+      `GL${run.webGLVersion}${benchSkipNote(run.skippedAtStart)}`;
     measureScenario(options, scenario, run.timing, run.webGLVersion === 2 ? 2 : 1, label).done.then(
       (record) => {
         if (state === null) return;
         const next = recordResult(state, record);
         save(next);
+        markLedger(record.index);
         post([record], next.cursor >= BENCH_RUN_LENGTH, reload);
       },
       (error: unknown) => {
@@ -1496,6 +1562,15 @@ function showResults(
   const { win, canvas } = options;
   const output = options.output ?? null;
   const skipped = benchSkippedScenarios(output);
+  // The same-game-code ledger's offer (plan v20x BENCSKIP), read at page build — so a partial
+  // run stopped by **Back** makes an honest offer over what that run left pending.
+  const gameCode = options.gameCodeHash ?? '';
+  const ledgerPlan = skipPlan(
+    parseLedger(read(storageOf(win), BENCH_LEDGER_KEY), gameCode),
+    (index) => benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null,
+  );
+  const skipOffer =
+    gameCode !== '' && ledgerPlan.remaining > 0 && ledgerPlan.skipped > 0 ? ledgerPlan : null;
   const size = BENCH_V2_SIZE;
   const source = atlasFor(options.assets, 1);
   const ui = createDrawList(256, RESULTS_MAX_LINES);
@@ -1533,6 +1608,7 @@ function showResults(
     status,
     scenarios: BENCH_SCENARIOS.length - skipped.length,
     timing: TV_BENCH_TIMING,
+    skipOffer,
     page,
     maxLines,
   });

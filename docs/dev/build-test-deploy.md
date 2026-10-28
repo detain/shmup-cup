@@ -421,6 +421,19 @@ across builds the analyzer refuses rather than prints a mixed table. The folder'
 `a4c62bb1`'s §13 rows more).
 
 The results also stay in the widget's `localStorage` until the next run, so a crash loses nothing.
+**The skip ledger (plan v20x BENCSKIP).** Both bench builds bake in a `gameCodeHash` — a 10-hex
+sha256 digest of the shipped game's draw inputs (`scripts/game-code-hash.mjs` over the five package
+`src` trees, `content/`, the art sources and the atlas pipeline; Markdown and the scale-1-inert v2
+pixel maps excluded) — never of the bench's own code, and every row measured is recorded in a
+localStorage ledger keyed by it. So a results page whose ledger holds same-code rows offers two
+first-class choices: **Enter** runs the *un-measured* rows only (decode / stand-in / rewind included
+when they are missing — ≈ 10 min for a 19-row append), **Green** (`ColorF1Green`, 404; **F** on a
+keyboard) runs the *full* suite again and resets the ledger — a fresh noise-floor sample, not a
+fallback, and rows shared by two same-code sessions pool as samples, never superseded. A rebuild of
+unchanged game code (bench, test, docs or store-art commits) inherits its timings; any byte that can
+move a pixel forces the full suite. Payloads carry the code additively as `env.gameCodeHash` and the
+analyzer pools campaign blocks by *game code* when present — sessions without it group by
+`(buildId, output)` exactly as before, so the committed `analysis-*.txt` tables are unchanged.
 `pnpm --filter @shmup/tizen dev:bench` serves the page in a desktop browser (`?scenario=<id>` runs
 one scenario — `?scenario=decode` the decode scenario (`?reps=` 1–50 its repetitions), `?scenario=standin-zone` the headless twin of the stand-in draw (plan R3-04.M4b; `test/bench/render.perf.ts` gates it) —, `?warmup=`
 / `?measure=` / `?sync=` shorten the phases, `?gl=2`). `pnpm bench` builds the widget and opens

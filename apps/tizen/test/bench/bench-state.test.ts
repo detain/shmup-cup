@@ -308,3 +308,36 @@ describe('bench run state: planned skips (a build output — src/bench/output.ts
     expect(next).toMatchObject({ cursor: 5, running: false, single: false });
   });
 });
+
+describe('bench run state — skip ledger fields (plan v20x BENCSKIP)', () => {
+  it('keeps the four-argument start at row zero with no skipped rows', () => {
+    const full = createRunState('rb-full', 7, 1, TV_BENCH_TIMING);
+    expect(full).toMatchObject({ cursor: 0, skippedAtStart: 0 });
+  });
+
+  it('starts a planned skip run on its first pending row', () => {
+    const skip = createRunState('rb-skip', 7, 1, TV_BENCH_TIMING, 174, 174);
+    expect(skip).toMatchObject({ running: true, cursor: 174, skippedAtStart: 174 });
+    // The skip plan's first pending row is where the run works on from.
+    const state = recordResult(skip, rec(174));
+    expect(state).toMatchObject({ cursor: 175, skippedAtStart: 174, running: true });
+    // Red on a stopped skip run re-runs its last measured row, note preserved (plan v20x
+    // BENCSKIP: Red on a *running* state just resumes — as it always did).
+    expect(rerunScenario(stopRun(state, null))).toMatchObject({
+      cursor: 174,
+      single: true,
+      skippedAtStart: 174,
+    });
+  });
+
+  it('reads a stored state without the field as a full run', () => {
+    const state = createRunState('rb-old', 7, 1, TV_BENCH_TIMING);
+    const raw = JSON.parse(serializeRunState(state)) as Record<string, unknown>;
+    delete raw.skippedAtStart;
+    expect(parseRunState(JSON.stringify(raw))).toMatchObject({ skippedAtStart: 0, cursor: 0 });
+    const bad = { ...raw, skippedAtStart: -4 };
+    expect(parseRunState(JSON.stringify(bad))?.skippedAtStart).toBe(0);
+    const fractional = { ...raw, skippedAtStart: 174.9 };
+    expect(parseRunState(JSON.stringify(fractional))?.skippedAtStart).toBe(174);
+  });
+});

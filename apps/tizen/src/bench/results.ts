@@ -25,6 +25,7 @@ import type { DrawList } from '@shmup/core';
 import { RAF_BUCKET_EDGES_MS } from '@shmup/render-pixi';
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
 import { DECODE_SCENARIO_INDEX } from './decode.js';
+import { benchSkipNote } from './ledger.js';
 import { M7_SLOWDOWN_ESTIMATE, REWIND_PATIENCE_S, type RewindBenchRecord } from './rewind.js';
 import { BENCH_SIZES, findBenchScenario, type BenchScenario, type BenchTiming } from './matrix.js';
 import { BENCH_OUTPUT_SCALE_MODE } from './output.js';
@@ -446,6 +447,12 @@ export interface BenchPageInput {
   readonly skipped?: readonly BenchScenario[];
   /** The phase timing of a TV run. */
   readonly timing: BenchTiming;
+  /**
+   * The same-game-code ledger lets **Enter** run only the new rows (plan v20x BENCSKIP): the
+   * counts the offer lines print (`./ledger.ts` {@link skipPlan}). `null` / absent — no ledger,
+   * a foreign code, or nothing left — the page offers the full run as before.
+   */
+  readonly skipOffer?: { readonly skipped: number; readonly remaining: number } | null;
   /** The page to show, from 0 (clamped to the pages there are; default 0). */
   readonly page?: number;
   /** Lines that fit the screen (default: no limit — one page holds everything). */
@@ -526,9 +533,10 @@ export function formatOutputLines(output: string, skipped: readonly BenchScenari
 function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number } {
   const t = input.timing;
   const seconds = (ms: number): string => String(Math.round(ms / 1000));
-  const minutes = Math.round(
-    (input.scenarios * (t.warmupMs + t.measureMs + t.syncMs + 2000)) / 60000,
-  );
+  const minutesOf = (rows: number): number =>
+    Math.round((rows * (t.warmupMs + t.measureMs + t.syncMs + 2000)) / 60000);
+  const minutes = minutesOf(input.scenarios);
+  const offer = input.skipOffer ?? null;
   const lines: BenchLine[] = [
     {
       text:
@@ -537,14 +545,32 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
         (input.output === undefined || input.output === null ? '' : `  output ${input.output}`),
       color: HEADER_COLOR,
     },
-    {
+  ];
+  if (offer === null) {
+    lines.push({
       text:
         `ENTER run: ${input.scenarios} scenarios + decode + stand-in + rewind, ` +
         `~${minutes} min ` +
         `(${seconds(t.warmupMs)} s warm, ${seconds(t.measureMs)} s measure, ` +
         `${seconds(t.syncMs)} s sync)`,
       color: NOTE_COLOR,
-    },
+    });
+  } else {
+    // Same game code already measured rows (plan v20x BENCSKIP): Enter runs what is left.
+    lines.push({
+      text:
+        `ENTER new rows only: ${offer.remaining} row(s) left, ~${minutesOf(offer.remaining)} min ` +
+        `(${offer.skipped} measured on this game code)`,
+      color: NOTE_COLOR,
+    });
+    lines.push({
+      text:
+        `GREEN full suite: ${input.scenarios} scenarios + decode + stand-in + rewind, ` +
+        `~${minutes} min: fresh noise-floor sample`,
+      color: NOTE_COLOR,
+    });
+  }
+  lines.push(
     {
       text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
       color: NOTE_COLOR,
@@ -556,7 +582,7 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
         (input.status === '' ? '' : `  ${input.status}`),
       color: NOTE_COLOR,
     },
-  ];
+  );
   if (input.output !== undefined && input.output !== null) {
     const extra = formatOutputLines(input.output, input.skipped ?? []);
     for (let i = 0; i < extra.length; i++) lines.push(extra[i]);
@@ -597,7 +623,8 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   const page = Math.max(0, Math.min(pages - 1, Math.floor(input.page ?? 0)));
   lines.push({
     text:
-      `RUN ${state.session}  ${state.records.length}/${input.scenarios + 1} measured  ` +
+      `RUN ${state.session}  ${state.records.length}/${input.scenarios + 1} measured` +
+      `${benchSkipNote(state.skippedAtStart)}  ` +
       `sent ${sent}/${state.records.length}` +
       (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +
       (state.running ? '  (still running)' : '') +

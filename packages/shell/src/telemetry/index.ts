@@ -1551,6 +1551,13 @@ export const RENDER_BENCH_KIND = 'render-bench';
 export interface RenderBenchEnv {
   /** The build id (`__SHMUP_BUILD__`) of the bench bundle. */
   buildId: string;
+  /**
+   * The game-code hash of the bench bundle (`__SHMUP_GAME_CODE_HASH__`, plan v20x BENCSKIP):
+   * the identity sessions pool their rows by — equal across a bench-only rebuild, different when
+   * any shipped game draw input moved. Additive: sessions recorded before it carry no field, and
+   * the analyzer then falls back to `buildId` grouping, exactly as it always behaved.
+   */
+  gameCodeHash?: string;
   /** Which host ran it: `'tizen'`, `'webos'` or `'browser'`. */
   host: string;
   /** `navigator.userAgent`, or `''` when unavailable. */

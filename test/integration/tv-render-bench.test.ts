@@ -1007,3 +1007,191 @@ describe('render bench analyzer: plan §13 prints its outcome rows at 960x540 as
     expect(analyzeBenchSessions([knobOnly])).not.toContain('Plan §13 at 960×540');
   });
 });
+
+describe('bench analyzer: game-code pooling (plan v20x BENCSKIP): one code merges across builds, two codes never pool', () => {
+  /** The 2026-10-27 law's env type, with the BENCSKIP field it may now carry. */
+  type BenchEnv = RenderBenchEnv & { output?: string | null };
+
+  /** The code a rebuilt-bench-over-same-game bundle carries. */
+  const CODE = 'c0de000001';
+  /** A different game code (any shipped draw input moved between the two builds). */
+  const CODE2 = 'c0de000002';
+
+  /**
+   * One log-server line (the law describe's builder, mirrored for its own file).
+   *
+   * @param session - Session id.
+   * @param seq - Payload sequence.
+   * @param env - The session env.
+   * @param results - The payload's records.
+   * @param done - Whether the run completed.
+   * @returns The JSONL line.
+   */
+  function line(
+    session: string,
+    seq: number,
+    env: BenchEnv,
+    results: RenderBenchRecord[],
+    done = false,
+  ): string {
+    return JSON.stringify({
+      kind: RENDER_BENCH_KIND,
+      session,
+      seq,
+      sentAt: 1_793_300_000_000 + seq,
+      receivedAt: 1_793_300_000_001 + seq,
+      from: '10.0.0.1',
+      env,
+      results,
+      done,
+    });
+  }
+
+  /**
+   * A full-window GL 1 env.
+   *
+   * @param buildId - The bundle's build id.
+   * @param startedAt - When the run started (orders the sessions).
+   * @param gameCodeHash - The code field, absent for a legacy session.
+   * @returns The env.
+   */
+  function envWin(buildId: string, startedAt: number, gameCodeHash?: string): BenchEnv {
+    return {
+      buildId,
+      ...(gameCodeHash === undefined ? {} : { gameCodeHash }),
+      host: 'tizen',
+      userAgent: 'UA',
+      innerWidth: 1920,
+      innerHeight: 1080,
+      devicePixelRatio: 1,
+      webGLVersion: 1,
+      scenarios: BENCH_SCENARIOS.length,
+      startedAt,
+      output: null,
+    };
+  }
+
+  /** The busy rows of 384×216 and 640×360 — the baseline plus one §13 frame. */
+  function busyRows(): RenderBenchRecord[] {
+    const i384 = BENCH_SCENARIOS.findIndex((s) => s.id === '384x216-busy');
+    const i640 = BENCH_SCENARIOS.findIndex((s) => s.id === '640x360-busy');
+    return [record(i384), record(i640)];
+  }
+
+  /** Only the 640×360 busy row (a skip run never re-measures the frozen baseline). */
+  function row640(): RenderBenchRecord[] {
+    const i640 = BENCH_SCENARIOS.findIndex((s) => s.id === '640x360-busy');
+    return [record(i640)];
+  }
+
+  let dir = '';
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'shmup-bench-code-'));
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  /**
+   * Writes one session file.
+   *
+   * @param name - File name (`.jsonl` appended).
+   * @param lines - The payload lines.
+   * @returns The path.
+   */
+  function sessionFile(name: string, lines: string[]): string {
+    const file = join(dir, `${name}.jsonl`);
+    writeFileSync(file, lines.join('\n') + '\n');
+    return file;
+  }
+
+  it('pools two builds of one game code into one block; samples stack, they never supersede', () => {
+    // The owner's exact story: the 174-era full run, a bench-only rebuild (new build id, same
+    // game code), then the new-rows run whose few rows still land in the SAME tables.
+    const full = sessionFile('rb-code-full', [
+      line('rb-code-full', 1, envWin('b-one', 1_793_299_000_000, CODE), busyRows(), true),
+    ]);
+    const rest = sessionFile('rb-code-rest', [
+      line('rb-code-rest', 1, envWin('b-two', 1_793_300_100_000, CODE), row640(), true),
+    ]);
+    const report = analyzeBenchSessions([full, rest]);
+    // One block for the window output, naming both sessions — one pooled campaign of 2 runs.
+    expect(report).toContain('2 session(s) (rb-code-full, rb-code-rest); runs: GL 1 × 2.');
+    expect(report).toContain('## Output 1920x1080 (window) [build b-one]');
+    // The 640×360 busy row sits in both sessions: the table counts BOTH runs (the second is a
+    // noise sample, not a replacement — the amendment rules out newest-wins across sessions).
+    expect(report).toMatch(/\|\s*busy\s*\|\s*2\s*\|/);
+    // Repeats therefore exist: no “no noise floor” refusal, and the §13 pairing resolved.
+    expect(report).not.toContain('No noise floor');
+    expect(report).toContain('median of 2 runs');
+    // The baseline from the full run and the 640×360 row from the skip run share a table:
+    // §13's outcome line prints Δ points (the pairing survived the split across sessions).
+    expect(report).toContain('Plan §13 at 640×360');
+    expect(report).not.toContain('no 384x216 baseline in the same run');
+  });
+
+  it('refuses to pool two game codes even under one output resolution', () => {
+    const one = sessionFile('rb-refuse-a', [
+      line('rb-refuse-a', 1, envWin('b-one', 1_793_299_000_000, CODE), busyRows(), true),
+    ]);
+    const two = sessionFile('rb-refuse-b', [
+      line('rb-refuse-b', 1, envWin('b-two', 1_793_300_100_000, CODE2), busyRows(), true),
+    ]);
+    const report = analyzeBenchSessions([one, two]);
+    // Each code sits alone: no shared block, no pooled noise, exactly the old cross-build refusal.
+    expect(report).toContain('1 session(s) (rb-refuse-a)');
+    expect(report).toContain('1 session(s) (rb-refuse-b)');
+    expect(report).not.toContain('2 session(s) (rb-refuse-a, rb-refuse-b)');
+    expect(report).toContain('No noise floor: no WebGL version has 2 runs');
+  });
+
+  it('legacy sessions without the field keep today’s build-id partitioning, both ways', () => {
+    // Two legacy sessions of one build: pooled, as every committed table has always shown.
+    const a = sessionFile('rb-leg-a', [
+      line('rb-leg-a', 1, envWin('b-one', 1_793_299_000_000), busyRows(), true),
+    ]);
+    const b = sessionFile('rb-leg-b', [
+      line('rb-leg-b', 1, envWin('b-one', 1_793_300_100_000), busyRows(), true),
+    ]);
+    expect(analyzeBenchSessions([a, b])).toContain(
+      '2 session(s) (rb-leg-a, rb-leg-b); runs: GL 1 × 2.',
+    );
+    // A hashed session of the same build id never joins the legacy block (and vice versa).
+    const h = sessionFile('rb-leg-h', [
+      line('rb-leg-h', 1, envWin('b-one', 1_793_300_200_000, CODE), busyRows(), true),
+    ]);
+    const mixed = analyzeBenchSessions([a, h]);
+    expect(mixed).toContain('1 session(s) (rb-leg-a)');
+    expect(mixed).toContain('1 session(s) (rb-leg-h)');
+  });
+
+  it('inside one session a Red re-run still replaces the row (per-session dedupe untouched)', () => {
+    const rows = busyRows();
+    const again = {
+      ...rows[1],
+      twoTickShare: rows[1].twoTickShare + 0.05,
+      endedAt: rows[1].endedAt + 1,
+    };
+    const file = sessionFile('rb-redup', [
+      line('rb-redup', 1, envWin('b-one', 1_793_299_000_000, CODE), [rows[0]]),
+      line('rb-redup', 2, envWin('b-one', 1_793_299_000_000, CODE), [rows[1]], false),
+      line('rb-redup', 3, envWin('b-one', 1_793_299_000_000, CODE), [again], true),
+    ]);
+    const read = readBenchSession(file);
+    expect(read.records).toHaveLength(2);
+    expect(read.records.find((r: RenderBenchRecord) => r.index === rows[1].index)).toEqual(again);
+  });
+
+  it('an empty gameCodeHash string reads as legacy, not as a code of its own', () => {
+    const noField = sessionFile('rb-empty-f', [
+      line('rb-empty-f', 1, envWin('b-one', 1_793_299_000_000), busyRows(), true),
+    ]);
+    const empty = sessionFile('rb-empty-e', [
+      line('rb-empty-e', 1, envWin('b-one', 1_793_300_100_000, ''), busyRows(), true),
+    ]);
+    // Both are build-id sessions of one build → one block (the '' never opens a `code:` pool).
+    expect(analyzeBenchSessions([noField, empty])).toContain(
+      '2 session(s) (rb-empty-f, rb-empty-e); runs: GL 1 × 2.',
+    );
+  });
+});

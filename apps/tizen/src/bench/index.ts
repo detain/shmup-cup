@@ -23,7 +23,18 @@
  * otherwise only shows as late frames), plus draw calls, pooled render-target bytes, atlas texture
  * bytes and the coarse JS heap (`./run.ts`, `./stats.ts`). Remote: **Enter** starts the matrix,
  * **Back** exits (and stops a run, so the next Enter starts a fresh session), **Red** re-runs a
- * scenario, **Left / Right** page the results (`./host.ts`).
+ * scenario, **Green** runs the full suite over the ledger's offer, **Left / Right** page the
+ * results (`./host.ts`).
+ *
+ * **The skip ledger (plan v20x BENCSKIP, owner 2026-10-28).** The rows a game code has measured
+ * are remembered in `localStorage` (`./ledger.ts`) under the build-time game-code hash
+ * (`scripts/game-code-hash.mjs` — the digest of everything that can move a drawn pixel, defined
+ * by both bench Vite configs and carried in every payload's env): rebuilding the bench over
+ * unchanged game code lets the results page offer **Enter = the new rows only** against **Green =
+ * the full suite again** as a fresh noise-floor sample — the owner sits deliberate full runs, so
+ * both arms are first-class, and repeated rows across sessions stack as samples, never
+ * supersede. Changed game code (or a bundle built without the hash) finds no matching ledger and
+ * runs exactly the pre-ledger full suite.
  *
  * **Results three ways:** an on-screen table in the bitmap font after the run (`./results.ts` —
  * photographing the TV is enough), a `render-bench` payload per scenario POSTed through the shell
@@ -310,3 +321,14 @@ export {
   type BenchHost,
   type BenchKey,
 } from './host.js';
+export {
+  BENCH_LEDGER_KEY,
+  BENCH_LEDGER_VERSION,
+  benchSkipNote,
+  ledgerWith,
+  parseLedger,
+  serializeLedger,
+  skipPlan,
+  type BenchLedger,
+  type BenchSkipPlan,
+} from './ledger.js';

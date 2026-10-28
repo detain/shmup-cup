@@ -27,6 +27,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import { buildId, clientConditions, shmupBuildInfo, shmupVideos } from '../../vite.shared.js';
+import { gameCodeHash } from '../../scripts/game-code-hash.mjs';
 import { BENCH_VIDEO_CLIPS, shmupRenderBench } from './scripts/bench-atlas.mjs';
 import { benchBuildId, parseBenchOutput } from './src/bench/output.js';
 import { benchConfigXml } from './scripts/config-xml.mjs';
@@ -34,6 +35,9 @@ import { classicScriptTag } from './vite.config.js';
 
 /** `apps/tizen/`. */
 const appDir = fileURLToPath(new URL('.', import.meta.url));
+
+/** The repository root (two levels up) — the tree the game-code hash digest is taken over. */
+const repoRoot = join(appDir, '..', '..');
 
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
@@ -89,6 +93,9 @@ export default defineConfig({
     __SHMUP_BENCH_PAUSE_S__: JSON.stringify(process.env.VITE_BENCH_PAUSE_S ?? '30'),
     __SHMUP_BENCH_OUTPUT__: JSON.stringify(benchOutput === null ? '' : benchOutput.id),
     __SHMUP_BENCH_BUILD_ID__: JSON.stringify(benchBuildId(buildId(), benchOutput)),
+    // Plan v20x BENCSKIP: the game-code identity the skip ledger and the payloads pool by —
+    // stable across a bench-only rebuild, fresh whenever any drawn-pixel input moves.
+    __SHMUP_GAME_CODE_HASH__: JSON.stringify(gameCodeHash(repoRoot)),
   },
   publicDir: join(appDir, 'public'),
   resolve: {

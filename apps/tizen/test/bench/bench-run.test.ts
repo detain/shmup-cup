@@ -11,8 +11,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   BENCH_DENSITIES,
+  BENCH_LEDGER_KEY,
   BENCH_SCENARIOS,
   BENCH_STATE_KEY,
+  REWIND_SCENARIO_INDEX,
   TV_BENCH_MARKER,
   TV_BENCH_TIMING,
   atlasFor,
@@ -21,6 +23,7 @@ import {
   recordDecode,
   recordResult,
   recordRewind,
+  serializeLedger,
   serializeRunState,
   startRenderBench,
   parseBenchOutput,
@@ -48,6 +51,10 @@ interface FakeOptions {
   readonly output?: BenchOutput | null;
   /** The log server, default none. */
   readonly reportUrl?: string;
+  /** The game-code hash (plan v20x BENCSKIP), default absent — the pre-ledger behavior. */
+  readonly gameCodeHash?: string;
+  /** Text stored under the ledger key before the page starts (default nothing). */
+  readonly ledger?: string;
 }
 
 /** A fake page: storage, keys, the body marker, reload and exit, and images that fail to load. */
@@ -59,6 +66,7 @@ function fakePage(
 ) {
   const store = new Map<string, string>();
   if (stored !== null) store.set(BENCH_STATE_KEY, stored);
+  if (extra.ledger !== undefined) store.set(BENCH_LEDGER_KEY, extra.ledger);
   let keydown: ((event: { keyCode: number; preventDefault(): void }) => void) | null = null;
   const attributes: Record<string, string> = {};
   const appended: { textContent: string }[] = [];
@@ -128,12 +136,24 @@ function fakePage(
       canvas: {} as HTMLCanvasElement,
       reportUrl: extra.reportUrl ?? '',
       buildId: 'test',
+      gameCodeHash: extra.gameCodeHash,
       assets,
       host,
       output: extra.output ?? null,
     });
   };
-  return { win, start, press, state, reload, exit, attributes, appended, posted };
+  return {
+    win,
+    start,
+    press,
+    state,
+    ledger: () => store.get(BENCH_LEDGER_KEY) ?? null,
+    reload,
+    exit,
+    attributes,
+    appended,
+    posted,
+  };
 }
 
 /** Lets the page's promises settle. */
@@ -467,5 +487,104 @@ describe('bench page (headless mode)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
     expect(page.state()).toBeNull();
     expect(page.reload).not.toHaveBeenCalled();
+  });
+});
+
+/** The skip ledger's game code in these tests (any non-empty string; 10-hex like the real one). */
+const CODE = 'abc123def4';
+
+/**
+ * The first 174 render rows — the frozen set of the owner's M7 runs (plan v20x BENCSKIP).
+ *
+ * @returns Ascending scenario indexes.
+ */
+function first174(): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < 174; i++) out.push(i);
+  return out;
+}
+
+describe('bench skip ledger (TV mode)', () => {
+  it('offers the new rows only when the ledger holds this game code', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    const text = page.appended[0].textContent;
+    expect(text).toContain('ENTER new rows only: 19 row(s) left');
+    expect(text).toContain('174 measured on this game code');
+    expect(text).toContain('GREEN full suite: 190 scenarios');
+    expect(text).toContain('fresh noise-floor sample');
+    page.press(13);
+    expect(page.state()).toMatchObject({ running: true, cursor: 174, skippedAtStart: 174 });
+    expect(page.reload).toHaveBeenCalledTimes(1);
+    // The offer itself changes nothing: the ledger still holds exactly the same-code rows.
+    expect(page.ledger()).toBe(serializeLedger(CODE, first174()));
+  });
+
+  it('Green starts the full suite and clears the ledger for it to refill', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    page.press(404);
+    expect(page.state()).toMatchObject({ running: true, cursor: 0, skippedAtStart: 0 });
+    expect(page.ledger()).toBe(serializeLedger(CODE, []));
+  });
+
+  it('a foreign game code never offers, and Enter takes the full run over it', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger('ffffaaaa00', first174()),
+    });
+    page.start();
+    await settle();
+    expect(page.appended[0].textContent).not.toContain('new rows only');
+    page.press(13);
+    expect(page.state()).toMatchObject({ cursor: 0, skippedAtStart: 0 });
+    expect(page.ledger()).toBe(serializeLedger(CODE, []));
+  });
+
+  it('a build without the hash behaves exactly as before (no ledger is ever written)', async () => {
+    const stored = serializeLedger(CODE, first174());
+    const page = fakePage('', completeRun(), ASSETS, { ledger: stored });
+    page.start();
+    await settle();
+    expect(page.appended[0].textContent).not.toContain('new rows only');
+    page.press(13);
+    expect(page.state()).toMatchObject({ cursor: 0, skippedAtStart: 0 });
+    expect(page.ledger()).toBe(stored);
+  });
+
+  it('marks the rewind row in the ledger when it measured', async () => {
+    const running = createRunState('rb-r', 1, 1, TV_BENCH_TIMING, REWIND_SCENARIO_INDEX);
+    const page = fakePage('', serializeRunState(running), ASSETS, { gameCodeHash: CODE });
+    page.start();
+    await settle();
+    expect(page.state()?.records.length ?? 0).toBe(0);
+    expect(page.ledger()).toBe(serializeLedger(CODE, [REWIND_SCENARIO_INDEX]));
+  });
+
+  it('marks nothing for a scenario that failed (its row stays pending)', async () => {
+    const running = createRunState('rb-f', 1, 1, TV_BENCH_TIMING);
+    const page = fakePage('', serializeRunState(running), ASSETS, { gameCodeHash: CODE });
+    page.start();
+    await settle();
+    expect(page.state()?.running).toBe(false);
+    expect(page.ledger()).toBeNull();
+  });
+
+  it('notes the skipped rows on the RUN line', async () => {
+    const skip = createRunState('rb-n', 1, 1, TV_BENCH_TIMING, 174, 174);
+    const one = { ...recordResult(skip, recordFor(174)), running: false };
+    const page = fakePage('', serializeRunState(one));
+    page.start();
+    await settle();
+    expect(page.appended[0].textContent).toContain('RUN rb-n');
+    expect(page.appended[0].textContent).toContain('(skipped 174 same game)');
   });
 });

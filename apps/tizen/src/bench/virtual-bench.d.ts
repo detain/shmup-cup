@@ -25,6 +25,15 @@ declare const __SHMUP_BENCH_OUTPUT__: string;
  */
 declare const __SHMUP_BENCH_BUILD_ID__: string;
 
+/**
+ * The game-code hash of the bench build (plan v20x BENCSKIP): the 10-hex digest of
+ * `scripts/game-code-hash.mjs` over the shipped game's draw inputs, defined by both bench Vite
+ * configs — the identity the skip ledger (`./ledger.ts`) and the payloads' pooling key on. A
+ * rebuild over unchanged game code carries the same value, so the widget can offer the new rows
+ * only; the game build never defines it (the bench is its only consumer).
+ */
+declare const __SHMUP_GAME_CODE_HASH__: string;
+
 declare module 'virtual:shmup-render-bench' {
   import type { AtlasManifest } from '@shmup/render-pixi';
   /** One density's atlas: the real atlas ×s (nearest-neighbour), its pages next to the page. */

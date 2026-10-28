@@ -31,9 +31,13 @@
  * build a **cross-output comparison** puts each size × variant's two-tick share and synced p95 side by side
  * (`—` where a build skipped the row) and says where the reduced outputs beat the largest beyond the noise band.
  *
- * **Builds are never mixed in one table** (the 2026-10-27 contamination law, `results/2026-10-27-m7-bench/`):
- * a folder campaign may hold several `buildId`s — e.g. a legacy replay of an older bench whose session a newer
- * app later resumed — but aggregation, noise pooling and cross-output comparison all stay inside one build.
+ * **Drawn pixels are never mixed in one table** (the 2026-10-27 contamination law, refined by the 2026-10-28
+ * BENCSKIP amendment): a folder campaign may hold several `buildId`s — e.g. a legacy replay of an older bench
+ * whose session a newer app later resumed — and aggregation, noise pooling and cross-output comparison all
+ * stay inside one identity: sessions that carry `env.gameCodeHash` pool by it (equal = the same shipped game
+ * code under a rebuilt bench — those runs legitimately pool, newest samples never supersede older ones, they
+ * stack into the noise floor); sessions without it pool by `env.buildId` exactly as before, so the committed
+ * history regenerates byte for byte.
  * A session's `env` is read by **majority over its payloads** (see {@link modalEnv}), never from the last one:
  * when the TV resumes a finished old run, the new app appends one header payload with its own `env` under the
  * OLD session id, and the log server files payloads by session id.
@@ -968,11 +972,13 @@ function outputCampaign(output, sessions) {
 }
 
 /**
- * Loads a campaign: its sessions (oldest first), grouped by build and output resolution
- * ({@link sessionOutput} under the {@link modalEnv}, largest output first; the 2026-10-27 contamination law:
- * sessions of different `env.buildId`s are never aggregated into one block), and per group one run per session
- * and WebGL version, the per-version aggregates, the display order of the sizes and the noise floor. An output
- * without same-version repeats borrows the pooled band of its own build's other outputs (`noise.pooled`).
+ * Loads a campaign: its sessions (oldest first), grouped by pooling identity — game code hash, or the
+ * build id for a session without one (plan v20x BENCSKIP) — and output resolution
+ * ({@link sessionOutput} under the {@link modalEnv}, largest output first; the 2026-10-27 contamination
+ * law: sessions whose drawn game code differs are never aggregated into one block), and per group one run
+ * per session and WebGL version, the per-version aggregates, the display order of the sizes and the noise
+ * floor. An output without same-version repeats borrows the pooled band of its own build's other outputs
+ * (`noise.pooled`).
  *
  * @param {string[]} files - the session files.
  * @returns {any} the campaign: `{sessions, outputs, sizes}` plus — for callers that predate the outputs — the
@@ -985,12 +991,18 @@ export function loadCampaign(files) {
       const { payloads, records, decode } = readBenchSession(file);
       const last = payloads[payloads.length - 1] ?? {};
       const env = modalEnv(payloads);
+      const code = typeof env.gameCodeHash === 'string' && env.gameCodeHash !== '' ? env.gameCodeHash : null;
       return {
         file,
         order,
         id: last.session ?? basename(file),
         env,
         buildId: typeof env.buildId === 'string' ? env.buildId : '?',
+        // Plan v20x BENCSKIP: rows pool by game code when the bundle carried one, by build id
+        // when it did not — every session recorded before the field exists groups exactly as it
+        // always did (the committed analysis tables regenerate byte for byte on that rule). The
+        // `code:` shape can never collide with a build id (`4b37d12`, `8ba0e7c@960x540`, …).
+        pool: code === null ? (typeof env.buildId === 'string' ? env.buildId : '?') : `code:${code}`,
         output: sessionOutput(env),
         from: last.from ?? null,
         payloads,
@@ -1006,7 +1018,7 @@ export function loadCampaign(files) {
     );
   const groups = new Map();
   for (const session of sessions) {
-    const key = `${session.buildId}|${session.output.id}`;
+    const key = `${session.pool}|${session.output.id}`;
     const g = groups.get(key);
     if (g === undefined)
       groups.set(key, { output: { ...session.output, buildId: session.buildId }, sessions: [session] });

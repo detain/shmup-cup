@@ -380,3 +380,72 @@ describe('bench results page', () => {
     expect(list.count).toBe(2);
   });
 });
+
+describe('bench results page — skip ledger offer (plan v20x BENCSKIP)', () => {
+  /**
+   * The page's input with overrides (as the page describe above builds its own).
+   *
+   * @param over - What differs.
+   * @returns The input.
+   */
+  const input = (over: Partial<BenchPageInput> = {}): BenchPageInput => ({
+    state: null,
+    buildId: 'abc1234',
+    host: 'tizen',
+    webGLVersion: 1,
+    display: '1920x1080',
+    endpoint: null,
+    status: '',
+    scenarios: BENCH_SCENARIOS.length,
+    timing: TV_BENCH_TIMING,
+    ...over,
+  });
+
+  /** The 174-row frozen era's plan against the 19-row remainder (16 rows + three specials). */
+  const offer = { skipped: 174, remaining: 19, firstPending: 174 };
+
+  it('replaces the ENTER line with the two first-class choices, printable ASCII, short', () => {
+    const lines = benchPageLines(input({ skipOffer: offer }));
+    expect(lines[1].text).toBe(
+      'ENTER new rows only: 19 row(s) left, ~10 min (174 measured on this game code)',
+    );
+    expect(lines[2].text).toBe(
+      'GREEN full suite: 190 scenarios + decode + stand-in + rewind, ~101 min: fresh noise-floor ' +
+        'sample',
+    );
+    expect(lines[3].text).toBe(
+      'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
+    );
+    for (const line of lines) {
+      expect(line.text.length).toBeLessThanOrEqual(106);
+      expect(line.text).toMatch(/^[ -~]*$/);
+    }
+    // Without the offer the page reads exactly as before.
+    const plain = benchPageLines(input());
+    expect(plain[1].text).toMatch(/^ENTER run: 190 scenarios/);
+    expect(plain.length).toBeLessThan(lines.length);
+  });
+
+  it('an explicit null offer reads as no offer', () => {
+    expect(benchPageLines(input({ skipOffer: null }))[1].text).toMatch(/^ENTER run:/);
+  });
+
+  it('notes the skipped rows on the RUN line of a skip run', () => {
+    const skip = createRunState('rb-skip', 1, 1, TV_BENCH_TIMING, 174, 174);
+    const state = { ...recordResult(skip, recordFor(174)), running: false };
+    const text = benchPageLines(input({ state }))
+      .map((line) => line.text)
+      .join('\n');
+    expect(text).toContain('RUN rb-skip  1/191 measured (skipped 174 same game)  sent 0/1');
+    // A full run's line carries no note.
+    const full = {
+      ...recordResult(createRunState('rb-full', 1, 1, TV_BENCH_TIMING), recordFor(0)),
+      running: false,
+    };
+    expect(
+      benchPageLines(input({ state: full }))
+        .map((line) => line.text)
+        .join('\n'),
+    ).toContain('RUN rb-full  1/191 measured  sent 0/1');
+  });
+});

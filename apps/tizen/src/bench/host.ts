@@ -5,15 +5,16 @@
  * One bench bundle serves both TVs (the webOS stub builds the same entry) and a desktop browser,
  * so the keys of all three are accepted everywhere: **Enter** (13) starts, **Back** (Tizen 10009,
  * webOS 461, Escape, Backspace) exits, **Red** (403 on both TVs, or `R`) re-runs a scenario,
- * **Left / Right** (and Up / Down — 37–40, no registration needed) page the results. On
- * Tizen the Red key must be registered (`tv.inputdevice`); the bench registers only that one.
+ * **Green** (404 on Tizen, or `F`) runs the full suite over a same-game-code skip offer (plan v20x
+ * BENCSKIP), **Left / Right** (and Up / Down — 37–40, no registration needed) page the results. On
+ * Tizen the Red key must be registered (`tv.inputdevice`); the bench registers the colour keys.
  *
  * @module
  */
 import { getTizenApi, registerRemoteKeys } from '../platform/index.js';
 
 /** A bench remote action. */
-export type BenchKey = 'enter' | 'back' | 'red' | 'prev' | 'next';
+export type BenchKey = 'enter' | 'back' | 'red' | 'full' | 'prev' | 'next';
 
 /** Key codes per action (every host's, accepted on every host). */
 export const BENCH_KEY_CODES: Readonly<Record<BenchKey, readonly number[]>> = Object.freeze({
@@ -23,6 +24,12 @@ export const BENCH_KEY_CODES: Readonly<Record<BenchKey, readonly number[]>> = Ob
   back: Object.freeze([10009, 461, 27, 8]),
   /** The red colour key (Tizen `ColorF0Red`, webOS), or `R` on a keyboard. */
   red: Object.freeze([403, 82]),
+  /**
+   * The green colour key (Tizen `ColorF1Green` — registered, it arrives), or `F` on a keyboard:
+   * the full suite where the ledger would otherwise offer the new rows only (plan v20x BENCSKIP;
+   * the amendment's "Start" has no code on either TV's registered set — Green/F is the landing).
+   */
+  full: Object.freeze([404, 70]),
   /** Left or Up: the previous results page. */
   prev: Object.freeze([37, 38]),
   /** Right or Down: the next results page. */
@@ -44,6 +51,7 @@ export function benchKeyOf(keyCode: number): BenchKey | null {
   if (BENCH_KEY_CODES.enter.indexOf(keyCode) >= 0) return 'enter';
   if (BENCH_KEY_CODES.back.indexOf(keyCode) >= 0) return 'back';
   if (BENCH_KEY_CODES.red.indexOf(keyCode) >= 0) return 'red';
+  if (BENCH_KEY_CODES.full.indexOf(keyCode) >= 0) return 'full';
   if (BENCH_KEY_CODES.prev.indexOf(keyCode) >= 0) return 'prev';
   if (BENCH_KEY_CODES.next.indexOf(keyCode) >= 0) return 'next';
   return null;
