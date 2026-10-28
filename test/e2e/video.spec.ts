@@ -60,15 +60,23 @@ function watchErrors(page: Page): string[] {
 
 /**
  * Skips the test when the served build carries no clips (the encode kit ships nothing without
- * ffmpeg — the degraded shape of the feature, not a failure).
+ * ffmpeg — the degraded shape of the feature, not a failure). The probe reads the bytes the
+ * game itself would fetch and asks them for an MP4's `ftyp` box at offset 4, because an HTTP
+ * status is not a capability: `vite preview`'s SPA fallback answers a path the build has no
+ * file for with `200 index.html` (v20x F-F — on CI's clip-less build every `response.ok()`
+ * check passed, the specs walked past their own skips, and the media never decoded). The
+ * served bytes are the honest condition: the specs run wherever the build really carries the
+ * clip and skip wherever it does not, with or without the ffmpeg binary on the machine.
  *
  * @param page - Any page (the request goes to the preview server).
  * @param file - The clip file under `assets/video/`.
- * @returns Whether the clip exists.
+ * @returns Whether the build serves that clip as real MP4 bytes.
  */
 async function hasClip(page: Page, file: string): Promise<boolean> {
   const response = await page.request.get(`assets/video/${file}`);
-  return response.ok();
+  if (!response.ok()) return false;
+  const body = await response.body();
+  return body.length > 12 && body.subarray(4, 8).toString('latin1') === 'ftyp';
 }
 
 /**
@@ -193,7 +201,7 @@ test.describe('cutscene video (web build)', () => {
     if (!(await hasClip(page, 'attract-ambient.mp4'))) {
       test.skip(
         true,
-        'this build host encoded no clips (no ffmpeg) — the game ships without video',
+        'the served build carries no clip bytes (a host without ffmpeg encodes none) — the game ships without video',
       );
       return;
     }
@@ -250,7 +258,7 @@ test.describe('cutscene video (web build)', () => {
     if (!(await hasClip(page, 'title-sting.mp4'))) {
       test.skip(
         true,
-        'this build host encoded no clips (no ffmpeg) — the game ships without video',
+        'the served build carries no clip bytes (a host without ffmpeg encodes none) — the game ships without video',
       );
       return;
     }
@@ -284,7 +292,7 @@ test.describe('cutscene video (web build)', () => {
     if (!(await hasClip(page, 'attract-ambient.mp4'))) {
       test.skip(
         true,
-        'this build host encoded no clips (no ffmpeg) — the game ships without video',
+        'the served build carries no clip bytes (a host without ffmpeg encodes none) — the game ships without video',
       );
       return;
     }

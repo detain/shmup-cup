@@ -24,7 +24,8 @@
  *   still holds — and must have closed at least once (an unclosed bitmap would hold its backing
  *   until the GC eats the atlas share).
  */
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
@@ -301,7 +302,7 @@ test.describe('atlas bitmap decode — pixel identity (plan v20x P0-1)', () => {
   test('the shipped default uploads ImageBitmap pages, byte-identical to the Image fallback, drawn identical', async ({
     page,
     context,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(150_000);
     await installDecodeProbe(page);
     await showcaseAtTick(page);
@@ -352,22 +353,31 @@ test.describe('atlas bitmap decode — pixel identity (plan v20x P0-1)', () => {
     const imageMarks = await bootMarks(second);
     expect(bitmapMarks.pageMsAttr).toMatch(/^manifest:|main(-\d+)?\.png:/);
     expect(imageMarks.pageMsAttr).toMatch(/^manifest:|main(-\d+)?\.png:/);
-    writeFileSync(
-      '/tmp/opencode/v20x-opt1-measure.json',
-      JSON.stringify(
-        {
-          note: 'desktop Chromium (SwiftShader) — mechanism proof only; the M7 TV numbers are the doc’s',
-          bitmap: {
-            uploads: bitmapRun.uploads,
-            marks: bitmapMarks,
-            shotBytes: bitmapShot.length,
-          },
-          image: { uploads: imageRun.uploads, marks: imageMarks, shotBytes: imageShot.length },
-        },
-        null,
-        2,
-      ),
-    );
+    // The plan's measurement record is the test's own artifact, not a fixed host path: it rides
+    // in Playwright's per-test output directory (`test-results/…`, git-ignored, wiped for a
+    // passing test, kept for a failing one) — the conventions law that a test never writes to a
+    // fixed path another test reads. The file is read back and checked against the in-page
+    // probe right here, so the artifact is proven inside this spec and nothing outside it
+    // depends on where it landed (plan v20x F-G: a fixed `/tmp/opencode/…` target was ENOENT
+    // red on every CI runner).
+    const measurePath = testInfo.outputPath('v20x-opt1-measure.json');
+    mkdirSync(dirname(measurePath), { recursive: true });
+    const measure = {
+      note: 'desktop Chromium (SwiftShader) — mechanism proof only; the M7 TV numbers are the doc’s',
+      bitmap: {
+        uploads: bitmapRun.uploads,
+        marks: bitmapMarks,
+        shotBytes: bitmapShot.length,
+      },
+      image: { uploads: imageRun.uploads, marks: imageMarks, shotBytes: imageShot.length },
+    };
+    writeFileSync(measurePath, JSON.stringify(measure, null, 2));
+    const roundTrip = JSON.parse(readFileSync(measurePath, 'utf8')) as typeof measure;
+    expect(roundTrip.note).toBe(measure.note);
+    expect(roundTrip.bitmap.uploads).toEqual(measure.bitmap.uploads);
+    expect(roundTrip.image.uploads).toEqual(measure.image.uploads);
+    expect(roundTrip.bitmap.marks).toEqual(measure.bitmap.marks);
+    expect(roundTrip.image.marks).toEqual(measure.image.marks);
     await second.close();
   });
 });
