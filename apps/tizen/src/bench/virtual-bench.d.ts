@@ -42,6 +42,7 @@ declare const __SHMUP_GAME_CODE_HASH__: string;
 
 declare module 'virtual:shmup-render-bench' {
   import type { AtlasManifest } from '@shmup/render-pixi';
+  import type { BenchSvgProbe } from './decode.js';
   /** One density's atlas: the real atlas ×s (nearest-neighbour), its pages next to the page. */
   export interface BenchAtlasModule {
     /** The density factor `s` (1, 1.5, 2.25). */
@@ -62,13 +63,15 @@ declare module 'virtual:shmup-render-bench' {
   }
   /**
    * One page of the `decode` scenario (plan R1-05 B4, the page model of plan R3-04.M4a,
-   * `scripts/bench-decode.mjs`): fetched, decoded and uploaded on the TV, never drawn.
+   * `scripts/bench-decode.mjs`): fetched, decoded and uploaded on the TV, never drawn. The SVG arm
+   * appends the E3 rows of plan R-SVG WO-2 to the same list (`svg-x1-e3`, `svg-x2.67-e3`,
+   * `svg-standin-e3`), which is why their ids all end in the encoding.
    */
   export interface BenchDecodePageModule {
     /**
      * `standin-zone-a` (with `standin-zone-a-2` right after it when the stand-in group packs onto
      * two pages), `common` or `zone-a`; a bench from before R3-04.M4a also recorded `rgba-2048`
-     * and `png8-2048`.
+     * and `png8-2048`. An armed build adds the three E3 rows after them.
      */
     readonly id: string;
     /** What it stands for. */
@@ -100,6 +103,31 @@ declare module 'virtual:shmup-render-bench' {
   /** The `standin-zone` load's atlas. */
   export const standin: BenchStandinModule;
   /**
+   * One SVG probe row of the decode scenario (plan R-SVG WO-2 §C.5): a consumption route the four
+   * decode stages cannot express, so `src/bench/decode.ts` `measureSvgDecode` measures it its own way.
+   */
+  export interface BenchSvgProbeModule {
+    /** Row id (`svg-bitmap-reject`, `svg-teximage-from-img`). */
+    readonly id: string;
+    /** Which route: {@link BenchSvgProbe} (`bitmap-reject` or `url-upload`). */
+    readonly probe: BenchSvgProbe;
+    /** What it stands for. */
+    readonly what: string;
+    /** Pixels (the E3 page's raster size — `createSource` refuses another). */
+    readonly width: number;
+    /** Pixels. */
+    readonly height: number;
+    /** URL relative to the page (`assets/atlas/bench-x1-0.svg`). */
+    readonly url: string;
+  }
+  /**
+   * The `standin-zone-svg` load's atlas (plan R-SVG WO-2): the same pages as {@link standin} as the
+   * arm emits them. `null` in a PNG build, which has no E3 pages and passes the load's slot over.
+   */
+  export const standinSvg: BenchStandinModule | null;
+  /** The decode scenario's SVG probe rows — empty in a PNG build. */
+  export const svgProbes: readonly BenchSvgProbeModule[];
+  /**
    * One clip of the decode scenario's video rows (plan v20x HARBENCH S8): shipped by the
    * `shmupVideos` plugin from the same table, measured on the R7-VID surface path.
    */
@@ -117,13 +145,15 @@ declare module 'virtual:shmup-render-bench' {
   }
   /** The decode scenario's video clips, in the order it measures them. */
   export const videos: readonly BenchVideoPageModule[];
-  /** All five. */
+  /** All seven. */
   const bench: {
     readonly atlases: readonly BenchAtlasModule[];
     readonly fx: readonly BenchFxFile[];
     readonly decode: readonly BenchDecodePageModule[];
     readonly standin: BenchStandinModule;
+    readonly standinSvg: BenchStandinModule | null;
     readonly videos: readonly BenchVideoPageModule[];
+    readonly svgProbes: readonly BenchSvgProbeModule[];
   };
   export default bench;
 }

@@ -456,6 +456,36 @@ export function digestPixels(image) {
  */
 
 /**
+ * The E3 of page bytes this build already has: every item's PNG decoded in memory and written as
+ * one E3 document. {@link buildBenchSvgPages} is its atlas-shaped caller; the arm's stand-in pages
+ * (which the build ships as PNG in both arms and additionally as SVG when armed) go through it
+ * directly.
+ *
+ * @param {readonly { file: string, png: Buffer }[]} items - Each page's PNG file name and bytes.
+ * @returns {BenchSvgPage[]} One entry per item, in the given order.
+ * @throws {Error} Whatever the PNG decoder throws for bytes it is not a PNG of.
+ */
+export function emitSvgPages(items) {
+  /** @type {BenchSvgPage[]} */
+  const pages = [];
+  for (const item of items) {
+    const image = decodePng(item.png);
+    const doc = emitE3Doc(image);
+    pages.push({
+      pngFile: item.file,
+      file: benchSvgPageFile(item.file),
+      width: image.width,
+      height: image.height,
+      svg: Buffer.from(doc.text, 'utf8'),
+      pngBytes: item.png.length,
+      rects: doc.rects,
+      paths: doc.paths,
+    });
+  }
+  return pages;
+}
+
+/**
  * The arm's page files: every density page of the built atlases emitted as E3 (the PNG pages the
  * build no longer ships stay as the input, decoded in memory).
  *
@@ -463,27 +493,14 @@ export function digestPixels(image) {
  * @returns {BenchSvgPage[]} One entry per page, in density and page order.
  */
 export function buildBenchSvgPages(atlases) {
-  /** @type {BenchSvgPage[]} */
-  const pages = [];
+  /** @type {{ file: string, png: Buffer }[]} */
+  const items = [];
   for (const atlas of atlases) {
     atlas.png.forEach((/** @type {Buffer} */ png, /** @type {number} */ index) => {
-      const image = decodePng(png);
-      const doc = emitE3Doc(image);
-      const pngFile = atlas.manifest.pages[index].file;
-      const file = benchSvgPageFile(pngFile);
-      pages.push({
-        pngFile,
-        file,
-        width: image.width,
-        height: image.height,
-        svg: Buffer.from(doc.text, 'utf8'),
-        pngBytes: png.length,
-        rects: doc.rects,
-        paths: doc.paths,
-      });
+      items.push({ file: atlas.manifest.pages[index].file, png });
     });
   }
-  return pages;
+  return emitSvgPages(items);
 }
 
 /**

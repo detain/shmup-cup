@@ -14,6 +14,8 @@ import {
   REWIND_STAGE,
   STANDIN_SCENARIO_ID,
   STANDIN_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
   type RewindBenchRecord,
 } from '../../src/bench/index.js';
 
@@ -179,6 +181,22 @@ export function fakeStandinRecord(over: Partial<RenderBenchRecord> = {}): Render
     textureBytes: 2048 * 1024 * 4,
     atlasPages: 1,
     load: { bullets: 0, points: 0, enemies: 20, particles: 0, tiles: 110 },
+    ...over,
+  });
+}
+
+/**
+ * The fake record of the SVG arm's stand-in page load (plan R-SVG WO-2): the same frame drawn from
+ * the E3 pages, so its row reads against {@link fakeStandinRecord} as the arm reads against the PNG.
+ *
+ * @param over - What differs.
+ * @returns The record.
+ */
+export function fakeStandinSvgRecord(over: Partial<RenderBenchRecord> = {}): RenderBenchRecord {
+  return fakeStandinRecord({
+    scenario: STANDIN_SVG_SCENARIO_ID,
+    index: STANDIN_SVG_SCENARIO_INDEX,
+    variant: STANDIN_SVG_SCENARIO_ID,
     ...over,
   });
 }

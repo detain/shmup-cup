@@ -32,6 +32,16 @@
  * fetch fails (an engine where `file://` XHR is refused), the page is decoded from its URL instead
  * (fetch and decode then share the decode figure, and the page's `error` says so).
  *
+ * **The SVG arm's rows** (plan R-SVG WO-2). An armed build's `decode` array carries three E3 pages
+ * after its PNG ones (the ×1 and ×2.67 density pages and the stand-in page, emitted beside their PNGs
+ * by `scripts/bench-atlas.mjs`) — those are ordinary pages: the same four stages, the file names
+ * ending `.svg`, the encoding tag {@link SVG_DECODE_ENCODING} and stage 4 skipped as described. Two
+ * further rows measure routes the stages cannot express — {@link measureSvgDecode} over
+ * {@link BenchSvgProbeSpec}s: whether `createImageBitmap` takes SVG at all (it refuses on the TV
+ * engines, which is why the loader uses an `HTMLImageElement`), and the page decoded from its URL and
+ * uploaded, the shape of a real atlas load with no fetched bytes to time. A PNG build ships none of
+ * these, so its decode record is exactly what it was: same ids, same order, same columns.
+ *
  * The stages are orchestrated by {@link measureDecode} against a {@link DecodeHost}; the browser's
  * host is {@link createDecodeHost} — both tested in Node with fakes; the WebGL half runs on the TV
  * and in `pnpm bench` (`test/bench/render.perf.ts`, `?scenario=decode`).
@@ -50,8 +60,8 @@ export const DECODE_SCENARIO_ID = 'decode';
 export const DECODE_SCENARIO_INDEX = BENCH_SCENARIOS.length;
 
 /**
- * The stand-in page load's id (plan R3-04.M4a, `?scenario=standin-zone` runs it headlessly): the
- * run's last load, which draws one `FRAME_W × FRAME_H` frame from the decoded stand-in pages.
+ * The stand-in page load's id (plan R3-04.M4a, `?scenario=standin-zone` runs it headlessly): the load
+ * after the decode scenario, drawing one `FRAME_W × FRAME_H` frame from the decoded stand-in pages.
  */
 export const STANDIN_SCENARIO_ID = 'standin-zone';
 
@@ -59,11 +69,29 @@ export const STANDIN_SCENARIO_ID = 'standin-zone';
 export const STANDIN_SCENARIO_INDEX = DECODE_SCENARIO_INDEX + 1;
 
 /**
- * Page loads of a whole TV run: the render matrix, the decode scenario, the stand-in load and —
- * since plan R2 TL-3 — the rewind scenario (its own index and length live in `./rewind.js`,
- * which extends this line's run by its page).
+ * The **SVG arm's** stand-in page load (plan R-SVG WO-2, `?scenario=standin-zone-svg` runs it
+ * headlessly): the same zone-A frame as {@link STANDIN_SCENARIO_ID} but drawn from the stand-in
+ * pages' E3 files, so the arm's zone load is measured beside the PNG one — which is why its slot sits
+ * right after it, before the page both arms finish with.
  */
-export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 3;
+export const STANDIN_SVG_SCENARIO_ID = 'standin-zone-svg';
+
+/** Its position in a TV run: the slot after the PNG stand-in load. */
+export const STANDIN_SVG_SCENARIO_INDEX = STANDIN_SCENARIO_INDEX + 1;
+
+/**
+ * Page loads of a whole TV run: the render matrix, the decode scenario, the two stand-in loads (the
+ * arm's only measured on an armed build) and the rewind scenario (its own index lives in
+ * `./rewind.js`, which closes the run).
+ *
+ * @remarks
+ * The arm's slot is part of **both** arms' run length: a PNG build has no SVG pages to draw, so the
+ * run passes over it as a planned skip (`./run.ts` `plannedSkip` — the same mechanism an output build
+ * uses for a frame taller than its backbuffer). One length for both arms is what lets the ledger, the
+ * state and the results page keep a single row identity (see `./ledger.ts`), and putting the reserved
+ * slot *before* the rewind page keeps **Red** at the end of a run a row every arm really measured.
+ */
+export const BENCH_RUN_LENGTH = BENCH_SCENARIOS.length + 4;
 
 /** Repetitions per page on the TV (about 20 s for the pages on the M7, by estimate). */
 export const TV_DECODE_REPETITIONS = 8;
@@ -82,7 +110,9 @@ export interface BenchDecodePage {
   /**
    * `standin-zone-a` (with `standin-zone-a-2` right after it when the stand-in group packs onto
    * two pages), `common` or `zone-a`; a stored run from before plan R3-04.M4a also holds
-   * `rgba-2048` and `png8-2048`.
+   * `rgba-2048` and `png8-2048`. The **SVG arm's** build appends the E3 rows `svg-x1-e3`,
+   * `svg-x2.67-e3` and `svg-standin-e3` after these (plan R-SVG WO-2), which the same four stages
+   * measure and {@link pageEncodingOf} tags {@link SVG_DECODE_ENCODING}.
    */
   readonly id: string;
   /** What it stands for. */
@@ -675,6 +705,233 @@ export async function measureVideoDecode(
     }
   }
   return runs.map((run) => videoRow(run, null));
+}
+
+/**
+ * Which consumption route an {@link BenchSvgProbeSpec} measures (plan R-SVG WO-2 §C.5). The four
+ * decode stages cannot express either: one is about a route that does **not** exist on the TV
+ * engines, the other about a page whose bytes were never fetched.
+ */
+export type BenchSvgProbe = 'bitmap-reject' | 'url-upload';
+
+/**
+ * One probe row of the SVG arm's decode scenario: an E3 page measured through a route the ordinary
+ * pages do not take. `bitmap-reject` asks whether `createImageBitmap` accepts SVG bytes at all (it
+ * does not on Chromium 68/69 — the row records the rejection *and* its cost, which is why the game's
+ * atlas loader goes through an `HTMLImageElement`); `url-upload` decodes the page straight from its
+ * URL, the shape of a real atlas page load, where the fetched-bytes route has nothing to time.
+ */
+export interface BenchSvgProbeSpec {
+  /** Row id (`svg-bitmap-reject`, `svg-teximage-from-img`). */
+  readonly id: string;
+  /** The route to take. */
+  readonly probe: BenchSvgProbe;
+  /** What the row stands for. */
+  readonly what: string;
+  /** Width in pixels (the page's raster size, which the upload must match). */
+  readonly width: number;
+  /** Height in pixels. */
+  readonly height: number;
+  /** Relative URL of the E3 file. */
+  readonly url: string;
+}
+
+/**
+ * The probe rows' honest mapping onto the frozen {@link DecodeBenchPage} columns (the `rb-` schema
+ * does not move, and neither does the shell's hashed type): both kinds take `bytes` from one XHR of
+ * the first repetition. `bitmap-reject` then times the `createImageBitmap` attempt into `bitmapMs`
+ * and, where the engine accepted the SVG, its upload into `bitmapUploadMs`; a rejection is the row's
+ * `error`, which is the expected result on a TV. `url-upload` times the `<img src>` load into
+ * `decodeMs`, the `texImage2D` CPU into `uploadMs` and that plus `gl.finish()` into
+ * `uploadSyncedMs`, with `totalMs` over the two; its image-path columns stand and the bitmap ones are
+ * `null`. Every row's `encoding` reads {@link SVG_DECODE_ENCODING}.
+ */
+interface SvgProbeRuns {
+  /** The spec. */
+  readonly spec: BenchSvgProbeSpec;
+  /** The file's bytes (one XHR, whatever route the row then takes). */
+  bytes: number;
+  /** That XHR's ms (also the row's `fetchMs`). */
+  readonly fetch: number[];
+  /** `<img src=url>` decode ms, URL route only. */
+  readonly decode: number[];
+  /** `uploadTextureSource` CPU ms, URL route only. */
+  readonly upload: number[];
+  /** The same upload plus `gl.finish()`, URL route only. */
+  readonly uploadSynced: number[];
+  /** `createImageBitmap` attempt ms, bitmap route only (a rejected attempt included). */
+  readonly bitmap: number[];
+  /** A resolved bitmap's upload plus `gl.finish()`, bitmap route only. */
+  readonly bitmapUpload: number[];
+  /** Decode plus synced upload ms, URL route only. */
+  readonly total: number[];
+  /** Distinct stage notes (a rejection is a note, not a failure of the scenario). */
+  readonly errors: string[];
+}
+
+/**
+ * The row one probe's figures fold into (see {@link SvgProbeRuns} for the column story).
+ *
+ * @param run - The probe's figures.
+ * @param base - A scenario-level note to prepend, or `null`.
+ * @returns The row.
+ */
+function svgProbeRow(run: SvgProbeRuns, base: string | null): DecodeBenchPage {
+  const errors = base === null ? run.errors.slice() : [base, ...run.errors];
+  const bitmapRoute = run.spec.probe === 'bitmap-reject';
+  return {
+    id: run.spec.id,
+    what: run.spec.what,
+    width: run.spec.width,
+    height: run.spec.height,
+    encoding: SVG_DECODE_ENCODING,
+    bytes: run.bytes,
+    textureBytes: run.spec.width * run.spec.height * 4,
+    repetitions: (bitmapRoute ? run.bitmap : run.decode).length,
+    fetchMs: summarizeRuns(run.fetch),
+    decodeMs: bitmapRoute ? null : summarizeRuns(run.decode),
+    uploadMs: bitmapRoute ? null : summarizeRuns(run.upload),
+    uploadSyncedMs: bitmapRoute ? null : summarizeRuns(run.uploadSynced),
+    totalMs: bitmapRoute ? null : summarizeRuns(run.total),
+    firstTotalMs: !bitmapRoute && run.total.length > 0 ? roundTo(run.total[0], 3) : 0,
+    bitmapMs: bitmapRoute ? summarizeRuns(run.bitmap) : null,
+    bitmapUploadMs: bitmapRoute ? summarizeRuns(run.bitmapUpload) : null,
+    error: errors.length === 0 ? null : errors.join('; '),
+  };
+}
+
+/**
+ * Measures the SVG arm's probe rows (see {@link SvgProbeRuns}): repetitions outer, probes inner, the
+ * page re-fetched and re-decoded every repetition so nothing is served from a cache the previous
+ * repetition filled. A stage that fails is noted in the row and the repetition moves on — for the
+ * rejection probe a failure *is* the measurement — so this never rejects. Cold path.
+ *
+ * @param host - The browser (or a fake).
+ * @param specs - The probes, in the order to measure.
+ * @param options - Repetitions and the engine facts (the probe facts ride the rows, not a record).
+ * @returns The rows, appended after the video rows' by the caller.
+ * @throws {RangeError} For a probe name neither route knows — a build whose tables drifted apart.
+ *
+ * @example
+ * ```ts
+ * const rows = await measureSvgDecode(host, assets.svgProbes, facts);
+ * rows[0].error; // → 'bitmap: …' where the engine refuses SVG bitmaps (the TV's answer)
+ * ```
+ */
+export async function measureSvgDecode(
+  host: DecodeHost,
+  specs: readonly BenchSvgProbeSpec[],
+  options: DecodeMeasureOptions,
+): Promise<DecodeBenchPage[]> {
+  const runs: SvgProbeRuns[] = specs.map((spec) => {
+    // The route read as text first: a stored spec is the build's, not the compiler's, so an unknown
+    // one still fails loud here rather than silently measuring nothing.
+    const route: string = spec.probe;
+    if (route !== 'bitmap-reject' && route !== 'url-upload') {
+      throw new RangeError(`bench svg probe: "${route}" is not a route (${spec.id})`);
+    }
+    return {
+      spec,
+      bytes: 0,
+      fetch: [],
+      decode: [],
+      upload: [],
+      uploadSynced: [],
+      bitmap: [],
+      bitmapUpload: [],
+      total: [],
+      errors: [],
+    };
+  });
+  /**
+   * Notes a stage once per row and message (see `measureVideoDecode`'s identical helper).
+   *
+   * @param run - The row's figures.
+   * @param stage - The stage.
+   * @param error - What went wrong.
+   */
+  const fail = (run: SvgProbeRuns, stage: string, error: unknown): void => {
+    const message = `${stage}: ${error instanceof Error ? error.message : String(error)}`;
+    if (run.errors.indexOf(message) < 0) run.errors.push(message);
+  };
+  const bitmapOf = host.decodeBitmap === undefined ? null : host.decodeBitmap;
+  for (let rep = 0; rep < options.repetitions; rep++) {
+    for (const run of runs) {
+      host.progress?.(`${run.spec.id} ${rep + 1}/${options.repetitions}`);
+      // 1. The file's bytes: every repetition re-fetches, so no row is measured on a warm cache.
+      let bytes: ArrayBuffer | null = null;
+      const tFetch = host.now();
+      try {
+        bytes = await host.fetch(run.spec.url);
+        run.fetch.push(host.now() - tFetch);
+        run.bytes = bytes.byteLength;
+      } catch (error) {
+        fail(run, 'fetch', error);
+      }
+      // 2. The route.
+      if (run.spec.probe === 'bitmap-reject') {
+        if (bytes === null) continue;
+        if (bitmapOf === null) {
+          fail(run, 'bitmap', 'createImageBitmap unavailable');
+          continue;
+        }
+        const t0 = host.now();
+        try {
+          const page = await bitmapOf(bytes);
+          run.bitmap.push(host.now() - t0);
+          try {
+            const source = host.createSource(page.image, run.spec);
+            try {
+              host.finish();
+              const t1 = host.now();
+              host.upload(source);
+              host.finish();
+              run.bitmapUpload.push(host.now() - t1);
+            } finally {
+              source.destroy();
+            }
+          } finally {
+            page.release();
+          }
+        } catch (error) {
+          // The expected outcome on the TV's engine: the attempt is the figure, the message the row.
+          run.bitmap.push(host.now() - t0);
+          fail(run, 'bitmap', error);
+        }
+        continue;
+      }
+      let page: DecodedPage | null = null;
+      try {
+        const t0 = host.now();
+        page = await host.decodeUrl(run.spec.url, rep);
+        run.decode.push(host.now() - t0);
+      } catch (error) {
+        fail(run, 'decode', error);
+      }
+      if (page === null) continue;
+      try {
+        const source = host.createSource(page.image, run.spec);
+        try {
+          host.finish();
+          const t1 = host.now();
+          host.upload(source);
+          const uploadMs = host.now() - t1;
+          host.finish();
+          const syncedMs = host.now() - t1;
+          run.upload.push(uploadMs);
+          run.uploadSynced.push(syncedMs);
+          run.total.push(run.decode[run.decode.length - 1] + syncedMs);
+        } finally {
+          source.destroy();
+        }
+      } catch (error) {
+        fail(run, 'upload', error);
+      } finally {
+        page.release();
+      }
+    }
+  }
+  return runs.map((run) => svgProbeRow(run, null));
 }
 
 /** The window's parts {@link createDecodeHost} uses (a fake in the tests). */

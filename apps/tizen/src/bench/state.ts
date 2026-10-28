@@ -8,10 +8,12 @@
  * later run overwrites them, so a crash or a power cut loses nothing. Everything here is a pure
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
- * A run is the render scenarios of the matrix (190 since the resolution sweep, the video knob and
- * the 960×540 first-class set), then the `decode` scenario (plan R1-05 B4 —
- * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`) and the
- * `rewind` scenario (plan R2 TL-3 — `./rewind.ts`): the cursor runs to {@link BENCH_RUN_LENGTH},
+ * A run is the render scenarios of the matrix (194 since the resolution sweep, the video knob, the
+ * 960×540 first-class set and the cull pair), then the `decode` scenario (plan R1-05 B4 —
+ * `./decode.ts`), then the `standin-zone` page load (plan R3-04.M4a — `./scene.ts`), the `rewind`
+ * scenario (plan R2 TL-3 — `./rewind.ts`) and the SVG arm's `standin-zone-svg` load (plan R-SVG
+ * WO-2 — a slot every build reserves and only an armed build measures, its `plannedSkip` passing it
+ * over on a PNG build): the cursor runs to {@link BENCH_RUN_LENGTH},
  * the render records (the stand-in load's among them) go to `records`, the decode record to
  * `decode` and the rewind record to `rewind`. A state stored by a bench from before B4 (no
  * `decode`) or before TL-3 (no `rewind`) still reads — its record is `null`.
@@ -459,10 +461,12 @@ export function skipScenario(state: BenchRunState, reason: string): BenchRunStat
  * backbuffer is smaller than their frame — `./output.ts`), so none of them is launched.
  *
  * @param state - The state.
- * @param isSkipped - Whether the render scenario at an index is skipped (never asked for the
- *   decode scenario's index).
+ * @param isSkipped - Whether the row at an index is skipped by this build: asked for every index
+ *   from the cursor up, the four page loads included (`run.ts` answers for those — the SVG arm's
+ *   stand-in slot is the one a PNG build passes over).
  * @returns `state` itself when it is not running or the scenario at its cursor runs; else the
- *   state with the cursor on the first scenario at or after it that runs (or the decode scenario).
+ *   state with the cursor on the first scenario at or after it that runs (or {@link BENCH_RUN_LENGTH}
+ *   when the run's tail was all planned skips, which ends it).
  *   No record is added and `lastError` is left alone — a planned skip is not an error, so a
  *   campaign's resume never passes over the scenario after it. A **Red** re-run (`single`) of a
  *   skipped scenario stops the run instead, its cursor one past it.
@@ -475,7 +479,7 @@ export function skipPlannedScenarios(
 ): BenchRunState {
   if (!state.running) return state;
   let cursor = state.cursor;
-  while (cursor < DECODE_SCENARIO_INDEX && isSkipped(cursor)) {
+  while (cursor < BENCH_RUN_LENGTH && isSkipped(cursor)) {
     cursor++;
     if (state.single) break;
   }

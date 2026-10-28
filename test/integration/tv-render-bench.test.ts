@@ -20,7 +20,9 @@
  * through the old formula (both shapes are pinned here).
  *
  * The matrix is the resolution sweep (the owner's R0-03 follow-up): 25 frame sizes × 6 variants
- * plus 40 knob rows, 190 scenarios — with R0-02's 18 ids (384×216, 640×360, 960×540) unchanged.
+ * plus 44 knob rows, 194 scenarios — with R0-02's 18 ids (384×216, 640×360, 960×540) unchanged.
+ * Rows only ever append (plan R-SVG WO-2's cull pair takes 190…193), so the ids and indexes a
+ * campaign already banked keep their meaning; the page loads shift by the count of new rows.
  */
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
@@ -42,6 +44,8 @@ import {
   BENCH_RUN_LENGTH,
   DECODE_SCENARIO_ID,
   DECODE_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
   STANDIN_SCENARIO_ID,
   STANDIN_SCENARIO_INDEX,
   measureDecode,
@@ -292,16 +296,16 @@ describe('render bench: the TV gate (tvBenchViolations, R0-02)', () => {
 });
 
 describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-up)', () => {
-  it('sweeps 25 frame sizes, 150 plain rows then 40 knob rows', () => {
+  it('sweeps 25 frame sizes, 150 plain rows then 44 knob rows', () => {
     expect(BENCH_SIZES).toHaveLength(25);
     expect(BENCH_SIZES.filter((size) => size.art === 'scaled')).toHaveLength(11);
     expect(BENCH_SIZES.filter((size) => size.art === 'native')).toHaveLength(14);
     expect(BENCH_DENSITIES).toEqual([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
-    expect(BENCH_SCENARIOS).toHaveLength(190);
+    expect(BENCH_SCENARIOS).toHaveLength(194);
     expect(BENCH_SCENARIOS.filter((s) => s.knob === null)).toHaveLength(
       BENCH_SIZES.length * BENCH_VARIANTS.length,
     );
-    expect(BENCH_SCENARIOS.filter((s) => s.knob !== null)).toHaveLength(40);
+    expect(BENCH_SCENARIOS.filter((s) => s.knob !== null)).toHaveLength(44);
     expect(BENCH_KNOBS.map((knob) => knob.id)).toEqual([
       'fit',
       'stretch',
@@ -317,6 +321,8 @@ describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-
       'out540',
       'video',
       'video',
+      // The owner-folded cull pair, at the tail (plan R-SVG WO-2).
+      'cull',
     ]);
     // Plain rows first, sizes outer: the 384×216 baseline is the first resolution measured.
     expect(BENCH_SCENARIOS[0].id).toBe('384x216-busy');
@@ -325,11 +331,16 @@ describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-
     expect(BENCH_SCENARIOS[171].id).toBe('640x360-worst-out540');
     expect(BENCH_SCENARIOS[172].id).toBe('640x360-busy-video');
     expect(BENCH_SCENARIOS[173].id).toBe('640x360-worst-video');
+    // The cull pair takes the four indexes right after the 190 the M7 banked, sizes outer.
+    expect(BENCH_SCENARIOS[190].id).toBe('640x360-busy-cull');
+    expect(BENCH_SCENARIOS[191].id).toBe('640x360-worst-cull');
+    expect(BENCH_SCENARIOS[192].id).toBe('960x540-busy-cull');
+    expect(BENCH_SCENARIOS[193].id).toBe('960x540-worst-cull');
     BENCH_SCENARIOS.forEach((s, i) => {
       expect(s.index).toBe(i);
       expect(s.id).toBe(`${s.size.id}-${s.row}`);
     });
-    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(190);
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(194);
     expect(BENCH_V2_SIZE.id).toBe('640x360');
   });
 
@@ -373,20 +384,30 @@ describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-
     expect(interp).toMatchObject({ scaleMode: 'integer', interpolation: true, outputWidth: 0 });
     const out720 = BENCH_SCENARIOS.find((s) => s.id === '640x360-busy-out720');
     expect([out720?.outputWidth, out720?.outputHeight]).toEqual([1280, 720]);
+    // Only the cull knob carries the walk (plan R-SVG WO-2): `run.ts` installs the pass from this
+    // flag alone, so no other row can pay for it and no cull row can forget it.
+    expect(BENCH_SCENARIOS.find((s) => s.id === '640x360-worst-cull')?.knob?.cull).toBe(true);
+    expect(BENCH_SCENARIOS.filter((s) => s.knob?.cull === true)).toHaveLength(4);
+    expect(BENCH_SCENARIOS.filter((s) => s.index < 190 && s.knob?.cull === true)).toHaveLength(0);
   });
 });
 
 describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () => {
-  it('appends one page load to the run; stand-in and rewind follow it (R3-04.M4a, R2 TL-3)', () => {
+  it('appends one page load to the run; the stand-ins and rewind follow it (R3-04.M4a, R-SVG WO-2, R2 TL-3)', () => {
     expect([
       DECODE_SCENARIO_ID,
       DECODE_SCENARIO_INDEX,
       STANDIN_SCENARIO_ID,
       STANDIN_SCENARIO_INDEX,
+      STANDIN_SVG_SCENARIO_ID,
+      STANDIN_SVG_SCENARIO_INDEX,
       REWIND_SCENARIO_ID,
       REWIND_SCENARIO_INDEX,
       BENCH_RUN_LENGTH,
-    ]).toEqual(['decode', 190, 'standin-zone', 191, 'rewind', 192, 193]);
+    ]).toEqual(['decode', 194, 'standin-zone', 195, 'standin-zone-svg', 196, 'rewind', 197, 198]);
+    // The arm's load is a slot on BOTH arms: a PNG build reserves the index and passes it over, so
+    // every index below the run length means the same row whichever bundle is installed.
+    expect(BENCH_RUN_LENGTH).toBe(BENCH_SCENARIOS.length + 4);
   });
 
   it('draws its synthetic pages the same on every machine (integer maths only)', () => {
@@ -398,7 +419,7 @@ describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () =
 
   it('builds a record of every page with each stage as [min, p50, p95, max]', async () => {
     const record = await legacyDecodeRecord();
-    expect(record).toMatchObject({ scenario: 'decode', index: 190, repetitions: 4, error: null });
+    expect(record).toMatchObject({ scenario: 'decode', index: 194, repetitions: 4, error: null });
     expect(record.pages.map((page) => [page.id, page.encoding])).toEqual([
       ['rgba-2048', 'rgba'],
       ['png8-2048', 'png8'],
@@ -548,7 +569,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     );
     const report = analyzeBenchSession(file);
     expect(report).toContain(`# ${session} — TV render bench`);
-    expect(report).toContain('190 of 190 scenario(s) measured, run complete');
+    expect(report).toContain('194 of 194 scenario(s) measured, run complete');
     // 640x360 busy: synced p95 4.5 × 1.5 over the baseline's 4 → 1.50×; two-tick 3 % vs 2 % → +1.0.
     expect(report).toContain('| busy | 1 | 3.00 / 4.50 | 4.50 / 6.00 | 1.50× | 3.0 | +1.0 |');
     expect(report).toContain('## Plan §13 at 640×360');
@@ -596,8 +617,8 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
 
   it('keeps the stand-in draw out of the matrix tables and prints it on its own (R3-04.M4a)', async () => {
     // The test owns its session (the M4bRV1 MAJOR fix): the matrix count was true only because the
-    // block's first test had posted the 190 payloads to the shared one, so standalone this test
-    // read `0 of 190`. Its own 190 matrix records ride here first, then the stand-in payload.
+    // block's first test had posted the 194 payloads to the shared one, so standalone this test
+    // read `0 of 194`. Its own 194 matrix records ride here first, then the stand-in payload.
     const own = makeRenderBenchSessionId(1_760_000_000_000 + 60_000, 0.75);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
       const payload = buildRenderBenchPayload(
@@ -655,7 +676,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     expect(response.status).toBe(200);
     const file = join(dir, `${own}.jsonl`);
     // The analyzer reads it as the run's last page load, never as a size row (M4a's split): the
-    // matrix keeps its 190 records and the header the fake env reports for them.
+    // matrix keeps its 194 records and the header the fake env reports for them.
     const stored = readBenchSession(file);
     expect(stored.records.map((r: RenderBenchRecord) => r.scenario)).not.toContain(
       STANDIN_SCENARIO_ID,
@@ -666,7 +687,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
       "## Stand-in draw (the run's last page load, plan R3-04.M4a) — 1 record(s)",
     );
     expect(report).toContain('| 1 | 2.00 / 3.00 | 3.00 / 4.00 | 12 | 1 |');
-    expect(report).toContain('190 of 190 scenario(s) measured');
+    expect(report).toContain('194 of 194 scenario(s) measured');
   });
 });
 

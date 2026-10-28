@@ -97,8 +97,9 @@ const SIZES = [
 /** The load variants in column order (`BENCH_VARIANTS` of `apps/tizen/src/bench/matrix.ts`). */
 export const VARIANTS = ['busy', 'filter', 'mode7', 'crt-light', 'crt-full', 'worst'];
 
-/** The knobs in matrix order (`BENCH_KNOBS`). */
-export const KNOBS = ['fit', 'stretch', 'interp', 'out720', 'out540'];
+/** The knobs in matrix order (`BENCH_KNOBS`). An unknown knob still pairs with its plain row — the
+ *  list only orders the table — so it sorts after the known ones. */
+export const KNOBS = ['fit', 'stretch', 'interp', 'out720', 'out540', 'video', 'cull'];
 
 /** Runs of each WebGL version the GL 1-vs-2 verdict needs (and the noise floor needs of one version). */
 export const MIN_RUNS_FOR_VERDICT = 2;
@@ -837,9 +838,13 @@ export function aggregateRuns(runs) {
           syncValues: [],
           renderValues: [],
           twoTickValues: [],
+          // The cull walk's own figures (plan R-SVG WO-2), from the first run that measured them:
+          // a fact about the scene's size, not a timing, so one sample says it.
+          cull: null,
         };
         acc.set(r.scenario, a);
       }
+      if (a.cull === null && r.cull !== null && typeof r.cull === 'object') a.cull = r.cull;
       a.runs += 1;
       a.syncValues.push(p95Of(r.syncedMs));
       a.renderValues.push(p95Of(r.renderMs));
@@ -860,6 +865,7 @@ export function aggregateRuns(runs) {
       sync: runStats(a.syncValues),
       render: runStats(a.renderValues),
       twoTick: runStats(a.twoTickValues),
+      cull: a.cull,
     });
   }
   return out;
@@ -1342,6 +1348,18 @@ function knobTable(campaign, gl) {
       ? 'No noise floor (one run per version): every knob difference is unjudged.'
       : `"beyond" = the difference exceeds the noise floor’s p90 (two-tick ${num(noise.twoTick?.p90, 1)} points, synced` +
         ` p95 ${pct(noise.relSync?.p90)}${noise.pooled === true ? ', pooled over all outputs' : ''}); "within" = no call.`,
+    // The cull rows say what the walk walked (plan R-SVG WO-2): the pairing above prices it, these
+    // lines say what was priced. Only rows whose records carry the additive `cull` field appear.
+    ...knobRows.flatMap((k) =>
+      k.cull === null
+        ? []
+        : [
+            '',
+            `- **${k.scenario}:** ${k.cull.tagged} sprites tagged cullable; per frame ${k.cull.visits} nodes` +
+              ` visited, ${k.cull.culled} found outside the view, ${k.cull.flips} write(s) that moved the` +
+              ` bit, over ${k.cull.passes} measured frame(s).`,
+          ],
+    ),
   ];
 }
 

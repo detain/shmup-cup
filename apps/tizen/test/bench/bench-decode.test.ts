@@ -19,6 +19,8 @@ import {
   HEADLESS_DECODE_REPETITIONS,
   MAX_DECODE_REPETITIONS,
   STANDIN_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
   STANDIN_SCENARIO_INDEX,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
@@ -159,18 +161,25 @@ function scriptedHost(
 }
 
 describe('decode scenario: its place in the run', () => {
-  it('follows the 190-scenario matrix, then the stand-in load and the rewind page (R3-04.M4a, R2 TL-3)', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(190);
+  it('follows the 194-scenario matrix, then the stand-in loads and the rewind page (R3-04.M4a, R2 TL-3, R-SVG WO-2)', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(194);
     expect(DECODE_SCENARIO_ID).toBe('decode');
-    expect(DECODE_SCENARIO_INDEX).toBe(190);
-    expect(BENCH_RUN_LENGTH).toBe(193);
+    expect(DECODE_SCENARIO_INDEX).toBe(194);
+    expect(BENCH_RUN_LENGTH).toBe(198);
     expect(BENCH_SCENARIOS.some((s) => s.id === DECODE_SCENARIO_ID)).toBe(false);
     expect(STANDIN_SCENARIO_ID).toBe('standin-zone');
     expect(STANDIN_SCENARIO_INDEX).toBe(DECODE_SCENARIO_INDEX + 1);
-    expect(REWIND_SCENARIO_INDEX).toBe(STANDIN_SCENARIO_INDEX + 1);
+    // The SVG arm's stand-in load sits right after the PNG one and before the rewind page that
+    // closes the run (plan R-SVG WO-2): the index the PNG arm reserves and passes over, so both arms
+    // share one run length and every index below it means the same row on both.
+    expect(STANDIN_SVG_SCENARIO_ID).toBe('standin-zone-svg');
+    expect(STANDIN_SVG_SCENARIO_INDEX).toBe(STANDIN_SCENARIO_INDEX + 1);
+    expect(STANDIN_SVG_SCENARIO_INDEX).toBe(BENCH_SCENARIOS.length + 2);
+    expect(REWIND_SCENARIO_INDEX).toBe(STANDIN_SVG_SCENARIO_INDEX + 1);
     expect(REWIND_SCENARIO_INDEX + 1).toBe(BENCH_RUN_LENGTH);
     expect(BENCH_SCENARIOS.some((s) => s.id === STANDIN_SCENARIO_ID)).toBe(false);
     expect(BENCH_SCENARIOS.some((s) => s.id === REWIND_SCENARIO_ID)).toBe(false);
+    expect(BENCH_SCENARIOS.some((s) => s.id === STANDIN_SVG_SCENARIO_ID)).toBe(false);
     expect([TV_DECODE_REPETITIONS, HEADLESS_DECODE_REPETITIONS]).toEqual([8, 2]);
   });
 
@@ -205,7 +214,7 @@ describe('decode scenario: measureDecode', () => {
     const record = await measureDecode(script.host, PAGES, FACTS);
     expect(record).toMatchObject({
       scenario: 'decode',
-      index: 190,
+      index: DECODE_SCENARIO_INDEX,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,
@@ -301,7 +310,7 @@ describe('decode scenario: measureDecode', () => {
   it('records a scenario that could not run at all', () => {
     expect(failedDecodeRecord('Error: no WebGL', FACTS)).toEqual({
       scenario: 'decode',
-      index: 190,
+      index: DECODE_SCENARIO_INDEX,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,

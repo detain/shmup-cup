@@ -141,11 +141,11 @@ describe('bench output: each scenario’s setup', () => {
       });
     }
     expect(benchSkippedScenarios(null)).toEqual([]);
-    // The matrix itself does not depend on the output: 190 rows + decode + stand-in + rewind,
-    // indexes unchanged (the three extra page loads of plan R1-05 B4, R3-04.M4a and R2 TL-3 ride
-    // after the matrix).
-    expect(BENCH_SCENARIOS).toHaveLength(190);
-    expect(BENCH_RUN_LENGTH).toBe(193);
+    // The matrix itself does not depend on the output: 194 rows + decode + stand-in + rewind + the
+    // SVG arm's stand-in slot, indexes unchanged (the four extra page loads of plans R1-05 B4,
+    // R3-04.M4a, R2 TL-3 and R-SVG WO-2 ride after the matrix, and the cull pair sits at its tail).
+    expect(BENCH_SCENARIOS).toHaveLength(194);
+    expect(BENCH_RUN_LENGTH).toBe(198);
     expect(setupOf('640x360-busy', null).scaleMode).toBe(BENCH_DEFAULT_SCALE_MODE);
   });
 
@@ -188,16 +188,17 @@ describe('bench output: each scenario’s setup', () => {
     );
   });
 
-  it('skips exactly these rows at 1280x720 (166 of 190 run)', () => {
+  it('skips exactly these rows at 1280x720 (170 of 194 run)', () => {
     const skipped = benchSkippedScenarios(output('1280x720')).map((s) => s.id);
     expect(skipped).toEqual(SKIPPED_720);
-    expect(BENCH_SCENARIOS.length - skipped.length).toBe(166);
+    // The cull pair never joins a skip list: both its sizes fit a 720p backbuffer.
+    expect(BENCH_SCENARIOS.length - skipped.length).toBe(170);
   });
 
-  it('skips exactly these rows at 960x540 (104 of 190 run)', () => {
+  it('skips exactly these rows at 960x540 (108 of 194 run)', () => {
     const skipped = benchSkippedScenarios(output('960x540')).map((s) => s.id);
     expect(skipped).toEqual(SKIPPED_540);
-    expect(BENCH_SCENARIOS.length - skipped.length).toBe(104);
+    expect(BENCH_SCENARIOS.length - skipped.length).toBe(108);
   });
 });
 

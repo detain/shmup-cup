@@ -203,11 +203,15 @@ because the CLI packs every file in `dist/`.
 A second widget built from this app, **next to** the game: its own entry (`bench/index.html` →
 `src/bench`), its own app id `ShmpCupBnc.RenderBench` (its `config.xml` is the game's, rewritten by
 `scripts/config-xml.mjs` `benchConfigXml`) and its own output `dist-bench/`. It measures a
-density-scaled synthetic scene at 384×216, 640×360 and 960×540 (s = 1 / 1.5 / 2.25, the real atlas
-upscaled ×s into `dist-bench/assets/atlas/` by `scripts/bench-atlas.mjs` — never into the game's
-atlas; since R1-05 from the **ungrouped** one-page atlas, `buildAtlas({ ungrouped: true })`, so the
-×1 page is byte for byte what R0-02 measured although the game ships zone pages), six variants each,
-one scenario per page load; see the `bench` module row below.
+density-scaled synthetic scene over the resolution sweep of `src/bench/matrix.ts` — fifteen
+resolutions from 384×216 to 1920×1080 in two art-density modes, 25 sizes in all (the art is upscaled
+×s at `s = height / 240` for a `scaled` row, left at its own size for an `n` `native` one; the real
+atlas upscaled ×s into `dist-bench/assets/atlas/` by `scripts/bench-atlas.mjs` — never into the
+game's atlas; since R1-05 from the **ungrouped** one-page atlas, `buildAtlas({ ungrouped: true })`,
+so the ×1 page is byte for byte what R0-02 measured although the game ships zone pages), six variants
+each — 150 plain rows — plus the 44 rows the knobs add (the upscale modes, render interpolation, an
+output below the display's, the cutscene video surface and the cull pair): **194 scenarios**, one
+scenario per page load; see the `bench` module row below.
 
 ```powershell
 # Windows PowerShell, from the repo root; the log server runs on the desktop (tools/input-probe)
@@ -219,7 +223,7 @@ pnpm bench:tv:install             # installs it next to the game
 pnpm --filter @shmup/tizen bench:run
 ```
 
-On the TV: **Enter** runs the 18-scenario matrix (~10 min: 10 s warm-up, 14 s measured, 6 s with
+On the TV: **Enter** runs the 194-scenario matrix (~97 min: 10 s warm-up, 14 s measured, 6 s with
 `gl.finish()` per scenario, reloading between them), **Red** re-runs a scenario, **Back** exits. The
 results table appears on screen after the run, each scenario is POSTed as a `render-bench` payload
 to the log server (`rb-….jsonl`, `tools/input-probe/results/analyze-bench.mjs`), and the results stay
@@ -229,13 +233,15 @@ scenario headlessly, `?warmup=` / `?measure=` / `?sync=` shorten the phases). Th
 mode (`DEV_BUILD_MODES` in `vite.shared.ts`), never shipped: the bundle check's rule 9 rejects it in
 the game's `app.js`. Packaging and installing are written, never run here.
 
-**The decode scenario (plan R1-05 B4).** After the 18 scenarios the run loads the page once more
-(`R1-05 DECODE 19/19` on screen, about 20–30 s) and measures what an atlas page costs **from file to
-GPU**: four PNGs built into `dist-bench/assets/atlas/decode-*.png` by `scripts/bench-decode.mjs` — a
-synthetic 2048² RGBA page (≈ 2.4 MB), the same quantised to a 2048² PNG-8 page (≈ 0.5 MB), and the
-shipped `common` and zone A pages — each fetched with XHR, decoded by an `Image` (blob URL, `onload`,
+**The decode scenario (plan R1-05 B4).** After the 194 scenarios the run loads the page once more
+(`R1-05 DECODE 195/198` on screen, about 20–30 s) and measures what an atlas page costs **from file to
+GPU**: the PNGs built into `dist-bench/assets/atlas/decode-*.png` by `scripts/bench-decode.mjs` — the
+stand-in zone A page(s) of R3-04.M4a, and the shipped `common` and zone A pages — each fetched with
+XHR, decoded by an `Image` (blob URL, `onload`,
 `decode()`), uploaded through the renderer with `gl.finish()`, and decoded by `createImageBitmap` for
-comparison, eight times, every texture released in between. The figures appear in three places: the
+comparison, eight times, every texture released in between. The shipped cutscene clips ride the same
+record as `avc1` rows (plan v20x HARBENCH S8), and the SVG arm's five rows after them (below).
+The figures appear in three places: the
 **`DECODE (R1-05)` table** under the results table on screen (medians and p95s in ms: `FETCH50`,
 `DEC50`/`DEC95`, `UPL50`/`UPL95`, `TOT50`/`TOT95` file → GPU, `FIRST` the coldest repetition,
 `BMP50`/`BMPUP` the bitmap path), the run's last `render-bench` payload (its `decode` field), and the
@@ -277,6 +283,45 @@ the decode rows should read several times the PNG's; measuring that on hardware 
 way: the bundle check sizes an SVG page against a 12 MiB raw budget and a 2048² edge (rule 8) and
 demands the pages on disk are exactly the pages the bundle names, one encoding per build (rule 12).
 
+**What the arm measures, and what a PNG build reserves (plan R-SVG WO-2).** Both arms run the same
+194 rows and the same page loads in the same order — `decode` (index 194), `standin-zone` (195),
+`standin-zone-svg` (196), `rewind` (197) — so the run is 198 long on both and every index below it
+means the same row on both. The third load is the arm's: an armed build draws the stand-in frame from
+`assets/atlas/decode-standin-zone-a.svg`, its E3 of the same pages. A PNG build has no such file, so
+its planned skip passes the slot over without launching a page, and the run ends where the rewind page
+ended it before. An armed `decode` record carries five rows a PNG build does not: the ×1 and ×2.67
+density pages and the stand-in page as E3 **files** (the same four stages, `encoding: svg-e3`, bitmap
+columns null), plus two **probe** rows for the routes those stages cannot express —
+`svg-bitmap-reject`, which records the `createImageBitmap` refusal the paragraph above predicts
+instead of skipping it, and `svg-teximage-from-img`, the atlas loader's own route (an `<img>` decoded
+from its URL and uploaded with no bytes in hand — the desktop's 30 ms against the fetched route's
+17 ms). Row-count truth: **a PNG build measures 194 rows and 3 page loads; an armed build measures the
+same 194 rows over E3 pages, 4 page loads, and 5 more rows inside the decode record.**
+
+**One skip ledger per arm (plan R-SVG WO-2).** The same-game-code skip ledger (plan v20x BENCSKIP:
+after a run, **Enter** takes the rows this game code has not measured, **Green** the whole suite again)
+is stored **per pool** — `{version: 2, pools: {…}}`, keyed by the bare game code for a PNG build and by
+`code|svg=e3` for an armed one, the analyzer's `benchPoolOf` keys, so an SVG row never inherits a PNG
+row's done mark and one TV can hold both arms' runs. A store written by a smaller matrix still reads:
+a version-1 ledger's frozen row prefix maps unchanged and its three page loads are re-pointed at this
+build's own indexes, which is why Enter on the M7's banked full run yields **exactly the four cull
+rows** below (pinned by `test/bench/bench-ledger.test.ts` and, at widget level,
+`test/bench/bench-run.test.ts`).
+
+**The cull pair (plan R-SVG WO-2 — both arms).** `640x360-busy-cull`, `640x360-worst-cull`,
+`960x540-busy-cull` and `960x540-worst-cull` are the owner-folded arm B of `v20x-SPIKE-report.md`:
+before the measured phase, every textured sprite under the renderer's scene is tagged `cullable` with a
+tight `boundsArea` (its own atlas frame, anchor- and scale-aware), and one cull pass runs **inside the
+timed window** after each `renderer.render()`. Pixi's `CullerPlugin` never fires for the bench's raw
+`WebGLRenderer`, so `src/bench/cull.ts` walks the graph itself with Culler's own prune guard and
+four-corner test, and writes `culled` (the flag Pixi owns) rather than `visible` (which the renderer's
+per-frame sprite sync owns). A row reads against the plain row of the same size and variant in the
+analyzer's knob table, and its record carries what the walk walked as the additive `cull` field
+(`tagged` / `visits` / `culled` / `flips` / `passes`). The spike's own figure on a desktop rig was
+adverse — Δ p95 **+1.200 ms**, with only 8 of 1,727 visible sprites ever off-frame — and the rows ship
+anyway because the M7 is the machine that decides whether that holds there; the walk is bench code
+only, the shipped renderer is untouched and `gameCodeHash` does not move.
+
 ```powershell
 $env:VITE_BENCH_SVG = "e3"              # SVG arm; unset = the PNG arm (the default)
 pnpm bench:tv                           # same command, armed dist-bench/
@@ -313,7 +358,7 @@ reach the desktop on the port (firewall).
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±, and since M3-02b Guide 458 and Extra 10253 so REBIND can capture them; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, the lifecycle over `visibilitychange` **and** window `blur` / `focus` (M3-02b — Home on the M7 is an overlay that fires only the latter; edge-triggered over hidden ∨ unfocused, so the pause menu opens and the audio suspends while the Home bar is up and a `blur` + `hidden` pair suspends once), `exit()`, localStorage (since M2-17 the shell's quota-checked `createWebStorage`, issues logged) |
 | `device-info` | implemented | M2-17: UA / resolution / WebGL (`MAX_TEXTURE_SIZE`) / Samsung `webapis.productinfo` model, model code and firmware (`$WEBAPIS/webapis/webapis.js` loaded only on a TV, only when the debug tools unlock) → the debug overlay's device line (`tizenDebugTools`) and the remote inspector's console |
 | `live-reload` | implemented | M2-17: dev-only reload-on-change on the TV — `tizen:watch` builds with the dev server's WebSocket URL (`__SHMUP_LIVE_RELOAD__`); on each rebuild the app reloads, the installed widget navigating to the served build; reconnects with a growing delay; absent from release builds |
-| `bench` | implemented | R0-02: the TV render bench (its own widget — `vite.bench.config.ts`, `dist-bench/`; never in the game's bundle): the 18-scenario matrix (`matrix.ts`), the density-scaled synthetic scene drawn through the real renderer (`scene.ts` — five parallax layers, ~35 % terrain at `8·s` px, decor, 64 enemies, 512 bullets, 512 point items, 512 particles, the HUD bars; filtered layer, Mode-7, CRT variants), the allocation-free sampler (`stats.ts` — render CPU ms, `gl.finish()`-synced ms, rAF buckets, ticks per frame of the vsync-locked loop), the run state in `localStorage` (`state.ts`), the on-screen results table (`results.ts`), Enter / Back / Red on both TVs (`host.ts`) and the page plumbing with its headless `?scenario=` mode (`run.ts`); results POSTed through `@shmup/shell`'s `sendRenderBench`; R1-05 B4: the decode scenario after the matrix (`decode.ts` — fetch / decode / upload of the `scripts/bench-decode.mjs` pages, its own table and payload field) |
+| `bench` | implemented | R0-02: the TV render bench (its own widget — `vite.bench.config.ts`, `dist-bench/`; never in the game's bundle): the 18-scenario matrix (`matrix.ts`), the density-scaled synthetic scene drawn through the real renderer (`scene.ts` — five parallax layers, ~35 % terrain at `8·s` px, decor, 64 enemies, 512 bullets, 512 point items, 512 particles, the HUD bars; filtered layer, Mode-7, CRT variants), the allocation-free sampler (`stats.ts` — render CPU ms, `gl.finish()`-synced ms, rAF buckets, ticks per frame of the vsync-locked loop), the run state in `localStorage` (`state.ts`), the on-screen results table (`results.ts`), Enter / Back / Red on both TVs (`host.ts`) and the page plumbing with its headless `?scenario=` mode (`run.ts`); results POSTed through `@shmup/shell`'s `sendRenderBench`; R1-05 B4: the decode scenario after the matrix (`decode.ts` — fetch / decode / upload of the `scripts/bench-decode.mjs` pages, its own table and payload field); R-SVG WO-2: the SVG arm's five rows in that record and the E3 stand-in load (`measureSvgDecode`, the reserved index the PNG arm skips), the hand-installed cull walk of the four `*-cull` rows (`cull.ts`) and the skip ledger's per-pool store (`ledger.ts`) |
 
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
 `tools/input-probe` (a separate npm project) — results change the input profiles in

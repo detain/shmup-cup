@@ -32,6 +32,7 @@ import {
   digestPixels,
   emitE3,
   emitE3Page,
+  emitSvgPages,
   parseBenchSvgEncoding,
   parseE3,
   proveSvgPages,
@@ -355,6 +356,44 @@ describe('bench-svg: pixel-exact on the shipped pages (re-derived in this repo)'
     const page = standinPage;
     if (page === null) throw new Error('the shared build() filled no stand-in page');
     expect(digestPixels(rasterE3(emitE3(page.image)))).toBe(digestPixels(page.image));
+  }, 600_000);
+
+  it('emits a page from its bytes alone (the route the arm’s stand-in row takes)', () => {
+    build();
+    if (standinPage === null) throw new Error('the shared build() filled no stand-in page');
+    const page = standinPage;
+    const rows = emitSvgPages([{ file: page.file, png: page.png }]);
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    // The file name is the PNG page's own with the SVG extension, and the bytes are what the whole
+    // atlas walk writes for that page — the extraction `bench-atlas.mjs` relies on to emit the
+    // stand-in E3 beside the density E3 (plan R-SVG WO-2).
+    expect(row.pngFile).toBe(page.file);
+    expect(row.file).toBe(benchSvgPageFile(page.file));
+    expect(row.svg.equals(emitE3Page(page.image))).toBe(true);
+    expect(row.width).toBe(page.image.width);
+    expect(row.height).toBe(page.image.height);
+    expect(row.pngBytes).toBe(page.png.length);
+    expect(row.paths).toBeGreaterThan(0);
+    expect(row.rects).toBeGreaterThan(0);
+    expect(
+      buildBenchSvgPages([
+        {
+          density: 1,
+          label: 'x1',
+          pageUrls: [page.file],
+          manifest: {
+            formatVersion: 2,
+            pages: [{ file: page.file, w: page.image.width, h: page.image.height }],
+            frames: {},
+            sprites: {},
+            animations: {},
+            fonts: {},
+          },
+          png: [page.png],
+        },
+      ]),
+    ).toEqual([row]);
   }, 600_000);
 
   it('pins the three proof pages’ digests, censuses and sizes', () => {

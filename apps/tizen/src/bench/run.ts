@@ -39,17 +39,35 @@
  * table on the results page. Headless, `?scenario=decode` (`&reps=<n>`) publishes it as the
  * outcome's `decode`.
  *
- * **The stand-in load (plan R3-04.M4a).** The run's last page load is `standin-zone`: it draws one
- * 640×360 frame from the decode scenario's stand-in pages — parallax bands, tile rows, enemies and
- * the boss — warm-up, measured and synced like a render scenario, and its {@link RenderBenchRecord}
- * is stored and POSTed as one. Headless, `?scenario=standin-zone` publishes it as the outcome's
- * `record`.
+ * **The stand-in loads (plans R3-04.M4a, R-SVG WO-2).** The run's page loads after the matrix are
+ * `standin-zone` — one 640×360 frame drawn from the decode scenario's stand-in pages (parallax bands,
+ * tile rows, enemies and the boss), warm-up, measured and synced like a render scenario — then
+ * `rewind`, then `standin-zone-svg`: the same frame drawn from the **E3 pages** an armed build emits
+ * beside their PNGs, which a PNG build passes over as a planned skip. Each is stored and POSTed as a
+ * {@link RenderBenchRecord}. Headless, `?scenario=standin-zone` and `?scenario=standin-zone-svg`
+ * publish them as the outcome's `record`.
+ *
+ * **The SVG arm's beside-rows (plan R-SVG WO-2, §C.5 of `r-svg-inv-report.md`).** An armed build's
+ * `decode` page list carries three more pages — the ×1 and ×2.67 density pages and the stand-in page
+ * as E3 — measured by the same four stages as a PNG page; and two **probe** rows
+ * (`./decode.ts` `measureSvgDecode`) for the routes the stages cannot express: `createImageBitmap` of
+ * SVG bytes (the TV engine refuses it — the row records the refusal), and the atlas loader's own
+ * route, an `<img>` decoded from its URL and uploaded with no fetched bytes in hand. A PNG build
+ * ships neither, so its decode record is what it was before the arm.
+ *
+ * **The cull pair (plan R-SVG WO-2, the owner-folded arm B of `v20x-SPIKE-report.md`).** The four
+ * `busy-cull` / `worst-cull` rows run {@link createBenchCull} over the renderer's scene inside the
+ * timed window — every textured leaf tagged `cullable` with a tight `boundsArea`, one cull pass per
+ * rendered frame — against the plain row of the same size and variant. The row's own record carries
+ * the walk's figures as the additive `cull` field (tagged sprites, nodes visited, culled, bit flips —
+ * per measured frame); the spike measured the mechanism adverse on a desktop rig and the M7 is the
+ * machine that decides whether it is any different.
  *
  * **The measured frame.** Per animation frame: the vsync-locked fixed-step loop (`core/loop`, as
  * the shell runs it on a 60 Hz TV) advances the scene by its ticks, the particle pool is topped up,
- * then the **timed** part — the backdrop and terrain bindings' sync and `renderer.render()` — runs,
- * followed in the synced phase by `gl.finish()`. Nothing in that path allocates (the heap delta is
- * one of the headless gates).
+ * then the **timed** part — the backdrop and terrain bindings' sync, `renderer.render()` and, on a
+ * cull row, the cull pass — runs, followed in the synced phase by `gl.finish()`. Nothing in that path
+ * allocates (the heap delta is one of the headless gates).
  *
  * @module
  */
@@ -93,6 +111,8 @@ import {
   DECODE_SCENARIO_INDEX,
   STANDIN_SCENARIO_ID,
   STANDIN_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
   HEADLESS_DECODE_REPETITIONS,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
@@ -100,11 +120,14 @@ import {
   failedDecodeRecord,
   measureDecode,
   measureVideoDecode,
+  measureSvgDecode,
   type BenchDecodePage,
   type BenchVideoSpec,
+  type BenchSvgProbeSpec,
   type DecodeMeasureOptions,
   type DecodeWindow,
 } from './decode.js';
+import { createBenchCull, type BenchCullFacts, type CullNode } from './cull.js';
 import {
   REWIND_SCENARIO_ID,
   REWIND_SCENARIO_INDEX,
@@ -142,6 +165,7 @@ import {
 } from './matrix.js';
 import {
   BENCH_LEDGER_KEY,
+  benchLedgerPool,
   benchSkipNote,
   ledgerWith,
   parseLedger,
@@ -367,6 +391,16 @@ export interface BenchAssets {
   readonly videos?: readonly BenchVideoSpec[];
   /** The stand-in load's atlas (plan R3-04.M4a); absent from older builds and test fakes. */
   readonly standin?: BenchStandinData | null;
+  /**
+   * The SVG arm's stand-in atlas (plan R-SVG WO-2): the stand-in pages as E3, for the run's last slot.
+   * Absent (or `null`) in a PNG build, where that slot is passed over as a planned skip.
+   */
+  readonly standinSvg?: BenchStandinData | null;
+  /**
+   * The SVG arm's probe rows (plan R-SVG WO-2), measured by the decode scenario after its video rows.
+   * Absent from a PNG build, older builds and test fakes.
+   */
+  readonly svgProbes?: readonly BenchSvgProbeSpec[];
 }
 
 /**
@@ -475,8 +509,53 @@ export function benchWebGLVersion(search: string, storage: Storage | null): 1 | 
 /** One scenario's result and whether the run was asked to stop. */
 interface ScenarioRun {
   /** Resolves with the record once the synced phase is over. */
-  readonly done: Promise<RenderBenchRecord>;
+  readonly done: Promise<TvBenchRecord>;
 }
+
+/**
+ * A render scenario's record with the cull row's figures (plan R-SVG WO-2): {@link RenderBenchRecord}
+ * is the shell's hashed payload type and does not move for a bench-only measurement, so the walk's
+ * numbers ride as an additive field of the object the TV POSTs (the `svgEnc` field of
+ * {@link TvBenchEnv} is the same pattern one level up). The analyzer reads it where it is present and
+ * ignores it everywhere else, which keeps every PNG session's record of before the cull rows byte for
+ * byte the same.
+ */
+interface TvBenchRecord extends RenderBenchRecord {
+  /** The bench cull walk's figures — `undefined` on every row without the knob. */
+  cull?: BenchCullFacts;
+}
+
+/**
+ * Which stand-in load a page measures (plan R-SVG WO-2): the PNG pages every build ships, or the SVG
+ * arm's E3 of the same content. A descriptor rather than a flag, so the record's identity fields come
+ * from one frozen place.
+ */
+interface StandinLoad {
+  /** The scenario id the record carries. */
+  readonly id: string;
+  /** Its position in the run. */
+  readonly index: number;
+  /** The record's `variant` field. */
+  readonly row: string;
+  /** Whether the pages come from `assets.standinSvg` rather than `assets.standin`. */
+  readonly svg: boolean;
+}
+
+/** The PNG arm's stand-in load (plan R3-04.M4a) — every build measures it. */
+const STANDIN_LOAD_PNG: StandinLoad = Object.freeze({
+  id: STANDIN_SCENARIO_ID,
+  index: STANDIN_SCENARIO_INDEX,
+  row: 'standin-zone',
+  svg: false,
+});
+
+/** The SVG arm's stand-in load, drawn from the E3 pages an armed build emits beside their PNGs. */
+const STANDIN_LOAD_SVG: StandinLoad = Object.freeze({
+  id: STANDIN_SVG_SCENARIO_ID,
+  index: STANDIN_SVG_SCENARIO_INDEX,
+  row: 'standin-zone-svg',
+  svg: true,
+});
 
 /**
  * Measures one scenario on this page (see the module docs): builds the density's atlas and scene,
@@ -498,7 +577,7 @@ function measureScenario(
   label: string,
 ): ScenarioRun {
   const { win, canvas, assets } = options;
-  const done = (async (): Promise<RenderBenchRecord> => {
+  const done = (async (): Promise<TvBenchRecord> => {
     const { size, variant } = scenario;
     const source = atlasFor(assets, size.density);
     const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
@@ -590,6 +669,15 @@ function measureScenario(
       });
       renderer.layers.layers[LayerId.Terrain].addChild(terrain.container);
       renderer.bindWorld(scene.world);
+      // The cull rows (plan R-SVG WO-2): the bench-side walk of `./cull.ts` tagged over the scene the
+      // renderer holds — Pixi's own `CullerPlugin` never runs on this raw `WebGLRenderer`, and the
+      // game's renderer is not touched for a measurement (the spike's arm B installed it the same
+      // way, from outside). Tagging happens once, before the first phase.
+      const cull =
+        scenario.knob !== null && scenario.knob.cull
+          ? createBenchCull(renderer.scene as unknown as CullNode, size.width, size.height)
+          : null;
+      if (cull !== null) cull.tag();
       scene.setLabel(`${label} WARM-UP`);
       parallax.sync(scene.parallax);
       terrain.sync(scene.terrain, scene.camera);
@@ -634,7 +722,10 @@ function measureScenario(
       counts[TILES] = 1 << 30;
       const durations = [timing.warmupMs, timing.measureMs, timing.syncMs];
       const phaseNames = ['WARM-UP', 'MEASURE', 'SYNCED'];
-      return await new Promise<RenderBenchRecord>((resolve, reject) => {
+      // The cull walk's figures for the free-running pass, snapshotted when it ends (`null` on every
+      // row without the knob, and on a run that never reached the end of that pass).
+      let cullFacts: BenchCullFacts | null = null;
+      return await new Promise<TvBenchRecord>((resolve, reject) => {
         /**
          * One animation frame (allocation-free; see the module docs).
          *
@@ -656,6 +747,9 @@ function measureScenario(
             parallax.sync(scene.parallax);
             terrain.sync(scene.terrain, scene.camera);
             renderer.render(frame);
+            // Inside the timed window on purpose: the walk's cost, and the render-group churn its
+            // flips cause on the frame that follows, are what the row is for (spike arm B).
+            if (cull !== null) cull.cull();
             if (phase === 2 && context !== null) context.finish();
             const elapsed = clock.now() - t0;
             if (phase === 1) sampler.free(elapsed, delta, ticks);
@@ -673,11 +767,15 @@ function measureScenario(
               (phase === 0 || counts[RECORDED] >= timing.minFrames)
             ) {
               if (phase === 1) counts[DRAWS] = renderer.drawCalls;
+              // The walk's figures for the free-running pass, taken as it ends — the same window
+              // `renderMs` summarises (the synced pass's cull cost is inside `syncedMs`).
+              if (cull !== null && phase === 1) cullFacts = cull.facts();
               const next = phase + 1;
               counts[PHASE] = next;
               counts[RECORDED] = 0;
               times[START] = now;
               if (next === 1) {
+                if (cull !== null) cull.reset();
                 collect(win);
                 times[HEAP] = heapUsed(win);
                 // The phase's clock starts on the next frame, which is not recorded: it carries
@@ -736,6 +834,9 @@ function measureScenario(
                     particles: counts[PARTICLES],
                     tiles: counts[TILES] === 1 << 30 ? 0 : counts[TILES],
                   },
+                  // Additive field (plan R-SVG WO-2): only a `cull` knob row carries the walk's
+                  // figures; every other record keeps the exact shape it had before this row existed.
+                  ...(cullFacts === null ? {} : { cull: cullFacts }),
                   endedAt: Date.now(),
                 });
                 return;
@@ -864,6 +965,16 @@ function measureDecodeScenario(
       });
       for (let i = 0; i < rows.length; i++) record.pages.push(rows[i]);
     }
+    // The SVG arm's probe rows (plan R-SVG WO-2): the routes the four stages cannot express. A PNG
+    // build ships no specs, so its record ends where it did before the arm.
+    const svgSpecs = assets.svgProbes ?? [];
+    if (svgSpecs.length > 0) {
+      const rows = await measureSvgDecode(host, svgSpecs, {
+        ...facts,
+        webGLVersion: renderer.webGLVersion,
+      });
+      for (let i = 0; i < rows.length; i++) record.pages.push(rows[i]);
+    }
     show('done');
     return record;
   })().catch((error: unknown) => failedDecodeRecord(String(error), facts));
@@ -878,18 +989,23 @@ function measureDecodeScenario(
  * @param options - The app options (window, canvas, assets).
  * @param webGLVersion - The WebGL version to ask for.
  * @param label - The HUD label.
- * @returns Resolves with the record; rejects when the build has no stand-in pages or the frame
+ * @param load - Which stand-in load this is: the PNG pages, or the SVG arm's E3 of them (plan
+ *   R-SVG WO-2). Its record's identity (`scenario`, `index`, `variant`) comes from the descriptor.
+ * @returns Resolves with the record; rejects when the build has no pages for that load or the frame
  *   cannot be drawn (the TV mode stops the run, as for a render scenario).
  */
 async function measureStandinScenario(
   options: RenderBenchAppOptions,
   webGLVersion: 1 | 2,
   label: string,
+  load: StandinLoad,
 ): Promise<RenderBenchRecord> {
   const { win, canvas, assets } = options;
-  const standin = assets.standin ?? null;
+  const standin = (load.svg ? assets.standinSvg : assets.standin) ?? null;
   if (standin === null || standin.pageUrls.length === 0) {
-    throw new Error('this bench build has no stand-in pages');
+    throw new Error(
+      `this bench build has no ${load.svg ? 'SVG ' : ''}stand-in pages (${load.id} is not a load it can measure)`,
+    );
   }
   const size = BENCH_V2_SIZE;
   const images = await Promise.all(standin.pageUrls.map((url) => loadImage(win, url)));
@@ -953,13 +1069,13 @@ async function measureStandinScenario(
     let textureBytes = 0;
     for (const page of standin.manifest.pages) textureBytes += page.w * page.h * 4;
     return {
-      scenario: STANDIN_SCENARIO_ID,
-      index: STANDIN_SCENARIO_INDEX,
+      scenario: load.id,
+      index: load.index,
       size: size.id,
       width: size.width,
       height: size.height,
       density: size.density,
-      variant: 'standin-zone',
+      variant: load.row,
       crt: 'off',
       filter: false,
       mode7: false,
@@ -1066,7 +1182,20 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
     return;
   }
   if (scenarioId === STANDIN_SCENARIO_ID) {
-    measureStandinScenario(options, gl, 'R3-04 STAND-IN').then(
+    measureStandinScenario(options, gl, 'R3-04 STAND-IN', STANDIN_LOAD_PNG).then(
+      (record) => {
+        publish({ record, error: null });
+      },
+      (error: unknown) => {
+        publish({ record: null, error: String(error) });
+      },
+    );
+    return;
+  }
+  if (scenarioId === STANDIN_SVG_SCENARIO_ID) {
+    // The SVG arm's stand-in load (plan R-SVG WO-2): headless asks for it by name, so a PNG build's
+    // answer is the error below rather than a silent pass-over.
+    measureStandinScenario(options, gl, 'R-SVG STAND-IN (E3)', STANDIN_LOAD_SVG).then(
       (record) => {
         publish({ record, error: null });
       },
@@ -1110,6 +1239,24 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
 }
 
 /**
+ * The predicate of the rows a build passes over without launching a page for them (the plan R-SVG
+ * WO-2 arm-awareness of `./state.ts` `skipPlannedScenarios` and of the ledger's plan in one place).
+ *
+ * @param output - The build's output resolution, or `null` for a build that fixes none.
+ * @param armed - Whether the build was built with the SVG arm on (`VITE_BENCH_SVG=e3`).
+ * @returns A function answering for **every** index of the run, the four page loads included: a
+ *   render scenario whose frame is bigger than this build's backbuffer (`./output.ts`), or the SVG
+ *   arm's stand-in slot on a PNG build — `scripts/bench-atlas.mjs` emits no E3 pages for those, so
+ *   the slot is reserved on both arms and measured on one. The run length is the same either way.
+ */
+function plannedSkipOf(output: BenchOutput | null, armed: boolean): (index: number) => boolean {
+  return (index: number): boolean =>
+    index < BENCH_SCENARIOS.length
+      ? benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null
+      : index === STANDIN_SVG_SCENARIO_INDEX && !armed;
+}
+
+/**
  * The TV mode (see the module docs).
  *
  * @param options - The app options.
@@ -1121,27 +1268,25 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
   const storage = storageOf(win);
   const endpoint = renderReportEndpoint(options.reportUrl);
   const output = options.output ?? null;
+  const gameCode = options.gameCodeHash ?? '';
+  const svgEnc = options.svgEnc ?? 'png';
+  const armed = svgEnc === 'e3';
+  // The pool this build's rows are measured into (plan R-SVG WO-2): the SVG arm's rows never inherit
+  // a PNG run's, because the two are not comparable samples of the same page load.
+  const ledgerPool = benchLedgerPool(gameCode, svgEnc);
+  // Which rows this build passes over by design, at the page's build and in the ledger's plan alike.
+  const plannedSkip = plannedSkipOf(output, armed);
   const stored = parseRunState(read(storage));
   // The scenarios this build skips by design (`./output.ts`) are passed over before anything is
   // launched — no record, no reload.
-  let state =
-    stored === null
-      ? null
-      : skipPlannedScenarios(
-          stored,
-          (index) => benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null,
-        );
+  let state = stored === null ? null : skipPlannedScenarios(stored, plannedSkip);
   if (state !== null && state !== stored) write(storage, BENCH_STATE_KEY, serializeRunState(state));
   const mode: 'scenario' | 'results' = state !== null && state.running ? 'scenario' : 'results';
 
   // The same-game-code skip ledger (plan v20x BENCSKIP): the rows this game's code already has
   // timings for. It never blocks anything — an unknown code, a foreign ledger or an empty one
   // all read as "run the whole suite", the behavior of every bench built before this one.
-  const gameCode = options.gameCodeHash ?? '';
-  let ledgerDone = parseLedger(read(storage, BENCH_LEDGER_KEY), gameCode);
-  /** Whether the render scenario at an index is skipped by this build's output (`./output.ts`). */
-  const plannedSkip = (index: number): boolean =>
-    benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null;
+  let ledgerDone = parseLedger(read(storage, BENCH_LEDGER_KEY), ledgerPool);
 
   /**
    * Stores the state.
@@ -1183,7 +1328,11 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
   /** Stores the ledger (a storage that refuses it just loses the offer — the run goes on). */
   const saveLedger = (): void => {
     if (gameCode === '') return;
-    write(storage, BENCH_LEDGER_KEY, serializeLedger(gameCode, ledgerDone));
+    write(
+      storage,
+      BENCH_LEDGER_KEY,
+      serializeLedger(ledgerPool, ledgerDone, read(storage, BENCH_LEDGER_KEY)),
+    );
   };
   /**
    * Notes one measured row in the ledger. Every save path of a successful measurement calls it —
@@ -1363,6 +1512,35 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       `R3-04 STAND-IN ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}${benchSkipNote(
         run.skippedAtStart,
       )}`,
+      STANDIN_LOAD_PNG,
+    ).then(
+      (record) => {
+        if (state === null) return;
+        const next = recordResult(state, record);
+        save(next);
+        markLedger(record.index);
+        post([record], next.cursor >= BENCH_RUN_LENGTH, reload);
+      },
+      (error: unknown) => {
+        if (state !== null) save(stopRun(state, String(error)));
+        reload();
+      },
+    );
+    return;
+  }
+  if (mode === 'scenario' && state !== null && state.cursor === STANDIN_SVG_SCENARIO_INDEX) {
+    // The SVG arm's last load (plan R-SVG WO-2): the stand-in frame drawn from the E3 pages an armed
+    // build emits beside their PNGs, stored and POSTed exactly as the PNG stand-in load's record is.
+    // A PNG build's cursor never lands here — `plannedSkip` passes the slot over at page build.
+    const run: BenchRunState = state;
+    mark(win, 'scenario');
+    measureStandinScenario(
+      options,
+      run.webGLVersion === 2 ? 2 : 1,
+      `R-SVG STAND-IN E3 ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}${benchSkipNote(
+        run.skippedAtStart,
+      )}`,
+      STANDIN_LOAD_SVG,
     ).then(
       (record) => {
         if (state === null) return;
@@ -1588,11 +1766,13 @@ function showResults(
   const output = options.output ?? null;
   const skipped = benchSkippedScenarios(output);
   // The same-game-code ledger's offer (plan v20x BENCSKIP), read at page build — so a partial
-  // run stopped by **Back** makes an honest offer over what that run left pending.
+  // run stopped by **Back** makes an honest offer over what that run left pending. The pool it reads
+  // is the arm's (plan R-SVG WO-2): a PNG run's rows are never offered as the SVG arm's.
   const gameCode = options.gameCodeHash ?? '';
+  const svgEnc = options.svgEnc ?? 'png';
   const ledgerPlan = skipPlan(
-    parseLedger(read(storageOf(win), BENCH_LEDGER_KEY), gameCode),
-    (index) => benchScenarioSetup(BENCH_SCENARIOS[index], output).skip !== null,
+    parseLedger(read(storageOf(win), BENCH_LEDGER_KEY), benchLedgerPool(gameCode, svgEnc)),
+    plannedSkipOf(output, svgEnc === 'e3'),
   );
   const skipOffer =
     gameCode !== '' && ledgerPlan.remaining > 0 && ledgerPlan.skipped > 0 ? ledgerPlan : null;
@@ -1632,6 +1812,7 @@ function showResults(
     endpoint,
     status,
     scenarios: BENCH_SCENARIOS.length - skipped.length,
+    pageLoads: svgEnc === 'e3' ? 4 : 3,
     timing: TV_BENCH_TIMING,
     skipOffer,
     page,

@@ -12,8 +12,8 @@
  * upscaled ×s at bench-build time (`scripts/bench-atlas.mjs` — eight densities from 1 to 2.67,
  * one or two atlas pages each; nothing is added to the game's atlas). Six variants per size
  * (`./matrix.ts`: busy, a filtered layer, Mode-7, CRT light, CRT full, all of them) over 25 sizes,
- * then 40 knob rows (the first six knobs, the 960×540 first-class set and the big-frame video
- * pairs), make the 190-scenario matrix.
+ * then 44 knob rows (the first six knobs, the 960×540 first-class set, the big-frame video pairs and
+ * the cull pair), make the 194-scenario matrix.
  *
  * **One scenario per page load** (Pixi's `TexturePool` is global and never shrinks): the cursor
  * and the results live in `localStorage` (`./state.ts`) and the page reloads between scenarios.
@@ -34,7 +34,20 @@
  * the full suite again** as a fresh noise-floor sample — the owner sits deliberate full runs, so
  * both arms are first-class, and repeated rows across sessions stack as samples, never
  * supersede. Changed game code (or a bundle built without the hash) finds no matching ledger and
- * runs exactly the pre-ledger full suite.
+ * runs exactly the pre-ledger full suite. The store is keyed **per pool** (plan R-SVG WO-2): the
+ * game code for a PNG build, `code|svg=<enc>` for an armed one, so an SVG row never inherits a PNG
+ * row's done mark; a store written before the matrix grew is migrated on read, its frozen row prefix
+ * unchanged and its page loads shifted by the rows appended since.
+ *
+ * **The SVG arm's rows (plan R-SVG WO-2).** Built with `VITE_BENCH_SVG=e3`, the bench measures the
+ * same matrix over E3 atlas pages, carries the arm's five decode-side rows (`./decode.ts`
+ * `measureSvgDecode` and the E3 pages appended to its `decode` list) and draws one more page load,
+ * `standin-zone-svg`, from the stand-in atlas's E3 pages. A PNG build reserves that load's slot and
+ * passes it over as a planned skip, so every index below the run's length means the same row on both
+ * arms. **The cull pair** (the owner-folded arm B of `v20x-SPIKE-report.md`) runs on both arms: four
+ * knob rows (`640x360-busy-cull` …) tag every scene sprite cullable with a tight bound and walk the
+ * cull test once per rendered frame inside the timed window (`./cull.ts`), to be read against the
+ * plain row of the same size and variant.
  *
  * **Results three ways:** an on-screen table in the bitmap font after the run (`./results.ts` —
  * photographing the TV is enough), a `render-bench` payload per scenario POSTed through the shell
@@ -116,6 +129,8 @@
  * {@link BenchCampaignConfig}, {@link BenchCampaignState}, {@link BenchCampaignAttempt},
  * {@link BenchCampaignStep}, {@link BenchPassGL}); the decode scenario ({@link DECODE_SCENARIO_ID},
  * {@link DECODE_SCENARIO_INDEX}, {@link STANDIN_SCENARIO_ID}, {@link STANDIN_SCENARIO_INDEX},
+ * {@link STANDIN_SVG_SCENARIO_ID}, {@link STANDIN_SVG_SCENARIO_INDEX},
+ * {@link measureSvgDecode}, {@link BenchSvgProbe}, {@link BenchSvgProbeSpec},
  * {@link BENCH_RUN_LENGTH}, {@link TV_DECODE_REPETITIONS},
  * {@link HEADLESS_DECODE_REPETITIONS}, {@link MAX_DECODE_REPETITIONS},
  * {@link DECODE_STAGE_TIMEOUT_MS}, {@link measureDecode}, {@link failedDecodeRecord},
@@ -280,16 +295,21 @@ export {
   MAX_DECODE_REPETITIONS,
   STANDIN_SCENARIO_ID,
   STANDIN_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
   TV_DECODE_REPETITIONS,
   createDecodeHost,
   decodeRepetitionsFromSearch,
   failedDecodeRecord,
   measureDecode,
+  measureSvgDecode,
   measureVideoDecode,
   pngEncodingOf,
   summarizeRuns,
   VIDEO_DECODE_ENCODING,
   type BenchDecodePage,
+  type BenchSvgProbe,
+  type BenchSvgProbeSpec,
   type BenchVideoSpec,
   type DecodeHost,
   type DecodeHostOptions,
@@ -298,6 +318,14 @@ export {
   type DecodeWindow,
   type DecodedPage,
 } from './decode.js';
+export {
+  createBenchCull,
+  type BenchCull,
+  type BenchCullFacts,
+  type CullMatrix,
+  type CullNode,
+  type CullRect,
+} from './cull.js';
 export {
   HEADLESS_REWIND_TICKS,
   M7_SLOWDOWN_ESTIMATE,
@@ -324,11 +352,13 @@ export {
 export {
   BENCH_LEDGER_KEY,
   BENCH_LEDGER_VERSION,
+  benchLedgerPool,
   benchSkipNote,
   ledgerWith,
   parseLedger,
   serializeLedger,
   skipPlan,
   type BenchLedger,
+  type BenchLedgerPools,
   type BenchSkipPlan,
 } from './ledger.js';

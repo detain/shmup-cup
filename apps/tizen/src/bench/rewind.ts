@@ -41,13 +41,17 @@ import type { ContentDb, ContentFile, GameConfig, World } from '@shmup/core';
 import kestrelPlayer from '../../../../content/player/kestrel.player.json' with { type: 'json' };
 import typeAWeapons from '../../../../content/weapons/type-a.weapons.json' with { type: 'json' };
 import { searchParam } from './matrix.js';
-import { STANDIN_SCENARIO_INDEX } from './decode.js';
+import { STANDIN_SVG_SCENARIO_INDEX } from './decode.js';
 
 /** The rewind scenario's id (`?scenario=rewind` runs it headlessly). */
 export const REWIND_SCENARIO_ID = 'rewind';
 
-/** Its position in a TV run: after the stand-in load (the run's third special page). */
-export const REWIND_SCENARIO_INDEX = STANDIN_SCENARIO_INDEX + 1;
+/**
+ * Its position in a TV run: the last page, after both stand-in loads (plan R-SVG WO-2 reserves the
+ * slot before it for the SVG arm's stand-in frame, so the page that closes a run is one every build
+ * measures — a **Red** at the results page always has something to re-run).
+ */
+export const REWIND_SCENARIO_INDEX = STANDIN_SVG_SCENARIO_INDEX + 1;
 
 /** Ticks the headless run steps (SwiftShader — the sim is the point, seconds are enough). */
 export const HEADLESS_REWIND_TICKS = 6_000;

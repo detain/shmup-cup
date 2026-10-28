@@ -43,7 +43,11 @@
  * plan R3-04.M4a: the stand-in zone A's own page(s) and the shipped `common` and zone A pages, as
  * `decode-<id>.png` next to the density pages) with the manifest of the run's last page load, the
  * `standin-zone` one, which draws a v2 frame from those stand-in pages; it exposes all four through
- * the virtual module {@link BENCH_MODULE_ID}.
+ * the virtual module {@link BENCH_MODULE_ID}. The **SVG arm** (`{ svgEnc: 'e3' }`) ships the density
+ * pages as E3 instead of PNG and *besides* them the same stand-in pages as E3, the `decode`
+ * scenario's five E3 rows and the manifest of the run's last load drawn from E3
+ * (`standin-zone-svg`) — a PNG build ships none of it, so its module text, its rows and its ledger
+ * are exactly what they were before the arm ({@link benchSvgDecodeRows}, {@link benchSvgProbeRows}).
  *
  * The pages are encoded like the game's atlas pages: lossless PNG-8 where a page has at most 256
  * colours, else RGBA (`encodePng(…, { indexed: 'auto' })`, decision W3-3 — today's art has more,
@@ -52,7 +56,8 @@
  * **Public API.** {@link BENCH_DENSITIES}, {@link BENCH_MODULE_ID}, {@link BENCH_ATLAS_DIR},
  * {@link densityLabel}, {@link benchPageFile}, {@link scaledSize}, {@link benchPageCount},
  * {@link benchSourceAtlas}, {@link scaleAtlas}, {@link buildBenchAtlases}, {@link readFxFiles},
- * {@link shmupRenderBench}.
+ * {@link BENCH_SVG_DECODE_ROWS}, {@link BENCH_SVG_STANDIN_ROW}, {@link BENCH_SVG_PROBE_ROWS},
+ * {@link benchSvgDecodeRows}, {@link benchSvgProbeRows}, {@link shmupRenderBench}.
  *
  * @module
  */
@@ -68,6 +73,7 @@ import {
   BENCH_SVG_ENCODING,
   SVG_MIME_TYPE,
   buildBenchSvgPages,
+  emitSvgPages,
   parseBenchSvgEncoding,
 } from './bench-svg.mjs';
 import { FRAME_H, FRAME_W } from '../../../scripts/frame.mjs';
@@ -108,6 +114,56 @@ export const BENCH_VIDEO_CLIPS = Object.freeze([
   Object.freeze({ id: 'warn-zone-a', what: 'Zone A warning clip' }),
   Object.freeze({ id: 'title-sting', what: 'Title sting clip' }),
   Object.freeze({ id: 'ark-sailing', what: 'Zone I ark sailing clip' }),
+]);
+
+/**
+ * The density pages the **SVG arm** measures in the `decode` scenario beside the PNG ones (plan
+ * R-SVG WO-2, the §C.5 sizing of `r-svg-inv-report.md`): the E3 of that density page, fetched,
+ * decoded and uploaded exactly like a PNG decode page (the `avc1` video rows' mechanism — own id,
+ * own encoding tag, the frozen page columns). Absent from a PNG build, whose dist holds no SVG to
+ * measure. `page` counts down to the density's last page when it packs fewer than it names.
+ */
+export const BENCH_SVG_DECODE_ROWS = Object.freeze([
+  Object.freeze({
+    id: 'svg-x1-e3',
+    density: 1,
+    page: 0,
+    what: 'E3 of the x1 density page (most colours, partial alpha — the arm is parse-bound here)',
+  }),
+  Object.freeze({
+    id: 'svg-x2.67-e3',
+    density: 2.67,
+    page: 1,
+    what: 'E3 of the x2.67 density page (most pixels, fewest colours — the case E3 wins on the wire)',
+  }),
+]);
+
+/**
+ * The stand-in page the SVG arm emits as E3 beside its PNG, measured as the decode row of the same
+ * id: PNG-8 interim art, the largest element count in the build — E3 at its worst (its cost is the
+ * point of the row, not an accident to hide).
+ */
+export const BENCH_SVG_STANDIN_ROW = Object.freeze({
+  id: 'svg-standin-e3',
+  what: 'E3 of the stand-in zone A page (PNG-8 interim art, largest element count — worst case)',
+});
+
+/**
+ * The SVG arm's probe rows: the two measurements the four decode stages cannot express, because
+ * each is about a consumption route an SVG page has or has not got. `probe` picks the route in
+ * `src/bench/decode.ts` `measureSvgDecode`; both reference the ×1 density page's E3 file.
+ */
+export const BENCH_SVG_PROBE_ROWS = Object.freeze([
+  Object.freeze({
+    id: 'svg-bitmap-reject',
+    probe: 'bitmap-reject',
+    what: 'createImageBitmap of the x1 E3 page — the expected rejection, no SVG bitmapping on the TV engine',
+  }),
+  Object.freeze({
+    id: 'svg-teximage-from-img',
+    probe: 'url-upload',
+    what: 'the x1 E3 page decoded from its URL (the atlas loader route, no fetched bytes) then uploaded',
+  }),
 ]);
 
 /** Edge-extrusion border around each frame (the pipeline's `ATLAS_EXTRUDE`). */
@@ -446,6 +502,90 @@ export function readFxFiles(dir = FX_DIR) {
 }
 
 /**
+ * A `decode` scenario row for one E3 page (plan R-SVG WO-2) — the shape the virtual module's
+ * `decode` array holds, so the row is measured by the same four stages as a PNG page.
+ *
+ * @param {string} id - The row id (`svg-x1-e3`, …).
+ * @param {string} what - The table label.
+ * @param {import('./bench-svg.mjs').BenchSvgPage} page - The emitted page.
+ * @returns {{ id: string, what: string, width: number, height: number, url: string }} The row.
+ */
+function svgDecodeRow(id, what, page) {
+  return {
+    id,
+    what: `${what} (${page.file}: ${page.paths} paths / ${page.rects} rects)`,
+    width: page.width,
+    height: page.height,
+    url: `${BENCH_ATLAS_DIR}/${page.file}`,
+  };
+}
+
+/**
+ * The E3 pages the `decode` scenario measures in an armed build (the rows of
+ * {@link BENCH_SVG_DECODE_ROWS}, then the stand-in page's).
+ *
+ * @param {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} densityPages - The density
+ *   pages' E3 by PNG name, or `null` in the PNG arm.
+ * @param {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} standinPages - The stand-in
+ *   pages' E3 by PNG name in manifest order, or `null` in the PNG arm.
+ * @param {readonly BenchAtlas[]} atlases - The built atlases (which page of a density is asked for).
+ * @returns {{ id: string, what: string, width: number, height: number, url: string }[]} The rows —
+ *   `[]` in the PNG arm, where there is no SVG in the bundle to measure.
+ * @throws {Error} When a row names a density the build has no atlas for, or a page with no E3 behind
+ *   it — a build whose tables have drifted apart fails instead of shipping a short row list.
+ */
+export function benchSvgDecodeRows(densityPages, standinPages, atlases) {
+  if (densityPages === null || standinPages === null) return [];
+  /** @type {{ id: string, what: string, width: number, height: number, url: string }[]} */
+  const rows = [];
+  for (const row of BENCH_SVG_DECODE_ROWS) {
+    const atlas = atlases.find((built) => built.density === row.density);
+    if (atlas === undefined) {
+      throw new Error(`bench build: the ${row.id} row names density ${row.density}, not built`);
+    }
+    const index = Math.min(row.page, atlas.manifest.pages.length - 1);
+    const page = densityPages.get(atlas.manifest.pages[index].file);
+    if (page === undefined) {
+      throw new Error(`bench build: no E3 page behind the ${row.id} row's atlas page ${index}`);
+    }
+    rows.push(svgDecodeRow(row.id, row.what, page));
+  }
+  const standin = standinPages.values().next().value;
+  if (standin === undefined) {
+    throw new Error('bench build: the SVG arm has no stand-in page to measure');
+  }
+  rows.push(svgDecodeRow(BENCH_SVG_STANDIN_ROW.id, BENCH_SVG_STANDIN_ROW.what, standin));
+  return rows;
+}
+
+/**
+ * The E3 rows the `decode` scenario measures through {@link benchSvgProbeRows}'s own routes (plan
+ * R-SVG WO-2 §C.5): both name the ×1 density page's E3 file, which is the page with the most
+ * colours and so the most representative parse.
+ *
+ * @param {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} densityPages - The density
+ *   pages' E3 by PNG name, or `null` in the PNG arm.
+ * @returns {{ id: string, probe: string, what: string, width: number, height: number, url: string }[]}
+ *   The probe specs — `[]` in the PNG arm.
+ * @throws {Error} When the build has no ×1 page (a bench build always has one).
+ */
+export function benchSvgProbeRows(densityPages) {
+  if (densityPages === null) return [];
+  const page = densityPages.get(benchPageFile(1, 0));
+  if (page === undefined) {
+    throw new Error('bench build: the SVG arm has no x1 page for its probe rows');
+  }
+  return BENCH_SVG_PROBE_ROWS.map((row) => ({
+    id: row.id,
+    probe: row.probe,
+    what: `${row.what} (${page.file})`,
+    width: page.width,
+    height: page.height,
+    url: `${BENCH_ATLAS_DIR}/${page.file}`,
+  }));
+}
+
+/**
  * Vite plugin of the bench builds (`vite.bench.config.ts` of `apps/tizen` and `apps/webos`):
  * builds the density atlases from {@link benchSourceAtlas} (the shipped art, ungrouped, built in
  * memory once per Vite run), emits their pages into
@@ -521,6 +661,61 @@ export function shmupRenderBench(options = {}) {
     return svgByName;
   };
 
+  /** @type {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} */
+  let svgStandinByName = null;
+
+  /**
+   * The E3 of the stand-in load's own pages (the pages {@link ensureDecode} ships as PNG in **both**
+   * arms), keyed by the PNG file name — `null` in the PNG arm. The arm draws the run's last page
+   * load from these (`standin-zone-svg`) and measures the first as a decode row (`svg-standin-e3`);
+   * the PNG files stay shipped either way, so the `decode` scenario's PNG rows never move.
+   *
+   * @returns {Map<string, import('./bench-svg.mjs').BenchSvgPage> | null} The pages by PNG name.
+   * @throws {Error} When a stand-in manifest page has no shipped PNG behind it — a build whose page
+   *   files and manifest have drifted apart.
+   */
+  const svgStandinPages = () => {
+    if (svgEnc !== BENCH_SVG_ENCODING) return null;
+    if (svgStandinByName === null) {
+      const build = ensureDecode();
+      /** @type {Map<string, Buffer>} */
+      const pngByFile = new Map();
+      for (const page of build.pages) pngByFile.set(page.file, page.png);
+      const items = build.manifest.pages.map((/** @type {{ file: string }} */ page) => {
+        const png = pngByFile.get(page.file);
+        if (png === undefined) {
+          throw new Error(
+            `bench build: the stand-in page ${page.file} has no shipped PNG to convert`,
+          );
+        }
+        return { file: page.file, png };
+      });
+      svgStandinByName = new Map();
+      for (const page of emitSvgPages(items)) svgStandinByName.set(page.pngFile, page);
+    }
+    return svgStandinByName;
+  };
+
+  /**
+   * The arm's stand-in atlas: the same manifest and page count as {@link ensureDecode}'s, with every
+   * page file renamed to its E3 sibling (`null` in the PNG arm, where the run has no SVG load).
+   *
+   * @returns {{ manifest: object, pageUrls: string[] } | null} The stand-in SVG atlas.
+   */
+  const standinSvgAtlas = () => {
+    const standin = svgStandinPages();
+    if (standin === null) return null;
+    const build = ensureDecode();
+    const files = build.manifest.pages.map((page) => standin.get(page.file).file);
+    return {
+      manifest: {
+        ...build.manifest,
+        pages: build.manifest.pages.map((page, index) => ({ ...page, file: files[index] })),
+      },
+      pageUrls: files.map((file) => `${BENCH_ATLAS_DIR}/${file}`),
+    };
+  };
+
   /**
    * The page the widget fetches and the bundle emits: the PNG page in the default arm, the E3 SVG
    * text of the same pixels when armed (the bytes argument is then only read in the PNG arm).
@@ -560,6 +755,17 @@ export function shmupRenderBench(options = {}) {
           source: page.png,
         });
       }
+      // The arm's stand-in E3 pages, beside their PNGs (the PNG arm ships none).
+      const standinSvg = svgStandinPages();
+      if (standinSvg !== null) {
+        for (const page of standinSvg.values()) {
+          this.emitFile({
+            type: 'asset',
+            fileName: `${BENCH_ATLAS_DIR}/${page.file}`,
+            source: page.svg,
+          });
+        }
+      }
     },
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
@@ -585,6 +791,14 @@ export function shmupRenderBench(options = {}) {
         if (decodePage !== undefined) {
           response.setHeader('Content-Type', 'image/png');
           response.end(decodePage.png);
+          return;
+        }
+        const svgStandin = [...(svgStandinPages()?.values() ?? [])].find(
+          (page) => page.file === file,
+        );
+        if (svgStandin !== undefined) {
+          response.setHeader('Content-Type', SVG_MIME_TYPE);
+          response.end(svgStandin.svg);
           return;
         }
         next();
@@ -628,13 +842,22 @@ export function shmupRenderBench(options = {}) {
         height: FRAME_H,
         url: `${BENCH_VIDEO_DIR}/${clip.id}.mp4`,
       }));
+      // The SVG arm's beside-rows (plan R-SVG WO-2): the E3 files the `decode` scenario measures in
+      // addition to its PNG pages, the two probe rows, and the manifest of the `standin-zone-svg`
+      // load. A PNG build ships none of them — its `decode` array and every other row stay exactly
+      // as they were, which is what keeps its ledger and the analyzer's PNG pools honest.
+      const svgPagesByName = svgPages();
+      const svgDecode = benchSvgDecodeRows(svgPagesByName, svgStandinPages(), ensure());
+      const svgProbes = benchSvgProbeRows(svgPagesByName);
       return (
         `export const atlases = ${JSON.stringify(list)};\n` +
         `export const fx = ${JSON.stringify(readFxFiles())};\n` +
-        `export const decode = ${JSON.stringify(decode)};\n` +
+        `export const decode = ${JSON.stringify(decode.concat(svgDecode))};\n` +
         `export const standin = ${JSON.stringify(standin)};\n` +
+        `export const standinSvg = ${JSON.stringify(standinSvgAtlas() ?? null)};\n` +
         `export const videos = ${JSON.stringify(videos)};\n` +
-        'export default { atlases, fx, decode, standin, videos };\n'
+        `export const svgProbes = ${JSON.stringify(svgProbes)};\n` +
+        'export default { atlases, fx, decode, standin, standinSvg, videos, svgProbes };\n'
       );
     },
   };

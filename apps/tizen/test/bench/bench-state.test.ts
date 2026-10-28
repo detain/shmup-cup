@@ -14,6 +14,7 @@ import {
   BENCH_STATE_KEY,
   DECODE_SCENARIO_INDEX,
   STANDIN_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_INDEX,
   BENCH_STATE_VERSION,
   BenchSampler,
   BenchSeries,
@@ -36,7 +37,13 @@ import {
   unsentRecords,
 } from '../../src/bench/index.js';
 import { REWIND_SCENARIO_INDEX } from '../../src/bench/index.js';
-import { fakeDecode, fakeRewind, fakeStandinRecord, recordFor } from './fake-record.js';
+import {
+  fakeDecode,
+  fakeRewind,
+  fakeStandinRecord,
+  fakeStandinSvgRecord,
+  recordFor,
+} from './fake-record.js';
 
 /**
  * A complete record for scenario `index`.
@@ -91,7 +98,7 @@ describe('bench run state', () => {
     expect(messy?.sent).toEqual([1]);
   });
 
-  it('works through the matrix, then decode, the stand-in load and the rewind page, and stops', () => {
+  it('works through the matrix, then decode, the two stand-in loads and the rewind page, and stops', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
       expect(state.running).toBe(true);
@@ -109,13 +116,18 @@ describe('bench run state', () => {
     expect(state.decode).toEqual(fakeDecode());
     expect(state.records).toHaveLength(BENCH_SCENARIOS.length);
     state = recordResult(state, fakeStandinRecord());
-    // The stand-in hands on to the rewind page (plan R2 TL-3): the run goes on.
+    // The stand-in hands on to the SVG arm's stand-in slot, and the rewind page closes the run
+    // (plans R3-04.M4a, R-SVG WO-2, R2 TL-3): `state.ts` walks the arm's slot on both arms, and which
+    // builds launch a page for it is `run.ts`'s planned skip.
+    expect(state.running).toBe(true);
+    expect(state.cursor).toBe(STANDIN_SVG_SCENARIO_INDEX);
+    state = recordResult(state, fakeStandinSvgRecord());
     expect(state.running).toBe(true);
     expect(state.cursor).toBe(REWIND_SCENARIO_INDEX);
+    expect(state.records).toHaveLength(BENCH_SCENARIOS.length + 2);
     state = recordRewind(state, fakeRewind());
     expect(state.running).toBe(false);
     expect(state.cursor).toBe(BENCH_RUN_LENGTH);
-    expect(state.records).toHaveLength(BENCH_SCENARIOS.length + 1);
     expect(state.rewind).toEqual(fakeRewind());
   });
 
@@ -133,16 +145,28 @@ describe('bench run state', () => {
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
     const { decode: _decode, ...old } = { ...state, running: false };
     state = parseRunState(JSON.stringify(old)) ?? state;
-    expect([state.running, state.cursor, state.decode]).toEqual([false, 190, null]);
-    state = markSent(state, [189]);
+    expect([state.running, state.cursor, state.decode]).toEqual([
+      false,
+      DECODE_SCENARIO_INDEX,
+      null,
+    ]);
+    state = markSent(state, [BENCH_SCENARIOS.length - 1]);
     state = rerunScenario(state);
-    expect([state.running, state.single, state.cursor]).toEqual([true, true, 189]);
-    state = recordResult(state, { ...rec(189), frames: 7 });
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 190]);
-    expect(state.records).toHaveLength(190);
-    expect(state.records[189].frames).toBe(7);
+    expect([state.running, state.single, state.cursor]).toEqual([
+      true,
+      true,
+      BENCH_SCENARIOS.length - 1,
+    ]);
+    state = recordResult(state, { ...rec(BENCH_SCENARIOS.length - 1), frames: 7 });
+    expect([state.running, state.single, state.cursor]).toEqual([
+      false,
+      false,
+      DECODE_SCENARIO_INDEX,
+    ]);
+    expect(state.records).toHaveLength(BENCH_SCENARIOS.length);
+    expect(state.records[BENCH_SCENARIOS.length - 1].frames).toBe(7);
     // The new record is not acknowledged yet.
-    expect(unsentRecords(state).map((r) => r.index)).toContain(189);
+    expect(unsentRecords(state).map((r) => r.index)).toContain(BENCH_SCENARIOS.length - 1);
   });
 
   it('re-runs the last page load from the results page after a whole run (R3-04.M4a, R2 TL-3)', () => {
@@ -150,14 +174,18 @@ describe('bench run state', () => {
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
     state = markSent(recordDecode(state, fakeDecode()), [DECODE_SCENARIO_INDEX]);
     expect(decodeUnsent(state)).toBe(false);
-    // The run is not over: the stand-in load and the rewind page follow. Finish it, re-run the
-    // last page load (the rewind, since R2 TL-3).
-    expect([state.running, state.cursor]).toEqual([true, 191]);
+    // The run is not over: the stand-in load, the SVG arm's stand-in slot and the rewind page
+    // follow (plan R-SVG WO-2 — the arm's slot sits before the page that closes the run, so a Red at
+    // the results page always re-measures a row a PNG build has too).
+    expect([state.running, state.cursor]).toEqual([true, STANDIN_SCENARIO_INDEX]);
     state = recordResult(state, fakeStandinRecord());
     state = markSent(state, [STANDIN_SCENARIO_INDEX]);
+    expect([state.running, state.cursor]).toEqual([true, STANDIN_SVG_SCENARIO_INDEX]);
+    state = recordResult(state, fakeStandinSvgRecord());
+    state = markSent(state, [STANDIN_SVG_SCENARIO_INDEX]);
     expect([state.running, state.cursor]).toEqual([true, REWIND_SCENARIO_INDEX]);
     state = recordRewind(state, fakeRewind());
-    expect([state.running, state.cursor]).toEqual([false, 193]);
+    expect([state.running, state.cursor]).toEqual([false, BENCH_RUN_LENGTH]);
     state = rerunScenario(state);
     expect([state.running, state.single, state.cursor]).toEqual([
       true,
@@ -165,10 +193,11 @@ describe('bench run state', () => {
       REWIND_SCENARIO_INDEX,
     ]);
     state = recordRewind(state, fakeRewind({ stepsPerSecond: 999 }));
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 193]);
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, BENCH_RUN_LENGTH]);
     expect(state.rewind?.stepsPerSecond).toBe(999);
-    expect(state.records).toHaveLength(191);
-    expect(state.records[190].drawCalls).toBe(96);
+    expect(state.records).toHaveLength(BENCH_SCENARIOS.length + 2);
+    expect(state.records[BENCH_SCENARIOS.length].drawCalls).toBe(96);
+    expect(state.records[BENCH_SCENARIOS.length + 1].drawCalls).toBe(96);
     // The rewind is never POSTed: nothing new joins the acknowledged set, the decode stays acked.
     expect(unsentRecords(state).map((r) => r.index)).not.toContain(REWIND_SCENARIO_INDEX);
     expect(decodeUnsent(state)).toBe(false);
@@ -297,10 +326,18 @@ describe('bench run state: planned skips (a build output — src/bench/output.ts
   it('runs on into the decode scenario past a skipped last render scenario', () => {
     const next = skipPlannedScenarios({ ...run, cursor: DECODE_SCENARIO_INDEX - 1 }, skipped);
     expect(next).toMatchObject({ cursor: DECODE_SCENARIO_INDEX, running: true });
-    // The decode scenario itself is never asked about.
-    expect(skipPlannedScenarios({ ...run, cursor: DECODE_SCENARIO_INDEX }, () => true).cursor).toBe(
-      DECODE_SCENARIO_INDEX,
-    );
+    // Since plan R-SVG WO-2 the page loads are asked about too — `run.ts` answers for them (the SVG
+    // arm's stand-in slot is the row a PNG build passes over), and a run whose whole tail is a
+    // planned skip ends at the run's length rather than stopping at the decode scenario.
+    expect(
+      skipPlannedScenarios({ ...run, cursor: DECODE_SCENARIO_INDEX }, () => true),
+    ).toMatchObject({ cursor: BENCH_RUN_LENGTH, running: false });
+    expect(
+      skipPlannedScenarios(
+        { ...run, cursor: DECODE_SCENARIO_INDEX },
+        (index) => index !== STANDIN_SVG_SCENARIO_INDEX,
+      ).cursor,
+    ).toBe(STANDIN_SVG_SCENARIO_INDEX);
   });
 
   it('stops a Red re-run of a skipped scenario instead of running the rest of the matrix', () => {

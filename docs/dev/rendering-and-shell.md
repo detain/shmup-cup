@@ -1214,8 +1214,12 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   surface's quad over the base scene — the headless SwiftShader rows read p95 2.10 ms (+0.2)
   and 2.70 ms (+0.6) with +1 draw call exactly, heap +33–88 KB) — **174 rows** through v2.0.x —
   and `4b37d123` appended the twelve 960×540 knob rows and the four big-frame video rows at the
-  tail (40 knobs in all; ids and indices 0 … 173 never move), so the matrix is **190
-  scenarios, one per page load** now and a full session **193 page loads**. The ids R0-02 and R0-03
+  tail (40 knobs in all; ids and indices 0 … 173 never move), so the matrix was 190 rows through
+  v2.1.0; R-SVG WO-2 appends the four `*-cull` rows the same way (44 knobs; ids and indices 0 … 189
+  never move), so the matrix is **194
+  scenarios, one per page load** now and a full session **198 page loads** — the 194 rows, the
+  `decode`, `standin-zone` and `rewind` loads and the SVG arm's `standin-zone-svg` slot, which a PNG
+  build reserves and passes over without a launch. The ids R0-02 and R0-03
   recorded — `384x216`, `640x360`, `960x540` — are byte-identical through the growth, so the
   sessions under `tools/input-probe/results/` stay comparable row for row. The atlas is upscaled
   ×`s` at build time (`apps/tizen/scripts/bench-atlas.mjs`; `ceil(s² / 4)` pages of

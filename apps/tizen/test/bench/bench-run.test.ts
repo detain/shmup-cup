@@ -12,9 +12,14 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   BENCH_DENSITIES,
   BENCH_LEDGER_KEY,
+  BENCH_RUN_LENGTH,
   BENCH_SCENARIOS,
   BENCH_STATE_KEY,
+  DECODE_SCENARIO_INDEX,
   REWIND_SCENARIO_INDEX,
+  STANDIN_SVG_SCENARIO_ID,
+  STANDIN_SVG_SCENARIO_INDEX,
+  STANDIN_SCENARIO_INDEX,
   TV_BENCH_MARKER,
   TV_BENCH_TIMING,
   atlasFor,
@@ -55,6 +60,8 @@ interface FakeOptions {
   readonly gameCodeHash?: string;
   /** Text stored under the ledger key before the page starts (default nothing). */
   readonly ledger?: string;
+  /** The atlas-page encoding the build was armed with (plan R-SVG WO-2), default `'png'`. */
+  readonly svgEnc?: 'png' | 'e3';
 }
 
 /** A fake page: storage, keys, the body marker, reload and exit, and images that fail to load. */
@@ -140,6 +147,7 @@ function fakePage(
       assets,
       host,
       output: extra.output ?? null,
+      svgEnc: extra.svgEnc ?? 'png',
     });
   };
   return {
@@ -243,9 +251,13 @@ describe('bench page (TV mode)', () => {
     const done = fakePage('', completeRun());
     done.start();
     done.press(403);
-    // The last page load of a whole run is the rewind page (plan R2 TL-3, after the stand-in of
-    // plan R3-04.M4a).
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 192 });
+    // The last page load of a whole run is the rewind page on both arms (plan R2 TL-3, after the
+    // stand-in of plan R3-04.M4a and the SVG arm's stand-in slot of plan R-SVG WO-2).
+    expect(done.state()).toMatchObject({
+      running: true,
+      single: true,
+      cursor: REWIND_SCENARIO_INDEX,
+    });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -294,8 +306,8 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: true, cursor: 191, lastError: null });
-    expect(state?.records).toHaveLength(190);
+    expect(state).toMatchObject({ running: true, cursor: STANDIN_SCENARIO_INDEX, lastError: null });
+    expect(state?.records).toHaveLength(BENCH_SCENARIOS.length);
     expect(state?.decode?.error).toBe('this bench build has no decode pages');
     expect(state?.decode?.pages).toEqual([]);
     expect(page.reload).toHaveBeenCalledTimes(1);
@@ -307,9 +319,9 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: false, cursor: 191 });
+    expect(state).toMatchObject({ running: false, cursor: STANDIN_SCENARIO_INDEX });
     expect(state?.lastError).toContain('this bench build has no stand-in pages');
-    expect(state?.records).toHaveLength(190);
+    expect(state?.records).toHaveLength(BENCH_SCENARIOS.length);
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -318,7 +330,7 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     page.start();
     await settle();
     const state = page.state();
-    expect(state?.cursor).toBe(191);
+    expect(state?.cursor).toBe(STANDIN_SCENARIO_INDEX);
     expect(state?.decode?.error).toContain('atlas page missing.png failed to load');
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
@@ -369,6 +381,47 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
     expect(page.state()).toBeNull();
     expect(page.reload).not.toHaveBeenCalled();
+  });
+
+  it('publishes the E3 stand-in outcome headlessly (?scenario=standin-zone-svg)', async () => {
+    const page = fakePage(`?scenario=${STANDIN_SVG_SCENARIO_ID}`, null, ASSETS, {
+      svgEnc: 'e3',
+    });
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('running');
+    await settle();
+    const outcome = (page.win as unknown as { __shmupTvBench: TvBenchOutcome }).__shmupTvBench;
+    expect(outcome.record).toBeNull();
+    expect(outcome.error).toContain('this bench build has no SVG stand-in pages');
+    expect(outcome.error).toContain(STANDIN_SVG_SCENARIO_ID);
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
+    expect(page.reload).not.toHaveBeenCalled();
+  });
+
+  it('launches the E3 stand-in load on an armed page', async () => {
+    const armed = createRunState('rb-arm', 1, 1, TV_BENCH_TIMING, STANDIN_SVG_SCENARIO_INDEX);
+    const page = fakePage('', serializeRunState(armed), ASSETS, { svgEnc: 'e3' });
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    await settle();
+    // It fails like the PNG stand-in load of a build without its pages: the row is not recorded.
+    expect(page.state()).toMatchObject({ running: false, cursor: STANDIN_SVG_SCENARIO_INDEX });
+    expect(page.state()?.lastError).toContain('this bench build has no SVG stand-in pages');
+    expect(page.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the E3 stand-in slot over on a PNG page, without a launch', async () => {
+    const png = createRunState('rb-png', 1, 1, TV_BENCH_TIMING, STANDIN_SVG_SCENARIO_INDEX);
+    const page = fakePage('', serializeRunState(png), ASSETS);
+    page.start();
+    // The reserved slot is a planned skip decided at page build (`run.ts`'s arm-aware predicate): no
+    // page is launched for it, so this one goes on to measure the rewind page that follows it and the
+    // run ends there exactly as an unreserved one would (plan R-SVG WO-2).
+    await settle();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    expect(page.state()).toMatchObject({ running: false, cursor: BENCH_RUN_LENGTH });
+    expect(page.state()?.records).toHaveLength(0);
+    expect(page.state()?.rewind?.scenario).toBe('rewind');
   });
 
   it('publishes the decode outcome headlessly (?scenario=decode)', async () => {
@@ -437,7 +490,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(text).toContain('output 1280x720');
     expect(text).toContain('24 scenario(s) skipped: frame larger than the output');
     expect(text).toContain('SKIPPED 1024x768n 1280x960n 1920x1080n 1920x1080n-interp');
-    expect(text).toContain('ENTER run: 166 scenarios + decode + stand-in + rewind');
+    expect(text).toContain('ENTER run: 170 scenarios + decode + stand-in + rewind');
   });
 
   it('reports a null output without one', async () => {
@@ -452,7 +505,7 @@ describe('bench page: a build output (VITE_BENCH_OUTPUT)', () => {
     expect(payload.env.output).toBeNull();
     expect(page.appended[0].textContent).not.toContain('OUTPUT');
     expect(page.appended[0].textContent).toContain(
-      'ENTER run: 190 scenarios + decode + stand-in + rewind',
+      'ENTER run: 194 scenarios + decode + stand-in + rewind',
     );
   });
 
@@ -513,9 +566,9 @@ describe('bench skip ledger (TV mode)', () => {
     page.start();
     await settle();
     const text = page.appended[0].textContent;
-    expect(text).toContain('ENTER new rows only: 19 row(s) left');
+    expect(text).toContain('ENTER new rows only: 23 row(s) left');
     expect(text).toContain('174 measured on this game code');
-    expect(text).toContain('GREEN full suite: 190 scenarios');
+    expect(text).toContain('GREEN full suite: 194 scenarios');
     expect(text).toContain('fresh noise-floor sample');
     page.press(13);
     expect(page.state()).toMatchObject({ running: true, cursor: 174, skippedAtStart: 174 });
@@ -546,7 +599,11 @@ describe('bench skip ledger (TV mode)', () => {
     expect(page.appended[0].textContent).not.toContain('new rows only');
     page.press(13);
     expect(page.state()).toMatchObject({ cursor: 0, skippedAtStart: 0 });
-    expect(page.ledger()).toBe(serializeLedger(CODE, []));
+    // Writing this code's pool keeps the foreign one: one store, one done set per pool, so the arm
+    // that did not run this time never loses its rows (plan R-SVG WO-2).
+    expect(page.ledger()).toBe(
+      serializeLedger(CODE, [], serializeLedger('ffffaaaa00', first174())),
+    );
   });
 
   it('a build without the hash behaves exactly as before (no ledger is ever written)', async () => {
@@ -558,6 +615,62 @@ describe('bench skip ledger (TV mode)', () => {
     page.press(13);
     expect(page.state()).toMatchObject({ cursor: 0, skippedAtStart: 0 });
     expect(page.ledger()).toBe(stored);
+  });
+
+  it('offers exactly the four cull rows over a banked version-1 ledger', async () => {
+    // The owner's cheap visit (plan R-SVG WO-2): the M7's complete 193-index run, stored by the bench
+    // built before the cull pair and the arm's slot, migrates on read — the 174…189 rows this build
+    // has never measured are what Enter runs, and nothing else.
+    const banked: number[] = [];
+    for (let i = 0; i <= 192; i++) banked.push(i);
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: JSON.stringify({ version: 1, code: CODE, done: banked }),
+    });
+    page.start();
+    await settle();
+    const text = page.appended[0].textContent;
+    expect(text).toContain('ENTER new rows only: 4 row(s) left');
+    expect(text).toContain('193 measured on this game code');
+    page.press(13);
+    expect(page.state()).toMatchObject({
+      running: true,
+      cursor: 190,
+      skippedAtStart: 193,
+    });
+    // Reading migrates and changes nothing: the store is rewritten as a version-2 document of this
+    // build's pool only when a row measures (a failed or untouched page leaves it as it was).
+    const migrated = banked
+      .slice(0, 190)
+      .concat([DECODE_SCENARIO_INDEX, STANDIN_SCENARIO_INDEX, REWIND_SCENARIO_INDEX]);
+    expect(page.ledger()).toBe(JSON.stringify({ version: 1, code: CODE, done: banked }));
+    const measuring = createRunState('rb-v1', 1, 1, TV_BENCH_TIMING, REWIND_SCENARIO_INDEX);
+    const second = fakePage('', serializeRunState(measuring), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: JSON.stringify({ version: 1, code: CODE, done: banked }),
+    });
+    second.start();
+    await settle();
+    expect(second.ledger()).toBe(serializeLedger(CODE, migrated));
+  });
+
+  it('pools the SVG arm apart from the PNG rows (plan R-SVG WO-2)', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      svgEnc: 'e3',
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    // The stored ledger is the PNG arm's pool: the armed build finds nothing measured of its own and
+    // runs the whole suite, which is the point — its rows are different samples.
+    expect(page.appended[0].textContent).not.toContain('new rows only');
+    page.press(13);
+    expect(page.state()).toMatchObject({ cursor: 0, skippedAtStart: 0 });
+    // Enter rewrites the store with this arm's empty pool and the PNG one kept beside it.
+    expect(page.ledger()).toBe(
+      serializeLedger(`${CODE}|svg=e3`, [], serializeLedger(CODE, first174())),
+    );
   });
 
   it('marks the rewind row in the ledger when it measured', async () => {

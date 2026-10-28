@@ -280,7 +280,7 @@ describe('bench-atlas plugin and particle presets', () => {
   });
 
   it('serves the virtual module with every density and the presets', () => {
-    const plugin = shmupRenderBench() as {
+    const plugin = shmupRenderBench() as unknown as {
       name: string;
       resolveId: (id: string) => string | null;
       load: (id: string) => string | null;
@@ -309,6 +309,107 @@ describe('bench-atlas plugin and particle presets', () => {
         '"url":"assets/video/attract-ambient.mp4"}',
     );
     expect(source).toContain('{"id":"ark-sailing"');
-    expect(source).toContain('export default { atlases, fx, decode, standin, videos };');
+    expect(source).toContain(
+      'export default { atlases, fx, decode, standin, standinSvg, videos, svgProbes };',
+    );
   }, 60_000);
+
+  it('ships no SVG rows in the PNG arm (plan R-SVG WO-2: the PNG matrix stays byte-pure)', () => {
+    const plugin = shmupRenderBench() as unknown as {
+      resolveId: (id: string) => string | null;
+      load: (id: string) => string | null;
+    };
+    const source = plugin.load(plugin.resolveId(BENCH_MODULE_ID) as string) as string;
+    // The arm's stand-in load has no atlas to draw and its probe rows no files to name…
+    expect(source).toContain('export const standinSvg = null;');
+    expect(source).toContain('export const svgProbes = [];');
+    // …and the `decode` list is exactly the three stand-in/PNG pages it measured before the arm:
+    // no `.svg` file, and the E3 ids appear nowhere in a PNG build's module.
+    expect(source).not.toContain('.svg');
+    expect(source).not.toContain('svg-x1-e3');
+    expect(source).not.toContain('svg-standin-e3');
+    const decode = JSON.parse(source.slice(decodeStart(source), decodeEnd(source))) as Array<{
+      id: string;
+    }>;
+    expect(decode.map((page) => page.id)).toEqual(['standin-zone-a', 'common', 'zone-a']);
+  }, 60_000);
+
+  it('adds the five E3 rows and the stand-in E3 atlas when armed (plan R-SVG WO-2)', () => {
+    const plugin = shmupRenderBench({ svgEnc: 'e3' }) as unknown as {
+      resolveId: (id: string) => string | null;
+      load: (id: string) => string | null;
+    };
+    const source = plugin.load(plugin.resolveId(BENCH_MODULE_ID) as string) as string;
+    const decode = JSON.parse(source.slice(decodeStart(source), decodeEnd(source))) as Array<{
+      id: string;
+      url: string;
+      what: string;
+      width: number;
+    }>;
+    // The three file rows ride the PNG pages' own list, in §C.5's order: the ×1 page (parse-bound),
+    // the ×2.67 page (the wire case) and the stand-in page (worst element count).
+    expect(decode.map((page) => page.id)).toEqual([
+      'standin-zone-a',
+      'common',
+      'zone-a',
+      'svg-x1-e3',
+      'svg-x2.67-e3',
+      'svg-standin-e3',
+    ]);
+    expect(decode[3].url).toBe('assets/atlas/bench-x1-0.svg');
+    expect(decode[4].url).toBe('assets/atlas/bench-x2.67-1.svg');
+    expect(decode[5].url).toBe('assets/atlas/decode-standin-zone-a.svg');
+    // Each row's `what` names the file and its element census, so a table line says what was paid.
+    expect(decode[3].what).toMatch(/^E3 of the x1 density page .*bench-x1-0\.svg: \d+ paths/);
+    // The two probe rows name the same ×1 page (the most colours, the most representative parse).
+    const probes = JSON.parse(source.slice(probeStart(source), probeEnd(source))) as Array<{
+      id: string;
+      probe: string;
+      url: string;
+      width: number;
+      what: string;
+    }>;
+    expect(probes.map((row) => row.id)).toEqual(['svg-bitmap-reject', 'svg-teximage-from-img']);
+    expect(probes.map((row) => row.probe)).toEqual(['bitmap-reject', 'url-upload']);
+    expect(probes[0].url).toBe('assets/atlas/bench-x1-0.svg');
+    expect(probes[0].width).toBe(1024);
+    // And the arm's stand-in load: the same manifest, its pages flipped to the E3 files.
+    expect(source).toContain('"pageUrls":["assets/atlas/decode-standin-zone-a.svg"]');
+    expect(source).toContain('export const standinSvg = {"manifest":{"formatVersion":2,');
+  }, 120_000);
 });
+
+/**
+ * Where the module text's `decode` array begins and ends (its JSON is one line).
+ *
+ * @param source - The virtual module's text.
+ * @returns The offsets of the array's brackets, `start` inclusive, `end` one past it.
+ */
+function decodeStart(source: string): number {
+  return source.indexOf('export const decode = ') + 'export const decode = '.length;
+}
+
+/**
+ * @param source - The virtual module's text.
+ * @returns One past the `decode` array's closing bracket.
+ */
+function decodeEnd(source: string): number {
+  return source.indexOf('];\nexport const standin ', decodeStart(source)) + 1;
+}
+
+/**
+ * @param source - The virtual module's text.
+ * @returns The start of the `svgProbes` array's JSON.
+ */
+function probeStart(source: string): number {
+  return source.indexOf('export const svgProbes = ') + 'export const svgProbes = '.length;
+}
+
+/**
+ * @param source - The virtual module's text.
+ * @returns One past the `svgProbes` array's closing bracket.
+ */
+function probeEnd(source: string): number {
+  const start = probeStart(source);
+  return source.indexOf('];', start) + 1;
+}

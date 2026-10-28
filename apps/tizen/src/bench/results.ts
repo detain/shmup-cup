@@ -5,7 +5,7 @@
  * session — are the ones plan §13 decides by. A knob row (`640x360-busy-stretch`) is read against
  * its own plain row instead (`640x360-busy`), so its relative columns say what the knob cost.
  *
- * **Paged.** The resolution sweep’s 190 rows do not fit one screen, so {@link benchPageLines}
+ * **Paged.** The matrix’s 194 rows do not fit one screen, so {@link benchPageLines}
  * returns one page — the head, then as many rows as fit — and **Left / Right** turn the page; the
  * decode table is the last page. (R0-03's 18-row table already lost the end of its last row on the
  * TV: the page's text overran the renderer's 1024-glyph UI pool, which the results page now sizes
@@ -436,6 +436,13 @@ export interface BenchPageInput {
   /** Scenarios a run measures (the matrix less the {@link BenchPageInput.skipped} ones). */
   readonly scenarios: number;
   /**
+   * The page loads a run follows the matrix with (plan R-SVG WO-2): 3 for a PNG build (the decode,
+   * the stand-in frame, the rewind page) and 4 for an armed one, which also draws the stand-in frame
+   * from the E3 pages. The head's ENTER line names them and the RUN line's denominator counts the two
+   * whose record joins the table, so the page never promises a load this build passes over. Default 3.
+   */
+  readonly pageLoads?: number;
+  /**
    * The build output resolution (`'1280x720'` — `./output.ts`), or `null` / absent for the
    * window's backbuffer.
    */
@@ -536,6 +543,12 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   const minutesOf = (rows: number): number =>
     Math.round((rows * (t.warmupMs + t.measureMs + t.syncMs + 2000)) / 60000);
   const minutes = minutesOf(input.scenarios);
+  // The arm's fourth load is named on the head line and counted in the RUN line's denominator only
+  // when this build measures it (plan R-SVG WO-2); `+ E3` keeps both lines inside 106 characters.
+  const pageLoads = input.pageLoads ?? 3;
+  const armLoad = pageLoads > 3 ? ' + E3' : '';
+  // Of the page loads, the stand-in frame's record (and the arm's) is what the RUN line counts.
+  const recordLoads = Math.max(1, pageLoads - 2);
   const offer = input.skipOffer ?? null;
   const lines: BenchLine[] = [
     {
@@ -549,7 +562,7 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   if (offer === null) {
     lines.push({
       text:
-        `ENTER run: ${input.scenarios} scenarios + decode + stand-in + rewind, ` +
+        `ENTER run: ${input.scenarios} scenarios + decode + stand-in${armLoad} + rewind, ` +
         `~${minutes} min ` +
         `(${seconds(t.warmupMs)} s warm, ${seconds(t.measureMs)} s measure, ` +
         `${seconds(t.syncMs)} s sync)`,
@@ -565,7 +578,7 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     });
     lines.push({
       text:
-        `GREEN full suite: ${input.scenarios} scenarios + decode + stand-in + rewind, ` +
+        `GREEN full suite: ${input.scenarios} scenarios + decode + stand-in${armLoad} + rewind, ` +
         `~${minutes} min: fresh noise-floor sample`,
       color: NOTE_COLOR,
     });
@@ -623,7 +636,7 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
   const page = Math.max(0, Math.min(pages - 1, Math.floor(input.page ?? 0)));
   lines.push({
     text:
-      `RUN ${state.session}  ${state.records.length}/${input.scenarios + 1} measured` +
+      `RUN ${state.session}  ${state.records.length}/${input.scenarios + recordLoads} measured` +
       `${benchSkipNote(state.skippedAtStart)}  ` +
       `sent ${sent}/${state.records.length}` +
       (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +

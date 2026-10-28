@@ -21,9 +21,9 @@
  *     no extra atlas at all (it reuses the ×1 pages) and at 384×216 it *is* the scaled row, so
  *     that resolution has one row, not two.
  * - **{@link BENCH_KNOBS}** — the upscale mode (`fit`, `stretch` against the default `integer`),
- *   render interpolation (M2-08) and an output resolution below the display's, each at a few
- *   representative sizes rather than across the whole sweep (a third full axis would multiply the
- *   matrix by six).
+ *   render interpolation (M2-08), an output resolution below the display's, the cutscene video
+ *   surface (v2 R7-VID) and the cull walk (R-SVG WO-2), each at a few representative sizes rather
+ *   than across the whole sweep (a third full axis would multiply the matrix by six).
  *
  * **Why `scaled` stops at `s ≈ 2.7`.** The bench models a ×s atlas as the real 1024² source page
  * scaled ×s and re-packed into 2048² pages, so pages grow as s²
@@ -240,12 +240,19 @@ export interface BenchKnob {
    * looping clip for the whole session — the panel cost of decode plus one texture pull a frame.
    */
   readonly video: boolean;
+  /**
+   * R-SVG WO-2: whether the row runs the bench's cull walk over the scene every frame — the
+   * owner-folded A/B of `v20x-SPIKE-report.md` arm B (every sprite `cullable`, tight bounds), read
+   * against the plain row of the same size and variant. Only the knob at the tail of
+   * {@link BENCH_KNOBS} sets it.
+   */
+  readonly cull: boolean;
 }
 
 /**
  * The knobs (see the module docs): the two non-default upscale modes, render interpolation, two
- * output resolutions below the display's and the cutscene video surface — 24 rows in all, each
- * with `busy` and `worst`.
+ * output resolutions below the display's, the cutscene video surface and the cull walk — 14 entries,
+ * 44 rows in all, each with `busy` and `worst`.
  *
  * @remarks
  * `fit` and `stretch` only differ from `integer` when the frame's aspect ratio is not the
@@ -269,6 +276,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'stretch',
@@ -280,6 +288,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'interp',
@@ -291,6 +300,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out720',
@@ -302,6 +312,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 1280,
     outputHeight: 720,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out540',
@@ -313,6 +324,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 960,
     outputHeight: 540,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'video',
@@ -324,6 +336,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: true,
+    cull: false,
   }),
   // — The 960×540 first-class comparison (owner 2026-10-27): every knob must pair at 960×540
   // against the plain row the same way the 640×360 rows do. These entries are APPENDED at the
@@ -339,6 +352,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'stretch',
@@ -350,6 +364,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'interp',
@@ -361,6 +376,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out720',
@@ -372,6 +388,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 1280,
     outputHeight: 720,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'out540',
@@ -383,6 +400,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 960,
     outputHeight: 540,
     video: false,
+    cull: false,
   }),
   Object.freeze<BenchKnob>({
     id: 'video',
@@ -394,6 +412,7 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: true,
+    cull: false,
   }),
   // The video surface at the big native frames — the endgame worst case one and two steps above
   // 960×540 (the M7 fix held at 640×360; the panel-side cost of the per-frame pull never measured
@@ -408,6 +427,26 @@ export const BENCH_KNOBS: readonly BenchKnob[] = Object.freeze([
     outputWidth: 0,
     outputHeight: 0,
     video: true,
+    cull: false,
+  }),
+  // — The owner-folded **cull pair** (plan R-SVG WO-2, owner 2026-10-28 on `v20x-SPIKE-report.md`,
+  // whose arm B measured the mechanism and found it adverse: Δ p95 +1.200 ms on the desktop rig):
+  // the same two loads with the bench's cull walk installed over the scene every frame, read against
+  // the plain `busy` / `worst` row of the same size. These entries are APPENDED at the tail of the
+  // knob list — the existing 190 scenario ids AND indices never move; the new rows take indices
+  // 190 … 193 and the specials shift by their count alone (which is what the skip ledger's version
+  // migration in `./ledger.ts` exists to keep honest).
+  Object.freeze<BenchKnob>({
+    id: 'cull',
+    what: 'cull walk every rendered frame: every scene sprite cullable with tight bounds (spike arm B)',
+    sizes: Object.freeze(['640x360', '960x540']),
+    variants: Object.freeze(['busy', 'worst']),
+    scaleMode: null,
+    interpolation: false,
+    outputWidth: 0,
+    outputHeight: 0,
+    video: false,
+    cull: true,
   }),
 ]);
 
@@ -492,7 +531,7 @@ function buildScenarios(): BenchScenario[] {
 /**
  * Every scenario: the plain matrix first — sizes outer, variants inner, so a session measures its
  * 384×216 baseline before anything else and a run cut short still holds whole resolutions — then
- * the knob rows (150 + 40 = 190).
+ * the knob rows (150 + 44 = 194).
  */
 export const BENCH_SCENARIOS: readonly BenchScenario[] = Object.freeze(buildScenarios());
 

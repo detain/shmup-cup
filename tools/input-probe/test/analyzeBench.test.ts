@@ -337,6 +337,22 @@ describe('knob rows', () => {
     expect(baselineFor(knob, records)).toBe(plain);
   });
 
+  it('prices the cull pair against its plain row and prints what the walk walked', () => {
+    // The knob machinery is generic (plan R-SVG WO-2): a `busy-cull` row needs no new code to be read
+    // against `busy` at the same size. What the cull rows add is the record's additive `cull` field —
+    // and the table says what was priced, not only what it cost, so a row cannot be read as a
+    // regression without seeing that nothing was culled.
+    const facts = analyzeBenchSessions([cullSession('cull-facts.jsonl', true)]);
+    // The table's own row (size + variant, like every knob's), then the walk's figures under it.
+    expect(facts).toContain('| 640x360 | busy-cull |');
+    expect(facts).toContain('- **640x360-busy-cull:** 7386 sprites tagged cullable; per frame 7392');
+    expect(facts).toContain('120 found outside the view, 2 write(s) that moved the bit, over 400');
+    // A run recorded before the field exists (or a plain knob row) prices the same and says nothing.
+    const bare = analyzeBenchSessions([cullSession('cull-bare.jsonl', false)]);
+    expect(bare).toContain('| 640x360 | busy-cull |');
+    expect(bare).not.toContain('sprites tagged cullable');
+  });
+
   it('orders sizes scaled first, then native, each in matrix order', () => {
     const records = [
       { size: '1280x720n', index: 40, variant: 'busy' },
@@ -525,6 +541,54 @@ function syntheticSession(name: string, o: SyntheticOptions): string {
     };
   });
   const payload = { kind: 'render-bench', session: name.replace('.jsonl', ''), seq: 1, env, results, done: true };
+  const file = join(tmp, name);
+  writeFileSync(file, JSON.stringify(payload) + '\n');
+  return file;
+}
+
+/**
+ * A one-run session with the plain 640×360 `busy` row and its cull twin, the latter carrying (or
+ * not) the additive `cull` facts of plan R-SVG WO-2.
+ *
+ * @param {string} name - The file's name in the temp folder.
+ * @param {boolean} withFacts - Whether the cull row's record carries the walk's figures.
+ * @returns {string} the written file.
+ */
+function cullSession(name, withFacts) {
+  const rec = (scenario, index, variant, over = {}) => ({
+    scenario,
+    index,
+    size: '640x360',
+    density: 1,
+    variant,
+    webGLVersion: 1,
+    twoTickShare: 0.1,
+    syncedMs: [1, 2, 3, 4],
+    renderMs: [1, 1.5, 2, 2.5],
+    endedAt: 1760000000000 + index,
+    ...over,
+  });
+  const cull = withFacts ? { cull: { tagged: 7386, passes: 400, visits: 7392, culled: 120, flips: 2 } } : {};
+  const payload = {
+    kind: 'render-bench',
+    session: name.replace('.jsonl', ''),
+    seq: 1,
+    env: {
+      buildId: 'abc1234',
+      host: 'tizen',
+      innerWidth: 1920,
+      innerHeight: 1080,
+      devicePixelRatio: 1,
+      webGLVersion: 1,
+      scenarios: 194,
+      startedAt: 1760000000000,
+    },
+    results: [
+      rec('640x360-busy', 6, 'busy'),
+      rec('640x360-busy-cull', 190, 'busy-cull', cull),
+    ],
+    done: true,
+  };
   const file = join(tmp, name);
   writeFileSync(file, JSON.stringify(payload) + '\n');
   return file;

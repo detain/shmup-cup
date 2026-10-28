@@ -111,8 +111,8 @@ describe('bench matrix (plan R0-02, §13)', () => {
     ]);
   });
 
-  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 40 knob rows', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(190);
+  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 44 knob rows', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(194);
     expect(BENCH_SCENARIOS.slice(0, 6).every((s) => s.size.id === '384x216')).toBe(true);
     BENCH_SCENARIOS.forEach((scenario, index) => {
       expect(scenario.index).toBe(index);
@@ -127,7 +127,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
         expect([scenario.outputWidth, scenario.outputHeight]).toEqual([0, 0]);
       }
     });
-    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(190);
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(194);
     expect(Object.isFrozen(BENCH_SCENARIOS)).toBe(true);
     // R0-02's and R0-03's 18 ids are still there, byte for byte.
     for (const size of ['384x216', '640x360', '960x540']) {
@@ -154,10 +154,34 @@ describe('bench matrix (plan R0-02, §13)', () => {
       ['out540', 2],
       ['video', 2],
       ['video', 4],
+      // The cull pair (plan R-SVG WO-2, the owner-folded spike arm B) — appended, so the video
+      // rows above keep their ids and indices and the specials shift by these four alone.
+      ['cull', 4],
     ]);
     const knobRows = BENCH_SCENARIOS.filter((s) => s.knob !== null);
-    expect(knobRows).toHaveLength(40);
+    expect(knobRows).toHaveLength(44);
     expect(knobRows[0].id).toBe('800x600-busy-fit');
+    // Only the tail knob culls; every row before it runs the plain, uncalled walk.
+    expect(BENCH_KNOBS.slice(0, -1).every((knob) => knob.cull === false)).toBe(true);
+    expect(BENCH_SCENARIOS.slice(0, 190).every((s) => s.knob === null || !s.knob.cull)).toBe(true);
+    for (const [size, variant] of [
+      ['640x360', 'busy'],
+      ['640x360', 'worst'],
+      ['960x540', 'busy'],
+      ['960x540', 'worst'],
+    ]) {
+      const row = findBenchScenario(`${size}-${variant}-cull`);
+      expect(row).toMatchObject({
+        row: `${variant}-cull`,
+        scaleMode: BENCH_DEFAULT_SCALE_MODE,
+        interpolation: false,
+        outputWidth: 0,
+        outputHeight: 0,
+      });
+      expect(row?.knob?.cull).toBe(true);
+    }
+    expect(findBenchScenario('640x360-busy-cull')?.index).toBe(190);
+    expect(BENCH_SCENARIOS[193].id).toBe('960x540-worst-cull');
     expect(findBenchScenario('640x360-busy-stretch')).toMatchObject({
       row: 'busy-stretch',
       scaleMode: 'stretch',
@@ -179,7 +203,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     expect(findBenchScenario('640x360-nope')).toBeNull();
   });
 
-  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 95 minutes', () => {
+  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 97 minutes', () => {
     expect(TV_BENCH_TIMING).toEqual({
       warmupMs: 10_000,
       measureMs: 14_000,
@@ -188,7 +212,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     });
     const perScenario =
       TV_BENCH_TIMING.warmupMs + TV_BENCH_TIMING.measureMs + TV_BENCH_TIMING.syncMs;
-    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(95);
+    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(97);
     expect(HEADLESS_BENCH_TIMING.measureMs).toBeGreaterThan(0);
   });
 });
