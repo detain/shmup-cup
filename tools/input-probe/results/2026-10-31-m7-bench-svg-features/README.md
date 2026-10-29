@@ -25,7 +25,7 @@ actually draw.
 | Hardware | Samsung M70AET (`model: M70AET`), firmware `M-KSU2SMWWC-2750.0`, Tizen 5.5, Chromium **69.0.3497.106**, viewport 1920×1080 @1, 4 cores |
 | GL | WebGL 1 *and* 2 both live (Mali-G51, `MAX_TEXTURE_SIZE` 8192, ASTC/ETC/ETC1 compressed-texture extensions) |
 | Realm | WASM ✓ · AudioWorklet ✓ · OffscreenCanvas ✓ · Gamepad API ✓ · native `globalThis` ✗ (the polyfill's reason) — audio 44,100 Hz, baseLatency 0.05 s |
-| Keys | `getSupportedKeys()` 46, `registerKey` ok **45/45** — the probe registered the digit keys to test them (the games' bench registers its own seven since `b2e70185`) |
+| Keys | `getSupportedKeys()` 46, `registerKey` ok **45/45** — the probe registered the digit keys to test them (the games' bench registered its own seven since `b2e70185`, nine since `c0d21407`) |
 | Matrix | `svg matrix done` · **19 features (16 expected, 3 surprise)** · 247.0 s · warm 3 · measure 12 |
 | Reports | 168 events, dropped 0 |
 
@@ -105,16 +105,18 @@ The atlas stays PNG-8.
 
 ## The digit keys — arrival proven through the registered path
 
-The owner's key walk this session logged **every digit** (Keys seen: `1(49)` … `0(48)`, 9 down to 1
-plus 0), and the bench-relevant two are clean human taps — `1` and `2` each show down 1 / up 1 /
-non-press downs 0 and sit in the "real down/up" tap class (median tap 326 ms) — so keyCodes 49/50
-arrive through `registerKey` on this set, exactly as `b2e70185`'s commit body predicted. The four
+The owner walked 1–9, 0 on the registered probe: keys seen shows `1(49)` … `0(48)`, every one down 1 /
+up 1 / non-press downs 0, with `1` and `2` in the real down/up tap class (median tap 326 ms) — keyCodes
+49/50 arrive through `registerKey` on this set, exactly as `b2e70185`'s commit body predicted. The four
 color keys (`ColorF0Red(403)` … `ColorF3Blue(406)`) each logged exactly one **release-only** event
 (keydown+keyup <15 ms apart — the send-on-release class the M7 produces for keys the remote does not
 really press), consistent with the no-color-keys remote the aliases exist for. The alias's **action**
-is proved in the sibling folder: the full-suite bench run that this session followed was started by
-pressing `2`. The queued follow-up (not this lane): the skip-ledger offer text still says
-`GREEN full suite:` — `apps/tizen/src/bench/results.ts:574` — and should name the `2` alias.
+is proved in the sibling folder: the full-suite bench run this session followed was started by
+pressing `2`. And the digit receipt fed **onward** while this folder was written: `c0d21407` built the
+owner's easy keys into the bench on this session's `seenKeys` — `MediaPlayPause(10252)`, `Guide(458)`
+and `ChannelDown(428)` arrive as real keydowns once registered, Play/Pause and Guide join the
+full-suite keys beside Green/`2`, ChannelDown joins the re-run keys beside Red/`1` — the ledger's offer
+now prints **"PLAY/PAUSE or GREEN/2 full suite:"** (`apps/tizen/src/bench/results.ts:581`).
 
 ## Re-confirmed housekeeping
 

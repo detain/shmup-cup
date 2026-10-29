@@ -168,9 +168,11 @@ stand-in + decode in ~99.7 min, every shared row freshly sampled (the pair table
 have a new value). The same evening's input-probe session (sibling folder
 [`../2026-10-31-m7-bench-svg-features/`](../2026-10-31-m7-bench-svg-features/), started ~3 min after
 this run's closure) logged digits **`1(49)` and `2(50)` arriving as real down/up taps** through the
-registered path (45/45 keys), the keyCodes exactly as the alias commit predicted. Queued follow-up,
-not this lane: the skip-ledger offer text still names the keys by color only — `GREEN full suite:` at
-`apps/tizen/src/bench/results.ts:574` — and should mention `2`.
+registered path (45/45 keys), the keyCodes exactly as the alias commit predicted. The offer-text
+wording this folder queued landed while it was being written: `c0d21407` added the owner's easy keys —
+`Play/Pause`/`Guide` join Green/`2` as full-suite keys, `ChannelDown` joins Red/`1` as the re-run key,
+the registration set at nine — and its offer now prints **"PLAY/PAUSE or GREEN/2 full suite:"**
+(`apps/tizen/src/bench/results.ts:581`), citing this drop's probe `seenKeys` as its measured basis.
 
 ## R3-04 — nothing moves
 
