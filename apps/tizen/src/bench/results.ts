@@ -578,14 +578,14 @@ function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number }
     });
     lines.push({
       text:
-        `GREEN full suite: ${input.scenarios} scenarios + decode + stand-in${armLoad} + rewind, ` +
-        `~${minutes} min: fresh noise-floor sample`,
+        `PLAY/PAUSE or GREEN/2 full suite: ${input.scenarios} scenarios + decode + stand-in` +
+        `${armLoad} + rewind, ~${minutes} min: fresh sample`,
       color: NOTE_COLOR,
     });
   }
   lines.push(
     {
-      text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
+      text: 'LEFT/RIGHT page    CH-/RED/1 re-run the last scenario    BACK exit (stops a run)',
       color: NOTE_COLOR,
     },
     {

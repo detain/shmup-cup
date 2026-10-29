@@ -261,23 +261,34 @@ describe('bench query string', () => {
 });
 
 describe('bench remote and host', () => {
-  it('maps Enter, every host’s Back, Red and Green with their number aliases and the paging arrows', () => {
-    expect(benchKeyOf(13)).toBe('enter');
-    for (const code of [10009, 461, 27, 8]) expect(benchKeyOf(code)).toBe('back');
-    expect(benchKeyOf(403)).toBe('red');
-    expect(benchKeyOf(82)).toBe('red');
-    expect(benchKeyOf(49)).toBe('red');
-    expect(benchKeyOf(404)).toBe('full');
-    expect(benchKeyOf(70)).toBe('full');
-    expect(benchKeyOf(50)).toBe('full');
-    expect(benchKeyOf(51)).toBeNull();
-    expect(benchKeyOf(37)).toBe('prev');
-    expect(benchKeyOf(38)).toBe('prev');
-    expect(benchKeyOf(39)).toBe('next');
-    expect(benchKeyOf(40)).toBe('next');
-    expect(benchKeyOf(65)).toBeNull();
-    expect(BENCH_KEY_CODES.back).toContain(10009);
-  });
+  it(
+    'maps Enter, every host’s Back, Red with ChannelDown, and Green with Play/Pause, Guide and ' +
+      'the number aliases, and the paging arrows',
+    () => {
+      expect(benchKeyOf(13)).toBe('enter');
+      for (const code of [10009, 461, 27, 8]) expect(benchKeyOf(code)).toBe('back');
+      expect(benchKeyOf(403)).toBe('red');
+      expect(benchKeyOf(82)).toBe('red');
+      expect(benchKeyOf(49)).toBe('red');
+      expect(benchKeyOf(428)).toBe('red');
+      expect(benchKeyOf(404)).toBe('full');
+      expect(benchKeyOf(70)).toBe('full');
+      expect(benchKeyOf(50)).toBe('full');
+      expect(benchKeyOf(10252)).toBe('full');
+      expect(benchKeyOf(458)).toBe('full');
+      expect(benchKeyOf(51)).toBeNull();
+      // The owner's set delivers these too (ip-mvsr61cj-cjko's seenKeys) — by choice unbound:
+      // ChannelUp carries no bench action, and volume must only change the volume.
+      expect(benchKeyOf(427)).toBeNull();
+      for (const code of [447, 448, 449]) expect(benchKeyOf(code)).toBeNull();
+      expect(benchKeyOf(37)).toBe('prev');
+      expect(benchKeyOf(38)).toBe('prev');
+      expect(benchKeyOf(39)).toBe('next');
+      expect(benchKeyOf(40)).toBe('next');
+      expect(benchKeyOf(65)).toBeNull();
+      expect(BENCH_KEY_CODES.back).toContain(10009);
+    },
+  );
 
   it('registers the bench remote keys on Tizen and exits through the application', () => {
     const exit = vi.fn();
@@ -298,6 +309,8 @@ describe('bench remote and host', () => {
       'ColorF2Yellow',
       'ColorF3Blue',
       'MediaPlayPause',
+      'Guide',
+      'ChannelDown',
       '1',
       '2',
     ]);

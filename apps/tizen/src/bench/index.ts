@@ -22,9 +22,10 @@
  * ticks — and 6 s **synced** with `gl.finish()` after every render (WebGL is asynchronous; fill cost
  * otherwise only shows as late frames), plus draw calls, pooled render-target bytes, atlas texture
  * bytes and the coarse JS heap (`./run.ts`, `./stats.ts`). Remote: **Enter** starts the matrix,
- * **Back** exits (and stops a run, so the next Enter starts a fresh session), **Red** re-runs a
- * scenario, **Green** runs the full suite over the ledger's offer, **Left / Right** page the
- * results (`./host.ts`).
+ * **Back** exits (and stops a run, so the next Enter starts a fresh session), **Red** or
+ * **ChannelDown** re-runs a scenario, **Green** / `2` / **Play/Pause** / **Guide** runs the full
+ * suite over the ledger's offer, **Left / Right** page the results (`./host.ts` — the codes are
+ * the owner's M7 remote's measured ones, plan v20x-KEYS).
  *
  * **The skip ledger (plan v20x BENCSKIP, owner 2026-10-28).** The rows a game code has measured
  * are remembered in `localStorage` (`./ledger.ts`) under the build-time game-code hash

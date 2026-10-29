@@ -231,7 +231,7 @@ describe('bench results page', () => {
         '6 s sync)',
     );
     expect(lines[2]).toEqual({
-      text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
+      text: 'LEFT/RIGHT page    CH-/RED/1 re-run the last scenario    BACK exit (stops a run)',
       color: NOTE_COLOR,
     });
     expect(lines[3].text).toBe('LOG off (build with VITE_REPORT_URL)');
@@ -412,11 +412,11 @@ describe('bench results page — skip ledger offer (plan v20x BENCSKIP)', () => 
       'ENTER new rows only: 19 row(s) left, ~10 min (174 measured on this game code)',
     );
     expect(lines[2].text).toBe(
-      'GREEN full suite: 194 scenarios + decode + stand-in + rewind, ~103 min: fresh noise-floor ' +
-        'sample',
+      'PLAY/PAUSE or GREEN/2 full suite: 194 scenarios + decode + stand-in + rewind, ~103 min: ' +
+        'fresh sample',
     );
     expect(lines[3].text).toBe(
-      'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
+      'LEFT/RIGHT page    CH-/RED/1 re-run the last scenario    BACK exit (stops a run)',
     );
     for (const line of lines) {
       expect(line.text.length).toBeLessThanOrEqual(106);

@@ -8,8 +8,11 @@
  * - **On a TV (or a desktop browser):** the page reads the run state (`./state.ts`). While a run is
  *   on, it measures the scenario at the cursor, stores the record, POSTs it as a `render-bench`
  *   payload when a log server is configured, and reloads for the next one; otherwise it shows the
- *   results page (the start page of a fresh install). **Enter** starts a run, **Red** re-runs a
- *   scenario, **Back** exits.
+ *   results page (the start page of a fresh install). **Enter** starts a run, **Red** or
+ *   **ChannelDown** re-runs a scenario, **Back** exits; on the ledger's offer **Green**,
+ *   **Play/Pause** or **Guide** runs the full suite (v20x-KEYS — the owner's remote reaches the
+ *   rocker and play/pause without the digit dance; the volume keys arrive on the set too and are
+ *   deliberately bound to nothing).
  * - **Headless (`?scenario=<id>`):** `pnpm bench` opens one page per scenario, which measures
  *   that scenario with the short {@link HEADLESS_BENCH_TIMING} (or `?warmup=` / `?measure=` /
  *   `?sync=`) and publishes the record on `window.__shmupTvBench` — no storage, no POST, no reload.
@@ -1445,8 +1448,9 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     }
     if (mode === 'results') {
       // The ledger's offer (plan v20x BENCSKIP): **Enter** runs the rows this game code has left,
-      // **Green** runs the full suite as a fresh noise-floor sample and takes the ledger back to
-      // zero. Without an offer — no ledger, foreign game code, or nothing pending — every key
+      // **Green / `2` / Play-Pause / Guide** runs the full suite as a fresh noise-floor sample and
+      // takes the ledger back to zero. Without an offer — no ledger, foreign game code, or nothing
+      // pending — every key
       // starts the full run exactly as before, and the ledger is cleared for it to refill.
       const plan = skipPlan(ledgerDone, plannedSkip);
       const skipStart =

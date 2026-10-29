@@ -568,8 +568,8 @@ describe('bench skip ledger (TV mode)', () => {
     const text = page.appended[0].textContent;
     expect(text).toContain('ENTER new rows only: 23 row(s) left');
     expect(text).toContain('174 measured on this game code');
-    expect(text).toContain('GREEN full suite: 194 scenarios');
-    expect(text).toContain('fresh noise-floor sample');
+    expect(text).toContain('PLAY/PAUSE or GREEN/2 full suite: 194 scenarios');
+    expect(text).toContain('fresh sample');
     page.press(13);
     expect(page.state()).toMatchObject({ running: true, cursor: 174, skippedAtStart: 174 });
     expect(page.reload).toHaveBeenCalledTimes(1);
@@ -622,6 +622,63 @@ describe('bench skip ledger (TV mode)', () => {
     page.press(50);
     expect(page.reload).not.toHaveBeenCalled();
     expect(page.state()).toMatchObject({ session: 'rb-x', running: true, cursor: 0 });
+  });
+
+  // v20x-KEYS: the owner's remote reaches the rocker and play/pause without the digit dance the
+  // number keys need; every code below is his M7's measured one (probe ip-mvsr61cj-cjko).
+  it('play/pause takes the full suite over the offer and ChannelDown stands in for Red', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    // ChannelDown (428) is Red wherever Red works: the results page re-runs the last scenario —
+    // the rewind page on both arms — and leaves the ledger alone.
+    page.press(428);
+    expect(page.state()).toMatchObject({
+      running: true,
+      single: true,
+      cursor: REWIND_SCENARIO_INDEX,
+    });
+    expect(page.reload).toHaveBeenCalledTimes(1);
+    expect(page.ledger()).toBe(serializeLedger(CODE, first174()));
+    // Play/Pause (10252) is Green: the full suite over the offer, ledger cleared to refill.
+    page.press(10252);
+    expect(page.state()).toMatchObject({ running: true, cursor: 0, skippedAtStart: 0 });
+    expect(page.reload).toHaveBeenCalledTimes(2);
+    expect(page.ledger()).toBe(serializeLedger(CODE, []));
+  });
+
+  it('a mid-scenario play/pause or Guide starts nothing, and volume never acts', () => {
+    const running = serializeRunState(createRunState('rb-x', 1, 1, TV_BENCH_TIMING));
+    const page = fakePage('', running);
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    page.press(10252);
+    page.press(458);
+    expect(page.reload).not.toHaveBeenCalled();
+    expect(page.state()).toMatchObject({ session: 'rb-x', running: true, cursor: 0 });
+    // 447–449 reach the web app on the owner's set (the probe's seenKeys) — binding them would
+    // make every re-run press change the room's volume, so they stay unbound by choice.
+    for (const code of [447, 448, 449]) page.press(code);
+    expect(page.reload).not.toHaveBeenCalled();
+    expect(page.state()).toMatchObject({ session: 'rb-x', running: true, cursor: 0 });
+  });
+
+  it('Guide is a third full-suite alias and ChannelUp carries nothing', async () => {
+    const page = fakePage('', completeRun(), ASSETS, {
+      gameCodeHash: CODE,
+      ledger: serializeLedger(CODE, first174()),
+    });
+    page.start();
+    await settle();
+    page.press(427); // ChannelUp: no bench action.
+    expect(page.reload).not.toHaveBeenCalled();
+    page.press(458); // Guide: the full suite, ledger cleared to refill.
+    expect(page.state()).toMatchObject({ running: true, cursor: 0, skippedAtStart: 0 });
+    expect(page.reload).toHaveBeenCalledTimes(1);
+    expect(page.ledger()).toBe(serializeLedger(CODE, []));
   });
 
   it('a foreign game code never offers, and Enter takes the full run over it', async () => {
