@@ -608,3 +608,145 @@ output in a way a floor retune would fix, so the Auto floor is not retuned. The 
 ×2 + ×1 pairing carries no verdict and correctly stays verdictless. webOS 5 (Chromium 68) remains
 unmeasured on hardware throughout. No cap was raised and nothing was edited: every figure above is
 read off the committed logs of `2026-10-19-m7-bench`, `-resolutions`, `out720` and `out540`.
+
+---
+
+## 13. SVG on the TV (v2.0.x era)
+
+**Why this section exists.** The SVG-art program (R-SVG WO-1/2/3) asked whether the atlas could
+travel as vectors, and it asked on the strength of WO-1's inventory — a **desktop** measurement,
+which is exactly the caveat this repo always carries: the TVs run Chromium 69 (Tizen) and 68
+(webOS), older than anything on a desk. The probe's capability matrix closes that gap. It is 19
+small, known-output SVGs, each rastered through the image pipeline a device actually has (`blob:`
+URL → `Image` → first `drawImage` + `getImageData` flush), 3 throwaway windows then 12 measured
+ones, every row decided by a numeric pixel predicate — and every feature the game could care about
+**renders on the M7**. Sixteen for sixteen, plus three answers that disagree with the desktop record.
+
+- **Raw data:** [tools/input-probe/results/2026-10-31-m7-bench-svg-features/](../../tools/input-probe/results/2026-10-31-m7-bench-svg-features/)
+  — session `ip-mvsr61cj-cjko`, 83 reports, 168 events, none dropped, from 10.0.0.224; the finished
+  matrix rides the last report's `stats.svg`. The folder's README holds the launch story and both
+  verdicts in full.
+- **Analyzer:** `node results/analyze.mjs results/2026-10-31-m7-bench-svg-features/ip-mvsr61cj-cjko.jsonl`
+  from `tools/input-probe/` — the table below is its `## SVG capability` section, committed beside
+  the logs as `analysis-features.txt` (byte-identical on two runs).
+- **Dates:** the folder label (2026-10-31) is the owner's; the wire is `2026-10-28T23:35:48.013Z →
+  23:39:54.118Z` (4.1 min, of which the matrix's own clock reports 247.0 s). Same class of label as
+  §12's session dates — the stamps are the order of record. This session began **three minutes
+  after** the bench run in
+  [tools/input-probe/results/2026-10-31-m7-bench-pngfloor/](../../tools/input-probe/results/2026-10-31-m7-bench-pngfloor/)
+  closed on the same monitor (§13.6).
+
+### 13.1 The static matrix — 16 of 16 PASS
+
+Every figure is a median of 12 measured windows; `total` = decode (blob → `onload` + `decode()`) +
+draw (the first `drawImage` through the `getImageData` read-back); `ink` is the predicate's count of
+non-empty pixels; `B` is the SVG's own byte size.
+
+| Feature | Status | total ms | decode ms | draw ms | ink | B |
+|---|---|---|---|---|---|---|
+| `paths-static` | PASS | 83.9 | 81.0 | 2.3 | 65536 | 380 |
+| `grad-linear` | PASS | 82.8 | 80.4 | 2.7 | 65536 | 342 |
+| `grad-radial` | PASS | 140.8 | 109.1 | 31.1 | 48100 | 374 |
+| `mask-lum` | PASS | 119.9 | 97.0 | 22.5 | 63360 | 424 |
+| `clip-circle` | PASS | 96.2 | 92.5 | 3.0 | 13034 | 278 |
+| `use-symbol` | PASS | 138.8 | 131.9 | 3.3 | 3200 | 378 |
+| `text-glyph` | PASS | 97.5 | 95.2 | 2.5 | 65536 | 290 |
+| `text-path` | PASS | 87.4 | 82.3 | 2.4 | 1656 | 322 |
+| `blur-s2` | PASS | 95.6 | 88.8 | 5.9 | 3163 | 318 |
+| `blur-s4` | PASS | 98.5 | 89.5 | 8.5 | 3892 | 318 |
+| `blur-s8` | PASS | **103.5** | 91.8 | 10.8 | 5233 | 318 |
+| `drop-shadow` | PASS | 101.9 | 90.7 | 11.8 | 65536 | 433 |
+| `turb-oct1` | PASS | 149.7 | 146.0 | 2.9 | 52900 | 428 |
+| `turb-oct4` | PASS | **214.4** | 211.4 | 2.8 | 52900 | 428 |
+| `chain-tcc` | PASS | 136.2 | 120.7 | 15.0 | 25600 | 539 |
+| `e3-atlas` | PASS | 96.4 | 91.4 | 3.4 | 16384 | **50430** |
+
+**The shape of the cost is parse, not paint.** Decode is 80–212 ms of every total while the raster
+draw is 2–31 ms; `turb-oct4`, the dearest feature on the box at 214.4 ms, spends 211.4 of them
+*reading a 428-byte file*. A vector page bills on arrival and then draws cheaply — which is §13.4's
+load-cost story in one sentence. **Filters are where the draw does live:** plain paths, gradients,
+text and `<use>` draw in 2–3 ms, while `blur-s8` costs 10.8, `drop-shadow` 11.8, the
+filter+mask+clip chain 15.0, and the radial gradient 31.1.
+
+### 13.2 The three surprises — where Chromium 69 disagrees with the desktop record
+
+| Feature | Desktop-era answer | **M7 answer** | Device evidence |
+|---|---|---|---|
+| `smil-animate` | FROZEN — static-image mode, `imgCtxAnimated = FALSE` for `animateTransform` | **ANIMATES** | the redraw 500 ms on differs from the first read: **raster differs at byte 98376** (276 B, 2.8 ms draw) |
+| `css-keyframes` | FROZEN — a CSS `@keyframes` in an `<img>`-loaded SVG does not run | **ANIMATES** | the redraw differs: **raster differs at byte 240** (369 B, 2.5 ms draw) |
+| `bitmap-svg` | REJECT — `createImageBitmap` refused every SVG source, "even on Chromium 156" (whatwg/html #923, vector formats) | **ACCEPT** | the promise resolved: **`accepted 256×256`** (197 B) |
+
+**Animation inside `<img>` is live on this panel.** The spec's static-image mode is what modern
+Chromium does; Chromium 69 advances both SMIL and CSS-keyframe content in an image element. Read the
+direction of the difference before reaching for it: it is an **older engine being more permissive**,
+and the price of a live image is that the *engine* owns the clock — no `requestAnimationFrame`
+gating, no pause, no deterministic frame. Fascinating as a capability; unadoptable as play art in a
+game whose simulation is the clock.
+
+**`createImageBitmap` splits by source shape, and the repo's blanket claim was too wide.** The bench
+measured `createImageBitmap(blob of SVG bytes)` on this same unit the night before and recorded *"The
+source image could not be decoded."* — 0 of 8 reps (`svg-bitmap-reject`,
+[2026-10-30-m7-svg/](../../tools/input-probe/results/2026-10-30-m7-svg/)), and the skip is still in
+`apps/tizen/src/bench/decode.ts` on that strength. The probe's bitmap stage hands the call something
+else: the **already-decoded `HTMLImageElement`** loaded from the object URL. That route is accepted,
+256×256, on Chromium 69. So the plumbing question is not settled so much as **narrower**: the blob
+of SVG bytes is refused, the decoded image is not. It belongs to an owner ruling before any code
+leans either way; nothing in this record changes the skip.
+
+### 13.3 `e3-atlas` — the 50,430 B compound-path chunk
+
+The E3 encoding's representative chunk (one merged-run compound `<path>` per palette colour, WO-3A's
+fixture, 128², deterministic LCG art) landed on the device **to the byte**: `ink` reads 16384 = 128²
+against a `min = max` band, and the row passes the probe's strict reference check — the TV's raster
+equals the reference pixels, not merely near them. Its cost is **96.4 ms per fresh window (91.4
+decode, 3.4 draw)** against desktop's 33 ms: the same shape as the rest of the matrix, at Chromium
+69's roughly-3× parse rate. **Fidelity was never the migration's problem, and this row is the
+proof** — the panel draws vector atlas content exactly. §13.4 is why it still does not ship.
+
+### 13.4 The two answers, kept apart
+
+**Capability: YES.** The device renders all of SVG the program asked about, animates two of its
+mechanisms, and rasterises a 50 KB atlas chunk byte-exact. A future **DOM-side** vector UI on the TV
+— shell chrome, an icon, an ornament, something animated in the HTML around the canvas — is inside
+this panel's ability, and no further measurement stands between the idea and a prototype.
+
+**Atlas migration: NOT-WORTH-it — unchanged, and for a cost reason capability cannot touch.** The
+game's pages are texture sources, not DOM images, and the SVG arm measured exactly that route on
+this hardware ([2026-10-30-m7-svg/README.md](../../tools/input-probe/results/2026-10-30-m7-svg/README.md),
+*Verdict — the SVG arm: NOT-WORTH-it for atlas migration*): the density pages cost **232–314 ms to
+decode** (`svg-x2.67-e3` 2048×1024 at 232.5, `svg-x1-e3` 1024² at 314.2 — a bounded tax over the
+PNG-8 class's ~100 ms), and the **stand-in page — the one a zone load actually needs — cost
+2,002.2 ms to decode and 2,657.7 / 2,818.9 ms (p50 / p95) file → GPU against its PNG-8 twin's
+224.0 / 365.7: Δ +2,434 ms, over R3-04's whole 2,000 ms budget by itself.** "The TV can draw SVG"
+and "the TV should load its atlas as SVG" are different questions: the first is answered yes here,
+the second was answered no on the device that matters, and §13.1's shape — the bill is parse, paid
+on arrival — is the mechanism of that no.
+
+### 13.5 The correction note, and what changes
+
+Three findings are **older-engine answers overturning newer-engine claims**: SMIL inside `<img>` and
+CSS keyframes inside `<img>` (desktop: frozen), and `createImageBitmap` of a decoded SVG image
+(desktop: rejected). They are pinned to this unit's **Chromium 69** and to nothing else — webOS 5's
+**Chromium 68** remains unmeasured for every row here, and modern desktop Chromium keeps the
+frozen/refused behaviour the inventory recorded. §13's numbers obey the law of the whole document:
+quote the device for the device, and never write another engine's answer as the general one.
+
+**What changes: nothing ships.** No code, no budget, no format. The atlas stays PNG-8, the bench
+keeps its SVG bitmap skip, and §12's cull verdict plus the migration verdict stand. What is added is
+the record the owner asked for — the TVs render SVG, animate some of it, and are not the limiting
+factor anyone assumed they were — beside the logs that say so. One September row ages well by the
+way: §5's key table (measured 2026-09-15) saw no digits and no colour keys, and this session's
+`Keys seen` carries **keyCodes 48–57** and `ColorF0Red`…`ColorF3Blue` (403–406) arriving as real
+down/up pairs once registered — the arrival the bench's remote-key work (the digit aliases of
+`b2e7018`, extended by `c0d21407`'s Play/Pause, Guide and Channel− bindings) is built on.
+
+### 13.6 The same evening's ruler (for everything in §12 and above)
+
+The bench session that closed three minutes before this matrix ran was the program's **first
+same-pool PNG repeat** (Oct-29's `baeb005` and Oct-31's `b2e7018` carry one game code,
+`356cdf76a8`), and it set the house noise floor: over **190 same-code pairs** the two-tick share
+repeats within a **median spread of 3.2 points** (p90 11.6), the synced p95 within **8 % / 31 %**,
+and a whole run drifts **1.8 points / 3 %**. §12's reads — and any §13.1 cost comparison of two
+sessions — are now graded against that ruler: beyond it is a measurement, inside it is weather. The
+receipts and the cull pair's floor-graded closure live in
+[tools/input-probe/results/2026-10-31-m7-bench-pngfloor/](../../tools/input-probe/results/2026-10-31-m7-bench-pngfloor/).
