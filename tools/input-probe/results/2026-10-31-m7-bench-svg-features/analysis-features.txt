@@ -1,0 +1,119 @@
+# ip-mvsr61cj-cjko  (from 10.0.0.224, 83 reports, 168 events, dropped 0)
+
+## Environment
+UA: Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106/5.5 TV Safari/537.36
+Chrome 69 · Tizen 5.5 · model M70AET (20_KANTSU2_43UHD_MNT) · firmware M-KSU2SMWWC-2750.0
+viewport 1920×1080 @1 · screen 1920×1080 · cores 4
+WebGL1: WebGL 1.0 (OpenGL ES 2.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WebGL2: WebGL 2.0 (OpenGL ES 3.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WebGL1 extensions (17): ANGLE_instanced_arrays EXT_blend_minmax EXT_sRGB EXT_texture_filter_anisotropic OES_EGL_image_external OES_element_index_uint OES_standard_derivatives OES_vertex_array_object WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc1 WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_depth_texture WEBGL_lose_context WEBKIT_EXT_texture_filter_anisotropic WEBKIT_WEBGL_depth_texture WEBKIT_WEBGL_lose_context
+WebGL2 extensions (8): EXT_color_buffer_float EXT_texture_filter_anisotropic WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context
+compressed-texture extensions: WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1
+WASM true · AudioWorklet true · OffscreenCanvas true · Gamepad API true · native globalThis false
+audio: 44100 Hz, baseLatency 0.05 s
+keys: getSupportedKeys() = 46; registerKey ok 45/45
+
+## event.timeStamp (probe clock problem)
+handler − timeStamp: n=129 min 28.5 · p10 225.8 · median 620.7 · mean 621.6 · p90 1021.1 · max 1229.1
+distinct non-zero timeStamp steps between key events (ms): 1, 2, 3, 24, 31, 81, 85, 88, 91, 93, 94, 97 …
+⇒ timeStamp advances in whole seconds; never use it for timing on Tizen 5.5.
+
+## Keys seen
+  ArrowUp(38) downs 2 ups 2 non-press downs 0
+  ArrowDown(40) downs 1 ups 1 non-press downs 0
+  ArrowLeft(37) downs 16 ups 4 non-press downs 12
+  ArrowRight(39) downs 38 ups 7 non-press downs 31
+  Enter(13) downs 2 ups 2 non-press downs 0
+  Back(10009) downs 2 ups 2 non-press downs 0
+  VolumeDown(448) downs 2 ups 2 non-press downs 0
+  VolumeUp(447) downs 2 ups 2 non-press downs 0
+  1(49) downs 1 ups 1 non-press downs 0
+  2(50) downs 1 ups 1 non-press downs 0
+  3(51) downs 1 ups 1 non-press downs 0
+  4(52) downs 1 ups 1 non-press downs 0
+  5(53) downs 1 ups 1 non-press downs 0
+  6(54) downs 1 ups 1 non-press downs 0
+  7(55) downs 1 ups 1 non-press downs 0
+  8(56) downs 1 ups 1 non-press downs 0
+  9(57) downs 1 ups 1 non-press downs 0
+  0(48) downs 1 ups 1 non-press downs 0
+  ColorF0Red(403) downs 1 ups 1 non-press downs 0
+  ColorF1Green(404) downs 1 ups 1 non-press downs 0
+  ColorF2Yellow(405) downs 1 ups 1 non-press downs 0
+  ColorF3Blue(406) downs 1 ups 1 non-press downs 0
+  Info(457) downs 1 ups 1 non-press downs 0
+  MediaPlayPause(10252) downs 2 ups 2 non-press downs 0
+  Guide(458) downs 1 ups 1 non-press downs 0
+  ChannelDown(428) downs 1 ups 1 non-press downs 0
+  ChannelUp(427) downs 1 ups 1 non-press downs 0
+  VolumeMute(449) downs 1 ups 1 non-press downs 0
+
+## Press / release
+release-only keys (keydown+keyup < 15 ms apart, i.e. sent on release): Back ×2, ArrowUp ×1, 8 ×1, 0 ×1, ArrowLeft ×1, ArrowRight ×1, ColorF0Red ×1, ColorF1Green ×1, ColorF2Yellow ×1, ColorF3Blue ×1, Info ×1, MediaPlayPause ×2, VolumeMute ×1
+taps (no repeat) on keys with a real down/up: ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Enter, VolumeDown, VolumeUp, 1, 2, 3, 4, 5, 6, 7, 9, Guide, ChannelDown, ChannelUp
+  tap duration (down → up, ms): n=26 min 234.2 · p10 264.4 · median 326.2 · mean 376.1 · p90 493.2 · max 1165.0
+
+## Held keys (auto-repeat)
+holds with repeats: 2 (ArrowLeft 1095 ms, ArrowRight 3182 ms)
+repeat events: 0 with repeat=true, 43 with repeat=false (keydown without the flag)
+first repeat after press (ms): n=2 min 701.4 · p10 701.4 · median 735.6 · mean 718.5 · p90 735.6 · max 735.6
+repeat interval (ms): n=41 min -775.8 · p10 169.4 · median 204.4 · mean 115.4 · p90 244.8 · max 259.4
+keyup after the last repeat (ms): n=2 min -951.4 · p10 -951.4 · median -938.8 · mean -945.1 · p90 -938.8 · max -938.8
+bounces (keyup → keydown of the same key < 60 ms): 1 — ArrowRight -839.0
+max keys down at once: 1
+new keydowns while an arrow was held: 0 (a second arrow / OK pressed during a hold never arrived)
+gaps > 200 ms inside a hold's repeat stream: ArrowLeft 213.0 ms, ArrowLeft 205.0 ms, ArrowLeft 218.6 ms, ArrowLeft 258.2 ms, ArrowLeft 259.4 ms, ArrowRight 202.6 ms, ArrowRight 202.8 ms, ArrowRight 204.4 ms, ArrowRight 228.0 ms, ArrowRight 247.8 ms, ArrowRight 244.8 ms, ArrowRight 211.0 ms, ArrowRight 222.4 ms, ArrowRight 231.6 ms, ArrowRight 212.0 ms, ArrowRight 246.4 ms, ArrowRight 211.6 ms, ArrowRight 215.0 ms, ArrowRight 230.4 ms, ArrowRight 200.6 ms, ArrowRight 213.0 ms, ArrowRight 214.4 ms, ArrowRight 205.6 ms, ArrowRight 230.8 ms
+
+## Gamepads
+  GP0 connected id=""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+  buttons seen: 
+  axis zones seen: 
+  D-pad presses while another D-pad direction was held (diagonals): 0
+  final: #0 "Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc) mapping=standard buttons 17 axes 4 presses 0
+
+## Lifecycle & info
+     2488.3 focus
+     2488.6 focus
+    20019.8 svg blur-s2 → PASS
+    21753.9 svg blur-s4 → PASS
+    23592.4 svg blur-s8 → PASS
+   149189.0 gamepadconnected #0 ""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+   162351.2 blur — cleared held keys
+   164002.9 focus
+   220029.2 hold/repeat/frame stats reset
+   220949.4 hold/repeat/frame stats reset
+   236362.0 blur — cleared held keys
+   238505.8 focus
+  visibilitychange seen: no
+
+## Frames (requestAnimationFrame)
+last 600 deltas: median 17.0 ms (58.7 Hz) · p95 34.6 · max 68.8 · worst since reset 120.8
+since the last reset: 1511 frames, 477 deltas > 20 ms (31.6 %), pauses 0
+average delivered frame rate over 27 s: 54.90 fps (from report timestamps)
+
+## SVG capability
+  matrix done · 19 features (16 expected, 3 surprise) · 247.0 s · warm 3 · measure 12
+  feature       status         total    decode      draw      ink   bytes
+  paths-static  PASS          83.9ms    81.0ms     2.3ms    65536     380
+  grad-linear   PASS          82.8ms    80.4ms     2.7ms    65536     342
+  grad-radial   PASS         140.8ms   109.1ms    31.1ms    48100     374
+  mask-lum      PASS         119.9ms    97.0ms    22.5ms    63360     424
+  clip-circle   PASS          96.2ms    92.5ms     3.0ms    13034     278
+  use-symbol    PASS         138.8ms   131.9ms     3.3ms     3200     378
+  text-glyph    PASS          97.5ms    95.2ms     2.5ms    65536     290
+  text-path     PASS          87.4ms    82.3ms     2.4ms     1656     322
+  blur-s2       PASS          95.6ms    88.8ms     5.9ms     3163     318
+  blur-s4       PASS          98.5ms    89.5ms     8.5ms     3892     318
+  blur-s8       PASS         103.5ms    91.8ms    10.8ms     5233     318
+  drop-shadow   PASS         101.9ms    90.7ms    11.8ms    65536     433
+  turb-oct1     PASS         149.7ms   146.0ms     2.9ms    52900     428
+  turb-oct4     PASS         214.4ms   211.4ms     2.8ms    52900     428
+  chain-tcc     PASS         136.2ms   120.7ms    15.0ms    25600     539
+  smil-animate  ANIMATES         —ms       —ms     2.8ms        —     276
+                            → raster differs from first read at byte 98376
+  css-keyframes ANIMATES         —ms       —ms     2.5ms        —     369
+                            → raster differs from first read at byte 240
+  bitmap-svg    ACCEPT           —ms       —ms       —ms        —     197
+                            → accepted 256×256
+  e3-atlas      PASS          96.4ms    91.4ms     3.4ms    16384   50430
+
