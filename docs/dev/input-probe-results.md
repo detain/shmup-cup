@@ -750,3 +750,42 @@ and a whole run drifts **1.8 points / 3 %**. §12's reads — and any §13.1 cos
 sessions — are now graded against that ruler: beyond it is a measurement, inside it is weather. The
 receipts and the cull pair's floor-graded closure live in
 [tools/input-probe/results/2026-10-31-m7-bench-pngfloor/](../../tools/input-probe/results/2026-10-31-m7-bench-pngfloor/).
+
+### 13.7 The svg arm's second sample (owner drop `b7a68a6d`, wire 2026-10-29) — the verdicts, floor-graded
+
+The outstanding repeat landed: session `rb-mvt2ahx6-xenx` (build `d4f9351+svg-e3`,
+`gameCodeHash 356cdf76a8`, `svgEnc e3` — measured again at the write-up's tree, so it **pools with
+§13.4's session** as `code:356cdf76a8|svg=e3`, GL 1 × 2 runs) plus its sibling `hb-mvt5x48z-0tid`
+(`done: true`), in
+[tools/input-probe/results/2026-10-31-m7-bench-svg-arm/](../../tools/input-probe/results/2026-10-31-m7-bench-svg-arm/)
+— the README there holds the full write-up, the arm's floor, and the fresh
+`analysis-svgpair.txt` / `analysis-arms.txt` (byte-identical on two runs). What the second sample
+does to each §13/§12 claim:
+
+- **The arm now has its own noise floor**: over 195 same-pool pairs the two-tick share repeats within
+  a **median spread of 2.9 points** (p90 10.7), the synced p95 within **7 % / 24 %**, run drift 2.4
+  points / 4 % — the §13.6 ruler's shape, reproduced on the SVG side. The Oct-31 folder's
+  "the SVG arm still has no floor" is spent.
+- **The frame-side A/B is a tie, floor-graded.** Pool medians (2×2, same game code): busy@640 PNG
+  6.7 vs SVG 6.8 — **+0.1, within**; 1024x768n busy 59.9 vs 62.5 (+2.6, within), its worst 78.0 vs
+  77.1 (−0.9, within); no deciding row near either p90. The pre-write draft's "SVG −3.6 at busy@640"
+  and "big frames −9.8" reads **do not reproduce** at any table (the 3.1 is the PNG pool's
+  `640x360n` row, one cell away) — suggestive single-sample headlines, spent by the second sample.
+  §13's tiers are arm-independent: SVG busy@640 **+5.7 (+5.4 … +6.0)** against PNG's
+  **+4.0 (+0.3 … +7.8)**, overlapping, same **performance-step** verdict.
+- **The load verdict is strengthened, and it was never a noise question.** The clean-page class holds
+  (x1 1024² decode **314.2 → 309.0** ms — the "194.6, tax gone" reading does not exist in the data;
+  x2.67 232.5 → 224.1): a bounded ~220–315 ms tax over the png8 class's ~100, twice measured. The
+  noisy-content class breaks the budget **twice**: the E3 stand-in page's file→GPU median
+  **2,657.7 → 2,598.2 ms** (p95 2,818.9 → 2,911.6) against its PNG-8 twin's 224.0 → 205.4 — each
+  SVG sample over R3-04's **entire 2,000 ms** budget **by itself**, and a median 30 % above a budget
+  is arithmetic no noise floor grades. Keep the page-classes apart exactly as §13.4 does: density
+  pages pay a bounded tax; a noisy-content page is the budget-bust. `createImageBitmap` of an SVG
+  **blob** is refused again (0/8, `svg-bitmap-reject`), consistent with §13.2's narrowing.
+  **Atlas migration: NOT-WORTH-it — unchanged, now two device samples deep.** Nothing ships; the
+  atlas stays PNG-8; R3-04's estimates do not move (this session's PNG pages: cold 642 / change 281;
+  the decode basis gets its sixth sample, **72.1 ms/MP**, band 72.1–76.3).
+- **The cull closure reaffirms**: busy@640 cull is beyond-adverse on **every** sample — SVG
+  +18.2 / +16.2 (pool knob +17.1, beyond the arm's 10.7), PNG +13.4 — with the per-frame facts
+  identical to the sprite across arms (5,953–5,954 tagged, ~6,010 visited, ~1,200 off-view,
+  82–92 bit-writes). §12's CLOSED verdict now rests on four pricing samples, not two.
