@@ -35,6 +35,28 @@ export function gameModeFromSearch(search: string): boolean {
   return searchParam(search, 'gm') !== '0';
 }
 
+/** The `hb-` measurement pages the widget dispatches with `?page=` (plan v20x HARBENCH S2–S4). */
+export const HARB_PAGE_IDS: readonly string[] = ['boot', 'soak', 'probe', 'input'];
+
+/** The program phase each page reports under (the session letters of `v20x-HARBENCH-scout.md`). */
+export const HARB_PAGE_PHASES: Readonly<Record<string, string>> = {
+  boot: 'S2',
+  soak: 'S2',
+  probe: 'S4',
+  input: 'S3',
+};
+
+/**
+ * The `hb-` page a query asks for: `?page=<id>`. The value is returned verbatim even when unknown
+ * (the runner fails LOUD on an unknown id — a typo must not silently run the normal widget).
+ *
+ * @param search - `location.search`.
+ * @returns The page id, or `null` when the query carries none.
+ */
+export function harbPageFromSearch(search: string): string | null {
+  return searchParam(search, 'page');
+}
+
 /** The pieces one `hb-` send needs, all injected so the pages and the tests share this file. */
 export interface HarbSendContext {
   /** The window (for `XMLHttpRequest` and clocks). */

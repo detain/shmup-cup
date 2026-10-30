@@ -88,6 +88,17 @@
  * Node proxy at `test/bench/rewind.perf.ts` carries the shipped-golden-density figures). R0-02's 18
  * scenarios keep their ids in the larger matrix, so R0-02's and R0-03's numbers stay comparable.
  *
+ * **The `hb-` measurement pages (plan v20x HARBENCH S2–S4, the PAGES lane).** A page load of the
+ * widget asked with `?page=` runs one measurement body and sends one `hb-` record (the wire the
+ * HARB-SCHEMA lane froze; `./harb.ts` carries the send): `boot` (S2 — the manifest's `file://` XHR,
+ * the ×1 pages through the shipped bitmap loader route, the time to a first synced frame), `soak`
+ * (S2 — the long residency cycle over the stand-in pages with the heap sampled per cycle),
+ * `probe` (S4 — the WebGL extension census, the ETC compressed-upload smoke, device memory / cores
+ * / `OffscreenCanvas` / reduce-motion) and `input` (S3 — the registered-key delivery watch with
+ * the press-to-tick lag and auto-repeat Hz, the game-mode A/B leg riding the env). Bodies pure
+ * (`./boot.ts`, `./soak.ts`, `./probe.ts`, `./inputpage.ts` over injected hosts), reachable from
+ * the widget's own page flow via `startRenderBench` (`./run.ts`), never through the matrix ledger.
+ *
  * **Implements.**
  * - shmup_feat.md §22 — the render budget (render ≤ 8 ms, draw calls) the measurements are read
  *   against
@@ -363,3 +374,53 @@ export {
   type BenchLedgerPools,
   type BenchSkipPlan,
 } from './ledger.js';
+export {
+  HARB_PAGE_IDS,
+  HARB_PAGE_PHASES,
+  gameModeFromSearch,
+  harbPageFromSearch,
+  sendHarbRecord,
+  type HarbSendContext,
+} from './harb.js';
+export {
+  BOOT_PAGE_ID,
+  BOOT_MANIFEST_URL,
+  MAX_BOOT_PAGE_ROWS,
+  TV_BOOT_MANIFEST_REPETITIONS,
+  bootRepetitionsFromSearch,
+  measureBoot,
+  type BootHost,
+} from './boot.js';
+export {
+  SOAK_PAGE_ID,
+  SOAK_TARGET_S,
+  SOAK_MIN_TARGET_S,
+  SOAK_MAX_TARGET_S,
+  SOAK_REST_MS,
+  MAX_SOAK_SAMPLES,
+  measureSoak,
+  soakTargetSecondsFromSearch,
+  type SoakHost,
+} from './soak.js';
+export {
+  PROBE_PAGE_ID,
+  PROBE_SMOKE_REPETITIONS,
+  PROBE_SMOKE_BLOCK_BYTES,
+  PROBE_ETC_FORMATS,
+  measureProbe,
+  type ProbeContext,
+  type ProbeHost,
+} from './probe.js';
+export {
+  INPUT_PAGE_ID,
+  INPUT_WATCH_S,
+  INPUT_MIN_WATCH_S,
+  INPUT_MAX_WATCH_S,
+  INPUT_EPISODE_GAP_MS,
+  MAX_INPUT_DELIVERIES,
+  BENCH_INPUT_KEYS,
+  inputWatchSecondsFromSearch,
+  measureInputWatch,
+  type InputHost,
+  type InputWatchKey,
+} from './inputpage.js';

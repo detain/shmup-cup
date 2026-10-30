@@ -730,6 +730,22 @@ export function shmupRenderBench(options = {}) {
     return { file: svg.file, source: svg.svg, mime: SVG_MIME_TYPE };
   };
 
+  /**
+   * The JSON of the ×1 manifest the boot page fetches to measure the manifest's `file://` XHR
+   * (plan v20x PAGES S2): the density-1 atlas's manifest with the ARM's page files, so the fetched
+   * bytes describe exactly the pages the bundle ships.
+   *
+   * @returns {string} The manifest JSON.
+   */
+  const bootManifestJson = () => {
+    const x1 = ensure().find((atlas) => atlas.density === 1);
+    const pages = x1.manifest.pages.map((page, index) => ({
+      ...page,
+      file: pageOf(page.file, x1.png[index]).file,
+    }));
+    return JSON.stringify({ ...x1.manifest, pages });
+  };
+
   return {
     name: 'shmup:render-bench',
     configResolved(config) {
@@ -766,6 +782,14 @@ export function shmupRenderBench(options = {}) {
           });
         }
       }
+      // The boot page's manifest (plan v20x PAGES S2): the ×1 manifest as a real shipped file, so
+      // the `file://` XHR the boot measures runs against the bundle's own bytes (the boot page's
+      // `BOOT_MANIFEST_URL` names this path).
+      this.emitFile({
+        type: 'asset',
+        fileName: `${BENCH_ATLAS_DIR}/bench-x1.json`,
+        source: bootManifestJson(),
+      });
     },
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
@@ -799,6 +823,11 @@ export function shmupRenderBench(options = {}) {
         if (svgStandin !== undefined) {
           response.setHeader('Content-Type', SVG_MIME_TYPE);
           response.end(svgStandin.svg);
+          return;
+        }
+        if (file === 'bench-x1.json') {
+          response.setHeader('Content-Type', 'application/json');
+          response.end(bootManifestJson());
           return;
         }
         next();

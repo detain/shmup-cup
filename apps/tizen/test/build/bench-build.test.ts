@@ -84,6 +84,9 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
       'assets/atlas/bench-x1-0.png',
       'assets/atlas/bench-x1.33-0.png',
       'assets/atlas/bench-x1.5-0.png',
+      // The boot page's manifest (plan v20x PAGES S2): the ×1 manifest as a shipped file, so the
+      // `file://` XHR the boot measures runs against the bundle's own bytes.
+      'assets/atlas/bench-x1.json',
       'assets/atlas/bench-x2-0.png',
       'assets/atlas/bench-x2.25-0.png',
       'assets/atlas/bench-x2.25-1.png',

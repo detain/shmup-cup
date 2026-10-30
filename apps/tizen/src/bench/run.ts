@@ -92,6 +92,7 @@ import {
   createSpriteTables,
   createTerrainBinding,
   loadFxContent,
+  type Atlas,
   type AtlasManifest,
   type AtlasPageImage,
   type FxContent,
@@ -104,6 +105,10 @@ import {
   renderReportEndpoint,
   sendRenderBench,
   type DecodeBenchRecord,
+  type HarbenchBootRecord,
+  type HarbenchInputRecord,
+  type HarbenchMemoryRecord,
+  type HarbenchProbeRecord,
   type HarbenchRewindRecord,
   type RenderBenchEnv,
   type RenderBenchRecord,
@@ -128,6 +133,7 @@ import {
   type BenchVideoSpec,
   type BenchSvgProbeSpec,
   type DecodeMeasureOptions,
+  type DecodedPage,
   type DecodeWindow,
 } from './decode.js';
 import { createBenchCull, type BenchCullFacts, type CullNode } from './cull.js';
@@ -154,7 +160,28 @@ import {
   type BenchCampaignState,
 } from './campaign.js';
 import { benchKeyOf, detectBenchHost, type BenchHost } from './host.js';
-import { gameModeFromSearch, sendHarbRecord } from './harb.js';
+import {
+  HARB_PAGE_IDS,
+  HARB_PAGE_PHASES,
+  gameModeFromSearch,
+  harbPageFromSearch,
+  sendHarbRecord,
+} from './harb.js';
+import { BOOT_PAGE_ID, bootRepetitionsFromSearch, measureBoot, type BootHost } from './boot.js';
+import {
+  SOAK_PAGE_ID,
+  SOAK_REST_MS,
+  measureSoak,
+  soakTargetSecondsFromSearch,
+  type SoakHost,
+} from './soak.js';
+import { PROBE_PAGE_ID, PROBE_SMOKE_REPETITIONS, measureProbe, type ProbeHost } from './probe.js';
+import {
+  INPUT_PAGE_ID,
+  inputWatchSecondsFromSearch,
+  measureInputWatch,
+  type InputHost,
+} from './inputpage.js';
 import {
   BENCH_SCENARIOS,
   BENCH_V2_SIZE,
@@ -865,6 +892,103 @@ function measureScenario(
 type UploadSource = Parameters<PixiRenderer['uploadTextureSource']>[0];
 
 /**
+ * The bench page's shared rig: a renderer on the ×1 atlas at the v2 frame (640×360) on the
+ * window's display, its decode host, a canvas progress line and one synced render. The decode
+ * scenario and the `hb-` boot / soak pages ({@link runHarbPage}) all drive it; nothing is torn
+ * down (the TV reloads or the app exits after a page's work, the headless page closes).
+ */
+interface BenchRig {
+  /** The renderer (its `webGLVersion` is the truth of what the engine gave). */
+  renderer: PixiRenderer;
+  /** The decode host over this renderer's canvas and GL context. */
+  host: ReturnType<typeof createDecodeHost>;
+  /**
+   * Draws the progress line (between measurements, never inside one).
+   *
+   * @param text - What is being measured.
+   */
+  show(text: string): void;
+  /** Renders one empty frame and waits for the GPU. */
+  render(): void;
+}
+
+/**
+ * Builds the rig (see {@link BenchRig}) — the exact pipeline the decode scenario ran inline
+ * before the `hb-` pages shared it.
+ *
+ * @param options - The app options (window, canvas, assets).
+ * @param webGLVersion - The WebGL version to ask for.
+ * @param label - The progress label's prefix.
+ * @returns The rig.
+ */
+async function createBenchRig(
+  options: RenderBenchAppOptions,
+  webGLVersion: 1 | 2,
+  label: string,
+): Promise<BenchRig> {
+  const { win, canvas, assets } = options;
+  const size = BENCH_V2_SIZE;
+  const source = atlasFor(assets, 1);
+  const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
+  const atlas = createAtlas(source.manifest, images, { onWarning: () => {} });
+  canvas.width = Math.max(1, Math.floor(win.innerWidth));
+  canvas.height = Math.max(1, Math.floor(win.innerHeight));
+  const renderer = await createPixiRenderer({
+    canvas,
+    displayWidth: canvas.width,
+    displayHeight: canvas.height,
+    width: size.width,
+    height: size.height,
+    atlas,
+    preferWebGLVersion: webGLVersion,
+  });
+  const context = canvas.getContext(renderer.webGLVersion === 2 ? 'webgl2' : 'webgl') as {
+    finish(): void;
+  } | null;
+  const ui = createDrawList(4, 2);
+  const frame = new BenchFrame(null, createDrawList(1, 1), ui);
+  const lineHeight = source.manifest.fonts.pixel?.lineHeight ?? 10;
+  /**
+   * Draws the progress line (between measurements, never inside one).
+   *
+   * @param text - What is being measured.
+   */
+  const show = (text: string): void => {
+    drawBenchLines(ui, [{ text: `${label} ${text}`, color: NOTE_COLOR }], 4, 4, lineHeight);
+    renderer.render(frame);
+  };
+  const render = (): void => {
+    renderer.render(frame);
+    context?.finish();
+  };
+  const host = createDecodeHost({
+    win: win as unknown as DecodeWindow,
+    createSource: (image, page) =>
+      createAtlas(
+        {
+          formatVersion: 2,
+          pages: [{ file: page.url, w: page.width, h: page.height }],
+          frames: {},
+          sprites: {},
+          animations: {},
+          fonts: {},
+        },
+        [image as AtlasPageImage],
+        { onWarning: () => {} },
+      ).pages[0],
+    upload: (texture) => {
+      renderer.uploadTextureSource(texture as UploadSource);
+    },
+    finish: () => {
+      context?.finish();
+    },
+    progress: show,
+  });
+  show('');
+  return { renderer, host, show, render };
+}
+
+/**
  * Runs the decode scenario on this page (plan R1-05 B4 — see `./decode.ts`): a renderer on the ×1
  * atlas at the v2 frame (640×360) on the window's display, then {@link measureDecode} over the bench
  * build's decode pages, each wrapped in a texture source by `createAtlas` exactly as the game wraps
@@ -884,7 +1008,7 @@ function measureDecodeScenario(
   label: string,
   repetitions: number,
 ): Promise<DecodeBenchRecord> {
-  const { win, canvas, assets } = options;
+  const { win, assets } = options;
   const decodeWin = win as unknown as DecodeWindow;
   const facts: DecodeMeasureOptions = {
     repetitions,
@@ -899,72 +1023,19 @@ function measureDecodeScenario(
     if (pages.length === 0) {
       return failedDecodeRecord('this bench build has no decode pages', facts);
     }
-    const size = BENCH_V2_SIZE;
-    const source = atlasFor(assets, 1);
-    const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
-    const atlas = createAtlas(source.manifest, images, { onWarning: () => {} });
-    canvas.width = Math.max(1, Math.floor(win.innerWidth));
-    canvas.height = Math.max(1, Math.floor(win.innerHeight));
-    const renderer = await createPixiRenderer({
-      canvas,
-      displayWidth: canvas.width,
-      displayHeight: canvas.height,
-      width: size.width,
-      height: size.height,
-      atlas,
-      preferWebGLVersion: webGLVersion,
-    });
-    const context = canvas.getContext(renderer.webGLVersion === 2 ? 'webgl2' : 'webgl') as {
-      finish(): void;
-    } | null;
-    const ui = createDrawList(4, 2);
-    const frame = new BenchFrame(null, createDrawList(1, 1), ui);
-    const lineHeight = source.manifest.fonts.pixel?.lineHeight ?? 10;
-    /**
-     * Draws the progress line (between measurements, never inside one).
-     *
-     * @param text - What is being measured.
-     */
-    const show = (text: string): void => {
-      drawBenchLines(ui, [{ text: `${label} ${text}`, color: NOTE_COLOR }], 4, 4, lineHeight);
-      renderer.render(frame);
-    };
-    show('');
-    const host = createDecodeHost({
-      win: decodeWin,
-      createSource: (image, page) =>
-        createAtlas(
-          {
-            formatVersion: 2,
-            pages: [{ file: page.url, w: page.width, h: page.height }],
-            frames: {},
-            sprites: {},
-            animations: {},
-            fonts: {},
-          },
-          [image as AtlasPageImage],
-          { onWarning: () => {} },
-        ).pages[0],
-      upload: (texture) => {
-        renderer.uploadTextureSource(texture as UploadSource);
-      },
-      finish: () => {
-        context?.finish();
-      },
-      progress: show,
-    });
-    const record = await measureDecode(host, pages, {
+    const rig = await createBenchRig(options, webGLVersion, label);
+    const record = await measureDecode(rig.host, pages, {
       ...facts,
-      webGLVersion: renderer.webGLVersion,
+      webGLVersion: rig.renderer.webGLVersion,
     });
     // The video rows (plan v20x HARBENCH S8): the R7-VID surface path over the build's shipped
     // clips, appended after the image pages — a build without `assets.videos` (older bench builds,
     // every test fake) measures none and the record keeps its exact previous shape.
     const videoSpecs = assets.videos ?? [];
     if (videoSpecs.length > 0) {
-      const rows = await measureVideoDecode(host, videoSpecs, {
+      const rows = await measureVideoDecode(rig.host, videoSpecs, {
         ...facts,
-        webGLVersion: renderer.webGLVersion,
+        webGLVersion: rig.renderer.webGLVersion,
       });
       for (let i = 0; i < rows.length; i++) record.pages.push(rows[i]);
     }
@@ -972,13 +1043,13 @@ function measureDecodeScenario(
     // build ships no specs, so its record ends where it did before the arm.
     const svgSpecs = assets.svgProbes ?? [];
     if (svgSpecs.length > 0) {
-      const rows = await measureSvgDecode(host, svgSpecs, {
+      const rows = await measureSvgDecode(rig.host, svgSpecs, {
         ...facts,
-        webGLVersion: renderer.webGLVersion,
+        webGLVersion: rig.renderer.webGLVersion,
       });
       for (let i = 0; i < rows.length; i++) record.pages.push(rows[i]);
     }
-    show('done');
+    rig.show('done');
     return record;
   })().catch((error: unknown) => failedDecodeRecord(String(error), facts));
 }
@@ -1139,12 +1210,419 @@ async function measureStandinScenario(
 export function startRenderBench(options: RenderBenchAppOptions): void {
   const { win } = options;
   const search = (win as Partial<Window>).location?.search ?? '';
+  const pageId = harbPageFromSearch(search);
+  if (pageId !== null) {
+    // A `hb-` measurement page (plan v20x HARBENCH S2–S4) is its own one-record page load: it
+    // takes precedence over the run and the headless scenario modes.
+    runHarbPage(options, pageId, search);
+    return;
+  }
   const scenarioId = searchParam(search, 'scenario');
   if (scenarioId !== null) {
     runHeadless(options, scenarioId, search);
     return;
   }
   runOnTv(options, search);
+}
+
+/** The `id` of the DOM text block the `hb-` pages draw (the input watch's checklist, summaries). */
+const PAGE_TEXT_ID = 'bench-page-text';
+
+/** The four `hb-` page bodies' record union (members of {@link HarbenchRecord} that carry `error`). */
+type HarbPageRecord =
+  HarbenchBootRecord | HarbenchMemoryRecord | HarbenchProbeRecord | HarbenchInputRecord;
+
+/**
+ * Draws (or replaces) the page's DOM text block — the `hb-` pages' honest on-screen answer, no
+ * renderer needed (the input watch and the probe never build one, and the summary after a send
+ * must outlive the rig).
+ *
+ * @param win - The window.
+ * @param lines - The lines to show.
+ */
+function showPageText(win: Window, lines: readonly string[]): void {
+  const doc = win.document;
+  let block = doc.getElementById(PAGE_TEXT_ID);
+  if (block === null) {
+    block = doc.createElement('pre');
+    block.id = PAGE_TEXT_ID;
+    block.setAttribute(
+      'style',
+      'position:fixed;left:8px;top:8px;margin:0;z-index:9;color:#dfe9ff;font:16px monospace',
+    );
+    doc.body.appendChild(block);
+  }
+  block.textContent = lines.join('\n');
+}
+
+/**
+ * The two summary lines a finished page leaves on screen.
+ *
+ * @param row - The record that went out.
+ * @returns The lines.
+ */
+function pageSummary(row: HarbPageRecord): string[] {
+  return [
+    `HARB ${row.record.toUpperCase()} (${row.scenario}) sent`,
+    row.error === null ? 'ok' : `degraded: ${row.error}`,
+  ];
+}
+
+/**
+ * Runs one `hb-` measurement page (plan v20x HARBENCH S2–S4): the page's body is measured, the
+ * record rides a single-record `hb-` session via {@link sendHarbRecord}, and the page ends on its
+ * summary — no state, no ledger, no reload loop (a page load is the unit; rerun is a relaunch).
+ * An unknown page id fails LOUD and sends nothing.
+ *
+ * @param options - The app options.
+ * @param pageId - The `?page=` value (verbatim — unknown ids are the point of the loud failure).
+ * @param search - `location.search`.
+ */
+function runHarbPage(options: RenderBenchAppOptions, pageId: string, search: string): void {
+  const { win } = options;
+  // The host is resolved for every page: its name rides the env, and `detectBenchHost` performs
+  // the remote-key registration the input watch depends on (the v20x-KEYS five keys).
+  const host = options.host ?? detectBenchHost(win);
+  const webGLVersion = benchWebGLVersion(search, storageOf(win));
+  const endpoint = renderReportEndpoint(options.reportUrl);
+  const envBase: TvBenchEnv = {
+    buildId: options.buildId,
+    output: null,
+    svgEnc: options.svgEnc ?? 'png',
+    host: host.name,
+    userAgent: (win as Partial<Window>).navigator?.userAgent ?? '',
+    innerWidth: win.innerWidth,
+    innerHeight: win.innerHeight,
+    devicePixelRatio: win.devicePixelRatio,
+    webGLVersion,
+    scenarios: BENCH_SCENARIOS.length,
+    startedAt: Date.now(),
+    ...(options.gameCodeHash === undefined || options.gameCodeHash === ''
+      ? {}
+      : { gameCodeHash: options.gameCodeHash }),
+  };
+  const phase = HARB_PAGE_PHASES[pageId];
+  if (phase === undefined) {
+    mark(win, 'error');
+    showPageText(win, [`unknown hb- page "${pageId}"`, `known pages: ${HARB_PAGE_IDS.join(', ')}`]);
+    return;
+  }
+  mark(win, 'scenario');
+  showPageText(win, [`HARB ${phase} ${pageId} running`]);
+  runHarbPageBody(options, pageId, search, webGLVersion).then(
+    (row) => {
+      sendHarbRecord(
+        { win, endpoint, envBase, phase, gameMode: gameModeFromSearch(search) },
+        row,
+        () => {
+          mark(win, row.error === null ? 'done' : 'error');
+          showPageText(win, pageSummary(row));
+        },
+      );
+    },
+    (error: unknown) => {
+      mark(win, 'error');
+      showPageText(win, [`hb- page "${pageId}" crashed`, String(error)]);
+    },
+  );
+}
+
+/**
+ * Dispatches one page's body. Every body never rejects; a rig that cannot be built at all (no
+ * canvas, a refused renderer) rejects and {@link runHarbPage} notes it LOUD on the page.
+ *
+ * @param options - The app options.
+ * @param pageId - A validated page id ({@link HARB_PAGE_PHASES}).
+ * @param search - `location.search`.
+ * @param webGLVersion - The page's renderer ask (the probe asks both versions itself).
+ * @returns The record.
+ */
+function runHarbPageBody(
+  options: RenderBenchAppOptions,
+  pageId: string,
+  search: string,
+  webGLVersion: 1 | 2,
+): Promise<HarbPageRecord> {
+  if (pageId === BOOT_PAGE_ID) return runBootPage(options, search, webGLVersion);
+  if (pageId === SOAK_PAGE_ID) return runSoakPage(options, search, webGLVersion);
+  if (pageId === PROBE_PAGE_ID) return runProbePage(options);
+  if (pageId === INPUT_PAGE_ID) return runInputPage(options, search);
+  return Promise.reject(new Error(`unknown hb- page "${pageId}"`));
+}
+
+/**
+ * The boot page (S2): the bench rig, then the ×1 pages named by the shipped manifest files.
+ *
+ * @param options - The app options.
+ * @param search - `location.search`.
+ * @param webGLVersion - The renderer ask.
+ * @returns The boot row.
+ */
+async function runBootPage(
+  options: RenderBenchAppOptions,
+  search: string,
+  webGLVersion: 1 | 2,
+): Promise<HarbenchBootRecord> {
+  const rig = await createBenchRig(options, webGLVersion, 'HARB S2 BOOT');
+  const source = atlasFor(options.assets, 1);
+  const pages: BenchDecodePage[] = [];
+  for (let i = 0; i < source.manifest.pages.length; i++) {
+    const page = source.manifest.pages[i];
+    pages.push({
+      id: bootPageIdOf(page.file),
+      what: `x1 atlas page ${i + 1}`,
+      width: page.w,
+      height: page.h,
+      url: source.pageUrls[i],
+    });
+  }
+  const host: BootHost = { render: () => rig.render(), ...rig.host };
+  return measureBoot(host, pages, {
+    repetitions: bootRepetitionsFromSearch(search),
+    wallClock: () => Date.now(),
+  });
+}
+
+/**
+ * The page row id from a shipped page file: `bench-x1-2.svg` → `bench-x1-2`.
+ *
+ * @param file - The manifest's page file.
+ * @returns The id.
+ */
+function bootPageIdOf(file: string): string {
+  const slash = file.lastIndexOf('/');
+  const base = slash >= 0 ? file.slice(slash + 1) : file;
+  const dot = base.lastIndexOf('.');
+  return dot > 0 ? base.slice(0, dot) : base;
+}
+
+/**
+ * The soak page (S2): the residency cycle over the stand-in pages — fetch + bitmap-or-image decode,
+ * `createAtlas`, eager upload of every page, one synced render, then `destroy()` and release — with
+ * the heap sampled per cycle. The pages are the biggest files the build ships (the same stand-in
+ * pages the `standin-zone` load draws).
+ *
+ * @param options - The app options.
+ * @param search - `location.search`.
+ * @param webGLVersion - The renderer ask.
+ * @returns The memory row.
+ */
+async function runSoakPage(
+  options: RenderBenchAppOptions,
+  search: string,
+  webGLVersion: 1 | 2,
+): Promise<HarbenchMemoryRecord> {
+  const rig = await createBenchRig(options, webGLVersion, 'HARB S2 SOAK');
+  const { win } = options;
+  const standin = options.assets.standin;
+  let cycleAtlas: Atlas | null = null;
+  let cycleImages: DecodedPage[] = [];
+  const host: SoakHost = {
+    time: () => win.performance.now(),
+    heapUsed: () => heapUsed(win),
+    beginCycle: async () => {
+      if (standin === null || standin === undefined) {
+        throw new Error('this bench build ships no stand-in pages');
+      }
+      const images: unknown[] = [];
+      cycleImages = [];
+      for (let i = 0; i < standin.pageUrls.length; i++) {
+        const bytes = await rig.host.fetch(standin.pageUrls[i]);
+        const decoded =
+          rig.host.decodeBitmap === null
+            ? await rig.host.decodeImage(bytes)
+            : await rig.host.decodeBitmap(bytes).catch(() => rig.host.decodeImage(bytes));
+        images.push(decoded.image);
+        cycleImages.push(decoded);
+      }
+      const atlas = createAtlas(standin.manifest, images as AtlasPageImage[], {
+        onWarning: () => {},
+      });
+      cycleAtlas = atlas;
+      for (let i = 0; i < images.length; i++) {
+        rig.host.upload(atlas.pages[i]);
+      }
+      rig.render();
+      return countResidentPages(atlas, standin.manifest.pages.length);
+    },
+    endCycle: () => {
+      const atlas = cycleAtlas;
+      if (atlas !== null) {
+        atlas.destroy();
+        cycleAtlas = null;
+      }
+      for (let i = 0; i < cycleImages.length; i++) cycleImages[i].release();
+      cycleImages = [];
+      return 0; // the atlas's `destroy()` frees every page's GPU copy and the images are closed
+    },
+    rest: () =>
+      new Promise<void>((resolve) => {
+        win.setTimeout(resolve, SOAK_REST_MS);
+      }),
+    progress: (seconds, cycles) => {
+      rig.show(`cycle ${cycles} at ${Math.floor(seconds)}s`);
+      const heap = heapUsed(win);
+      showPageText(win, [
+        `HARB S2 SOAK  cycle ${cycles}  ${Math.floor(seconds)}s`,
+        `heap ${heap >= 0 ? `${Math.floor(heap / 1_048_576)} MiB` : 'unmeasured'}`,
+      ]);
+    },
+  };
+  return measureSoak(host, {
+    targetSeconds: soakTargetSecondsFromSearch(search),
+    wallClock: () => Date.now(),
+  });
+}
+
+/**
+ * How many of an atlas's pages the renderer reports resident (the soak row's ledger count).
+ *
+ * @param atlas - The live atlas.
+ * @param pageCount - Its manifest's page count.
+ * @returns The resident count.
+ */
+function countResidentPages(atlas: Atlas, pageCount: number): number {
+  let resident = 0;
+  for (let i = 0; i < pageCount; i++) if (atlas.isPageLoaded(i)) resident += 1;
+  return resident;
+}
+
+/**
+ * The probe page (S4): the capability census on throwaway 1×1 canvases — no bench rig, no
+ * renderer, nothing resident afterwards (each context is lost through `WEBGL_lose_context` like
+ * the `tools/input-probe` env census does).
+ *
+ * @param options - The app options.
+ * @returns The probe row.
+ */
+function runProbePage(options: RenderBenchAppOptions): Promise<HarbenchProbeRecord> {
+  const { win } = options;
+  const host: ProbeHost = {
+    time: () => win.performance.now(),
+    createContext: (kind) => {
+      const probe = win.document.createElement('canvas');
+      probe.width = 1;
+      probe.height = 1;
+      const gl = probe.getContext(
+        kind === 'webgl2' ? 'webgl2' : 'webgl',
+      ) as WebGLRenderingContext | null;
+      if (gl === null) return null;
+      return {
+        supportedExtensions: () => gl.getSupportedExtensions() ?? [],
+        compressedSmokeMs: (extension, format, block) => {
+          if (gl.getExtension(extension) === null) return null;
+          const texture = gl.createTexture();
+          if (texture === null) return null;
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+          const t0 = win.performance.now();
+          let refused: boolean;
+          try {
+            gl.compressedTexImage2D(gl.TEXTURE_2D, 0, format, 4, 4, 0, block);
+            refused = gl.getError() !== gl.NO_ERROR;
+          } catch (_error) {
+            refused = true;
+          }
+          const ms = win.performance.now() - t0;
+          gl.deleteTexture(texture);
+          return refused ? null : ms;
+        },
+        release: () => {
+          const lose = gl.getExtension('WEBGL_lose_context') as { loseContext(): void } | null;
+          if (lose !== null) lose.loseContext();
+        },
+      };
+    },
+    hasOffscreenCanvas: () =>
+      (win as Partial<{ OffscreenCanvas: unknown }>).OffscreenCanvas !== undefined,
+    reduceMotionResolves: () => {
+      try {
+        const query =
+          typeof win.matchMedia === 'function'
+            ? win.matchMedia('(prefers-reduced-motion: reduce)')
+            : null;
+        return query !== null && query.matches === true;
+      } catch (_error) {
+        return false;
+      }
+    },
+    deviceMemoryGiB: () => {
+      const nav = (win as Partial<Window>).navigator as
+        Partial<{ deviceMemory: number }> | undefined;
+      const value = nav === undefined ? undefined : nav.deviceMemory;
+      return typeof value === 'number' && value > 0 ? value : null;
+    },
+    hardwareConcurrency: () => {
+      const nav = (win as Partial<Window>).navigator as
+        Partial<{ hardwareConcurrency: number }> | undefined;
+      const value = nav === undefined ? undefined : nav.hardwareConcurrency;
+      return typeof value === 'number' && value > 0 ? Math.floor(value) : null;
+    },
+  };
+  return Promise.resolve(
+    measureProbe(host, {
+      repetitions: PROBE_SMOKE_REPETITIONS,
+      wallClock: () => Date.now(),
+    }),
+  );
+}
+
+/**
+ * The input watch page (S3): the registered-key delivery watch — no bench rig, no renderer; just
+ * document listeners and the frame loop the lag is measured to. The five-key registration is done
+ * by {@link runHarbPage}'s host resolution before this starts.
+ *
+ * @param options - The app options.
+ * @param search - `location.search`.
+ * @returns The input row.
+ */
+async function runInputPage(
+  options: RenderBenchAppOptions,
+  search: string,
+): Promise<HarbenchInputRecord> {
+  const { win } = options;
+  const doc = win.document;
+  const host: InputHost = {
+    time: () => win.performance.now(),
+    onKeydown: (onKey) => {
+      const handler = (event: Event): void => {
+        onKey((event as KeyboardEvent).keyCode);
+      };
+      doc.addEventListener('keydown', handler);
+      return () => {
+        doc.removeEventListener('keydown', handler);
+      };
+    },
+    onKeyup: (onKey) => {
+      const handler = (event: Event): void => {
+        onKey((event as KeyboardEvent).keyCode);
+      };
+      doc.addEventListener('keyup', handler);
+      return () => {
+        doc.removeEventListener('keyup', handler);
+      };
+    },
+    gamepadPresent: () => {
+      const nav = (win as Partial<Window>).navigator as
+        Partial<{ getGamepads?: () => (Gamepad | null)[] | undefined }> | undefined;
+      const pads =
+        nav !== undefined && typeof nav.getGamepads === 'function' ? nav.getGamepads() : null;
+      if (pads === null || pads === undefined) return false;
+      for (let i = 0; i < pads.length; i++)
+        if (pads[i] !== null && pads[i] !== undefined) return true;
+      return false;
+    },
+    schedule: (onFrame) => {
+      win.requestAnimationFrame(onFrame);
+    },
+    show: (lines) => {
+      showPageText(win, lines);
+    },
+  };
+  return measureInputWatch(host, {
+    watchSeconds: inputWatchSecondsFromSearch(search),
+    wallClock: () => Date.now(),
+  });
 }
 
 /**
