@@ -946,8 +946,20 @@ export interface DecodeWindow {
   readonly URL: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
   /** `createImageBitmap`, absent on old engines. */
   readonly createImageBitmap?: (source: Blob | HTMLVideoElement) => Promise<ImageBitmap>;
-  /** `Video` (the HTML video element constructor), absent on hosts without the surface. */
+  /**
+   * A `Video` constructor (the HTML video element). Chromium exposes no such global — the
+   * interface is `HTMLVideoElement` — so this is the shape the test fakes (and any host library
+   * that ships one) carry; {@link createDecodeHost} falls back to {@link DecodeWindow.document}
+   * for a real browser, and to no surface at all when neither is present.
+   */
   readonly Video?: new () => HTMLVideoElement;
+  /**
+   * The part of `document` the video surface needs: `createElement('video')` — the game's own
+   * creation call (`@shmup/render-pixi` `createVideoSurface`). The real window carries this;
+   * a host without it and without {@link DecodeWindow.Video} gets the honest
+   * `video surface unavailable` fold.
+   */
+  readonly document?: { createElement(tagName: 'video'): HTMLVideoElement };
   /** `performance.now()`. */
   readonly performance: { now(): number };
   /** `setTimeout`. */
@@ -1051,7 +1063,27 @@ export function createDecodeHost(options: DecodeHostOptions): DecodeHost {
       type: isSvgBytes(new Uint8Array(bytes, 0, 4)) ? SVG_DECODE_MIME : 'image/png',
     });
   const createBitmap = win.createImageBitmap;
-  const VideoCtor = win.Video;
+  /**
+   * The bench's video-surface factory (plan v20x-S8FIX): the `Video` constructor when the host
+   * carries one (the test fakes' shape — Chromium exposes no such global), else the game's own
+   * creation call, `document.createElement('video')` (the route `createVideoSurface` proved on
+   * the M7), else no surface at all — the honest `video surface unavailable` fold stays.
+   *
+   * @returns A fresh detached video element, or `null` where neither route exists.
+   */
+  const newVideoElement = (): HTMLVideoElement | null => {
+    const VideoCtor = win.Video;
+    if (VideoCtor !== undefined) return new VideoCtor();
+    if (win.document !== undefined) return win.document.createElement('video');
+    return null;
+  };
+  /**
+   * Whether this host can carry a video surface, without creating one (a capability read —
+   * {@link newVideoElement} instantiates).
+   *
+   * @returns true when a `Video` ctor or a `document` route exists.
+   */
+  const hasVideoSurface = (): boolean => win.Video !== undefined || win.document !== undefined;
   return {
     now: () => win.performance.now(),
     fetch: (url) =>
@@ -1081,12 +1113,17 @@ export function createDecodeHost(options: DecodeHostOptions): DecodeHost {
             )
         : null,
     openVideo:
-      VideoCtor === undefined || createBitmap === undefined
+      typeof createBitmap !== 'function' || !hasVideoSurface()
         ? null
         : (url, repetition) =>
             timed(
               new Promise<DecodedPage>((resolve, reject) => {
-                const video = new VideoCtor();
+                const made = newVideoElement();
+                if (made === null) {
+                  reject(new Error('no video surface'));
+                  return;
+                }
+                const video = made;
                 video.muted = true;
                 video.preload = 'auto';
                 const release = (): void => {

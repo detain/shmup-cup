@@ -329,6 +329,8 @@ function fakeWindow(
     decode?: 'resolve' | 'reject' | 'none';
     imageError?: boolean;
     video?: 'ok' | 'error';
+    /** The surface arrives through `document.createElement('video')` and no `Video` ctor. */
+    documentSurface?: boolean;
   } = {},
 ) {
   const created: string[] = [];
@@ -455,6 +457,13 @@ function fakeWindow(
     ...(options.video === undefined
       ? {}
       : { Video: FakeVideo as unknown as DecodeWindow['Video'] }),
+    ...(options.documentSurface === true
+      ? {
+          document: {
+            createElement: (): HTMLVideoElement => new FakeVideo() as unknown as HTMLVideoElement,
+          },
+        }
+      : {}),
   };
   return { win, created, revoked, closed, opened, videos, timers, blobTypes };
 }
@@ -717,9 +726,45 @@ describe('the video rows (plan v20x HARBENCH S8)', () => {
     expect(fake.videos[0].removed).toEqual(['src']); // released even on failure
   });
 
-  it('has no surface on a window without Video (the old fakes keep working)', () => {
+  it('folds to no surface on a host carrying neither shape (the honest fold, S8FIX)', () => {
     const host = hostOn(fakeWindow({ bitmap: true }).win);
     expect(host.openVideo).toBeNull();
+  });
+
+  it('opens the surface through the window document, the browser shape with no Video ctor (S8FIX)', async () => {
+    const fake = fakeWindow({ bitmap: true, video: 'ok', documentSurface: true });
+    const host = hostOn(fake.win);
+    expect(host.openVideo).not.toBeNull();
+    const rows = await measureVideoDecode(host, CLIPS, {
+      ...VIDEO_FACTS,
+      repetitions: 1,
+    });
+    expect(rows[0].id).toBe('video-attract');
+    expect(rows[0].encoding).toBe(VIDEO_DECODE_ENCODING);
+    expect(rows[0].error).toBeNull();
+    expect(rows[0].repetitions).toBe(1);
+    expect(rows[0].bytes).toBe(32);
+    expect(rows[0].fetchMs).toEqual([0, 0, 0, 0]); // the fake clock never advances
+    expect(fake.videos).toHaveLength(1);
+    expect(fake.videos[0].muted).toBe(true);
+    expect(fake.videos[0].preload).toBe('auto'); // the game surface's own attribute
+    expect(fake.videos[0].removed).toEqual(['src']);
+    expect(fake.videos[0].loaded).toBe(1);
+    expect(fake.closed).toHaveLength(1); // the pulled bitmap was closed
+  });
+
+  it('keeps the Video ctor first, so the fakes and old hosts are untouched (S8FIX)', async () => {
+    // Both shapes on one window: the ctor route wins (it is what every pre-S8FIX fake carried).
+    const fake = fakeWindow({ bitmap: true, video: 'ok', documentSurface: true });
+    const host = hostOn(fake.win);
+    const surface = host.openVideo;
+    if (surface === undefined || surface === null) {
+      throw new Error('expected a surface on a both-shapes window');
+    }
+    const page = await surface('assets/video/attract.mp4', 0);
+    expect(fake.videos).toHaveLength(1); // one element, not two
+    page.release();
+    expect(fake.videos[0].removed).toEqual(['src']);
   });
 });
 
