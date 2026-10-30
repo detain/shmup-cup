@@ -127,6 +127,25 @@ afterEach(() => {
 });
 
 describe('webos check-bundle (M3-03)', () => {
+  // The baked-off kill switches (v20x-CIFIX2): CI exports SHMUP_NO_VIDEO=1 workflow-wide to
+  // build the clip-less variant, and this suite's (M3-03) checks read the default process.env inside
+  // checkWebosBundle. Every test here starts from the baked-in state — the problems it asserts
+  // are its own fixture's, not the runner's setting — and the ambient value comes back after.
+  let savedNoVideo: string | undefined;
+  let savedNoStills: string | undefined;
+  beforeEach(() => {
+    savedNoVideo = process.env.SHMUP_NO_VIDEO;
+    savedNoStills = process.env.SHMUP_NO_STILLS;
+    delete process.env.SHMUP_NO_VIDEO;
+    delete process.env.SHMUP_NO_STILLS;
+  });
+  afterEach(() => {
+    if (savedNoVideo === undefined) delete process.env.SHMUP_NO_VIDEO;
+    else process.env.SHMUP_NO_VIDEO = savedNoVideo;
+    if (savedNoStills === undefined) delete process.env.SHMUP_NO_STILLS;
+    else process.env.SHMUP_NO_STILLS = savedNoStills;
+  });
+
   it('accepts a complete bundle', () => {
     goodBundle();
     const result = checkWebosBundle(dir);

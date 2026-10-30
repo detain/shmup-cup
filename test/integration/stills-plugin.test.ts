@@ -49,9 +49,10 @@ interface Emitted {
  * Runs the plugin's `buildStart` with a recording `emitFile`.
  *
  * @param sourceDir - The fixture directory.
+ * @param noStills - Bake `SHMUP_NO_STILLS=1` for this call (the still-less variant).
  * @returns The emitted files.
  */
-function emitBuild(sourceDir: string): Emitted[] {
+function emitBuild(sourceDir: string, noStills = false): Emitted[] {
   const plugin = shmupStills({ sourceDir });
   const emitted: Emitted[] = [];
   const context = {
@@ -62,7 +63,17 @@ function emitBuild(sourceDir: string): Emitted[] {
       });
     },
   };
-  (plugin.buildStart as (this: unknown) => void).call(context);
+  // The kill switch reads the environment (v20x-CIFIX2, the video plugin's law): the helper sets
+  // SHMUP_NO_STILLS exactly as the caller means and restores the ambient value afterwards.
+  const saved = process.env.SHMUP_NO_STILLS;
+  if (noStills) process.env.SHMUP_NO_STILLS = '1';
+  else delete process.env.SHMUP_NO_STILLS;
+  try {
+    (plugin.buildStart as (this: unknown) => void).call(context);
+  } finally {
+    if (saved === undefined) delete process.env.SHMUP_NO_STILLS;
+    else process.env.SHMUP_NO_STILLS = saved;
+  }
   return emitted;
 }
 
@@ -102,6 +113,10 @@ describe('shmupStills — build emit', () => {
 
   it('a directory that does not exist emits nothing (the still-less build)', () => {
     expect(emitBuild(join(tmp, 'absent'))).toEqual([]);
+  });
+
+  it('SHMUP_NO_STILLS=1 bakes the still-less build — the kit ships nothing (v20x-CIFIX2)', () => {
+    expect(emitBuild(stillsDir, true)).toEqual([]);
   });
 
   it('names every manifest file after its id', () => {

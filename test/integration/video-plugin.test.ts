@@ -49,9 +49,10 @@ interface Emitted {
  * Runs the plugin's `buildStart` with a recording `emitFile`.
  *
  * @param sourceDir - The fixture directory.
+ * @param noVideo - Bake `SHMUP_NO_VIDEO=1` for this call (the clip-less CI variant).
  * @returns The emitted files.
  */
-function emitBuild(sourceDir: string): Emitted[] {
+function emitBuild(sourceDir: string, noVideo = false): Emitted[] {
   const plugin = shmupVideos({ sourceDir });
   const emitted: Emitted[] = [];
   const context = {
@@ -62,7 +63,18 @@ function emitBuild(sourceDir: string): Emitted[] {
       });
     },
   };
-  (plugin.buildStart as (this: unknown) => void).call(context);
+  // The kill switch reads the environment (v20x-CIFIX2): CI exports SHMUP_NO_VIDEO to bake the
+  // clip-less variant, so `buildStart` runs with the variable set exactly as the caller means —
+  // never as the runner happens to have it — and whatever was there comes back afterwards.
+  const saved = process.env.SHMUP_NO_VIDEO;
+  if (noVideo) process.env.SHMUP_NO_VIDEO = '1';
+  else delete process.env.SHMUP_NO_VIDEO;
+  try {
+    (plugin.buildStart as (this: unknown) => void).call(context);
+  } finally {
+    if (saved === undefined) delete process.env.SHMUP_NO_VIDEO;
+    else process.env.SHMUP_NO_VIDEO = saved;
+  }
   return emitted;
 }
 
@@ -100,6 +112,10 @@ describe('shmupVideos — build emit', () => {
 
   it('a directory that does not exist emits nothing (the video-less build)', () => {
     expect(emitBuild(join(tmp, 'absent'))).toEqual([]);
+  });
+
+  it('SHMUP_NO_VIDEO=1 bakes the clip-less build — the kit ships nothing (v20x-CIFIX2)', () => {
+    expect(emitBuild(clipsDir, true)).toEqual([]);
   });
 
   it('names every manifest file after its id', () => {

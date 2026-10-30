@@ -698,6 +698,13 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
   let tvUrl = '';
   /** Every scenario's record, by id. */
   const records = new Map<string, RenderBenchRecord>();
+  /**
+   * Whether the programmatic bench build actually carries the clips (v20x-CIFIX2). CI exports
+   * `SHMUP_NO_VIDEO` to bake the clip-less variant every TV bundle check accepts; the video-knob
+   * scenarios and the shipped-bytes row check then have nothing to measure, and follow the e2e
+   * video spec's law: probe the served bytes, skip wherever they are absent, with disclosure.
+   */
+  let benchCarriesClips = false;
 
   beforeAll(async () => {
     // Exactly what `pnpm bench:tv` builds (the bench mode, its own config), into a cache folder.
@@ -718,6 +725,9 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
     const served = await serve(TV_BENCH_OUT_DIR);
     tvServer = served.server;
     tvUrl = served.url;
+    benchCarriesClips = existsSync(
+      join(TV_BENCH_OUT_DIR, BENCH_VIDEO_DIR, `${BENCH_VIDEO_CLIPS[0].id}.mp4`),
+    );
   }, 300_000);
 
   afterAll(async () => {
@@ -733,7 +743,13 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
   });
 
   for (const scenario of BENCH_SCENARIOS) {
-    it(`${scenario.id} — counted gates (draw calls, render targets, pages, heap)`, async () => {
+    it(`${scenario.id} — counted gates (draw calls, render targets, pages, heap)`, async (context) => {
+      if (scenario.knob?.video === true && !benchCarriesClips) {
+        console.info(
+          `[bench] tv ${scenario.id}: skipped — the clip-less bake (SHMUP_NO_VIDEO) ships no clips`,
+        );
+        context.skip();
+      }
       const outcome = await runTvScenario(tvUrl, scenario.id);
       expect(outcome.error).toBeNull();
       const record = outcome.record as RenderBenchRecord;
@@ -800,8 +816,15 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
     for (let i = 0; i < BENCH_VIDEO_CLIPS.length; i++) {
       const clip = BENCH_VIDEO_CLIPS[i];
       const page = videoPages[i];
-      const shippedBytes = statSync(join(TV_BENCH_OUT_DIR, BENCH_VIDEO_DIR, `${clip.id}.mp4`)).size;
-      expect(shippedBytes, clip.id).toBeGreaterThan(0);
+      // The shipped bytes are checked only when the build carries clips (v20x-CIFIX2: CI bakes
+      // the clip-less variant under SHMUP_NO_VIDEO); every row assertion below is spec-derived —
+      // the fold never fetches, so it holds with or without the files.
+      if (benchCarriesClips) {
+        const shippedBytes = statSync(
+          join(TV_BENCH_OUT_DIR, BENCH_VIDEO_DIR, `${clip.id}.mp4`),
+        ).size;
+        expect(shippedBytes, clip.id).toBeGreaterThan(0);
+      }
       expect(page.id, `row ${i}`).toBe(`video-${clip.id}`);
       expect(page.what).toBe(clip.what);
       expect(page.encoding).toBe(VIDEO_DECODE_ENCODING);
@@ -811,7 +834,15 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       expect(page.textureBytes).toBe(FRAME_W * FRAME_H * 4);
       // The missing-surface fold (`videoRow` over empty `VideoRuns`): nothing fetched, pulled or
       // uploaded — and `decodeMs`/`uploadMs`/`uploadSyncedMs` are null on every video row.
-      expect(page.error, page.id).toBe('video surface unavailable');
+      // The clip-less bake (v20x-CIFIX2): the rows exist and run, but the files do not, so the
+      // fold carries the failed byte fetch and the surface's load error instead (measured
+      // 2026-10-30 on the repo's Chromium — the same shape a CI run must produce).
+      expect(page.error, page.id).toBe(
+        benchCarriesClips
+          ? 'video surface unavailable'
+          : `bytes: could not load ${BENCH_VIDEO_DIR}/${clip.id}.mp4: status 404; ` +
+              'video: the clip did not load',
+      );
       expect(page.bytes).toBe(0);
       expect(page.repetitions).toBe(0);
       expect(page.fetchMs).toBeNull();

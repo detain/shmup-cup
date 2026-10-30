@@ -136,29 +136,47 @@ describe('integration: shmupBuildInfo() Vite plugin', () => {
   it('defines __SHMUP_DEV__, __SHMUP_BUILD__, __SHMUP_REPORT_URL__, __SHMUP_NO_VIDEO__ and __SHMUP_NO_STILLS__ as JSON literals', () => {
     process.env[ENV] = 'abc1234';
     delete process.env['VITE_REPORT_URL'];
-    expect(shmupBuildInfo().name).toBe('shmup:build-info');
-    expect(configFor({ command: 'build', mode: 'production' }).define).toEqual({
-      __SHMUP_DEV__: 'false',
-      __SHMUP_BUILD__: '"abc1234"',
-      __SHMUP_REPORT_URL__: '""',
-      // The cutscene kill switch bakes from the build environment (v2 R7-VID): `false` when
-      // `SHMUP_NO_VIDEO` is unset, `true` when it says `1`.
-      __SHMUP_NO_VIDEO__: 'false',
-      // The stills kill switch bakes the same way (plan v20x A4).
-      __SHMUP_NO_STILLS__: 'false',
-    });
-    process.env.SHMUP_NO_VIDEO = '1';
-    expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_NO_VIDEO__).toBe(
-      'true',
-    );
+    // The media kill switches read the ambient environment (CI runs the clip-less variant and
+    // exports SHMUP_NO_VIDEO); this test owns both variables — it starts from the unset state
+    // and restores whatever it found, so the defaults it asserts are its own, not the runner's.
+    const savedNoVideo = process.env.SHMUP_NO_VIDEO;
+    const savedNoStills = process.env.SHMUP_NO_STILLS;
     delete process.env.SHMUP_NO_VIDEO;
-    process.env.SHMUP_NO_STILLS = '1';
-    expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_NO_STILLS__).toBe(
-      'true',
-    );
     delete process.env.SHMUP_NO_STILLS;
-    expect(configFor({ command: 'build', mode: 'test' }).define?.__SHMUP_DEV__).toBe('true');
-    expect(configFor({ command: 'serve', mode: 'development' }).define?.__SHMUP_DEV__).toBe('true');
+    try {
+      expect(shmupBuildInfo().name).toBe('shmup:build-info');
+      expect(configFor({ command: 'build', mode: 'production' }).define).toEqual({
+        __SHMUP_DEV__: 'false',
+        __SHMUP_BUILD__: '"abc1234"',
+        __SHMUP_REPORT_URL__: '""',
+        // The cutscene kill switch bakes from the build environment (v2 R7-VID): `false` when
+        // `SHMUP_NO_VIDEO` is unset, `true` when it says `1`.
+        __SHMUP_NO_VIDEO__: 'false',
+        // The stills kill switch bakes the same way (plan v20x A4).
+        __SHMUP_NO_STILLS__: 'false',
+      });
+      process.env.SHMUP_NO_VIDEO = '1';
+      expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_NO_VIDEO__).toBe(
+        'true',
+      );
+      delete process.env.SHMUP_NO_VIDEO;
+      process.env.SHMUP_NO_STILLS = '1';
+      expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_NO_STILLS__).toBe(
+        'true',
+      );
+      expect(configFor({ command: 'build', mode: 'test' }).define?.__SHMUP_DEV__).toBe('true');
+      expect(configFor({ command: 'serve', mode: 'development' }).define?.__SHMUP_DEV__).toBe(
+        'true',
+      );
+    } finally {
+      for (const [name, value] of [
+        ['SHMUP_NO_VIDEO', savedNoVideo],
+        ['SHMUP_NO_STILLS', savedNoStills],
+      ] as const) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
   });
 
   it('bakes VITE_REPORT_URL into a dev build only (plan M3-02f)', () => {

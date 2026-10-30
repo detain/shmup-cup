@@ -383,6 +383,25 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
 });
 
 describe('tizen/scripts/check-bundle rule 11 — the era media ships (v20x-VIDIO1)', () => {
+  // The baked-off kill switches (v20x-CIFIX2): CI exports SHMUP_NO_VIDEO=1 workflow-wide to
+  // build the clip-less variant, and this suite's checks read the default process.env inside
+  // checkTizenBundle. Every test here starts from the baked-in state — the problems it asserts
+  // are its own fixture's, not the runner's setting — and the ambient value comes back after.
+  let savedNoVideo: string | undefined;
+  let savedNoStills: string | undefined;
+  beforeEach(() => {
+    savedNoVideo = process.env.SHMUP_NO_VIDEO;
+    savedNoStills = process.env.SHMUP_NO_STILLS;
+    delete process.env.SHMUP_NO_VIDEO;
+    delete process.env.SHMUP_NO_STILLS;
+  });
+  afterEach(() => {
+    if (savedNoVideo === undefined) delete process.env.SHMUP_NO_VIDEO;
+    else process.env.SHMUP_NO_VIDEO = savedNoVideo;
+    if (savedNoStills === undefined) delete process.env.SHMUP_NO_STILLS;
+    else process.env.SHMUP_NO_STILLS = savedNoStills;
+  });
+
   it('pins the counted rows to the shell media manifests', () => {
     expect(MEDIA_VIDEO_CLIP_COUNT).toBe(VIDEO_CLIPS.length);
     expect(MEDIA_STILL_COUNT).toBe(STILL_SURFACES.length);
