@@ -554,8 +554,8 @@ function syntheticSession(name: string, o: SyntheticOptions): string {
  * @param {boolean} withFacts - Whether the cull row's record carries the walk's figures.
  * @returns {string} the written file.
  */
-function cullSession(name, withFacts) {
-  const rec = (scenario, index, variant, over = {}) => ({
+function cullSession(name: string, withFacts: boolean): string {
+  const rec = (scenario: string, index: number, variant: string, over: Record<string, unknown> = {}) => ({
     scenario,
     index,
     size: '640x360',
@@ -952,7 +952,7 @@ describe('the pool key: game code and atlas encoding (plans v20x BENCSKIP + R-SV
     // The arms' rows never average together, and each group's session set says which is which.
     expect(mixed.sessions).toHaveLength(3);
     expect(mixed.outputs).toHaveLength(2);
-    const pools = mixed.outputs.map((o) => o.sessions.map((r) => r.id).sort().join('+')).sort();
+    const pools = mixed.outputs.map((o: { sessions: { id: string }[] }) => o.sessions.map((r) => r.id).sort().join('+')).sort();
     expect(pools).toEqual(['pool-png+pool-png-2', 'pool-svg']);
     const svgOnly = loadCampaign([svg]);
     expect(svgOnly.outputs).toHaveLength(1);
