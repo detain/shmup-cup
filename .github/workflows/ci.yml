@@ -109,14 +109,20 @@ jobs:
         run: pnpm test --shard=${{ matrix.shard }}/3
 
   build:
-    name: build · benchmark
+    name: build · benchmark · sim
     runs-on: ubuntu-latest
     # The render bench (plan M3-02c) adds ~5 minutes of Chromium time to the simulation benches.
     # Raised 25 → 35 on 2026-10-27: the GitHub runner wall-cut the job at exactly its timeout
     # (run 40477157216) while the same suite completed green in 23m04s on the host, install and
     # build sharing the window (w15-D6; zero budget violations). Wall-clock headroom on CI runners
     # — not a bench budget change; the budgets live in test/bench/render-harness/bench-gates.ts.
-    timeout-minutes: 35
+    # Split 2026-10-30 (v20x-CIFIX2, run 41115524004): once the clip-less bake let the builds
+    # pass again (un-freezing `pnpm bench` for the first time since R0-03), the single 35-minute
+    # window died mid-render-perf with ZERO failed tests — the TV matrix (25 sizes × 6 variants
+    # plus the knob rows) is ~28 SwiftShader minutes on its own after install + build + the sim
+    # benches. The render bench moves to its own job (below); this one keeps build and the
+    # simulation benches, and the two run in parallel.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
 
@@ -133,19 +139,48 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # The render bench (plan M3-02c) drives the built harness in Playwright's Chromium with
-      # SwiftShader, so this job needs the browser and its system libraries just as the e2e jobs
-      # do — `pnpm install` alone downloads no browser.
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
       # Plan M1-19: 20,000 stress ticks (512 bullets, 64 enemies, full loadout, lasers) — fails
       # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up. Plan
       # M2-18 adds every zone under stress (the zone itself, full loadout, 512 bullets: median
-      # < 1.0 ms/tick, < 1 MB retained) and a 30-minute soak through the scene flow (a flat heap).
-      # It has this runner to itself, so the timing is not disturbed by other checks.
+      # < 1.0 ms/tick, < 1 MB retained) and a soak through the scene flow (a flat heap — 30
+      # simulated minutes at 60 ticks a second, not wall time). The R2-era adds the rewind
+      # bench; the campaign balance harness runs only with SHMUP_BALANCE=1 (the owner's). The
+      # render bench is the sibling job — its Chromium is not needed here. It has this runner
+      # to itself, so the timing is not disturbed by other checks.
       - name: Benchmark
-        run: pnpm bench
+        run: pnpm bench stress zones soak rewind balance
+
+  benchrender:
+    name: benchmark · render
+    runs-on: ubuntu-latest
+    # The render bench (plan M3-02c) plus the TV render bench scenes (plan R0-02, grown by the
+    # R0-03 resolution sweep, the v2 R7-VID video knob rows and the R-SVG cull pair). The bench
+    # builds its harness and the bench widget programmatically (vite inside vitest — no
+    # `pnpm build`), and drives both in Playwright's Chromium with SwiftShader, so this job
+    # installs the browser exactly as the e2e jobs do. Sized from the 2026-10-30 host run:
+    # render.perf full = 22.6 minutes clip-less on a quiet machine; the CI matrix runs ~15%
+    # slower, and install shares the window (the job cut at 35 by run 41115524004 was still
+    # streaming the 480x320 rows with ~60 scenarios left).
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Benchmark
+        run: pnpm bench render.perf
+
 
   e2e:
     # Browser smoke tests (plan §1.4): builds the web and Tizen apps (`build:test` — dev / test
