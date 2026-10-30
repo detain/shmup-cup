@@ -202,6 +202,9 @@ The Oct-29 folder closed the done quirk **for the batched shape**: one payload, 
   `code:356cdf76a8`** for the PNG arm, and an **`F`-repeat on `code:356cdf76a8|svg=e3`** for the SVG
   arm — is **outstanding** for both. The skip ledger now offers exactly that choice per pool (WO-2's
   per-pool keys), Enter-new-rows vs GREEN-from-scratch, arms unable to inherit each other's marks.
+  (Offer text since `c0d21407`, noted 2026-10-30: **ENTER new rows only · PLAY/PAUSE or GREEN/2 full
+  suite · CH-/RED/1 re-run the last scenario** — `apps/tizen/src/bench/results.ts` 575/581/588; the
+  keys this bullet names predate that landing and its prose stands as written.)
 - **No GL 2 pair** — the GL 1-vs-2 section is empty by absence.
 - **The video surface is unmeasured for the third session running** — all four clip rows: "video
   surface unavailable" (Oct-28, Oct-29, tonight), the v2.0.x surface-decode follow-up's problem, not
