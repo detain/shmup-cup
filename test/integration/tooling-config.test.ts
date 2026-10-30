@@ -318,10 +318,11 @@ describe('tooling: test concurrency', () => {
 describe('tooling: the release version (M2-18, R0-01)', () => {
   /**
    * v2 is released on `master` at the version below (plan_resolution.md §3.2, steps R0-01 and
-   * R6-03; 2.1.0 is the v2.0.x-era release, landed by the RELPREP march of 2026-10-28).
+   * R6-03; 2.1.1 is the v2.0.x era's close-out patch, bumping the 2.1.0 line the RELPREP march
+   * of 2026-10-28 landed).
    * v1 is released as 1.0.0 and maintained on the `v1.x` branch.
    */
-  const RELEASE = '2.1.0';
+  const RELEASE = '2.1.1';
 
   it('gives the root and every workspace project the same release version', () => {
     expect(root.version).toBe(RELEASE);
@@ -335,12 +336,12 @@ describe('tooling: the release version (M2-18, R0-01)', () => {
   });
 
   it('has a CHANGELOG section for it, above the released v1', () => {
-    // The 2.1.0 release section is the first (its content rode R6-03.D1's shape, the v2.0.x
-    // era's own entry); its date rides the owner's OK, so it is matched as a pattern —
-    // R6-03.D7.DOCS amends it in CHANGELOG.md alone (R0-01).
+    // The 2.1.1 release section is the first (its content composes the era since the 2.1.0 tag,
+    // the checkpoint fix the era's only shipped-code change); its date rides the owner's OK, so
+    // it is matched as a pattern — the heading amends in CHANGELOG.md alone (R0-01).
     const changelog = read('CHANGELOG.md');
-    const heading = /^## \[2\.1\.0\] — \d{4}-\d{2}-\d{2}$/m.exec(changelog);
-    expect(heading, 'the [2.1.0] section heading with its date').not.toBeNull();
+    const heading = /^## \[2\.1\.1\] — \d{4}-\d{2}-\d{2}$/m.exec(changelog);
+    expect(heading, 'the [2.1.1] section heading with its date').not.toBeNull();
     const released = '## [1.0.0] — 2026-10-16';
     expect(changelog.indexOf(heading?.[0] ?? '')).toBe(changelog.indexOf('\n## ') + 1);
     expect(changelog.indexOf(released)).toBeGreaterThan(changelog.indexOf(heading?.[0] ?? ''));

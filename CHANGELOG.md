@@ -6,6 +6,153 @@ versions before 1.0 may change anything between minor releases. v1 was developed
 [`shmup_progress.md`](docs/old/shmup_progress.md); v2 follows
 [`plan_resolution.md`](plan_resolution.md), whose §17 tracks its progress.
 
+## [2.1.1] — 2026-10-30
+
+**Shmup Cup 2.1.1** — the v2.0.x era's close-out patch on the tagged 2.1.0. The game itself gains
+exactly one change: the resume record's continue-lifecycle cure, so a finished run no longer
+re-offers CONTINUE after a reload. Everything else sits around the game: the cutscene video's
+default-ON enablement as it really shipped after the release cut (the [2.1.0] text above was
+amended in place — this is the build that carries it), the CI bake that keeps ffmpeg-less runners
+green, and two measurement programs — the TV render bench grew the game-code-hash skip ledger, the
+SVG arm's A/B rows, the cull pair and the keys a real remote can press, and the SVG research
+program closed with §13's verdicts and the program's first noise floor. The game's simulation
+moved nowhere beyond the checkpoint fix: the goldens are byte-for-byte unmoved.
+
+### A finished run spends its checkpoint record (v20x-CONT)
+
+- **The record dies at the run's own edges** (`d6e49876`): a reload *at* the name entry had left
+  the run's checkpoint in storage, and the reloaded title offered CONTINUE? against a dead run —
+  an arcade-UX lie, the score already standing in a table. The record now dies at the two
+  transitions that mark a run completed (the score submission and the name-entry branch), and the
+  recorder stops before a later suspend flush could re-write the key; no save-format change, and
+  the checkpoint lives outside the World — `hashWorld`, the goldens and all three fingerprints
+  read none of it and stayed byte-for-byte. The frame-layout spec drops its checkpoint-removal
+  workaround and audits the flow's own behaviour now; seed tests pin both edges red before the
+  fix. This is the era's only change inside the shipped game code.
+
+### Video ships default ON, and CI stops fighting it
+
+- **The enablement landed after the release cut** (`7920f544`, docs and pins `4dae64b9`,
+  client rows `baeb0056`): the owner's M7 190-row adjudication (the video path winning p95 at
+  every size) ruled the flip — `VIDEO_DEFAULT_ON = true`, and OPTIONS → DISPLAY → **VIDEO**
+  writes the stored `shmup.video` choice (applies at restart; the kill chain host option →
+  `SHMUP_NO_VIDEO` → `?novid=1` → stored choice unchanged, `UserOptionKind.Video` appended on the
+  tolerant parser, no format bump). The DISPLAY row moves what the walks draw, so the
+  presentation and content-DB fingerprints re-pinned with it (14 segments, the UI-string row);
+  the goldens and the shell's own fingerprint stayed byte-for-byte.
+- **Check-bundle rule 11 demands the era's media** (`7920f544`): the fifteen clips and five
+  stills are presence-counted in every TV bundle — ledger rows and counts, never per-file digests
+  (the encoder is not byte-deterministic across ffmpeg builds) — closing the silent video-less
+  bundle on a box without ffmpeg; the `SHMUP_NO_VIDEO` / `SHMUP_NO_STILLS` bake-offs skip their
+  half and disclose it on the OK line.
+- **CI bakes the clip-less variant** (`7d27fa9b`): the GitHub runners carry no ffmpeg, so the
+  workflow sets `SHMUP_NO_VIDEO=1` — rule 11 skips its video half and every TV job is green again;
+  the stills (a pure-Node encoder) keep shipping and passing, `SHMUP_NO_STILLS` staying unset on
+  purpose. No ffmpeg apt-install, on evidence: H.264 outputs are not byte-deterministic across
+  builds — they would fight the committed `VIDEO_CLIPS` pins — and ~9 jobs would each re-encode
+  the 6.5 MB set.
+- **The stills probe reads served bytes; the game build hashes its media** (`f282d99a`):
+  `stills.spec`'s capability skip had the same flaw the video spec's cure fixed (the SPA fallback
+  answers a missing file with a 200 of index.html — the probe now asks the served bytes for their
+  PNG signature, both directions proven), and the spec opens its pages `?novid=1` since the
+  default-ON surface dims the compared rows by a uniform +27. The same commit gives the game's
+  `build` / `build:test` / `build:dev` tasks the encoded-media inputs the bench tasks already
+  carried: the bundles embed the media, yet an encoder edit had moved no game-build cache key.
+
+### The TV render bench grows up
+
+- **A per-game-code skip ledger** (`a95139f3`, cache law `baeb0056`): both bench builds bake a
+  `gameCodeHash` (the five packages' `src`, the content, the v1 art sources and the atlas
+  pipeline — `scripts/game-code-hash.mjs`), and a results page with same-code rows offers
+  **ENTER the un-measured rows only** or **GREEN a full fresh sample** — same-code sessions stack
+  samples, never supersede. A rebuild that cannot move a pixel inherits its timings; any hashed
+  byte that can forces the suite. The game-code-hash file itself joined both bench turbo inputs
+  when a cold rebuild reproduced a stale baked hash (`tv-engine-floor` law, red first, honest).
+- **The E3 SVG arm and its beside-rows** (`6ca6a8a6`, `3e6f26de`, frame-literals allow-list
+  follow-through `b2d859f4`): `VITE_BENCH_SVG=e3` emits every density page as an SVG 1.1
+  compound-path text the Chromium-69 parser knows, fetched beside the PNG pages (inlining was
+  never possible: app.js sat at 487.7 KiB of the 512 KiB gzip budget, a page is 0.8–7.9 MB of
+  text); five extra decode rows measure what the four PNG stages cannot (the bitmap route's
+  refusal, the `<img>`-uploaded root), the stand-in page loads as one more page, and the run is
+  198 shared indices on both arms so a Red re-measures a same-arm row. The same land grew the
+  **cull pair** — four rows pricing scene-graph culling on the device with a bench-side Culler
+  walk — and one ledger per arm (`code:<hash>` vs `code:<hash>|svg=e3` pools), the bundle check
+  taking `.svg` under a 12 MiB raw budget with a one-encoding-per-build rule. The bench sits
+  outside the hashed trees: both arms bake the same game code.
+- **Keys a real remote can press** (`b2e70185`, `c0d21407`): the digits 1/2 alias Red/Green
+  (registered — on Tizen only arrows, OK and Back arrive unregistered), then the owner's measured
+  easy set: Play/Pause (10252) or Guide (458) start the full suite, Channel− (428) re-runs the
+  last scenario, nine keys registered, and the offer text leads with the easy keys — `ENTER new
+  rows only · PLAY/PAUSE or GREEN/2 full suite · CH−/RED/1 re-run`. The volume trio arrives on
+  the set and stays deliberately unbound: a volume press must only change the volume.
+- **The video-decode rows finally get their surface** (`30abec24`): the bench had probed a
+  `Video` constructor that exists on no Chromium (the interface is `HTMLVideoElement`), so the
+  device folded every video row to `video surface unavailable` — the S8 cure builds through the
+  game's own `document.createElement('video')` route (what `createVideoSurface` proved on the
+  M7) and the rows carry their first real hardware decode numbers; the honest fold stays where
+  neither route exists.
+- **The four deferred hb- pages get bodies** (`37a821d0`): `?page=boot` and `?page=soak` reload
+  the x1 atlas through the shipped route and cycle the stand-in pages against `performance.memory`
+  (the bench build now ships the x1 manifest, the boot page reading the game's own bytes),
+  `?page=input` watches the fourteen remote keys with auto-repeat episode splitting, and
+  `?page=probe` censuses WebGL extensions with a compressed-upload smoke — each emitting only the
+  record classes the shell's wire already validates, degrading with honest error strings (the S8
+  lesson kept).
+
+### The SVG program: §13's verdicts and the first noise floor
+
+- **The TV renders all of SVG the program asked about** (`81ba8cbd` the 19-feature probe matrix,
+  `d4f93512` the §13 record): 16 of 16 static features PASS on Chromium 69 decided by pixel
+  predicates (`blur-s8` 103.5 ms total, `turb-oct4` 214.4, a 50,430-byte E3-style page 96.4 — and
+  the E3 chunk rasterises byte-exact), with three desktop-era claims overturned on the device:
+  SMIL animates inside `<img>`, CSS keyframes animate, `createImageBitmap` **accepts** a decoded
+  SVG image (a blob of SVG bytes is still refused — the question narrowed, not settled). The
+  verdict split as §13.4 states: **capability YES** — a future DOM-side vector UI on the TV needs
+  no further measurement; **atlas migration NOT-WORTH-it, two device samples deep** — the bill is
+  parse on arrival: density pages decode at 232–314 ms and the stand-in page costs 2,658/2,819 ms
+  (p50/p95) file → GPU against its PNG-8 twin's 224/366, busting R3-04's whole 2 s load budget by
+  itself. Nothing ships; the atlas stays PNG-8.
+- **The pool's first repeat sets the noise floor** (`bb585893`, the second svg-arm sample
+  `14309b36`, the README cure `a2da8ae2`): the Oct-31 drop — a same-code full PNG re-run (190
+  pairs) gives the program its grading ruler: two-tick median spread 3.2 pts, p90 11.6, drift 1.8,
+  p95 relative 8 %/31 % — **two-tick stable, p95 noisy** from here. Re-graded under the floor:
+  the video knob's blanket class label dies into per-row verdicts (two real wins, one
+  beyond-floor adverse p95, five no-calls), and **culling closes with device-grade receipts** —
+  busy@640 +13.4 pts beyond-floor adverse, the 960 p95 rows 1.31×/1.60× beyond adverse, the two
+  apparent wins within noise — no case for wiring scene-graph culling into the game.
+- **The owner's sessions stand as committed records** (`70dd2049`, `404a1cd7`, `bb585893`; raw
+  captures `f2300ef1`, `65e6a493`, `1bb85330`, `aa98ca46`, `b7a68a6d`): the Oct-29/30/31 folders
+  under `tools/input-probe/results/` — session jsonls, READMEs and the analyzer's tables, the
+  tables regenerating byte-identical as the gate.
+
+### Probe, gates and the stale words
+
+- **The input probe records WebGL extensions** (`d189547f`): `getSupportedExtensions()` rides the
+  env record under its own guard (a denied query costs neither the other facts nor the context
+  release), the analyzer prints the lists with a compressed-texture summary, and older captures
+  say `not captured` instead of lying with an empty set — additive wire, old sessions validate.
+- **Two regression gates from the optimize review, as machine checks** (`3b9ee512`): the
+  `data-shmup-*` writes pinned to the twelve allow-listed instrumentation surfaces, and the
+  DEP-GREP law plus the polyfill pairing pinned over the resolved dependency graph — no build
+  needed. `PlatformDisplay` carries the viewport-metrics law line.
+- **Stale words and one CI red cured** (`9a73b649`, `b6b442fe`, `71ce2fc8`): the v1-era
+  render-pixi docblocks moved onto the 640×360 frame truth; the analyzer's cull-session helpers
+  got the JSDoc types that end `3e6f26de`'s TS7006 CI red; and the v20x plan record refused to
+  fabricate a missing file (the P0-N cites live in `tizen_optimize.md` §9 — no plan artifact ever
+  existed on disk), carrying the two staleness cures it did find.
+
+### Notes
+
+- The era's **only** change inside the shipped game code is the checkpoint fix (`d6e49876`) —
+  and it lives outside the World, so the goldens, the sim hashes and the shell's frame
+  fingerprint are byte-for-byte unmoved; the era's only fingerprint moves are the video DISPLAY
+  row's two presentation pins (`4dae64b9`), an intended presentation change, disclosed in its own
+  commit.
+- The version bump moves no derived bytes: the eleven manifests, the two TV manifests, the store
+  listing's version stamp and the gates' release pins read `2.1.1`; the lockfile is
+  byte-unchanged; and the `gameCodeHash` measured `a87b2638b3` **before and after** this commit
+  on the landed tree (manifests are not hash material).
+
 ## [2.1.0] — 2026-10-28
 
 **Shmup Cup 2.1.0** — the v2.0.x era on top of the remaster: the TV boot and playability pass
