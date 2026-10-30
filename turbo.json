@@ -16,7 +16,7 @@
     "vite.shared.ts",
     "vitest.shared.ts"
   ],
-  "globalEnv": ["NODE_ENV"],
+  "globalEnv": ["NODE_ENV", "SHMUP_NO_VIDEO", "SHMUP_NO_STILLS"],
   "tasks": {
     "transit": {
       "dependsOn": ["^transit"]

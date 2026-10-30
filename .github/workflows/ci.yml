@@ -25,9 +25,12 @@ env:
   # TV bundle checks pass on CI: `packages/*/build`, `build:test` and the bench build all reach
   # check-bundle rule 11, whose video half skips under this env with a disclosure on the OK line
   # (`[video baked off by env — rule 11]`). The e2e video spec skips on its own byte probe of the
-  # served build (v20x F-F), so every media consumer degrades honestly. The 5 ending stills are
-  # pure Node (`scripts/v20x/stills-encode.mjs`, no ffmpeg) and DO ship and pass rule 11 on CI —
-  # this env says nothing about them, and `SHMUP_NO_STILLS` stays unset on purpose.
+  # served build (v20x F-F), so every media consumer degrades honestly. The variable reaches the
+  # `turbo run` children only because `turbo.json` declares it in `globalEnv` — turbo's strict
+  # environment mode strips every undeclared one (v20x-CIFIX2, run `41101474030`: the builds
+  # received nothing and rule 11's video half stayed red through this very env). The 5 ending
+  # stills are pure Node (`scripts/v20x/stills-encode.mjs`, no ffmpeg) and DO ship and pass rule
+  # 11 on CI — this env says nothing about them, and `SHMUP_NO_STILLS` stays unset on purpose.
   # An apt-installed ffmpeg is deliberately NOT added: the H.264 outputs are not byte-deterministic
   # across ffmpeg builds (rule 11's own docblock), so a CI-encoded ledger would fight the committed
   # VIDEO_CLIPS byte pins in packages/shell/test/cutscene/clips-consistency.test.ts, and every one
