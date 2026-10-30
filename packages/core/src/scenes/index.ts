@@ -2158,7 +2158,9 @@ interface FlowControl {
   nextAttract(from: Scene): void;
   /**
    * A game ended on its last screen (game over, stage clear, credits): the name entry when a score
-   * of it entered a table, else the title (M2-15).
+   * of it entered a table, else the title (M2-15). Reaching the name entry spends the run's
+   * checkpoint record (v20x-CONT — {@link endRun}): a game over that kept it through its own
+   * screens loses it at the naming ceremony, so a reload there offers no CONTINUE?.
    */
   finishGame(): void;
   /** The name entry is done: the game's table with its new rows (M2-15). */
@@ -2347,6 +2349,9 @@ interface FlowControl {
    * run's own — M2-15) —, notes the rows that entered for the name entry, counts the statistic (not
    * for practice) and writes the save when it changed.
    *
+   * A cleared run also spends its checkpoint record at this edge (v20x-CONT — {@link endRun});
+   * a game over keeps it (the continue rule resumes under it, R2 TL-2).
+   *
    * @param cleared - `true` for a stage clear (a run's final zone), `false` for a game over.
    * @returns Player 1's rank in the table (0 = best), or -1 when the score did not enter.
    */
@@ -2434,7 +2439,14 @@ interface FlowControl {
   noteAssists(world: World): void;
   /** The game's speed in percent now (M3-01 — the save's assist while the game scene is on top). */
   readonly speedPercent: number;
-  /** A run ended (the title came back): its replay is finished and stored (M3-01). A transition. */
+  /**
+   * A run ended: its replay is finished and stored (M3-01) and its checkpoint record is spent
+   * (R2 — the title offers no CONTINUE? without it). Reached when the title comes back, and since
+   * v20x-CONT also at the run-complete transitions — the score submission of a cleared run and the
+   * name entry after a game over (see {@link recordRun} and {@link finishGame}) — so a reload of a
+   * finished run never re-offers a resume. Idempotent: no second call ends a finished recording.
+   * A transition.
+   */
   endRun(): void;
   /** The ARCADE mode's final zone was cleared: the next loop starts at the first zone (M3-01). */
   nextLoop(): void;
@@ -11348,6 +11360,14 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       }
       if (!run.practice) save.count(cleared ? 'stagesCleared' : 'gameOvers');
       void save.flush();
+      // v20x-CONT: a CLEARED run has its outcome in the table at this edge — the resume-point's
+      // contract ("a run that stopped mid-flight", R2) is spent with it. `endRun` ends the
+      // recording (which also stops a later suspend flush from rewriting the key — the flush
+      // needs a live recording) and clears the record, so a reload through the ending, the
+      // credits or the name entry can never offer CONTINUE? against a finished campaign. A game
+      // over (`cleared` false) keeps its record: the continue rule is exactly what TL-2 resumes
+      // under, and the name entry is where that path spends it (see `finishGame`).
+      if (cleared) control.endRun();
       return rank;
     },
     demos,
@@ -11371,8 +11391,15 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       }
     },
     finishGame(): void {
-      if (control.pendingCount > 0) stack.reset(control.nameEntry);
-      else control.toTitle();
+      if (control.pendingCount > 0) {
+        // v20x-CONT: rows of the just-ended run wait to be named — from this transition the run
+        // can never legitimately resume, so its checkpoint record is spent before the screen
+        // opens (a game over keeps it through its own screens — R2 TL-2 — and loses it here,
+        // where its score already stands in a table). `endRun` is idempotent: a cleared run
+        // spent it at the tally (see `recordRun`), and a no-op ends no recording twice.
+        control.endRun();
+        stack.reset(control.nameEntry);
+      } else control.toTitle();
     },
     showResults(): void {
       control.hiScores.showResult(control.resultKey);

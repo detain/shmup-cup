@@ -4,7 +4,9 @@
  * the World's birth writes the record, a passed checkpoint rewrites it with the new position and
  * the live tail, a suspend flushes the current tick, and the title (a quit from the pause menu)
  * clears the key. The record must read back through the store's own classifier, with the config,
- * the run map and the carry in place.
+ * the run map and the carry in place. The v20x-CONT law closes the lifecycle: a run that
+ * COMPLETED — its score submitted at the final tally, or a game over reaching the name entry —
+ * spent its record at that edge, so a reload there never re-offers the title's CONTINUE? row.
  */
 import { describe, expect, it } from 'vitest';
 import type { ContentDb } from '../../src/data/index.js';
@@ -19,7 +21,13 @@ import {
   type RunCheckpointRecord,
 } from '../../src/replay/checkpoint.js';
 import { createSaveStore, type SaveStore } from '../../src/save/index.js';
-import { PauseItem, type SceneFlow } from '../../src/scenes/index.js';
+import {
+  CONTINUE_LOCK_TICKS,
+  GAME_OVER_DELAY_TICKS,
+  GAME_OVER_TIMEOUT_TICKS,
+  PauseItem,
+  type SceneFlow,
+} from '../../src/scenes/index.js';
 import { campaignContent as content } from '../helpers/campaign.js';
 
 /** A headless campaign session with the checkpoint store wired (the shell's boot pattern). */
@@ -71,15 +79,41 @@ class Session {
     this.hold(0);
   }
 
+  /** The top scene's id. */
+  get top(): string | undefined {
+    return this.flow.stack.top?.id;
+  }
+
+  /**
+   * Runs until a scene is on top (or a limit).
+   *
+   * @param id - Scene id.
+   * @param limit - Tick limit.
+   */
+  until(id: string, limit = 3000): void {
+    for (let i = 0; i < limit && this.top !== id; i++) this.hold(0);
+    expect(this.top).toBe(id);
+  }
+
   /**
    * The stored checkpoint text (the memory storage settles in microtasks).
    *
    * @returns The text (`null`/`''`: nothing written).
    */
   async text(): Promise<string | null> {
-    // The store chains its writes; drain enough microtasks for the chain to settle.
-    for (let i = 0; i < 10; i++) await Promise.resolve();
+    await this.settle();
     return this.platform.storage.get(RUN_CHECKPOINT_STORAGE_KEY);
+  }
+
+  /**
+   * Quiets the store's write chain: a text that classifies invalid is NOT written, and
+   * {@link RunCheckpointStore.store} then returns the pending chain itself — awaiting it settles
+   * every queued link (each costs a few microtask hops; a walk with several flushes and a final
+   * clear outruns a bare drain).
+   */
+  async settle(): Promise<void> {
+    await this.checkpoint.store('not-a-record');
+    for (let i = 0; i < 10; i++) await Promise.resolve();
   }
 
   /**
@@ -360,5 +394,72 @@ describe('title CONTINUE? and the checkpoint resume (R2 TL-2)', () => {
     const world = flow.world;
     expect(world.tick).toBeLessThan(3); // a fresh World flies in
     expect(world.continuesUsed).toBe(1); // and it still spends the continue rule
+  });
+});
+
+/**
+ * v20x-CONT: the completed run spends its record at the run-end transition itself, not only at a
+ * same-session return to the title. `GameScene.enter` flushes the birth record and `endRun` clears
+ * it, and neither of them runs again when the player leaves the app AT the name entry of a
+ * finished run — the reload booted a title that still offered CONTINUE? against a dead run (an
+ * arcade-UX lie: the score is already in the table). The law: a cleared run's record dies at the
+ * score submission (the final tally); a game over keeps it through the game-over screen (its
+ * continue rule is still the record's own story) and loses it at the name entry.
+ */
+describe('the finished run spends its record before a reload (v20x-CONT)', () => {
+  it('a campaign cleared to the name entry offers no CONTINUE? after a reload', async () => {
+    const s = new Session();
+    s.hold(0, 40); // mid the start zone: the birth record is in hand
+    expect(s.flow.checkpointAvailable).toBe(true);
+    s.until('stageClear');
+    s.press(Action.Confirm); // the tally → the zone map
+    expect(s.top).toBe('map');
+    s.hold(0, 3);
+    s.press(Action.Confirm); // the upper exit — a final zone
+    s.until('game');
+    s.until('stageClear'); // the final tally ENTERS: recordRun(true) submits the score HERE
+    // The run cannot legitimately resume from this edge on: the record is gone with the outcome.
+    expect(s.flow.checkpointAvailable).toBe(false);
+    expect(await s.text()).toBe('');
+    s.press(Action.Confirm); // → the ending
+    expect(s.top).toBe('ending');
+    // The ending and the credits play out to the name entry (OK past the locks walks the cards).
+    for (let i = 0; i < 500 && s.top !== 'nameEntry'; i++) {
+      s.hold(0, 30);
+      s.press(Action.Confirm);
+    }
+    expect(s.top).toBe('nameEntry');
+    expect(await s.text()).toBe(''); // no flush rewrote it through the cinematic
+    // The reload (the defect's exact shape): the title of the second boot offers no row.
+    const { game, flow } = await resume(s.platform);
+    expect(flow.checkpointAvailable).toBe(false);
+    press2(game, s.platform, Action.Confirm); // PRESS OK → the menu
+    expect(flow.title.menu.items.map((i) => i.label)[0]).toBe('1 PLAYER');
+  });
+
+  it('a game over keeps the record on its screen and spends it at the name entry', async () => {
+    const s = new Session();
+    s.hold(0, 40); // the birth record
+    expect(s.flow.checkpointAvailable).toBe(true);
+    const world = s.game.world;
+    world.scoring.board.scores[0].score = 4200; // a row that will enter the table
+    world.status = 'gameOver';
+    s.hold(0, GAME_OVER_DELAY_TICKS);
+    expect(s.top).toBe('continue'); // continues left: the countdown first
+    s.hold(0, CONTINUE_LOCK_TICKS + 2);
+    s.press(Action.Back); // decline it — the run ends at the game-over screen
+    expect(s.top).toBe('gameOver');
+    // The death/game-over path keeps its record: a suspend on either screen is a run stopped
+    // mid-flight, resumable under the game's own continue rule (TL-2).
+    expect(s.flow.checkpointAvailable).toBe(true);
+    s.hold(0, GAME_OVER_TIMEOUT_TICKS);
+    expect(s.top).toBe('nameEntry'); // the score entered — the naming ceremony began
+    // ...and from that transition the record is spent.
+    expect(s.flow.checkpointAvailable).toBe(false);
+    expect(await s.text()).toBe('');
+    const { game, flow } = await resume(s.platform);
+    expect(flow.checkpointAvailable).toBe(false);
+    press2(game, s.platform, Action.Confirm); // PRESS OK → the menu
+    expect(flow.title.menu.items.map((i) => i.label)[0]).toBe('1 PLAYER');
   });
 });
