@@ -157,11 +157,14 @@ jobs:
     # R0-03 resolution sweep, the v2 R7-VID video knob rows and the R-SVG cull pair). The bench
     # builds its harness and the bench widget programmatically (vite inside vitest — no
     # `pnpm build`), and drives both in Playwright's Chromium with SwiftShader, so this job
-    # installs the browser exactly as the e2e jobs do. Sized from the 2026-10-30 host run:
-    # render.perf full = 22.6 minutes clip-less on a quiet machine; the CI matrix runs ~15%
-    # slower, and install shares the window (the job cut at 35 by run 41115524004 was still
-    # streaming the 480x320 rows with ~60 scenarios left).
-    timeout-minutes: 55
+    # installs the browser exactly as the e2e jobs do. Sized from the 2026-10-30 host run and
+    # run 41122693348: render.perf full = 22.6 minutes clip-less on a quiet machine, but the CI
+    # SwiftShader runner takes ~3.4x that — its first render-only window cut at exactly 55:00
+    # with the matrix still streaming the 640x360 rows (≈row 58 of ~198 at 8-16 s a row, the
+    # heavy knob and page-load rows still ahead: ~40 minutes of work left). 90 is honest
+    # CI headroom with the product coverage untouched — trimming matrix rows would be an owner
+    # call, never a timeout workaround (the budgets live in bench-gates.ts, unchanged).
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
 
@@ -180,7 +183,6 @@ jobs:
 
       - name: Benchmark
         run: pnpm bench render.perf
-
 
   e2e:
     # Browser smoke tests (plan §1.4): builds the web and Tizen apps (`build:test` — dev / test
