@@ -19,6 +19,20 @@ env:
   # Electron is only type-checked and compiled in CI — never download its binary.
   ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
   TURBO_TELEMETRY_DISABLED: '1'
+  # The GitHub runners carry no ffmpeg, so the cutscene encode kit (`scripts/v20x/video-encode.mjs`)
+  # loud-skips and the era's 15 clips cannot be encoded here. Baking the clip-less variant — the
+  # supported degradation, same switch as a local `SHMUP_NO_VIDEO=1 pnpm build` — is what makes the
+  # TV bundle checks pass on CI: `packages/*/build`, `build:test` and the bench build all reach
+  # check-bundle rule 11, whose video half skips under this env with a disclosure on the OK line
+  # (`[video baked off by env — rule 11]`). The e2e video spec skips on its own byte probe of the
+  # served build (v20x F-F), so every media consumer degrades honestly. The 5 ending stills are
+  # pure Node (`scripts/v20x/stills-encode.mjs`, no ffmpeg) and DO ship and pass rule 11 on CI —
+  # this env says nothing about them, and `SHMUP_NO_STILLS` stays unset on purpose.
+  # An apt-installed ffmpeg is deliberately NOT added: the H.264 outputs are not byte-deterministic
+  # across ffmpeg builds (rule 11's own docblock), so a CI-encoded ledger would fight the committed
+  # VIDEO_CLIPS byte pins in packages/shell/test/cutscene/clips-consistency.test.ts, and every one
+  # of the ~9 building jobs would re-encode the whole 6.5 MB set.
+  SHMUP_NO_VIDEO: '1'
 
 jobs:
   lint:
