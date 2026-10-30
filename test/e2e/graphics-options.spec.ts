@@ -218,6 +218,9 @@ test.describe('graphics options through the Options screen (web build, R6-04)', 
         aspect: 'wide',
         output: '540',
         renderer: 'webgl1',
+        // The v20.x VIDEO row persists its default (the owner's ruling of 2026-10-28; the
+        // clip-less CI bake never removes the knob, only the surface) — v20x-CIFIX2 pin restated.
+        video: true,
         language: 'en',
       });
 

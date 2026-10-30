@@ -214,7 +214,11 @@ test.describe('display options through the Options screen (web build)', () => {
         reduceFlashing: true,
         showHitbox: true,
         bossHpBar: false,
-        // M3-02's rows plus the R6-04 boot knobs, all left at their defaults here.
+        // M3-02's rows plus the R6-04 boot knobs, all left at their defaults here — and the
+        // v20.x VIDEO row (the owner's ruling of 2026-10-28): `display.video` persists on every
+        // save write at its default `true`, whether or not the build carries clips (the row is
+        // the user-option layer; the clip-less bake only removes the surface, never the knob).
+        video: true,
         crtFilter: 'off',
         aspect: 'normal',
         output: 'auto',
