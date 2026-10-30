@@ -21,9 +21,13 @@
  * still's own arrival is a decode and a draw, so the attribute poll is wall time (media law,
  * R7-VID — on this host a decoded frame is not a game tick). The whole file skips when the build
  * carries no stills — the director degrades silently without them, exactly as designed.
+ * Since the v20.x enablement the cutscene video is default **ON** (owner ruling 2026-10-28,
+ * `7920f544`) and the ending layers its surface over the still, so every page here opens with
+ * `?novid=1`: the pixels this spec compares are the still's alone — the video surface is
+ * `video.spec.ts`'s own subject.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { decodePng } from '../../scripts/assets/png.mjs';
+import { decodePng, PNG_SIGNATURE } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, pixelIndex } from './frame-pixels.js';
 import { gameTick } from './ticks.js';
 import { open, openEnding, stepScene, watchErrors } from './zone-helpers.js';
@@ -59,17 +63,28 @@ function trackErrors(page: Page): string[] {
   return watchErrors(page);
 }
 
+/** {@link PNG_SIGNATURE} as the latin1 string a served prefix compares against. */
+const PNG_MAGIC = String.fromCharCode(...Array.from(PNG_SIGNATURE));
+
 /**
  * Skips the test when the served build carries no stills (the encode kit's output is derived —
- * a host that shipped without it runs the game exactly as before this feature).
+ * a host that shipped without it runs the game exactly as before this feature). Like the video
+ * spec's `hasClip` (the v20x F-F cure), the probe reads the bytes the game itself would fetch
+ * and asks them for the PNG signature, because an HTTP status is not a capability: `vite
+ * preview`'s SPA fallback answers a path the build has no file for with `200 index.html`, so a
+ * `response.ok()` check on a still-less build passed and the spec walked past its own skip.
+ * The served bytes are the honest condition: the specs run wherever the build really carries
+ * the still and skip — with the truthful reason — wherever it does not.
  *
  * @param page - Any page (the request goes to the preview server).
  * @param file - The still file under `assets/stills/`.
- * @returns Whether the file exists.
+ * @returns Whether the build serves that still as real PNG bytes.
  */
 async function hasStill(page: Page, file: string): Promise<boolean> {
   const response = await page.request.get(`assets/stills/${file}`);
-  return response.ok();
+  if (!response.ok()) return false;
+  const body = await response.body();
+  return body.length > 12 && body.subarray(0, 8).toString('latin1') === PNG_MAGIC;
 }
 
 /**
@@ -288,7 +303,7 @@ test.describe('image-surface stills (web build)', () => {
     const errorsPlain = trackErrors(plain);
 
     // — the citadel's painting rides the world band: the top rows are the PNG, pixel-exact.
-    await open(page, './');
+    await open(page, './?novid=1');
     await openEnding(page, 'citadel', 0);
     await waitForStill(page, 'ending-citadel-falls');
     await stepScene(page, 30);
@@ -299,7 +314,7 @@ test.describe('image-surface stills (web build)', () => {
     // — the same ending without the feature draws its procedural backdrop there instead
     //   (PALETTE.space 0x10173a against the painting's letterbox pad 0x05070f): a real picture,
     //   not a cache artefact, and the sprite art above the still is untouched either way.
-    await open(plain, './?nostills=1');
+    await open(plain, './?novid=1&nostills=1');
     await openEnding(plain, 'citadel', 0);
     await stepScene(plain, 30);
     const before = await shot(plain);
@@ -336,7 +351,7 @@ test.describe('image-surface stills (web build)', () => {
     await backToTitle(page);
     await waitForStill(page, 'none');
     await plain.reload();
-    await open(plain, './?nostills=1'); // a title-page baseline that never loaded a still
+    await open(plain, './?novid=1&nostills=1'); // a title-page baseline that never loaded a still
     await syncToSameTick([page, plain]);
     const releasedShot = await shot(page);
     const plainShot = await shot(plain);
@@ -367,7 +382,7 @@ test.describe('image-surface stills (web build)', () => {
 
     // The probe forces the DEEP painting while the CITADEL ending runs (the table would name
     // ending-citadel-falls): the picture is the probe's file, pixel-exact at the top rows.
-    await open(page, './?still=ending-deep-is-still');
+    await open(page, './?novid=1&still=ending-deep-is-still');
     await openEnding(page, 'citadel', 0);
     await waitForStill(page, 'ending-deep-is-still');
     await stepScene(page, 30);
@@ -379,7 +394,7 @@ test.describe('image-surface stills (web build)', () => {
     // stay the procedural backdrop of the ending (PALETTE.space).
     const plain = await page.context().newPage();
     const errorsPlain = trackErrors(plain);
-    await open(plain, './?nostills=1&still=ending-deep-is-still');
+    await open(plain, './?novid=1&nostills=1&still=ending-deep-is-still');
     await openEnding(plain, 'citadel', 0);
     await stepScene(plain, 30);
     expect(await stillAttribute(plain)).toBeNull();

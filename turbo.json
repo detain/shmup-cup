@@ -23,14 +23,32 @@
     },
     "build": {
       "dependsOn": ["^build", "//#assets"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/assets/generated/video/**",
+        "$TURBO_ROOT$/assets/generated/stills/**",
+        "$TURBO_ROOT$/scripts/v20x/**"
+      ],
       "outputs": ["dist/**"]
     },
     "build:test": {
       "dependsOn": ["^build", "//#assets"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/assets/generated/video/**",
+        "$TURBO_ROOT$/assets/generated/stills/**",
+        "$TURBO_ROOT$/scripts/v20x/**"
+      ],
       "outputs": ["dist/**"]
     },
     "build:dev": {
       "dependsOn": ["^build", "//#assets"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/assets/generated/video/**",
+        "$TURBO_ROOT$/assets/generated/stills/**",
+        "$TURBO_ROOT$/scripts/v20x/**"
+      ],
       "outputs": ["dist/**"]
     },
     "build:bench": {
