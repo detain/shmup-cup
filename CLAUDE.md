@@ -1,6 +1,6 @@
 # Shmup Cup
 
-TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69), plus LG webOS 5+ TVs, browser and Electron. pnpm 12 workspace + Turborepo. On `master` every `package.json` says `2.0.0`, the released v2 (the Tizen `config.xml` and webOS `appinfo.json`: the same `2.0.0`); `v1.x` carries `1.0.1-dev`.
+TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69), plus LG webOS 5+ TVs, browser and Electron. pnpm 12 workspace + Turborepo. On `master` every `package.json` says `2.1.1`, the released v2 line (the Tizen `config.xml` and webOS `appinfo.json`: the same `2.1.1`); `v1.x` carries `1.0.1-dev`.
 
 **Two release lines:**
 - **v2 is in development on `master`:** the 640×360 remaster. Its plan, decisions and step status (§17) are in **`plan_resolution.md`**.
