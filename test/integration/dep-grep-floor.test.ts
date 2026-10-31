@@ -7,8 +7,10 @@
  * does what `tv-engine-floor.test.ts` does for first-party sources, for the third-party side,
  * from committed state and the installed graph only:
  *
- * 1. the floor family itself cannot be quietly weakened — its needle list still covers the
- *    canonical DEP-GREP set and its walk still covers every browser-shipped tree on disk;
+ * 1. the floor family itself cannot be quietly weakened — the shared needle list covers the
+ *    canonical DEP-GREP set, the family scans with that list rather than a private one, both TV
+ *    bundle checks run the same shared rule over it, and the walk still covers every
+ *    browser-shipped tree on disk;
  * 2. the shipped third-party runtime set stays exactly the pinned graph (today: `pixi.js` and
  *    the packages it pulls in — §8.5's "all ten manifests scanned");
  * 3. no dependency's resolved sources reach for a post-68 API outside the pins below — a bump
@@ -16,6 +18,12 @@
  * 4. the two APIs the dependencies *do* use on the TV path (`globalThis`, `matchAll`) stay
  *    polyfilled in both TV builds and both bench builds — the pairing this scan's allowance
  *    leans on. Break the pairing and the allowance goes red with it.
+ *
+ * The needle list itself moved with v20x P1-8c: `scripts/too-new-apis.mjs` now carries it, read
+ * by the source scan *and* by rule 13 of both bundle checks, so law 1 proves the shared module
+ * covers the canonical set below, that the family imports and scans with that module (and cannot
+ * fall back to a private list), and that both TV bundle checks consume the same rule. The
+ * canonical set stays anchored in this file — the guard names it, it is never inherited.
  *
  * Radius: Vite resolves `pixi.js` through its `module`/`exports` import condition into its
  * `lib/` ESM tree (the `.mjs` files; the `.js` CJS mirrors and the `dist/` prebuilt bundles are
@@ -31,6 +39,7 @@ import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { MATCH_ALL_BANNER, POLYFILL_BANNER } from '../../apps/tizen/scripts/check-bundle.mjs';
+import { TOO_NEW_APIS } from '../../scripts/too-new-apis.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -44,9 +53,10 @@ const PNPM_STORE = join(repo, 'node_modules', '.pnpm');
 const POLYFILLED = ['.matchAll(', 'globalThis'];
 
 /**
- * The canonical floor set `tv-engine-floor.test.ts` must keep pinning for first-party code —
- * the brief's post-68 list (flat/flatMap/matchAll/replaceAll/at/fromEntries/structuredClone/
- * queueMicrotask/allSettled) plus the rest of the family and the incident's discoveries.
+ * The canonical floor set — the brief's post-68 list (flat/flatMap/matchAll/replaceAll/at/
+ * fromEntries/structuredClone/queueMicrotask/allSettled) plus the rest of the family and the
+ * incident's discoveries. This file is its anchor: the shared module the guards read must cover
+ * it (the first test below), never the other way round — a moved list stays checkable by name.
  */
 const FLOOR_NEEDLES = [
   '.flat(',
@@ -198,8 +208,9 @@ function read(path: string): string {
  * The single-quoted strings inside one array literal of `tv-engine-floor.test.ts`.
  *
  * @param source - The family's source text.
- * @param exportName - `TOO_NEW` or `RUNTIME_ROOTS`.
- * @returns The first-position strings: the needles, or the roots.
+ * @param exportName - `RUNTIME_ROOTS` — the needle list left this file for
+ * `scripts/too-new-apis.mjs` with v20x P1-8c, so it is checked on the live import now.
+ * @returns The first-position strings: the roots.
  * @throws Error when the family restructured its lists — the pins must be rewritten by hand.
  */
 function familyList(source: string, exportName: string): string[] {
@@ -210,10 +221,6 @@ function familyList(source: string, exportName: string): string[] {
   const pairs = block[1].match(/'([^']+)'/g);
   if (pairs === null || pairs.length === 0) {
     throw new Error(`tv-engine-floor.test.ts: empty \`${exportName}\` block`);
-  }
-  if (exportName === 'TOO_NEW') {
-    // Each entry is `[needle, description]` — the odd positions are the needles.
-    return pairs.filter((_, index) => index % 2 === 0).map((s) => s.slice(1, -1));
   }
   return pairs.map((s) => s.slice(1, -1));
 }
@@ -371,13 +378,60 @@ const PINNED = DEPENDENCY_PINS.map(
   (pin) => `${pin.pkg} ${pin.file} :: ${pin.needle} ×${pin.count}`,
 ).sort();
 
-describe('integration: the DEP-GREP law stays machine-checked (v20x P1-7)', () => {
+describe('integration: the DEP-GREP law stays machine-checked (v20x P1-7/P1-8c)', () => {
   const family = read('test/integration/tv-engine-floor.test.ts');
 
-  it('the floor family still greps the whole canonical needle set', () => {
-    const needles = familyList(family, 'TOO_NEW');
+  it('the shared needle module covers the whole canonical DEP-GREP set', () => {
+    // (a) The list moved to `scripts/too-new-apis.mjs` with v20x P1-8c; the canonical set above
+    // stays the anchor, read here live — the module may grow, but no name may leave it, and no
+    // name may stand twice (the bundle rule counts occurrences per entry).
+    const needles = TOO_NEW_APIS.map((entry) => entry.needle);
     const missing = FLOOR_NEEDLES.filter((needle) => !needles.includes(needle));
-    expect(missing, 'needles dropped from tv-engine-floor.test.ts TOO_NEW').toEqual([]);
+    expect(missing, 'needles dropped from scripts/too-new-apis.mjs TOO_NEW_APIS').toEqual([]);
+    expect(needles.length, 'a duplicated needle in TOO_NEW_APIS').toBe(new Set(needles).size);
+  });
+
+  it('the floor family scans with the shared list — it cannot fall back to a private one', () => {
+    // (b) A source-level proof beside the live one: the family imports the module, binds its
+    // scan list to the imported name, and iterates that binding — the pre-move shape, a
+    // `const TOO_NEW = [...]` literal, is the silent drift this forbids.
+    expect(
+      /import\s*\{[^}]*\bTOO_NEW_APIS\b[^}]*\}\s*from\s*'[^']*scripts\/too-new-apis\.mjs'/.test(
+        family,
+      ),
+      'tv-engine-floor.test.ts no longer imports TOO_NEW_APIS from scripts/too-new-apis.mjs',
+    ).toBe(true);
+    expect(family, 'the scan list must be the shared module').toContain(
+      'const TOO_NEW = TOO_NEW_APIS;',
+    );
+    expect(family, 'the offender loop must read the bound list').toContain(
+      'for (const { needle, what } of TOO_NEW) {',
+    );
+    expect(/const TOO_NEW = \[/.test(family), 'the family grew a private TOO_NEW list').toBe(false);
+  });
+
+  it('both TV bundle checks consume the shared module — rule 13 stays one rule', () => {
+    // (c) The family proof spans the built-bundle side too: the Tizen check reads the shared
+    // names and exports the one engine-floor rule, and the webOS check calls that rule — never a
+    // copy of its own (the budgets' shape of sharing, the lesson of the 8.22 boot break).
+    const tizen = read('apps/tizen/scripts/check-bundle.mjs');
+    const webos = read('apps/webos/scripts/check-bundle.mjs');
+    expect(tizen).toMatch(
+      /import\s*\{[^}]*\btooNewApiHits\b[^}]*\}\s*from\s*'[^']*scripts\/too-new-apis\.mjs'/,
+    );
+    expect(tizen, 'the exempt regions read the shared polyfill table').toContain(
+      'TOO_NEW_POLYFILLS.map(',
+    );
+    expect(tizen).toContain('export function checkBundleEngineFloor(');
+    expect(webos, 'webOS imports the shared rule').toContain('checkBundleEngineFloor,');
+    expect(webos, 'webOS runs it as rule 13').toContain(
+      'problems.push(...checkBundleEngineFloor(code));',
+    );
+    // …and webOS holds no second implementation, nor a private line to the list.
+    expect(webos, 'webOS re-implements the engine floor').not.toMatch(
+      /function checkBundleEngineFloor|tooNewApiHits/,
+    );
+    expect(webos, 'webOS greps a needle list of its own').not.toContain('too-new-apis');
   });
 
   it('the floor family still walks every browser-shipped tree on disk', () => {
