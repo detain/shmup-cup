@@ -1,132 +1,135 @@
 {
   "name": "shots/drone",
-  "description": "Seeker Drone v2 (w15-WEAPONLOOK): hand-drawn native darts, frame k = k·45° clockwise — swept dark fins, bright lime core line, pale nose, empty nose corners.",
+  "description": "Seeker Drone v2 (v20x-ARTPM, hand pixel map after the AI rounds stalled at FINAL STOP@8 on the octant AR whipsaw — w15-GEN6/w15-GEN7L): a steel arrow-dart with stubby swept fins and an amber thruster, lit top-left per octant (bible § 5 steel blues stay blue-grey, never neutral). Frame k points k·45° clockwise: the cardinals ink an 11x10 box (AR 1.1 at the 1.0 floor), the flank pair its 10x11 transpose, the diagonals a solid 10x10 stair.",
   "palette": {
     ".": null,
-    "a": "#3e552f",
-    "b": "#9fe860",
-    "c": "#e7f9d7"
+    "k": "#1b1a2e",
+    "d": "#3d5678",
+    "s": "#8ba3c4",
+    "l": "#d7e5f6",
+    "f": "#f8a030",
+    "h": "#ffd98a"
   },
   "native": true,
   "frames": [
     {
       "rows": [
-        "...........",
-        "...........",
-        ".aa........",
-        "..aa.bbbbb.",
-        "..bbbbbbbcb",
-        "..cbcccccbc",
-        "..bbbbbbbcb",
-        "..aa.bbbbb.",
-        ".aa........",
-        "...........",
+        "...kkk.....",
+        "...kkk.....",
+        "..kllllsk..",
+        ".kllsssssk.",
+        "hfksllssssk",
+        "hfksllssssk",
+        ".kdddddddk.",
+        "..kdddddk..",
+        "...kkk.....",
+        "...kkk.....",
         "..........."
       ]
     },
     {
       "rows": [
-        "....a......",
-        "....aa.....",
-        ".aaba.a....",
-        "..bcb......",
-        "..abcb.....",
-        ".a..bcb....",
-        "..a..bcb...",
-        "......bcb..",
-        ".......b.b.",
-        "........bcc",
-        ".........c."
-      ]
-    },
-    {
-      "rows": [
-        "...........",
-        "..a.....a..",
-        "..aabcbaa..",
-        "...abbba...",
-        "....bcb....",
-        "...bbcbb...",
-        "...bbcbb...",
-        "...bbcbb...",
-        "...bbcbb...",
-        "...bcbcb...",
-        "....bcb...."
-      ]
-    },
-    {
-      "rows": [
-        "......a....",
-        ".....aa....",
-        "....a.abaa.",
-        "......bcb..",
-        ".....bcba..",
-        "....bcb..a.",
-        "...bcb..a..",
-        "..bcb......",
-        ".b.b.......",
-        "ccb........",
-        ".c........."
-      ]
-    },
-    {
-      "rows": [
-        "...........",
-        "...........",
-        "........aa.",
-        ".bbbbb.aa..",
-        "bcbbbbbbb..",
-        "cbcccccbc..",
-        "bcbbbbbbb..",
-        ".bbbbb.aa..",
-        "........aa.",
-        "...........",
+        "h..........",
+        "f..........",
+        "kk.........",
+        ".sdd.......",
+        "..sddkk....",
+        "...ssdkk...",
+        "..kklsd....",
+        "...kklsd...",
+        "......lls..",
+        ".......lsk.",
         "..........."
       ]
     },
     {
       "rows": [
-        ".c.........",
-        "ccb........",
-        ".b.b.......",
-        "..bcb......",
-        "...bcb..a..",
-        "....bcb..a.",
-        ".....bcba..",
-        "......bcb..",
-        "....a.abaa.",
-        ".....aa....",
-        "......a...."
+        "....hh.....",
+        "...kffk....",
+        "..klkkdk...",
+        "kkllssddkk.",
+        "kklsllddkk.",
+        "kklsllddkk.",
+        "..lsssdd...",
+        "..ssssdd...",
+        "..ksssdk...",
+        "...kssk....",
+        "....kk....."
       ]
     },
     {
       "rows": [
-        "....bcb....",
-        "...bcbcb...",
-        "...bbcbb...",
-        "...bbcbb...",
-        "...bbcbb...",
-        "...bbcbb...",
-        "....bcb....",
-        "...abbba...",
-        "..aabcbaa..",
-        "..a.....a..",
+        "..........h",
+        "..........f",
+        ".........kk",
+        ".......dds.",
+        "....kkdds..",
+        "...kkdss...",
+        "....dslkk..",
+        "...dslkk...",
+        "..sll......",
+        ".ksl.......",
         "..........."
       ]
     },
     {
       "rows": [
-        ".........c.",
-        "........bcc",
-        ".......b.b.",
-        "......bcb..",
-        "..a..bcb...",
-        ".a..bcb....",
-        "..abcb.....",
-        "..bcb......",
-        ".aaba.a....",
-        "....aa.....",
-        "....a......"
+        ".....kkk...",
+        ".....kkk...",
+        "..ksllllk..",
+        ".ksssssllk.",
+        "kssssllskfh",
+        "kssssllskfh",
+        ".kdddddddk.",
+        "..kdddddk..",
+        ".....kkk...",
+        ".....kkk...",
+        "..........."
+      ]
+    },
+    {
+      "rows": [
+        "...........",
+        ".ksl.......",
+        "..sll......",
+        "...dslkk...",
+        "....dslkk..",
+        "...kkdss...",
+        "....kkdds..",
+        ".......dds.",
+        ".........kk",
+        "..........f",
+        "..........h"
+      ]
+    },
+    {
+      "rows": [
+        "....kk.....",
+        "...kssk....",
+        "..ksssdk...",
+        "..ssssdd...",
+        "..lsssdd...",
+        "kklsllddkk.",
+        "kklsllddkk.",
+        "kkllssddkk.",
+        "..klkkdk...",
+        "...kffk....",
+        "....hh....."
+      ]
+    },
+    {
+      "rows": [
+        "...........",
+        ".......lsk.",
+        "......lls..",
+        "...kklsd...",
+        "..kklsd....",
+        "...ssdkk...",
+        "..sddkk....",
+        ".sdd.......",
+        "kk.........",
+        "f..........",
+        "h.........."
       ]
     }
   ]

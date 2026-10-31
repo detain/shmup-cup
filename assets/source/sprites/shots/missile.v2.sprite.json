@@ -1,6 +1,6 @@
 {
   "name": "shots/missile",
-  "description": "Ground missile v2 (w15-WEAPONLOOK2): hand-drawn native rocket — a silver nose cone on a white body with canted stabiliser fins and a flickering orange/amber exhaust stub at the left; the fly frame swaps the flame colour only (same silhouette). Reads as a finned rocket, not a smooth bolt — separates it from torpedo, basic and twin (w15-WEAPONLOOK § 6).",
+  "description": "Ground missile v2 (v20x-ARTPM, hand pixel map — the AI lance never held the contract box, w15-GEN6/w15-GEN7L): a full-bleed 12x5 finned rocket (AR 2.4 inside the 1.6..3.8 window) in the v1 palette (the shots-v2 reuse law) — white-lit top flank, steel mid, dark belly and fin rings, red nose band; the fly frame swaps the grey smoke nub for a compact amber flame and the core row stays whole both frames. Reads as a rocket, not a smooth bolt — separates it from torpedo, basic and twin (w15-WEAPONLOOK § 6). v1 keeps its 8x3 shape.",
   "palette": {
     ".": null,
     "o": "#2a3a4a",
@@ -18,20 +18,20 @@
   "frames": [
     {
       "rows": [
-        "..o....gg...",
-        "..yyo..gggww",
-        "oyryoogggwww",
-        "..yyo..gggww",
-        "..o....gg..."
+        "..oooooooooo",
+        "goowwwggrrgo",
+        "ggoggggggrro",
+        "ogoooooorroo",
+        "..oooooooooo"
       ]
     },
     {
       "rows": [
-        "..o....gg...",
-        "..rro..gggww",
-        "oryroogggwww",
-        "..rro..gggww",
-        "..o....gg..."
+        "..oooooooooo",
+        "..owwwggrrgo",
+        "yyoggggggrro",
+        "..oooooorroo",
+        "..oooooooooo"
       ]
     }
   ],
