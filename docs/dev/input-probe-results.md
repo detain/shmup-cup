@@ -251,7 +251,7 @@ boundary per render group), where it was 2–4.
 | M2 | RENDER ms and RT with CRT off / light / full on the same section — after M3-02d all three should read the same, and RT should not move at all (**F2**) | |
 | M3 | Frame-graph spike entering the Mode-7 and raster stages — M3-02d's boot warm-up should have removed it (**F4**) | |
 | M4 | Frame-graph spike on the first very dense pattern of a fresh launch — likewise (**F5**) | |
-| M5 | WebGL1 vs WebGL2 over 60 s of the same stage (**F8**) | |
+| M5 | WebGL1 vs WebGL2 over 60 s of the same stage (**F8**) (runbook below: §14.1) | |
 | M6 | `estimateStageMemory` per zone vs. RT, CRT on and off (**F3**) — the estimator now says 67.0 MiB for zones A–G, 74.0 for H and 74.7 for I, of which 25.05 MiB is render targets | |
 | M7 | Does the app stop rendering under the Home overlay? | |
 | M8 | Input-to-photon latency, 240 fps video (§10 above) | |
@@ -589,7 +589,8 @@ The v2 rows sum to **≈ ≤ 21 MiB of counted GPU plus ≤ 31 MiB of heap** —
 headless estimator with the final art at 640×360 corroborates: stage totals **75.1–84.2 MiB**
 (28.6 MiB of fixed render targets driving it) — under 100. The TV rows count **11–16 draw calls**
 against feat §22's 20–50. The Chromium-process figure that Tizen's 120 MB install cap binds against
-is not carried by `rb-` records — it rides the same open owner capture as boot.
+is not carried by `rb-` records — it rides the same open owner capture as boot; runbook: same file,
+§14.2.
 
 **The P4 dispositions** (R6-02's rule 2: ship a mitigation only on a P3 miss — and the misses above
 are panel pacing and instrument gaps, none scene-attributable): **P4a** (parallax capped at 4 on
@@ -789,3 +790,163 @@ does to each §13/§12 claim:
   +18.2 / +16.2 (pool knob +17.1, beyond the arm's 10.7), PNG +13.4 — with the per-frame facts
   identical to the sprite across arms (5,953–5,954 tagged, ~6,010 visited, ~1,200 off-view,
   82–92 bit-writes). §12's CLOSED verdict now rests on four pricing samples, not two.
+
+## 14. The two open owner captures (runbook, 2026-10-31)
+
+The §11.2 **M5** row and the **process-wide memory** figure that Tizen's 120 MB dev-install cap
+binds against are the last unclosed items of the [tizen_optimize.md](../../tizen_optimize.md)
+audit — its §8.4 "The two measurements the owner still owes", §9 P1 item 8: *"Owner captures
+(instrumented, never run)"*. This section is the runbook for both. Every step runs from committed
+state alone; the two things that genuinely wait on a first owner experiment — §14.2's on-device
+`?page=` trigger and its process-RSS command — are marked loud, not papered over.
+
+### 14.1 M5 — WebGL 1 vs WebGL 2, 60 s of the same stage (§11.2's row, the review's F8)
+
+The review's row ([render-performance-review.md:366](render-performance-review.md)) asks for "two
+dev builds differing only in `preferWebGLVersion` (the overlay prints the version it got)".
+**No shipped build differs that way and none needs to:** since M3-02c the pin is a runtime switch
+inside one dev build — the same A/B with the same bundle, both sides through the same GPU, driver
+and frame loop, which is exactly what §11's "compare a millisecond only with another millisecond
+measured on a monitor" law wants. The kit, end to end:
+
+| Piece | Where |
+|---|---|
+| The switch (dev / test game builds) | [apps/tizen/src/boot/index.ts](../../apps/tizen/src/boot/index.ts) `:543` → `devWebGLVersion` (`:355-364`): `?gl=1` / `?gl=2` on the dev server, else `localStorage['shmup-cup:gl']` on the TV (`WEBGL_VERSION_KEY` `:320` — the TV has no query string), else no pin. A release build never calls it |
+| Where it flows | `ShellOptions.preferWebGLVersion` ([packages/shell/src/boot/index.ts](../../packages/shell/src/boot/index.ts) `:913`) → boot resolves at `:1588`: a pin beats the saved GRAPHICS → RENDERER row; with no pin `auto` keeps both TVs on WebGL 1 (R6-04's Chromium ≥ 71 floor, decision W5-20 — the M7 is 69) → the renderer ask at `:1618` → [packages/render-pixi/src/renderer/index.ts](../../packages/render-pixi/src/renderer/index.ts) `:822`, `preferWebGLVersion: options.preferWebGLVersion ?? 1` — that line, and only that line, is what a human edits if two hard-baked builds are ever wanted (neither Tizen vite config carries a GL define) |
+| The truth of what the engine gave | `renderer.webGLVersion` — printed as the overlay's `WEBGL` field by [packages/render-pixi/src/debug/index.ts](../../packages/render-pixi/src/debug/index.ts) `:927-929`, fed from `renderer.webGLVersion` by [packages/shell/src/debug/index.ts](../../packages/shell/src/debug/index.ts) `:603`. Read it before flying: it is the version got, not the version asked |
+| The M5 row inside the guided kit | check id `M5` — "60 s in one stage on this WebGL version (repeat the session with ?gl=2)", passed by `bestStageSeconds >= 60` ([packages/shell/src/telemetry/index.ts](../../packages/shell/src/telemetry/index.ts) `:994`, `:1077`) |
+
+**The procedure — one dev build, two passes on one monitor:**
+
+1. Start the capture channel: `cd tools/input-probe && npm run log-server` (the game's guided
+   render profile streams there since M3-02f — `PORT` 8787, `HOST` 0.0.0.0, `LOG_DIR`
+   `tools/input-probe/logs/`, git-ignored; one summary line printed per window, the progress feed).
+2. Build the game's dev bundle with the endpoint baked in —
+   `VITE_REPORT_URL=http://<desktop-ip>:8787 pnpm --filter @shmup/tizen build:dev`
+   (PowerShell: `$env:VITE_REPORT_URL="http://<desktop-ip>:8787"; pnpm --filter @shmup/tizen build:dev`).
+3. Install and run (the owner's steps — sdb / Tizen CLI never run by an agent,
+   [install-on-tv.md](../client/install-on-tv.md)): `TIZEN_PROFILE=<profile> pnpm --filter
+   @shmup/tizen tizen:package`, then `TV_IP=<monitor-ip> pnpm --filter @shmup/tizen tizen:install`,
+   then `TV_IP=<monitor-ip> pnpm --filter @shmup/tizen tizen:run`. Per
+   [tizen-env.mjs](../../apps/tizen/scripts/tizen-env.mjs): `TV_IP` makes the script `sdb connect`
+   it first, the sdb serial defaults to `<ip>:26101` (`TIZEN_TARGET` overrides), `TIZEN_CLI` / `SDB`
+   point at the SDK binaries, and the app id is the game's `ShmpCupGam.ShmupCup`.
+4. Unlock the tools on the remote: **Play/Pause, Ch+, Ch+, Ch+ — all four within 3 s**
+   ([rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv)),
+   then debug key **1** to hide the panel — a panel-on `REB` reading measures the overlay (§11.1's
+   warning), and the same reason says hide it for the windows you keep.
+5. **Arm A (WebGL 1):** in the remote Web Inspector on the game's app id set
+   `localStorage['shmup-cup:gl'] = '1'` and relaunch — the same inspector flow the bench's WebGL-2
+   pass uses ([install-on-tv.md](../client/install-on-tv.md) step 5.2, app id `ShmpCupBnc.RenderBench`
+   there, `ShmpCupGam.ShmupCup` here). Verify the overlay's `WEBGL` reads **1**, fly one practice-stage
+   section for ≥ 60 s straight (one checklist `M5` window), and let the profile POST land.
+6. **Arm B (WebGL 2):** set the key to `'2'`, relaunch, verify `WEBGL` reads **2** before flying —
+   if it still reads 1 the engine refused and that refusal *is* the M5 answer, recorded as such —
+   then the same stage, the same section, the same ≥ 60 s. Clear the key afterwards (or set `'1'`):
+   WebGL 1 stays the shipped default and the pin overrides the RENDERER row while it stands.
+7. Collect: two `rp-<session>.jsonl` in `tools/input-probe/logs/`, then from `tools/input-probe/`
+   `node results/analyze-render.mjs logs/rp-<A>.jsonl logs/rp-<B>.jsonl` — §11's pooled-histogram
+   analyzer prints the §11.1/§11.2 tables; the `RENDER` percentiles and the `RAF` histogram per
+   session are the row's content. Paste both arms (labelled GL 1 / GL 2) into §11.2's M5 cell, and
+   copy the raw JSONL into `tools/input-probe/results/<date>-m7-render/` as evidence with a README,
+   per the naming law in [results/README.md](../../tools/input-probe/results/README.md).
+
+**Expected verdict — *within noise* (§8.4), because the bench already ran this A/B at scale:** the
+resolution sweeps paired GL 1 × 2 against GL 2 × 2 in every campaign — 172 scenarios at the 1080p
+window, 150 at the shipped `Auto` = 720p output, 90 at 540p (§12.3, the 150+172 the PNG-floor era
+counts) — and graded the GL-2 gain **beyond noise only at the 1080p fill**, the mode `Auto` keeps
+the TVs out of; that pairing is what recorded P4d **NOT NEEDED** (§12.6). The game-side M5 row
+therefore retires the code's guess (the review's stated point) and ships nothing unless it
+*disagrees* with the sweeps — and any disagreement is first graded against §13.6's ruler (3.2 pts
+median / 11.6 p90, run drift 1.8 pts / 3 %). Note the honest scope of the sweeps: they ran on the
+bench scene, not the shipped game's scene mix; that gap is the only thing this capture still adds.
+
+### 14.2 Process memory vs the 120 MB dev-install cap
+
+The cap: **dev-installed apps are capped at 120 MB** on Tizen, the store publishes no limit, so the
+in-code budget is < 100 MB ([shmup_tech.md §2.5](../old/shmup_tech.md), the Samsung Memory FAQ it
+links; the budget constant in
+[packages/shell/src/memory/index.ts](../../packages/shell/src/memory/index.ts) `:144`). The
+blind spot (§8.4, verbatim): *"every counted component is 3.4×+ inside … but the process total
+(Chromium's own surfaces, the compositor planes outside our canvas) has never been read."* The
+capture has two halves, and they are not the same instrument.
+
+**Half one — what the game can self-report on-device (all committed since `37a821d0`).** The bench
+widget grew four one-shot `hb-` measurement pages; each runs its scenario, sends one single-record
+`hb-` session through the log server, and is done ([apps/tizen/src/bench/harb.ts](../../apps/tizen/src/bench/harb.ts)).
+They answer the *renderer-scope* half of the memory question:
+
+| Page | Record (phase) | What it measures |
+|---|---|---|
+| `?page=boot` | `hb-` boot row (S2) | Cold atlas cost on the set: the manifest's `file://` XHR (`assets/atlas/bench-x1.json` — the bench build ships the ×1 manifest bytes so this is the game's own route), every ×1 page through fetch → `createImageBitmap` with the `HTMLImageElement` fallback exactly as the shell loader does, each upload synced with `gl.finish()`, wall to the first drawn frame ([boot.ts](../../apps/tizen/src/bench/boot.ts); `?reps=` for repetitions) |
+| `?page=soak` | `hb-` memory row (S2) | The long residency cycle — load pages, draw, release every texture, rest 1 s, repeat (default 1800 s, `?secs=` clamped to 10–7200) — with a heap sample **each cycle** and the resident-page count. Where `performance.memory` does not answer, the row says so (`heapMeasured: false` + the note — never a silent zero, [soak.ts](../../apps/tizen/src/bench/soak.ts) `:126-128`) |
+| `?page=probe` | `hb-` probe row (S4) | The engine facts the budgets read against: WebGL 1 **and** 2 extension lists (this is where §8.4's `getSupportedExtensions()` ask is already carried), the ETC compressed-upload smoke, `deviceMemory` / core count, `OffscreenCanvas`, reduce-motion |
+| `?page=input` | `hb-` input row (S3) | The fourteen remote keys with auto-repeat episode splitting + the `?gm=0` game-mode flag — the companion capture, not a memory row |
+
+Two truths to hold apart while reading these rows: `performance.memory.usedJSHeapSize` (the kit's
+`heapUsed()` read, [run.ts](../../apps/tizen/src/bench/run.ts) `:489-491`) is the **renderer's JS
+heap only** — coarse on the TV, and it is the same source §12.6 row 5's 16.3–30.8 MiB came from;
+and the page **deliberately never writes `rssBytes`** ([soak.ts](../../apps/tizen/src/bench/soak.ts)
+`:15-16`) — that field exists on the wire for half two.
+
+**The trigger — the one step no committed file closes yet.** The pages dispatch on `location.search`
+([run.ts](../../apps/tizen/src/bench/run.ts) `:1212-1217`) and nothing in the shipped widget puts a
+query on the TV's app URL: no committed document runs `?page=` on a set (that is exactly why §9 P1-8
+says *instrumented, never run*). Establish it first: on the installed bench widget, navigate the
+remote Web Inspector to the query-suffixed `index.html` (e.g. `…/index.html?page=soak`) and check
+the page prints its `HARB S2 soak running` text block before measuring anything. If the firmware's
+file handler drops the query, do not guess a channel — the desktop rehearsal is fully committed
+(`pnpm --filter @shmup/tizen dev:bench` serves the same widget, query honoured, in a desktop
+browser), and the first owner who stands an on-set channel up writes the working one into this row.
+Everything downstream of the trigger is proven: the send path landed
+`hb-` `done: true` rows three times from the ordinary matrix's rewind page (§13.7), and unknown page
+ids fail loud on-screen, so a typo cannot silently run the 190-row suite.
+
+**Half two — what needs Tizen Studio's dev tools: the process total.** The wire already reserves
+its place: the `hb-` memory record carries an optional `rssBytes`
+([telemetry/index.ts](../../packages/shell/src/telemetry/index.ts) `:2147`, validated `:3101`) for
+"the supervisor pairing (the sdb carry item)" — a desktop-side reader stamping the app **process**
+RSS beside the soak timeline. What that reader is has **no committed answer**: the connectivity half
+is real (everything installs over `sdb` — `TV_IP` → `sdb connect`, serial `<ip>:26101`, per
+[tizen-env.mjs](../../apps/tizen/scripts/tizen-env.mjs); [install-on-tv.md](../client/install-on-tv.md)
+troubleshoots it), but the only memory read the docs carry is "Chrome DevTools over `sdb` →
+Memory / `performance.memory`" (the review's M6 row) — renderer-scope again, the same blind spot.
+The first owner run must establish, and record here: which `sdb shell` / Tizen Studio Device Manager
+figure answers on firmware `M-KSU2SMWWC-2750.0` (note each unit's firmware, Settings → About, as
+step 5.4 of the bench runbook says), its value at the soak's resident peaks and at its end, and
+whether the process total stays under 120 MB — the number that turns §12.6 row 5's "met on every
+measured component" into "met" plain and simple.
+
+**Running the bench-side captures (committed commands).** Same log server as §14.1 (both prefixes
+share one directory — the contamination law keeps them apart by their session ids), bench bundle
+instead of the game:
+
+```bat
+set VITE_REPORT_URL=http://<LOGSERVER>:8787
+pnpm bench:tv
+set TIZEN_PROFILE=<profile>
+pnpm bench:tv:package
+set TV_IP=<the monitor's IP>
+pnpm bench:tv:install
+pnpm --filter @shmup/tizen bench:run
+```
+
+(`tizen-bench.mjs` sets `TIZEN_DIST_DIR=dist-bench` and `TIZEN_APP_ID=ShmpCupBnc.RenderBench` in
+its own process — the bench installs next to the game and never replaces it,
+[install-on-tv.md](../client/install-on-tv.md) step 4.)
+
+**Collect and file.** `tools/input-probe/logs/hb-*.jsonl` →
+`tools/input-probe/results/<date>-m7-harbench/` with a README carrying the numbers by hand — there
+is **no analyzer for the `hb-` page rows** (`analyze-bench.mjs` speaks the `rb-` matrix;
+`analyze-render.mjs` the `rp-` profile; the pngfloor README's hand-written session table is the
+pattern to follow). The close-out targets of a completed run are exactly three: this section's two
+status notes, §11.2's M5 cell, and §12.6 rows 4 and 5 — the blanks §8.4 names.
+
+**Expected verdict — again *within noise*, and one live what-if.** Counted components sit 3.4×+
+inside (§12.6 row 5: ≤ ~21 MiB counted GPU + ≤ 30.8 MiB heap on-device; the headless estimator
+75.1–84.2 MiB/stage of the 100 MiB budget), so the soak should read a flat cycle-peak line and the
+process read should land comfortably under the cap. The what-if: Samsung's own memory guide
+documents the TV **killing** apps under pressure (tizen_optimize.md §8.3) — a process figure near
+120 MB promotes that from a cited failure class to a live risk, and its mitigation is the
+residency's, not the watchdog's (P0-3 covers the context-loss black screen, not a kill). A kill
+observed during the soak is itself the finding — record session id, cycle number and the RSS trace.
