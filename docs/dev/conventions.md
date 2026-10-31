@@ -272,13 +272,18 @@ things are involved, and confusing them is the trap:
    methods. `Array.prototype.flat` and `flatMap` landed in **Chrome 69**, so
    `eslint-plugin-compat` at a `chrome >= 69` floor **accepts them**
    (`test/integration/eslint-rules.test.ts` asserts that it does) and they would throw
-   `TypeError: [].flat is not a function` on an LG set. The one guard is
+   `TypeError: [].flat is not a function` on an LG set. Two guards stand against that,
+   sharing the needle list in **`scripts/too-new-apis.mjs`**: the source scan
    **`test/integration/tv-engine-floor.test.ts`**, which scans every shipped source tree
-   (`packages/{core,audio-web,input-web,render-pixi,shell}/src`, `apps/{web,tizen,webos}/src`)
-   with comments stripped for a fixed list of API names newer than Chrome 68, and also pins
-   the shared build settings — the same target string in both Vite configs, the same
-   polyfill *file* (webOS reads `apps/tizen/polyfills/global-this.js` rather than keeping a
-   copy) and the budgets imported from the Tizen check rather than repeated.
+   (`packages/{core,audio-web,input-web,render-pixi,shell}/src`,
+   `apps/{web,tizen,webos}/src`) with comments stripped for the API names newer than
+   Chrome 68, and also pins the shared build settings — the same target string in both
+   Vite configs, the same polyfill *file* (webOS reads
+   `apps/tizen/polyfills/global-this.js` rather than keeping a copy) and the budgets
+   imported from the Tizen check rather than repeated — and the built-bundle scan
+   **rule 13 of `apps/tizen/scripts/check-bundle.mjs`** (the v20x P1-8c rule below),
+   which reads the same names over the `app.js` the TV actually parses — dependencies
+   included — as part of both TV apps' `build` script.
 3. **`globalThis` (Chrome 71) exists on neither TV.** It works because both builds prepend
    the same ES5 polyfill, whose banner both bundle checks verify.
 
@@ -286,18 +291,29 @@ things are involved, and confusing them is the trap:
 
 - **Only the names in its list.** It is a string search, not a semantic analysis: a new
   Chrome 69+ API nobody thought of passes, and so would `arr['flat']()` or any other
-  indirect call. Add the name to `TOO_NEW` when you learn of one.
-- **Only first-party source.** Dependencies are not scanned. PixiJS and everything else in
-  the bundle are the build's problem — and the problem arrived exactly as this paragraph
-  predicted: the 2026-10-20 dependency bump (`b42d34f2`, PixiJS 8.20.1 → 8.22.0) silently broke
-  the TV boot because 8.22's shader-sampler parse (`ensureSamplerPrecision`) calls
-  `String.prototype.matchAll` (Chrome 73 — on neither TV) twice in renderer init, where the
-  2026-09-16 grep over the built `apps/tizen/dist/app.js` had found no `.flat(`, `.flatMap(`,
-  `.at(`, `Object.fromEntries`, `matchAll`, `replaceAll`, `structuredClone`, `queueMicrotask`
-  or `Promise.allSettled` at all; `apps/tizen/polyfills/string-match-all.js` is now prepended
-  in both TV builds right after the globalThis file, and the 2026-10-23 audit of a fresh build
-  finds only Pixi's two call sites and every other name absent. A dependency upgrade can
-  change that silently — six weeks was enough — so re-run that grep when one lands.
+  indirect call. Add the name to the shared list in `scripts/too-new-apis.mjs`
+  (`TOO_NEW_APIS`) when you learn of one — it feeds both guards.
+- **Only first-party source — the source scan; the bundle check scans everything.** The
+  built bundle is not the source test's problem, and since the v20x P1-8c rule it is not
+  unscanned either: **rule 13 of `apps/tizen/scripts/check-bundle.mjs`** re-greps the
+  built `app.js` itself with the same `scripts/too-new-apis.mjs` list, and the `build`
+  scripts of both TV apps run their bundle check after `vite build` — so every
+  `pnpm build` (CI included, via turbo) fails loud if any of these names reaches the
+  artifact. The exemption is positional, not by name: the two prepended ES5 polyfill
+  files' exact embedded regions (located by their on-disk text) are exempt, and
+  `String.prototype.matchAll` is tolerated only at Pixi 8.22's pinned two-site baseline
+  while the matchAll polyfill banner stands in front. This is the codification of the
+  standing rule that grew from the incident this paragraph predicted: the 2026-10-20
+  dependency bump (`b42d34f2`, PixiJS 8.20.1 → 8.22.0) silently broke the TV boot because
+  8.22's shader-sampler parse (`ensureSamplerPrecision`) calls `String.prototype.matchAll`
+  (Chrome 73 — on neither TV) twice in renderer init, where the 2026-09-16 grep over the
+  built `apps/tizen/dist/app.js` had found no `.flat(`, `.flatMap(`, `.at(`,
+  `Object.fromEntries`, `matchAll`, `replaceAll`, `structuredClone`, `queueMicrotask` or
+  `Promise.allSettled` at all; `apps/tizen/polyfills/string-match-all.js` is now
+  prepended in both TV builds right after the globalThis file, and the 2026-10-23 audit
+  of a fresh build finds only Pixi's two call sites and every other name absent — the
+  corpus rule 13 now greps automatically on every TV build, so a dependency upgrade that
+  changes that shape breaks the build instead of the boot.
 - **Only JavaScript.** DOM, CSS, WebGL and Web Audio surfaces between 68 and 69 are not
   checked by anything; WebGL1 is the baseline for a different reason (the Mali driver), and
   CSS in `index.html` is a hand-review item.
