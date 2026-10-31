@@ -47,6 +47,15 @@
  *     density pages and the PNG arm no SVG ones, so a page of the other encoding is a page loaded
  *     by nothing — and sized by the TV for nothing. The game widget ships no `.svg` page, so there
  *     the rule reads as "no stray svg".
+ * 13. No API newer than Chromium 68 survives into the built `app.js` ({@link checkBundleEngineFloor}
+ *     — the v20x P1-8c codification of the standing re-grep rule, {@link tooNewApiHits}): every
+ *     occurrence of the shared needle list {@link TOO_NEW_APIS} fails loud, except inside the two
+ *     prepended ES5 polyfill files' embedded regions, and except names a polyfill in front of the
+ *     bundle backs — today only `String.prototype.matchAll`, capped at PixiJS 8.22's two known
+ *     call sites while the matchAll banner stands ({@link BUNDLE_POLYFILLED}). The source scan
+ *     `test/integration/tv-engine-floor.test.ts` reads the same list; a dependency bump that
+ *     introduces one of these names now breaks the build instead of the TV boot (w14). The bench
+ *     widget keeps the rule — same engines, same floor.
  *
  * Exits non-zero with a readable report on failure. Checks `apps/tizen/dist` by default, or the
  * folder given as the first argument (`node scripts/check-bundle.mjs dist-bench` — `build:bench`).
@@ -60,7 +69,8 @@
  * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES},
  * {@link checkEraMedia}, {@link VIDEO_LEDGER_FILE}, {@link STILLS_LEDGER_FILE},
  * {@link SVG_PAGE_MAX_BYTES}, {@link svgPageSize}, {@link checkBenchAtlasPages},
- * {@link MEDIA_VIDEO_CLIP_COUNT}, {@link MEDIA_STILL_COUNT}, {@link bakedOffNote}.
+ * {@link MEDIA_VIDEO_CLIP_COUNT}, {@link MEDIA_STILL_COUNT}, {@link bakedOffNote},
+ * {@link checkBundleEngineFloor}.
  *
  * @module
  */
@@ -69,6 +79,13 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { parse } from 'acorn';
+import {
+  BUNDLE_POLYFILLED,
+  MATCH_ALL_BANNER,
+  POLYFILL_BANNER,
+  TOO_NEW_POLYFILLS,
+  tooNewApiHits,
+} from '../../../scripts/too-new-apis.mjs';
 import { BENCH_APP_ID, validateConfigXml } from './config-xml.mjs';
 import { APP_DIR, DIST_DIR } from './tizen-env.mjs';
 
@@ -78,15 +95,11 @@ import { APP_DIR, DIST_DIR } from './tizen-env.mjs';
  */
 export const WIDGET_FILES = ['app.js', 'config.xml', 'icon.png', 'index.html'];
 
-/** First characters of the globalThis polyfill banner that must open app.js. */
-export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
-
-/**
- * First characters of the matchAll polyfill banner, the first line of the file that must open
- * app.js right after the globalThis one — PixiJS 8.22 calls `String.prototype.matchAll`
- * (Chrome 73) during renderer init, and the TVs stop at Chromium 68/69 (w14).
- */
-export const MATCH_ALL_BANNER = '/* Shmup Cup — matchAll polyfill';
+// The polyfill banners and the post-68 needle list live in `scripts/too-new-apis.mjs` — one
+// shared source for this file's bundle audit (rule 13) and the source scan in
+// `test/integration/tv-engine-floor.test.ts`. Re-exported here: the webOS check and the tests
+// have always read them off this module's public API.
+export { MATCH_ALL_BANNER, POLYFILL_BANNER };
 
 /**
  * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
@@ -286,6 +299,77 @@ export function checkBenchAtlasPages(files, code) {
   }
   for (const file of onDisk) {
     if (!named.has(file)) problems.push(`${file} is in the bundle but named by nothing (stale?)`);
+  }
+  return problems;
+}
+
+/**
+ * Reads the two prepended ES5 polyfill files as the built `app.js` carries them (rule 13's exempt
+ * regions): their on-disk text is what `postBanner` embeds verbatim.
+ *
+ * @returns {Array<{ file: string, text: string | null }>} One entry per polyfill; `text` is
+ *   `null` when the file cannot be read — the region then grants no exemption.
+ */
+function readEnginePolyfillBodies() {
+  return TOO_NEW_POLYFILLS.map((entry) => ({
+    file: `apps/tizen/polyfills/${entry.file}`,
+    text: readOptional(join(APP_DIR, 'polyfills', entry.file)),
+  }));
+}
+
+/**
+ * Rule 13 (the v20x P1-8c codification): no API newer than Chromium 68 survives into the built
+ * bundle unbacked — the standing prose rule of `docs/dev/conventions.md` (the 2026-10-23 audit
+ * after the Pixi 8.22 boot break) turned into a check.
+ *
+ * @remarks
+ * Scans `app.js` with {@link tooNewApiHits} and the shared {@link TOO_NEW_APIS} list, outside the
+ * two prepended polyfill files' exact embedded regions (located by their on-disk text — a
+ * blanket name exemption would licence the very dependency site the polyfill exists for). A hit
+ * of a {@link BUNDLE_POLYFILLED} name is tolerated only while its banner stands in the bundle and
+ * only up to its baseline count — a new call site is a finding, not a licence. Dependencies are
+ * in here on purpose: unlike the source scan, this rule reads what the TV actually parses. The
+ * check runs on the game and the bench widget alike (same engines), and never on an empty bundle
+ * (the missing `app.js` is rule 5's to report).
+ *
+ * @param {string} code - The contents of `app.js` (`''` when missing).
+ * @param {Array<{ file: string, text: string | null }>} [polyfillBodies] - The exempt-region
+ *   sources (default: {@link readEnginePolyfillBodies}, the two committed files).
+ * @returns {string[]} The problems (empty when the bundle stays inside the floor).
+ */
+export function checkBundleEngineFloor(code, polyfillBodies = readEnginePolyfillBodies()) {
+  if (code === '') return [];
+  /** @type {Array<readonly [number, number]>} */
+  const exemptRanges = [];
+  for (const body of polyfillBodies) {
+    if (body.text === null) continue;
+    const at = code.indexOf(body.text);
+    if (at >= 0) exemptRanges.push([at, at + body.text.length]);
+  }
+  /** @type {Map<string, number>} */
+  const tolerated = new Map();
+  /** @type {string[]} */
+  const problems = [];
+  for (const hit of tooNewApiHits(code, exemptRanges)) {
+    const tolerance = BUNDLE_POLYFILLED.find((entry) => entry.needle === hit.needle);
+    if (tolerance !== undefined && code.includes(tolerance.banner)) {
+      const seen = (tolerated.get(hit.needle) ?? 0) + 1;
+      tolerated.set(hit.needle, seen);
+      if (seen > tolerance.maxCount) {
+        problems.push(
+          `app.js holds a \`${hit.needle}\` site beyond the known-good baseline of ` +
+            `${tolerance.maxCount} — ${tolerance.why} (surplus site at byte ${hit.index}); ` +
+            `audit it against ${tolerance.polyfill} before raising the baseline in ` +
+            'scripts/too-new-apis.mjs',
+        );
+      }
+      continue;
+    }
+    const near = code.slice(Math.max(0, hit.index - 60), hit.index + 60).replace(/\s+/g, ' ');
+    problems.push(
+      `app.js uses ${hit.what} — an API neither TV has, outside the prepended polyfills\n` +
+        `    at byte ${hit.index}: …${near}…`,
+    );
   }
   return problems;
 }
@@ -704,6 +788,10 @@ export function checkTizenBundle(distDir) {
 
   // 12. The SVG pages on disk are the SVG pages app.js names (plan R-SVG WO-1).
   problems.push(...checkBenchAtlasPages(files, code));
+
+  // 13. No API newer than Chromium 68 survives into the built bundle unbacked (v20x P1-8c — the
+  // game and the bench alike: same engines, same floor).
+  problems.push(...checkBundleEngineFloor(code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

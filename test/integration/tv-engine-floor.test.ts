@@ -12,7 +12,11 @@
  * So this file does what the lint cannot: it scans the shipped runtime sources for the handful of
  * APIs between Chrome 68 and the lint's own floor, and pins the shared build settings that make
  * one target correct for two engines. The scan is the same shape as the `.timeStamp` scan in
- * `eslint-rules.test.ts` — a belt beside the braces, for a rule no config can express.
+ * `eslint-rules.test.ts` — a belt beside the braces, for a rule no config can express. The names
+ * live in `scripts/too-new-apis.mjs`, shared with rule 13 of `apps/tizen/scripts/check-bundle.mjs`
+ * — the built-bundle audit (the v20x P1-8c codification of the standing re-grep after the Pixi
+ * 8.22 `matchAll` boot break), so one list guards the sources here and the dependency-carrying
+ * `app.js` there.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, posix } from 'node:path';
@@ -26,6 +30,7 @@ import {
   POLYFILL_BANNER,
 } from '../../apps/tizen/scripts/check-bundle.mjs';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../apps/webos/scripts/check-bundle.mjs';
+import { BUNDLE_POLYFILLED, TOO_NEW_APIS } from '../../scripts/too-new-apis.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -42,24 +47,10 @@ const RUNTIME_ROOTS = [
 ];
 
 /**
- * APIs Chrome 68 does not have. The first two are the ones the lint lets through (Chrome 69);
- * the rest are already lint errors and are re-checked here so one scan covers the whole floor.
+ * APIs Chrome 68 does not have — the shared list of `scripts/too-new-apis.mjs` (its docblock
+ * carries the story; the source scan and the built-bundle rule 13 read the same needles).
  */
-const TOO_NEW = [
-  ['.flat(', 'Array.prototype.flat (Chrome 69 — webOS 5 is 68)'],
-  ['.flatMap(', 'Array.prototype.flatMap (Chrome 69 — webOS 5 is 68)'],
-  ['Object.fromEntries', 'Object.fromEntries (Chrome 73)'],
-  ['Object.hasOwn', 'Object.hasOwn (Chrome 93)'],
-  ['Promise.allSettled', 'Promise.allSettled (Chrome 76)'],
-  ['Promise.any', 'Promise.any (Chrome 85)'],
-  ['.replaceAll(', 'String.prototype.replaceAll (Chrome 85)'],
-  ['.matchAll(', 'String.prototype.matchAll (Chrome 73)'],
-  ['structuredClone', 'structuredClone (Chrome 98)'],
-  ['queueMicrotask', 'queueMicrotask (Chrome 71)'],
-  ['WeakRef', 'WeakRef (Chrome 84)'],
-  ['FinalizationRegistry', 'FinalizationRegistry (Chrome 84)'],
-  ['.at(', 'Array.prototype.at (Chrome 92)'],
-] as const;
+const TOO_NEW = TOO_NEW_APIS;
 
 /**
  * Strips block and line comments so a docblock that *names* an API is not an offence.
@@ -240,7 +231,7 @@ describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03
     const offenders: string[] = [];
     for (const path of files) {
       const code = stripComments(read(path));
-      for (const [needle, what] of TOO_NEW) {
+      for (const { needle, what } of TOO_NEW) {
         if (code.includes(needle)) offenders.push(`${path}: ${what}`);
       }
     }
@@ -249,8 +240,8 @@ describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03
 
   it('would catch one if it appeared — the scan is not vacuous', () => {
     const sample = 'export const a = [1, [2]].flat();\nexport const b = Object.fromEntries([]);\n';
-    const hits = TOO_NEW.filter(([needle]) => stripComments(sample).includes(needle));
-    expect(hits.map(([, what]) => what)).toEqual([
+    const hits = TOO_NEW.filter(({ needle }) => stripComments(sample).includes(needle));
+    expect(hits.map(({ what }) => what)).toEqual([
       'Array.prototype.flat (Chrome 69 — webOS 5 is 68)',
       'Object.fromEntries (Chrome 73)',
     ]);
@@ -261,6 +252,38 @@ describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03
     expect(stripComments('// Object.hasOwn is banned.\nexport const d = 1;')).not.toContain(
       'Object.hasOwn',
     );
+  });
+
+  it('carries the 2026-10-23 built-bundle corpus — the list the manual audit grepped', () => {
+    // The precedent grep (w14, after the Pixi 8.22 boot break) is what rule 13 of
+    // apps/tizen/scripts/check-bundle.mjs now runs automatically on every TV build; its nine
+    // names must all stand in the shared list the rule reads.
+    const corpus = [
+      '.flat(',
+      '.flatMap(',
+      '.at(',
+      'Object.fromEntries',
+      '.matchAll(',
+      '.replaceAll(',
+      'structuredClone',
+      'queueMicrotask',
+      'Promise.allSettled',
+    ];
+    const needles = TOO_NEW.map(({ needle }) => needle);
+    for (const name of corpus) expect(needles, name).toContain(name);
+  });
+
+  it('tolerates only the polyfilled matchAll name in a built bundle, at Pixi’s two sites', () => {
+    // The single bundle tolerance is the name apps/tizen/polyfills/string-match-all.js exists
+    // for, and its baseline is the two call sites the 2026-10-23 audit found and no more.
+    expect(BUNDLE_POLYFILLED).toHaveLength(1);
+    const [tolerance] = BUNDLE_POLYFILLED;
+    expect(tolerance?.needle).toBe('.matchAll(');
+    expect(tolerance?.banner).toBe(MATCH_ALL_BANNER);
+    expect(tolerance?.maxCount).toBe(2);
+    expect(tolerance?.polyfill).toBe('apps/tizen/polyfills/string-match-all.js');
+    expect(typeof tolerance?.why).toBe('string');
+    expect(existsSync(join(repo, 'apps/tizen/polyfills/string-match-all.js'))).toBe(true);
   });
 
   it('keeps the one `globalThis` in shipped source behind the polyfill both TVs prepend', () => {
@@ -275,16 +298,21 @@ describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03
 
   it('polyfills the one Chrome 73 method PixiJS calls — one file, grep-clean', () => {
     // PixiJS 8.22's sampler-precision parse calls String.prototype.matchAll (Chrome 73) on both
-    // TVs (w14). The fix is the second prepended file, and the built-bundle floor audit is a
-    // plain name grep, so the polyfill may define the method only through defineProperty: its
-    // text — comments and strings included, it is prepended verbatim — spells none of the shapes.
+    // TVs (w14). The fix is the second prepended file. Rule 13 of the bundle check exempts this
+    // file's embedded region exactly, but the ES5 file stays grep-clean on principle (comments
+    // and strings included, it is prepended verbatim — it spells none of the shapes) so the
+    // built bundle's `.matchAll(` count stays exactly Pixi's two sites — the baseline
+    // BUNDLE_POLYFILLED pins. The ES5-only requirement is enforced (with an acorn parse) in
+    // apps/tizen/test/build/match-all-polyfill.test.ts; here the grep shape is what matters.
     const file = read('apps/tizen/polyfills/string-match-all.js');
     expect(MATCH_ALL_BANNER).toBe('/* Shmup Cup — matchAll polyfill');
     expect(file.startsWith(MATCH_ALL_BANNER)).toBe(true);
-    // The ES5-only requirement is enforced (with an acorn parse) in
-    // apps/tizen/test/build/match-all-polyfill.test.ts; here the grep shape is what matters.
-    for (const [needle, what] of TOO_NEW) {
+    // The globalThis polyfill is exempted the same way and must likewise speak no needle.
+    const globalThisFile = read('apps/tizen/polyfills/global-this.js');
+    expect(globalThisFile.startsWith(POLYFILL_BANNER)).toBe(true);
+    for (const { needle, what } of TOO_NEW) {
       expect(file, `the polyfill ${what}`).not.toContain(needle);
+      expect(globalThisFile, `the globalThis polyfill ${what}`).not.toContain(needle);
     }
   });
 });
@@ -451,5 +479,24 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
         "problems.push('app.js does not contain the matchAll polyfill banner')",
       );
     }
+  });
+
+  it('audits both built bundles for the shared needle list — rule 13 (v20x P1-8c)', () => {
+    // The standing prose rule became code: each app's `build` script runs its check-bundle after
+    // vite, and both checks call the Tizen check's shared rule over the built app.js (the webOS
+    // one imports it, like the budgets — no second implementation to forget).
+    for (const path of [
+      'apps/tizen/scripts/check-bundle.mjs',
+      'apps/webos/scripts/check-bundle.mjs',
+    ]) {
+      expect(read(path), path).toContain('checkBundleEngineFloor(');
+    }
+    expect(read('apps/webos/scripts/check-bundle.mjs')).toContain(
+      "from '../../tizen/scripts/check-bundle.mjs'",
+    );
+    // …and the rule is a plain name scan over the raw bundle: shared with this file's list.
+    expect(read('apps/tizen/scripts/check-bundle.mjs')).toContain(
+      "from '../../../scripts/too-new-apis.mjs'",
+    );
   });
 });

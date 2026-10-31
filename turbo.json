@@ -10,6 +10,7 @@
     "eslint.config.js",
     "scripts/assets/**",
     "scripts/frame.mjs",
+    "scripts/too-new-apis.mjs",
     "tsconfig.base.json",
     "tsconfig.tooling.json",
     "types/**",

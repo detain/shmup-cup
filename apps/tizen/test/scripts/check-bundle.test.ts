@@ -26,6 +26,7 @@ import {
   STILLS_LEDGER_FILE,
   VIDEO_LEDGER_FILE,
   WIDGET_FILES,
+  checkBundleEngineFloor,
   checkEraMedia,
   checkTizenBundle,
   pngSize,
@@ -461,5 +462,105 @@ describe('tizen/scripts/check-bundle rule 11 — the era media ships (v20x-VIDIO
     expect(checkEraMedia(dir, files, { SHMUP_NO_VIDEO: '1', SHMUP_NO_STILLS: '1' })).toEqual([]);
     expect(checkEraMedia(dir, files, { SHMUP_NO_VIDEO: '1' })).toHaveLength(1);
     expect(checkEraMedia(dir, files, { SHMUP_NO_STILLS: '1' })).toHaveLength(1);
+  });
+});
+
+describe('tizen/scripts/check-bundle rule 13 — the built bundle stays inside Chromium 68 (P1-8c)', () => {
+  // The Pixi 8.22 lesson turned into code: a post-68 name that reaches app.js must fail the
+  // build, not the TV boot. The polyfill regions and the banner-backed baseline are the rule's
+  // only grace — everything else is a landmine, named with its byte position.
+
+  /** The needle pair every bundle starts with, verbatim from the committed ES5 files. */
+  const BODIES = [
+    { file: 'apps/tizen/polyfills/global-this.js', text: polyfill },
+    { file: 'apps/tizen/polyfills/string-match-all.js', text: matchAllPolyfill },
+  ];
+
+  it('holds the fixture bundle (ES2018 built-ins only) clean', () => {
+    expect(checkBundleEngineFloor(GOOD_APP, BODIES)).toEqual([]);
+    expect(checkBundleEngineFloor(GOOD_APP)).toEqual([]);
+  });
+
+  it.each([
+    ['[1, [2]].flat()', 'Array.prototype.flat'],
+    ['[1, [2]].flatMap((x) => x)', 'Array.prototype.flatMap'],
+    ['Object.fromEntries([])', 'Object.fromEntries'],
+    ['Object.hasOwn({}, "a")', 'Object.hasOwn'],
+    ['Promise.allSettled([])', 'Promise.allSettled'],
+    ['Promise.any([])', 'Promise.any'],
+    ['"a".replaceAll("b", "c")', 'String.prototype.replaceAll'],
+    ['structuredClone({})', 'structuredClone'],
+    ['queueMicrotask(() => {})', 'queueMicrotask'],
+    ['new WeakRef({})', 'WeakRef'],
+    ['new FinalizationRegistry(() => {})', 'FinalizationRegistry'],
+    ['[].at(0)', 'Array.prototype.at'],
+  ])('names a planted %s outside the exempt regions', (snippet, name) => {
+    const code = `${GOOD_APP}\nvar x = ${snippet};\nvoid x;\n`;
+    const problems = checkBundleEngineFloor(code, BODIES);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(name);
+    expect(problems[0]).toContain('at byte');
+  });
+
+  it('reports every occurrence when one name is planted twice', () => {
+    const code = `${GOOD_APP}\nvar a = [1].flat();\nvar b = [2].flat();\nvoid a; void b;\n`;
+    expect(checkBundleEngineFloor(code, BODIES)).toHaveLength(2);
+  });
+
+  it('grants the matchAll baseline to the two Pixi call sites it was pinned from', () => {
+    // The 2026-10-23 audit's known-good bundle: exactly the two `.matchAll(` sites, with the
+    // polyfill standing in front. The fixture carries them; a real build is checked by
+    // apps/tizen/test/build/tizen-build.test.ts against the actual vite output.
+    const code = `${GOOD_APP}\nvar a = /re/g;\n` + "void 'x'.matchAll(a);\nvoid 'y'.matchAll(a);\n";
+    expect(checkBundleEngineFloor(code, BODIES)).toEqual([]);
+  });
+
+  it('rejects a third matchAll site — beyond the known-good baseline of 2', () => {
+    const code =
+      `${GOOD_APP}\nvar a = /re/g;\n` +
+      "void 'x'.matchAll(a);\nvoid 'y'.matchAll(a);\nvoid 'z'.matchAll(a);\n";
+    const problems = checkBundleEngineFloor(code, BODIES);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('`.matchAll(`');
+    expect(problems[0]).toContain('known-good baseline of 2');
+  });
+
+  it('keeps matchAll a landmine when the polyfill banner does not stand in front', () => {
+    // The baseline is a licence granted by the prepended polyfill alone — a bundle that lost the
+    // banner lost the licence (and rule 4 reports the missing banner right with it).
+    const bodies = [{ file: 'apps/tizen/polyfills/global-this.js', text: polyfill }];
+    const code = `${polyfill}\nvoid 'x'.matchAll(/re/g);\n`;
+    expect(code).not.toContain(MATCH_ALL_BANNER);
+    const problems = checkBundleEngineFloor(code, bodies);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('String.prototype.matchAll');
+  });
+
+  it('exempts exactly the embedded polyfill regions — not the name everywhere', () => {
+    // A bundle that embeds a polyfill body keeps its text clean; one that hides a fresh call in
+    // a string shaped like the banner region is still caught. The exemption is positional.
+    const disguised =
+      `${GOOD_APP}\nvar s = "/* Shmup Cup — globalThis polyfill */ junk";\nvoid s;\n` +
+      'var t = [1].flat();\nvoid t;\n';
+    const problems = checkBundleEngineFloor(disguised, BODIES);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('Array.prototype.flat');
+  });
+
+  it('checks a bundle even when the polyfill files cannot be read (no exemption granted)', () => {
+    const code = `${GOOD_APP}\nvar x = [1].flat();\nvoid x;\n`;
+    const bodies = [
+      { file: 'apps/tizen/polyfills/global-this.js', text: null },
+      { file: 'apps/tizen/polyfills/string-match-all.js', text: null },
+    ];
+    expect(checkBundleEngineFloor(code, bodies)).toHaveLength(1);
+  });
+
+  it('empty code is not a problem here (the missing script is rule 5’s)', () => {
+    expect(checkBundleEngineFloor('', BODIES)).toEqual([]);
+  });
+
+  it('the shipped fixture bundle passes the whole check with rule 13 wired in', () => {
+    expect(checkTizenBundle(dir).problems).toEqual([]);
   });
 });

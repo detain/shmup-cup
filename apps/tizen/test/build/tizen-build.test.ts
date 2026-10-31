@@ -16,6 +16,7 @@ import {
   MATCH_ALL_BANNER,
   POLYFILL_BANNER,
   TV_BENCH_MARKER,
+  checkBundleEngineFloor,
   checkTizenBundle,
 } from '../../scripts/check-bundle.mjs';
 import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
@@ -101,6 +102,14 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(types).not.toContain('ImportDeclaration');
     expect(types).not.toContain('ExportNamedDeclaration');
     expect(types).not.toContain('ExportDefaultDeclaration');
+  });
+
+  it('holds the Chromium-68 engine floor in the real bundle — rule 13 (v20x P1-8c)', () => {
+    // The known-good baseline of the 2026-10-23 audit, verified against this build: PixiJS 8.22's
+    // two polyfilled `.matchAll(` sites and nothing else post-68. A dependency bump that moves
+    // this shape breaks the build (here and in `pnpm build`) instead of the TV boot.
+    expect(checkBundleEngineFloor(code)).toEqual([]);
+    expect(code.split('.matchAll(').length - 1).toBe(2);
   });
 
   it('app.js is a trio of IIFEs (globalThis, matchAll, then the app) leaking no top-level bindings', () => {

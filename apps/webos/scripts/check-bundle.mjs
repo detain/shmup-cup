@@ -31,6 +31,11 @@
  * 12. The `.svg` pages on disk are the `.svg` pages `app.js` names, one encoding per build (the
  *     bench's SVG arm, plan R-SVG WO-1) — the Tizen check's `checkBenchAtlasPages`, imported like
  *     the budgets; the game widget ships no SVG page, so there it reads as "no stray svg".
+ * 13. No API newer than Chromium 68 survives into the built `app.js` unbacked (the v20x P1-8c
+ *     codification; webOS 5 is Chromium 68 itself) — the Tizen check's `checkBundleEngineFloor`,
+ *     imported like the budgets: the shared needle list fails loud on every occurrence outside the
+ *     two prepended polyfill files' embedded regions, save the names a polyfill in front backs
+ *     (today `String.prototype.matchAll`, capped at PixiJS 8.22's two call sites).
  *
  * Exits non-zero with a readable report on failure. Checks `apps/webos/dist` by default, or the
  * folder given as the first argument (`build:bench` checks `dist-bench`). The checks are also
@@ -56,6 +61,7 @@ import {
   bakedOffNote,
   checkAtlasManifest,
   checkBenchAtlasPages,
+  checkBundleEngineFloor,
   checkEraMedia,
   pngSize,
   svgPageSize,
@@ -252,6 +258,10 @@ export function checkWebosBundle(distDir) {
 
   // 12. the SVG pages on disk are the SVG pages app.js names (plan R-SVG WO-1).
   problems.push(...checkBenchAtlasPages(files, code));
+
+  // 13. no API newer than Chromium 68 survives into the built bundle unbacked (v20x P1-8c — the
+  // Tizen check's rule, webOS 5 being the older engine of the two; the bench stub keeps it too).
+  problems.push(...checkBundleEngineFloor(code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

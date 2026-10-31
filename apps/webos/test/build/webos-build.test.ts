@@ -17,7 +17,11 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { MATCH_ALL_BANNER, POLYFILL_BANNER } from '../../../tizen/scripts/check-bundle.mjs';
+import {
+  MATCH_ALL_BANNER,
+  POLYFILL_BANNER,
+  checkBundleEngineFloor,
+} from '../../../tizen/scripts/check-bundle.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { stillsShippedFiles, videoShippedFiles } from '../../../../vite.shared.js';
 import { WEBOS_APP_FILES, checkWebosBundle } from '../../scripts/check-bundle.mjs';
@@ -101,6 +105,12 @@ describe('webos build output (vite build → dist/) — M3-03', () => {
     expect(code.startsWith(POLYFILL_BANNER)).toBe(true);
     expect(code).toContain(MATCH_ALL_BANNER);
     expect(code).not.toMatch(/\bimport\.meta\b/);
+  });
+
+  it('holds the Chromium-68 engine floor in the real bundle — rule 13 (v20x P1-8c)', () => {
+    // The shared rule (the Tizen check's, imported like the budgets) over the webOS build too —
+    // the older engine is exactly the one a post-68 dependency API breaks.
+    expect(checkBundleEngineFloor(code)).toEqual([]);
   });
 
   it('loads it with a classic deferred tag, never a module', () => {

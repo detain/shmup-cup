@@ -185,6 +185,15 @@ describe('webos check-bundle (M3-03)', () => {
     expect(problems).toContain('app.js does not start with the globalThis polyfill banner');
   });
 
+  it('rule 13 (v20x P1-8c): rejects a post-68 API in the built bundle — webOS is the 68 engine', () => {
+    goodBundle();
+    put('app.js', `${BANNER_PAIR}var x = [1, [2]].flat();\nvoid x;\n`);
+    const { problems } = checkWebosBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('Array.prototype.flat (Chrome 69 — webOS 5 is 68)');
+    expect(problems[0]).toContain('at byte');
+  });
+
   it('passes an invalid appinfo.json straight through from the validator', () => {
     goodBundle();
     put('appinfo.json', '{"id":"nope"}');
