@@ -16,10 +16,11 @@
  * that does not belong under the law goes to {@link NOT_SCANNED} with a reason, and its absence
  * from that list fails the completeness pass). The page-touch family is
  * {@link METHOD_NAMES} — creation and query (`createElement`, `querySelector`, `getElementById`,
- * …), the attribute surface, and node-graph mutation (`appendChild`, `removeChild`, …) — counted
- * where they are **called** (a plain read of a property named `createElement`, like the
- * page-image factory's own option, is not a touch), and {@link FIELD_NAMES} — style / class /
- * text writes, node-graph companions (`parentNode`, `nextSibling`, …) and the document surface
+ * …), the attribute surface, and node-graph mutation (`appendChild`, `removeChild`, `append`,
+ * `insertAdjacentHTML`, …) — counted where they are **called** (a plain read of a property
+ * named `createElement`, like the page-image factory's own option, is not a touch), and
+ * {@link FIELD_NAMES} — style / class / text writes, the data-attribute mirror (`dataset`),
+ * node-graph companions (`parentNode`, `nextSibling`, …) and the document surface
  * (`document`, `navigator`, `documentElement`) however reached, bare or through the injected
  * `win` — counted on **any** access; plus the media element constructors `new Image()` /
  * `new Audio()` as
@@ -101,13 +102,20 @@ const METHOD_NAMES: ReadonlySet<string> = new Set([
   'removeChild',
   'insertBefore',
   'replaceChild',
+  // The ChildNode / ParentNode mutators — the same page-graph writes under their newer names.
+  'append',
+  'prepend',
+  'before',
+  'after',
+  'replaceChildren',
+  'insertAdjacentHTML',
 ]);
 
 /**
  * The DOM fields of the family — counted on any access (read or write). Style, class and text;
- * the node-graph companions of the mutation surface; and the document surface, however reached
- * (through an injected `win` or bare). The names absent from both lists are reasoned in the
- * module docblock.
+ * the `dataset` mirror; the node-graph companions of the mutation surface; and the document
+ * surface, however reached (through an injected `win` or bare). The names absent from both lists
+ * are reasoned in the module docblock.
  */
 const FIELD_NAMES: ReadonlySet<string> = new Set([
   // Style, class and text.
@@ -126,6 +134,8 @@ const FIELD_NAMES: ReadonlySet<string> = new Set([
   'firstChild',
   'lastChild',
   'childNodes',
+  // The data-attribute mirror: `el.dataset.x = …` reaches the page through this field alone.
+  'dataset',
   // The document surface.
   'documentElement',
   'document',
@@ -300,6 +310,61 @@ function scanDomTouches(file: string, text: string): DomTouch[] {
   };
   visit(source);
   return hits;
+}
+
+/**
+ * The name of the boot's frame-body callback, read from the boot source itself — the ban on DOM
+ * touches inside the per-frame body must follow the callback's **identity**, never a literal the
+ * rename could walk past.
+ *
+ * @remarks
+ * The drift model, both ways: rename `onFrame` (packages/shell/src/boot/index.ts) and the ban
+ * follows automatically — this derivation reads the identifier the boot hands to
+ * `startFrameLoop`; change the call shape instead — drop the call, inline the arrow, hand two
+ * differently named callbacks — and the derivation throws here, red in the frame-body test, so
+ * the ban cannot go vacuous unnoticed while its allow-list entries follow a new name.
+ *
+ * @returns The callback identifier of the boot's `startFrameLoop(win, callback)` call.
+ */
+function frameBodyCallbackName(): string {
+  const file = 'packages/shell/src/boot/index.ts';
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(join(repo, file), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const names = new Set<string>();
+  let calls = 0;
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'startFrameLoop'
+    ) {
+      calls += 1;
+      const callback = node.arguments[1];
+      if (callback === undefined || !ts.isIdentifier(callback)) {
+        throw new Error(
+          `${file}: the startFrameLoop call does not name its callback identifier — the ` +
+            'frame-body ban cannot derive the frame body (repoint this test with the boot)',
+        );
+      }
+      names.add(callback.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  if (calls !== 1 || names.size !== 1) {
+    throw new Error(
+      `${file}: expected exactly one \`startFrameLoop(win, callback)\` call to derive the ` +
+        `frame-body name from, found ${calls} call(s) naming ` +
+        `${[...names].join(', ') || 'nothing'} — the frame-body ban must be repointed with ` +
+        'the boot, not left to go vacuous',
+    );
+  }
+  return [...names][0];
 }
 
 /**
@@ -914,7 +979,7 @@ const ALLOWED: readonly AllowedDomTouch[] = [
 /** What an unlisted touch is told to do. */
 const FIX =
   'reach the page only at a pinned cold site — move it off the frame path, or add it to ALLOWED ' +
-  'with the reason it is cold (the per-frame body itself stays clean: see the onFrame check)';
+  'with the reason it is cold (the per-frame body itself stays clean: see the frame-body check)';
 
 describe('integration: the shipped code touches the DOM only at the pinned cold sites (v20x P1-7)', () => {
   const trees = scannedTrees();
@@ -984,12 +1049,14 @@ describe('integration: the shipped code touches the DOM only at the pinned cold 
   });
 
   it('keeps the frame body itself DOM-free — the law §8.5 measured', () => {
-    // onFrame is the whole rAF body (packages/shell/src/boot/index.ts). It reaches the page
-    // only through markScene → markCanvas, a separately named symbol; a touch standing inside
-    // the frame body is the exact regression this gate was built for, and it stays unpinable:
-    // no allow-list entry may name it.
-    for (const touch of touches) expect(touch.symbol.split('.')).not.toContain('onFrame');
-    for (const entry of ALLOWED) expect(entry.symbol.split('.')).not.toContain('onFrame');
+    // The frame body is whatever callback the boot hands to `startFrameLoop` (today `onFrame`;
+    // frameBodyCallbackName derives the name from the boot's own AST — a rename follows, a
+    // changed call shape throws). It reaches the page only through markScene → markCanvas, a
+    // separately named symbol; a touch standing inside the frame body is the exact regression
+    // this gate was built for, and it stays unpinable: no allow-list entry may name it.
+    const frameBody = frameBodyCallbackName();
+    for (const touch of touches) expect(touch.symbol.split('.')).not.toContain(frameBody);
+    for (const entry of ALLOWED) expect(entry.symbol.split('.')).not.toContain(frameBody);
   });
 
   it('keeps the allow-list well formed', () => {
@@ -1012,6 +1079,9 @@ describe('integration: the shipped code touches the DOM only at the pinned cold 
       "  const el = doc['createElement']('div');",
       '  el.textContent = String(now);',
       '  const img = new Image();',
+      '  parent.append(el);',
+      "  el.dataset.shmupMark = '1';",
+      "  el.insertAdjacentHTML('beforeend', '<i></i>');",
       '  const factory = options.createElement; // an option read, not a page touch',
       '  new ImageSource(); // not a media element constructor',
       '  const pool = { remove(i: number) {} }; // domain remove, not the DOM one',
@@ -1025,6 +1095,9 @@ describe('integration: the shipped code touches the DOM only at the pinned cold 
       'onFrame.el=createElement@3',
       'onFrame=textContent@4',
       'onFrame.img=new Image@5',
+      'onFrame=append@6',
+      'onFrame=dataset@7',
+      'onFrame=insertAdjacentHTML@8',
     ]);
     // …and the problems report names an unlisted touch, a drifted count and a stale entry.
     expect(
@@ -1053,6 +1126,9 @@ describe('integration: the shipped code touches the DOM only at the pinned cold 
       'sample.ts › onFrame.el = createElement (line 3): a DOM touch — fix it',
       'sample.ts › onFrame = textContent (line 4): a DOM touch — fix it',
       'sample.ts › onFrame.img = new Image (line 5): a DOM touch — fix it',
+      'sample.ts › onFrame = append (line 6): a DOM touch — fix it',
+      'sample.ts › onFrame = dataset (line 7): a DOM touch — fix it',
+      'sample.ts › onFrame = insertAdjacentHTML (line 8): a DOM touch — fix it',
     ]);
   });
 });
