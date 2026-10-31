@@ -105,6 +105,13 @@ export interface PlatformLifecycle {
  * plan v20x P1-7). The live hosts answer these getters from the window itself, so a frame
  * loop that polled them would re-read the display every frame; instead the boot sizes the
  * canvas once and re-sizes it on the `resize` listener, which never fires during TV play.
+ * The getters are live reads that allocate per read, not cached fields: `apps/tizen/src/
+ * platform/index.ts:415-419`, `apps/webos/src/platform/index.ts:307-311` and `apps/web/src/
+ * platform/index.ts:345-349` each build `cssWidth` / `cssHeight` from a `displaySize()`
+ * closure that returns a fresh `{ width, height }` literal of `window.innerWidth` /
+ * `window.innerHeight` (`apps/tizen/src/boot/index.ts:525`, `apps/webos/src/boot/
+ * index.ts:369`, `apps/web/src/boot/index.ts:646`). Enforced by
+ * `test/integration/layout-inquiry.test.ts` (no forced-layout inquiry in shipped source).
  */
 export interface PlatformDisplay {
   /** Width of the available viewport in CSS pixels (1920 on a Tizen 1080p web app). */
