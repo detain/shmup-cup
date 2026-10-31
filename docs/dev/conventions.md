@@ -662,6 +662,26 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   `test/scripts/assets` — the `interim-pipeline.test.ts` floor in particular — and
   `test/integration/render-groups.test.ts` in its gate set, the lesson and mechanism the
   `c86ad478` / `59d14ed8` commit bodies carry.
+- **The frame-path DOM-free law is a machine check, not prose** (plan v20x P1-7; the 2026-10-27
+  DOM-rules lane's §8.5 measurement): `test/integration/frame-path-dom-free.test.ts` parses every
+  package's and app's `src/` from disk (core excepted — the purity lint owns it) and freezes the
+  conclusion that shipped code reaches the page only at pinned **cold** sites. The family: the
+  DOM methods (creation/query, attributes, the node-graph mutators — counted where **called**),
+  the DOM fields (`style`, `dataset`, node-graph companions, the document surface — counted on
+  any reach) and `new Image()` / `new Audio()`. Each hit is pinned in a rot-proof `ALLOWED` by
+  file, symbol path, API and count — an entry that grows, shrinks or dies fails like an unlisted
+  touch — and the per-frame body's own ban derives the callback's name from the boot's AST (the
+  `startFrameLoop(win, callback)` call), so a rename moves the ban and a changed call shape reds
+  the gate instead of going vacuous. Print the live surface with `SHMUP_DOM_FREE_PRINT=1` to
+  write entries; a new touch moves off the frame path or joins the list with its cold reason.
+- **The layout-inquiry law is a hard zero** (plan v20x P1-7, §8.5 again; the same lane's
+  layout-queries report): `test/integration/layout-inquiry.test.ts` scans the shipped trees (core
+  included) for `getBoundingClientRect` / `getClientRects`, the `offset*` / `client*` / `scroll*`
+  fields and `getComputedStyle` — every read of them forces a synchronous style/layout flush on
+  the frame thread — with **no allow-list**, because the measurement found no first-party site to
+  write. Comments are stripped, so naming the family in prose cannot offend; dependency
+  residuals (Pixi's per-pointermove rect read, closed on the TVs by P0-5's `eventFeatures` off)
+  are `dep-grep-floor.test.ts`'s and the bundle greps' ground, not this file's.
 - **Allocation guards** run in the shared worker pool, next to everything else: the guard lands
   V8's background compiles before every round it measures and leaves compiled code out of its
   count, so the full suite's load no longer shows in its result

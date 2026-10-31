@@ -39,9 +39,10 @@ const GLSL_CORPUS = [
 
 /**
  * The API-name shapes `test/integration/tv-engine-floor.test.ts` greps the shipped
- * sources for — the same list the built TV bundles are audited with (that test's
- * `TOO_NEW`, copied because it is not exported). The polyfill is prepended to the
- * bundles verbatim, so it must carry none of them, not even in prose.
+ * sources for — the same list the built TV bundles are audited with (the shared
+ * `scripts/too-new-apis.mjs` `TOO_NEW_APIS` needles, written out here as bare
+ * shapes). The polyfill is prepended to the bundles verbatim, so it must carry
+ * none of them, not even in prose.
  */
 const BANNED_SHAPES = [
   '.flat(',
