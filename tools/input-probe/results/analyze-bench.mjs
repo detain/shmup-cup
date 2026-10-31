@@ -12,7 +12,12 @@
  *    median / min / max across that version's runs.
  * 2. **Noise floor.** From the same-version repeats: per scenario the relative spread of the synced p95
  *    (`(max − min) / median`) and the absolute spread of the two-tick share (`max − min`, percentage points);
- *    the band is the median and the p90 of those spreads across scenarios.
+ *    the band is the median and the p90 of those spreads across scenarios. The band is **knee-aware**
+ *    (report `v20x-CRT` §4): a row whose frame-ms median sits in the 16.7–33.3 ms vsync knee with a two-tick
+ *    share of 10–95 % spends its spread on frames flipping across the panel's boundary at ≈ 6 points per ms of
+ *    drift between the sessions, so such a row is graded against its own drift and flagged in every table that
+ *    made a call on it — a flat p90 reads those rows as outliers (the band's median belongs to the saturated
+ *    rows off the lever).
  * 3. **GL 1 vs GL 2.** Only with ≥ {@link MIN_RUNS_FOR_VERDICT} runs of each version. A scenario's difference
  *    (of the two versions' medians) is called only beyond the band's **p90** and with the versions' run ranges
  *    apart; the overall shift (the median of the per-scenario differences) only beyond the **run-to-run drift**
@@ -124,6 +129,34 @@ export const TWO_TICK_TV_PROFILE_POINTS = 10;
 
 /** §13: WebGL 2's synced render must be at least this much lower to count as "clearly better". */
 export const WEBGL2_GAIN = 0.1;
+
+/**
+ * The **vsync knee** (report `v20x-CRT` §4): the band of free-running frame medians between one and two
+ * 60 Hz frames. A repeated row whose frame median sits inside it does not price its work in the two-tick
+ * share — frames flip across the panel's boundary — so 1 ms of machine-state drift between two sessions of
+ * the *same* scenario moves the share by ~{@link LEVER_POINTS_PER_MS} points, while the same drift moves a
+ * row at share ≈ 0 or ≈ 1 nothing at all. That is why the flat noise band reads the knee rows as outliers:
+ * the band's median (3.2 points on the Oct-29/31 pool) is dominated by the rows off the lever.
+ */
+export const KNEE_FRAME_MIN_MS = 16.7;
+
+/** The upper edge of the vsync knee (ms): two 60 Hz frames, past which the share saturates at ≈ 1. */
+export const KNEE_FRAME_MAX_MS = 33.3;
+
+/** The two-tick share (0 … 1) at or above which the lever has real gain (below it the share ≈ 0: gain ≈ 0). */
+export const KNEE_SHARE_MIN = 0.1;
+
+/** The two-tick share (0 … 1) at or below which the lever has real gain (above it the row saturates). */
+export const KNEE_SHARE_MAX = 0.95;
+
+/** Points of two-tick share one ms of frame-ms drift projects inside the knee (100 points per 16.7 ms frame). */
+export const LEVER_POINTS_PER_MS = 6;
+
+/**
+ * Points the binomial sampling of a share of ~50 % over ~400–700 frames adds to a spread on its own
+ * (report `v20x-CRT` §1: ±4–5 points at n ≈ 400–700) — the slack allowed on a knee row's lever projection.
+ */
+export const LEVER_SAMPLE_PTS = 5;
 
 /** Plan R3-04: a zone change (or a lazy zone load) must take at most this long on the M7, ms. */
 export const ZONE_LOAD_TARGET_MS = 2000;
@@ -288,6 +321,99 @@ function pair(d) {
  */
 function p95Of(d) {
   return Array.isArray(d) && typeof d[2] === 'number' && Number.isFinite(d[2]) ? d[2] : null;
+}
+
+/**
+ * The median free-running frame time (ms) of a record — `frameMs` is the `[min, p50, p95, max]` tuple
+ * `summarizeSeries` writes (`apps/tizen/src/bench/stats.ts`), the row's own place on the vsync ladder.
+ *
+ * @param {any} r - the record.
+ * @returns {number | null} the frame median, or null when the record carries no `frameMs` at all (a
+ *   scenario stub, or a session recorded before the field: such a row cannot be graded for the knee).
+ * @throws {TypeError} when the record carries a `frameMs` that is not the four-number tuple — an unknown
+ *   shape is read loud, never as "no knee data".
+ */
+function frameMsOf(r) {
+  const d = r.frameMs;
+  if (d === undefined || d === null) return null;
+  if (!Array.isArray(d) || d.length !== 4 || d.some((v) => typeof v !== 'number' || !Number.isFinite(v))) {
+    throw new TypeError(
+      `record ${typeof r.scenario === 'string' ? r.scenario : '?'}: frameMs must be [min, p50, p95, max], got ${JSON.stringify(d)}`,
+    );
+  }
+  return d[1];
+}
+
+/**
+ * Whether an aggregated row sits in the **vsync knee**, and the figures the knee grades a spread with
+ * (report `v20x-CRT` §4). A row is on the lever only when all three hold: it is measured at least twice
+ * ({@link MIN_RUNS_FOR_VERDICT} — a spread needs repeats), its frame-ms median sits inside
+ * [{@link KNEE_FRAME_MIN_MS}, {@link KNEE_FRAME_MAX_MS}], and its two-tick share median inside
+ * [{@link KNEE_SHARE_MIN}, {@link KNEE_SHARE_MAX}] — one boundary alone reads as noise, the pair is the
+ * lever. A row whose records carry no `frameMs` is never a knee row (it cannot be placed on the ladder), and
+ * one that carries it in only some of its runs stays ungraded rather than guessed.
+ *
+ * @param {any} a - one {@link aggregateRuns} row (its `twoTick` and `frame` {@link runStats}).
+ * @returns {{lever: boolean, frameMs: number | null, frameDriftMs: number | null, share: number | null}}
+ *   the flag, the row's frame-ms median, its drift across the runs that measured it (max − min, ms — null
+ *   with a single run), and its share median (0 … 1).
+ * @throws {TypeError} on a value that is not an aggregate row.
+ */
+export function kneeGrade(a) {
+  if (a === null || typeof a !== 'object') throw new TypeError(`kneeGrade: not an aggregate row: ${JSON.stringify(a)}`);
+  const frame = a.frame;
+  const twoTick = a.twoTick;
+  if (twoTick !== null && twoTick !== undefined && typeof twoTick.median !== 'number') {
+    throw new TypeError(`kneeGrade: twoTick.median is not a number in ${JSON.stringify(twoTick)}`);
+  }
+  const share = twoTick === null || twoTick === undefined ? null : twoTick.median / 100;
+  if (frame === null || frame === undefined) return { lever: false, frameMs: null, frameDriftMs: null, share };
+  if (typeof frame.median !== 'number' || typeof frame.min !== 'number' || typeof frame.max !== 'number') {
+    throw new TypeError(`kneeGrade: frame is not a runStats value in ${JSON.stringify(frame)}`);
+  }
+  const repeats = frame.n >= MIN_RUNS_FOR_VERDICT;
+  const frameDriftMs = repeats ? frame.max - frame.min : null;
+  const onFrameKnee = frame.median >= KNEE_FRAME_MIN_MS && frame.median <= KNEE_FRAME_MAX_MS;
+  const onShareKnee = share !== null && share >= KNEE_SHARE_MIN && share <= KNEE_SHARE_MAX;
+  // The lever is a statement about a **spread**, so it needs the repeats that produce one: a row whose
+  // records carry `frameMs` in only one of its runs cannot be placed on the ladder and stays ungraded.
+  return { lever: repeats && onFrameKnee && onShareKnee, frameMs: frame.median, frameDriftMs, share };
+}
+
+/**
+ * The knee-aware grade of one row's own two-tick spread (what {@link noiseFloor} samples): beyond the flat
+ * band is an outlier **only** when the row's own frame-ms drift cannot account for it. A knee row is
+ * allowed `drift × LEVER_POINTS_PER_MS + LEVER_SAMPLE_PTS` points — the lever projection plus the binomial
+ * sampling of the share itself — and a spread inside that is drift-amplified, not a finding. Rows outside
+ * the knee grade on the band alone, exactly as they always did.
+ *
+ * @param {any} s - one {@link noiseFloor} sample (`{twoTick, lever, frameDriftMs}`).
+ * @param {number | null | undefined} p90 - the band's p90 (points), or null/undefined without a band.
+ * @returns {{grade: 'none' | 'within' | 'lever' | 'outlier', allowance: number | null, unexplained: number | null}}
+ *   the grade — `none` when there is nothing to grade — the spread the row may spend on its lever
+ *   (null off it), and the points beyond that allowance (null off it or within it).
+ * @throws {TypeError} on a value that is not a noise sample.
+ */
+export function gradeSpread(s, p90) {
+  if (s === null || typeof s !== 'object' || typeof s.lever !== 'boolean' || !('twoTick' in s)) {
+    throw new TypeError(`gradeSpread: not a noise sample: ${JSON.stringify(s)}`);
+  }
+  if (s.twoTick !== null && (typeof s.twoTick !== 'number' || !Number.isFinite(s.twoTick))) {
+    throw new TypeError(`gradeSpread: twoTick is not a number: ${JSON.stringify(s.twoTick)}`);
+  }
+  if (s.twoTick === null || typeof p90 !== 'number' || !Number.isFinite(p90)) {
+    return { grade: 'none', allowance: null, unexplained: null };
+  }
+  if (s.twoTick <= p90) return { grade: 'within', allowance: null, unexplained: null };
+  if (s.lever !== true) return { grade: 'outlier', allowance: null, unexplained: null };
+  if (typeof s.frameDriftMs !== 'number') {
+    throw new TypeError(`gradeSpread: a knee row has no frame-ms drift to grade with: ${JSON.stringify(s)}`);
+  }
+  const allowance = s.frameDriftMs * LEVER_POINTS_PER_MS + LEVER_SAMPLE_PTS;
+  const unexplained = s.twoTick - allowance;
+  return unexplained > 0
+    ? { grade: 'outlier', allowance, unexplained }
+    : { grade: 'lever', allowance, unexplained: null };
 }
 
 /**
@@ -816,8 +942,10 @@ export function expandSessionArgs(paths) {
  *
  * @param {any[]} runs - the runs (`{session, gl, byScenario}`), oldest first.
  * @returns {Map<string, any>} per scenario id: `{scenario, size, density, variant, base, knob, index, runs, sync,
- *   render, twoTick}` — `sync` / `render` the synced and CPU render p95 (ms) and `twoTick` the two-tick share
- *   (percent) as {@link runStats}, each over the runs that measured the scenario.
+ *   render, twoTick, frame, knee}` — `sync` / `render` the synced and CPU render p95 (ms) and `twoTick` the
+ *   two-tick share (percent) as {@link runStats}, `frame` the free-running frame median (ms) the same way
+ *   (null for a record set without `frameMs`), `knee` its {@link kneeGrade}; each over the runs that
+ *   measured the scenario.
  */
 export function aggregateRuns(runs) {
   const acc = new Map();
@@ -838,6 +966,7 @@ export function aggregateRuns(runs) {
           syncValues: [],
           renderValues: [],
           twoTickValues: [],
+          frameValues: [],
           // The cull walk's own figures (plan R-SVG WO-2), from the first run that measured them:
           // a fact about the scene's size, not a timing, so one sample says it.
           cull: null,
@@ -849,11 +978,12 @@ export function aggregateRuns(runs) {
       a.syncValues.push(p95Of(r.syncedMs));
       a.renderValues.push(p95Of(r.renderMs));
       a.twoTickValues.push(typeof r.twoTickShare === 'number' ? r.twoTickShare * 100 : null);
+      a.frameValues.push(frameMsOf(r));
     }
   }
   const out = new Map();
   for (const [id, a] of acc) {
-    out.set(id, {
+    const row = {
       scenario: a.scenario,
       size: a.size,
       density: a.density,
@@ -865,8 +995,11 @@ export function aggregateRuns(runs) {
       sync: runStats(a.syncValues),
       render: runStats(a.renderValues),
       twoTick: runStats(a.twoTickValues),
+      frame: runStats(a.frameValues),
       cull: a.cull,
-    });
+    };
+    row.knee = kneeGrade(row);
+    out.set(id, row);
   }
   return out;
 }
@@ -874,13 +1007,16 @@ export function aggregateRuns(runs) {
 /**
  * The noise floor from same-version repeats: per scenario and WebGL version with ≥ 2 runs, the relative spread
  * of the synced p95 (`(max − min) / median`) and the absolute spread of the two-tick share (`max − min`, points);
- * the band is the median and the p90 of each across those scenarios.
+ * the band is the median and the p90 of each across those scenarios. Every sample carries its row's
+ * {@link kneeGrade} — `lever`, `frameMs`, `frameDriftMs` — so a spread beyond the band can be graded against
+ * the vsync lever it sits on (see {@link gradeSpread}) instead of read as an outlier.
  *
  * @param {Map<number, Map<string, any>>} aggregates - {@link aggregateRuns} per WebGL version.
- * @returns {{samples: {gl: number, scenario: string, relSync: number | null, twoTick: number | null}[],
- *   relSync: {n: number, median: number, p90: number, worst: any} | null,
- *   twoTick: {n: number, median: number, p90: number, worst: any} | null} | null} the band, or null without a
- *   single repeated scenario.
+ * @returns {{samples: {gl: number, scenario: string, relSync: number | null, twoTick: number | null,
+ *   lever: boolean, frameMs: number | null, frameDriftMs: number | null}[],
+ *   relSync: {n: number, median: number, p90: number, leverN: number, worst: any} | null,
+ *   twoTick: {n: number, median: number, p90: number, leverN: number, worst: any} | null} | null} the band, or
+ *   null without a single repeated scenario.
  */
 export function noiseFloor(aggregates) {
   const samples = [];
@@ -888,7 +1024,9 @@ export function noiseFloor(aggregates) {
     for (const a of scenarios.values()) {
       const relSync = a.sync !== null && a.sync.n >= 2 && a.sync.median > 0 ? (a.sync.max - a.sync.min) / a.sync.median : null;
       const twoTick = a.twoTick !== null && a.twoTick.n >= 2 ? a.twoTick.max - a.twoTick.min : null;
-      if (relSync !== null || twoTick !== null) samples.push({ gl, scenario: a.scenario, relSync, twoTick });
+      if (relSync === null && twoTick === null) continue;
+      const knee = a.knee !== undefined ? a.knee : kneeGrade(a);
+      samples.push({ gl, scenario: a.scenario, relSync, twoTick, lever: knee.lever, frameMs: knee.frameMs, frameDriftMs: knee.frameDriftMs });
     }
   }
   return noiseFromSamples(samples);
@@ -897,8 +1035,9 @@ export function noiseFloor(aggregates) {
 /**
  * The bands of a list of spread samples (see {@link noiseFloor}).
  *
- * @param {{gl: number, scenario: string, relSync: number | null, twoTick: number | null, output?: string}[]} samples - per
- *   scenario and version, the spreads of its repeated runs.
+ * @param {{gl: number, scenario: string, relSync: number | null, twoTick: number | null, lever?: boolean,
+ *   frameMs?: number | null, frameDriftMs?: number | null, output?: string}[]} samples - per scenario and
+ *   version, the spreads of its repeated runs.
  * @returns {any | null} the band (`{samples, relSync, twoTick}`), or null for no sample.
  */
 function noiseFromSamples(samples) {
@@ -908,7 +1047,8 @@ function noiseFromSamples(samples) {
     if (with_.length === 0) return null;
     const values = with_.map((s) => s[key]);
     const worst = with_.reduce((w, s) => (s[key] > w[key] ? s : w));
-    return { n: values.length, median: quantile(values, 0.5), p90: quantile(values, 0.9), worst };
+    const leverN = with_.filter((s) => s.lever === true).length;
+    return { n: values.length, median: quantile(values, 0.5), p90: quantile(values, 0.9), leverN, worst };
   };
   return { samples, relSync: band('relSync'), twoTick: band('twoTick') };
 }
@@ -1319,6 +1459,7 @@ function knobTable(campaign, gl) {
     });
   if (knobRows.length === 0) return [];
   const noise = campaign.noise;
+  let kneeMarked = false;
   const rows = knobRows.map((k) => {
     const plain = aggOf(agg, k.size, k.base);
     const d = pairedDelta(runs, (run) => {
@@ -1326,6 +1467,11 @@ function knobTable(campaign, gl) {
       const base = recordOf(run, k.size, k.base);
       return row === null || base === null ? null : [row, base];
     });
+    // A knee row's difference rides the lever too (report v20x-CRT §4): mark the call the band made on it.
+    const onKnee = k.knee?.lever === true || plain?.knee?.lever === true;
+    const twoTickCall = noise === null || d.points === null ? '—' : call(d.points.median, noise.twoTick?.p90);
+    const mark = onKnee === true && twoTickCall === 'beyond';
+    if (mark) kneeMarked = true;
     return [
       k.size,
       k.variant,
@@ -1335,7 +1481,7 @@ function knobTable(campaign, gl) {
       plain === null ? '—' : num(plain.sync?.median, 1),
       num(k.sync?.median, 1),
       d.ratio === null ? '—' : num(d.ratio.median) + '×',
-      noise === null || d.points === null ? '—' : call(d.points.median, noise.twoTick?.p90),
+      mark ? twoTickCall + '†' : twoTickCall,
       noise === null || d.ratio === null ? '—' : call(d.ratio.median - 1, noise.relSync?.p90),
     ];
   });
@@ -1348,6 +1494,7 @@ function knobTable(campaign, gl) {
       ? 'No noise floor (one run per version): every knob difference is unjudged.'
       : `"beyond" = the difference exceeds the noise floor’s p90 (two-tick ${num(noise.twoTick?.p90, 1)} points, synced` +
         ` p95 ${pct(noise.relSync?.p90)}${noise.pooled === true ? ', pooled over all outputs' : ''}); "within" = no call.`,
+    ...(kneeMarked ? ['', kneeFootnote()] : []),
     // The cull rows say what the walk walked (plan R-SVG WO-2): the pairing above prices it, these
     // lines say what was priced. Only rows whose records carry the additive `cull` field appear.
     ...knobRows.flatMap((k) =>
@@ -1360,6 +1507,80 @@ function knobTable(campaign, gl) {
               ` bit, over ${k.cull.passes} measured frame(s).`,
           ],
     ),
+  ];
+}
+
+/**
+ * The line a table carries when its noise column marked a call with `†`: what the mark means, in the
+ * numbers of the knee constants (report `v20x-CRT` §4).
+ *
+ * @returns {string} the footnote.
+ */
+function kneeFootnote() {
+  return (
+    `\`†\` = the row sits in the **vsync knee** (a frame-ms median of ${num(KNEE_FRAME_MIN_MS, 1)}–` +
+    `${num(KNEE_FRAME_MAX_MS, 1)} ms and a two-tick share of ${pct(KNEE_SHARE_MIN)}–${pct(KNEE_SHARE_MAX)}):` +
+    ` its spread rides the lever of ≈ ${LEVER_POINTS_PER_MS} points per ms of drift between the sessions, and` +
+    ` so does any call the band made on it — grade such a row against its own frame-ms drift (the noise` +
+    ` floor’s knee block), not against the flat p90.`
+  );
+}
+
+/**
+ * The vsync-knee block of a noise band (report `v20x-CRT` §4): the knee rows whose two-tick spread the flat
+ * band would call beyond, each graded against the frame-ms drift of **its own row** — the drift the lever
+ * scales by {@link LEVER_POINTS_PER_MS}. Empty when no repeated row of the band sits in the knee, so a
+ * campaign off the lever prints exactly what it printed before.
+ *
+ * @param {any} noise - a {@link noiseFloor} band (with its samples and their knee flags).
+ * @returns {string[]} the lines.
+ */
+function kneeBlock(noise) {
+  const twoTick = noise.twoTick;
+  if (twoTick === null || twoTick.leverN === 0) return [];
+  const knee = noise.samples.filter((s) => s.lever === true && s.twoTick !== null);
+  const beyond = knee
+    .map((s) => ({ s, g: gradeSpread(s, twoTick.p90) }))
+    .filter((x) => x.g.grade !== 'within')
+    .sort((x, y) => y.s.twoTick - x.s.twoTick);
+  const out = [
+    `**The vsync knee.** ${twoTick.leverN} of the ${twoTick.n} repeated row × version samples sit in it — a` +
+      ` frame-ms median of ${num(KNEE_FRAME_MIN_MS, 1)}–${num(KNEE_FRAME_MAX_MS, 1)} ms and a two-tick share of` +
+      ` ${pct(KNEE_SHARE_MIN)}–${pct(KNEE_SHARE_MAX)}. There the share counts frames that flipped across the` +
+      ` panel's boundary, so it moves ≈ ${LEVER_POINTS_PER_MS} points per ms of machine-state drift between` +
+      ` the sessions: their spread is that lever, not a scenario cost, and the p90 band does not bound it.`,
+  ];
+  if (beyond.length === 0) {
+    return [
+      ...out,
+      '',
+      `- No knee row is beyond the p90 band (${num(twoTick.p90, 1)} points of` +
+        ` ${knee.length} knee row(s) with a spread): nothing to re-grade.`,
+    ];
+  }
+  return [
+    ...out,
+    '',
+    `Beyond the p90 band (${num(twoTick.p90, 1)} points), every knee row against its own drift:`,
+    '',
+    ...mdTable(
+      ['Row', 'GL', '2t spread pts', 'frame-ms median', 'its drift ms', 'lever allowance pts', 'pts beyond', 'Grade'],
+      beyond.map(({ s, g }) => [
+        `${s.scenario}${noise.pooled === true ? ` @${s.output}` : ''}`,
+        String(s.gl),
+        num(s.twoTick, 1),
+        num(s.frameMs, 1),
+        num(s.frameDriftMs, 2),
+        num(g.allowance, 1),
+        g.unexplained === null ? '—' : signed(g.unexplained, 1),
+        g.grade === 'lever' ? 'drift explains it' : '**beyond its lever**',
+      ]),
+      [0, 7],
+    ),
+    '',
+    `- **drift explains it** = the spread is inside the row's own frame-ms drift × ${LEVER_POINTS_PER_MS}` +
+      ` pts/ms, plus the ${LEVER_SAMPLE_PTS} points a share of ~50 % samples by itself over ~400–700 frames;` +
+      ` **beyond its lever** = drift cannot account for it — a real finding about the row.`,
   ];
 }
 
@@ -1397,10 +1618,17 @@ function noiseSection(campaign) {
       ' points.',
   );
   out.push('');
-  const worst = (b, fmt) =>
+  const leverNote = (s) =>
+    s.lever === true && typeof s.frameDriftMs === 'number'
+      ? ` — **on the vsync lever** (its own ${num(s.frameDriftMs, 2)} ms of frame-ms drift ≈ ` +
+        `${num(s.frameDriftMs * LEVER_POINTS_PER_MS, 1)} pts at ${LEVER_POINTS_PER_MS} pts/ms)`
+      : '';
+  const worst = (b, fmt, lever = false) =>
     b === null
       ? '—'
-      : `${fmt(b.worst)} ${b.worst.scenario} GL ${b.worst.gl}${noise.pooled === true ? ` @${b.worst.output}` : ''}`;
+      : `${fmt(b.worst)} ${b.worst.scenario} GL ${b.worst.gl}` +
+        `${noise.pooled === true ? ` @${b.worst.output}` : ''}` +
+        `${lever ? leverNote(b.worst) : ''}`;
   out.push(
     ...mdTable(
       ['Spread', 'Pairs', 'Median', 'p90', 'Worst'],
@@ -1417,12 +1645,14 @@ function noiseSection(campaign) {
           String(noise.twoTick?.n ?? 0),
           num(noise.twoTick?.median, 1),
           num(noise.twoTick?.p90, 1),
-          worst(noise.twoTick, (s) => num(s.twoTick, 1)),
+          worst(noise.twoTick, (s) => num(s.twoTick, 1), true),
         ],
       ],
       [0, 4],
     ),
   );
+  const knee = kneeBlock(noise);
+  if (knee.length > 0) out.push('', ...knee);
   out.push('');
   const drift = noise.drift;
   if (drift !== undefined && drift.pairs > 0) {
@@ -1480,6 +1710,8 @@ export function glVerdict(campaign, options = {}) {
       b,
       points,
       ratio,
+      // A row both versions sit in the vsync knee with carries the lever into this difference too.
+      onKnee: a.knee?.lever === true || b.knee?.lever === true,
       callPoints: scenarioCall(points, noise?.twoTick?.p90, a.twoTick, b.twoTick),
       callRatio: ratio === null ? '—' : scenarioCall(ratio - 1, noise?.relSync?.p90, a.sync, b.sync),
     });
@@ -1546,7 +1778,7 @@ export function glVerdict(campaign, options = {}) {
           cell(c.a.twoTick, 1),
           cell(c.b.twoTick, 1),
           signed(c.points),
-          c.callPoints,
+          c.callPoints === 'beyond' && c.onKnee === true ? 'beyond†' : c.callPoints,
           cell(c.a.sync, 1),
           cell(c.b.sync, 1),
           c.ratio === null ? '—' : num(c.ratio) + '×',
@@ -1555,6 +1787,7 @@ export function glVerdict(campaign, options = {}) {
         [0, 4, 8],
       ),
     );
+    if (listed.some((c) => c.callPoints === 'beyond' && c.onKnee === true)) out.push('', kneeFootnote());
   }
   out.push('');
   const busy = compared.find((c) => c.a.scenario === `${V2_SIZE}-busy`);

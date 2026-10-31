@@ -29,6 +29,8 @@ import {
   decodeSection,
   decodeZoneEstimate,
   expandSessionArgs,
+  gradeSpread,
+  kneeGrade,
   lateShare,
   loadCampaign,
   parseRow,
@@ -500,6 +502,12 @@ interface SyntheticOptions {
   skip?: (row: SyntheticRow) => boolean;
   /** `[twoTick %, synced p95 ms]` of a row in this run. */
   value: (row: SyntheticRow, run: number) => [number, number];
+  /**
+   * The row's free-running `frameMs` tuple `[min, p50, p95, max]` in this run — the vsync-knee
+   * figure — or null for a record that carries none (a stub, an older session). Omit the option to
+   * write records without the field at all, exactly as every older synthetic campaign does.
+   */
+  frameOf?: (row: SyntheticRow, run: number) => number[] | null;
 }
 
 /**
@@ -537,6 +545,7 @@ function syntheticSession(name: string, o: SyntheticOptions): string {
       twoTickShare: twoTick / 100,
       syncedMs: [0, sync / 2, sync, sync * 1.5],
       renderMs: [0, sync / 3, sync / 2, sync],
+      ...(o.frameOf === undefined ? {} : { frameMs: o.frameOf(row, o.run) }),
       endedAt: 1760000000000 + o.run * 1000 + row.index,
     };
   });
@@ -659,6 +668,242 @@ function crossRow(report: string, size: string, variant: string): string[] {
     .map((x) => x.trim())
     .slice(3, -1);
 }
+
+describe('the vsync knee: drift-amplified spreads (report v20x-CRT §4)', () => {
+  // The six synthetic rows measured twice each, at `[two-tick %, frame-ms median]` per run. Only two sit
+  // in the knee (a frame median of 16.7–33.3 ms **and** a share of 10–95 %): `640x360-busy` — the campaign's
+  // widest spread, 23 points spent on a 4 ms drift, exactly the lever's arithmetic — and `384x216-busy` with
+  // a 1-point spread. The other four stay off it one way each: a share under the band (`384x216-worst`), a
+  // frame median past it (`640x360-worst`), a saturated share (`1280x720n-busy`), a frame median under it
+  // (`1280x720n-worst`).
+  const KNEE: Record<string, { share: [number, number]; frame: [number, number] }> = {
+    '384x216-busy': { share: [30, 31], frame: [20, 20.2] },
+    '384x216-worst': { share: [3, 4], frame: [19, 19.1] },
+    '640x360-busy': { share: [40, 17], frame: [24, 20] },
+    '640x360-worst': { share: [50, 52], frame: [40, 41] },
+    '1280x720n-busy': { share: [99, 96], frame: [36, 37] },
+    '1280x720n-worst': { share: [20, 22], frame: [12, 12.4] },
+  };
+
+  /** The `[min, p50, p95, max]` tuple of a frame median (only the median is read). */
+  const tuple = (ms: number): number[] => [ms - 3, ms, ms + 8, ms + 20];
+
+  /**
+   * The two runs of the knee campaign.
+   *
+   * @param key - the files' prefix; `'no'` writes the same campaign without `frameMs` on any record (a
+   *   session older than the field), `'of'` writes it with every frame median under the knee. Both are two
+   *   letters so the two reports' session-id column — and every padded table cell — is the same width.
+   * @param drift - the widest knee row's own frame-ms drift (its run-1 median moves): 4 ms by default, the
+   *   drift its 23-point spread needs to be accounted for; a smaller one leaves the spread beyond its lever.
+   * @returns The paths, oldest run first.
+   */
+  function kneeFiles(key: string, drift = 4): string[] {
+    return [0, 1].map((run) =>
+      syntheticSession(`knee-${key}-${run}.jsonl`, {
+        gl: 1,
+        run,
+        value: (row: SyntheticRow) => {
+          const f = KNEE[`${row.size}-${row.variant}`];
+          return [f.share[run], 8];
+        },
+        ...(key === 'no'
+          ? {}
+          : {
+              frameOf: (row: SyntheticRow) => {
+                if (key === 'of') return tuple(12);
+                const f = KNEE[`${row.size}-${row.variant}`];
+                const widest = run === 1 && row.size === '640x360' && row.variant === 'busy';
+                return tuple(widest ? f.frame[0] - drift : f.frame[run]);
+              },
+            }),
+      }),
+    );
+  }
+
+  /**
+   * The rows of the noise floor's knee table (its beyond-band knee rows, in the order printed).
+   *
+   * @param report - the campaign report.
+   * @returns One entry per table row: the scenario id and its grade cell.
+   */
+  function kneeRows(report: string): { row: string; grade: string }[] {
+    const at = report.indexOf('Beyond the p90 band');
+    expect(at).toBeGreaterThan(-1);
+    const rows: { row: string; grade: string }[] = [];
+    for (const line of report.slice(report.indexOf('\n', at)).split('\n')) {
+      if (line === '') continue;
+      if (!line.startsWith('|')) break;
+      if (line.startsWith('| Row') || line.startsWith('|-')) continue;
+      const cells = line.split('|').map((x: string) => x.trim());
+      rows.push({ row: cells[1], grade: cells[cells.length - 2] });
+    }
+    return rows;
+  }
+
+  const knee = kneeFiles('knee');
+  const flat = kneeFiles('no');
+  const off = kneeFiles('of');
+
+  it('puts a repeated row on the lever only inside the frame knee and the share band both', () => {
+    const agg = loadCampaign(knee).aggregates.get(1);
+    const widest = agg.get('640x360-busy');
+    expect(widest.frame.median).toBeCloseTo(22, 9);
+    expect(widest.knee).toEqual({ lever: true, frameMs: 22, frameDriftMs: 4, share: 0.285 });
+    // The four off-knee rows keep their ordinary grading, whatever their spread is.
+    for (const id of ['384x216-worst', '640x360-worst', '1280x720n-busy', '1280x720n-worst']) {
+      expect(agg.get(id).knee.lever).toBe(false);
+    }
+    // Either edge of the frame band alone is not a lever: past 33.3 ms the share saturates, under
+    // 16.7 ms it is a binomial trickle, and one repeat gives a row no spread to grade.
+    expect(kneeGrade({ frame: runStats([16.7, 17]), twoTick: runStats([10, 12]) }).lever).toBe(true);
+    expect(kneeGrade({ frame: runStats([16.6, 16.65]), twoTick: runStats([10, 12]) }).lever).toBe(false);
+    expect(kneeGrade({ frame: runStats([33.3, 33.4]), twoTick: runStats([90, 91]) }).lever).toBe(false);
+    expect(kneeGrade({ frame: runStats([22]), twoTick: runStats([28]) })).toEqual({
+      lever: false,
+      frameMs: 22,
+      frameDriftMs: null,
+      share: 0.28,
+    });
+    // A record set without `frameMs` cannot be placed on the ladder — and says so quietly, as data.
+    expect(kneeGrade({ frame: null, twoTick: runStats([28, 30]) })).toEqual({
+      lever: false,
+      frameMs: null,
+      frameDriftMs: null,
+      share: 0.29,
+    });
+  });
+
+  it('grades a knee row’s big spread as drift-amplified, and says so in the headline and the table', () => {
+    const band = loadCampaign(knee).noise.twoTick;
+    // The flat band itself does not move: the knee changes how a spread is read, never how it is measured.
+    expect(band.n).toBe(6);
+    expect(band.median).toBeCloseTo(2, 9);
+    expect(band.p90).toBeCloseTo(13, 9);
+    expect(band.leverN).toBe(2);
+    expect(band.worst.scenario).toBe('640x360-busy');
+    expect(band.worst.twoTick).toBeCloseTo(23, 9);
+    const grade = gradeSpread(band.worst, band.p90);
+    expect(grade.grade).toBe('lever');
+    expect(grade.allowance).toBeCloseTo(29, 9);
+    expect(grade.unexplained).toBeNull();
+    const report = analyzeBenchSessions(knee);
+    // The headline reads its own drift: 23 points on a row that spent 4 ms between the sessions.
+    expect(report).toContain('**on the vsync lever** (its own 4.00 ms of frame-ms drift ≈ 24.0 pts at 6 pts/ms)');
+    expect(report).toContain('**The vsync knee.** 2 of the 6 repeated row × version samples sit in it');
+    expect(report).toContain('it moves ≈ 6 points per ms of machine-state drift');
+    expect(kneeRows(report)).toEqual([{ row: '640x360-busy', grade: 'drift explains it' }]);
+  });
+
+  it('grades a knee row with a small spread as what it is: inside the band', () => {
+    const noise = loadCampaign(knee).noise;
+    const small = noise.samples.find((s: { scenario: string }) => s.scenario === '384x216-busy');
+    expect(small.lever).toBe(true);
+    expect(small.twoTick).toBeCloseTo(1, 9);
+    expect(gradeSpread(small, noise.twoTick.p90)).toEqual({ grade: 'within', allowance: null, unexplained: null });
+    // The printed block lists the beyond-band rows only, so a well-behaved knee row never shows up in it.
+    expect(kneeRows(analyzeBenchSessions(knee))).not.toContainEqual({ row: '384x216-busy', grade: expect.anything() });
+  });
+
+  it('still calls a knee row an outlier when its own drift cannot account for the spread', () => {
+    const files = kneeFiles('tight', 0.5);
+    const noise = loadCampaign(files).noise;
+    const worst = noise.twoTick.worst;
+    expect(worst.lever).toBe(true);
+    expect(worst.frameDriftMs).toBeCloseTo(0.5, 9);
+    const grade = gradeSpread(worst, noise.twoTick.p90);
+    // 23 points on half a ms of drift: 0.5 × 6 + 5 = 8 allowed, 15 beyond it — a finding, not the lever.
+    expect(grade.grade).toBe('outlier');
+    expect(grade.allowance).toBeCloseTo(8, 9);
+    expect(grade.unexplained).toBeCloseTo(15, 9);
+    expect(kneeRows(analyzeBenchSessions(files))).toEqual([{ row: '640x360-busy', grade: '**beyond its lever**' }]);
+  });
+
+  it('touches nothing a campaign without the knee has — same band, same bytes', () => {
+    // Two ways a row is not on the lever: its records carry no `frameMs` at all (a scenario stub, a session
+    // older than the field), or their frame medians sit under the knee. Neither is graded on a drift, and
+    // the second prints byte for byte what the first prints: the knee adds lines only where it applies.
+    const noFrame = loadCampaign(flat);
+    expect(noFrame.noise.twoTick.leverN).toBe(0);
+    expect(noFrame.noise.twoTick.median).toBeCloseTo(2, 9);
+    expect(noFrame.noise.samples.every((s: { lever: boolean; frameMs: unknown }) => s.lever === false && s.frameMs === null)).toBe(true);
+    const offKnee = loadCampaign(off);
+    expect(offKnee.noise.twoTick.leverN).toBe(0);
+    const plain = analyzeBenchSessions(flat);
+    expect(plain).not.toContain('**The vsync knee.**');
+    expect(plain).not.toContain('on the vsync lever');
+    expect(plain).not.toContain('beyond its lever');
+    // The session id is the file name, so only that differs between the two campaigns' reports.
+    const unnamed = (r: string) => r.replace(/knee-(no|of)/g, 'knee');
+    expect(unnamed(analyzeBenchSessions(off))).toBe(unnamed(plain));
+    // Off the lever a spread grades on the flat band alone, exactly as it did: the past-the-knee row's
+    // 2-point spread is `within`, and a 23-point spread on an unflagged row is a plain outlier.
+    expect(gradeSpread(offKnee.noise.samples.find((s: { scenario: string }) => s.scenario === '640x360-worst'), offKnee.noise.twoTick.p90).grade).toBe('within');
+    expect(gradeSpread({ gl: 1, scenario: 'x', relSync: null, twoTick: 23, lever: false, frameMs: 40, frameDriftMs: 0.1 }, 13)).toEqual({
+      grade: 'outlier',
+      allowance: null,
+      unexplained: null,
+    });
+  });
+
+  it('reads an unknown shape loud rather than grading it as no-knee data', () => {
+    // A `frameMs` that is not the four-number tuple is not “absent”: the analyzer stops on the row it
+    // cannot place rather than printing a band that silently ignores the field.
+    const bad = variantSession('frame-bad.jsonl', (r: Record<string, unknown>) => ({ ...r, frameMs: [1, 2] }));
+    expect(() => loadCampaign([FIXTURE, bad])).toThrow(/frameMs must be \[min, p50, p95, max\]/);
+    const half = variantSession('frame-half.jsonl', (r: Record<string, unknown>) => ({ ...r, frameMs: [1, 'x', 3, 4] }));
+    expect(() => loadCampaign([FIXTURE, half])).toThrow(/record 384x216-busy: frameMs/);
+    // The graders refuse their own unknown shapes.
+    expect(() => kneeGrade(null)).toThrow(/kneeGrade: not an aggregate row/);
+    expect(() => kneeGrade({ frame: { median: '22', min: 22, max: 22, n: 2 }, twoTick: runStats([28, 30]) })).toThrow(
+      /kneeGrade: frame is not a runStats value/,
+    );
+    expect(() => gradeSpread({ twoTick: 3 }, 1)).toThrow(/gradeSpread: not a noise sample/);
+    expect(() => gradeSpread({ lever: true, twoTick: 40 }, 1)).toThrow(/no frame-ms drift to grade with/);
+    expect(() => gradeSpread({ lever: true, twoTick: 'x' }, 1)).toThrow(/gradeSpread: twoTick is not a number/);
+  });
+
+  it('marks the calls the band made on a knee row in the verdict tables', () => {
+    // Four passes (GL 1, 2, 1, 2) so the verdict has a comparison: every row differs across the versions by
+    // far more than the within-version 0.25-point band, so all six are called `beyond` — and only the two
+    // knee rows carry `†` saying the call rides the lever. `[GL 1 %, GL 2 %, GL 1 ms, GL 2 ms]` per row.
+    const MARK: Record<string, [number, number, number, number]> = {
+      '384x216-busy': [30, 15, 20, 21],
+      '384x216-worst': [4, 2, 19, 20],
+      '640x360-busy': [40, 20, 24, 25],
+      '640x360-worst': [50, 25, 40, 41],
+      '1280x720n-busy': [99, 60, 36, 37],
+      '1280x720n-worst': [20, 10, 12, 13],
+    };
+    const figures = (row: SyntheticRow, run: number): [number, number, number, number] => {
+      const f = MARK[`${row.size}-${row.variant}`];
+      return [f[run % 2] + (run === 1 ? 0.25 : 0), f[2 + (run % 2)], 0, 0];
+    };
+    const passes = [1, 2, 1, 2].map((gl, i) =>
+      syntheticSession(`knee-mark-${gl}-${i}.jsonl`, {
+        gl,
+        run: Math.floor(i / 2),
+        value: (row: SyntheticRow) => {
+          const f = MARK[`${row.size}-${row.variant}`];
+          return [f[gl === 1 ? 0 : 1] + (i % 2 === 1 ? 0.25 : 0), 8];
+        },
+        frameOf: (row: SyntheticRow) => {
+          const f = MARK[`${row.size}-${row.variant}`];
+          return tuple(f[gl === 1 ? 2 : 3]);
+        },
+      }),
+    );
+    expect(figures(SYNTHETIC_ROWS[0], 0)).toBeDefined();
+    const report = analyzeBenchSessions(passes);
+    expect(report).toContain('**Verdict:**');
+    expect(report).toContain('`†` = the row sits in the **vsync knee**');
+    expect(report).toMatch(/\| 640x360-busy +\| .*beyond†/);
+    expect(report).toMatch(/\| 384x216-busy +\| .*beyond†/);
+    expect(report).toMatch(/\| 1280x720n-worst +\| .*beyond +\|/);
+    expect(report).not.toMatch(/\| 1280x720n-worst +\| .*beyond†/);
+    expect(report).not.toMatch(/\| 640x360-worst +\| .*beyond†/);
+  });
+});
 
 describe('output resolutions', () => {
   // 1920x1080 (the window): jitter 1.0 pt / +10 %. 1280x720: much better on busy, the same on worst; jitter 0.4 pt.
