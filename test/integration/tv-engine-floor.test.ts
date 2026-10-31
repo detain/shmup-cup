@@ -440,8 +440,7 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
       'APP_JS_GZIP_BUDGET',
       'ATLAS_PAGE_MAX_SIZE',
       'DIST_BUDGET',
-      'MATCH_ALL_BANNER',
-      'POLYFILL_BANNER',
+      'checkPolyfillPair',
     ]) {
       expect(check, name).toContain(name);
       // …and webOS does not define its own.
@@ -454,7 +453,7 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
     ]);
   });
 
-  it('asks for the polyfill banner and an ES2018 classic script on both TVs', () => {
+  it('asks for the polyfill pair and an ES2018 classic script on both TVs', () => {
     // Drive the webOS check against an empty folder: it is the missing-app-files path, and it
     // proves the check really is wired to the shared constants above (no build needed).
     const report = checkWebosBundle(join(repo, 'apps/webos/__no_such_dist__'));
@@ -467,18 +466,18 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
       'index.html',
       'largeIcon.png',
     ]);
-    // Both checks name the same banner rules in the same words.
+    // Both checks enforce rule 4 through one positional function — the pair verbatim at the head
+    // (reordered halves leave Pixi's init-time `.matchAll(` unbacked on both TVs; rule 13's
+    // tolerance rides the same position). Shared wiring, no second wording to drift.
     for (const path of [
       'apps/tizen/scripts/check-bundle.mjs',
       'apps/webos/scripts/check-bundle.mjs',
     ]) {
-      expect(read(path), path).toContain(
-        "problems.push('app.js does not start with the globalThis polyfill banner')",
-      );
-      expect(read(path), path).toContain(
-        "problems.push('app.js does not contain the matchAll polyfill banner')",
-      );
+      expect(read(path), path).toContain('checkPolyfillPair(code)');
     }
+    expect(read('apps/webos/scripts/check-bundle.mjs')).toContain(
+      "from '../../tizen/scripts/check-bundle.mjs'",
+    );
   });
 
   it('audits both built bundles for the shared needle list — rule 13 (v20x P1-8c)', () => {

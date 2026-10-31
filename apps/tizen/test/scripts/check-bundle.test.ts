@@ -43,6 +43,10 @@ const CONFIG_XML = readFileSync(new URL('../../public/config.xml', import.meta.u
 const GOOD_HTML =
   '<!doctype html><html><head><script defer src="./app.js"></script></head><body><canvas id="game"></canvas></body></html>';
 const GOOD_APP = `${polyfill}${matchAllPolyfill}\n(function () {\n  'use strict';\n  var x = { a: 1 };\n  var y = Object.assign({}, x, { b: 2 });\n  async function f() { for await (const v of []) { void v; } }\n  void f; void y;\n})();\n`;
+/** The one rule 4 problem a bundle that does not open with the pair earns (positional, w14). */
+const PAIR_PROBLEM =
+  "app.js does not open with the polyfill pair (the globalThis file's text, then the matchAll " +
+  "file's text, verbatim — apps/tizen/vite.config.ts postBanner)";
 
 let dir = '';
 
@@ -236,18 +240,26 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(problems[0]).toMatch(/near: …/);
   });
 
-  it('rejects a bundle that does not start with the globalThis polyfill', () => {
+  it('rejects a bundle that does not open with the polyfill pair', () => {
     put('app.js', '(function () {})();\n' + polyfill);
-    expect(checkTizenBundle(dir).problems).toEqual([
-      'app.js does not start with the globalThis polyfill banner',
-      'app.js does not contain the matchAll polyfill banner',
-    ]);
+    expect(checkTizenBundle(dir).problems).toEqual([PAIR_PROBLEM]);
   });
 
-  it('rejects a bundle that does not hold the matchAll polyfill (PixiJS 8.22, w14)', () => {
+  it('rejects a bundle that opens with only the globalThis half of the pair (PixiJS 8.22, w14)', () => {
     put('app.js', `${polyfill}\n(function () {})();\n`);
+    expect(checkTizenBundle(dir).problems).toEqual([PAIR_PROBLEM]);
+  });
+
+  it('rejects the planted reorder — matchAll behind the app code runs unbacked (self-check)', () => {
+    // The exact shape the old permissive `includes` gate let through: every byte present, wrong
+    // position. Rule 13 loses its two-site licence here too — its tolerance rides rule 4's.
+    put(
+      'app.js',
+      `${polyfill}\n(function () { void 'x'.matchAll(/re/g); })();\n${matchAllPolyfill}`,
+    );
     expect(checkTizenBundle(dir).problems).toEqual([
-      'app.js does not contain the matchAll polyfill banner',
+      PAIR_PROBLEM,
+      expect.stringContaining('String.prototype.matchAll'),
     ]);
   });
 
@@ -467,8 +479,9 @@ describe('tizen/scripts/check-bundle rule 11 — the era media ships (v20x-VIDIO
 
 describe('tizen/scripts/check-bundle rule 13 — the built bundle stays inside Chromium 68 (P1-8c)', () => {
   // The Pixi 8.22 lesson turned into code: a post-68 name that reaches app.js must fail the
-  // build, not the TV boot. The polyfill regions and the banner-backed baseline are the rule's
-  // only grace — everything else is a landmine, named with its byte position.
+  // build, not the TV boot. The polyfill regions and the pair-position-backed baseline (rule 4's
+  // head) are the rule's only grace — everything else is a landmine, named with its byte
+  // position.
 
   /** The needle pair every bundle starts with, verbatim from the committed ES5 files. */
   const BODIES = [
@@ -525,13 +538,23 @@ describe('tizen/scripts/check-bundle rule 13 — the built bundle stays inside C
     expect(problems[0]).toContain('known-good baseline of 2');
   });
 
-  it('keeps matchAll a landmine when the polyfill banner does not stand in front', () => {
-    // The baseline is a licence granted by the prepended polyfill alone — a bundle that lost the
-    // banner lost the licence (and rule 4 reports the missing banner right with it).
+  it('keeps matchAll a landmine when the polyfill pair does not stand in front', () => {
+    // The baseline is a licence granted by the polyfill pair standing at the head — a bundle that
+    // lost the position lost the licence (and rule 4 reports the wrong head right with it).
     const bodies = [{ file: 'apps/tizen/polyfills/global-this.js', text: polyfill }];
     const code = `${polyfill}\nvoid 'x'.matchAll(/re/g);\n`;
     expect(code).not.toContain(MATCH_ALL_BANNER);
     const problems = checkBundleEngineFloor(code, bodies);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('String.prototype.matchAll');
+  });
+
+  it('keeps matchAll a landmine when the polyfill pair is planted out of order', () => {
+    // Positional tolerance (the reviewer's planted reorder): both files are in the bundle — the
+    // old `includes` gate passed this shape — yet the matchAll half stands BEHIND the app code,
+    // where Pixi's init-time `.matchAll(` would run unbacked on Chromium 68/69. No licence.
+    const code = `${polyfill}\nvoid 'x'.matchAll(/re/g);\n${matchAllPolyfill}`;
+    const problems = checkBundleEngineFloor(code, BODIES);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain('String.prototype.matchAll');
   });

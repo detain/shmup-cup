@@ -8,8 +8,8 @@
  *  3. app.js parses with acorn as an ES2018 *script* (Chromium 69 supports ES2018;
  *     this also rejects `import`/`export`, `import()`, `import.meta`, `?.`, `??`,
  *     class fields and optional catch binding that would slip through).
- *  4. app.js starts with the globalThis polyfill banner and holds the matchAll polyfill banner
- *     that follows it (the two prepended ES5 files, w14).
+ *  4. app.js opens with the two prepended ES5 polyfill files verbatim and in order — the
+ *     globalThis file's text, then the matchAll file's text ({@link checkPolyfillPair}, w14).
  *  5. config.xml and icon.png were copied from public/, and config.xml — whichever variant was
  *     built (default, game mode, gamepad check — `config-xml.mjs`, M2-17) — validates.
  *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
@@ -52,7 +52,8 @@
  *     occurrence of the shared needle list {@link TOO_NEW_APIS} fails loud, except inside the two
  *     prepended ES5 polyfill files' embedded regions, and except names a polyfill in front of the
  *     bundle backs — today only `String.prototype.matchAll`, capped at PixiJS 8.22's two known
- *     call sites while the matchAll banner stands ({@link BUNDLE_POLYFILLED}). The source scan
+ *     call sites while the polyfill pair stands verbatim at the head — rule 4's position, not a
+ *     mere presence ({@link BUNDLE_POLYFILLED}). The source scan
  *     `test/integration/tv-engine-floor.test.ts` reads the same list; a dependency bump that
  *     introduces one of these names now breaks the build instead of the TV boot (w14). The bench
  *     widget keeps the rule — same engines, same floor.
@@ -70,7 +71,7 @@
  * {@link checkEraMedia}, {@link VIDEO_LEDGER_FILE}, {@link STILLS_LEDGER_FILE},
  * {@link SVG_PAGE_MAX_BYTES}, {@link svgPageSize}, {@link checkBenchAtlasPages},
  * {@link MEDIA_VIDEO_CLIP_COUNT}, {@link MEDIA_STILL_COUNT}, {@link bakedOffNote},
- * {@link checkBundleEngineFloor}.
+ * {@link checkBundleEngineFloor}, {@link checkPolyfillPair}.
  *
  * @module
  */
@@ -318,6 +319,62 @@ function readEnginePolyfillBodies() {
 }
 
 /**
+ * The exact text `postBanner` prepends: the two polyfill files' on-disk texts concatenated in
+ * {@link TOO_NEW_POLYFILLS}' order — which is the build's order (`apps/tizen/vite.config.ts`).
+ *
+ * @remarks
+ * The result is the contract's pair or nothing: a `polyfillBodies` list missing one of the two
+ * files, or holding a file that cannot be read, yields `null` — the pair then cannot be placed
+ * anywhere, and rule 13 grants no licence to a bundle that merely carries half of it.
+ *
+ * @param {Array<{ file: string, text: string | null }>} polyfillBodies - The same sources rule
+ *   13 reads for its exempt regions.
+ * @returns {string | null} The pair's text, or `null` when a half is missing or unreadable.
+ */
+function polyfillPairText(polyfillBodies) {
+  let pair = '';
+  for (const entry of TOO_NEW_POLYFILLS) {
+    const body = polyfillBodies.find((b) => b.file === `apps/tizen/polyfills/${entry.file}`);
+    if (body === undefined || body.text === null) return null;
+    pair += body.text;
+  }
+  return pair;
+}
+
+/**
+ * Rule 4: the bundle opens with the polyfill pair — the globalThis file's text, then the matchAll
+ * file's text, verbatim, before the app code (`postBanner`, `apps/tizen/vite.config.ts`).
+ *
+ * @remarks
+ * The check is positional, not a search. A reorder that leaves the matchAll half behind the app
+ * code keeps every byte the old `includes` check demanded, yet Pixi 8.22's init-time `.matchAll(`
+ * call (the w14 boot break) then runs UNBACKED on both TVs — Chromium 68/69 has no
+ * `String.prototype.matchAll`. Rule 13's two-site tolerance therefore rides on this same position
+ * ({@link checkBundleEngineFloor}). Leading whitespace is tolerated (the bundler separates the
+ * banner from the code itself); anything else before the pair is a finding. Unreadable polyfill
+ * files fail loud on their own — the check cannot place what it cannot read.
+ *
+ * @param {string} code - The contents of `app.js` (`''` when missing).
+ * @param {Array<{ file: string, text: string | null }>} [polyfillBodies] - The pair's sources
+ *   (default: {@link readEnginePolyfillBodies}, the two committed files).
+ * @returns {string[]} The problems (empty when the pair stands in front, in order).
+ */
+export function checkPolyfillPair(code, polyfillBodies = readEnginePolyfillBodies()) {
+  if (code === '') return []; // the missing script is rule 5's to report
+  const pair = polyfillPairText(polyfillBodies);
+  if (pair === null) {
+    return [
+      'apps/tizen/polyfills/ cannot be read — the bundle check cannot place the polyfill pair',
+    ];
+  }
+  if (code.trimStart().startsWith(pair)) return [];
+  return [
+    "app.js does not open with the polyfill pair (the globalThis file's text, then the matchAll " +
+      "file's text, verbatim — apps/tizen/vite.config.ts postBanner)",
+  ];
+}
+
+/**
  * Rule 13 (the v20x P1-8c codification): no API newer than Chromium 68 survives into the built
  * bundle unbacked — the standing prose rule of `docs/dev/conventions.md` (the 2026-10-23 audit
  * after the Pixi 8.22 boot break) turned into a check.
@@ -326,8 +383,9 @@ function readEnginePolyfillBodies() {
  * Scans `app.js` with {@link tooNewApiHits} and the shared {@link TOO_NEW_APIS} list, outside the
  * two prepended polyfill files' exact embedded regions (located by their on-disk text — a
  * blanket name exemption would licence the very dependency site the polyfill exists for). A hit
- * of a {@link BUNDLE_POLYFILLED} name is tolerated only while its banner stands in the bundle and
- * only up to its baseline count — a new call site is a finding, not a licence. Dependencies are
+ * of a {@link BUNDLE_POLYFILLED} name is tolerated only while the polyfill pair stands verbatim
+ * at the head — rule 4's position ({@link checkPolyfillPair}), not mere presence in the bundle —
+ * and only up to its baseline count: a new call site is a finding, not a licence. Dependencies are
  * in here on purpose: unlike the source scan, this rule reads what the TV actually parses. The
  * check runs on the game and the bench widget alike (same engines), and never on an empty bundle
  * (the missing `app.js` is rule 5's to report).
@@ -346,13 +404,18 @@ export function checkBundleEngineFloor(code, polyfillBodies = readEnginePolyfill
     const at = code.indexOf(body.text);
     if (at >= 0) exemptRanges.push([at, at + body.text.length]);
   }
+  // The tolerance is positional: the pair must stand at the head (rule 4). A bundle carrying the
+  // matchAll file BEHIND the app code — where Pixi's init call would still run unbacked — gets
+  // no licence from it; unreadable files grant none either (the pair is null then).
+  const pair = polyfillPairText(polyfillBodies);
+  const pairInFront = pair !== null && code.trimStart().startsWith(pair);
   /** @type {Map<string, number>} */
   const tolerated = new Map();
   /** @type {string[]} */
   const problems = [];
   for (const hit of tooNewApiHits(code, exemptRanges)) {
     const tolerance = BUNDLE_POLYFILLED.find((entry) => entry.needle === hit.needle);
-    if (tolerance !== undefined && code.includes(tolerance.banner)) {
+    if (tolerance !== undefined && pairInFront) {
       const seen = (tolerated.get(hit.needle) ?? 0) + 1;
       tolerated.set(hit.needle, seen);
       if (seen > tolerance.maxCount) {
@@ -703,13 +766,8 @@ export function checkTizenBundle(distDir) {
       problems.push(`app.js is not a valid ES2018 script: ${err.message}\n    near: …${context}…`);
     }
 
-    // 4. Polyfill first.
-    if (!code.trimStart().startsWith(POLYFILL_BANNER)) {
-      problems.push('app.js does not start with the globalThis polyfill banner');
-    }
-    if (!code.includes(MATCH_ALL_BANNER)) {
-      problems.push('app.js does not contain the matchAll polyfill banner');
-    }
+    // 4. The polyfill pair stands in front, in order (positional — see checkPolyfillPair).
+    problems.push(...checkPolyfillPair(code));
   }
 
   // 5. Tizen widget files.

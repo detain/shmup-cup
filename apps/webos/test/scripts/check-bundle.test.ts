@@ -75,8 +75,20 @@ function manifestJson(): string {
   });
 }
 
-/** The ES5 banner pair real bundles start with (rule 4, w14) — the fixtures' stand-in. */
-const BANNER_PAIR = '/* Shmup Cup — globalThis polyfill */\n/* Shmup Cup — matchAll polyfill */\n';
+/**
+ * The ES5 polyfill pair real bundles start with (rule 4, w14) — verbatim from disk, not a
+ * stand-in: rule 4 is positional and rule 13's matchAll tolerance rides on that same position,
+ * so the fixture must carry the very text the check places at the head.
+ */
+const globalThisPolyfill = readFileSync(
+  fileURLToPath(new URL('../../../tizen/polyfills/global-this.js', import.meta.url)),
+  'utf8',
+);
+const matchAllPolyfill = readFileSync(
+  fileURLToPath(new URL('../../../tizen/polyfills/string-match-all.js', import.meta.url)),
+  'utf8',
+);
+const BANNER_PAIR = `${globalThisPolyfill}${matchAllPolyfill}`;
 
 /** Writes a complete, valid fixture bundle. */
 function goodBundle(): void {
@@ -177,12 +189,27 @@ describe('webos check-bundle (M3-03)', () => {
     expect(problems).toContain('dist/assets/atlas/ holds no atlas page');
   });
 
-  it('rejects syntax newer than ES2018 and a missing polyfill banner', () => {
+  it('rejects syntax newer than ES2018 and a bundle with the polyfill pair out of position', () => {
     goodBundle();
     put('app.js', 'const a = b?.c ?? 1;\n');
     const { problems } = checkWebosBundle(dir);
     expect(problems.join('\n')).toMatch(/does not parse as an ES2018 script/);
-    expect(problems).toContain('app.js does not start with the globalThis polyfill banner');
+    expect(problems).toContain(
+      "app.js does not open with the polyfill pair (the globalThis file's text, then the matchAll " +
+        "file's text, verbatim — apps/tizen/vite.config.ts postBanner)",
+    );
+  });
+
+  it('rejects the planted reorder — matchAll behind the app code (self-check)', () => {
+    // Every byte the old permissive rule 4 checked is present; only the position is wrong — the
+    // exact shape a reorder to [globalThis, app, matchAll] would ship, with Pixi's init-time
+    // `.matchAll(` unbacked on Chromium 68. The shared positional check catches it.
+    goodBundle();
+    put('app.js', `${globalThisPolyfill}\nvar x = 1;\n${matchAllPolyfill}`);
+    expect(checkWebosBundle(dir).problems).toEqual([
+      "app.js does not open with the polyfill pair (the globalThis file's text, then the matchAll " +
+        "file's text, verbatim — apps/tizen/vite.config.ts postBanner)",
+    ]);
   });
 
   it('rule 13 (v20x P1-8c): rejects a post-68 API in the built bundle — webOS is the 68 engine', () => {
