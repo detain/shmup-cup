@@ -16,7 +16,7 @@ import { loadContent, type ContentDb, type ContentFile } from '../../src/data/in
 import { FX_CUES, SimEventKind } from '../../src/events/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { GUARD_REAR_INTERVAL } from '../../src/options/index.js';
-import { MainWeapon, ShotFlag, WeaponRole } from '../../src/weapons/index.js';
+import { MainWeapon, ShotFlag, ShotKind, WeaponRole } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -181,9 +181,58 @@ describe('core/options firing — the Guard pods', () => {
       w.weapons.timers.fill(0);
       stepWorld(w, input);
       expect([...g.rear], `tick ${t}`).toEqual([0, 0, 0, 0]);
-      expect(scanShots(w, WeaponRole.Laser).back).toBe(0);
+      // The load-bearing gate evidence is the spent rear countdown above (fireRear refuses a beam,
+      // so it never starts). A bare `back == 0` is vacuous — a beam is anchored to its shooter's row
+      // and always flies forward (vx > 0), so it is 0 whether or not the rear volley is gated — so
+      // the real invariant is asserted positively instead: the ship and pods DO fire their Laser
+      // forward this tick, and none of that fire is a rearward shot (w15-WB review, nitpick 4).
+      const fired = scanShots(w, WeaponRole.Laser);
+      expect(fired.fwd, 'the beam fires forward from ship and pods').toBeGreaterThan(0);
+      expect(fired.back, 'the beam is never volleyed back').toBe(0);
     }
     expect(g.folded.every((v) => v === 0)).toBe(true); // Echo state untouched by a Guard group
+  });
+
+  it('sends a Hawk Wind main rear volley straight back, not up/down (w15-WB review, minor 1)', () => {
+    const w = world('guard');
+    const g = w.weapons.options[0];
+    // `roles` (the compiled role tables) is private on `WeaponSystem`; a test-only cast (the repo's
+    // established seam for driving internals) forges the otherwise-unreachable combination.
+    const roles = (w.weapons as unknown as { roles: { kind: Int32Array; angle: Int32Array } })
+      .roles;
+    // Forge a rear-volley role whose kind re-resolves its own heading from the playfield midline.
+    // The shipped weapon model keeps the Hawk Wind in the missile slot (never the pod's main role),
+    // so this combination is only reachable by hand — precisely the latent misdirect the review
+    // flagged: before the fix the pods' rear volley would take the up/missile reinterpretation.
+    roles.kind[WeaponRole.Main] = ShotKind.HawkWind;
+    roles.angle[WeaponRole.Main] = 128;
+    const input = createInputSnapshot();
+    drainShots(w);
+    commitPlayerInput(input.players[0], Action.Shot);
+    w.weapons.timers.fill(0);
+    g.rear.fill(0);
+    stepWorld(w, input);
+    // The world parks the ship at y 100 and the playfield midline is 168, so a forward Hawk Wind
+    // re-derives to the up-missile reinterpretation (vy ≠ 0). A Guard rear volley must ignore that
+    // override and fly straight back (vx < 0, vy ≈ 0); the fix is scoped to the rear volley alone.
+    const f = w.weapons.pool.fields;
+    let rearStraight = 0;
+    let forwardReinterpreted = 0;
+    for (let i = 0; i < w.weapons.pool.count; i++) {
+      if ((f.flags[i] & ShotFlag.Dead) !== 0 || f.role[i] !== WeaponRole.Main) continue;
+      if (f.vx[i] < 0) {
+        expect(Math.abs(f.vy[i]), 'rear volley is horizontal').toBeLessThan(1);
+        expect(f.shooter[i], 'rear volley comes from a pod').toBeGreaterThanOrEqual(1);
+        expect(f.kind[i], 'rear volley kept the Hawk Wind kind (no up/down reinterpretation)').toBe(
+          ShotKind.HawkWind,
+        );
+        rearStraight++;
+      } else if (Math.abs(f.vy[i]) > 1) {
+        forwardReinterpreted++;
+      }
+    }
+    expect(rearStraight, 'both pods rear-fired straight back').toBe(2);
+    expect(forwardReinterpreted, 'the forward Hawk Wind still re-derives').toBeGreaterThan(0);
   });
 });
 

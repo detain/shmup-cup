@@ -1054,7 +1054,8 @@ export interface BulletSystem {
    * cancelable bullet within {@link AEGIS_SWALLOW_RADIUS} px of a dish and inside the forward
    * {@link AEGIS_ARC}-unit wedge at its ship leaves a point item (or only sparkles without the
    * cancel rule) exactly like a cancelled bullet. Lasers are not swallowed — the dishes eat
-   * bullets, not beams. Groups of any other type are skipped at once.
+   * bullets, not beams. When no group flies an Aegis dish the sweep returns 0 at once, without
+   * walking the bullet pool at all (a cheap scan of the few groups gates the whole pass).
    *
    * @param options - The World's per-player option groups (read, never written).
    * @returns Bullets swallowed (allocation-free).
@@ -2356,6 +2357,19 @@ class BulletSystemImpl implements BulletSystem {
 
   /** See {@link BulletSystem.aegisSweep}. */
   aegisSweep(options: readonly OptionGroup[]): number {
+    // Fast gate (w15-WB review, nitpick 1): with no Aegis dish in play there is nothing to swallow,
+    // so the whole pool × players walk is skipped. The scan is over the groups alone (≤ MAX_PLAYERS),
+    // so it is free; skipping leaves the result a no-op and the sim byte-identical for every world
+    // that does not fly an Aegis group (goldens and the fingerprint never move — proven at LAND).
+    let anyDish = false;
+    for (let p = 0; p < options.length; p++) {
+      const group = options[p];
+      if (group.mode === OptionMode.Aegis && group.count > 0) {
+        anyDish = true;
+        break;
+      }
+    }
+    if (!anyDish) return 0;
     const f = this.pool.fields;
     const n = this.pool.count;
     const half = AEGIS_ARC / 2;

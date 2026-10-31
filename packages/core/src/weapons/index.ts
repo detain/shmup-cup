@@ -2078,6 +2078,12 @@ class WeaponSystemImpl implements WeaponSystem {
   private readonly blastSprite: number;
   /** Row offset of the next Twin Laser beam {@link WeaponSystemImpl.emit} fills (a class field). */
   private lane = 0;
+  /**
+   * Whether the next {@link WeaponSystemImpl.emit} is a Guard rear volley (a class field, the Twin
+   * Laser's `lane` precedent): 1 makes the caller's heading authoritative, so a role whose kind
+   * re-resolves its heading from the playfield midline (the Hawk Wind) still flies straight back.
+   */
+  private rearVolley = 0;
   /** The World. */
   private readonly host: WeaponHost;
   /** Shooter x of the current fire / lookup (class fields keep fractions unboxed). */
@@ -2153,8 +2159,9 @@ class WeaponSystemImpl implements WeaponSystem {
       // The session's Option type (M2-04; a host config without one flies the trail).
       options.push(createOptionGroup(host.config.optionChoice));
     }
-    // The Echo fold probe (w15-WB): one load-time closure per group, reading the live terrain
-    // map — the whole-pixel arguments keep the per-tick call free of boxed heap numbers.
+    // The Echo fold probe (w15-WB): one load-time closure shared by every group (it reads the
+    // live terrain map, not per-group state), handed to all groups below — the whole-pixel
+    // arguments keep the per-tick call free of boxed heap numbers.
     const echoProbe = (px: number, py: number): boolean => {
       const map = host.terrain;
       return map !== null && terrainAt(map, px, py) !== TerrainType.Empty;
@@ -2603,7 +2610,12 @@ class WeaponSystemImpl implements WeaponSystem {
     if (kind === ShotKind.Laser || kind === ShotKind.Twin || kind === ShotKind.Ripple) return false;
     const live = this.liveCounts[s * WEAPON_ROLE_SLOTS + role];
     if (live >= t.cap[role]) return false;
+    // Pin the caller's straight-back heading (the class-field `lane` idiom): a role whose kind would
+    // re-resolve that heading from the playfield midline (the Hawk Wind) must not — the rear volley
+    // is defined as the pod's own shot flying back, not up or down (w15-WB review, minor 1).
+    this.rearVolley = 1;
     const fired = this.emit(role, s, GUARD_REAR_ANGLE, 0) >= 0;
+    this.rearVolley = 0;
     if (fired) this.sfx(t.sfx[role]);
     return fired;
   }
@@ -2670,8 +2682,11 @@ class WeaponSystemImpl implements WeaponSystem {
     // The role's mirror bits (M3-01 — backward and upside-down art); a Double's forward shot is
     // drawn like the main shot.
     let flip = forward === 1 ? 0 : t.flip[role];
-    if (kind === ShotKind.HawkWind) {
-      // Hawk Wind (M3-01): up above the playfield's middle, down below it.
+    if (kind === ShotKind.HawkWind && this.rearVolley === 0) {
+      // Hawk Wind (M3-01): up above the playfield's middle, down below it. A Guard rear volley
+      // (rearVolley = 1, set by {@link fireRear}) skips this re-resolution and keeps the passed
+      // straight-back heading — the review's "fires its up/missile reinterpretation instead of a
+      // straight-back shot" case, pinned by options-fire.test.ts.
       if (this.fy < this.host.camera.y + PLAYFIELD_H / 2) {
         kind = ShotKind.Upper;
         a = (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK;
