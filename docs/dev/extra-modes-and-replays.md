@@ -371,7 +371,9 @@ start begin the new one); the game scene calls `record(input)` right before and 
 right after every `stepWorld` — pauses and menus are not recorded; `action(code, param)` for a continue or a pause secret; `seal(world)`
 before the zone tally pays its bonus (the tally changes the World outside a tick — the segment's
 final hash is taken first); `finishRun(world, meta)` when the run ends (`SceneFlow.endRun` — back
-at the title, or a new run started from inside the game). The segment recorder (`SegmentRecorder`)
+at the title, a new run started from inside the game, and — since the v20x-CONT cure (`d6e49876`) —
+the two run-complete edges themselves: a cleared run's score submission (`recordRun`) and the
+game-over path's name-entry transition (`finishGame`)). The segment recorder (`SegmentRecorder`)
 is preallocated: `record` / `check` / `action` never allocate (hashing boxes one number every 600
 ticks); segment and run transitions allocate like a scene transition.
 

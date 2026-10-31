@@ -240,6 +240,19 @@ the pause menu (with the pause sound) only when the game scene is on top — ret
 home screen never drops the player back into a running game. The flow's own music keeps playing
 under the pause menu; the World is frozen.
 
+**Checkpoint record.** The v2.0.x R2 TV resume anchors a **mid-flight** run: the game scene's
+`enter` birth flush, its checkpoint-edge flush and the forced flush when the platform suspends
+write the run's `run.checkpoint.v1` record, and the title's one-shot `CONTINUE?` row spends it
+(`beginResume`). The record also **dies where the run ends**: `SceneFlow.endRun` clears it on the
+return to the title and — since the v20x-CONT cure (`d6e49876`) — at the two run-complete edges as
+well, the cleared run's score submission (`recordRun` on a cleared run, so the ending cinematic is
+already record-dead) and the game-over path's step into the name entry (`finishGame`). A reload at
+the name entry of a finished run never re-offers a resume: the score already stands in its table,
+and the resume point's contract is a run that stopped mid-flight. The record is flow and storage
+state, never World state — the sim hashes, the goldens and the shell's fingerprint read none of it.
+Rows: [api-reference.md](api-reference.md) (`replay/checkpoint`); guide:
+[extra-modes-and-replays.md](extra-modes-and-replays.md).
+
 ### Menus answer to any player
 
 `flow.tick(input)` first merges every player's masks into `flow.menuInput` (`mergeMenuInput`:

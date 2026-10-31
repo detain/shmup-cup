@@ -138,12 +138,18 @@ scale — the doc images with R2-03 (`doc-images.mjs` now calls `collectSprites(
 v1 art at either frame* — the
 bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
 
-**The atlas with interim art** — what `pnpm assets` writes today, re-measured at R5-01.S7's
-derived groups: **512** sprites and **1,805** frames on a 2048×1024 `common` page (293,561 B) and
-nine smaller zone / feature pages — **349,848 B** of PNG in all, the `common` page still inside
-the detailed-art projection `ATLAS_COMMON_PNG_CAP` 300,000 B and every zone page far inside
-`ATLAS_ZONE_PNG_CAP` 600,000 B (R3-04.M2b's RR-7 band, from R1-05's 256 KiB sum cap;
-`test/scripts/assets/atlas-budget.ts`), under the **5,700,000 B** `ATLAS_PNG_BYTES_CAP`.
+**The atlas with interim art** — R5-01.S7's re-measurement of what `pnpm assets` writes, kept as
+the dated row it is (the set grew through every wave-15 art round after it; the scale-1 truth rides
+`test/scripts/assets/interim-pipeline.test.ts`'s digest pin, the v1-scale one-page figures
+`test/integration/cjk-budget.test.ts` and its named documents): **512** sprites and **1,805**
+frames on a 2048×1024 `common` page (293,561 B) and nine smaller zone / feature pages —
+**349,848 B** of PNG in all, the `common` page inside that day's `ATLAS_COMMON_PNG_CAP` 300,000 B
+and every zone page far inside `ATLAS_ZONE_PNG_CAP` 600,000 B (R3-04.M2b's RR-7 band, from R1-05's
+256 KiB sum cap; `test/scripts/assets/atlas-budget.ts`), under the then-derived **5,700,000 B**
+`ATLAS_PNG_BYTES_CAP`. The wave-15 art rounds walked the `common` cap **300,000 → 337,000 B** (the
+derived sum with it, to 5,737,000 B) on the owner's dated carve-out of 2026-10-26 — measured bytes
+disclosed at every raise, no gameplay cap moved (the troubleshooting row in
+[build-test-deploy.md](build-test-deploy.md) carries the walk).
 At scale 1 the same tree draws **438** sprites in **1,411** frames and 120,969 B — v1's art,
 byte for byte. The interim name set grew past v1's as R4's and R5's v2 art added names of its own;
 the newest are R5-01.S2's twelve azure sprites with their six `@flash` siblings — eighteen
@@ -263,7 +269,7 @@ the `native` sprites the interim stage never upscales (the "Never upscaled" list
 | `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up. At the v2 build scale it passes the scale through, so the variants carry the native v2 shapes frame for frame (R3-03.V1). And since R3-03.V5 a bullet / beam / bend whose frames come from a real-art PNG override gets its variants **recoloured from that art** instead of redrawn (decision W5-13, [below](#real-art-png-overrides)) |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
 | `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14); M3-02's `fx/black-hole` left for `blackhole` in R4-P.P1 (below) |
-| `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`abs(dx) + abs(dy) ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips; M2-04: `items/capsule-blue` (12×8 × 2, `blink`) — the same pill in blue with a white core (`capsule(bright, tint)`, `CAPSULE_COLORS`); M2-10: `items/capsule-bonus` (12×8 × 2, `blink`) — the pill in gold, the 1,000-point bonus capsule — and `items/1up` (12×8 × 2, `blink`) — the pill in green with a white `+` (`oneUp(bright)`), the bonus stages' extra life |
+| `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`abs(dx) + abs(dy) ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips; M2-04: `items/capsule-blue` (12×8 × 2, `blink`) — the same pill in blue with a white core (`capsule(bright, tint)`, `CAPSULE_COLORS`); M2-10: `items/capsule-bonus` (12×8 × 2, `blink`) — the pill in gold, the 1,000-point bonus capsule — and `items/1up` (12×8 × 2, `blink`) — the pill in green with a white `+` (`oneUp(bright)`), the bonus stages' extra life; w15-C: the four capsule flavors `items/capsule-speed` / `capsule-weapon` / `capsule-option` / `capsule-power` (the same 12×8 pill in green / red / blue / gold with a white `»` / `W` / ring / `!` mark — `FLAVOR_MARKS`, rescaled at v2 to the 18×12 cell — 4 frames at **both** art scales, the dim/spark/lit glint walk, the mark never dimming away) and the three drop crates `items/crate-weapon` / `crate-mega` / `crate-speed` (12×12 at scale 1, 18×18 native at v2 — `CRATE_COLORS` / `CRATE_GLYPHS`, a red-brown `W` / gold `!` / green `›` stencil, six shimmer stages: corner pips, body light, lid-pip spark — 4 → 6 frames per the owner's dated art-budget ruling of 2026-10-26) |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`); M2-04: `shields/pod` (8×8 × 4 wear states, same names — a faceted orange-gold gem that dims to red and loses facets, seeded holes) and `shields/reduce` (20×14 × 2: `full`, `worn` — a dotted green ring round the shrunken ship, every 2nd / 4th ring pixel lit) |
 | `direct` | M2-05 (`shmup_feat.md` §6B / §7B / §9): the MANTA's shots — `shots/direct-missile` (12×6 × 2: the weak and the wide missile), `shots/disc` (20×20 × 4, radius 3.5 → 9.5), `shots/beam` (26×8 × 4: blue lasers, a longer yellow one, the round piercing laser), `shots/wave` (16×34 × 4 crescent waves), `shots/sub-bomb` (6×6), `shots/sub-laser` (9×9) and `shots/sub-laser-wide` (11×11) with **8 octant frames** each (frame `k` = `k × 45°` clockwise from right — the engine picks the heading's octant, nothing is rotated at run time), `shots/sub-disc` (12×12 × 2) — only exactly rounded maths; R4-P.P1 split the six colour items into `direct-items` and the Arm into `arm` (the rows below) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
